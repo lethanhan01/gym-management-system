@@ -155,7 +155,7 @@ Biểu đồ này phác thảo phạm vi của hệ thống và các tương tá
 - **Quản lý phòng tập & thiết bị:** Quản lý phòng tập, thiết bị và bảo trì
 - **Quản trị hệ thống & báo cáo:** Cấu hình hệ thống, quản lý nhân sự và xem báo cáo kinh doanh
 
-Tệp nguồn diagram: [01_overview_usecase.puml](plantuml/01_overview_usecase.puml)
+Tệp nguồn diagram: [01_overview_usecase.puml](Diagram/src/01_overview_usecase.puml)
 
 ![alt text](image.png)
 
@@ -178,7 +178,7 @@ Nhóm này tập trung vào tính bảo mật và quyền truy cập của các 
 
 **Ghi chú:** Phân quyền người dùng được mô tả trong Quy trình 2.4.6, không tách thành một Use Case riêng trong phần 3.
 
-Tệp nguồn diagram: [02_decomposition_account.puml](plantuml/02_decomposition_account.puml)
+Tệp nguồn diagram: [02_decomposition_account.puml](Diagram/src/02_decomposition_account.puml)
 
 ![alt text](image-1.png)
 
@@ -197,7 +197,7 @@ Tệp nguồn diagram: [02_decomposition_account.puml](plantuml/02_decomposition
 - Tương tác tác nhân: Nhân viên quản lý thực hiện tại quầy hoặc Hội viên tự thực hiện (đối với UC04 online)
 - Hệ thống Thanh toán: Đóng vai trò là tác nhân hỗ trợ nhận lệnh và phản hồi kết quả giao dịch
 
-Tệp nguồn diagram: [03_decomposition_membership_payment.puml](plantuml/03_decomposition_membership_payment.puml)
+Tệp nguồn diagram: [03_decomposition_membership_payment.puml](Diagram/src/03_decomposition_membership_payment.puml)
 
 ![alt text](image-2.png)
 
@@ -215,7 +215,7 @@ Nhóm này quản lý trải nghiệm hàng ngày của hội viên và huấn l
 - UC06 có sự tương tác chặt chẽ giữa PT (người nhập dữ liệu) và Hội viên (người theo dõi kết quả)
 - UC07 cho phép Hội viên đánh giá nhân sự và cơ sở vật chất, dữ liệu này sẽ làm đầu vào cho UC11 (Quản lý nhân sự)
 
-Tệp nguồn diagram: [04_decomposition_training_realtime.puml](plantuml/04_decomposition_training_realtime.puml)
+Tệp nguồn diagram: [04_decomposition_training_realtime.puml](Diagram/src/04_decomposition_training_realtime.puml)
 
 ![alt text](image-3.png)
 
@@ -231,7 +231,7 @@ Tệp nguồn diagram: [04_decomposition_training_realtime.puml](plantuml/04_dec
 - UC09 là sự kết hợp giữa việc quản lý danh mục thiết bị và quy trình báo hỏng, sửa chữa
 - Thiết bị kiểm soát (Access Device) tương tác trực tiếp với UC05 để cung cấp dữ liệu về sự hiện diện của hội viên
 
-Tệp nguồn diagram: [05_decomposition_facility.puml](plantuml/05_decomposition_facility.puml)
+Tệp nguồn diagram: [05_decomposition_facility.puml](Diagram/src/05_decomposition_facility.puml)
 
 ![alt text](image-4.png)
 
@@ -248,7 +248,7 @@ Dành riêng cho tác nhân Chủ phòng tập để điều hành và đánh gi
 - UC11 quản lý thông tin nhân viên, phân quyền, và lịch làm việc, kết nối với các đánh giá từ UC07 để chấm điểm hiệu suất
 - UC12 tổng hợp dữ liệu từ mọi giao dịch thành công tại UC03, UC04 cũng như dữ liệu từ UC05, UC06, UC07 để xuất báo cáo doanh thu, hiệu suất và thống kê nhân sự
 
-Tệp nguồn diagram: [06_decomposition_admin_report.puml](plantuml/06_decomposition_admin_report.puml)
+Tệp nguồn diagram: [06_decomposition_admin_report.puml](Diagram/src/06_decomposition_admin_report.puml)
 
 ![alt text](image-5.png)
 
@@ -283,7 +283,7 @@ Quy trình này áp dụng cho cả việc tạo mới hội viên và nâng c�
 - Hệ thống tự động in biên lai
 - Cấp/cập nhật quyền truy cập cho hội viên
 
-Tệp nguồn diagram: [07_process_register_renew_payment.puml](plantuml/07_process_register_renew_payment.puml)
+Tệp nguồn diagram: [07_process_register_renew_payment.puml](Diagram/src/07_process_register_renew_payment.puml)
 
 ![alt text](image-6.png)
 
@@ -308,7 +308,7 @@ Quy trình này thay thế cho việc check-in thủ công, dựa trên thời g
 - Thông tin buổi tập được lưu vào lịch sử sử dụng dịch vụ
 - Hội viên và nhân viên có thể theo dõi bất cứ lúc nào
 
-Tệp nguồn diagram: [08_process_realtime_training.puml](plantuml/08_process_realtime_training.puml)
+Tệp nguồn diagram: [08_process_realtime_training.puml](Diagram/src/08_process_realtime_training.puml)
 
 ![alt text](image-7.png)
 
@@ -332,7 +332,7 @@ Tệp nguồn diagram: [08_process_realtime_training.puml](plantuml/08_process_r
 - **Thành công:** Kỹ thuật viên sửa xong, cập nhật trạng thái về "Hoạt động bình thường"
 - **Thất bại:** Nếu thiết bị không thể sửa, hệ thống sẽ thực hiện quy trình thanh lý và chuyển trạng thái sang "Ngừng hoạt động"
 
-Tệp nguồn diagram: [09_process_equipment_maintenance.puml](plantuml/09_process_equipment_maintenance.puml)
+Tệp nguồn diagram: [09_process_equipment_maintenance.puml](Diagram/src/09_process_equipment_maintenance.puml)
 
 ![alt text](image-8.png)
 
@@ -352,7 +352,7 @@ Tệp nguồn diagram: [09_process_equipment_maintenance.puml](plantuml/09_proce
 - Định kỳ, chủ phòng tập truy xuất báo cáo hiệu suất
 - Đánh giá mức độ hoàn thành công việc của từng nhân viên
 
-Tệp nguồn diagram: [10_process_hr_evaluation.puml](plantuml/10_process_hr_evaluation.puml)
+Tệp nguồn diagram: [10_process_hr_evaluation.puml](Diagram/src/10_process_hr_evaluation.puml)
 
 ![alt text](image-9.png)
 
@@ -371,7 +371,7 @@ Tệp nguồn diagram: [10_process_hr_evaluation.puml](plantuml/10_process_hr_ev
 - Quản lý cập nhật kết quả lên hệ thống
 - Hội viên nhận được thông báo phản hồi
 
-Tệp nguồn diagram: [11_process_feedback.puml](plantuml/11_process_feedback.puml)
+Tệp nguồn diagram: [11_process_feedback.puml](Diagram/src/11_process_feedback.puml)
 
 ![alt text](image-10.png)
 
@@ -409,7 +409,7 @@ Quy trình này đảm bảo tính bảo mật và đúng vai trò trong hệ th
 3. Chủ phòng tập tích chọn hoặc bỏ tích các quyền tương ứng
 4. Nhấn "Lưu" để hệ thống cập nhật quyền hạn cho toàn bộ thành viên trong nhóm đó ngay lập tức
 
-Tệp nguồn diagram: [12_process_permission_management.puml](plantuml/12_process_permission_management.puml)
+Tệp nguồn diagram: [12_process_permission_management.puml](Diagram/src/12_process_permission_management.puml)
 
 ![alt text](image-11.png)
 
@@ -433,7 +433,7 @@ Tệp nguồn diagram: [12_process_permission_management.puml](plantuml/12_proce
   - Bảng biểu số liệu chi tiết
 - Phục vụ việc ra quyết định kinh doanh
 
-Tệp nguồn diagram: [13_process_statistics_report.puml](plantuml/13_process_statistics_report.puml)
+Tệp nguồn diagram: [13_process_statistics_report.puml](Diagram/src/13_process_statistics_report.puml)
 
 ![alt text](image-12.png)
 ---
