@@ -157,88 +157,7 @@ Biểu đồ này phác thảo phạm vi của hệ thống và các tương tá
 
 Tệp nguồn diagram: [01_overview_usecase.puml](plantuml/01_overview_usecase.puml)
 
-```plantuml
-left to right direction
-skinparam packageStyle rectangle
-
-actor "Hội viên" as Member
-actor "Nhân viên quản lý" as Staff
-actor "Huấn luyện viên\n(PT)" as PT
-actor "Chủ phòng tập" as Owner
-actor "Hệ thống thanh toán\n(Ngân hàng số, ví điện tử,...)" as PaymentSystem
-
-rectangle "Hệ thống quản lý phòng tập Gym" {
-
-  rectangle "Quản lý đăng nhập & phân quyền" {
-    usecase "UC00\nĐăng nhập" as UC00
-    usecase "UC01\nĐăng xuất" as UC01
-    usecase "UC02\nQuên mật khẩu" as UC02
-    usecase "Phân quyền người dùng" as Role
-  }
-
-  rectangle "Quản lý hội viên & thanh toán" {
-    usecase "UC03\nĐăng ký hội viên mới" as UC03
-    usecase "UC04\nGia hạn gói tập" as UC04
-    usecase "Thanh toán" as Payment
-    usecase "Quản lý giao dịch tài chính" as Transaction
-  }
-
-  rectangle "Quản lý lịch tập & đánh giá" {
-    usecase "UC05\nTheo dõi lịch tập và\nTự động ghi nhận" as UC05
-    usecase "UC06\nTheo dõi và Đánh giá tiến độ" as UC06
-    usecase "UC07\nGửi phản hồi" as UC07
-  }
-
-  rectangle "Quản lý phòng tập & thiết bị" {
-    usecase "UC08\nQuản lý thông tin phòng tập" as UC08
-    usecase "UC09\nQuản lý và Bảo trì thiết bị" as UC09
-  }
-
-  rectangle "Quản trị hệ thống & báo cáo" {
-    usecase "UC10\nThiết lập gói tập" as UC10
-    usecase "UC11\nQuản lý nhân sự" as UC11
-    usecase "UC12\nXem báo cáo thống kê" as UC12
-  }
-}
-
-Member --> UC00
-Member --> UC01
-Member --> UC02
-Member --> UC04
-Member --> UC05
-Member --> UC06
-Member --> UC07
-Member --> Payment
-
-Staff --> UC00
-Staff --> UC01
-Staff --> UC02
-Staff --> UC03
-Staff --> UC04
-Staff --> UC08
-Staff --> UC09
-Staff --> UC10
-Staff --> Transaction
-
-PT --> UC00
-PT --> UC01
-PT --> UC02
-PT --> UC05
-PT --> UC06
-PT --> UC07
-
-Owner --> UC00
-Owner --> Role
-Owner --> UC10
-Owner --> UC11
-Owner --> UC12
-Owner --> Transaction
-
-Payment --> PaymentSystem
-Transaction ..> Payment : <<include>>
-UC03 ..> Payment : <<include>>
-UC04 ..> Payment : <<include>>
-```
+![alt text](image.png)
 
 
 ---
@@ -261,36 +180,7 @@ Nhóm này tập trung vào tính bảo mật và quyền truy cập của các 
 
 Tệp nguồn diagram: [02_decomposition_account.puml](plantuml/02_decomposition_account.puml)
 
-```plantuml
-left to right direction
-
-actor "Hội viên" as Member
-actor "Nhân viên quản lý" as Staff
-actor "Huấn luyện viên\n(PT)" as PT
-actor "Chủ phòng tập" as Owner
-
-rectangle "Hệ thống & Tài khoản" {
-  usecase "UC00\nĐăng nhập" as UC00
-  usecase "UC01\nĐăng xuất" as UC01
-  usecase "UC02\nQuên mật khẩu" as UC02
-}
-
-Member --> UC00
-Member --> UC01
-Member --> UC02
-
-Staff --> UC00
-Staff --> UC01
-Staff --> UC02
-
-PT --> UC00
-PT --> UC01
-PT --> UC02
-
-Owner --> UC00
-Owner --> UC01
-Owner --> UC02
-```
+![alt text](image-1.png)
 
 **Ghi chú:** Phân quyền người dùng được mô tả chi tiết trong Quy trình 2.4.6, không có Use Case riêng trong phần 3.
 
@@ -309,32 +199,7 @@ Owner --> UC02
 
 Tệp nguồn diagram: [03_decomposition_membership_payment.puml](plantuml/03_decomposition_membership_payment.puml)
 
-```plantuml
-left to right direction
-
-actor "Hội viên" as Member
-actor "Nhân viên quản lý" as Staff
-actor "Hệ thống thanh toán" as PaymentSystem
-
-rectangle "Quản lý Hội viên & Giao dịch" {
-  usecase "UC03\nĐăng ký hội viên mới" as UC03
-  usecase "UC04\nGia hạn gói tập" as UC04
-  usecase "Thanh toán" as Pay
-  usecase "Xuất biên lai" as Receipt
-}
-
-Staff --> UC03
-Staff --> UC04
-Member --> UC04
-
-UC03 ..> Pay : <<include>>
-UC03 ..> Receipt : <<include>>
-
-UC04 ..> Pay : <<include>>
-UC04 ..> Receipt : <<include>>
-
-PaymentSystem --> Pay
-```
+![alt text](image-2.png)
 
 ### 2.3.3 Phân rã Vận hành tập luyện (Real-time)
 
@@ -352,28 +217,7 @@ Nhóm này quản lý trải nghiệm hàng ngày của hội viên và huấn l
 
 Tệp nguồn diagram: [04_decomposition_training_realtime.puml](plantuml/04_decomposition_training_realtime.puml)
 
-```plantuml
-left to right direction
-
-actor "Hội viên" as Member
-actor "Huấn luyện viên\n(PT)" as PT
-actor "Thiết bị kiểm soát\nAccess Device" as AccessDevice
-
-rectangle "Vận hành tập luyện Real-time" {
-  usecase "UC05\nTheo dõi lịch tập và\nTự động ghi nhận" as UC05
-  usecase "UC06\nTheo dõi và Đánh giá tiến độ" as UC06
-  usecase "UC07\nGửi phản hồi" as UC07
-}
-
-Member --> UC05
-Member --> UC06
-Member --> UC07
-
-PT --> UC05
-PT --> UC06
-
-AccessDevice --> UC05
-```
+![alt text](image-3.png)
 
 ### 2.3.4 Phân rã Quản lý Cơ sở vật chất
 
@@ -389,26 +233,7 @@ AccessDevice --> UC05
 
 Tệp nguồn diagram: [05_decomposition_facility.puml](plantuml/05_decomposition_facility.puml)
 
-```plantuml
-left to right direction
-
-actor "Nhân viên quản lý" as Staff
-actor "Chủ phòng tập" as Owner
-actor "Thiết bị kiểm soát\nAccess Device" as AccessDevice
-
-rectangle "Quản lý Cơ sở vật chất" {
-  usecase "UC08\nQuản lý thông tin phòng tập" as UC08
-  usecase "UC09\nQuản lý và Bảo trì thiết bị" as UC09
-}
-
-Staff --> UC08
-Staff --> UC09
-
-Owner --> UC08
-Owner --> UC09
-
-UC09 --> AccessDevice
-```
+![alt text](image-4.png)
 
 ### 2.3.5 Phân rã Quản trị & Báo cáo
 
@@ -425,23 +250,7 @@ Dành riêng cho tác nhân Chủ phòng tập để điều hành và đánh gi
 
 Tệp nguồn diagram: [06_decomposition_admin_report.puml](plantuml/06_decomposition_admin_report.puml)
 
-```plantuml
-left to right direction
-
-actor "Chủ phòng tập" as Owner
-
-rectangle "Quản trị & Báo cáo" {
-  usecase "UC10\nThiết lập gói tập" as UC10
-  usecase "UC11\nQuản lý nhân sự" as UC11
-  usecase "UC12\nXem báo cáo thống kê" as UC12
-}
-
-Owner --> UC10
-Owner --> UC11
-Owner --> UC12
-
-UC12 ..> UC10 : <<include>>
-```
+![alt text](image-5.png)
 
 ---
 
@@ -476,44 +285,7 @@ Quy trình này áp dụng cho cả việc tạo mới hội viên và nâng c�
 
 Tệp nguồn diagram: [07_process_register_renew_payment.puml](plantuml/07_process_register_renew_payment.puml)
 
-```plantuml
-start
-
-:Tiếp nhận yêu cầu;
-if (Đăng ký mới?) then (Yes)
-  :Nhập thông tin cá nhân;
-  :Kiểm tra trùng SĐT/Email;
-else (No)
-  :Nhập mã hội viên;
-  :Kiểm tra trạng thái gói cũ;
-endif
-
-:Chọn gói tập;
-
-:Nhập/cập nhật dữ liệu;
-
-: Tính toán tổng tiền;
-
-:Thực hiện thanh toán;
-
-if (Thanh toán thành công?) then (Yes)
-  :Cập nhật gói tập;
-  :Kích hoạt quyền truy cập;
-  :Xuất biên lai;
-  stop
-else (No)
-  :Báo lỗi;
-  if (Thử lại?) then (Yes)
-    :Chọn lại phương thức;
-    --> :Thực hiện thanh toán;
-  else (No)
-    :Hủy giao dịch;
-    stop
-  endif
-endif
-
-@enduml
-```
+![alt text](image-6.png)
 
 ### 2.4.2 Quy trình Theo dõi Lịch tập và Tự động ghi nhận (Real-time)
 
@@ -538,32 +310,7 @@ Quy trình này thay thế cho việc check-in thủ công, dựa trên thời g
 
 Tệp nguồn diagram: [08_process_realtime_training.puml](plantuml/08_process_realtime_training.puml)
 
-```plantuml
-start
-
-:Thiết bị nhận diện hội viên;
-
-:Kiểm tra trạng thái gói tập;
-
-if (Gói còn hạn?) then (Yes)
-  :Kiểm tra lịch đặt;
-  
-  :Ghi nhận phiên tập;
-
-  :Theo dõi thời gian tập;
-
-  :Trừ số buổi;
-
-  :Lưu lịch sử tập luyện;
-
-  stop
-else (No)
-  :Từ chối truy cập;
-  stop
-endif
-
-@enduml
-```
+![alt text](image-7.png)
 
 ### 2.4.3 Quy trình Quản lý Thiết bị và Bảo trì (Tích hợp)
 
@@ -587,32 +334,7 @@ endif
 
 Tệp nguồn diagram: [09_process_equipment_maintenance.puml](plantuml/09_process_equipment_maintenance.puml)
 
-```plantuml
-start
-
-:Nhập / cập nhật thiết bị;
-
-if (Có sự cố?) then (Yes)
-  :Ghi nhận lỗi;
-  :Chuyển trạng thái "Đang sửa";
-  
-  :Tiến hành sửa chữa;
-
-  if (Sửa thành công?) then (Yes)
-    :Chuyển "Hoạt động";
-    stop
-  else (No)
-    :Thanh lý thiết bị;
-    :Chuyển "Ngừng hoạt động";
-    stop
-  endif
-
-else (No)
-  stop
-endif
-
-@enduml
-```
+![alt text](image-8.png)
 
 ### 2.4.4 Quy trình Quản lý Nhân sự và Đánh giá
 
@@ -632,33 +354,7 @@ endif
 
 Tệp nguồn diagram: [10_process_hr_evaluation.puml](plantuml/10_process_hr_evaluation.puml)
 
-```plantuml
-start
-
-:Chủ phòng tập tạo hồ sơ nhân viên;
-
-:Phân nhóm quyền;
-:Thiết lập lịch làm việc;
-
-:Hệ thống thu thập dữ liệu hiệu suất;
-note right
-- Số buổi hướng dẫn thực tế
-- Phản hồi từ hội viên
-end note
-
-:Chủ phòng tập xem báo cáo hiệu suất;
-
-:Đánh giá mức độ hoàn thành công việc;
-
-if (Hiệu suất đạt yêu cầu?) then (Yes)
-  :Ghi nhận đánh giá tốt;
-else (No)
-  :Nhắc nhở / điều chỉnh lịch làm việc;
-endif
-
-stop
-@enduml
-```
+![alt text](image-9.png)
 
 ### 2.4.5 Quy trình Tiếp nhận và Xử lý Phản hồi
 
@@ -677,32 +373,7 @@ stop
 
 Tệp nguồn diagram: [11_process_feedback.puml](plantuml/11_process_feedback.puml)
 
-```plantuml
-start
-
-:Hội viên gửi phản hồi;
-
-:Nhân viên quản lý tiếp nhận phản hồi;
-
-:Phân loại mức độ nghiêm trọng;
-
-if (Phản hồi về thiết bị?) then (Yes)
-  :Chuyển đến bộ phận kỹ thuật;
-  :Xử lý / sửa chữa thiết bị;
-elseif (Phản hồi về nhân viên?) then (Yes)
-  :Chuyển đến quản lý nhân sự;
-  :Nhắc nhở / đánh giá nhân viên;
-else (Dịch vụ)
-  :Xử lý vấn đề dịch vụ;
-endif
-
-:Cập nhật kết quả xử lý lên hệ thống;
-
-:Thông báo kết quả cho hội viên;
-
-stop
-@enduml
-```
+![alt text](image-10.png)
 
 ### 2.4.6 Quy trình Quản lý Phân quyền và Nhóm người dùng
 
@@ -740,41 +411,7 @@ Quy trình này đảm bảo tính bảo mật và đúng vai trò trong hệ th
 
 Tệp nguồn diagram: [12_process_permission_management.puml](plantuml/12_process_permission_management.puml)
 
-```plantuml
-start
-
-:Chủ phòng tập truy cập chức năng quản lý phân quyền;
-
-if (Quản lý nhóm cho người dùng?) then (Yes)
-  :Chọn tài khoản người dùng;
-  :Chọn nhóm quyền;
-  :Gán nhóm cho người dùng;
-
-elseif (Quản lý người dùng cho nhóm?) then (Yes)
-  :Chọn nhóm quyền;
-  :Hiển thị danh sách thành viên;
-
-  if (Thêm thành viên?) then (Yes)
-    :Tìm mã nhân viên;
-    :Thêm vào nhóm;
-  else (Loại bỏ)
-    :Chọn thành viên;
-    :Loại bỏ khỏi nhóm;
-  endif
-
-else (Quản lý chức năng cho nhóm)
-  :Chọn nhóm cần cấu hình;
-  :Hiển thị danh mục chức năng;
-  :Tích chọn / bỏ tích quyền;
-endif
-
-:Lưu thay đổi;
-
-:Hệ thống cập nhật quyền hạn;
-
-stop
-@enduml
-```
+![alt text](image-11.png)
 
 ### 2.4.7 Quy trình Báo cáo Thống kê
 
@@ -798,40 +435,7 @@ stop
 
 Tệp nguồn diagram: [13_process_statistics_report.puml](plantuml/13_process_statistics_report.puml)
 
-```plantuml
-start
-
-:Chủ phòng tập chọn loại báo cáo;
-note right
-Ví dụ:
-- Doanh thu
-- Đăng ký mới
-- Tỷ lệ gia hạn
-end note
-
-:Chọn khoảng thời gian;
-
-:Hệ thống truy xuất dữ liệu;
-
-:Hệ thống tổng hợp dữ liệu;
-note right
-Nguồn dữ liệu:
-- Giao dịch thanh toán
-- Lịch sử tập luyện
-end note
-
-if (Có dữ liệu?) then (Yes)
-  :Xuất báo cáo dạng biểu đồ / bảng biểu;
-  :Chủ phòng tập xem báo cáo;
-else (No)
-  :Thông báo không có dữ liệu;
-endif
-
-stop
-@enduml
-```
-![alt text](image.png)
-
+![alt text](image-12.png)
 ---
 
 # 3. Đặc tả các chức năng
