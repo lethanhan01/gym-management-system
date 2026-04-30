@@ -1,0 +1,82 @@
+@startuml
+left to right direction
+skinparam packageStyle rectangle
+
+actor "会員" as Member
+actor "管理スタッフ" as Staff
+actor "トレーナー\n(PT)" as PT
+actor "ジムオーナー" as Owner
+actor "決済システム\n(銀行、電子ウォレットなど)" as PaymentSystem
+
+rectangle "ジム管理システム" {
+
+  rectangle "ログインと権限管理" {
+    usecase "UC00\nログイン" as UC00
+    usecase "UC01\nログアウト" as UC01
+    usecase "UC02\nパスワードを忘れた場合" as UC02
+    usecase "ユーザー権限管理" as Role
+  }
+
+  rectangle "会員と決済の管理" {
+    usecase "UC03\n新規会員登録" as UC03
+    usecase "UC04\nプラン更新" as UC04
+    usecase "決済" as Payment
+    usecase "取引管理" as Transaction
+  }
+
+  rectangle "トレーニングと評価の管理" {
+    usecase "UC05\nトレーニング履歴の追跡と\n自動記録" as UC05
+    usecase "UC06\n進捗の確認と評価" as UC06
+    usecase "UC07\nフィードバック送信" as UC07
+  }
+
+  rectangle "ジムと設備の管理" {
+    usecase "UC08\nジム情報の管理" as UC08
+    usecase "UC09\n設備の管理と保守" as UC09
+  }
+
+  rectangle "システム管理と報告" {
+    usecase "UC10\nプラン設定" as UC10
+    usecase "UC11\n人事管理" as UC11
+    usecase "UC12\n統計レポートの表示" as UC12
+  }
+}
+
+Member --> UC00
+Member --> UC01
+Member --> UC02
+Member --> UC04
+Member --> UC05
+Member --> UC06
+Member --> UC07
+Member --> Payment
+
+Staff --> UC00
+Staff --> UC01
+Staff --> UC02
+Staff --> UC03
+Staff --> UC04
+Staff --> UC08
+Staff --> UC09
+Staff --> UC10
+Staff --> Transaction
+
+PT --> UC00
+PT --> UC01
+PT --> UC02
+PT --> UC05
+PT --> UC06
+PT --> UC07
+
+Owner --> UC00
+Owner --> Role
+Owner --> UC10
+Owner --> UC11
+Owner --> UC12
+Owner --> Transaction
+
+Payment --> PaymentSystem
+Transaction ..> Payment : <<include>>
+UC03 ..> Payment : <<include>>
+UC04 ..> Payment : <<include>>
+@enduml

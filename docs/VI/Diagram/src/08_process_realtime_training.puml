@@ -1,0 +1,25 @@
+@startuml
+start
+
+:Thiết bị nhận diện hội viên;
+
+:Kiểm tra trạng thái gói tập;
+
+if (Gói còn hạn?) then (Yes)
+  :Kiểm tra lịch đặt;
+  
+  :Ghi nhận phiên tập;
+
+  :Theo dõi thời gian tập;
+
+  :Trừ số buổi;
+
+  :Lưu lịch sử tập luyện;
+
+  stop
+else (No)
+  :Từ chối truy cập;
+  stop
+endif
+
+@enduml

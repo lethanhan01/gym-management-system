@@ -1,0 +1,22 @@
+@startuml
+left to right direction
+
+actor "会員" as Member
+actor "トレーナー\n(PT)" as PT
+actor "入退室管理機器\nAccess Device" as AccessDevice
+
+rectangle "トレーニング運用（リアルタイム）" {
+  usecase "UC05\nトレーニング履歴の追跡と\n自動記録" as UC05
+  usecase "UC06\n進捗の確認と評価" as UC06
+  usecase "UC07\nフィードバック送信" as UC07
+}
+
+Member --> UC05
+Member --> UC06
+Member --> UC07
+
+PT --> UC05
+PT --> UC06
+
+AccessDevice --> UC05
+@enduml

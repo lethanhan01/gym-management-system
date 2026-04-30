@@ -1,0 +1,20 @@
+@startuml
+left to right direction
+
+actor "管理スタッフ" as Staff
+actor "ジムオーナー" as Owner
+actor "入退室管理機器\nAccess Device" as AccessDevice
+
+rectangle "施設管理" {
+  usecase "UC08\nジム情報の管理" as UC08
+  usecase "UC09\n設備の管理と保守" as UC09
+}
+
+Staff --> UC08
+Staff --> UC09
+
+Owner --> UC08
+Owner --> UC09
+
+UC09 --> AccessDevice
+@enduml

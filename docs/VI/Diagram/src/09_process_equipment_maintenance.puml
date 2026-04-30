@@ -1,0 +1,25 @@
+@startuml
+start
+
+:Nhập / cập nhật thiết bị;
+
+if (Có sự cố?) then (Yes)
+  :Ghi nhận lỗi;
+  :Chuyển trạng thái "Đang sửa";
+  
+  :Tiến hành sửa chữa;
+
+  if (Sửa thành công?) then (Yes)
+    :Chuyển "Hoạt động";
+    stop
+  else (No)
+    :Thanh lý thiết bị;
+    :Chuyển "Ngừng hoạt động";
+    stop
+  endif
+
+else (No)
+  stop
+endif
+
+@enduml

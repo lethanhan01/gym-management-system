@@ -1,0 +1,26 @@
+@startuml
+left to right direction
+
+actor "Hội viên" as Member
+actor "Nhân viên quản lý" as Staff
+actor "Hệ thống thanh toán" as PaymentSystem
+
+rectangle "Quản lý Hội viên & Giao dịch" {
+  usecase "UC03\nĐăng ký hội viên mới" as UC03
+  usecase "UC04\nGia hạn gói tập" as UC04
+  usecase "Thanh toán" as Pay
+  usecase "Xuất biên lai" as Receipt
+}
+
+Staff --> UC03
+Staff --> UC04
+Member --> UC04
+
+UC03 ..> Pay : <<include>>
+UC03 ..> Receipt : <<include>>
+
+UC04 ..> Pay : <<include>>
+UC04 ..> Receipt : <<include>>
+
+PaymentSystem --> Pay
+@enduml

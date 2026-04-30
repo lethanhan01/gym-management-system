@@ -1,0 +1,22 @@
+@startuml
+left to right direction
+
+actor "Hội viên" as Member
+actor "Huấn luyện viên\n(PT)" as PT
+actor "Thiết bị kiểm soát\nAccess Device" as AccessDevice
+
+rectangle "Vận hành tập luyện Real-time" {
+  usecase "UC05\nTheo dõi lịch tập và\nTự động ghi nhận" as UC05
+  usecase "UC06\nTheo dõi và Đánh giá tiến độ" as UC06
+  usecase "UC07\nGửi phản hồi" as UC07
+}
+
+Member --> UC05
+Member --> UC06
+Member --> UC07
+
+PT --> UC05
+PT --> UC06
+
+AccessDevice --> UC05
+@enduml

@@ -1,0 +1,25 @@
+@startuml
+start
+
+:設備を入力/更新;
+
+if (問題があるか?) then (Yes)
+  :不具合を登録;
+  :状態を"修理中"に変更;
+  
+  :修理を開始;
+
+  if (修理成功か?) then (Yes)
+    :"稼働中"に戻す;
+    stop
+  else (No)
+    :設備を廃棄;
+    :"停止"に変更;
+    stop
+  endif
+
+else (No)
+  stop
+endif
+
+@enduml

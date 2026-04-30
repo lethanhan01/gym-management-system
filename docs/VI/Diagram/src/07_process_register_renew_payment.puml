@@ -1,0 +1,37 @@
+@startuml
+start
+
+:Tiếp nhận yêu cầu;
+if (Đăng ký mới?) then (Yes)
+  :Nhập thông tin cá nhân;
+  :Kiểm tra trùng SĐT/Email;
+else (No)
+  :Nhập mã hội viên;
+  :Kiểm tra trạng thái gói cũ;
+endif
+
+:Chọn gói tập;
+
+:Nhập/cập nhật dữ liệu;
+
+: Tính toán tổng tiền;
+
+:Thực hiện thanh toán;
+
+if (Thanh toán thành công?) then (Yes)
+  :Cập nhật gói tập;
+  :Kích hoạt quyền truy cập;
+  :Xuất biên lai;
+  stop
+else (No)
+  :Báo lỗi;
+  if (Thử lại?) then (Yes)
+    :Chọn lại phương thức;
+    --> :Thực hiện thanh toán;
+  else (No)
+    :Hủy giao dịch;
+    stop
+  endif
+endif
+
+@enduml

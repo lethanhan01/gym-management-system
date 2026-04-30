@@ -1,0 +1,26 @@
+@startuml
+start
+
+:Chủ phòng tập tạo hồ sơ nhân viên;
+
+:Phân nhóm quyền;
+:Thiết lập lịch làm việc;
+
+:Hệ thống thu thập dữ liệu hiệu suất;
+note right
+- Số buổi hướng dẫn thực tế
+- Phản hồi từ hội viên
+end note
+
+:Chủ phòng tập xem báo cáo hiệu suất;
+
+:Đánh giá mức độ hoàn thành công việc;
+
+if (Hiệu suất đạt yêu cầu?) then (Yes)
+  :Ghi nhận đánh giá tốt;
+else (No)
+  :Nhắc nhở / điều chỉnh lịch làm việc;
+endif
+
+stop
+@enduml

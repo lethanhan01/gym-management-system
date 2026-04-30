@@ -1,0 +1,30 @@
+@startuml
+left to right direction
+
+actor "Hội viên" as Member
+actor "Nhân viên quản lý" as Staff
+actor "Huấn luyện viên\n(PT)" as PT
+actor "Chủ phòng tập" as Owner
+
+rectangle "Hệ thống & Tài khoản" {
+  usecase "UC00\nĐăng nhập" as UC00
+  usecase "UC01\nĐăng xuất" as UC01
+  usecase "UC02\nQuên mật khẩu" as UC02
+}
+
+Member --> UC00
+Member --> UC01
+Member --> UC02
+
+Staff --> UC00
+Staff --> UC01
+Staff --> UC02
+
+PT --> UC00
+PT --> UC01
+PT --> UC02
+
+Owner --> UC00
+Owner --> UC01
+Owner --> UC02
+@enduml

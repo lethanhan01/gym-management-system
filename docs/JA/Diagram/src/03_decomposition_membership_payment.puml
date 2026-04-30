@@ -1,0 +1,26 @@
+@startuml
+left to right direction
+
+actor "会員" as Member
+actor "管理スタッフ" as Staff
+actor "決済システム" as PaymentSystem
+
+rectangle "会員管理と取引" {
+  usecase "UC03\n新規会員登録" as UC03
+  usecase "UC04\nプラン更新" as UC04
+  usecase "決済" as Pay
+  usecase "領収書発行" as Receipt
+}
+
+Staff --> UC03
+Staff --> UC04
+Member --> UC04
+
+UC03 ..> Pay : <<include>>
+UC03 ..> Receipt : <<include>>
+
+UC04 ..> Pay : <<include>>
+UC04 ..> Receipt : <<include>>
+
+PaymentSystem --> Pay
+@enduml

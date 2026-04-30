@@ -1,0 +1,17 @@
+@startuml
+left to right direction
+
+actor "ジムオーナー" as Owner
+
+rectangle "管理・報告" {
+  usecase "UC10\nプラン設定" as UC10
+  usecase "UC11\n人事管理" as UC11
+  usecase "UC12\n統計レポートの表示" as UC12
+}
+
+Owner --> UC10
+Owner --> UC11
+Owner --> UC12
+
+UC12 ..> UC10 : <<include>>
+@enduml

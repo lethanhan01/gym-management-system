@@ -1,0 +1,34 @@
+@startuml
+start
+
+:Chủ phòng tập truy cập chức năng quản lý phân quyền;
+
+if (Quản lý nhóm cho người dùng?) then (Yes)
+  :Chọn tài khoản người dùng;
+  :Chọn nhóm quyền;
+  :Gán nhóm cho người dùng;
+
+elseif (Quản lý người dùng cho nhóm?) then (Yes)
+  :Chọn nhóm quyền;
+  :Hiển thị danh sách thành viên;
+
+  if (Thêm thành viên?) then (Yes)
+    :Tìm mã nhân viên;
+    :Thêm vào nhóm;
+  else (Loại bỏ)
+    :Chọn thành viên;
+    :Loại bỏ khỏi nhóm;
+  endif
+
+else (Quản lý chức năng cho nhóm)
+  :Chọn nhóm cần cấu hình;
+  :Hiển thị danh mục chức năng;
+  :Tích chọn / bỏ tích quyền;
+endif
+
+:Lưu thay đổi;
+
+:Hệ thống cập nhật quyền hạn;
+
+stop
+@enduml

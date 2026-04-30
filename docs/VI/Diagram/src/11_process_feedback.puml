@@ -1,0 +1,25 @@
+@startuml
+start
+
+:Hội viên gửi phản hồi;
+
+:Nhân viên quản lý tiếp nhận phản hồi;
+
+:Phân loại mức độ nghiêm trọng;
+
+if (Phản hồi về thiết bị?) then (Yes)
+  :Chuyển đến bộ phận kỹ thuật;
+  :Xử lý / sửa chữa thiết bị;
+elseif (Phản hồi về nhân viên?) then (Yes)
+  :Chuyển đến quản lý nhân sự;
+  :Nhắc nhở / đánh giá nhân viên;
+else (Dịch vụ)
+  :Xử lý vấn đề dịch vụ;
+endif
+
+:Cập nhật kết quả xử lý lên hệ thống;
+
+:Thông báo kết quả cho hội viên;
+
+stop
+@enduml

@@ -1,0 +1,30 @@
+@startuml
+left to right direction
+
+actor "会員" as Member
+actor "管理スタッフ" as Staff
+actor "トレーナー\n(PT)" as PT
+actor "ジムオーナー" as Owner
+
+rectangle "システムとアカウント" {
+  usecase "UC00\nログイン" as UC00
+  usecase "UC01\nログアウト" as UC01
+  usecase "UC02\nパスワードを忘れた場合" as UC02
+}
+
+Member --> UC00
+Member --> UC01
+Member --> UC02
+
+Staff --> UC00
+Staff --> UC01
+Staff --> UC02
+
+PT --> UC00
+PT --> UC01
+PT --> UC02
+
+Owner --> UC00
+Owner --> UC01
+Owner --> UC02
+@enduml

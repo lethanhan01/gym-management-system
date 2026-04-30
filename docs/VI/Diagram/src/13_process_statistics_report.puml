@@ -1,0 +1,31 @@
+@startuml
+start
+
+:Chủ phòng tập chọn loại báo cáo;
+note right
+Ví dụ:
+- Doanh thu
+- Đăng ký mới
+- Tỷ lệ gia hạn
+end note
+
+:Chọn khoảng thời gian;
+
+:Hệ thống truy xuất dữ liệu;
+
+:Hệ thống tổng hợp dữ liệu;
+note right
+Nguồn dữ liệu:
+- Giao dịch thanh toán
+- Lịch sử tập luyện
+end note
+
+if (Có dữ liệu?) then (Yes)
+  :Xuất báo cáo dạng biểu đồ / bảng biểu;
+  :Chủ phòng tập xem báo cáo;
+else (No)
+  :Thông báo không có dữ liệu;
+endif
+
+stop
+@enduml

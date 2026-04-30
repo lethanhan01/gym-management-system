@@ -1,0 +1,20 @@
+@startuml
+left to right direction
+
+actor "Nhân viên quản lý" as Staff
+actor "Chủ phòng tập" as Owner
+actor "Thiết bị kiểm soát\nAccess Device" as AccessDevice
+
+rectangle "Quản lý Cơ sở vật chất" {
+  usecase "UC08\nQuản lý thông tin phòng tập" as UC08
+  usecase "UC09\nQuản lý và Bảo trì thiết bị" as UC09
+}
+
+Staff --> UC08
+Staff --> UC09
+
+Owner --> UC08
+Owner --> UC09
+
+UC09 --> AccessDevice
+@enduml

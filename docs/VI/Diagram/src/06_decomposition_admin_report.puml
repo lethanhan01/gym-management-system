@@ -1,0 +1,17 @@
+@startuml
+left to right direction
+
+actor "Chủ phòng tập" as Owner
+
+rectangle "Quản trị & Báo cáo" {
+  usecase "UC10\nThiết lập gói tập" as UC10
+  usecase "UC11\nQuản lý nhân sự" as UC11
+  usecase "UC12\nXem báo cáo thống kê" as UC12
+}
+
+Owner --> UC10
+Owner --> UC11
+Owner --> UC12
+
+UC12 ..> UC10 : <<include>>
+@enduml
