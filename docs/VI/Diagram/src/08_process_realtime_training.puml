@@ -1,24 +1,23 @@
 @startuml
 start
 
-:Thiết bị nhận diện hội viên;
+:Access Device đọc thẻ/QR/vân tay;
 
-:Kiểm tra trạng thái gói tập;
+:Backend nhận member_code + device API key;
 
-if (Gói còn hạn?) then (Yes)
-  :Kiểm tra lịch đặt;
-  
-  :Ghi nhận phiên tập;
+if (Subscription active và end_date >= ngày hiện tại?) then (Yes)
 
-  :Theo dõi thời gian tập;
+  if (Có training_session đúng khung giờ?) then (Có)
+    :Ghi attendance_log với session_id;
+  else (Không)
+    :Ghi attendance_log không gắn session;
+  endif
 
-  :Trừ số buổi;
-
-  :Lưu lịch sử tập luyện;
+  :Trả OK cho device, mở cửa;
 
   stop
 else (No)
-  :Từ chối truy cập;
+  :Từ chối truy cập, log lý do;
   stop
 endif
 

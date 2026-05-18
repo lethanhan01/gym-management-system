@@ -7,6 +7,7 @@ actor "Nhân viên quản lý" as Staff
 actor "Huấn luyện viên\n(PT)" as PT
 actor "Chủ phòng tập" as Owner
 actor "Hệ thống thanh toán\n(Ngân hàng số, ví điện tử,...)" as PaymentSystem
+actor "Access Device\n(thẻ/QR/vân tay)" as AccessDevice
 
 rectangle "Hệ thống quản lý phòng tập Gym" {
 
@@ -25,7 +26,8 @@ rectangle "Hệ thống quản lý phòng tập Gym" {
   }
 
   rectangle "Quản lý lịch tập & đánh giá" {
-    usecase "UC05\nTheo dõi lịch tập và\nTự động ghi nhận" as UC05
+    usecase "UC05A\nPT lập lịch tập" as UC05A
+    usecase "UC05B\nReal-time check-in\nqua Access Device" as UC05B
     usecase "UC06\nTheo dõi và Đánh giá tiến độ" as UC06
     usecase "UC07\nGửi phản hồi" as UC07
   }
@@ -46,7 +48,7 @@ Member --> UC00
 Member --> UC01
 Member --> UC02
 Member --> UC04
-Member --> UC05
+Member --> UC05B
 Member --> UC06
 Member --> UC07
 Member --> Payment
@@ -64,9 +66,11 @@ Staff --> Transaction
 PT --> UC00
 PT --> UC01
 PT --> UC02
-PT --> UC05
+PT --> UC05A
 PT --> UC06
 PT --> UC07
+
+AccessDevice --> UC05B
 
 Owner --> UC00
 Owner --> Role
