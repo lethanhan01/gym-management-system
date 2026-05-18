@@ -1,0 +1,108 @@
+name: CI
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+    branches: ['**']
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  client:
+    name: Client (lint • test • build)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: client
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: client/.nvmrc
+          cache: npm
+          cache-dependency-path: client/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint --if-present
+
+      - name: Test
+        run: npm test --if-present
+        env:
+          CI: true
+
+      - name: Build
+        run: npm run build --if-present
+
+      - name: Upload client build artifact
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: client-dist
+          path: client/dist
+          if-no-files-found: ignore
+          retention-days: 7
+
+  server:
+    name: Server (lint • test • build)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: server
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: gym
+          POSTGRES_PASSWORD: gym
+          POSTGRES_DB: gym_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U gym -d gym_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      NODE_ENV: test
+      PORT: 4000
+      DATABASE_URL: postgres://gym:gym@localhost:5432/gym_test
+      JWT_SECRET: test-secret-please-change
+      JWT_EXPIRES_IN: 1h
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: server/.nvmrc
+          cache: npm
+          cache-dependency-path: server/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint --if-present
+
+      - name: Test
+        run: npm test --if-present
+        env:
+          CI: true
+
+      - name: Build
+        run: npm run build --if-present
