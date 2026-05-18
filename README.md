@@ -13,6 +13,71 @@ Bằng cách cung cấp một nền tảng kỹ thuật số tích hợp, hệ t
 
 ---
 
+## Quickstart cho developer
+
+Monorepo gồm 2 sub-project độc lập (mỗi project có `node_modules` + `tsconfig` riêng):
+
+- [`server/`](server/) — REST API: **NestJS 10 + Prisma + PostgreSQL** (port 3000). Xem [`server/README.md`](server/README.md).
+- [`client/`](client/) — Web UI: **React + Vite + TypeScript** (port 5173). Xem [`client/README.md`](client/README.md).
+
+### Yêu cầu
+
+- Node.js ≥ 20, npm ≥ 10
+- Tài khoản Supabase (PostgreSQL managed) — Free tier đủ cho dev
+
+### Setup nhanh
+
+```bash
+# 1. Clone repo
+git clone <repo-url> gym-management-system
+cd gym-management-system
+
+# 2. Backend
+cd server
+cp .env.example .env                  # Điền DATABASE_URL + DIRECT_URL Supabase + JWT_SECRET
+npm install
+npm run prisma:push                   # Sync schema.prisma → Supabase (idempotent)
+npm run prisma:seed                   # Seed RBAC + 10 user mẫu (password: Password123!)
+npm run dev                           # http://localhost:3000
+
+# 3. Smoke test backend (terminal khác)
+curl http://localhost:3000/health     # Lần đầu sau cold start có thể db:down (lazy connect)
+curl -X POST http://localhost:3000/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"owner@gym.local","password":"Password123!"}'
+# Tiêu chí pass: trả accessToken + roles:["owner"]
+curl http://localhost:3000/health     # Sau login phải trả db:ok
+
+# 4. Frontend (mở terminal khác, từ root)
+cd client
+npm install
+npm run dev                           # http://localhost:5173
+```
+
+### Tài khoản mặc định sau seed
+
+| Email | Role | Password |
+|---|---|---|
+| `owner@gym.local` | owner | `Password123!` |
+| `staff.linh@gym.local` | staff | `Password123!` |
+| `trainer.minh@gym.local` | trainer | `Password123!` |
+| `nguyen.van.a@email.com` | member | `Password123!` |
+
+Đổi password ngay trong môi trường thật.
+
+### Tài liệu thiết kế
+
+- [`docs/VI/SRS_VI.md`](docs/VI/SRS_VI.md) — Software Requirements Specification (13 UC: UC00-UC12)
+- [`docs/VI/Design/Architecture.md`](docs/VI/Design/Architecture.md) — High-Level Design (10 cluster, 14 ADR, NFR, threat model)
+- [`docs/VI/Design/Database.md`](docs/VI/Design/Database.md) — ERD + DDL + convention (20 model + otp_codes)
+- [`docs/VI/Design/API/`](docs/VI/Design/API/) — API spec Module 1 Auth + Module 2 RBAC + Module 4 Member/Subscription (Markdown + OpenAPI 3.0)
+
+### Troubleshooting
+
+Xem [`server/README.md` § Troubleshooting](server/README.md) cho các vấn đề thường gặp: build silent fail, DB không connect, seed thiếu data, OTP không gửi email.
+
+---
+
 ## 2. Đối Tượng Sử Dụng
 
 | Đối tượng | Vai trò |
@@ -111,66 +176,12 @@ Dự án gồm **2 project độc lập**: `client/` và `server/`. Mỗi bên t
 
 ---
 
-## 6. Hướng Dẫn Cài Đặt
-
-### Yêu cầu
-
-- Node.js >= 20 (xem `client/.nvmrc` hoặc `server/.nvmrc`)
-- PostgreSQL >= 14
-- npm >= 10 (đi kèm Node 20)
-
-### Các bước (mở 2 terminal song song)
-
-```bash
-# Terminal 1 - Server
-cd server
-cp .env.example .env          # sửa DB_*, JWT_SECRET, ...
-npm install
-npm run db:migrate
-npm run db:seed               # tùy chọn: tạo admin user mặc định
-npm run dev                   # http://localhost:3000
-```
-
-```bash
-# Terminal 2 - Client
-cd client
-cp .env.example .env          # tùy chọn (Vite dev proxy đã forward /api)
-npm install
-npm run dev                   # http://localhost:5173
-```
-
-### Script tiện ích
-
-`client/`:
-
-| Lệnh | Mô tả |
-|---|---|
-| `npm run dev` | Vite dev server |
-| `npm run build` | `tsc` + `vite build` |
-| `npm run preview` | Preview bản build |
-| `npm run lint` | ESLint cho `src/` |
-| `npm run format` | Prettier format `src/` |
-
-`server/`:
-
-| Lệnh | Mô tả |
-|---|---|
-| `npm run dev` | `tsx watch src/index.ts` |
-| `npm run build` | `tsc` ra `dist/` |
-| `npm start` | Chạy bản build (`node dist/index.js`) |
-| `npm run lint` | ESLint cho `src/` |
-| `npm run format` | Prettier format `src/` |
-| `npm run db:migrate` | Áp dụng migration trong `src/db/migrations/` |
-| `npm run db:seed` | Tạo admin user mặc định |
-
----
-
-## 7. Đóng Góp
+## 6. Đóng Góp
 
 Mọi đóng góp đều được hoan nghênh. Vui lòng tạo **Issue** hoặc **Pull Request** để thảo luận trước khi thay đổi.
 
 ---
 
-## 8. Giấy Phép
+## 7. Giấy Phép
 
 > *(Cập nhật khi có thông tin giấy phép)*

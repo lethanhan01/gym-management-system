@@ -179,6 +179,48 @@ DIRECT_URL=postgresql://postgres.<ref>:<password>@aws-X-<region>.pooler.supabase
 
 Lưu ý: username của Session pooler có dạng `postgres.<ref>` (giống Transaction pooler), khác với direct connection (`postgres`).
 
+### Smoke test sau setup
+
+Sau khi `npm run dev` chạy thành công (log `Nest application successfully started` + `Server running on http://localhost:3000`), mở terminal khác và chạy:
+
+```bash
+# 1. Health check (ngay sau cold start có thể trả db:down do PrismaService lazy connect — không phải lỗi)
+curl http://localhost:3000/health
+# Mong đợi: {"status":"ok"|"degraded","timestamp":"...","db":"ok"|"down"}
+
+# 2. Login owner mặc định — kích hoạt connection DB nếu chưa có
+curl -X POST http://localhost:3000/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"owner@gym.local","password":"Password123!"}'
+# Mong đợi: {"success":true,"data":{"accessToken":"eyJ...","user":{"userId":"...","email":"owner@gym.local","fullName":"Pham Quoc Hung","roles":["owner"]}}}
+
+# 3. Health check sau khi đã có query — db:ok bền vững
+curl http://localhost:3000/health
+# Mong đợi: {"status":"ok","timestamp":"...","db":"ok"}
+```
+
+Tiêu chí pass: bước 2 trả `accessToken` + `roles:["owner"]`, bước 3 trả `db:"ok"`. Bước 1 có thể là `db:"down"` hoặc `db:"ok"` tuỳ thời điểm — không phải lỗi.
+
+PowerShell (Windows):
+
+```powershell
+# Login với Invoke-RestMethod
+$body = @{ email = 'owner@gym.local'; password = 'Password123!' } | ConvertTo-Json
+Invoke-RestMethod -Method POST -Uri 'http://localhost:3000/api/v1/auth/login' `
+  -ContentType 'application/json' -Body $body
+```
+
+### Troubleshooting
+
+| Triệu chứng | Nguyên nhân | Khắc phục |
+| --- | --- | --- |
+| `npm run build` trả exit 0 nhưng `dist/` không tạo | `tsconfig.build.tsbuildinfo` stale (tsc incremental cache không invalidate) | `rm -f tsconfig.build.tsbuildinfo && npm run build` |
+| `/health` luôn trả `db: down` kể cả sau login | DATABASE_URL sai (host/port/credential) hoặc pooler chặn | Kiểm tra log Nest console; chạy `npx prisma db pull` để test connection |
+| Login trả `Email hoac mat khau khong dung` dù password đúng | User `status='locked'` hoặc seed chưa chạy | `npm run prisma:studio` xem `users.status`; nếu thiếu data → `npm run prisma:seed` |
+| `prisma db push` báo `P3005: schema is not empty` | Đã chạy `prisma migrate deploy` trên Supabase trước đó | Project không dùng `migrate` — chỉ dùng `db push`. Đọc section "Tại sao `db push`" ở trên |
+| `prisma db push` timeout / connection refused | `DIRECT_URL` đang dùng direct host nhưng cổng 5432 bị ISP chặn | Đổi sang Session pooler (xem section trên) |
+| OTP `/auth/forgot-password` không gửi email | SMTP chưa integrate (placeholder v1.0) | OTP log ra `console.log` — copy từ stdout server. Production cần chốt SMTP provider (xem Architecture.md §8) |
+
 ---
 
 ## 8. API
