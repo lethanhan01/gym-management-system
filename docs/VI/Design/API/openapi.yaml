@@ -1,0 +1,932 @@
+openapi: 3.0.3
+info:
+  title: Gym Management System API
+  version: 1.0.0
+  description: |
+    OpenAPI 3.0 contract cho Module 1 Auth + Module 4 Member/Subscription/Payment.
+    Module 2 RBAC, 3 Package, 5 Staff, 6 Facility, 7 Training, 8 Feedback, 9 Report defer session sau.
+    Source-of-truth conventions: [docs/Design/API/conventions.md](./conventions.md).
+    Source-of-truth error envelope: server/src/common/filters/http-exception.filter.ts.
+  contact:
+    name: Lê Thanh An
+servers:
+  - url: /api/v1
+    description: Base URL (global prefix set in server/src/main.ts)
+
+tags:
+  - name: Auth
+    description: Module 1 — Authentication (UC00, UC01, UC02, UC13).
+  - name: Members
+    description: Module 4 — Hội viên (UC03A, UC03B, UC11).
+  - name: Subscriptions
+    description: Module 4 — Lượt đăng ký gói (UC04A, UC04B).
+  - name: Payments
+    description: Module 4 — Thanh toán.
+
+security:
+  - BearerAuth: []
+
+paths:
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: UC00 — Đăng nhập
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/LoginBody' }
+            example:
+              email: owner@gym.local
+              password: Password123!
+      responses:
+        '200':
+          description: Thành công
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/LoginResult' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /auth/logout:
+    post:
+      tags: [Auth]
+      summary: UC01 — Đăng xuất (client-side token discard)
+      responses:
+        '200':
+          description: Thành công
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties: { message: { type: string } }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /auth/me:
+    get:
+      tags: [Auth]
+      summary: Lấy thông tin user hiện tại
+      responses:
+        '200':
+          description: Thành công
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/UserProfile' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /auth/forgot-password:
+    post:
+      tags: [Auth]
+      summary: UC02 — Quên mật khẩu (gửi OTP)
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ForgotPasswordBody' }
+            example: { email: owner@gym.local }
+      responses:
+        '200':
+          description: Anti-enumeration — luôn 200 OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties: { message: { type: string } }
+              example:
+                success: true
+                message: Nếu email tồn tại trong hệ thống, mã OTP đã được gửi
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '429': { $ref: '#/components/responses/RateLimit' }
+
+  /auth/reset-password:
+    post:
+      tags: [Auth]
+      summary: UC02 — Đặt lại mật khẩu bằng OTP
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ResetPasswordBody' }
+            example:
+              email: owner@gym.local
+              otp: '123456'
+              newPassword: NewPass123!
+      responses:
+        '200':
+          description: Thành công
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties: { message: { type: string } }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /auth/verify-email:
+    post:
+      tags: [Auth]
+      summary: UC13 — Xác thực email bằng OTP
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/VerifyEmailBody' }
+            example:
+              email: newmember@gym.local
+              otp: '654321'
+      responses:
+        '200':
+          description: Thành công
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties: { message: { type: string } }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409':
+          description: EMAIL_ALREADY_VERIFIED
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+              example: { success: false, code: EMAIL_ALREADY_VERIFIED, message: Email đã được xác thực }
+        '410':
+          description: OTP_EXPIRED
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+              example: { success: false, code: OTP_EXPIRED, message: Mã OTP đã hết hạn }
+
+  /auth/resend-verify:
+    post:
+      tags: [Auth]
+      summary: UC13 — Gửi lại email xác thực
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ForgotPasswordBody' }
+            example: { email: newmember@gym.local }
+      responses:
+        '200':
+          description: Anti-enumeration — luôn 200 OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties: { message: { type: string } }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '429': { $ref: '#/components/responses/RateLimit' }
+
+  /members:
+    get:
+      tags: [Members]
+      summary: UC11 — List hội viên
+      parameters:
+        - { $ref: '#/components/parameters/Page' }
+        - { $ref: '#/components/parameters/PageSize' }
+        - { name: sort, in: query, schema: { type: string, default: created_at:desc } }
+        - { name: status, in: query, schema: { $ref: '#/components/schemas/UserStatus' } }
+        - { name: trainerId, in: query, schema: { type: string } }
+        - { name: search, in: query, schema: { type: string } }
+        - { name: includeDeleted, in: query, schema: { type: boolean, default: false }, description: Chỉ Owner }
+      responses:
+        '200':
+          description: Thành công
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items: { $ref: '#/components/schemas/Member' }
+                      meta: { $ref: '#/components/schemas/PaginationMeta' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+    post:
+      tags: [Members]
+      summary: UC03A — Staff tạo hội viên tại quầy
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreateMemberBody' }
+      responses:
+        '201':
+          description: Tạo thành công
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/Member' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '500':
+          description: MEMBER_CODE_GENERATION_FAILED
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+
+  /members/self-register:
+    post:
+      tags: [Members]
+      summary: UC03B — Member tự đăng ký online
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/SelfRegisterMemberBody' }
+      responses:
+        '201':
+          description: Tạo thành công
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/MemberWithPendingSubscription' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '409': { $ref: '#/components/responses/Conflict' }
+
+  /members/{id}:
+    parameters:
+      - { $ref: '#/components/parameters/IdParam' }
+    get:
+      tags: [Members]
+      summary: Chi tiết hội viên
+      responses:
+        '200':
+          description: Thành công
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/Member' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    patch:
+      tags: [Members]
+      summary: Cập nhật profile hội viên (Self chỉ subset field)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UpdateMemberBody' }
+      responses:
+        '200':
+          description: Thành công
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/Member' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+    delete:
+      tags: [Members]
+      summary: Xóa hội viên (soft-delete, Owner only)
+      responses:
+        '200':
+          description: Thành công
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties: { message: { type: string } }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /members/{id}/assign-trainer:
+    parameters:
+      - { $ref: '#/components/parameters/IdParam' }
+    patch:
+      tags: [Members]
+      summary: UC11 — Gán PT chính
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AssignTrainerBody' }
+            example: { trainerId: '3' }
+      responses:
+        '200':
+          description: Thành công
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          memberId: { type: string }
+                          primaryTrainerId: { type: string, nullable: true }
+                          primaryTrainerName: { type: string, nullable: true }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /members/{id}/progress:
+    parameters:
+      - { $ref: '#/components/parameters/IdParam' }
+    get:
+      tags: [Members]
+      summary: UC06 — List bản ghi tiến độ
+      parameters:
+        - { $ref: '#/components/parameters/Page' }
+        - { $ref: '#/components/parameters/PageSize' }
+        - { name: sort, in: query, schema: { type: string, default: recorded_at:desc } }
+        - { name: from, in: query, schema: { type: string, format: date } }
+        - { name: to, in: query, schema: { type: string, format: date } }
+      responses:
+        '200':
+          description: Thành công
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items: { $ref: '#/components/schemas/MemberProgress' }
+                      meta: { $ref: '#/components/schemas/PaginationMeta' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /subscriptions:
+    get:
+      tags: [Subscriptions]
+      summary: List lượt đăng ký gói
+      parameters:
+        - { name: memberId, in: query, schema: { type: string }, description: Self bắt buộc set memberId=self }
+        - { name: status, in: query, schema: { $ref: '#/components/schemas/SubscriptionStatus' } }
+        - { $ref: '#/components/parameters/Page' }
+        - { $ref: '#/components/parameters/PageSize' }
+        - { name: sort, in: query, schema: { type: string, default: start_date:desc } }
+      responses:
+        '200':
+          description: Thành công
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items: { $ref: '#/components/schemas/Subscription' }
+                      meta: { $ref: '#/components/schemas/PaginationMeta' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+    post:
+      tags: [Subscriptions]
+      summary: UC03A/B / UC04A — Tạo subscription mới (purchase hoặc renewal)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreateSubscriptionBody' }
+            example: { memberId: '5', packageId: '3' }
+      responses:
+        '201':
+          description: Tạo thành công
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/Subscription' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403':
+          description: FORBIDDEN hoặc EMAIL_NOT_VERIFIED
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+        '409':
+          description: SUBSCRIPTION_ALREADY_PENDING hoặc DUPLICATE_VALUE
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+
+  /subscriptions/{id}:
+    parameters:
+      - { $ref: '#/components/parameters/IdParam' }
+    get:
+      tags: [Subscriptions]
+      summary: Chi tiết subscription
+      responses:
+        '200':
+          description: Thành công
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/SubscriptionWithPackage' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /subscriptions/{id}/cancel:
+    parameters:
+      - { $ref: '#/components/parameters/IdParam' }
+    patch:
+      tags: [Subscriptions]
+      summary: UC04B — Hủy subscription (cascade activate pending nếu có)
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CancelSubscriptionBody' }
+            example: { reason: Member chuyển nơi ở }
+      responses:
+        '200':
+          description: Thành công
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/CancelSubscriptionResult' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409':
+          description: SUBSCRIPTION_NOT_CANCELLABLE
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+
+  /payments:
+    get:
+      tags: [Payments]
+      summary: List payments
+      parameters:
+        - { name: memberId, in: query, schema: { type: string }, description: Self bắt buộc set memberId=self }
+        - { name: subscriptionId, in: query, schema: { type: string } }
+        - { name: status, in: query, schema: { $ref: '#/components/schemas/PaymentStatus' } }
+        - { name: method, in: query, schema: { $ref: '#/components/schemas/PaymentMethod' } }
+        - { name: from, in: query, schema: { type: string, format: date } }
+        - { name: to, in: query, schema: { type: string, format: date } }
+        - { $ref: '#/components/parameters/Page' }
+        - { $ref: '#/components/parameters/PageSize' }
+        - { name: sort, in: query, schema: { type: string, default: paid_at:desc } }
+      responses:
+        '200':
+          description: Thành công
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items: { $ref: '#/components/schemas/Payment' }
+                      meta: { $ref: '#/components/schemas/PaginationMeta' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+    post:
+      tags: [Payments]
+      summary: Ghi nhận thanh toán (activate subscription nếu success + start_date <= today_vn)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreatePaymentBody' }
+      responses:
+        '201':
+          description: Tạo thành công
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/PaymentWithSubscription' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409':
+          description: DUPLICATE_VALUE hoặc SUBSCRIPTION_NOT_PENDING
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    IdParam:
+      name: id
+      in: path
+      required: true
+      schema: { type: string }
+      description: BigInt PK serialized as string.
+    Page:
+      name: page
+      in: query
+      schema: { type: integer, default: 1, minimum: 1 }
+    PageSize:
+      name: pageSize
+      in: query
+      schema: { type: integer, default: 20, minimum: 1, maximum: 100 }
+
+  schemas:
+    SuccessEnvelope:
+      type: object
+      required: [success]
+      properties:
+        success: { type: boolean, enum: [true] }
+        message: { type: string }
+
+    ErrorEnvelope:
+      type: object
+      required: [success, code, message]
+      properties:
+        success: { type: boolean, enum: [false] }
+        code: { type: string, example: VALIDATION_ERROR }
+        message: { type: string }
+        details:
+          oneOf:
+            - { type: array, items: { type: string } }
+            - { type: object, additionalProperties: true }
+
+    PaginationMeta:
+      type: object
+      required: [page, pageSize, totalItems, totalPages]
+      properties:
+        page: { type: integer, minimum: 1 }
+        pageSize: { type: integer, minimum: 1, maximum: 100 }
+        totalItems: { type: integer, minimum: 0 }
+        totalPages: { type: integer, minimum: 0 }
+
+    UserStatus:
+      type: string
+      enum: [pending_verification, active, locked]
+
+    SubscriptionStatus:
+      type: string
+      enum: [pending, active, expired, cancelled]
+
+    PaymentStatus:
+      type: string
+      enum: [success, failed]
+
+    PaymentMethod:
+      type: string
+      enum: [cash, bank_card, ewallet]
+
+    UserProfile:
+      type: object
+      required: [userId, email, fullName, status, roles]
+      properties:
+        userId: { type: string }
+        email: { type: string, format: email }
+        phone: { type: string, nullable: true }
+        fullName: { type: string }
+        status: { $ref: '#/components/schemas/UserStatus' }
+        roles:
+          type: array
+          items: { type: string, enum: [owner, staff, pt, member] }
+
+    LoginBody:
+      type: object
+      required: [email, password]
+      properties:
+        email: { type: string, format: email }
+        password: { type: string, minLength: 8 }
+
+    LoginResult:
+      type: object
+      required: [accessToken, user]
+      properties:
+        accessToken: { type: string }
+        user:
+          type: object
+          required: [userId, email, fullName, roles]
+          properties:
+            userId: { type: string }
+            email: { type: string, format: email }
+            fullName: { type: string }
+            roles:
+              type: array
+              items: { type: string }
+
+    ForgotPasswordBody:
+      type: object
+      required: [email]
+      properties:
+        email: { type: string, format: email }
+
+    ResetPasswordBody:
+      type: object
+      required: [email, otp, newPassword]
+      properties:
+        email: { type: string, format: email }
+        otp: { type: string, minLength: 6, maxLength: 10 }
+        newPassword: { type: string, minLength: 8 }
+
+    VerifyEmailBody:
+      type: object
+      required: [email, otp]
+      properties:
+        email: { type: string, format: email }
+        otp: { type: string, minLength: 6, maxLength: 6 }
+
+    Member:
+      type: object
+      required: [memberId, memberCode, userId, email, fullName, status, createdAt]
+      properties:
+        memberId: { type: string }
+        memberCode: { type: string, example: MEM-2026-000005 }
+        userId: { type: string }
+        email: { type: string, format: email }
+        phone: { type: string, nullable: true }
+        fullName: { type: string }
+        status: { $ref: '#/components/schemas/UserStatus' }
+        emailVerifiedAt: { type: string, format: date-time, nullable: true }
+        dateOfBirth: { type: string, format: date, nullable: true }
+        address: { type: string, nullable: true }
+        primaryTrainerId: { type: string, nullable: true }
+        avatarFileId: { type: string, nullable: true }
+        createdAt: { type: string, format: date-time }
+
+    CreateMemberBody:
+      type: object
+      required: [email, password, fullName]
+      properties:
+        email: { type: string, format: email }
+        phone: { type: string, nullable: true }
+        password: { type: string, minLength: 8 }
+        fullName: { type: string, minLength: 2, maxLength: 200 }
+        dateOfBirth: { type: string, format: date, nullable: true }
+        address: { type: string, maxLength: 200, nullable: true }
+
+    SelfRegisterMemberBody:
+      allOf:
+        - $ref: '#/components/schemas/CreateMemberBody'
+        - type: object
+          properties:
+            packageId: { type: string, nullable: true, description: FK packages.package_id }
+          required: [phone]
+
+    UpdateMemberBody:
+      type: object
+      description: |
+        Self chỉ được set [fullName, phone, dateOfBirth, address]. Staff/Owner mở rộng (trừ system-managed).
+        primaryTrainerId KHÔNG cho phép — dùng /assign-trainer endpoint.
+      properties:
+        fullName: { type: string, minLength: 2, maxLength: 200 }
+        phone: { type: string }
+        dateOfBirth: { type: string, format: date, nullable: true }
+        address: { type: string, maxLength: 200, nullable: true }
+
+    AssignTrainerBody:
+      type: object
+      required: [trainerId]
+      properties:
+        trainerId:
+          type: string
+          nullable: true
+          description: FK staff.staff_id (position=pt), hoặc null để bỏ gán.
+
+    MemberWithPendingSubscription:
+      description: |
+        Member shape kèm subscription pending nếu request có packageId.
+        Khi không có packageId, field `subscription` được omit khỏi response (không gửi null).
+      allOf:
+        - $ref: '#/components/schemas/Member'
+        - type: object
+          properties:
+            subscription:
+              $ref: '#/components/schemas/Subscription'
+
+    MemberProgress:
+      type: object
+      required: [progressId, memberId, staffId, recordedAt]
+      properties:
+        progressId: { type: string }
+        memberId: { type: string }
+        staffId: { type: string }
+        staffName: { type: string }
+        weight: { type: string, description: Decimal as string, example: '65.50' }
+        bmi: { type: string, example: '22.10' }
+        goal: { type: string, nullable: true }
+        notes: { type: string, nullable: true }
+        recordedAt: { type: string, format: date-time }
+
+    Subscription:
+      type: object
+      required: [subscriptionId, memberId, packageId, startDate, endDate, status, createdAt]
+      properties:
+        subscriptionId: { type: string }
+        memberId: { type: string }
+        memberCode: { type: string }
+        packageId: { type: string }
+        packageName: { type: string }
+        startDate: { type: string, format: date }
+        endDate: { type: string, format: date }
+        status: { $ref: '#/components/schemas/SubscriptionStatus' }
+        cancelledAt: { type: string, format: date-time, nullable: true }
+        createdAt: { type: string, format: date-time }
+
+    SubscriptionWithPackage:
+      allOf:
+        - $ref: '#/components/schemas/Subscription'
+        - type: object
+          properties:
+            package:
+              type: object
+              required: [packageId, packageCode, name, durationDays, price]
+              properties:
+                packageId: { type: string }
+                packageCode: { type: string, example: PKG-0003 }
+                name: { type: string }
+                durationDays: { type: integer, minimum: 1 }
+                price: { type: string, example: '3000000.00' }
+
+    CreateSubscriptionBody:
+      type: object
+      required: [memberId, packageId]
+      properties:
+        memberId: { type: string }
+        packageId: { type: string }
+
+    CancelSubscriptionBody:
+      type: object
+      properties:
+        reason: { type: string, maxLength: 500 }
+
+    CancelSubscriptionResult:
+      type: object
+      required: [cancelledSubscription]
+      properties:
+        cancelledSubscription:
+          type: object
+          required: [subscriptionId, status, cancelledAt]
+          properties:
+            subscriptionId: { type: string }
+            status: { type: string, enum: [cancelled] }
+            cancelledAt: { type: string, format: date-time }
+        activatedSubscription:
+          nullable: true
+          type: object
+          properties:
+            subscriptionId: { type: string }
+            status: { type: string, enum: [active] }
+            startDate: { type: string, format: date }
+            endDate: { type: string, format: date }
+
+    Payment:
+      type: object
+      required: [paymentId, memberId, subscriptionId, amount, method, status, paidAt]
+      properties:
+        paymentId: { type: string }
+        memberId: { type: string }
+        subscriptionId: { type: string }
+        amount: { type: string, example: '3000000.00' }
+        method: { $ref: '#/components/schemas/PaymentMethod' }
+        transactionReference: { type: string, nullable: true }
+        status: { $ref: '#/components/schemas/PaymentStatus' }
+        paidAt: { type: string, format: date-time }
+
+    CreatePaymentBody:
+      type: object
+      required: [memberId, subscriptionId, amount, method]
+      properties:
+        memberId: { type: string }
+        subscriptionId: { type: string }
+        amount: { type: string, description: Decimal VND integer, example: '3000000.00' }
+        method: { $ref: '#/components/schemas/PaymentMethod' }
+        transactionReference: { type: string, nullable: true, description: Bắt buộc khi method != cash. }
+        status: { $ref: '#/components/schemas/PaymentStatus', default: success }
+
+    PaymentWithSubscription:
+      allOf:
+        - $ref: '#/components/schemas/Payment'
+        - type: object
+          properties:
+            subscription:
+              type: object
+              properties:
+                subscriptionId: { type: string }
+                status: { $ref: '#/components/schemas/SubscriptionStatus' }
+                startDate: { type: string, format: date }
+                endDate: { type: string, format: date }
+
+  responses:
+    Unauthorized:
+      description: JWT thiếu / sai / expired
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+          example: { success: false, code: UNAUTHORIZED, message: Token không hợp lệ }
+    Forbidden:
+      description: RolesGuard / OwnershipGuard reject
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+          example: { success: false, code: FORBIDDEN, message: Không có quyền truy cập }
+    NotFound:
+      description: Resource không tồn tại / soft-deleted
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+          example: { success: false, code: NOT_FOUND, message: Không tìm thấy bản ghi yêu cầu }
+    Conflict:
+      description: Trùng giá trị UNIQUE / state conflict
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+          example: { success: false, code: DUPLICATE_VALUE, message: 'Giá trị đã tồn tại: email' }
+    ValidationError:
+      description: Body / query / param sai format
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+          example:
+            success: false
+            code: VALIDATION_ERROR
+            message: Dữ liệu không hợp lệ
+            details: [email phải hợp lệ, password tối thiểu 8 ký tự]
+    RateLimit:
+      description: Quá rate limit (silently 200 OK với forgot-password anti-enumeration; endpoint khác trả 429)
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+          example:
+            success: false
+            code: RATE_LIMIT_EXCEEDED
+            message: 'Quá giới hạn yêu cầu, thử lại sau'
