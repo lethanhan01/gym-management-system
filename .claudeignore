@@ -1,0 +1,34 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+build/
+coverage/
+
+# Lock files — large, no coding value
+**/package-lock.json
+**/pnpm-lock.yaml
+**/yarn.lock
+
+# TypeScript build metadata
+*.tsbuildinfo
+
+# Binary assets — Claude can't read these anyway
+*.jpg
+*.jpeg
+*.png
+*.webp
+*.svg
+*.ico
+*.woff
+*.woff2
+*.ttf
+*.eot
+
+# Exercise image library
+client/public/exercises/
+
+# SRS documentation — 118 KB reference doc rarely consulted during coding
+docs/VI/SRS_VI.md
+docs/VI/Diagram/picture/

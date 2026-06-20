@@ -1,0 +1,48 @@
+model Feedback {
+  feedbackId         BigInt           @id @default(autoincrement()) @map("feedback_id")
+  memberId           BigInt           @map("member_id")
+  feedbackType       FeedbackType     @map("feedback_type")
+  content            String
+  severity           FeedbackSeverity @default(low)
+  status             FeedbackStatus   @default(open)
+  handledByStaffId   BigInt?          @map("handled_by_staff_id")
+  handledAt          DateTime?        @map("handled_at") @db.Timestamp(6)
+  subjectStaffId     BigInt?          @map("subject_staff_id")
+  subjectEquipmentId BigInt?          @map("subject_equipment_id")
+  createdAt          DateTime         @default(now()) @map("created_at") @db.Timestamp(6)
+  deletedAt          DateTime?        @map("deleted_at") @db.Timestamp(6)
+  handledByStaff     Staff?           @relation("FeedbackHandledBy", fields: [handledByStaffId], references: [staffId])
+  member             Member           @relation(fields: [memberId], references: [memberId])
+  subjectEquipment   Equipment?       @relation("FeedbackSubjectEquipment", fields: [subjectEquipmentId], references: [equipmentId])
+  subjectStaff       Staff?           @relation("FeedbackSubjectStaff", fields: [subjectStaffId], references: [staffId])
+
+  @@index([status, severity, createdAt(sort: Desc)])
+  @@index([memberId, createdAt(sort: Desc)])
+  @@index([subjectStaffId, createdAt(sort: Desc)])
+  @@map("feedback")
+}
+
+enum FeedbackType {
+  staff
+  equipment
+  service
+
+  @@map("feedback_type")
+}
+
+enum FeedbackSeverity {
+  low
+  medium
+  high
+
+  @@map("feedback_severity")
+}
+
+enum FeedbackStatus {
+  open
+  in_progress
+  resolved
+  rejected
+
+  @@map("feedback_status")
+}

@@ -1,0 +1,103 @@
+@layer base {
+  :root {
+    color-scheme: dark;
+
+    /* RoGym brand */
+    --rogym-green: #06c384;
+    --rogym-green-hover: #08d891;
+    --rogym-teal: #42e09e;
+    --rogym-green-dark: #00492f;
+    --rogym-green-deeper: #003d28;
+
+    /* Backgrounds */
+    --rogym-bg-base: #080e0b;
+    --rogym-bg-deep: #030907;
+    --rogym-bg-deep-alt: #040d08;
+    --rogym-bg-card: #0f1c16;
+    --rogym-bg-card-hover: #132218;
+    --rogym-bg-elevated: #1a2520;
+    --rogym-bg-elevated-green: #1a3326;
+    --rogym-bg-light: #ffffff;
+    --rogym-bg-glass: rgba(12, 22, 17, 0.82);
+
+    /* Text */
+    --rogym-text-primary: #ffffff;
+    --rogym-text-secondary: #bbcabf;
+    --rogym-text-muted: #8ab89c;
+    --rogym-text-dim: rgba(255, 255, 255, 0.45);
+    --rogym-text-faint: rgba(255, 255, 255, 0.25);
+    --rogym-text-on-light: #0a0f0e;
+    --rogym-text-on-light-muted: rgba(0, 0, 0, 0.5);
+    --rogym-error: #ff6b6b;
+
+    /* Borders */
+    --rogym-border-subtle: rgba(255, 255, 255, 0.07);
+    --rogym-border-section: rgba(255, 255, 255, 0.04);
+    --rogym-border-white-dim: rgba(255, 255, 255, 0.1);
+    --rogym-border-white-button: rgba(255, 255, 255, 0.45);
+    --rogym-border-white-hover: #ffffff;
+    --rogym-border-teal-dim: rgba(66, 224, 158, 0.1);
+    --rogym-border-teal-hover: rgba(66, 224, 158, 0.4);
+    --rogym-border-teal-focus: var(--rogym-teal);
+
+    /* Typography and motion */
+    --rogym-font-body: 'Be Vietnam Pro', sans-serif;
+    --rogym-font-display: 'Anton', sans-serif;
+    --rogym-ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+    --rogym-duration-button: 380ms;
+    --rogym-duration-link: 280ms;
+    --rogym-duration-image: 650ms;
+    --rogym-container-width: 1280px;
+    --rogym-container-padding: 40px;
+    --rogym-section-padding: 128px;
+
+    /* Shadows */
+    --rogym-shadow-primary: 0 8px 24px -4px rgba(6, 195, 132, 0.3);
+    --rogym-shadow-card: 0 24px 56px -12px rgba(6, 195, 132, 0.2);
+    --rogym-shadow-glass:
+      0 24px 64px rgba(0, 0, 0, 0.55),
+      inset 0 1px 0 rgba(255, 255, 255, 0.05);
+
+    /* Semantic aliases used by shadcn and existing UI primitives */
+    --background: var(--rogym-bg-base);
+    --foreground: var(--rogym-text-primary);
+    --card: var(--rogym-bg-card);
+    --card-foreground: var(--rogym-text-primary);
+    --popover: var(--rogym-bg-elevated);
+    --popover-foreground: var(--rogym-text-primary);
+    --primary: var(--rogym-green);
+    --primary-foreground: var(--rogym-green-dark);
+    --secondary: var(--rogym-bg-elevated);
+    --secondary-foreground: var(--rogym-text-primary);
+    --muted: var(--rogym-bg-card);
+    --muted-foreground: var(--rogym-text-muted);
+    --accent: var(--rogym-teal);
+    --accent-foreground: var(--rogym-bg-base);
+    --destructive: var(--rogym-error);
+    --border: var(--rogym-border-subtle);
+    --input: var(--rogym-border-white-dim);
+    --ring: var(--rogym-teal);
+    --radius: 0.75rem;
+    --sidebar: var(--rogym-bg-card);
+    --sidebar-foreground: var(--rogym-text-primary);
+    --sidebar-primary: var(--rogym-green);
+    --sidebar-primary-foreground: var(--rogym-green-dark);
+    --sidebar-accent: var(--rogym-bg-card-hover);
+    --sidebar-accent-foreground: var(--rogym-text-primary);
+    --sidebar-border: var(--rogym-border-teal-dim);
+    --sidebar-ring: var(--rogym-teal);
+  }
+
+  .theme,
+  .dark {
+    --font-heading: var(--rogym-font-body);
+    --font-sans: var(--rogym-font-body);
+  }
+}
+
+@media (max-width: 767px) {
+  :root {
+    --rogym-container-padding: 20px;
+    --rogym-section-padding: 80px;
+  }
+}

@@ -1,0 +1,357 @@
+@layer components {
+  .rogym-badge {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 9999px;
+    padding: 0.25rem 1rem;
+    color: var(--rogym-bg-base);
+    background: var(--rogym-teal);
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+  }
+
+  .rogym-divider {
+    height: 1px;
+    border: 0;
+    background: var(--rogym-border-subtle);
+  }
+
+  .rogym-marquee__track {
+    display: flex;
+    width: max-content;
+    animation: rogym-marquee-left 22s linear infinite;
+    will-change: transform;
+  }
+
+  .rogym-marquee__group {
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+    gap: 3rem;
+    padding-right: 3rem;
+    white-space: nowrap;
+  }
+
+  .rogym-marquee:hover .rogym-marquee__track,
+  .rogym-marquee:focus-within .rogym-marquee__track {
+    animation-play-state: paused;
+  }
+
+  .rogym-dashboard-skeleton {
+    height: 100px;
+    background: rgba(15, 28, 22, 0.6);
+  }
+
+  .rogym-dashboard-skeleton--88 {
+    height: 88px;
+  }
+
+  .rogym-dashboard-skeleton--120 {
+    height: 120px;
+  }
+
+  .rogym-dashboard-skeleton--140 {
+    height: 140px;
+  }
+
+  .rogym-dashboard-skeleton--200 {
+    height: 200px;
+  }
+
+  .rogym-tone-badge {
+    --rogym-tone: #6b7280;
+    display: inline-block;
+    padding: 2px 10px;
+    border: 1px solid color-mix(in srgb, var(--rogym-tone) 27%, transparent);
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--rogym-tone) 13%, transparent);
+    color: var(--rogym-tone);
+    font-family: var(--rogym-font-body);
+    font-size: 11px;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .rogym-tone-badge.is-compact {
+    padding-inline: 8px;
+  }
+
+  .rogym-tone-badge.is-large {
+    padding: 3px 12px;
+    font-size: 12px;
+  }
+
+  [data-tone='success'] {
+    --rogym-tone: var(--rogym-green);
+  }
+
+  [data-tone='warning'] {
+    --rogym-tone: #f59e0b;
+  }
+
+  [data-tone='danger'],
+  [data-tone='high'] {
+    --rogym-tone: #ef4444;
+  }
+
+  [data-tone='info'] {
+    --rogym-tone: #3b82f6;
+  }
+
+  [data-tone='purple'] {
+    --rogym-tone: #8b5cf6;
+  }
+
+  [data-tone='low'] {
+    --rogym-tone: #22c55e;
+  }
+
+  [data-tone='medium'] {
+    --rogym-tone: #f59e0b;
+  }
+
+  .rogym-progress {
+    width: 100%;
+    height: 8px;
+    overflow: hidden;
+    border: 0;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.08);
+  }
+
+  .rogym-progress::-webkit-progress-bar {
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.08);
+  }
+
+  .rogym-progress::-webkit-progress-value {
+    border-radius: 999px;
+    background: var(--rogym-green);
+    transition: width 600ms ease;
+  }
+
+  .rogym-progress::-moz-progress-bar {
+    border-radius: 999px;
+    background: var(--rogym-green);
+  }
+
+  .rogym-progress.is-danger::-webkit-progress-value,
+  .rogym-progress.is-danger::-moz-progress-bar {
+    background: #ef4444;
+  }
+
+  .rogym-progress.is-warning::-webkit-progress-value,
+  .rogym-progress.is-warning::-moz-progress-bar {
+    background: #f59e0b;
+  }
+
+  .rogym-status-text {
+    color: var(--rogym-teal);
+    font-weight: 600;
+  }
+
+  .rogym-status-text.is-danger {
+    color: #f87171;
+  }
+
+  .rogym-pagination-button {
+    display: flex;
+    width: 36px;
+    height: 36px;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 50%;
+    background: transparent;
+    color: #fff;
+    font-family: var(--rogym-font-body);
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 150ms;
+  }
+
+  .rogym-pagination-button.is-active {
+    border-color: rgba(6, 195, 132, 0.3);
+    background: rgba(6, 195, 132, 0.15);
+    color: var(--rogym-green);
+  }
+
+  .rogym-pagination-button:disabled {
+    color: #4a6654;
+    cursor: not-allowed;
+  }
+
+  .rogym-filter-chip,
+  .rogym-range-chip {
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: transparent;
+    color: var(--rogym-text-secondary);
+  }
+
+  .rogym-filter-chip.is-active,
+  .rogym-range-chip.is-active {
+    border-color: rgba(6, 195, 132, 0.33);
+    background: rgba(6, 195, 132, 0.13);
+    color: var(--rogym-green);
+  }
+
+  .rogym-filter-chip__count {
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    background: rgba(255, 255, 255, 0.12);
+    color: var(--rogym-text-secondary);
+    font-size: 10px;
+  }
+
+  .rogym-filter-chip.is-active .rogym-filter-chip__count {
+    background: var(--rogym-green);
+    color: #003d25;
+  }
+
+  .rogym-danger-button {
+    border: 0;
+    background: #ef4444;
+    color: #fff;
+    cursor: pointer;
+  }
+
+  .rogym-danger-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  .rogym-tone-text {
+    color: var(--rogym-tone, #fff);
+  }
+
+  .rogym-tone-text[data-tone='default'] {
+    color: #fff;
+  }
+
+  .rogym-list-row:not(:last-child) {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  }
+
+  .rogym-payment-account.is-default {
+    border-color: rgba(6, 195, 132, 0.27);
+  }
+
+  .rogym-account-action.is-default-action:hover {
+    color: var(--rogym-teal);
+  }
+
+  .rogym-account-action.is-delete-action:hover {
+    color: #f87171;
+  }
+
+  .rogym-payment-method-option {
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: transparent;
+    color: var(--rogym-text-secondary);
+    cursor: pointer;
+  }
+
+  .rogym-payment-method-option.is-active {
+    border: 1.5px solid var(--rogym-green);
+    background: rgba(6, 195, 132, 0.09);
+    color: var(--rogym-green);
+  }
+
+  .rogym-checkbox {
+    width: 18px;
+    height: 18px;
+    border: 1.5px solid rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+    background: transparent;
+  }
+
+  .rogym-checkbox.is-checked {
+    border-color: var(--rogym-green);
+    background: rgba(6, 195, 132, 0.13);
+  }
+
+  .rogym-filter-trigger {
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--rogym-text-muted);
+  }
+
+  .rogym-filter-trigger.is-active {
+    border-color: rgba(66, 224, 158, 0.27);
+    background: rgba(66, 224, 158, 0.13);
+    color: var(--rogym-teal);
+  }
+
+  .rogym-exercise-option {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    background: transparent;
+    color: var(--rogym-text-secondary);
+  }
+
+  .rogym-exercise-option.is-active {
+    background: rgba(66, 224, 158, 0.06);
+    color: var(--rogym-teal);
+  }
+
+  .rogym-workout-set-grid {
+    grid-template-columns: 40px 1fr 1fr 32px;
+  }
+
+  .rogym-workout-set-grid:is(.uppercase) {
+    color: var(--rogym-text-muted);
+    letter-spacing: 0.08em;
+  }
+
+  .rogym-workout-set-grid.is-completed {
+    opacity: 0.7;
+  }
+
+  .rogym-workout-set-index {
+    color: var(--rogym-text-secondary);
+  }
+
+  .rogym-workout-set-toggle {
+    color: var(--rogym-text-muted);
+  }
+
+  .rogym-workout-set-grid.is-completed .rogym-workout-set-index,
+  .rogym-workout-set-grid.is-completed .rogym-workout-set-toggle {
+    color: var(--rogym-green);
+  }
+
+  .rogym-mini-progress {
+    width: 100%;
+    height: 4px;
+    overflow: hidden;
+    border: 0;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  .rogym-mini-progress::-webkit-progress-bar {
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  .rogym-mini-progress::-webkit-progress-value {
+    border-radius: 999px;
+    background: var(--rogym-teal);
+  }
+
+  .rogym-mini-progress::-moz-progress-bar {
+    border-radius: 999px;
+    background: var(--rogym-teal);
+  }
+
+  /* Inline error alert (non-blocking, inside a section) */
+  .rogym-error-alert {
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    border-radius: 0.75rem;
+    padding: 0.75rem 1rem;
+    background: rgba(239, 68, 68, 0.08);
+    color: #fca5a5;
+    font-size: 0.875rem;
+  }
+}

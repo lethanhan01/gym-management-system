@@ -1,0 +1,917 @@
+<title>Báo cáo SOLID — GMS Backend</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --ground:    #FAFAF9;
+    --text:      #1A1714;
+    --accent:    #B45309;
+    --pass:      #166534;
+    --warn:      #92400E;
+    --muted:     #6B7280;
+    --border:    #E2DDD6;
+    --code-bg:   #1A1A1A;
+    --code-text: #E2E8F0;
+    --pass-bg:   #F0FDF4;
+    --fail-bg:   #FFFBEB;
+    --pass-border: #BBF7D0;
+    --fail-border: #FDE68A;
+    --letter-color: #B45309;
+  }
+
+  html { background: var(--ground); color: var(--text); scroll-behavior: smooth; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    font-size: 15px;
+    line-height: 1.65;
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 0 28px 80px;
+  }
+
+  /* ── HEADER ─────────────────────────────────────────────── */
+  .report-header {
+    padding: 64px 0 48px;
+    border-bottom: 1.5px solid var(--border);
+    margin-bottom: 0;
+    opacity: 0;
+    animation: fadeUp 0.5s ease 0.05s forwards;
+  }
+
+  .report-eyebrow {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 18px;
+  }
+
+  .report-title {
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: clamp(2rem, 5vw, 3.4rem);
+    font-weight: 700;
+    line-height: 1.1;
+    color: var(--text);
+    margin-bottom: 10px;
+    letter-spacing: -0.02em;
+  }
+
+  .report-subtitle {
+    font-size: 15px;
+    color: var(--muted);
+    margin-bottom: 40px;
+  }
+
+  /* Score strip */
+  .score-strip {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+    margin-bottom: 32px;
+  }
+
+  .score-chip {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    background: white;
+  }
+
+  .score-chip .letter {
+    font-family: Georgia, serif;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--accent);
+    width: 18px;
+    text-align: center;
+  }
+
+  .score-chip .name {
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.03em;
+  }
+
+  .score-chip .val {
+    font-size: 13px;
+    font-weight: 700;
+    margin-left: auto;
+  }
+
+  .score-chip .bar-wrap {
+    width: 60px;
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .score-chip .bar-fill {
+    height: 100%;
+    border-radius: 2px;
+    background: var(--accent);
+  }
+
+  .score-chip .bar-fill.good { background: var(--pass); }
+  .score-chip .bar-fill.mid  { background: var(--accent); }
+  .score-chip .bar-fill.low  { background: #DC2626; }
+
+  .overall-box {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 10px;
+    padding: 16px 24px;
+    border: 1.5px solid var(--accent);
+    border-radius: 3px;
+  }
+
+  .overall-label { font-size: 12px; font-weight: 600; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; }
+  .overall-score { font-family: Georgia, serif; font-size: 2rem; font-weight: 700; color: var(--accent); }
+  .overall-max   { font-size: 14px; color: var(--muted); }
+
+  /* ── PRINCIPLE SECTION ───────────────────────────────────── */
+  .principle {
+    padding: 56px 0 48px;
+    border-bottom: 1px solid var(--border);
+    opacity: 0;
+    animation: fadeUp 0.5s ease forwards;
+  }
+
+  .principle-header {
+    display: grid;
+    grid-template-columns: 88px 1fr;
+    gap: 0 24px;
+    align-items: start;
+    margin-bottom: 28px;
+  }
+
+  .principle-letter {
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: 6.5rem;
+    font-weight: 700;
+    line-height: 0.85;
+    color: var(--accent);
+    opacity: 0.15;
+    user-select: none;
+    letter-spacing: -0.04em;
+    transform: translateY(4px);
+  }
+
+  .principle-meta { padding-top: 6px; }
+
+  .principle-meta h2 {
+    font-family: Georgia, serif;
+    font-size: 1.5rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    margin-bottom: 6px;
+    color: var(--text);
+  }
+
+  .principle-abbr {
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 12px;
+  }
+
+  .score-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 4px;
+  }
+
+  .score-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 2px;
+    letter-spacing: 0.04em;
+  }
+
+  .score-badge.pass { background: var(--pass-bg); color: var(--pass); border: 1px solid var(--pass-border); }
+  .score-badge.mid  { background: var(--fail-bg); color: var(--warn); border: 1px solid var(--fail-border); }
+  .score-badge.low  { background: #FEF2F2; color: #991B1B; border: 1px solid #FECACA; }
+
+  .score-track {
+    flex: 1;
+    max-width: 120px;
+    height: 5px;
+    background: var(--border);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+
+  .score-track-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 1s ease;
+  }
+
+  .score-track-fill.pass { background: var(--pass); }
+  .score-track-fill.mid  { background: var(--accent); }
+  .score-track-fill.low  { background: #DC2626; }
+
+  .score-num {
+    font-size: 12px;
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Analysis body */
+  .principle-body {
+    padding-left: 112px;
+  }
+
+  .principle-body p {
+    margin-bottom: 16px;
+    color: #3C3733;
+    max-width: 68ch;
+  }
+
+  .principle-body p:last-child { margin-bottom: 0; }
+
+  /* Evidence cards */
+  .evidence-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin: 20px 0;
+  }
+
+  @media (max-width: 640px) {
+    .evidence-grid { grid-template-columns: 1fr; }
+    .principle-body { padding-left: 0; }
+    .principle-header { grid-template-columns: 1fr; }
+    .principle-letter { font-size: 4rem; }
+  }
+
+  .evidence-card {
+    border-radius: 4px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+  }
+
+  .evidence-card.pass { border-color: var(--pass-border); }
+  .evidence-card.fail { border-color: var(--fail-border); }
+
+  .evidence-card-header {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 8px 12px;
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .evidence-card.pass .evidence-card-header { background: var(--pass-bg); color: var(--pass); }
+  .evidence-card.fail .evidence-card-header { background: var(--fail-bg); color: var(--warn); }
+
+  .dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+  .evidence-card.pass .dot { background: var(--pass); }
+  .evidence-card.fail .dot { background: var(--accent); }
+
+  .evidence-card-body {
+    padding: 12px 14px;
+    background: white;
+  }
+
+  .evidence-card-body .file-ref {
+    font-family: Consolas, 'Cascadia Code', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    margin-bottom: 6px;
+    display: block;
+  }
+
+  .evidence-card-body p {
+    font-size: 13px;
+    color: var(--text);
+    line-height: 1.5;
+    max-width: none;
+    margin-bottom: 0;
+  }
+
+  /* Code blocks */
+  .code-block {
+    margin: 16px 0;
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .code-label {
+    background: #2D2D2D;
+    color: #9CA3AF;
+    font-size: 10px;
+    font-family: Consolas, monospace;
+    letter-spacing: 0.06em;
+    padding: 6px 14px;
+    border-bottom: 1px solid #333;
+  }
+
+  pre {
+    background: var(--code-bg);
+    color: var(--code-text);
+    font-family: Consolas, 'Cascadia Code', 'JetBrains Mono', monospace;
+    font-size: 12px;
+    line-height: 1.6;
+    padding: 14px 16px;
+    overflow-x: auto;
+  }
+
+  .kw   { color: #569CD6; }
+  .fn   { color: #DCDCAA; }
+  .str  { color: #CE9178; }
+  .cmt  { color: #6A9955; font-style: italic; }
+  .cls  { color: #4EC9B0; }
+  .dec  { color: #C586C0; }
+  .num  { color: #B5CEA8; }
+  .hl   { background: rgba(255,200,80,0.15); display: inline; border-radius: 2px; }
+
+  /* ── COUPLING / COHESION ────────────────────────────────── */
+  .concept-section {
+    padding: 56px 0 48px;
+    border-bottom: 1px solid var(--border);
+    opacity: 0;
+    animation: fadeUp 0.5s ease forwards;
+  }
+
+  .concept-header {
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+
+  .concept-tag {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--muted);
+    border: 1px solid var(--border);
+    padding: 3px 8px;
+    border-radius: 2px;
+    white-space: nowrap;
+  }
+
+  .concept-header h2 {
+    font-family: Georgia, serif;
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: -0.01em;
+  }
+
+  .concept-body p {
+    margin-bottom: 14px;
+    color: #3C3733;
+    max-width: 72ch;
+  }
+
+  .finding-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin: 16px 0;
+  }
+
+  .finding-list li {
+    display: flex;
+    gap: 10px;
+    font-size: 13.5px;
+    line-height: 1.5;
+    color: #3C3733;
+    padding: 8px 12px;
+    border-radius: 3px;
+  }
+
+  .finding-list li.ok   { background: var(--pass-bg); border-left: 3px solid var(--pass); }
+  .finding-list li.bad  { background: var(--fail-bg);  border-left: 3px solid var(--accent); }
+
+  .finding-list li .icon { flex-shrink: 0; margin-top: 1px; }
+
+  /* ── SUMMARY TABLE ──────────────────────────────────────── */
+  .summary-section {
+    padding: 56px 0 24px;
+    opacity: 0;
+    animation: fadeUp 0.5s ease forwards;
+  }
+
+  .summary-section h2 {
+    font-family: Georgia, serif;
+    font-size: 1.3rem;
+    font-weight: 700;
+    margin-bottom: 20px;
+    color: var(--text);
+  }
+
+  .summary-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    overflow-x: auto;
+    display: block;
+  }
+
+  .summary-table th {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding: 8px 14px;
+    text-align: left;
+    border-bottom: 1.5px solid var(--border);
+    white-space: nowrap;
+  }
+
+  .summary-table td {
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+    line-height: 1.45;
+  }
+
+  .summary-table tr:last-child td { border-bottom: none; }
+
+  .summary-table .principle-col {
+    font-family: Georgia, serif;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+
+  .summary-table .score-col {
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+
+  .summary-table .score-col.pass { color: var(--pass); }
+  .summary-table .score-col.mid  { color: var(--warn); }
+  .summary-table .score-col.low  { color: #DC2626; }
+
+  /* Animation */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(14px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .principle:nth-child(1) { animation-delay: 0.1s; }
+  .principle:nth-child(2) { animation-delay: 0.18s; }
+  .principle:nth-child(3) { animation-delay: 0.26s; }
+  .principle:nth-child(4) { animation-delay: 0.34s; }
+  .principle:nth-child(5) { animation-delay: 0.42s; }
+  .concept-section:nth-of-type(1) { animation-delay: 0.5s; }
+  .concept-section:nth-of-type(2) { animation-delay: 0.56s; }
+  .summary-section { animation-delay: 0.62s; }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; opacity: 1 !important; }
+  }
+
+  /* Inline code */
+  code {
+    font-family: Consolas, 'Cascadia Code', monospace;
+    font-size: 0.87em;
+    background: #F0EDE8;
+    padding: 1px 5px;
+    border-radius: 3px;
+    color: #92400E;
+  }
+
+  pre code { background: none; padding: 0; color: inherit; font-size: inherit; border-radius: 0; }
+</style>
+
+<!-- HEADER -->
+<header class="report-header">
+  <div class="report-eyebrow">Backend Analysis &nbsp;·&nbsp; Service Layer &nbsp;·&nbsp; 2026-06-20</div>
+  <h1 class="report-title">Báo cáo tuân thủ SOLID</h1>
+  <p class="report-subtitle">Gym Management System &mdash; NestJS backend, 36+ service files, 13 feature modules</p>
+
+  <div class="score-strip">
+    <div class="score-chip">
+      <span class="letter">S</span>
+      <span class="name">Single Responsibility</span>
+      <div class="bar-wrap"><div class="bar-fill mid" style="width:70%"></div></div>
+      <span class="val" style="color:var(--warn)">7/10</span>
+    </div>
+    <div class="score-chip">
+      <span class="letter">O</span>
+      <span class="name">Open/Closed</span>
+      <div class="bar-wrap"><div class="bar-fill mid" style="width:60%"></div></div>
+      <span class="val" style="color:var(--warn)">6/10</span>
+    </div>
+    <div class="score-chip">
+      <span class="letter">L</span>
+      <span class="name">Liskov Substitution</span>
+      <div class="bar-wrap"><div class="bar-fill good" style="width:70%"></div></div>
+      <span class="val" style="color:var(--pass)">7/10</span>
+    </div>
+    <div class="score-chip">
+      <span class="letter">I</span>
+      <span class="name">Interface Segregation</span>
+      <div class="bar-wrap"><div class="bar-fill low" style="width:50%"></div></div>
+      <span class="val" style="color:#DC2626">5/10</span>
+    </div>
+    <div class="score-chip">
+      <span class="letter">D</span>
+      <span class="name">Dependency Inversion</span>
+      <div class="bar-wrap"><div class="bar-fill low" style="width:50%"></div></div>
+      <span class="val" style="color:#DC2626">5/10</span>
+    </div>
+  </div>
+
+  <div class="overall-box">
+    <span class="overall-label">Điểm tổng</span>
+    <span class="overall-score">6.0</span>
+    <span class="overall-max">&nbsp;/ 10</span>
+  </div>
+</header>
+
+<!-- ── S ── -->
+<section class="principle">
+  <div class="principle-header">
+    <div class="principle-letter">S</div>
+    <div class="principle-meta">
+      <div class="principle-abbr">Single Responsibility Principle</div>
+      <h2>Mỗi class chỉ có một lý do để thay đổi</h2>
+      <div class="score-row">
+        <span class="score-badge mid">Tuân thủ một phần</span>
+        <div class="score-track"><div class="score-track-fill mid" style="width:70%"></div></div>
+        <span class="score-num">7 / 10</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="principle-body">
+    <p>Phần lớn service layer đã tuân thủ SRP tốt. Các infrastructure service — <code>OtpStoreService</code>, <code>RateLimitService</code>, <code>AuditService</code>, <code>InMemoryPermissionCacheService</code> — mỗi cái chỉ làm đúng một việc và không có lý do để thay đổi trừ khi chính logic đó thay đổi. <code>EmailVerificationService</code> và <code>PasswordResetService</code> cũng là ví dụ điển hình: mỗi service xử lý đúng một luồng nghiệp vụ, với các method là sub-step của cùng một use case.</p>
+
+    <p>Vi phạm đáng chú ý nằm ở <code>LineOAuthService</code>: service này thực hiện ba trách nhiệm độc lập — xác thực LINE ID token với API bên ngoài, tạo tài khoản User/Member/UserGroup trong DB, và tạo mã member code. Ba lý do thay đổi độc lập nhau, cùng nằm trong một class.</p>
+
+    <div class="evidence-grid">
+      <div class="evidence-card pass">
+        <div class="evidence-card-header"><span class="dot"></span> Tuân thủ</div>
+        <div class="evidence-card-body">
+          <span class="file-ref">email-verification.service.ts</span>
+          <p><code>EmailVerificationService</code> chỉ có hai method: <code>verifyEmail()</code> và <code>resendVerify()</code> — cả hai đều thuộc một use case duy nhất (UC12/UC13). Không xử lý business logic ngoài phạm vi xác thực email.</p>
+        </div>
+      </div>
+      <div class="evidence-card fail">
+        <div class="evidence-card-header"><span class="dot"></span> Vi phạm</div>
+        <div class="evidence-card-body">
+          <span class="file-ref">line-oauth.service.ts:169–220</span>
+          <p><code>createMemberFromLine()</code> làm ba việc: tạo User, tạo Member, gán Group. Logic generate <code>memberCode</code> qua <code>generateLineMemberCode()</code> là trách nhiệm của <code>MembersService</code>, không phải của OAuth flow.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="code-block">
+      <div class="code-label">line-oauth.service.ts — Vi phạm SRP: 3 trách nhiệm trong 1 private method</div>
+      <pre><code><span class="kw">private async</span> <span class="fn">createMemberFromLine</span>(profile: <span class="cls">LineProfile</span>): <span class="kw">Promise</span>&lt;<span class="cls">UserWithRoles</span>&gt; {
+  <span class="hl"><span class="kw">const</span> memberCode = <span class="kw">await</span> <span class="kw">this</span>.<span class="fn">generateLineMemberCode</span>() <span class="cmt">// ← trách nhiệm của MembersService</span></span>
+  <span class="kw">return await</span> <span class="kw">this</span>.prisma.<span class="fn">$transaction</span>(<span class="kw">async</span> (tx) => {
+    <span class="kw">const</span> user = <span class="kw">await</span> tx.user.<span class="fn">create</span>({ ... })   <span class="cmt">// ← tạo User</span>
+    <span class="kw">await</span> tx.member.<span class="fn">create</span>({ ... })              <span class="cmt">// ← tạo Member</span>
+    <span class="kw">const</span> memberGroup = <span class="kw">await</span> tx.group.<span class="fn">findUnique</span>({ ... })
+    <span class="kw">await</span> tx.userGroup.<span class="fn">create</span>({ ... })           <span class="cmt">// ← gán Group</span>
+  })
+}</code></pre>
+    </div>
+
+    <p>Một vi phạm phụ: <code>LineOAuthService</code> truy vấn trực tiếp <code>prisma.staff.findFirst</code> và <code>prisma.member.findFirst</code> để lấy ID cho JWT payload — đây là trách nhiệm thuộc về <code>StaffService</code> và <code>MembersService</code> tương ứng. Kết quả là nếu logic tìm kiếm staff/member thay đổi, phải sửa ở nhiều nơi.</p>
+  </div>
+</section>
+
+<!-- ── O ── -->
+<section class="principle">
+  <div class="principle-header">
+    <div class="principle-letter">O</div>
+    <div class="principle-meta">
+      <div class="principle-abbr">Open/Closed Principle</div>
+      <h2>Mở để mở rộng, đóng để sửa đổi</h2>
+      <div class="score-row">
+        <span class="score-badge mid">Tuân thủ một phần</span>
+        <div class="score-track"><div class="score-track-fill mid" style="width:60%"></div></div>
+        <span class="score-num">6 / 10</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="principle-body">
+    <p>Điểm mạnh nhất của OCP trong codebase này là pattern Guard + Reflector của NestJS. Cả <code>JwtAuthGuard</code>, <code>RolesGuard</code>, lẫn <code>PermissionsGuard</code> đều đọc metadata qua <code>Reflector</code> — thêm role mới hay permission mới chỉ cần trang trí controller bằng <code>@Roles()</code> hoặc <code>@RequirePermission()</code>, không cần động vào guard. Đây là ứng dụng OCP đúng hướng.</p>
+
+    <p><code>IPermissionCacheProvider</code> cũng là ví dụ tốt: thêm Redis cache chỉ cần implement interface mới và đổi provider trong module, không cần sửa <code>PermissionsGuard</code>.</p>
+
+    <p>Vi phạm nằm ở các hard-coded role check và state machine if-else. Thêm role <code>'affiliate'</code> hay <code>'partner'</code> vào hệ thống yêu cầu sửa trực tiếp <code>LineOAuthService</code> và nhiều service khác có role check inline.</p>
+
+    <div class="evidence-grid">
+      <div class="evidence-card pass">
+        <div class="evidence-card-header"><span class="dot"></span> Tuân thủ — Guard metadata pattern</div>
+        <div class="evidence-card-body">
+          <span class="file-ref">permissions.guard.ts + require-permission.decorator.ts</span>
+          <p>Guard đọc metadata tại runtime. Thêm một permission mới không cần sửa guard — chỉ cần thêm <code>@RequirePermission('new.code')</code> lên controller method.</p>
+        </div>
+      </div>
+      <div class="evidence-card fail">
+        <div class="evidence-card-header"><span class="dot"></span> Vi phạm — Hard-coded role check</div>
+        <div class="evidence-card-body">
+          <span class="file-ref">line-oauth.service.ts:58</span>
+          <p><code>user.roles.every(r => r === 'member')</code> — thêm role mới được phép dùng LINE login yêu cầu sửa service này trực tiếp.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="code-block">
+      <div class="code-label">line-oauth.service.ts:58 — Vi phạm OCP: role check hard-coded</div>
+      <pre><code><span class="cmt">// Đóng để mở rộng — thêm role mới phải sửa dòng này</span>
+<span class="kw">if</span> (user.roles.length === <span class="num">0</span> || !user.roles.<span class="fn">every</span>((r) => <span class="hl">r === <span class="str">'member'</span></span>)) {
+  <span class="kw">throw new</span> <span class="cls">ForbiddenException</span>(...)
+}
+
+<span class="cmt">// Cách mở rộng hơn: dùng const whitelist có thể inject/config</span>
+<span class="kw">const</span> LINE_ALLOWED_ROLES: <span class="cls">Role</span>[] = [<span class="str">'member'</span>]
+<span class="kw">if</span> (!user.roles.<span class="fn">every</span>((r) => LINE_ALLOWED_ROLES.<span class="fn">includes</span>(r))) { ... }</code></pre>
+    </div>
+
+    <p>State transition trong subscription, feedback, và workout plan được implement bằng chuỗi if-else trực tiếp trong service methods. Thêm một trạng thái mới vào state machine yêu cầu sửa service method hiện tại — vi phạm OCP ở mức thiết kế. Pattern State hoặc bảng transition có thể giải quyết nhưng thêm complexity — trade-off hợp lý ở quy mô hiện tại.</p>
+  </div>
+</section>
+
+<!-- ── L ── -->
+<section class="principle">
+  <div class="principle-header">
+    <div class="principle-letter">L</div>
+    <div class="principle-meta">
+      <div class="principle-abbr">Liskov Substitution Principle</div>
+      <h2>Subtype phải thay thế được supertype</h2>
+      <div class="score-row">
+        <span class="score-badge pass">Đạt — phạm vi hạn chế</span>
+        <div class="score-track"><div class="score-track-fill pass" style="width:70%"></div></div>
+        <span class="score-num">7 / 10</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="principle-body">
+    <p>Trong phạm vi các interface tồn tại, LSP được tuân thủ tốt. <code>InMemoryPermissionCacheService</code> implement <code>IPermissionCacheProvider</code> đúng hợp đồng: tất cả ba method (<code>get</code>, <code>set</code>, <code>delete</code>) có đúng signature, trả đúng kiểu, và không thêm precondition mới hay làm yếu postcondition.</p>
+
+    <p>Guards implement <code>CanActivate</code> của NestJS theo đúng nghĩa vụ: trả <code>boolean | Promise&lt;boolean&gt;</code>, không throw ngoại lệ không mong đợi (chỉ throw <code>UnauthorizedException</code>/<code>ForbiddenException</code> — hành vi đã kỳ vọng).</p>
+
+    <p>Điểm cần lưu ý: phần lớn service không có interface, nên phạm vi đánh giá LSP rất hẹp. Điểm 7/10 phản ánh "tuân thủ trong phạm vi áp dụng được" chứ không phải "áp dụng rộng rãi".</p>
+
+    <div class="evidence-grid">
+      <div class="evidence-card pass">
+        <div class="evidence-card-header"><span class="dot"></span> Tuân thủ — Cache provider</div>
+        <div class="evidence-card-body">
+          <span class="file-ref">in-memory-permission-cache.service.ts</span>
+          <p><code>InMemoryPermissionCacheService</code> là substitutable implementation của <code>IPermissionCacheProvider</code>. Một Redis implementation mới sẽ hoạt động với <code>PermissionsGuard</code> mà không cần thay đổi guard.</p>
+        </div>
+      </div>
+      <div class="evidence-card fail">
+        <div class="evidence-card-header"><span class="dot"></span> Rủi ro — Thiếu interface</div>
+        <div class="evidence-card-body">
+          <span class="file-ref">Toàn bộ domain services</span>
+          <p>Không có <code>IUsersService</code>, <code>IMembersService</code>, v.v. Không thể viết test double hoặc swap implementation mà không sửa tất cả điểm inject. LSP không có cơ hội được áp dụng hoặc vi phạm.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="code-block">
+      <div class="code-label">common/interfaces/permission-cache.interface.ts — Interface đúng hướng</div>
+      <pre><code><span class="kw">export interface</span> <span class="cls">IPermissionCacheProvider</span> {
+  <span class="fn">get</span>(userId: <span class="kw">string</span>): <span class="cls">Promise</span>&lt;<span class="cls">Set</span>&lt;<span class="kw">string</span>&gt; | <span class="kw">null</span>&gt;
+  <span class="fn">set</span>(userId: <span class="kw">string</span>, codes: <span class="cls">Set</span>&lt;<span class="kw">string</span>&gt;, ttlMs: <span class="kw">number</span>): <span class="cls">Promise</span>&lt;<span class="kw">void</span>&gt;
+  <span class="fn">delete</span>(userId: <span class="kw">string</span>): <span class="cls">Promise</span>&lt;<span class="kw">void</span>&gt;
+}
+<span class="cmt">// Đây là mẫu đúng — pattern này nên được nhân rộng sang các service khác</span></code></pre>
+    </div>
+  </div>
+</section>
+
+<!-- ── I ── -->
+<section class="principle">
+  <div class="principle-header">
+    <div class="principle-letter">I</div>
+    <div class="principle-meta">
+      <div class="principle-abbr">Interface Segregation Principle</div>
+      <h2>Client không phụ thuộc vào method nó không dùng</h2>
+      <div class="score-row">
+        <span class="score-badge low">Chưa đạt</span>
+        <div class="score-track"><div class="score-track-fill low" style="width:50%"></div></div>
+        <span class="score-num">5 / 10</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="principle-body">
+    <p><code>IPermissionCacheProvider</code> là ví dụ tốt về ISP: interface chỉ có 3 method thiết yếu, không có gì thừa. Decorators cũng được tách biệt đúng: <code>@Public()</code>, <code>@Roles()</code>, <code>@RequirePermission()</code> là ba decorator riêng — controller chỉ import đúng cái cần.</p>
+
+    <p>Vấn đề chính: không có interface nào cho các domain service. Khi <code>LineOAuthService</code> inject <code>UsersService</code>, nó phụ thuộc vào toàn bộ <code>UsersService</code> — kể cả các method nó không dùng (<code>softDelete</code>, <code>updateStatus</code>, v.v.). Khi viết test cho <code>LineOAuthService</code>, phải mock toàn bộ <code>UsersService</code> thay vì chỉ mock hai method thực sự cần.</p>
+
+    <p>Vấn đề thứ hai: <code>AuditService</code> được inject vào hầu hết service — kể cả trong các read-only flow mà <code>audit.log()</code> không bao giờ được gọi. ISP không yêu cầu tách <code>AuditService</code> thành hai interface riêng, nhưng nó gợi ý rằng read-only service không nên mang theo dependency ghi audit.</p>
+
+    <div class="evidence-grid">
+      <div class="evidence-card pass">
+        <div class="evidence-card-header"><span class="dot"></span> Tuân thủ — Decorator segregation</div>
+        <div class="evidence-card-body">
+          <span class="file-ref">auth/decorators/</span>
+          <p>Ba decorator riêng biệt, client chọn đúng cái cần. Controller chỉ dùng <code>@Public()</code> không phải khai báo <code>@Roles()</code> với giá trị rỗng.</p>
+        </div>
+      </div>
+      <div class="evidence-card fail">
+        <div class="evidence-card-header"><span class="dot"></span> Vi phạm — Fat service dependency</div>
+        <div class="evidence-card-body">
+          <span class="file-ref">line-oauth.service.ts:constructor</span>
+          <p>Inject <code>UsersService</code> toàn phần chỉ để dùng hai method: <code>findByLineIdWithRoles()</code> và <code>findByEmailWithRoles()</code>. Nên có interface <code>IUserLookupService</code> để tách biệt.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── D ── -->
+<section class="principle">
+  <div class="principle-header">
+    <div class="principle-letter">D</div>
+    <div class="principle-meta">
+      <div class="principle-abbr">Dependency Inversion Principle</div>
+      <h2>Phụ thuộc vào abstraction, không phụ thuộc vào concretion</h2>
+      <div class="score-row">
+        <span class="score-badge low">Chưa đạt</span>
+        <div class="score-track"><div class="score-track-fill low" style="width:50%"></div></div>
+        <span class="score-num">5 / 10</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="principle-body">
+    <p>Điểm mạnh: <code>PermissionsGuard</code> phụ thuộc vào <code>IPermissionCacheProvider</code> (abstraction) thay vì <code>InMemoryPermissionCacheService</code> (concretion) — đây là DIP được áp dụng đúng. <code>ConfigService</code> và <code>JwtService</code> cũng là abstraction được inject qua NestJS DI.</p>
+
+    <p>Vi phạm hệ thống: <code>PrismaService</code> là concrete class và được inject trực tiếp vào hầu hết mọi service trong toàn bộ backend — không có repository layer hay interface. Về mặt kỹ thuật, PrismaService có thể được mock trong test nhờ NestJS DI token, nhưng về mặt thiết kế, high-level business service như <code>SubscriptionsService</code> hay <code>TrainingService</code> đang phụ thuộc trực tiếp vào infrastructure layer.</p>
+
+    <p>Vi phạm cụ thể nhất: <code>LineOAuthService</code> inject <code>PrismaService</code> và gọi trực tiếp <code>prisma.staff.findFirst</code>, <code>prisma.member.findFirst</code> — bypassing domain service layer. High-level OAuth flow đang điều phối trực tiếp với data layer, bỏ qua business logic có thể có trong <code>StaffService</code> và <code>MembersService</code>.</p>
+
+    <div class="evidence-grid">
+      <div class="evidence-card pass">
+        <div class="evidence-card-header"><span class="dot"></span> Tuân thủ — PermissionsGuard</div>
+        <div class="evidence-card-body">
+          <span class="file-ref">permissions.guard.ts</span>
+          <p>Guard inject <code>IPermissionCacheProvider</code> token, không phải <code>InMemoryPermissionCacheService</code> class. Có thể swap sang Redis cache mà không sửa guard.</p>
+        </div>
+      </div>
+      <div class="evidence-card fail">
+        <div class="evidence-card-header"><span class="dot"></span> Vi phạm — Cross-layer direct access</div>
+        <div class="evidence-card-body">
+          <span class="file-ref">line-oauth.service.ts:86–89</span>
+          <p>OAuth service gọi trực tiếp <code>prisma.staff.findFirst</code> và <code>prisma.member.findFirst</code> thay vì đi qua domain service. High-level phụ thuộc trực tiếp vào low-level.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="code-block">
+      <div class="code-label">line-oauth.service.ts:86–89 — Vi phạm DIP: high-level gọi thẳng Prisma</div>
+      <pre><code><span class="cmt">// High-level OAuth service phụ thuộc trực tiếp vào Prisma (data layer)</span>
+<span class="kw">const</span> [staff, memberRecord] = <span class="kw">await</span> <span class="cls">Promise</span>.<span class="fn">all</span>([
+  <span class="hl"><span class="kw">this</span>.prisma.staff.<span class="fn">findFirst</span>({ where: { userId: user.userId, deletedAt: <span class="kw">null</span> } }),</span>
+  <span class="hl"><span class="kw">this</span>.prisma.member.<span class="fn">findFirst</span>({ where: { userId: user.userId, deletedAt: <span class="kw">null</span> } }),</span>
+])
+
+<span class="cmt">// Nên đi qua domain service (đã inject sẵn UsersService):</span>
+<span class="cmt">// const { staffId, memberId } = await this.users.getProfileIds(user.userId)</span></code></pre>
+    </div>
+
+    <p><code>PasswordResetService</code> cũng gọi trực tiếp <code>this.prisma.user.update</code> để cập nhật <code>passwordHash</code> — thay đổi logic hash (ví dụ từ bcrypt sang argon2) yêu cầu sửa ở service này, không phải tập trung tại một chỗ.</p>
+  </div>
+</section>
+
+<!-- ── LOOSE COUPLING ── -->
+<section class="concept-section">
+  <div class="concept-header">
+    <span class="concept-tag">Design Concept</span>
+    <h2>Loose Coupling</h2>
+  </div>
+
+  <div class="concept-body">
+    <p>Loose coupling đánh giá mức độ các module độc lập với nhau — thay đổi trong một module không kéo theo thay đổi trong module khác. NestJS module system tạo ra coupling có kiểm soát qua import/export rõ ràng, và đây là nền tảng tốt.</p>
+
+    <ul class="finding-list">
+      <li class="ok"><span class="icon">+</span><span>NestJS module boundaries: mỗi feature module (membership, training, workout...) export có chọn lọc. Cross-module access phải đi qua exported service — không thể truy cập internal service tùy ý.</span></li>
+      <li class="ok"><span class="icon">+</span><span><code>IPermissionCacheProvider</code>: PermissionsGuard không biết đến implementation cụ thể. Swap sang distributed cache không ảnh hưởng guard hay bất kỳ service nào.</span></li>
+      <li class="ok"><span class="icon">+</span><span><code>auth.constants.ts</code>: các magic value (OTP_TTL_MS, OTP_RATE_LIMIT, OTP_RATE_WINDOW_MS, isDemoOtp) được tập trung. EmailVerificationService và PasswordResetService dùng chung constants này — thay đổi TTL chỉ cần sửa một chỗ.</span></li>
+      <li class="bad"><span class="icon">−</span><span><code>LineOAuthService</code> import type <code>LoginResult</code> và <code>RequestContext</code> từ <code>auth.service.ts</code>. Đây là intra-module coupling qua type import — nếu auth.service đổi interface, line-oauth.service bị kéo theo.</span></li>
+      <li class="bad"><span class="icon">−</span><span>Logic generate member code bị nhân đôi: <code>LineOAuthService.generateLineMemberCode()</code> và <code>MembersService</code> đều có code generation riêng. Nếu format code thay đổi, phải sửa ở hai nơi — coupling ẩn qua duplication.</span></li>
+      <li class="bad"><span class="icon">−</span><span><code>AuditService</code> là concrete dependency được inject vào 10+ service. Thay đổi interface của <code>AuditService</code> (thêm field bắt buộc, đổi tên method) sẽ phá vỡ toàn bộ codebase. Nên extract interface <code>IAuditService</code>.</span></li>
+      <li class="bad"><span class="icon">−</span><span><code>LineOAuthService</code> truy cập trực tiếp <code>prisma.staff</code> và <code>prisma.member</code> thay vì đi qua <code>StaffService</code>/<code>MembersService</code>. Thay đổi trong domain logic của Staff/Member không tự động ảnh hưởng đến OAuth flow — behavior drift risk.</span></li>
+    </ul>
+
+    <p><strong>Đánh giá tổng:</strong> Coupling ở mức trung bình. Module boundaries và DI container làm tốt phần structural decoupling, nhưng thiếu abstraction layer giữa business service và Prisma tạo ra concrete coupling rộng. Rủi ro thực tế: database migration hay thay đổi ORM sẽ ảnh hưởng trực tiếp đến business logic layer.</p>
+  </div>
+</section>
+
+<!-- ── HIGH COHESION ── -->
+<section class="concept-section">
+  <div class="concept-header">
+    <span class="concept-tag">Design Concept</span>
+    <h2>High Cohesion</h2>
+  </div>
+
+  <div class="concept-body">
+    <p>High cohesion đánh giá mức độ các thành phần trong một module/class liên quan chặt chẽ với nhau — mọi method và dependency đều phục vụ cùng một mục đích.</p>
+
+    <ul class="finding-list">
+      <li class="ok"><span class="icon">+</span><span><strong>EmailVerificationService</strong>: hai method, một mục đích — xử lý OTP cho email verification. Mọi dependency (OtpStore, RateLimit, Audit, UsersService) đều được dùng trong flow này. Cohesion rất cao.</span></li>
+      <li class="ok"><span class="icon">+</span><span><strong>PasswordResetService</strong>: hai method, một use case (UC02). Không có logic nào thuộc về use case khác. Cohesion cao.</span></li>
+      <li class="ok"><span class="icon">+</span><span><strong>Infrastructure services</strong>: <code>OtpStoreService</code>, <code>RateLimitService</code>, <code>InMemoryPermissionCacheService</code> — mỗi cái là single-purpose utility. Cohesion tối đa.</span></li>
+      <li class="ok"><span class="icon">+</span><span><strong>Domain module separation</strong>: membership, training, workout, facility, rbac, staff là các module riêng với boundaries rõ ràng. Không có feature spillover giữa các domain.</span></li>
+      <li class="bad"><span class="icon">−</span><span><strong>LineOAuthService</strong>: ba nhóm chức năng không liên quan trực tiếp — LINE token verification (giao tiếp external API), account creation (business logic), member code generation (domain utility). Cohesion thấp hơn mức cần thiết.</span></li>
+      <li class="bad"><span class="icon">−</span><span><strong>auth.service.ts</strong>: xử lý login và đồng thời auto-activate tài khoản <code>pending_verification</code> khi login thành công. Activation là business rule của user lifecycle, không phải authentication flow — cohesion bị pha loãng.</span></li>
+    </ul>
+
+    <p><strong>Đánh giá tổng:</strong> Cohesion nhìn chung tốt. Phần lớn service file có focus rõ ràng và không có method ngoài lề. Các vấn đề tập trung ở module <code>auth/</code> — đặc biệt <code>LineOAuthService</code> gộp nhiều concern vào một class. Tách <code>MemberRegistrationService</code> để handle account creation và <code>MemberCodeGenerator</code> để handle code generation sẽ cải thiện cohesion đáng kể mà không tăng độ phức tạp kiến trúc quá mức.</p>
+  </div>
+</section>
+
+<!-- ── SUMMARY ── -->
+<section class="summary-section">
+  <h2>Tổng hợp</h2>
+  <div style="overflow-x:auto">
+  <table class="summary-table">
+    <thead>
+      <tr>
+        <th>Nguyên tắc</th>
+        <th>Điểm</th>
+        <th>Tuân thủ tốt</th>
+        <th>Vi phạm chính</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="principle-col">S — Single Responsibility</td>
+        <td class="score-col mid">7 / 10</td>
+        <td>EmailVerificationService, PasswordResetService, các infrastructure service</td>
+        <td>LineOAuthService ôm 3 trách nhiệm; logic member code generation không đúng chỗ</td>
+      </tr>
+      <tr>
+        <td class="principle-col">O — Open/Closed</td>
+        <td class="score-col mid">6 / 10</td>
+        <td>Guard + Reflector metadata pattern; IPermissionCacheProvider</td>
+        <td>Hard-coded role string check; state machine if-else chains</td>
+      </tr>
+      <tr>
+        <td class="principle-col">L — Liskov Substitution</td>
+        <td class="score-col pass">7 / 10</td>
+        <td>InMemoryPermissionCacheService; tất cả guard implement CanActivate đúng</td>
+        <td>Phạm vi hẹp: phần lớn service không có interface để LSP có thể áp dụng</td>
+      </tr>
+      <tr>
+        <td class="principle-col">I — Interface Segregation</td>
+        <td class="score-col low">5 / 10</td>
+        <td>IPermissionCacheProvider minimal; decorators tách biệt</td>
+        <td>Không có service interface; consumer phụ thuộc vào toàn bộ concrete class</td>
+      </tr>
+      <tr>
+        <td class="principle-col">D — Dependency Inversion</td>
+        <td class="score-col low">5 / 10</td>
+        <td>PermissionsGuard → IPermissionCacheProvider; ConfigService, JwtService</td>
+        <td>PrismaService concrete inject khắp nơi; LineOAuthService gọi thẳng data layer</td>
+      </tr>
+      <tr>
+        <td class="principle-col">Loose Coupling</td>
+        <td class="score-col mid">Trung bình</td>
+        <td>Module system; IPermissionCacheProvider; auth.constants tập trung</td>
+        <td>AuditService concrete; member code duplication; LineOAuthService cross-layer</td>
+      </tr>
+      <tr>
+        <td class="principle-col">High Cohesion</td>
+        <td class="score-col pass">Tốt</td>
+        <td>Phần lớn service có focus rõ ràng; domain module separation tốt</td>
+        <td>LineOAuthService gộp nhiều concern; auth.service.ts pha loãng activation logic</td>
+      </tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div style="margin-top:32px;padding:20px 24px;border:1px solid var(--border);border-radius:4px;background:white;max-width:680px">
+    <div style="font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:12px">Ưu tiên cải thiện</div>
+    <ol style="padding-left:20px;display:flex;flex-direction:column;gap:8px;font-size:13.5px;color:#3C3733;line-height:1.5">
+      <li>Thêm <code>IAuditService</code> interface — giảm concrete coupling trong toàn bộ codebase với effort thấp nhất.</li>
+      <li>Tách <code>LineOAuthService.createMemberFromLine()</code> sang <code>MembersService</code> và remove <code>generateLineMemberCode()</code> duplicate.</li>
+      <li>Thêm <code>IUsersService</code> interface với chỉ hai method lookup — bước đầu tiên đưa DIP vào domain service layer.</li>
+      <li>Remove cross-layer Prisma calls trong <code>LineOAuthService</code>: delegate sang domain service thay vì gọi thẳng <code>prisma.staff/member</code>.</li>
+    </ol>
+  </div>
+</section>

@@ -1,0 +1,101 @@
+@layer components {
+  .rogym-island-option {
+    border: 0;
+    border-right: 1px solid rgba(255, 255, 255, 0.08);
+    background: transparent;
+    color: var(--rogym-text-secondary);
+    font-family: var(--rogym-font-body);
+    cursor: pointer;
+  }
+
+  .rogym-island-option:last-child {
+    border-right: 0;
+  }
+
+  .rogym-island-option:hover {
+    color: #fff;
+  }
+
+  .rogym-island-option.is-active {
+    background: rgba(6, 195, 132, 0.15);
+    color: var(--rogym-green);
+  }
+
+  .rogym-history-tab {
+    margin-bottom: -1px;
+    border: 0;
+    border-bottom: 2px solid transparent;
+    background: none;
+    color: var(--rogym-text-secondary);
+    font-family: var(--rogym-font-body);
+    cursor: pointer;
+  }
+
+  .rogym-history-tab.is-active {
+    border-bottom-color: var(--rogym-green);
+    color: #fff;
+  }
+
+  .rogym-sort-toggle:hover {
+    color: #fff;
+  }
+
+  .rogym-checkout-method {
+    display: flex;
+    width: 100%;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    background: transparent;
+    color: var(--rogym-text-secondary);
+    font-family: var(--rogym-font-body);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 150ms;
+  }
+
+  .rogym-checkout-method.is-active {
+    border: 1.5px solid var(--rogym-green);
+    background: rgba(6, 195, 132, 0.09);
+    color: var(--rogym-green);
+  }
+
+  .rogym-checkout-field__icon {
+    position: absolute;
+    top: 50%;
+    left: 12px;
+    color: rgba(255, 255, 255, 0.25);
+    pointer-events: none;
+    transform: translateY(-50%);
+    transition: color 150ms;
+  }
+
+  .rogym-checkout-field:focus-within .rogym-checkout-field__icon {
+    color: var(--rogym-teal);
+  }
+
+  .rogym-checkout-field__input {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    outline: none;
+    background: rgba(255, 255, 255, 0.05);
+    color: #fff;
+    font-family: var(--rogym-font-body);
+    font-size: 14px;
+    transition: border-color 150ms, background 150ms;
+  }
+
+  .rogym-checkout-field__input.has-icon {
+    padding-left: 38px;
+  }
+
+  .rogym-checkout-field__input:focus {
+    border-color: var(--rogym-teal);
+    background: rgba(66, 224, 158, 0.05);
+  }
+}

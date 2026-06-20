@@ -1,119 +1,45 @@
 # Module 2 — RBAC + User Admin API
 
-| Field | Value |
-|---|---|
-| Document ID | GMS-API-M2-001 |
-| Version | 1.0.0 |
-| Status | Draft |
-| Author | Lê Thanh An (initial draft 2026-05-17) |
-| Reviewers | TBD |
-| Last Updated | 2026-05-17 |
-| Related docs | [`conventions.md`](./conventions.md), [`Architecture.md §4.1.2`](../Architecture.md), [`Database.md`](../Database.md), [`SRS_VI.md UC10`](../../VI/SRS_VI.md), [`server/prisma/seed.ts`](../../../server/prisma/seed.ts) |
+## 1. Mục đích module
 
----
+Module 2 quản lý permission, group, quan hệ user-group và các thao tác quản trị user. Catalog hiện được khai báo tại `server/prisma/seed/rbac.ts` với 49 permission code và 4 group hệ thống: `owner`, `staff`, `trainer`, `member`.
 
-## 1. Mục đích & Phạm vi
+## 2. Danh sách các API của module
 
-Module 2 đặc tả endpoint quản lý RBAC infrastructure (Permissions, Groups, User-Group assignment) và User admin (UC10). Permission catalog derive từ `seed.ts` (35 permission codes, 4 group: `owner`, `staff`, `trainer`, `member`).
+| STT | Method | Endpoint |
+|---:|---|---|
+| 1 | `GET` | `/api/v1/permissions` |
+| 2 | `GET` | `/api/v1/permissions/:id` |
+| 3 | `GET` | `/api/v1/groups` |
+| 4 | `GET` | `/api/v1/groups/:id` |
+| 5 | `POST` | `/api/v1/groups` |
+| 6 | `PATCH` | `/api/v1/groups/:id` |
+| 7 | `DELETE` | `/api/v1/groups/:id` |
+| 8 | `POST` | `/api/v1/groups/:id/permissions` |
+| 9 | `DELETE` | `/api/v1/groups/:id/permissions/:permissionId` |
+| 10 | `GET` | `/api/v1/users` |
+| 11 | `GET` | `/api/v1/users/:id` |
+| 12 | `GET` | `/api/v1/users/:id/groups` |
+| 13 | `POST` | `/api/v1/users/:id/groups` |
+| 14 | `DELETE` | `/api/v1/users/:id/groups/:groupId` |
+| 15 | `PATCH` | `/api/v1/users/:id` |
+| 16 | `DELETE` | `/api/v1/users/:id` |
 
-In-scope:
+### 2.1 `GET /permissions`
 
-- Permission inventory read-only (system-managed, không CRUD qua API v1.0).
-- Group CRUD + permission assignment.
-- User-Group assignment.
-- User admin: list, detail, update profile/status, soft delete (UC10).
+**API method:** `GET`
 
-Out-of-scope:
+**Endpoint URL:** `/api/v1/permissions`
 
-- Member profile CRUD → Module 4 [`Module-4-Member-Subscription.md`](./Module-4-Member-Subscription.md).
-- Staff profile CRUD → Module 5 (stub).
-- Permission CRUD via API — `seed.ts` là source-of-truth permission codes; thêm/xóa permission phải đi qua schema migration + seed update + DB re-seed. API chỉ `GET`.
-- Auth flow → Module 1.
-- Custom permission per user (override group) — defer v1.1+.
+**Mô tả:** Liệt kê permission catalog hiện có. Permission được seed từ `server/prisma/seed/rbac.ts` và không có API tạo, sửa hoặc xóa.
 
-## 2. Permission Inventory
+Auth: JWT Quyền: rbac.manage
 
-35 permission codes (`seed.ts:22-70`). Notation `<resource>.<action>` — không có nested scope (`.own`/`.any`) v1.0; ownership check qua `OwnershipGuard` ở endpoint cụ thể.
+**Request body:**
 
-### 2.1 Catalog
+Không có request body.
 
-| Resource | Codes | Purpose |
-|---|---|---|
-| User | `user.read`, `user.create`, `user.update`, `user.delete` | Quản lý tài khoản hệ thống (admin). |
-| RBAC | `rbac.manage` | Quản lý group + permission assignment. |
-| Member | `member.read`, `member.create`, `member.update`, `member.delete` | UC03 — Module 4. |
-| Staff | `staff.read`, `staff.create`, `staff.update`, `staff.delete` | UC11 — Module 5. |
-| Package | `package.read`, `package.manage` | UC03/UC04/UC10 — Module 3. |
-| Subscription | `subscription.read`, `subscription.create` | UC03/UC04 — Module 4. |
-| Payment | `payment.read`, `payment.create`, `payment.refund` | UC03/UC04 — Module 4. |
-| Room | `room.manage` | UC08 — Module 6. |
-| Equipment | `equipment.manage` | UC09 — Module 6. |
-| Maintenance | `maintenance.read`, `maintenance.report`, `maintenance.resolve` | UC09 — Module 6. |
-| Session | `session.read`, `session.manage` | UC05 — Module 7. |
-| Attendance | `attendance.read`, `attendance.checkin` | UC05 — Module 7. |
-| Progress | `progress.read`, `progress.record` | UC06 — Module 7. |
-| Feedback | `feedback.read`, `feedback.create`, `feedback.handle` | UC07 — Module 8. |
-| Schedule | `schedule.read`, `schedule.manage` | UC11 — Module 5. |
-| Report | `report.view` | UC12 — Module 9. |
-
-### 2.2 Role → Permission map (seed default)
-
-| Role | Permission count | Highlights | Excluded |
-|---|---|---|---|
-| `owner` | 35 (all) | Mọi permission. | — |
-| `staff` | 26 | `user.read/create/update`, member full CRUD, package/subscription/payment management, room/equipment/maintenance, feedback full, session/attendance/progress read + checkin. | `user.delete`, `rbac.manage`, `staff.*` (mọi action), `session.manage`, `progress.record`, `schedule.manage`, `report.view`. |
-| `trainer` | 13 | `member.read`, `session.read/manage`, `attendance.read/checkin`, `progress.read/record`, `feedback.read`, `schedule.read`, `subscription.read`, `package.read`, `maintenance.read/report`. | Mọi `*.create/update/delete` ngoài training/progress. |
-| `member` | 8 | Self-service: `package.read`, `subscription.read/create`, `payment.read/create`, `session.read`, `attendance.read`, `progress.read`, `feedback.create`. | Mọi action quản trị. |
-
-Source: `seed.ts:100-138` ROLE_PERMISSIONS map.
-
-### 2.3 Thay đổi permission catalog
-
-V1.0 workflow:
-
-1. Edit `seed.ts` PERMISSIONS array + role mapping.
-2. Bump Module 2 doc `permission count` + Catalog table.
-3. `npm run prisma:seed` (DB upsert).
-4. Audit log không track (seed-time event, không phải runtime).
-
-V1.1+ defer: API endpoint `POST /permissions` cho Owner thêm custom permission runtime — cần `audit.create` action code mới.
-
-## 3. Endpoint Inventory
-
-| # | Method | Path | UC | Auth | RBAC | Status |
-|---|---|---|---|---|---|---|
-| 1 | GET | `/permissions` | UC10 | JWT | `rbac.manage` | NEW |
-| 2 | GET | `/permissions/:id` | UC10 | JWT | `rbac.manage` | NEW |
-| 3 | GET | `/groups` | UC10 | JWT | `rbac.manage` | NEW |
-| 4 | GET | `/groups/:id` | UC10 | JWT | `rbac.manage` | NEW |
-| 5 | POST | `/groups` | UC10 | JWT | `rbac.manage` | NEW |
-| 6 | PATCH | `/groups/:id` | UC10 | JWT | `rbac.manage` | NEW |
-| 7 | DELETE | `/groups/:id` | UC10 | JWT | `rbac.manage` | NEW |
-| 8 | POST | `/groups/:id/permissions` | UC10 | JWT | `rbac.manage` | NEW |
-| 9 | DELETE | `/groups/:id/permissions/:permissionId` | UC10 | JWT | `rbac.manage` | NEW |
-| 10 | GET | `/users` | UC10 | JWT | `user.read` | NEW |
-| 11 | GET | `/users/:id` | UC10 | JWT | `user.read` HOẶC Self | NEW |
-| 12 | GET | `/users/:id/groups` | UC10 | JWT | `user.read` HOẶC Self | NEW |
-| 13 | POST | `/users/:id/groups` | UC10 | JWT | `rbac.manage` | NEW |
-| 14 | DELETE | `/users/:id/groups/:groupId` | UC10 | JWT | `rbac.manage` | NEW |
-| 15 | PATCH | `/users/:id` | UC10 | JWT | `user.update` HOẶC Self (giới hạn field) | NEW |
-| 16 | DELETE | `/users/:id` | UC10 | JWT | `user.delete` | NEW |
-
-Tổng: 16 endpoint, 0 implemented, depends Module 4 OwnershipGuard.
-
----
-
-## 4. Endpoints
-
-### 4.1 GET /permissions
-
-**UC:** UC10 — quản lý phân quyền
-**Auth:** JWT
-**RBAC:** `rbac.manage`
-
-**Description:** List toàn bộ permission catalog (35 row v1.0). Read-only — permission codes derive từ `seed.ts`, không CRUD qua API.
-
-**Query params:**
+**Query parameters:**
 
 | Param | Type | Default | Mô tả |
 |---|---|---|---|
@@ -121,7 +47,9 @@ Tổng: 16 endpoint, 0 implemented, depends Module 4 OwnershipGuard.
 | `pageSize` | int | 20 | Max 100. |
 | `resource` | string | — | Filter `code` LIKE `<resource>.%` (vd `member`, `subscription`). |
 
-**Response 200 OK:**
+**Response body:**
+
+HTTP 200.
 
 ```json
 {
@@ -130,43 +58,77 @@ Tổng: 16 endpoint, 0 implemented, depends Module 4 OwnershipGuard.
     { "permissionId": "1", "code": "user.read", "name": "Xem tai khoan", "description": "..." },
     { "permissionId": "2", "code": "user.create", "name": "Tao tai khoan", "description": "..." }
   ],
-  "meta": { "page": 1, "pageSize": 20, "total": 35 }
+  "meta": { "page": 1, "pageSize": 20, "totalItems": 38, "totalPages": 2 }
 }
 ```
 
-**Errors:** `401 UNAUTHORIZED`, `403 FORBIDDEN` (thiếu `rbac.manage`).
+**Error:**
 
-**Audit:** Không log (read-only).
+| HTTP status | Mã lỗi | Điều kiện xảy ra |
+|---:|---|---|
+| 401 | `UNAUTHORIZED` | Thiếu JWT, JWT sai hoặc hết hạn. |
+| 403 | `FORBIDDEN` | Người gọi thiếu permission hoặc không thỏa điều kiện ownership ghi trong mô tả. |
+| 500 | `INTERNAL_SERVER_ERROR` | Lỗi nội bộ không được ánh xạ sang lỗi nghiệp vụ cụ thể. |
+| 500 | `PRISMA_<code>` | Lỗi Prisma chưa có mapping riêng. |
+| 503 | `DATABASE_AUTH_FAILED` / `DATABASE_UNAVAILABLE` | Database sai thông tin xác thực hoặc tạm thời không kết nối được. |
 
-**Rate limit:** Không giới hạn riêng (chung global rate limit v1.1).
+Lỗi nghiệp vụ/điều kiện bổ sung từ service:
 
----
+`401 UNAUTHORIZED`, `403 FORBIDDEN` (thiếu `rbac.manage`).
 
-### 4.2 GET /permissions/:id
+### 2.2 `GET /permissions/:id`
 
-**UC:** UC10
-**Auth:** JWT
-**RBAC:** `rbac.manage`
+**API method:** `GET`
 
-**Description:** Detail 1 permission. Dùng cho UI hiển thị tooltip / mô tả trong group permission picker.
+**Endpoint URL:** `/api/v1/permissions/:id`
 
-**Path param:** `id` — `permissionId` (BigInt string).
+**Mô tả:** Detail 1 permission. Dùng cho UI hiển thị tooltip / mô tả trong group permission picker.
 
-**Response 200 OK:** Single permission object.
+Auth: JWT Quyền: rbac.manage
 
-**Errors:** `401`, `403`, `404 NOT_FOUND`.
+**Request body:**
 
----
+Không có request body.
 
-### 4.3 GET /groups
+**Path parameters:** `id` — số nguyên dương; sai định dạng trả 400.
 
-**UC:** UC10
-**Auth:** JWT
-**RBAC:** `rbac.manage`
+**Response body:**
 
-**Description:** List group (default 4 system group + custom group nếu có). Pagination + filter.
+HTTP 200.
 
-**Query params:**
+Single permission object.
+
+**Error:**
+
+| HTTP status | Mã lỗi | Điều kiện xảy ra |
+|---:|---|---|
+| 401 | `UNAUTHORIZED` | Thiếu JWT, JWT sai hoặc hết hạn. |
+| 403 | `FORBIDDEN` | Người gọi thiếu permission hoặc không thỏa điều kiện ownership ghi trong mô tả. |
+| 400 | `BAD_REQUEST` | Path parameter hoặc dữ liệu do `ValidationPipe`/`ParseIntPipe` từ chối. |
+| 404 | `NOT_FOUND` | Resource được tham chiếu không tồn tại hoặc đã bị xóa. |
+| 500 | `INTERNAL_SERVER_ERROR` | Lỗi nội bộ không được ánh xạ sang lỗi nghiệp vụ cụ thể. |
+| 500 | `PRISMA_<code>` | Lỗi Prisma chưa có mapping riêng. |
+| 503 | `DATABASE_AUTH_FAILED` / `DATABASE_UNAVAILABLE` | Database sai thông tin xác thực hoặc tạm thời không kết nối được. |
+
+Lỗi nghiệp vụ/điều kiện bổ sung từ service:
+
+`401`, `403`, `404 NOT_FOUND`.
+
+### 2.3 `GET /groups`
+
+**API method:** `GET`
+
+**Endpoint URL:** `/api/v1/groups`
+
+**Mô tả:** List group (default 4 system group + custom group nếu có). Pagination + filter.
+
+Auth: JWT Quyền: rbac.manage
+
+**Request body:**
+
+Không có request body.
+
+**Query parameters:**
 
 | Param | Type | Default | Mô tả |
 |---|---|---|---|
@@ -174,7 +136,9 @@ Tổng: 16 endpoint, 0 implemented, depends Module 4 OwnershipGuard.
 | `search` | string | — | LIKE `name` hoặc `description`. |
 | `includeDeleted` | boolean | false | Bao gồm `deleted_at IS NOT NULL`. |
 
-**Response 200 OK:**
+**Response body:**
+
+HTTP 200.
 
 ```json
 {
@@ -185,30 +149,50 @@ Tổng: 16 endpoint, 0 implemented, depends Module 4 OwnershipGuard.
       "name": "owner",
       "description": "Chu phong tap...",
       "memberCount": 1,
-      "permissionCount": 35,
+      "permissionCount": 38,
       "createdAt": "2026-01-01T08:00:00.000Z",
       "deletedAt": null
     }
   ],
-  "meta": { "page": 1, "pageSize": 20, "total": 4 }
+  "meta": { "page": 1, "pageSize": 20, "totalItems": 4, "totalPages": 1 }
 }
 ```
 
 `memberCount` = count user assigned vào group qua `user_groups`. `permissionCount` = count permission qua `group_permissions`.
 
-**Errors:** `401`, `403`.
+**Error:**
 
----
+| HTTP status | Mã lỗi | Điều kiện xảy ra |
+|---:|---|---|
+| 401 | `UNAUTHORIZED` | Thiếu JWT, JWT sai hoặc hết hạn. |
+| 403 | `FORBIDDEN` | Người gọi thiếu permission hoặc không thỏa điều kiện ownership ghi trong mô tả. |
+| 500 | `INTERNAL_SERVER_ERROR` | Lỗi nội bộ không được ánh xạ sang lỗi nghiệp vụ cụ thể. |
+| 500 | `PRISMA_<code>` | Lỗi Prisma chưa có mapping riêng. |
+| 503 | `DATABASE_AUTH_FAILED` / `DATABASE_UNAVAILABLE` | Database sai thông tin xác thực hoặc tạm thời không kết nối được. |
 
-### 4.4 GET /groups/:id
+Lỗi nghiệp vụ/điều kiện bổ sung từ service:
 
-**UC:** UC10
-**Auth:** JWT
-**RBAC:** `rbac.manage`
+`401`, `403`.
 
-**Description:** Detail group kèm danh sách permission gán + danh sách user assigned (paginated user list nested không có; trả `memberCount` + endpoint `GET /users?groupId=:id` cho list user).
+### 2.4 `GET /groups/:id`
 
-**Response 200 OK:**
+**API method:** `GET`
+
+**Endpoint URL:** `/api/v1/groups/:id`
+
+**Mô tả:** Detail group kèm danh sách permission gán + danh sách user assigned (paginated user list nested không có; trả `memberCount` + endpoint `GET /users?groupId=:id` cho list user).
+
+Auth: JWT Quyền: rbac.manage
+
+**Request body:**
+
+Không có request body.
+
+**Path parameters:** `id` — số nguyên dương; sai định dạng trả 400.
+
+**Response body:**
+
+HTTP 200.
 
 ```json
 {
@@ -228,17 +212,31 @@ Tổng: 16 endpoint, 0 implemented, depends Module 4 OwnershipGuard.
 }
 ```
 
-**Errors:** `401`, `403`, `404`.
+**Error:**
 
----
+| HTTP status | Mã lỗi | Điều kiện xảy ra |
+|---:|---|---|
+| 401 | `UNAUTHORIZED` | Thiếu JWT, JWT sai hoặc hết hạn. |
+| 403 | `FORBIDDEN` | Người gọi thiếu permission hoặc không thỏa điều kiện ownership ghi trong mô tả. |
+| 400 | `BAD_REQUEST` | Path parameter hoặc dữ liệu do `ValidationPipe`/`ParseIntPipe` từ chối. |
+| 404 | `NOT_FOUND` | Resource được tham chiếu không tồn tại hoặc đã bị xóa. |
+| 500 | `INTERNAL_SERVER_ERROR` | Lỗi nội bộ không được ánh xạ sang lỗi nghiệp vụ cụ thể. |
+| 500 | `PRISMA_<code>` | Lỗi Prisma chưa có mapping riêng. |
+| 503 | `DATABASE_AUTH_FAILED` / `DATABASE_UNAVAILABLE` | Database sai thông tin xác thực hoặc tạm thời không kết nối được. |
 
-### 4.5 POST /groups
+Lỗi nghiệp vụ/điều kiện bổ sung từ service:
 
-**UC:** UC10
-**Auth:** JWT
-**RBAC:** `rbac.manage`
+`401`, `403`, `404`.
 
-**Description:** Tạo custom group. System group (`owner`/`staff`/`trainer`/`member`) không cần tạo qua API — đã seed.
+### 2.5 `POST /groups`
+
+**API method:** `POST`
+
+**Endpoint URL:** `/api/v1/groups`
+
+**Mô tả:** Tạo custom group. System group (`owner`/`staff`/`trainer`/`member`) không cần tạo qua API — đã seed.
+
+Auth: JWT Quyền: rbac.manage
 
 **Request body:**
 
@@ -256,9 +254,25 @@ Tổng: 16 endpoint, 0 implemented, depends Module 4 OwnershipGuard.
 }
 ```
 
-**Response 201 Created:** Group detail (giống §4.4).
+**Response body:**
 
-**Errors:**
+HTTP 201.
+
+Group detail (giống §4.4).
+
+**Error:**
+
+| HTTP status | Mã lỗi | Điều kiện xảy ra |
+|---:|---|---|
+| 401 | `UNAUTHORIZED` | Thiếu JWT, JWT sai hoặc hết hạn. |
+| 403 | `FORBIDDEN` | Người gọi thiếu permission hoặc không thỏa điều kiện ownership ghi trong mô tả. |
+| 400 | `BAD_REQUEST` | Request body bị `ValidationPipe` từ chối. Service có thể trả `VALIDATION_ERROR` cho business validation. |
+| 409 | `CONFLICT` | Trạng thái resource hoặc ràng buộc nghiệp vụ xung đột; mã cụ thể ghi bên dưới. |
+| 500 | `INTERNAL_SERVER_ERROR` | Lỗi nội bộ không được ánh xạ sang lỗi nghiệp vụ cụ thể. |
+| 500 | `PRISMA_<code>` | Lỗi Prisma chưa có mapping riêng. |
+| 503 | `DATABASE_AUTH_FAILED` / `DATABASE_UNAVAILABLE` | Database sai thông tin xác thực hoặc tạm thời không kết nối được. |
+
+Lỗi nghiệp vụ/điều kiện bổ sung từ service:
 
 | HTTP | Code | Trigger |
 |---|---|---|
@@ -267,25 +281,15 @@ Tổng: 16 endpoint, 0 implemented, depends Module 4 OwnershipGuard.
 | 403 | `FORBIDDEN` | Thiếu `rbac.manage`. |
 | 409 | `DUPLICATE_VALUE` | Group `name` đã tồn tại (P2002). |
 
-**Audit:** `group.create` với `after_data` = group + permission codes.
+### 2.6 `PATCH /groups/:id`
 
-**WHEN-THEN-ELSE:**
+**API method:** `PATCH`
 
-- WHEN `name` ∈ system group set (`'owner'`, `'staff'`, `'trainer'`, `'member'`) → 400 `VALIDATION_ERROR` với `details: ["name reserved for system group"]`.
-- WHEN có permission code không tồn tại → 400 `VALIDATION_ERROR` với `details: ["unknown permission: <code>"]` (validate trước transaction).
-- ELSE INSERT group + bulk INSERT group_permissions trong `$transaction`.
+**Endpoint URL:** `/api/v1/groups/:id`
 
----
+**Mô tả:** Update `name`/`description` của group. Permission assignment qua endpoint riêng (§4.8/4.9).
 
-### 4.6 PATCH /groups/:id
-
-**UC:** UC10
-**Auth:** JWT
-**RBAC:** `rbac.manage`
-
-**Description:** Update `name`/`description` của group. Permission assignment qua endpoint riêng (§4.8/4.9).
-
-**Path param:** `id` = groupId.
+Auth: JWT Quyền: rbac.manage
 
 **Request body:**
 
@@ -294,32 +298,65 @@ Tổng: 16 endpoint, 0 implemented, depends Module 4 OwnershipGuard.
 | `name` | string | no | UNIQUE, format như §4.5. |
 | `description` | string | no | 10-500 ký tự. |
 
-**Response 200 OK:** Group detail updated.
+**Path parameters:** `id` — số nguyên dương; sai định dạng trả 400.
 
-**Errors:** `401`, `403`, `404`, `409 DUPLICATE_VALUE`.
+**Response body:**
 
-**Audit:** `group.update` với `before_data` + `after_data`.
+HTTP 200.
 
-**WHEN-THEN-ELSE:**
+Group detail updated.
 
-- WHEN `id` thuộc system group (`name` ∈ system set) AND `name` được đổi → 400 `VALIDATION_ERROR` với `details: ["cannot rename system group"]`. Mô tả vẫn có thể update.
-- ELSE proceed.
+**Error:**
 
----
+| HTTP status | Mã lỗi | Điều kiện xảy ra |
+|---:|---|---|
+| 401 | `UNAUTHORIZED` | Thiếu JWT, JWT sai hoặc hết hạn. |
+| 403 | `FORBIDDEN` | Người gọi thiếu permission hoặc không thỏa điều kiện ownership ghi trong mô tả. |
+| 400 | `BAD_REQUEST` | Path parameter hoặc dữ liệu do `ValidationPipe`/`ParseIntPipe` từ chối. |
+| 404 | `NOT_FOUND` | Resource được tham chiếu không tồn tại hoặc đã bị xóa. |
+| 409 | `CONFLICT` | Trạng thái resource hoặc ràng buộc nghiệp vụ xung đột; mã cụ thể ghi bên dưới. |
+| 500 | `INTERNAL_SERVER_ERROR` | Lỗi nội bộ không được ánh xạ sang lỗi nghiệp vụ cụ thể. |
+| 500 | `PRISMA_<code>` | Lỗi Prisma chưa có mapping riêng. |
+| 503 | `DATABASE_AUTH_FAILED` / `DATABASE_UNAVAILABLE` | Database sai thông tin xác thực hoặc tạm thời không kết nối được. |
 
-### 4.7 DELETE /groups/:id
+Lỗi nghiệp vụ/điều kiện bổ sung từ service:
 
-**UC:** UC10
-**Auth:** JWT
-**RBAC:** `rbac.manage`
+`401`, `403`, `404`, `409 DUPLICATE_VALUE`.
 
-**Description:** Soft delete group (`deleted_at = NOW()`).
+### 2.7 `DELETE /groups/:id`
 
-**Path param:** `id` = groupId.
+**API method:** `DELETE`
 
-**Response 204 No Content.**
+**Endpoint URL:** `/api/v1/groups/:id`
 
-**Errors:**
+**Mô tả:** Soft delete group (`deleted_at = NOW()`).
+
+Auth: JWT Quyền: rbac.manage
+
+**Request body:**
+
+Không có request body.
+
+**Path parameters:** `id` — số nguyên dương; sai định dạng trả 400.
+
+**Response body:**
+
+HTTP 204 No Content. Không có response body.
+
+**Error:**
+
+| HTTP status | Mã lỗi | Điều kiện xảy ra |
+|---:|---|---|
+| 401 | `UNAUTHORIZED` | Thiếu JWT, JWT sai hoặc hết hạn. |
+| 403 | `FORBIDDEN` | Người gọi thiếu permission hoặc không thỏa điều kiện ownership ghi trong mô tả. |
+| 400 | `BAD_REQUEST` | Path parameter hoặc dữ liệu do `ValidationPipe`/`ParseIntPipe` từ chối. |
+| 404 | `NOT_FOUND` | Resource được tham chiếu không tồn tại hoặc đã bị xóa. |
+| 409 | `CONFLICT` | Trạng thái resource hoặc ràng buộc nghiệp vụ xung đột; mã cụ thể ghi bên dưới. |
+| 500 | `INTERNAL_SERVER_ERROR` | Lỗi nội bộ không được ánh xạ sang lỗi nghiệp vụ cụ thể. |
+| 500 | `PRISMA_<code>` | Lỗi Prisma chưa có mapping riêng. |
+| 503 | `DATABASE_AUTH_FAILED` / `DATABASE_UNAVAILABLE` | Database sai thông tin xác thực hoặc tạm thời không kết nối được. |
+
+Lỗi nghiệp vụ/điều kiện bổ sung từ service:
 
 | HTTP | Code | Trigger |
 |---|---|---|
@@ -329,23 +366,15 @@ Tổng: 16 endpoint, 0 implemented, depends Module 4 OwnershipGuard.
 | 409 | `GROUP_HAS_USERS` | Group còn user assigned (`user_groups.count > 0`). |
 | 409 | `GROUP_IS_SYSTEM` | Group là system group (4 default). |
 
-**Audit:** `group.delete`.
+### 2.8 `POST /groups/:id/permissions`
 
-**WHEN-THEN-ELSE:**
+**API method:** `POST`
 
-- WHEN group là system → 409 `GROUP_IS_SYSTEM`.
-- WHEN EXISTS user_groups WHERE groupId = :id → 409 `GROUP_HAS_USERS`. Client phải reassign user trước.
-- ELSE soft delete; `group_permissions` rows vẫn giữ (audit history).
+**Endpoint URL:** `/api/v1/groups/:id/permissions`
 
----
+**Mô tả:** Bulk assign permission to group. Idempotent: existing assignment được skip qua `skipDuplicates: true`.
 
-### 4.8 POST /groups/:id/permissions
-
-**UC:** UC10
-**Auth:** JWT
-**RBAC:** `rbac.manage`
-
-**Description:** Bulk assign permission to group. Idempotent: existing assignment được skip qua `skipDuplicates: true`.
+Auth: JWT Quyền: rbac.manage
 
 **Request body:**
 
@@ -353,7 +382,11 @@ Tổng: 16 endpoint, 0 implemented, depends Module 4 OwnershipGuard.
 { "permissions": ["report.view", "schedule.manage"] }
 ```
 
-**Response 200 OK:**
+**Path parameters:** `id` — số nguyên dương; sai định dạng trả 400.
+
+**Response body:**
+
+HTTP 201.
 
 ```json
 {
@@ -368,52 +401,76 @@ Tổng: 16 endpoint, 0 implemented, depends Module 4 OwnershipGuard.
 
 `skipped` = permission codes đã assigned (no-op).
 
-**Errors:**
+**Error:**
+
+| HTTP status | Mã lỗi | Điều kiện xảy ra |
+|---:|---|---|
+| 401 | `UNAUTHORIZED` | Thiếu JWT, JWT sai hoặc hết hạn. |
+| 403 | `FORBIDDEN` | Người gọi thiếu permission hoặc không thỏa điều kiện ownership ghi trong mô tả. |
+| 400 | `BAD_REQUEST` | Path parameter hoặc dữ liệu do `ValidationPipe`/`ParseIntPipe` từ chối. |
+| 404 | `NOT_FOUND` | Resource được tham chiếu không tồn tại hoặc đã bị xóa. |
+| 500 | `INTERNAL_SERVER_ERROR` | Lỗi nội bộ không được ánh xạ sang lỗi nghiệp vụ cụ thể. |
+| 500 | `PRISMA_<code>` | Lỗi Prisma chưa có mapping riêng. |
+| 503 | `DATABASE_AUTH_FAILED` / `DATABASE_UNAVAILABLE` | Database sai thông tin xác thực hoặc tạm thời không kết nối được. |
+
+Lỗi nghiệp vụ/điều kiện bổ sung từ service:
 
 | HTTP | Code | Trigger |
 |---|---|---|
 | 400 | `VALIDATION_ERROR` | permission code không tồn tại; mảng rỗng. |
 | 404 | `NOT_FOUND` | Group không tồn tại. |
 
-**Audit:** `group.assign-permission` với payload `{groupId, added: [codes]}`.
+### 2.9 `DELETE /groups/:id/permissions/:permissionId`
 
-**WHEN-THEN-ELSE:**
+**API method:** `DELETE`
 
-- WHEN permission code không tồn tại → 400 với `details: ["unknown permission: <code>"]`.
-- WHEN mảng rỗng → 400 với `details: ["permissions: must contain at least 1 item"]`.
-- ELSE bulk INSERT với `skipDuplicates`; trả set thực sự thêm trong `added`.
+**Endpoint URL:** `/api/v1/groups/:id/permissions/:permissionId`
 
----
+**Mô tả:** Revoke permission khỏi group.
 
-### 4.9 DELETE /groups/:id/permissions/:permissionId
+Auth: JWT Quyền: rbac.manage
 
-**UC:** UC10
-**Auth:** JWT
-**RBAC:** `rbac.manage`
+**Request body:**
 
-**Description:** Revoke permission khỏi group.
+Không có request body.
 
-**Response 204 No Content.**
+**Path parameters:** `id`, `permissionId` — số nguyên dương; sai định dạng trả 400.
 
-**Errors:** `401`, `403`, `404 NOT_FOUND` (group hoặc permission không tồn tại hoặc chưa assigned).
+**Response body:**
 
-**Audit:** `group.revoke-permission` (mới — Architecture v1.1.5 §4.4.1 chưa list; flag drift cuối doc).
+HTTP 204 No Content. Không có response body.
 
-**WHEN-THEN-ELSE:**
+**Error:**
 
-- WHEN không tồn tại row `group_permissions WHERE groupId AND permissionId` → 404. Idempotency: client retry phải handle 404 như success-state.
+| HTTP status | Mã lỗi | Điều kiện xảy ra |
+|---:|---|---|
+| 401 | `UNAUTHORIZED` | Thiếu JWT, JWT sai hoặc hết hạn. |
+| 403 | `FORBIDDEN` | Người gọi thiếu permission hoặc không thỏa điều kiện ownership ghi trong mô tả. |
+| 400 | `BAD_REQUEST` | Path parameter hoặc dữ liệu do `ValidationPipe`/`ParseIntPipe` từ chối. |
+| 404 | `NOT_FOUND` | Resource được tham chiếu không tồn tại hoặc đã bị xóa. |
+| 500 | `INTERNAL_SERVER_ERROR` | Lỗi nội bộ không được ánh xạ sang lỗi nghiệp vụ cụ thể. |
+| 500 | `PRISMA_<code>` | Lỗi Prisma chưa có mapping riêng. |
+| 503 | `DATABASE_AUTH_FAILED` / `DATABASE_UNAVAILABLE` | Database sai thông tin xác thực hoặc tạm thời không kết nối được. |
 
----
+Lỗi nghiệp vụ/điều kiện bổ sung từ service:
 
-### 4.10 GET /users
+`401`, `403`, `404 NOT_FOUND` (group hoặc permission không tồn tại hoặc chưa assigned).
 
-**UC:** UC10
-**Auth:** JWT
-**RBAC:** `user.read`
+### 2.10 `GET /users`
 
-**Description:** List user hệ thống (admin view). Khác với `GET /members` (Module 4) — endpoint này show TẤT CẢ user bất kể role (Owner/Staff/PT/Member), join với staff/member profile nếu có.
+**API method:** `GET`
 
-**Query params:**
+**Endpoint URL:** `/api/v1/users`
+
+**Mô tả:** List user hệ thống (admin view). Khác với `GET /members` (Module 4) — endpoint này show TẤT CẢ user bất kể role (Owner/Staff/PT/Member), join với staff/member profile nếu có.
+
+Auth: JWT Quyền: user.read
+
+**Request body:**
+
+Không có request body.
+
+**Query parameters:**
 
 | Param | Type | Default | Mô tả |
 |---|---|---|---|
@@ -425,7 +482,9 @@ Tổng: 16 endpoint, 0 implemented, depends Module 4 OwnershipGuard.
 | `includeDeleted` | boolean | false | `deleted_at IS NOT NULL`. |
 | `sort` | string | `created_at:desc` | `field:asc\|desc`. |
 
-**Response 200 OK:**
+**Response body:**
+
+HTTP 200.
 
 ```json
 {
@@ -443,23 +502,43 @@ Tổng: 16 endpoint, 0 implemented, depends Module 4 OwnershipGuard.
       "deletedAt": null
     }
   ],
-  "meta": { "page": 1, "pageSize": 20, "total": 10 }
+  "meta": { "page": 1, "pageSize": 20, "totalItems": 10, "totalPages": 1 }
 }
 ```
 
-**Errors:** `401`, `403`.
+**Error:**
 
----
+| HTTP status | Mã lỗi | Điều kiện xảy ra |
+|---:|---|---|
+| 401 | `UNAUTHORIZED` | Thiếu JWT, JWT sai hoặc hết hạn. |
+| 403 | `FORBIDDEN` | Người gọi thiếu permission hoặc không thỏa điều kiện ownership ghi trong mô tả. |
+| 500 | `INTERNAL_SERVER_ERROR` | Lỗi nội bộ không được ánh xạ sang lỗi nghiệp vụ cụ thể. |
+| 500 | `PRISMA_<code>` | Lỗi Prisma chưa có mapping riêng. |
+| 503 | `DATABASE_AUTH_FAILED` / `DATABASE_UNAVAILABLE` | Database sai thông tin xác thực hoặc tạm thời không kết nối được. |
 
-### 4.11 GET /users/:id
+Lỗi nghiệp vụ/điều kiện bổ sung từ service:
 
-**UC:** UC10
-**Auth:** JWT
-**RBAC:** `user.read` HOẶC `Self` (`:id === JWT.sub`)
+`401`, `403`.
 
-**Description:** Detail 1 user kèm groups + profile (staff/member nested nếu có).
+### 2.11 `GET /users/:id`
 
-**Response 200 OK:**
+**API method:** `GET`
+
+**Endpoint URL:** `/api/v1/users/:id`
+
+**Mô tả:** Detail 1 user kèm groups + profile (staff/member nested nếu có).
+
+Auth: JWT Quyền: Authenticated
+
+**Request body:**
+
+Không có request body.
+
+**Path parameters:** `id` — số nguyên dương; sai định dạng trả 400.
+
+**Response body:**
+
+HTTP 200.
 
 ```json
 {
@@ -487,24 +566,41 @@ Tổng: 16 endpoint, 0 implemented, depends Module 4 OwnershipGuard.
 }
 ```
 
-**Errors:** `401`, `403`, `404`.
+**Error:**
 
-**WHEN-THEN-ELSE:**
+| HTTP status | Mã lỗi | Điều kiện xảy ra |
+|---:|---|---|
+| 401 | `UNAUTHORIZED` | Thiếu JWT, JWT sai hoặc hết hạn. |
+| 400 | `BAD_REQUEST` | Path parameter hoặc dữ liệu do `ValidationPipe`/`ParseIntPipe` từ chối. |
+| 403 | `FORBIDDEN` | Thiếu quyền hoặc vi phạm ownership/business access; điều kiện cụ thể ghi bên dưới. |
+| 404 | `NOT_FOUND` | Resource được tham chiếu không tồn tại hoặc đã bị xóa. |
+| 500 | `INTERNAL_SERVER_ERROR` | Lỗi nội bộ không được ánh xạ sang lỗi nghiệp vụ cụ thể. |
+| 500 | `PRISMA_<code>` | Lỗi Prisma chưa có mapping riêng. |
+| 503 | `DATABASE_AUTH_FAILED` / `DATABASE_UNAVAILABLE` | Database sai thông tin xác thực hoặc tạm thời không kết nối được. |
 
-- WHEN JWT sub khớp `:id` → bypass `user.read` permission check (Self).
-- ELSE require `user.read` permission.
+Lỗi nghiệp vụ/điều kiện bổ sung từ service:
 
----
+`401`, `403`, `404`.
 
-### 4.12 GET /users/:id/groups
+### 2.12 `GET /users/:id/groups`
 
-**UC:** UC10
-**Auth:** JWT
-**RBAC:** `user.read` HOẶC `Self`
+**API method:** `GET`
 
-**Description:** List group của 1 user (chi tiết kèm permission count). Lighter version của `GET /users/:id` khi UI chỉ cần group context.
+**Endpoint URL:** `/api/v1/users/:id/groups`
 
-**Response 200 OK:**
+**Mô tả:** List group của 1 user (chi tiết kèm permission count). Lighter version của `GET /users/:id` khi UI chỉ cần group context.
+
+Auth: JWT Quyền: Authenticated
+
+**Request body:**
+
+Không có request body.
+
+**Path parameters:** `id` — số nguyên dương; sai định dạng trả 400.
+
+**Response body:**
+
+HTTP 200.
 
 ```json
 {
@@ -523,15 +619,27 @@ Tổng: 16 endpoint, 0 implemented, depends Module 4 OwnershipGuard.
 
 `assignedAt` = `user_groups.created_at` (nếu schema track; verify trong implementation phase).
 
----
+**Error:**
 
-### 4.13 POST /users/:id/groups
+| HTTP status | Mã lỗi | Điều kiện xảy ra |
+|---:|---|---|
+| 401 | `UNAUTHORIZED` | Thiếu JWT, JWT sai hoặc hết hạn. |
+| 400 | `BAD_REQUEST` | Path parameter hoặc dữ liệu do `ValidationPipe`/`ParseIntPipe` từ chối. |
+| 500 | `INTERNAL_SERVER_ERROR` | Lỗi nội bộ không được ánh xạ sang lỗi nghiệp vụ cụ thể. |
+| 500 | `PRISMA_<code>` | Lỗi Prisma chưa có mapping riêng. |
+| 503 | `DATABASE_AUTH_FAILED` / `DATABASE_UNAVAILABLE` | Database sai thông tin xác thực hoặc tạm thời không kết nối được. |
 
-**UC:** UC10
-**Auth:** JWT
-**RBAC:** `rbac.manage`
+Không có lỗi nghiệp vụ bổ sung được khai báo ngoài các lỗi chuẩn trên.
 
-**Description:** Assign group cho user. Idempotent qua composite UNIQUE `(userId, groupId)`.
+### 2.13 `POST /users/:id/groups`
+
+**API method:** `POST`
+
+**Endpoint URL:** `/api/v1/users/:id/groups`
+
+**Mô tả:** Assign group cho user. Idempotent qua composite UNIQUE `(userId, groupId)`.
+
+Auth: JWT Quyền: rbac.manage
 
 **Request body:**
 
@@ -539,7 +647,11 @@ Tổng: 16 endpoint, 0 implemented, depends Module 4 OwnershipGuard.
 { "groupId": "2" }
 ```
 
-**Response 200 OK:**
+**Path parameters:** `id` — số nguyên dương; sai định dạng trả 400.
+
+**Response body:**
+
+HTTP 201.
 
 ```json
 {
@@ -553,33 +665,59 @@ Tổng: 16 endpoint, 0 implemented, depends Module 4 OwnershipGuard.
 }
 ```
 
-**Errors:**
+**Error:**
+
+| HTTP status | Mã lỗi | Điều kiện xảy ra |
+|---:|---|---|
+| 401 | `UNAUTHORIZED` | Thiếu JWT, JWT sai hoặc hết hạn. |
+| 403 | `FORBIDDEN` | Người gọi thiếu permission hoặc không thỏa điều kiện ownership ghi trong mô tả. |
+| 400 | `BAD_REQUEST` | Path parameter hoặc dữ liệu do `ValidationPipe`/`ParseIntPipe` từ chối. |
+| 404 | `NOT_FOUND` | Resource được tham chiếu không tồn tại hoặc đã bị xóa. |
+| 500 | `INTERNAL_SERVER_ERROR` | Lỗi nội bộ không được ánh xạ sang lỗi nghiệp vụ cụ thể. |
+| 500 | `PRISMA_<code>` | Lỗi Prisma chưa có mapping riêng. |
+| 503 | `DATABASE_AUTH_FAILED` / `DATABASE_UNAVAILABLE` | Database sai thông tin xác thực hoặc tạm thời không kết nối được. |
+
+Lỗi nghiệp vụ/điều kiện bổ sung từ service:
 
 | HTTP | Code | Trigger |
 |---|---|---|
 | 400 | `VALIDATION_ERROR` | groupId không tồn tại. |
 | 404 | `NOT_FOUND` | User không tồn tại. |
 
-**Audit:** `user.assign-group` (mới — drift flag cuối doc).
+### 2.14 `DELETE /users/:id/groups/:groupId`
 
-**WHEN-THEN-ELSE:**
+**API method:** `DELETE`
 
-- WHEN row `user_groups (userId, groupId)` đã tồn tại → 200 OK với `wasAlreadyAssigned: true`, không tạo audit row mới.
-- ELSE INSERT + audit.
+**Endpoint URL:** `/api/v1/users/:id/groups/:groupId`
 
----
+**Mô tả:** Remove group assignment khỏi user.
 
-### 4.14 DELETE /users/:id/groups/:groupId
+Auth: JWT Quyền: rbac.manage
 
-**UC:** UC10
-**Auth:** JWT
-**RBAC:** `rbac.manage`
+**Request body:**
 
-**Description:** Remove group assignment khỏi user.
+Không có request body.
 
-**Response 204 No Content.**
+**Path parameters:** `id`, `groupId` — số nguyên dương; sai định dạng trả 400.
 
-**Errors:**
+**Response body:**
+
+HTTP 204 No Content. Không có response body.
+
+**Error:**
+
+| HTTP status | Mã lỗi | Điều kiện xảy ra |
+|---:|---|---|
+| 401 | `UNAUTHORIZED` | Thiếu JWT, JWT sai hoặc hết hạn. |
+| 403 | `FORBIDDEN` | Người gọi thiếu permission hoặc không thỏa điều kiện ownership ghi trong mô tả. |
+| 400 | `BAD_REQUEST` | Path parameter hoặc dữ liệu do `ValidationPipe`/`ParseIntPipe` từ chối. |
+| 404 | `NOT_FOUND` | Resource được tham chiếu không tồn tại hoặc đã bị xóa. |
+| 409 | `CONFLICT` | Trạng thái resource hoặc ràng buộc nghiệp vụ xung đột; mã cụ thể ghi bên dưới. |
+| 500 | `INTERNAL_SERVER_ERROR` | Lỗi nội bộ không được ánh xạ sang lỗi nghiệp vụ cụ thể. |
+| 500 | `PRISMA_<code>` | Lỗi Prisma chưa có mapping riêng. |
+| 503 | `DATABASE_AUTH_FAILED` / `DATABASE_UNAVAILABLE` | Database sai thông tin xác thực hoặc tạm thời không kết nối được. |
+
+Lỗi nghiệp vụ/điều kiện bổ sung từ service:
 
 | HTTP | Code | Trigger |
 |---|---|---|
@@ -587,24 +725,17 @@ Tổng: 16 endpoint, 0 implemented, depends Module 4 OwnershipGuard.
 | 404 | `NOT_FOUND` | Assignment không tồn tại. |
 | 409 | `USER_NEEDS_AT_LEAST_ONE_GROUP` | Sau khi remove sẽ còn 0 group. |
 
-**Audit:** `user.revoke-group`.
+### 2.15 `PATCH /users/:id`
 
-**WHEN-THEN-ELSE:**
+**API method:** `PATCH`
 
-- WHEN remove sẽ làm user có 0 group → 409. Client phải assign group khác trước, hoặc soft-delete user (§4.16).
-- ELSE DELETE row + audit.
+**Endpoint URL:** `/api/v1/users/:id`
 
----
+**Mô tả:** Update user profile + status. Self chỉ update được `fullName`, `phone`, `avatarFileId`. Admin có `user.update` có thêm `status`.
 
-### 4.15 PATCH /users/:id
+Auth: JWT Quyền: Authenticated
 
-**UC:** UC10
-**Auth:** JWT
-**RBAC:** `user.update` HOẶC `Self` (field-restricted)
-
-**Description:** Update user profile + status. Self chỉ update được `fullName`, `phone`, `avatarFileId`. Admin có `user.update` có thêm `status`.
-
-**Request body (admin):**
+**Request body:**
 
 | Field | Type | Required | Constraint |
 |---|---|---|---|
@@ -613,11 +744,28 @@ Tổng: 16 endpoint, 0 implemented, depends Module 4 OwnershipGuard.
 | `status` | enum | no | `active` hoặc `pending_verification`. `locked` MUST NOT set v1.0 (SRS UC00 Ghi chú lockout). |
 | `avatarFileId` | string | no | FK `files.file_id`. |
 
-**Request body (Self):** Bỏ `status` (sẽ trả 403 nếu Self truyền `status`).
+**Path parameters:** `id` — số nguyên dương; sai định dạng trả 400.
 
-**Response 200 OK:** User detail (giống §4.11).
+**Response body:**
 
-**Errors:**
+HTTP 200.
+
+User detail (giống §4.11).
+
+**Error:**
+
+| HTTP status | Mã lỗi | Điều kiện xảy ra |
+|---:|---|---|
+| 401 | `UNAUTHORIZED` | Thiếu JWT, JWT sai hoặc hết hạn. |
+| 400 | `BAD_REQUEST` | Path parameter hoặc dữ liệu do `ValidationPipe`/`ParseIntPipe` từ chối. |
+| 403 | `FORBIDDEN` | Thiếu quyền hoặc vi phạm ownership/business access; điều kiện cụ thể ghi bên dưới. |
+| 404 | `NOT_FOUND` | Resource được tham chiếu không tồn tại hoặc đã bị xóa. |
+| 409 | `CONFLICT` | Trạng thái resource hoặc ràng buộc nghiệp vụ xung đột; mã cụ thể ghi bên dưới. |
+| 500 | `INTERNAL_SERVER_ERROR` | Lỗi nội bộ không được ánh xạ sang lỗi nghiệp vụ cụ thể. |
+| 500 | `PRISMA_<code>` | Lỗi Prisma chưa có mapping riêng. |
+| 503 | `DATABASE_AUTH_FAILED` / `DATABASE_UNAVAILABLE` | Database sai thông tin xác thực hoặc tạm thời không kết nối được. |
+
+Lỗi nghiệp vụ/điều kiện bổ sung từ service:
 
 | HTTP | Code | Trigger |
 |---|---|---|
@@ -627,28 +775,40 @@ Tổng: 16 endpoint, 0 implemented, depends Module 4 OwnershipGuard.
 | 404 | `NOT_FOUND` | User không tồn tại. |
 | 409 | `DUPLICATE_VALUE` | Phone đã dùng (P2002). |
 
-**Audit:** `user.update` với `before_data` + `after_data` (mask `passwordHash`).
+### 2.16 `DELETE /users/:id`
 
-**WHEN-THEN-ELSE:**
+**API method:** `DELETE`
 
-- WHEN client set `status='locked'` → 400 `STATUS_LOCKED_FORBIDDEN`. V1.0 không cho phép manual lock (xem SRS UC00 Ghi chú lockout, defer R20).
-- WHEN Self gửi `status` → 403.
-- WHEN phone trùng user khác → 409 `DUPLICATE_VALUE`.
-- ELSE UPDATE + audit.
+**Endpoint URL:** `/api/v1/users/:id`
 
----
+**Mô tả:** Soft delete user (`deleted_at = NOW()`). Cascade theo Database.md §Cascade Soft Delete Convention: member/staff/subscriptions tương ứng cũng `deleted_at = NOW()` trong cùng `$transaction`.
 
-### 4.16 DELETE /users/:id
+Auth: JWT Quyền: user.delete
 
-**UC:** UC10
-**Auth:** JWT
-**RBAC:** `user.delete`
+**Request body:**
 
-**Description:** Soft delete user (`deleted_at = NOW()`). Cascade theo Database.md §Cascade Soft Delete Convention: member/staff/subscriptions tương ứng cũng `deleted_at = NOW()` trong cùng `$transaction`.
+Không có request body.
 
-**Response 204 No Content.**
+**Path parameters:** `id` — số nguyên dương; sai định dạng trả 400.
 
-**Errors:**
+**Response body:**
+
+HTTP 204 No Content. Không có response body.
+
+**Error:**
+
+| HTTP status | Mã lỗi | Điều kiện xảy ra |
+|---:|---|---|
+| 401 | `UNAUTHORIZED` | Thiếu JWT, JWT sai hoặc hết hạn. |
+| 403 | `FORBIDDEN` | Người gọi thiếu permission hoặc không thỏa điều kiện ownership ghi trong mô tả. |
+| 400 | `BAD_REQUEST` | Path parameter hoặc dữ liệu do `ValidationPipe`/`ParseIntPipe` từ chối. |
+| 404 | `NOT_FOUND` | Resource được tham chiếu không tồn tại hoặc đã bị xóa. |
+| 409 | `CONFLICT` | Trạng thái resource hoặc ràng buộc nghiệp vụ xung đột; mã cụ thể ghi bên dưới. |
+| 500 | `INTERNAL_SERVER_ERROR` | Lỗi nội bộ không được ánh xạ sang lỗi nghiệp vụ cụ thể. |
+| 500 | `PRISMA_<code>` | Lỗi Prisma chưa có mapping riêng. |
+| 503 | `DATABASE_AUTH_FAILED` / `DATABASE_UNAVAILABLE` | Database sai thông tin xác thực hoặc tạm thời không kết nối được. |
+
+Lỗi nghiệp vụ/điều kiện bổ sung từ service:
 
 | HTTP | Code | Trigger |
 |---|---|---|
@@ -656,73 +816,3 @@ Tổng: 16 endpoint, 0 implemented, depends Module 4 OwnershipGuard.
 | 404 | `NOT_FOUND` | User không tồn tại hoặc đã soft-deleted. |
 | 409 | `USER_IS_SELF` | Client xóa chính mình (`:id === JWT.sub`). |
 | 409 | `USER_IS_LAST_OWNER` | User là Owner duy nhất còn `deleted_at IS NULL`. |
-
-**Audit:** `user.delete` với `before_data` = user snapshot. Cascade rows audit qua module liên quan (vd `member.delete`, `subscription.cancel` theo Architecture §4.4.1).
-
-**WHEN-THEN-ELSE:**
-
-- WHEN `:id === JWT.sub` → 409 `USER_IS_SELF`. Owner muốn tự "off-board" phải có Owner khác xóa.
-- WHEN user là Owner duy nhất (`SELECT COUNT(*) FROM user_groups ug JOIN groups g ON ug.groupId = g.groupId WHERE g.name='owner' AND ug.deletedAt IS NULL = 1`) → 409 `USER_IS_LAST_OWNER`.
-- WHEN user có member profile → cascade soft-delete `members.deleted_at` + active subscription → `cancelled`. Audit cascade rows.
-- WHEN user có staff profile → cascade soft-delete `staff.deleted_at`. Audit `staff.delete`.
-- WHEN user.email login sau khi `deleted_at IS NOT NULL` → UC00 step 4d generic 401 + audit `auth.login {success: false, reason: 'user_deleted'}` (Architecture §4.4.1 v1.1.5).
-- ELSE soft delete + cascade.
-
----
-
-## 5. Error Codes Appendix
-
-Standard codes (9): xem [`conventions.md §6`](./conventions.md).
-
-Domain-specific Module 2:
-
-| Code | HTTP | Module | Trigger |
-|---|---|---|---|
-| `GROUP_HAS_USERS` | 409 | Group | Soft delete group còn user assigned. |
-| `GROUP_IS_SYSTEM` | 409 | Group | Xóa/rename system group. |
-| `USER_NEEDS_AT_LEAST_ONE_GROUP` | 409 | User-Group | Remove last group khỏi user. |
-| `USER_IS_SELF` | 409 | User | Delete chính JWT subject. |
-| `USER_IS_LAST_OWNER` | 409 | User | Delete owner duy nhất. |
-| `STATUS_LOCKED_FORBIDDEN` | 400 | User | Client cố set `status='locked'` v1.0. |
-
-## 6. Audit Action Codes Used
-
-Module 2 dùng các audit action sau (Architecture §4.4.1):
-
-| Code | Architecture status | Trigger |
-|---|---|---|
-| `group.create` | Listed | §4.5 |
-| `group.update` | Listed | §4.6 |
-| `group.delete` | Listed | §4.7 |
-| `group.assign-permission` | Listed | §4.8 |
-| `group.revoke-permission` | **DRIFT — chưa list** | §4.9 |
-| `user.assign-group` | **DRIFT — chưa list** | §4.13 |
-| `user.revoke-group` | **DRIFT — chưa list** | §4.14 |
-| `user.update` | Listed (Module column generic) | §4.15 |
-| `user.delete` | Listed (cascade member/staff) | §4.16 |
-
-3 drift mới flag để Architecture v1.1.6 thêm vào row Permission/User audit list.
-
-## 7. Implementation Status
-
-| Endpoint | Status | Note |
-|---|---|---|
-| All 16 | NOT IMPLEMENTED | PR scaffold cùng Module 4. Reuse `OwnershipGuard` (Module 4) + thêm `PermissionGuard` mới. |
-
-`PermissionGuard` design hint:
-
-- Decorator `@RequirePermission('rbac.manage')` per route.
-- Guard load user permissions từ JWT (defer v1.1 sẽ embed permission list trong JWT payload để tránh DB lookup per request) HOẶC query realtime qua `user_groups → groups → group_permissions` (v1.0 default — đơn giản, chấp nhận latency).
-- v1.0 cache user permissions trong-memory 60s sau lookup đầu để giảm load.
-
-## 8. Cross-module Dependencies
-
-- **Module 1** Auth: `JwtAuthGuard` global apply. Endpoint Module 2 không reset auth.
-- **Module 4** Member: `DELETE /users/:id` cascade `members.deleted_at`. Module 4 phải implement OwnershipGuard pattern trước, Module 2 dùng lại.
-- **Module 5** Staff (stub): `DELETE /users/:id` cascade `staff.deleted_at`. Endpoint `/staff` riêng cho profile CRUD.
-
-## 9. Changelog
-
-| Version | Date | Author | Changes |
-|---|---|---|---|
-| 1.0.0 | 2026-05-17 | Lê Thanh An | Initial draft phase 10 — 16 endpoint, derive permission catalog từ `seed.ts` (35 codes, 4 group). 3 audit code drift flag (group.revoke-permission, user.assign-group, user.revoke-group). |

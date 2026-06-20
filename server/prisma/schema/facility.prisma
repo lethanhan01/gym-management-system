@@ -1,0 +1,59 @@
+model GymRoom {
+  roomId           BigInt            @id @default(autoincrement()) @map("room_id")
+  roomCode         String            @unique @map("room_code") @db.VarChar(30)
+  name             String            @db.VarChar(100)
+  roomType         String?           @map("room_type") @db.VarChar(50)
+  capacity         Int
+  description      String?           @db.VarChar(255)
+  equipment        Equipment[]
+  trainingSessions TrainingSession[]
+
+  @@map("gym_rooms")
+}
+
+model Equipment {
+  equipmentId       BigInt           @id @default(autoincrement()) @map("equipment_id")
+  roomId            BigInt           @map("room_id")
+  equipmentCode     String           @unique @map("equipment_code") @db.VarChar(30)
+  name              String           @db.VarChar(100)
+  importDate        DateTime         @map("import_date") @db.Date
+  warrantyUntil     DateTime?        @map("warranty_until") @db.Date
+  status            EquipmentStatus
+  room              GymRoom          @relation(fields: [roomId], references: [roomId])
+  feedbackAboutThis Feedback[]       @relation("FeedbackSubjectEquipment")
+  maintenanceLogs   MaintenanceLog[]
+
+  @@map("equipment")
+}
+
+model MaintenanceLog {
+  maintenanceId     BigInt            @id @default(autoincrement()) @map("maintenance_id")
+  equipmentId       BigInt            @map("equipment_id")
+  reportedByStaffId BigInt            @map("reported_by_staff_id")
+  description       String
+  status            MaintenanceStatus
+  reportedAt        DateTime          @map("reported_at") @db.Timestamp(6)
+  resolvedAt        DateTime?         @map("resolved_at") @db.Timestamp(6)
+  equipment         Equipment         @relation(fields: [equipmentId], references: [equipmentId])
+  reportedByStaff   Staff             @relation(fields: [reportedByStaffId], references: [staffId])
+
+  @@map("maintenance_logs")
+}
+
+enum EquipmentStatus {
+  active
+  broken
+  repairing
+  retired
+
+  @@map("equipment_status")
+}
+
+enum MaintenanceStatus {
+  reported
+  repairing
+  resolved
+  failed
+
+  @@map("maintenance_status")
+}

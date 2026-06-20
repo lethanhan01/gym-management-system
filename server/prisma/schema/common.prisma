@@ -1,0 +1,43 @@
+model AuditLog {
+  auditId      BigInt   @id @default(autoincrement()) @map("audit_id")
+  actorUserId  BigInt?  @map("actor_user_id")
+  action       String   @db.VarChar(100)
+  resourceType String   @map("resource_type") @db.VarChar(50)
+  resourceId   String?  @map("resource_id") @db.VarChar(50)
+  beforeData   Json?    @map("before_data")
+  afterData    Json?    @map("after_data")
+  ipAddress    String?  @map("ip_address") @db.VarChar(45)
+  userAgent    String?  @map("user_agent") @db.VarChar(500)
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamp(6)
+  actor        User?    @relation(fields: [actorUserId], references: [userId])
+
+  @@index([actorUserId, createdAt(sort: Desc)])
+  @@index([resourceType, resourceId, createdAt(sort: Desc)])
+  @@index([action, createdAt(sort: Desc)])
+  @@map("audit_logs")
+}
+
+model File {
+  fileId      BigInt    @id @default(autoincrement()) @map("file_id")
+  ownerUserId BigInt    @map("owner_user_id")
+  fileType    FileType  @map("file_type")
+  storagePath String    @map("storage_path") @db.VarChar(500)
+  publicUrl   String?   @map("public_url") @db.VarChar(1000)
+  mimeType    String    @map("mime_type") @db.VarChar(100)
+  sizeBytes   BigInt    @map("size_bytes")
+  deletedAt   DateTime? @map("deleted_at") @db.Timestamp(6)
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamp(6)
+  owner       User      @relation("FileOwner", fields: [ownerUserId], references: [userId])
+  avatarOf    User[]    @relation("UserAvatar")
+
+  @@index([ownerUserId, fileType])
+  @@map("files")
+}
+
+enum FileType {
+  avatar
+  document
+  equipment_doc
+
+  @@map("file_type")
+}

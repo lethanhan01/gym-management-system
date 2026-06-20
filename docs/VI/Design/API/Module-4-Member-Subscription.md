@@ -1,75 +1,284 @@
 # Module 4 — Member / Subscription / Payment API
 
-| Field | Value |
-|---|---|
-| Document ID | GMS-API-M4-001 |
-| Version | 1.0.0 |
-| Status | Draft |
-| Author | Lê Thanh An (initial draft 2026-05-17) |
-| Reviewers | TBD |
-| Last Updated | 2026-05-17 |
-| Related docs | [`conventions.md`](./conventions.md), [`Architecture.md §3.1, §4.3.3, §4.5.2, §5.2`](../Architecture.md), [`Database.md §USER, MEMBER, SUBSCRIPTION, PAYMENT`](../Database.md), [`SRS_VI.md UC03A, UC03B, UC04A, UC04B, UC06, UC11`](../../VI/SRS_VI.md) |
-
----
-
-## 1. Mục đích & Phạm vi
+## 1. Mục đích module
 
 Module 4 đặc tả endpoint quản lý hội viên + lượt đăng ký gói tập + thanh toán. Bao trùm 5 UC: đăng ký tại quầy (UC03A), đăng ký online (UC03B), gia hạn gói (UC04A), hủy gói (UC04B), theo dõi tiến độ (UC06). Subset UC11 (quản lý hội viên: list/update/delete) cũng nằm ở đây để giữ resource group nhất quán; quản lý nhân sự thuộc Module 5 Staff.
 
-In-scope: 14 endpoint chia 3 resource (Members 8 / Subscriptions 4 / Payments 2).
+## 2. Danh sách các API của module
 
-Out-of-scope:
+| STT | Method | Endpoint |
+|---:|---|---|
+| 1 | `GET` | `/api/v1/members/me` |
+| 2 | `PATCH` | `/api/v1/members/me` |
+| 3 | `GET` | `/api/v1/members/me/trainers` |
+| 4 | `PATCH` | `/api/v1/members/me/trainer` |
+| 5 | `POST` | `/api/v1/members/me/progress` |
+| 6 | `GET` | `/api/v1/members` |
+| 7 | `GET` | `/api/v1/members/:id` |
+| 8 | `POST` | `/api/v1/members` |
+| 9 | `POST` | `/api/v1/members/self-register` |
+| 10 | `PATCH` | `/api/v1/members/:id` |
+| 11 | `DELETE` | `/api/v1/members/:id` |
+| 12 | `PATCH` | `/api/v1/members/:id/assign-trainer` |
+| 13 | `GET` | `/api/v1/subscriptions` |
+| 14 | `GET` | `/api/v1/subscriptions/member/:memberId` |
+| 15 | `POST` | `/api/v1/subscriptions` |
+| 16 | `PATCH` | `/api/v1/subscriptions/:id/cancel` |
+| 17 | `POST` | `/api/v1/subscriptions/:id/renew` |
+| 18 | `GET` | `/api/v1/subscriptions/:id` |
+| 19 | `POST` | `/api/v1/payments` |
+| 20 | `GET` | `/api/v1/payments` |
+| 21 | `GET` | `/api/v1/members/:memberId/payment-accounts` |
+| 22 | `POST` | `/api/v1/members/:memberId/payment-accounts` |
+| 23 | `PATCH` | `/api/v1/members/:memberId/payment-accounts/:accountId` |
+| 24 | `DELETE` | `/api/v1/members/:memberId/payment-accounts/:accountId` |
 
-- Package CRUD (Module 3). Module 4 chỉ tham chiếu `packages.package_id` qua FK.
-- Trainer assign + Staff management (Module 5).
-- Training sessions, attendance logs (Module 7).
-- Refund flow (defer v1.1 — không có UC v1.0).
-- Upgrade/downgrade giữa kỳ (defer v1.1+ — Architecture ADR-009).
+### 2.1 `GET /members/me`
 
-## 2. Endpoint Inventory
+**API method:** `GET`
 
-### Members
+**Endpoint URL:** `/api/v1/members/me`
 
-| # | Method | Path | UC | Auth | RBAC |
-|---|---|---|---|---|---|
-| 1 | GET | `/members` | UC11 list | JWT | Owner, Staff |
-| 2 | GET | `/members/:id` | — | JWT | Owner, Staff, PT-if-primary, Self |
-| 3 | POST | `/members` | UC03A | JWT | Staff |
-| 4 | POST | `/members/self-register` | UC03B | Public | — |
-| 5 | PATCH | `/members/:id` | UC11 update | JWT | Owner, Staff, Self (limited) |
-| 6 | DELETE | `/members/:id` | UC11 delete | JWT | Owner |
-| 7 | PATCH | `/members/:id/assign-trainer` | UC11 | JWT | Owner, Staff |
-| 8 | GET | `/members/:id/progress` | UC06 | JWT | Owner, Staff, PT-if-primary, Self |
+**Mô tả:** Member lấy profile của chính mình. Không cần permission đặc biệt — chỉ cần JWT hợp lệ có `memberId`.
 
-### Subscriptions
+Auth: JWT Quyền: Authenticated
 
-| # | Method | Path | UC | Auth | RBAC |
-|---|---|---|---|---|---|
-| 9 | GET | `/subscriptions` | — | JWT | Owner, Staff, Self (`memberId` filter) |
-| 10 | POST | `/subscriptions` | UC03A/B, UC04A | JWT | Staff |
-| 11 | PATCH | `/subscriptions/:id/cancel` | UC04B | JWT | Owner, Staff, Self |
-| 12 | GET | `/subscriptions/:id` | — | JWT | Owner, Staff, Self |
+**Request body:**
 
-### Payments
+Không có request body.
 
-| # | Method | Path | UC | Auth | RBAC |
-|---|---|---|---|---|---|
-| 13 | POST | `/payments` | UC03A/B, UC04A | JWT | Staff |
-| 14 | GET | `/payments` | — | JWT | Owner, Staff, Self (`memberId` filter) |
+**Response body:**
 
----
+HTTP 200.
 
-## 3. Members
+Cùng shape với GET /members/:id.
 
-### 3.1 GET /members
+**Error:**
 
-**UC:** UC11 (list member để quản lý)
-**Auth:** JWT
-**RBAC:** Owner, Staff
+| HTTP status | Mã lỗi | Điều kiện xảy ra |
+|---:|---|---|
+| 401 | `UNAUTHORIZED` | Thiếu JWT, JWT sai hoặc hết hạn. |
+| 404 | `NOT_FOUND` | Resource được tham chiếu không tồn tại hoặc đã bị xóa. |
+| 500 | `INTERNAL_SERVER_ERROR` | Lỗi nội bộ không được ánh xạ sang lỗi nghiệp vụ cụ thể. |
+| 500 | `PRISMA_<code>` | Lỗi Prisma chưa có mapping riêng. |
+| 503 | `DATABASE_AUTH_FAILED` / `DATABASE_UNAVAILABLE` | Database sai thông tin xác thực hoặc tạm thời không kết nối được. |
 
-**Description:** List hội viên với pagination + filter. Mặc định ẩn `deleted_at IS NOT NULL`.
+Lỗi nghiệp vụ/điều kiện bổ sung từ service:
 
-**Query params:**
+| Status | Code | Khi nào |
+|---|---|---|
+| 401 | `UNAUTHORIZED` | JWT thiếu |
+| 404 | `NOT_FOUND` | JWT hợp lệ nhưng user không gắn với hội viên nào (`memberId` null) |
+
+### 2.2 `PATCH /members/me`
+
+**API method:** `PATCH`
+
+**Endpoint URL:** `/api/v1/members/me`
+
+**Mô tả:** Member cập nhật profile của chính mình. Giới hạn field giống `PATCH /members/:id` khi Self caller (§3.5).
+
+Auth: JWT Quyền: Authenticated
+
+**Request body:**
+
+| Field | Type | Required | Constraint |
+|---|---|---|---|
+| `fullName` | string | no | `@Length(2, 100)` |
+| `phone` | string | no | — |
+| `dateOfBirth` | string (YYYY-MM-DD) | no | `@IsDateString` |
+| `address` | string | no | `@Length(0, 200)` |
+
+**Response body:**
+
+HTTP 200.
+
+Trả member object đầy đủ.
+
+**Error:**
+
+| HTTP status | Mã lỗi | Điều kiện xảy ra |
+|---:|---|---|
+| 401 | `UNAUTHORIZED` | Thiếu JWT, JWT sai hoặc hết hạn. |
+| 400 | `BAD_REQUEST` | Request body bị `ValidationPipe` từ chối. Service có thể trả `VALIDATION_ERROR` cho business validation. |
+| 404 | `NOT_FOUND` | Resource được tham chiếu không tồn tại hoặc đã bị xóa. |
+| 409 | `CONFLICT` | Trạng thái resource hoặc ràng buộc nghiệp vụ xung đột; mã cụ thể ghi bên dưới. |
+| 500 | `INTERNAL_SERVER_ERROR` | Lỗi nội bộ không được ánh xạ sang lỗi nghiệp vụ cụ thể. |
+| 500 | `PRISMA_<code>` | Lỗi Prisma chưa có mapping riêng. |
+| 503 | `DATABASE_AUTH_FAILED` / `DATABASE_UNAVAILABLE` | Database sai thông tin xác thực hoặc tạm thời không kết nối được. |
+
+Lỗi nghiệp vụ/điều kiện bổ sung từ service:
+
+| Status | Code | Khi nào |
+|---|---|---|
+| 400 | `VALIDATION_ERROR` | Body sai format |
+| 401 | `UNAUTHORIZED` | JWT thiếu |
+| 404 | `NOT_FOUND` | JWT không gắn với hội viên |
+| 409 | `DUPLICATE_VALUE` | Phone đã tồn tại ở user khác |
+
+### 2.3 `GET /members/me/trainers`
+
+**API method:** `GET`
+
+**Endpoint URL:** `/api/v1/members/me/trainers`
+
+**Mô tả:** Lấy danh sách PT khả dụng mà member có thể tự chọn (tự gán). Không cần permission đặc biệt.
+
+Auth: JWT Quyền: Authenticated
+
+**Request body:**
+
+Không có request body.
+
+**Response body:**
+
+HTTP 200.
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "staffId": "3",
+      "fullName": "Phạm PT C",
+      "specialization": "Strength & Conditioning"
+    }
+  ]
+}
+```
+
+**Error:**
+
+| HTTP status | Mã lỗi | Điều kiện xảy ra |
+|---:|---|---|
+| 401 | `UNAUTHORIZED` | Thiếu JWT, JWT sai hoặc hết hạn. |
+| 500 | `INTERNAL_SERVER_ERROR` | Lỗi nội bộ không được ánh xạ sang lỗi nghiệp vụ cụ thể. |
+| 500 | `PRISMA_<code>` | Lỗi Prisma chưa có mapping riêng. |
+| 503 | `DATABASE_AUTH_FAILED` / `DATABASE_UNAVAILABLE` | Database sai thông tin xác thực hoặc tạm thời không kết nối được. |
+
+Lỗi nghiệp vụ/điều kiện bổ sung từ service:
+
+| Status | Code | Khi nào |
+|---|---|---|
+| 401 | `UNAUTHORIZED` | JWT thiếu |
+
+### 2.4 `PATCH /members/me/trainer`
+
+**API method:** `PATCH`
+
+**Endpoint URL:** `/api/v1/members/me/trainer`
+
+**Mô tả:** Member tự gán hoặc hủy PT của mình. Khác với `PATCH /members/:id/assign-trainer` (yêu cầu `member.update` permission — Staff/Owner only), endpoint này cho phép member tự chọn.
+
+Auth: JWT Quyền: Authenticated
+
+**Request body:**
+
+| Field | Type | Required | Constraint |
+|---|---|---|---|
+| `trainerId` | integer \| null | no | FK `staff.staff_id`; `null` để hủy gán |
+
+```json
+{ "trainerId": 3 }
+```
+
+Gửi `{ "trainerId": null }` hoặc omit field để hủy gán PT.
+
+**Response body:**
+
+HTTP 200.
+
+Trả member object sau khi update.
+
+**Error:**
+
+| HTTP status | Mã lỗi | Điều kiện xảy ra |
+|---:|---|---|
+| 401 | `UNAUTHORIZED` | Thiếu JWT, JWT sai hoặc hết hạn. |
+| 400 | `BAD_REQUEST` | Request body bị `ValidationPipe` từ chối. Service có thể trả `VALIDATION_ERROR` cho business validation. |
+| 500 | `INTERNAL_SERVER_ERROR` | Lỗi nội bộ không được ánh xạ sang lỗi nghiệp vụ cụ thể. |
+| 500 | `PRISMA_<code>` | Lỗi Prisma chưa có mapping riêng. |
+| 503 | `DATABASE_AUTH_FAILED` / `DATABASE_UNAVAILABLE` | Database sai thông tin xác thực hoặc tạm thời không kết nối được. |
+
+Lỗi nghiệp vụ/điều kiện bổ sung từ service:
+
+| Status | Code | Khi nào |
+|---|---|---|
+| 401 | `UNAUTHORIZED` | JWT thiếu |
+| 400 | `FK_CONSTRAINT` | `trainerId` không tồn tại hoặc không phải PT |
+
+### 2.5 `POST /members/me/progress`
+
+**API method:** `POST`
+
+**Endpoint URL:** `/api/v1/members/me/progress`
+
+**Mô tả:** Member tự ghi cân nặng và chiều cao. Không cần permission đặc biệt. Khác với POST progress do Staff/Trainer ghi (Module 7).
+
+Auth: JWT Quyền: Authenticated
+
+**Request body:**
+
+| Field | Type | Required | Constraint |
+|---|---|---|---|
+| `weight` | number | yes | `@Min(1)` `@Max(500)` — kg |
+| `height` | number | no | `@Min(50)` `@Max(300)` — cm |
+
+```json
+{ "weight": 68.5, "height": 172 }
+```
+
+**Response body:**
+
+HTTP 201.
+
+```json
+{
+  "success": true,
+  "data": {
+    "progressId": "45",
+    "memberId": "5",
+    "weight": 68.5,
+    "height": 172,
+    "recordedAt": "2026-06-19T08:00:00.000Z"
+  }
+}
+```
+
+**Error:**
+
+| HTTP status | Mã lỗi | Điều kiện xảy ra |
+|---:|---|---|
+| 401 | `UNAUTHORIZED` | Thiếu JWT, JWT sai hoặc hết hạn. |
+| 400 | `BAD_REQUEST` | Request body bị `ValidationPipe` từ chối. Service có thể trả `VALIDATION_ERROR` cho business validation. |
+| 404 | `NOT_FOUND` | Resource được tham chiếu không tồn tại hoặc đã bị xóa. |
+| 500 | `INTERNAL_SERVER_ERROR` | Lỗi nội bộ không được ánh xạ sang lỗi nghiệp vụ cụ thể. |
+| 500 | `PRISMA_<code>` | Lỗi Prisma chưa có mapping riêng. |
+| 503 | `DATABASE_AUTH_FAILED` / `DATABASE_UNAVAILABLE` | Database sai thông tin xác thực hoặc tạm thời không kết nối được. |
+
+Lỗi nghiệp vụ/điều kiện bổ sung từ service:
+
+| Status | Code | Khi nào |
+|---|---|---|
+| 400 | `VALIDATION_ERROR` | Body sai format / weight out of range |
+| 401 | `UNAUTHORIZED` | JWT thiếu |
+| 404 | `NOT_FOUND` | JWT không gắn với hội viên |
+
+### 2.6 `GET /members`
+
+**API method:** `GET`
+
+**Endpoint URL:** `/api/v1/members`
+
+**Mô tả:** List hội viên với pagination + filter. Mặc định ẩn `deleted_at IS NOT NULL`.
+
+Auth: JWT Quyền: member.read
+
+**Request body:**
+
+Không có request body.
+
+**Query parameters:**
 
 | Param | Type | Required | Default | Constraint |
 |---|---|---|---|---|
@@ -81,7 +290,9 @@ Out-of-scope:
 | `search` | string | no | — | match `member_code` ILIKE / `full_name` ILIKE |
 | `includeDeleted` | boolean | no | false | chỉ Owner — bao gồm soft-deleted |
 
-**Response 200 OK:**
+**Response body:**
+
+HTTP 200.
 
 ```json
 {
@@ -105,7 +316,17 @@ Out-of-scope:
 }
 ```
 
-**Errors:**
+**Error:**
+
+| HTTP status | Mã lỗi | Điều kiện xảy ra |
+|---:|---|---|
+| 401 | `UNAUTHORIZED` | Thiếu JWT, JWT sai hoặc hết hạn. |
+| 403 | `FORBIDDEN` | Người gọi thiếu permission hoặc không thỏa điều kiện ownership ghi trong mô tả. |
+| 500 | `INTERNAL_SERVER_ERROR` | Lỗi nội bộ không được ánh xạ sang lỗi nghiệp vụ cụ thể. |
+| 500 | `PRISMA_<code>` | Lỗi Prisma chưa có mapping riêng. |
+| 503 | `DATABASE_AUTH_FAILED` / `DATABASE_UNAVAILABLE` | Database sai thông tin xác thực hoặc tạm thời không kết nối được. |
+
+Lỗi nghiệp vụ/điều kiện bổ sung từ service:
 
 | Status | Code | Khi nào |
 |---|---|---|
@@ -113,33 +334,25 @@ Out-of-scope:
 | 401 | `UNAUTHORIZED` | JWT thiếu |
 | 403 | `FORBIDDEN` | Role không phải Owner/Staff / `includeDeleted=true` mà role không phải Owner |
 
-**Business rules:**
+### 2.7 `GET /members/:id`
 
-```text
-WHEN role là Staff (không phải Owner)
-THEN ignore param includeDeleted, query luôn filter deleted_at IS NULL
-ELSE Owner có thể set includeDeleted=true để xem soft-deleted
+**API method:** `GET`
 
-WHEN trainerId provided
-THEN filter WHERE primary_trainer_id = trainerId AND deleted_at IS NULL
-ELSE no trainer filter
-```
+**Endpoint URL:** `/api/v1/members/:id`
 
-**Audit:** Không (GET).
+**Mô tả:** Lấy chi tiết 1 hội viên. PT chỉ thấy nếu là `primary_trainer_id`. Member chỉ thấy chính mình.
 
----
+Auth: JWT Quyền: Authenticated
 
-### 3.2 GET /members/:id
+**Request body:**
 
-**UC:** —
-**Auth:** JWT
-**RBAC:** Owner, Staff, PT-if-primary, Self
+Không có request body.
 
-**Description:** Lấy chi tiết 1 hội viên. PT chỉ thấy nếu là `primary_trainer_id`. Member chỉ thấy chính mình.
+**Path parameters:** `id` — số nguyên dương; sai định dạng trả 400.
 
-**Path param:** `id` = `member_id` (string BigInt).
+**Response body:**
 
-**Response 200 OK:**
+HTTP 200.
 
 ```json
 {
@@ -162,7 +375,19 @@ ELSE no trainer filter
 }
 ```
 
-**Errors:**
+**Error:**
+
+| HTTP status | Mã lỗi | Điều kiện xảy ra |
+|---:|---|---|
+| 401 | `UNAUTHORIZED` | Thiếu JWT, JWT sai hoặc hết hạn. |
+| 400 | `BAD_REQUEST` | Path parameter hoặc dữ liệu do `ValidationPipe`/`ParseIntPipe` từ chối. |
+| 403 | `FORBIDDEN` | Thiếu quyền hoặc vi phạm ownership/business access; điều kiện cụ thể ghi bên dưới. |
+| 404 | `NOT_FOUND` | Resource được tham chiếu không tồn tại hoặc đã bị xóa. |
+| 500 | `INTERNAL_SERVER_ERROR` | Lỗi nội bộ không được ánh xạ sang lỗi nghiệp vụ cụ thể. |
+| 500 | `PRISMA_<code>` | Lỗi Prisma chưa có mapping riêng. |
+| 503 | `DATABASE_AUTH_FAILED` / `DATABASE_UNAVAILABLE` | Database sai thông tin xác thực hoặc tạm thời không kết nối được. |
+
+Lỗi nghiệp vụ/điều kiện bổ sung từ service:
 
 | Status | Code | Khi nào |
 |---|---|---|
@@ -170,60 +395,46 @@ ELSE no trainer filter
 | 403 | `FORBIDDEN` | OwnershipGuard reject (PT không phải primary, hoặc Member khác Self) |
 | 404 | `NOT_FOUND` | `member_id` không tồn tại hoặc `deleted_at IS NOT NULL` (trừ Owner có `?includeDeleted=true`) |
 
-**Business rules:**
+### 2.8 `POST /members`
 
-```text
-WHEN role là Owner hoặc Staff
-THEN bypass ownership, trả resource
-ELSE check ownership
+**API method:** `POST`
 
-WHEN role là PT
-THEN check member.primary_trainer_id = self.staff_id
-ELSE proceed
+**Endpoint URL:** `/api/v1/members`
 
-WHEN role là Member
-THEN check member.user_id = jwt.sub
-ELSE 403
+**Mô tả:** Staff tạo tài khoản hội viên mới tại quầy. Sinh `member_code` tự động (`MEM-YYYY-XXXXXX`). User tạo với `status='pending_verification'`; gửi OTP email verify (UC13). Subscription + Payment KHÔNG tạo cùng request — Staff gọi `POST /subscriptions` + `POST /payments` riêng sau khi member verify email (Architecture decision: tách atomic per-resource).
 
-WHEN member.deleted_at IS NOT NULL AND không phải Owner with includeDeleted=true
-THEN 404
-```
-
-**Audit:** Không (GET).
-
----
-
-### 3.3 POST /members
-
-**UC:** UC03A — Đăng ký tại quầy
-**Auth:** JWT
-**RBAC:** Staff
-
-**Description:** Staff tạo tài khoản hội viên mới tại quầy. Sinh `member_code` tự động (`MEM-YYYY-XXXXXX`). User tạo với `status='pending_verification'`; gửi OTP email verify (UC13). Subscription + Payment KHÔNG tạo cùng request — Staff gọi `POST /subscriptions` + `POST /payments` riêng sau khi member verify email (Architecture decision: tách atomic per-resource).
+Auth: JWT Quyền: member.create
 
 **Request body:**
 
 | Field | Type | Required | Constraint |
 |---|---|---|---|
 | `email` | string | yes | `@IsEmail` UNIQUE |
-| `phone` | string | no | `@IsPhoneNumber('VN')` UNIQUE khi có giá trị |
-| `password` | string | yes | `@MinLength(8)` |
-| `fullName` | string | yes | `@Length(2, 200)` |
-| `dateOfBirth` | string (YYYY-MM-DD) | no | `@IsDateString` |
-| `address` | string | no | `@MaxLength(200)` |
+| `password` | string | yes | `@Length(8, 100)` |
+| `fullName` | string | yes | `@Length(2, 100)` |
+| `phone` | string | no | optional |
+| `dateOfBirth` | string (YYYY-MM-DD) | yes | `@IsDateString` |
+| `address` | string | no | `@Length(0, 200)` |
+| `packageId` | integer | yes | FK `packages.package_id` |
+| `paymentMethod` | enum | yes | `cash`, `bank_card`, `ewallet` |
+| `transactionReference` | string | no | — |
 
 ```json
 {
   "email": "newmember@gym.local",
-  "phone": "+84901234567",
   "password": "InitPass123!",
   "fullName": "Nguyễn Văn A",
+  "phone": "+84901234567",
   "dateOfBirth": "1995-06-15",
-  "address": "12 Lê Lợi, Q1"
+  "address": "12 Lê Lợi, Q1",
+  "packageId": 3,
+  "paymentMethod": "cash"
 }
 ```
 
-**Response 201 Created:**
+**Response body:**
+
+HTTP 201.
 
 ```json
 {
@@ -240,7 +451,19 @@ THEN 404
 }
 ```
 
-**Errors:**
+**Error:**
+
+| HTTP status | Mã lỗi | Điều kiện xảy ra |
+|---:|---|---|
+| 401 | `UNAUTHORIZED` | Thiếu JWT, JWT sai hoặc hết hạn. |
+| 403 | `FORBIDDEN` | Người gọi thiếu permission hoặc không thỏa điều kiện ownership ghi trong mô tả. |
+| 400 | `BAD_REQUEST` | Request body bị `ValidationPipe` từ chối. Service có thể trả `VALIDATION_ERROR` cho business validation. |
+| 409 | `CONFLICT` | Trạng thái resource hoặc ràng buộc nghiệp vụ xung đột; mã cụ thể ghi bên dưới. |
+| 500 | `INTERNAL_SERVER_ERROR` | Lỗi nội bộ không được ánh xạ sang lỗi nghiệp vụ cụ thể. |
+| 500 | `PRISMA_<code>` | Lỗi Prisma chưa có mapping riêng. |
+| 503 | `DATABASE_AUTH_FAILED` / `DATABASE_UNAVAILABLE` | Database sai thông tin xác thực hoặc tạm thời không kết nối được. |
+
+Lỗi nghiệp vụ/điều kiện bổ sung từ service:
 
 | Status | Code | Khi nào |
 |---|---|---|
@@ -250,72 +473,42 @@ THEN 404
 | 409 | `DUPLICATE_VALUE` | Email hoặc phone đã tồn tại (P2002) |
 | 500 | `MEMBER_CODE_GENERATION_FAILED` | Retry 5 lần sinh `member_code` đều collision |
 
-**Business rules:**
+### 2.9 `POST /members/self-register`
 
-```text
-WHEN email hoặc phone đã tồn tại trong users
-THEN 409 DUPLICATE_VALUE
-ELSE proceed
+**API method:** `POST`
 
-WHEN sinh member_code 5 lần đều collision
-THEN 500 MEMBER_CODE_GENERATION_FAILED
-ELSE proceed
+**Endpoint URL:** `/api/v1/members/self-register`
 
-WHEN proceed
-THEN $transaction(
-  INSERT users (status='pending_verification', password_hash=bcrypt(password, 12));
-  INSERT members (user_id, member_code);
-  INSERT user_groups (group='member');
-  INSERT otp_codes (purpose='email_verify', expires_at=NOW()+10min);
-  INSERT audit_logs (action='member.create')
-)
-AND log OTP stdout v1.0 (TODO: gửi email khi SMTP ready)
-```
+**Mô tả:** Member tự đăng ký không cần Staff. Tạo user + member + OTP verify email. Optional: tạo subscription `pending` với `packageId` chọn từ landing page; subscription chuyển `active` sau khi member pay (cron daily 00:10 `subscription:activate-pending`) hoặc cancel sau 24-48h nếu chưa pay (cron `subscription:cancel-unpaid-pending`).
 
-**Audit:** `member.create`. `before_data` NULL, `after_data` = member + user shape (mask `password_hash`).
-
-**Rate limit:** Không.
-
-**Notes:**
-
-- `member_code` format `MEM-{YYYY}-{6 digits}`, năm hiện tại (`today_vn`). Random 6 digits + retry collision (conventions §12).
-- Password hash bcrypt cost 12 (cùng pattern `auth.service.ts:97`).
-- OTP gửi qua email pending SMTP integration (Architecture §8 R8). V1.0 log stdout.
-- Member group ID lookup từ `groups WHERE name='member'` (seed data).
-
----
-
-### 3.4 POST /members/self-register
-
-**UC:** UC03B — Đăng ký online (member tự đăng ký từ landing page)
-**Auth:** Public
-**RBAC:** —
-
-**Description:** Member tự đăng ký không cần Staff. Tạo user + member + OTP verify email. Optional: tạo subscription `pending` với `packageId` chọn từ landing page; subscription chuyển `active` sau khi member pay (cron daily 00:10 `subscription:activate-pending`) hoặc cancel sau 24-48h nếu chưa pay (cron `subscription:cancel-unpaid-pending`).
+Auth: Public Quyền: Public
 
 **Request body:**
 
 | Field | Type | Required | Constraint |
 |---|---|---|---|
 | `email` | string | yes | `@IsEmail` UNIQUE |
-| `phone` | string | yes | `@IsPhoneNumber('VN')` UNIQUE |
-| `password` | string | yes | `@MinLength(8)` |
-| `fullName` | string | yes | `@Length(2, 200)` |
-| `dateOfBirth` | string (YYYY-MM-DD) | no | — |
-| `packageId` | string | no | FK `packages.package_id`, status='active', `deleted_at IS NULL` |
+| `password` | string | yes | `@Length(8, 100)` |
+| `fullName` | string | yes | `@Length(2, 100)` |
+| `phone` | string | no | optional |
+| `dateOfBirth` | string (YYYY-MM-DD) | no | `@IsDateString` |
+| `address` | string | no | `@Length(0, 200)` |
+| `packageId` | integer | no | FK `packages.package_id`, status='active', `deleted_at IS NULL` |
 
 ```json
 {
   "email": "selfreg@gym.local",
-  "phone": "+84909999999",
   "password": "MyPass123!",
   "fullName": "Trần Thị B",
+  "phone": "+84909999999",
   "dateOfBirth": "1998-03-22",
-  "packageId": "3"
+  "packageId": 3
 }
 ```
 
-**Response 201 Created:**
+**Response body:**
+
+HTTP 201.
 
 ```json
 {
@@ -337,7 +530,17 @@ AND log OTP stdout v1.0 (TODO: gửi email khi SMTP ready)
 
 `subscription` null nếu không truyền `packageId`.
 
-**Errors:**
+**Error:**
+
+| HTTP status | Mã lỗi | Điều kiện xảy ra |
+|---:|---|---|
+| 400 | `BAD_REQUEST` | Request body bị `ValidationPipe` từ chối. Service có thể trả `VALIDATION_ERROR` cho business validation. |
+| 409 | `CONFLICT` | Trạng thái resource hoặc ràng buộc nghiệp vụ xung đột; mã cụ thể ghi bên dưới. |
+| 500 | `INTERNAL_SERVER_ERROR` | Lỗi nội bộ không được ánh xạ sang lỗi nghiệp vụ cụ thể. |
+| 500 | `PRISMA_<code>` | Lỗi Prisma chưa có mapping riêng. |
+| 503 | `DATABASE_AUTH_FAILED` / `DATABASE_UNAVAILABLE` | Database sai thông tin xác thực hoặc tạm thời không kết nối được. |
+
+Lỗi nghiệp vụ/điều kiện bổ sung từ service:
 
 | Status | Code | Khi nào |
 |---|---|---|
@@ -346,52 +549,17 @@ AND log OTP stdout v1.0 (TODO: gửi email khi SMTP ready)
 | 409 | `DUPLICATE_VALUE` | Email hoặc phone đã tồn tại |
 | 500 | `MEMBER_CODE_GENERATION_FAILED` | Retry sinh code thất bại |
 
-**Business rules:**
+### 2.10 `PATCH /members/:id`
 
-```text
-WHEN email/phone duplicate
-THEN 409
-ELSE proceed
+**API method:** `PATCH`
 
-WHEN packageId provided
-THEN validate packages.status='active' AND deleted_at IS NULL, fail → 400 FK_CONSTRAINT
-ELSE skip subscription creation
+**Endpoint URL:** `/api/v1/members/:id`
 
-WHEN packageId valid
-THEN $transaction(
-  INSERT users + members + user_groups + otp_codes + audit_logs (member.create);
-  INSERT subscriptions (status='pending', start_date=today_vn, end_date=today_vn + package.durationDays - 1);
-  INSERT audit_logs (action='subscription.create')
-)
-ELSE $transaction(users + members + user_groups + otp_codes + audit_logs)
+**Mô tả:** Cập nhật profile hội viên. Self chỉ được update subset field (`phone`, `address`, `dateOfBirth`, `fullName`); Staff/Owner update mọi field trừ system-managed (`memberId`, `memberCode`, `userId`, `status`).
 
-ALWAYS log OTP stdout v1.0
-```
+Auth: JWT Quyền: Authenticated
 
-**Audit:** `member.create` + (nếu có subscription) `subscription.create`. `actor_user_id` NULL (public endpoint).
-
-**Rate limit:** Không enforce v1.0. CAPTCHA defer v1.1 (Architecture §8 R23).
-
-**Notes:**
-
-- Subscription `start_date = today_vn`, `end_date = start_date + package.duration_days - 1` (inclusive). Architecture §4.5.2 `today_vn`.
-- Subscription ở `pending` → cron daily 00:15 `subscription:cancel-unpaid-pending` cancel nếu sau 24-48h vẫn chưa có `payments WHERE status='success'` (Architecture §5.2 + LOG-M03 fix phase 8).
-- Member phải verify email trước khi login (UC13).
-- `packageId` validate FK constraint qua Prisma — fail → P2003 → 400 (conventions §6).
-
----
-
-### 3.5 PATCH /members/:id
-
-**UC:** UC11 update (Staff/Owner) hoặc Self update profile
-**Auth:** JWT
-**RBAC:** Owner, Staff, Self (limited)
-
-**Description:** Cập nhật profile hội viên. Self chỉ được update subset field (`phone`, `address`, `dateOfBirth`, `fullName`); Staff/Owner update mọi field trừ system-managed (`memberId`, `memberCode`, `userId`, `status`).
-
-**Path param:** `id` = `member_id`.
-
-**Request body (partial):**
+**Request body:**
 
 | Field | Type | Constraint | Self allowed |
 |---|---|---|---|
@@ -405,9 +573,28 @@ ALWAYS log OTP stdout v1.0
 { "phone": "+84901234568", "address": "34 Trần Hưng Đạo, Q1" }
 ```
 
-**Response 200 OK:** Trả member object đầy đủ (giống GET /members/:id).
+**Path parameters:** `id` — số nguyên dương; sai định dạng trả 400.
 
-**Errors:**
+**Response body:**
+
+HTTP 200.
+
+Trả member object đầy đủ (giống GET /members/:id).
+
+**Error:**
+
+| HTTP status | Mã lỗi | Điều kiện xảy ra |
+|---:|---|---|
+| 401 | `UNAUTHORIZED` | Thiếu JWT, JWT sai hoặc hết hạn. |
+| 400 | `BAD_REQUEST` | Path parameter hoặc dữ liệu do `ValidationPipe`/`ParseIntPipe` từ chối. |
+| 403 | `FORBIDDEN` | Thiếu quyền hoặc vi phạm ownership/business access; điều kiện cụ thể ghi bên dưới. |
+| 404 | `NOT_FOUND` | Resource được tham chiếu không tồn tại hoặc đã bị xóa. |
+| 409 | `CONFLICT` | Trạng thái resource hoặc ràng buộc nghiệp vụ xung đột; mã cụ thể ghi bên dưới. |
+| 500 | `INTERNAL_SERVER_ERROR` | Lỗi nội bộ không được ánh xạ sang lỗi nghiệp vụ cụ thể. |
+| 500 | `PRISMA_<code>` | Lỗi Prisma chưa có mapping riêng. |
+| 503 | `DATABASE_AUTH_FAILED` / `DATABASE_UNAVAILABLE` | Database sai thông tin xác thực hoặc tạm thời không kết nối được. |
+
+Lỗi nghiệp vụ/điều kiện bổ sung từ service:
 
 | Status | Code | Khi nào |
 |---|---|---|
@@ -417,40 +604,39 @@ ALWAYS log OTP stdout v1.0
 | 404 | `NOT_FOUND` | `member_id` không tồn tại / soft-deleted |
 | 409 | `DUPLICATE_VALUE` | Phone đã tồn tại ở user khác |
 
-**Business rules:**
+### 2.11 `DELETE /members/:id`
 
-```text
-WHEN role là Self (member tự update)
-THEN whitelist fields = [fullName, phone, dateOfBirth, address]
-AND reject body chứa field khác → 400 VALIDATION_ERROR
-ELSE Owner/Staff full update (trừ system-managed)
+**API method:** `DELETE`
 
-WHEN body chứa primaryTrainerId
-THEN reject 400, hướng dẫn dùng /assign-trainer endpoint
-ELSE proceed
-```
+**Endpoint URL:** `/api/v1/members/:id`
 
-**Audit:** `member.update`. `before_data` = snapshot trước; `after_data` = snapshot sau. Mask `password_hash` luôn.
+**Mô tả:** Soft-delete hội viên (`deleted_at = NOW()`). KHÔNG cascade subscription/payment — giữ history cho audit/refund. User account `users.deleted_at` cũng set; user mất quyền login.
 
----
+Auth: JWT Quyền: member.delete
 
-### 3.6 DELETE /members/:id
+**Request body:**
 
-**UC:** UC11 delete
-**Auth:** JWT
-**RBAC:** Owner
+Không có request body.
 
-**Description:** Soft-delete hội viên (`deleted_at = NOW()`). KHÔNG cascade subscription/payment — giữ history cho audit/refund. User account `users.deleted_at` cũng set; user mất quyền login.
+**Path parameters:** `id` — số nguyên dương; sai định dạng trả 400.
 
-**Path param:** `id` = `member_id`.
+**Response body:**
 
-**Response 200 OK:**
+HTTP 204 No Content. Không có response body.
 
-```json
-{ "success": true, "message": "Đã xóa hội viên MEM-2026-000005" }
-```
+**Error:**
 
-**Errors:**
+| HTTP status | Mã lỗi | Điều kiện xảy ra |
+|---:|---|---|
+| 401 | `UNAUTHORIZED` | Thiếu JWT, JWT sai hoặc hết hạn. |
+| 403 | `FORBIDDEN` | Người gọi thiếu permission hoặc không thỏa điều kiện ownership ghi trong mô tả. |
+| 400 | `BAD_REQUEST` | Path parameter hoặc dữ liệu do `ValidationPipe`/`ParseIntPipe` từ chối. |
+| 404 | `NOT_FOUND` | Resource được tham chiếu không tồn tại hoặc đã bị xóa. |
+| 500 | `INTERNAL_SERVER_ERROR` | Lỗi nội bộ không được ánh xạ sang lỗi nghiệp vụ cụ thể. |
+| 500 | `PRISMA_<code>` | Lỗi Prisma chưa có mapping riêng. |
+| 503 | `DATABASE_AUTH_FAILED` / `DATABASE_UNAVAILABLE` | Database sai thông tin xác thực hoặc tạm thời không kết nối được. |
+
+Lỗi nghiệp vụ/điều kiện bổ sung từ service:
 
 | Status | Code | Khi nào |
 |---|---|---|
@@ -458,38 +644,15 @@ ELSE proceed
 | 403 | `FORBIDDEN` | Role không phải Owner |
 | 404 | `NOT_FOUND` | `member_id` không tồn tại / đã soft-deleted |
 
-**Business rules:**
+### 2.12 `PATCH /members/:id/assign-trainer`
 
-```text
-WHEN member có active subscription
-THEN soft-delete vẫn proceed; subscription giữ status='active' nhưng UC05B check-in sẽ reject (member.deleted_at IS NOT NULL)
-ELSE proceed
+**API method:** `PATCH`
 
-ALWAYS $transaction(
-  UPDATE members SET deleted_at=NOW() WHERE member_id=?;
-  UPDATE users SET deleted_at=NOW() WHERE user_id=member.user_id;
-  INSERT audit_logs (action='member.delete')
-)
-```
+**Endpoint URL:** `/api/v1/members/:id/assign-trainer`
 
-**Audit:** `member.delete`. `before_data` = snapshot, `after_data` NULL.
+**Mô tả:** Gán hoặc bỏ gán PT chính cho hội viên. PT chính ảnh hưởng UC06 (PT chỉ thấy member mình phụ trách).
 
-**Notes:**
-
-- Cascade soft-delete users — xem Database.md §Cascade Soft Delete Convention.
-- Restore (undo soft-delete) defer v1.1 — không có UC v1.0. Owner cần restore phải edit DB manual.
-
----
-
-### 3.7 PATCH /members/:id/assign-trainer
-
-**UC:** UC11 — gán PT cố định
-**Auth:** JWT
-**RBAC:** Owner, Staff
-
-**Description:** Gán hoặc bỏ gán PT chính cho hội viên. PT chính ảnh hưởng UC06 (PT chỉ thấy member mình phụ trách).
-
-**Path param:** `id` = `member_id`.
+Auth: JWT Quyền: member.update
 
 **Request body:**
 
@@ -501,7 +664,11 @@ ALWAYS $transaction(
 { "trainerId": "3" }
 ```
 
-**Response 200 OK:**
+**Path parameters:** `id` — số nguyên dương; sai định dạng trả 400.
+
+**Response body:**
+
+HTTP 200.
 
 ```json
 {
@@ -514,7 +681,19 @@ ALWAYS $transaction(
 }
 ```
 
-**Errors:**
+**Error:**
+
+| HTTP status | Mã lỗi | Điều kiện xảy ra |
+|---:|---|---|
+| 401 | `UNAUTHORIZED` | Thiếu JWT, JWT sai hoặc hết hạn. |
+| 403 | `FORBIDDEN` | Người gọi thiếu permission hoặc không thỏa điều kiện ownership ghi trong mô tả. |
+| 400 | `BAD_REQUEST` | Path parameter hoặc dữ liệu do `ValidationPipe`/`ParseIntPipe` từ chối. |
+| 404 | `NOT_FOUND` | Resource được tham chiếu không tồn tại hoặc đã bị xóa. |
+| 500 | `INTERNAL_SERVER_ERROR` | Lỗi nội bộ không được ánh xạ sang lỗi nghiệp vụ cụ thể. |
+| 500 | `PRISMA_<code>` | Lỗi Prisma chưa có mapping riêng. |
+| 503 | `DATABASE_AUTH_FAILED` / `DATABASE_UNAVAILABLE` | Database sai thông tin xác thực hoặc tạm thời không kết nối được. |
+
+Lỗi nghiệp vụ/điều kiện bổ sung từ service:
 
 | Status | Code | Khi nào |
 |---|---|---|
@@ -523,103 +702,21 @@ ALWAYS $transaction(
 | 403 | `FORBIDDEN` | Role không phải Owner/Staff |
 | 404 | `NOT_FOUND` | `member_id` không tồn tại / soft-deleted |
 
-**Business rules:**
+### 2.13 `GET /subscriptions`
 
-```text
-WHEN trainerId là null
-THEN UPDATE members SET primary_trainer_id=NULL (bỏ gán)
-ELSE validate staff.position='pt' AND staff.deleted_at IS NULL, fail → 400
+**API method:** `GET`
 
-WHEN validation pass
-THEN UPDATE members SET primary_trainer_id=trainerId
-AND INSERT audit_logs (action='member.assign-trainer')
-```
+**Endpoint URL:** `/api/v1/subscriptions`
 
-**Audit:** `member.assign-trainer`. `before_data` = `{primaryTrainerId: <old>}`, `after_data` = `{primaryTrainerId: <new>}`.
+**Mô tả:** List lượt đăng ký gói. Self bắt buộc filter `memberId=self`.
 
----
+Auth: JWT Quyền: subscription.read
 
-### 3.8 GET /members/:id/progress
+**Request body:**
 
-**UC:** UC06 — Theo dõi tiến độ
-**Auth:** JWT
-**RBAC:** Owner, Staff, PT-if-primary, Self
+Không có request body.
 
-**Description:** List bản ghi `member_progress` (cân nặng, BMI, mục tiêu, ghi chú). PT chỉ thấy nếu là `primary_trainer_id`.
-
-**Path param:** `id` = `member_id`.
-
-**Query params:**
-
-| Param | Type | Default | Constraint |
-|---|---|---|---|
-| `page` | integer | 1 | — |
-| `pageSize` | integer | 20 | max 100 |
-| `sort` | string | `recorded_at:desc` | whitelist: `recorded_at` |
-| `from` | string (ISO date) | — | filter `recorded_at >= from` |
-| `to` | string (ISO date) | — | filter `recorded_at <= to` |
-
-**Response 200 OK:**
-
-```json
-{
-  "success": true,
-  "data": [
-    {
-      "progressId": "12",
-      "memberId": "5",
-      "staffId": "3",
-      "staffName": "Phạm PT C",
-      "weight": 65.50,
-      "bmi": 22.10,
-      "goal": "Giảm 3kg trong 2 tháng",
-      "notes": "Tuần này tập 3 buổi cardio",
-      "recordedAt": "2026-05-10T10:00:00.000Z"
-    }
-  ],
-  "meta": { "page": 1, "pageSize": 20, "totalItems": 8, "totalPages": 1 }
-}
-```
-
-**Errors:**
-
-| Status | Code | Khi nào |
-|---|---|---|
-| 401 | `UNAUTHORIZED` | JWT thiếu |
-| 403 | `FORBIDDEN` | OwnershipGuard reject |
-| 404 | `NOT_FOUND` | `member_id` không tồn tại / soft-deleted |
-
-**Business rules:**
-
-```text
-WHEN role là PT
-THEN check member.primary_trainer_id = jwt.staffId
-ELSE Owner/Staff/Self bypass PT check
-
-WHEN role là Member
-THEN check member.user_id = jwt.sub
-ELSE Owner/Staff/PT bypass Self check
-```
-
-**Audit:** Không (GET).
-
-**Notes:**
-
-- POST/PATCH progress (PT ghi chỉ số mới) defer Module 7 Training — UC06 SRS spec PT input data ở session diary, không cần endpoint riêng v1.0 MVP nếu UI tích hợp vào TrainingSession form. Cân nhắc thêm `POST /members/:id/progress` khi Module 7 spec.
-
----
-
-## 4. Subscriptions
-
-### 4.1 GET /subscriptions
-
-**UC:** —
-**Auth:** JWT
-**RBAC:** Owner, Staff, Self (`memberId` filter bắt buộc cho Self)
-
-**Description:** List lượt đăng ký gói. Self bắt buộc filter `memberId=self`.
-
-**Query params:**
+**Query parameters:**
 
 | Param | Type | Required | Default | Constraint |
 |---|---|---|---|---|
@@ -629,7 +726,9 @@ ELSE Owner/Staff/PT bypass Self check
 | `pageSize` | integer | no | 20 | max 100 |
 | `sort` | string | no | `start_date:desc` | whitelist: `start_date`, `end_date`, `created_at` |
 
-**Response 200 OK:**
+**Response body:**
+
+HTTP 200.
 
 ```json
 {
@@ -652,32 +751,75 @@ ELSE Owner/Staff/PT bypass Self check
 }
 ```
 
-**Errors:**
+**Error:**
+
+| HTTP status | Mã lỗi | Điều kiện xảy ra |
+|---:|---|---|
+| 401 | `UNAUTHORIZED` | Thiếu JWT, JWT sai hoặc hết hạn. |
+| 403 | `FORBIDDEN` | Người gọi thiếu permission hoặc không thỏa điều kiện ownership ghi trong mô tả. |
+| 500 | `INTERNAL_SERVER_ERROR` | Lỗi nội bộ không được ánh xạ sang lỗi nghiệp vụ cụ thể. |
+| 500 | `PRISMA_<code>` | Lỗi Prisma chưa có mapping riêng. |
+| 503 | `DATABASE_AUTH_FAILED` / `DATABASE_UNAVAILABLE` | Database sai thông tin xác thực hoặc tạm thời không kết nối được. |
+
+Lỗi nghiệp vụ/điều kiện bổ sung từ service:
 
 | Status | Code | Khi nào |
 |---|---|---|
 | 401 | `UNAUTHORIZED` | JWT thiếu |
 | 403 | `FORBIDDEN` | Self không truyền `memberId=self` / truyền `memberId` khác |
+| 403 | `MEMBER_PROFILE_NOT_FOUND` | Self token nhưng `jwt.sub` không có member profile (vd: staff user gọi endpoint với Self token). |
 
-**Business rules:**
+### 2.14 `GET /subscriptions/member/:memberId`
 
-```text
-WHEN role là Self
-THEN bắt buộc memberId param = self.member_id, fail → 403
-ELSE Owner/Staff có thể list mọi member hoặc filter optional
-```
+**API method:** `GET`
 
-**Audit:** Không (GET).
+**Endpoint URL:** `/api/v1/subscriptions/member/:memberId`
 
----
+**Mô tả:** List tất cả subscription của 1 member cụ thể, truy vấn qua path param thay vì query param. Tiện lợi cho Staff/Owner khi xem subscription history của một member.
 
-### 4.2 POST /subscriptions
+Auth: JWT Quyền: subscription.read
 
-**UC:** UC03A/B (purchase mới), UC04A (renewal)
-**Auth:** JWT
-**RBAC:** Staff (Self self-register flow gọi qua endpoint `/members/self-register` ở §3.4, không gọi trực tiếp)
+**Request body:**
 
-**Description:** Tạo subscription mới cho member. Xử lý cả purchase mới + renewal qua state member hiện tại. Subscription tạo ở `pending` (chờ payment); chuyển `active` khi `POST /payments` thành công (nếu `start_date <= today_vn`) hoặc cron daily 00:10 `subscription:activate-pending` (khi `start_date` đến).
+Không có request body.
+
+**Path parameters:** `memberId` — số nguyên dương; sai định dạng trả 400.
+
+**Response body:**
+
+HTTP 200.
+
+Cùng shape với GET /subscriptions.
+
+**Error:**
+
+| HTTP status | Mã lỗi | Điều kiện xảy ra |
+|---:|---|---|
+| 401 | `UNAUTHORIZED` | Thiếu JWT, JWT sai hoặc hết hạn. |
+| 403 | `FORBIDDEN` | Người gọi thiếu permission hoặc không thỏa điều kiện ownership ghi trong mô tả. |
+| 400 | `BAD_REQUEST` | Path parameter hoặc dữ liệu do `ValidationPipe`/`ParseIntPipe` từ chối. |
+| 404 | `NOT_FOUND` | Resource được tham chiếu không tồn tại hoặc đã bị xóa. |
+| 500 | `INTERNAL_SERVER_ERROR` | Lỗi nội bộ không được ánh xạ sang lỗi nghiệp vụ cụ thể. |
+| 500 | `PRISMA_<code>` | Lỗi Prisma chưa có mapping riêng. |
+| 503 | `DATABASE_AUTH_FAILED` / `DATABASE_UNAVAILABLE` | Database sai thông tin xác thực hoặc tạm thời không kết nối được. |
+
+Lỗi nghiệp vụ/điều kiện bổ sung từ service:
+
+| Status | Code | Khi nào |
+|---|---|---|
+| 401 | `UNAUTHORIZED` | JWT thiếu |
+| 403 | `FORBIDDEN` | Role không có `subscription.read` |
+| 404 | `NOT_FOUND` | `memberId` không tồn tại |
+
+### 2.15 `POST /subscriptions`
+
+**API method:** `POST`
+
+**Endpoint URL:** `/api/v1/subscriptions`
+
+**Mô tả:** Tạo subscription mới cho member. Xử lý cả purchase mới + renewal qua state member hiện tại. Subscription tạo ở `pending` (chờ payment); chuyển `active` khi `POST /payments` thành công (nếu `start_date <= today_vn`) hoặc cron daily 00:10 `subscription:activate-pending` (khi `start_date` đến).
+
+Auth: JWT Quyền: subscription.create
 
 **Request body:**
 
@@ -690,7 +832,9 @@ ELSE Owner/Staff có thể list mọi member hoặc filter optional
 { "memberId": "5", "packageId": "3" }
 ```
 
-**Response 201 Created:**
+**Response body:**
+
+HTTP 201.
 
 ```json
 {
@@ -707,58 +851,38 @@ ELSE Owner/Staff có thể list mọi member hoặc filter optional
 }
 ```
 
-**Errors:**
+**Error:**
+
+| HTTP status | Mã lỗi | Điều kiện xảy ra |
+|---:|---|---|
+| 401 | `UNAUTHORIZED` | Thiếu JWT, JWT sai hoặc hết hạn. |
+| 403 | `FORBIDDEN` | Người gọi thiếu permission hoặc không thỏa điều kiện ownership ghi trong mô tả. |
+| 400 | `BAD_REQUEST` | Request body bị `ValidationPipe` từ chối. Service có thể trả `VALIDATION_ERROR` cho business validation. |
+| 409 | `CONFLICT` | Trạng thái resource hoặc ràng buộc nghiệp vụ xung đột; mã cụ thể ghi bên dưới. |
+| 500 | `INTERNAL_SERVER_ERROR` | Lỗi nội bộ không được ánh xạ sang lỗi nghiệp vụ cụ thể. |
+| 500 | `PRISMA_<code>` | Lỗi Prisma chưa có mapping riêng. |
+| 503 | `DATABASE_AUTH_FAILED` / `DATABASE_UNAVAILABLE` | Database sai thông tin xác thực hoặc tạm thời không kết nối được. |
+
+Lỗi nghiệp vụ/điều kiện bổ sung từ service:
 
 | Status | Code | Khi nào |
 |---|---|---|
 | 400 | `VALIDATION_ERROR` | Body sai format |
 | 400 | `FK_CONSTRAINT` | `memberId` / `packageId` không tồn tại |
 | 401 | `UNAUTHORIZED` | JWT thiếu |
-| 403 | `FORBIDDEN` | Role không phải Staff/Owner |
-| 403 | `EMAIL_NOT_VERIFIED` | Member chưa verify email (`users.email_verified_at IS NULL`) |
+| 403 | `FORBIDDEN` | Member gọi với `memberId` không phải self (OwnershipGuard) |
+| 403 | `EMAIL_NOT_VERIFIED` | Self/member caller và member chưa verify email. Staff/Owner bypass (UC03A counter registration). |
 | 409 | `SUBSCRIPTION_ALREADY_PENDING` | Member đã có subscription `pending` (chưa pay) |
 
-**Business rules:**
+### 2.16 `PATCH /subscriptions/:id/cancel`
 
-```text
-WHEN member.users.email_verified_at IS NULL
-THEN 403 EMAIL_NOT_VERIFIED
-ELSE proceed
+**API method:** `PATCH`
 
-WHEN tồn tại subscriptions WHERE member_id=? AND status='pending'
-THEN 409 SUBSCRIPTION_ALREADY_PENDING (member phải pay pending hiện tại hoặc cancel trước khi tạo mới)
-ELSE proceed
+**Endpoint URL:** `/api/v1/subscriptions/:id/cancel`
 
-WHEN tồn tại subscriptions WHERE member_id=? AND status='active'
-THEN renewal flow: start_date = activeSubscription.end_date + 1 day, end_date = start_date + package.durationDays - 1
-ELSE new purchase flow: start_date = today_vn, end_date = today_vn + package.durationDays - 1
+**Mô tả:** Hủy subscription `active` hoặc `pending`. Nếu member có subscription `pending` đã thanh toán (prepaid renewal), activate ngay trong cùng `$transaction` (cascade — Architecture §4.3.3). Không refund v1.0.
 
-ALWAYS INSERT subscriptions (status='pending', start_date, end_date)
-AND INSERT audit_logs (action = renewal ? 'subscription.renew' : 'subscription.create')
-```
-
-**Audit:** `subscription.create` (purchase mới) hoặc `subscription.renew` (renewal — phân biệt qua context có active subscription cùng member tại thời điểm INSERT). `after_data` = subscription shape.
-
-**Notes:**
-
-- Date arithmetic dùng `today_vn` (Architecture §4.5.2). `start_date = today_vn` hoặc `start_date = activeSubscription.end_date + 1 day` (date math, không phải datetime).
-- `end_date = start_date + durationDays - 1` (inclusive). Vd package 30 ngày, start 2026-05-01 → end 2026-05-30.
-- `pending` subscription chuyển `active` qua 2 path:
-  - `POST /payments` success AND `start_date <= today_vn` → activate ngay trong cùng `$transaction` (xem §5.1).
-  - Cron daily 00:10 `subscription:activate-pending` activate khi `start_date` đến (Architecture §5.2).
-- Cron daily 00:15 `subscription:cancel-unpaid-pending` cancel `pending` sau 24-48h nếu vẫn `NOT EXISTS payments WHERE status='success'` (Architecture §5.2 + LOG-M03 phase 8).
-
----
-
-### 4.3 PATCH /subscriptions/:id/cancel
-
-**UC:** UC04B — Hủy gói
-**Auth:** JWT
-**RBAC:** Owner, Staff, Self
-
-**Description:** Hủy subscription `active` hoặc `pending`. Nếu member có subscription `pending` đã thanh toán (prepaid renewal), activate ngay trong cùng `$transaction` (cascade — Architecture §4.3.3). Không refund v1.0.
-
-**Path param:** `id` = `subscription_id`.
+Auth: JWT Quyền: subscription.cancel
 
 **Request body:**
 
@@ -770,7 +894,11 @@ AND INSERT audit_logs (action = renewal ? 'subscription.renew' : 'subscription.c
 { "reason": "Member chuyển nơi ở" }
 ```
 
-**Response 200 OK:**
+**Path parameters:** `id` — số nguyên dương; sai định dạng trả 400.
+
+**Response body:**
+
+HTTP 200.
 
 ```json
 {
@@ -793,7 +921,20 @@ AND INSERT audit_logs (action = renewal ? 'subscription.renew' : 'subscription.c
 
 `activatedSubscription` = null nếu không có pending prepaid để cascade.
 
-**Errors:**
+**Error:**
+
+| HTTP status | Mã lỗi | Điều kiện xảy ra |
+|---:|---|---|
+| 401 | `UNAUTHORIZED` | Thiếu JWT, JWT sai hoặc hết hạn. |
+| 403 | `FORBIDDEN` | Người gọi thiếu permission hoặc không thỏa điều kiện ownership ghi trong mô tả. |
+| 400 | `BAD_REQUEST` | Path parameter hoặc dữ liệu do `ValidationPipe`/`ParseIntPipe` từ chối. |
+| 404 | `NOT_FOUND` | Resource được tham chiếu không tồn tại hoặc đã bị xóa. |
+| 409 | `CONFLICT` | Trạng thái resource hoặc ràng buộc nghiệp vụ xung đột; mã cụ thể ghi bên dưới. |
+| 500 | `INTERNAL_SERVER_ERROR` | Lỗi nội bộ không được ánh xạ sang lỗi nghiệp vụ cụ thể. |
+| 500 | `PRISMA_<code>` | Lỗi Prisma chưa có mapping riêng. |
+| 503 | `DATABASE_AUTH_FAILED` / `DATABASE_UNAVAILABLE` | Database sai thông tin xác thực hoặc tạm thời không kết nối được. |
+
+Lỗi nghiệp vụ/điều kiện bổ sung từ service:
 
 | Status | Code | Khi nào |
 |---|---|---|
@@ -802,47 +943,92 @@ AND INSERT audit_logs (action = renewal ? 'subscription.renew' : 'subscription.c
 | 404 | `NOT_FOUND` | `subscription_id` không tồn tại / soft-deleted / đã `cancelled`/`expired` (P2025 hoặc filter no match) |
 | 409 | `SUBSCRIPTION_NOT_CANCELLABLE` | Subscription `status` không phải `active` hoặc `pending` |
 
-**Business rules:**
+### 2.17 `POST /subscriptions/:id/renew`
 
-```text
-WHEN subscription.status NOT IN ('active', 'pending')
-THEN 409 SUBSCRIPTION_NOT_CANCELLABLE
-ELSE proceed
+**API method:** `POST`
 
-WHEN subscription.status = 'active' AND tồn tại subscriptions WHERE member_id=subscription.member_id AND status='pending' AND EXISTS payments WHERE subscription_id=pending.id AND status='success'
-THEN cascade activate pending (Architecture §4.3.3)
-ELSE chỉ cancel, KHÔNG activate
+**Endpoint URL:** `/api/v1/subscriptions/:id/renew`
 
-ALWAYS $transaction(
-  UPDATE subscriptions SET status='cancelled', cancelled_at=NOW() WHERE id=:id;
-  IF cascade THEN UPDATE pending SET status='active', start_date=today_vn, end_date=today_vn + package.durationDays - 1;
-  INSERT audit_logs (action='subscription.cancel');
-  IF cascade THEN INSERT audit_logs (action='subscription.activate')
-)
+**Mô tả:** Gia hạn subscription hiện tại — tạo subscription mới kế tiếp cùng member. Subscription mới bắt đầu ngay sau `end_date` của subscription hiện tại. Trả về 200 OK (không phải 201) vì là action trên resource đã tồn tại.
+
+Auth: JWT Quyền: subscription.create
+
+**Request body:**
+
+| Field | Type | Required | Constraint |
+|---|---|---|---|
+| `method` | enum | yes | `cash`, `bank_card`, `ewallet` |
+| `transactionReference` | string | no | optional |
+
+```json
+{ "method": "cash" }
 ```
 
-**Audit:** `subscription.cancel` với `before_data` = subscription trước, `after_data` = subscription sau. Nếu cascade: thêm 1 audit row `subscription.create` cho activated (theo Architecture §4.4.1 không có code `subscription.activate` — dùng `subscription.create` với note context, hoặc thêm code mới v1.1).
+**Path parameters:** `id` — số nguyên dương; sai định dạng trả 400.
 
-**Notes:**
+**Response body:**
 
-- Race condition: 2 user concurrent cancel cùng `active` → lần 2 nhận P2025 (Architecture §4.3.2). Filter map → 404. Không dùng `SELECT FOR UPDATE` v1.0.
-- Architecture §4.3.3 audit code mention `subscription.activate` — KHÔNG có trong §4.4.1 list. **Drift**: spec dùng `subscription.create` cho cascade-activated, flag để Architecture v1.1.4 thống nhất (thêm `subscription.activate` vào §4.4.1 hoặc xóa khỏi §4.3.3).
+HTTP 200.
 
-- `today_vn` cho `start_date` recompute khi cascade — không giữ `start_date` cũ của pending vì gói cũ kết thúc sớm hơn dự kiến.
+Trả subscription mới được tạo.
 
----
+```json
+{
+  "success": true,
+  "data": {
+    "subscriptionId": "16",
+    "memberId": "5",
+    "packageId": "3",
+    "startDate": "2026-08-01",
+    "endDate": "2026-10-29",
+    "status": "pending",
+    "createdAt": "2026-06-19T10:00:00.000Z"
+  }
+}
+```
 
-### 4.4 GET /subscriptions/:id
+**Error:**
 
-**UC:** —
-**Auth:** JWT
-**RBAC:** Owner, Staff, Self
+| HTTP status | Mã lỗi | Điều kiện xảy ra |
+|---:|---|---|
+| 401 | `UNAUTHORIZED` | Thiếu JWT, JWT sai hoặc hết hạn. |
+| 403 | `FORBIDDEN` | Người gọi thiếu permission hoặc không thỏa điều kiện ownership ghi trong mô tả. |
+| 400 | `BAD_REQUEST` | Path parameter hoặc dữ liệu do `ValidationPipe`/`ParseIntPipe` từ chối. |
+| 404 | `NOT_FOUND` | Resource được tham chiếu không tồn tại hoặc đã bị xóa. |
+| 500 | `INTERNAL_SERVER_ERROR` | Lỗi nội bộ không được ánh xạ sang lỗi nghiệp vụ cụ thể. |
+| 500 | `PRISMA_<code>` | Lỗi Prisma chưa có mapping riêng. |
+| 503 | `DATABASE_AUTH_FAILED` / `DATABASE_UNAVAILABLE` | Database sai thông tin xác thực hoặc tạm thời không kết nối được. |
 
-**Description:** Lấy chi tiết 1 subscription. Self check qua `subscription.member.user_id = jwt.sub`.
+Lỗi nghiệp vụ/điều kiện bổ sung từ service:
 
-**Path param:** `id` = `subscription_id`.
+| Status | Code | Khi nào |
+|---|---|---|
+| 400 | `VALIDATION_ERROR` | Body sai format |
+| 401 | `UNAUTHORIZED` | JWT thiếu |
+| 403 | `FORBIDDEN` | Role không có `subscription.create` |
+| 404 | `NOT_FOUND` | `subscription_id` không tồn tại |
 
-**Response 200 OK:** Cùng shape item của §4.1 + thêm field `package` expanded:
+### 2.18 `GET /subscriptions/:id`
+
+**API method:** `GET`
+
+**Endpoint URL:** `/api/v1/subscriptions/:id`
+
+**Mô tả:** Lấy chi tiết 1 subscription. Self check qua `subscription.member.user_id = jwt.sub`.
+
+Auth: JWT Quyền: subscription.read
+
+**Request body:**
+
+Không có request body.
+
+**Path parameters:** `id` — số nguyên dương; sai định dạng trả 400.
+
+**Response body:**
+
+HTTP 200.
+
+Cùng shape item của §4.1 + thêm field `package` expanded:
 
 ```json
 {
@@ -867,7 +1053,19 @@ ALWAYS $transaction(
 }
 ```
 
-**Errors:**
+**Error:**
+
+| HTTP status | Mã lỗi | Điều kiện xảy ra |
+|---:|---|---|
+| 401 | `UNAUTHORIZED` | Thiếu JWT, JWT sai hoặc hết hạn. |
+| 403 | `FORBIDDEN` | Người gọi thiếu permission hoặc không thỏa điều kiện ownership ghi trong mô tả. |
+| 400 | `BAD_REQUEST` | Path parameter hoặc dữ liệu do `ValidationPipe`/`ParseIntPipe` từ chối. |
+| 404 | `NOT_FOUND` | Resource được tham chiếu không tồn tại hoặc đã bị xóa. |
+| 500 | `INTERNAL_SERVER_ERROR` | Lỗi nội bộ không được ánh xạ sang lỗi nghiệp vụ cụ thể. |
+| 500 | `PRISMA_<code>` | Lỗi Prisma chưa có mapping riêng. |
+| 503 | `DATABASE_AUTH_FAILED` / `DATABASE_UNAVAILABLE` | Database sai thông tin xác thực hoặc tạm thời không kết nối được. |
+
+Lỗi nghiệp vụ/điều kiện bổ sung từ service:
 
 | Status | Code | Khi nào |
 |---|---|---|
@@ -875,19 +1073,15 @@ ALWAYS $transaction(
 | 403 | `FORBIDDEN` | OwnershipGuard reject |
 | 404 | `NOT_FOUND` | `subscription_id` không tồn tại / soft-deleted |
 
-**Audit:** Không (GET).
+### 2.19 `POST /payments`
 
----
+**API method:** `POST`
 
-## 5. Payments
+**Endpoint URL:** `/api/v1/payments`
 
-### 5.1 POST /payments
+**Mô tả:** Staff ghi nhận thanh toán cho subscription `pending`. Nếu `status='success'` AND subscription `start_date <= today_vn` AND không có subscription `active` đang chiếm slot → activate ngay (cùng `$transaction`). Ngược lại giữ `pending`, cron daily 00:10 activate khi `start_date` đến.
 
-**UC:** UC03A/B, UC04A — Ghi nhận thanh toán
-**Auth:** JWT
-**RBAC:** Staff
-
-**Description:** Staff ghi nhận thanh toán cho subscription `pending`. Nếu `status='success'` AND subscription `start_date <= today_vn` AND không có subscription `active` đang chiếm slot → activate ngay (cùng `$transaction`). Ngược lại giữ `pending`, cron daily 00:10 activate khi `start_date` đến.
+Auth: JWT Quyền: payment.create
 
 **Request body:**
 
@@ -911,7 +1105,9 @@ ALWAYS $transaction(
 }
 ```
 
-**Response 201 Created:**
+**Response body:**
+
+HTTP 201.
 
 ```json
 {
@@ -937,7 +1133,19 @@ ALWAYS $transaction(
 
 `subscription.status` trả `active` nếu activate ngay, `pending` nếu chờ cron.
 
-**Errors:**
+**Error:**
+
+| HTTP status | Mã lỗi | Điều kiện xảy ra |
+|---:|---|---|
+| 401 | `UNAUTHORIZED` | Thiếu JWT, JWT sai hoặc hết hạn. |
+| 403 | `FORBIDDEN` | Người gọi thiếu permission hoặc không thỏa điều kiện ownership ghi trong mô tả. |
+| 400 | `BAD_REQUEST` | Request body bị `ValidationPipe` từ chối. Service có thể trả `VALIDATION_ERROR` cho business validation. |
+| 409 | `CONFLICT` | Trạng thái resource hoặc ràng buộc nghiệp vụ xung đột; mã cụ thể ghi bên dưới. |
+| 500 | `INTERNAL_SERVER_ERROR` | Lỗi nội bộ không được ánh xạ sang lỗi nghiệp vụ cụ thể. |
+| 500 | `PRISMA_<code>` | Lỗi Prisma chưa có mapping riêng. |
+| 503 | `DATABASE_AUTH_FAILED` / `DATABASE_UNAVAILABLE` | Database sai thông tin xác thực hoặc tạm thời không kết nối được. |
+
+Lỗi nghiệp vụ/điều kiện bổ sung từ service:
 
 | Status | Code | Khi nào |
 |---|---|---|
@@ -948,58 +1156,21 @@ ALWAYS $transaction(
 | 409 | `DUPLICATE_VALUE` | `transactionReference` đã tồn tại (P2002) |
 | 409 | `SUBSCRIPTION_NOT_PENDING` | `subscription.status != 'pending'` |
 
-**Business rules:**
+### 2.20 `GET /payments`
 
-```text
-WHEN method != 'cash' AND transactionReference rỗng
-THEN 400 VALIDATION_ERROR
-ELSE proceed
+**API method:** `GET`
 
-WHEN method = 'cash'
-THEN transactionReference có thể NULL — accept double-charge risk (conventions §13)
-ELSE transactionReference UNIQUE check
+**Endpoint URL:** `/api/v1/payments`
 
-WHEN subscription.status != 'pending'
-THEN 409 SUBSCRIPTION_NOT_PENDING
-ELSE proceed
+**Mô tả:** List payments. Self bắt buộc `memberId=self`. Filter theo subscription / status / date range.
 
-WHEN status='success' AND subscription.start_date <= today_vn AND không có member subscription khác status='active'
-THEN $transaction(
-  INSERT payments;
-  UPDATE subscriptions SET status='active';
-  INSERT audit_logs (action='payment.success');
-  INSERT audit_logs (action='subscription.create' với note 'activated by payment')
-)
-ELSE WHEN status='success'
-THEN $transaction(INSERT payments; INSERT audit_logs (action='payment.success'))
-  AND subscription giữ pending, chờ cron daily 00:10 activate khi start_date đến
+Auth: JWT Quyền: payment.read
 
-WHEN status='failed'
-THEN $transaction(INSERT payments; INSERT audit_logs (action='payment.fail'))
-  AND subscription giữ pending; cron daily 00:15 sẽ cancel sau 24-48h nếu không có payment success khác
-```
+**Request body:**
 
-**Audit:** `payment.success` hoặc `payment.fail`. `after_data` mask `transactionReference` ở UI listing (giữ full trong DB cho reconciliation).
+Không có request body.
 
-**Idempotency:** UNIQUE `transaction_reference` (Database.md). Duplicate → 409 (conventions §13). `method='cash'` không có reference — accept double-charge risk, mitigate qua audit log review.
-
-**Notes:**
-
-- `amount` validate `> 0` (Database.md CHECK constraint).
-- Composite index `(subscription_id, status)` trên `payments` defer khi build (Architecture §5.2 LOG-M07 phase 8) — chưa có trong Prisma schema v1.0.
-- Activation logic phối hợp với cron `subscription:activate-pending` (Architecture §5.2). Sau commit, cron check `EXISTS payments WHERE subscription_id=? AND status='success'` — nếu hit và `start_date <= today_vn`, activate.
-
----
-
-### 5.2 GET /payments
-
-**UC:** —
-**Auth:** JWT
-**RBAC:** Owner, Staff, Self (`memberId` filter bắt buộc cho Self)
-
-**Description:** List payments. Self bắt buộc `memberId=self`. Filter theo subscription / status / date range.
-
-**Query params:**
+**Query parameters:**
 
 | Param | Type | Required | Default | Constraint |
 |---|---|---|---|---|
@@ -1013,7 +1184,9 @@ THEN $transaction(INSERT payments; INSERT audit_logs (action='payment.fail'))
 | `pageSize` | integer | no | 20 | max 100 |
 | `sort` | string | no | `paid_at:desc` | whitelist: `paid_at`, `amount` |
 
-**Response 200 OK:**
+**Response body:**
+
+HTTP 200.
 
 ```json
 {
@@ -1034,54 +1207,206 @@ THEN $transaction(INSERT payments; INSERT audit_logs (action='payment.fail'))
 }
 ```
 
-**Errors:**
+**Error:**
+
+| HTTP status | Mã lỗi | Điều kiện xảy ra |
+|---:|---|---|
+| 401 | `UNAUTHORIZED` | Thiếu JWT, JWT sai hoặc hết hạn. |
+| 403 | `FORBIDDEN` | Người gọi thiếu permission hoặc không thỏa điều kiện ownership ghi trong mô tả. |
+| 500 | `INTERNAL_SERVER_ERROR` | Lỗi nội bộ không được ánh xạ sang lỗi nghiệp vụ cụ thể. |
+| 500 | `PRISMA_<code>` | Lỗi Prisma chưa có mapping riêng. |
+| 503 | `DATABASE_AUTH_FAILED` / `DATABASE_UNAVAILABLE` | Database sai thông tin xác thực hoặc tạm thời không kết nối được. |
+
+Lỗi nghiệp vụ/điều kiện bổ sung từ service:
 
 | Status | Code | Khi nào |
 |---|---|---|
 | 401 | `UNAUTHORIZED` | JWT thiếu |
 | 403 | `FORBIDDEN` | Self không truyền `memberId=self` / truyền `memberId` khác |
 
-**Audit:** Không (GET).
+### 2.21 `GET /members/:memberId/payment-accounts`
 
----
+**API method:** `GET`
 
-## 6. Domain Error Codes
+**Endpoint URL:** `/api/v1/members/:memberId/payment-accounts`
 
-Codes specific cho Module 4 (ngoài standard codes ở `conventions.md §6`):
+**Mô tả:** Lấy danh sách tài khoản thanh toán của member.
 
-| Code | HTTP | Trigger |
+Auth: JWT Quyền: Authenticated
+
+**Request body:**
+
+Không có request body.
+
+**Path parameters:** `memberId` — số nguyên dương; sai định dạng trả 400.
+
+**Response body:**
+
+HTTP 200.
+
+```json
+[
+  {
+    "id": 1,
+    "memberId": "5",
+    "type": "bank_card",
+    "provider": "Vietcombank",
+    "accountRef": "****1234",
+    "label": "Thẻ chính",
+    "isDefault": true
+  }
+]
+```
+
+**Error:**
+
+| HTTP status | Mã lỗi | Điều kiện xảy ra |
+|---:|---|---|
+| 401 | `UNAUTHORIZED` | Thiếu JWT, JWT sai hoặc hết hạn. |
+| 400 | `BAD_REQUEST` | Path parameter hoặc dữ liệu do `ValidationPipe`/`ParseIntPipe` từ chối. |
+| 404 | `NOT_FOUND` | Resource được tham chiếu không tồn tại hoặc đã bị xóa. |
+| 500 | `INTERNAL_SERVER_ERROR` | Lỗi nội bộ không được ánh xạ sang lỗi nghiệp vụ cụ thể. |
+| 500 | `PRISMA_<code>` | Lỗi Prisma chưa có mapping riêng. |
+| 503 | `DATABASE_AUTH_FAILED` / `DATABASE_UNAVAILABLE` | Database sai thông tin xác thực hoặc tạm thời không kết nối được. |
+
+Lỗi nghiệp vụ/điều kiện bổ sung từ service:
+
+| Status | Code | Khi nào |
 |---|---|---|
-| `MEMBER_CODE_GENERATION_FAILED` | 500 | Retry 5 lần sinh `member_code` đều collision |
-| `EMAIL_NOT_VERIFIED` | 403 | Member chưa verify email cố thao tác cần verified user (vd tạo subscription) |
-| `SUBSCRIPTION_ALREADY_PENDING` | 409 | Tạo subscription mới khi member còn `pending` chưa pay |
-| `SUBSCRIPTION_NOT_CANCELLABLE` | 409 | Cancel subscription có `status` ngoài (`active`, `pending`) |
-| `SUBSCRIPTION_NOT_PENDING` | 409 | Tạo payment cho subscription không ở `status='pending'` |
+| 401 | `UNAUTHORIZED` | JWT thiếu |
+| 404 | `NOT_FOUND` | Caller không phải Self và không phải staff/owner |
 
-## 7. Cross-Module References
+### 2.22 `POST /members/:memberId/payment-accounts`
 
-- **Module 3 Package (stub):** `POST /subscriptions` body có `packageId` → validate FK `packages.package_id` với `status='active'` AND `deleted_at IS NULL`. Module 3 Package CRUD chưa spec; frontend tạm truy vấn raw Prisma hoặc dùng seed data. Khi Module 3 spec hoàn chỉnh, FK validation refactor sang dùng service injection.
-- **Module 5 Staff (stub):** `PATCH /members/:id/assign-trainer` body có `trainerId` → validate FK `staff.staff_id` với `position='pt'` AND `deleted_at IS NULL`. Module 5 Staff CRUD chưa spec.
-- **Module 7 Training (stub):** `GET /members/:id/progress` đọc bảng `member_progress`. POST/PATCH progress record defer Module 7 vì gắn với training session diary.
-- **Module 2 RBAC retrofit:** RBAC column hiện dùng role notation (`Owner | Staff | Self`). Khi Module 2 spec permission codes, refactor sang permission-based (vd `member.read.own`, `member.write.any`).
+**API method:** `POST`
 
-## 8. Implementation Status
+**Endpoint URL:** `/api/v1/members/:memberId/payment-accounts`
 
-Toàn bộ 14 endpoint **chưa implement code**. Module 4 sẽ là PR đầu tiên scaffold:
+**Mô tả:** Tạo tài khoản thanh toán mới cho member.
 
-- `server/src/members/` (members.module, controller, service, dto)
-- `server/src/subscriptions/` (subscriptions.module, controller, service, dto)
-- `server/src/payments/` (payments.module, controller, service, dto)
-- `server/src/common/dto/pagination.dto.ts` (shared cho mọi module)
-- `server/src/common/guards/ownership.guard.ts` (Self / PT-if-primary check)
-- `server/src/common/interceptors/audit.interceptor.ts` + `@Audit()` decorator (cho mọi mutation, dùng chéo Module 1-9)
+Auth: JWT Quyền: Authenticated
 
-Prisma schema thêm khi build:
+**Request body:**
 
-- Composite index `@@index([subscriptionId, status])` trên `payments` (Architecture §5.2 LOG-M07).
-- `@@index([memberId, status])` trên `subscriptions` (filter by member + status).
-
-## 9. Changelog
-
-| Version | Date | Author | Change |
+| Field | Type | Required | Constraint |
 |---|---|---|---|
-| 1.0.0 | 2026-05-17 | Lê Thanh An | Initial draft — 14 endpoint chia 3 resource (Members 8 + Subscriptions 4 + Payments 2). |
+| `type` | enum | yes | `cash`, `bank_card`, `ewallet` |
+| `provider` | string | no | `@Length(0, 100)` |
+| `accountRef` | string | no | `@Length(0, 100)` |
+| `label` | string | no | `@Length(0, 100)` |
+| `isDefault` | boolean | no | — |
+
+```json
+{ "type": "bank_card", "provider": "Vietcombank", "accountRef": "1234567890", "label": "Thẻ chính", "isDefault": true }
+```
+
+**Path parameters:** `memberId` — số nguyên dương; sai định dạng trả 400.
+
+**Response body:**
+
+HTTP 201.
+
+Trả payment account object vừa tạo.
+
+**Error:**
+
+| HTTP status | Mã lỗi | Điều kiện xảy ra |
+|---:|---|---|
+| 401 | `UNAUTHORIZED` | Thiếu JWT, JWT sai hoặc hết hạn. |
+| 400 | `BAD_REQUEST` | Path parameter hoặc dữ liệu do `ValidationPipe`/`ParseIntPipe` từ chối. |
+| 404 | `NOT_FOUND` | Resource được tham chiếu không tồn tại hoặc đã bị xóa. |
+| 500 | `INTERNAL_SERVER_ERROR` | Lỗi nội bộ không được ánh xạ sang lỗi nghiệp vụ cụ thể. |
+| 500 | `PRISMA_<code>` | Lỗi Prisma chưa có mapping riêng. |
+| 503 | `DATABASE_AUTH_FAILED` / `DATABASE_UNAVAILABLE` | Database sai thông tin xác thực hoặc tạm thời không kết nối được. |
+
+Lỗi nghiệp vụ/điều kiện bổ sung từ service:
+
+| Status | Code | Khi nào |
+|---|---|---|
+| 400 | `VALIDATION_ERROR` | Body sai format |
+| 401 | `UNAUTHORIZED` | JWT thiếu |
+| 404 | `NOT_FOUND` | Caller không phải Self và không phải staff/owner |
+
+### 2.23 `PATCH /members/:memberId/payment-accounts/:accountId`
+
+**API method:** `PATCH`
+
+**Endpoint URL:** `/api/v1/members/:memberId/payment-accounts/:accountId`
+
+**Mô tả:** Đặt tài khoản thanh toán làm default. Action duy nhất là set default — không update các field khác.
+
+Auth: JWT Quyền: Authenticated
+
+**Request body:**
+
+Không có request body.
+
+**Path parameters:**
+
+- `memberId` = member ID (integer)
+- `accountId` = payment account ID (integer)
+
+**Response body:**
+
+HTTP 200.
+
+Trả payment account object sau update.
+
+**Error:**
+
+| HTTP status | Mã lỗi | Điều kiện xảy ra |
+|---:|---|---|
+| 401 | `UNAUTHORIZED` | Thiếu JWT, JWT sai hoặc hết hạn. |
+| 400 | `BAD_REQUEST` | Path parameter hoặc dữ liệu do `ValidationPipe`/`ParseIntPipe` từ chối. |
+| 404 | `NOT_FOUND` | Resource được tham chiếu không tồn tại hoặc đã bị xóa. |
+| 500 | `INTERNAL_SERVER_ERROR` | Lỗi nội bộ không được ánh xạ sang lỗi nghiệp vụ cụ thể. |
+| 500 | `PRISMA_<code>` | Lỗi Prisma chưa có mapping riêng. |
+| 503 | `DATABASE_AUTH_FAILED` / `DATABASE_UNAVAILABLE` | Database sai thông tin xác thực hoặc tạm thời không kết nối được. |
+
+Lỗi nghiệp vụ/điều kiện bổ sung từ service:
+
+| Status | Code | Khi nào |
+|---|---|---|
+| 401 | `UNAUTHORIZED` | JWT thiếu |
+| 404 | `NOT_FOUND` | Caller không phải Self/staff/owner hoặc `accountId` không tồn tại |
+
+### 2.24 `DELETE /members/:memberId/payment-accounts/:accountId`
+
+**API method:** `DELETE`
+
+**Endpoint URL:** `/api/v1/members/:memberId/payment-accounts/:accountId`
+
+**Mô tả:** Xóa tài khoản thanh toán.
+
+Auth: JWT Quyền: Authenticated
+
+**Request body:**
+
+Không có request body.
+
+**Path parameters:**
+
+- `memberId` = member ID (integer)
+- `accountId` = payment account ID (integer)
+
+**Response body:**
+
+HTTP 204 No Content. Không có response body.
+
+**Error:**
+
+| HTTP status | Mã lỗi | Điều kiện xảy ra |
+|---:|---|---|
+| 401 | `UNAUTHORIZED` | Thiếu JWT, JWT sai hoặc hết hạn. |
+| 400 | `BAD_REQUEST` | Path parameter hoặc dữ liệu do `ValidationPipe`/`ParseIntPipe` từ chối. |
+| 404 | `NOT_FOUND` | Resource được tham chiếu không tồn tại hoặc đã bị xóa. |
+| 500 | `INTERNAL_SERVER_ERROR` | Lỗi nội bộ không được ánh xạ sang lỗi nghiệp vụ cụ thể. |
+| 500 | `PRISMA_<code>` | Lỗi Prisma chưa có mapping riêng. |
+| 503 | `DATABASE_AUTH_FAILED` / `DATABASE_UNAVAILABLE` | Database sai thông tin xác thực hoặc tạm thời không kết nối được. |
+
+Lỗi nghiệp vụ/điều kiện bổ sung từ service:
+
+| Status | Code | Khi nào |
+|---|---|---|
+| 401 | `UNAUTHORIZED` | JWT thiếu |
+| 404 | `NOT_FOUND` | Caller không phải Self/staff/owner hoặc `accountId` không tồn tại |

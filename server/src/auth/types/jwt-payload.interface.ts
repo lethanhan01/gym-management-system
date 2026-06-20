@@ -1,4 +1,4 @@
-import { Role } from '../../users/users.service'
+import { Role } from '../users.service'
 
 /**
  * Payload JWT phat hanh sau khi login thanh cong.
@@ -12,6 +12,8 @@ export interface JwtPayload {
   sub: string
   email: string
   roles: Role[]
+  staffId?: string  // ◄── Thêm trường này
+  memberId?: string // ◄── Thêm trường này
 }
 
 /** Thong tin user duoc gan vao request.user sau JwtAuthGuard. */
@@ -19,4 +21,6 @@ export interface AuthenticatedUser {
   userId: bigint
   email: string
   roles: Role[]
+  memberId?: bigint
+  staffId?: bigint
 }

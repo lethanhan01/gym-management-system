@@ -22,6 +22,7 @@ interface ErrorBody {
  *
  * - HttpException (NestJS): giu nguyen status code, lay code tu name cua exception.
  * - PrismaClientKnownRequestError: map sang HTTP code phu hop (P2002, P2025, ...).
+ * - Loi ket noi Prisma: tra ve 503 generic, khong lam lo host/credentials DB.
  * - Cac error khac: ghi log + tra ve 500 generic.
  */
 @Catch()
@@ -38,12 +39,10 @@ export class HttpExceptionFilter implements ExceptionFilter {
     if (status >= 500) {
       this.logger.error(
         `[${request.method} ${request.url}] ${body.code}: ${body.message}`,
-        exception instanceof Error ? exception.stack : undefined,
+        exception instanceof Error ? exception.stack : undefined
       )
     } else {
-      this.logger.warn(
-        `[${request.method} ${request.url}] ${status} ${body.code}: ${body.message}`,
-      )
+      this.logger.warn(`[${request.method} ${request.url}] ${status} ${body.code}: ${body.message}`)
     }
 
     response.status(status).json(body)
@@ -62,7 +61,9 @@ export class HttpExceptionFilter implements ExceptionFilter {
       }
 
       const obj = res as { message?: string | string[]; error?: string; code?: string }
-      const message = Array.isArray(obj.message) ? obj.message.join('; ') : obj.message ?? exception.message
+      const message = Array.isArray(obj.message)
+        ? obj.message.join('; ')
+        : (obj.message ?? exception.message)
       return {
         status,
         body: {
@@ -78,6 +79,27 @@ export class HttpExceptionFilter implements ExceptionFilter {
       return this.mapPrismaError(exception)
     }
 
+    if (exception instanceof Prisma.PrismaClientInitializationError) {
+      if (exception.message.includes('Authentication failed')) {
+        return {
+          status: HttpStatus.SERVICE_UNAVAILABLE,
+          body: {
+            success: false,
+            code: 'DATABASE_AUTH_FAILED',
+            message: 'Loi xac thuc database, vui long kiem tra cau hinh ket noi',
+          },
+        }
+      }
+      return {
+        status: HttpStatus.SERVICE_UNAVAILABLE,
+        body: {
+          success: false,
+          code: 'DATABASE_UNAVAILABLE',
+          message: 'Database tam thoi khong kha dung, vui long thu lai sau',
+        },
+      }
+    }
+
     if (exception instanceof Prisma.PrismaClientValidationError) {
       return {
         status: HttpStatus.BAD_REQUEST,
@@ -89,15 +111,12 @@ export class HttpExceptionFilter implements ExceptionFilter {
       }
     }
 
-    const fallbackMessage =
-      exception instanceof Error ? exception.message : 'Da co loi xay ra, vui long thu lai sau'
-
     return {
       status: HttpStatus.INTERNAL_SERVER_ERROR,
       body: {
         success: false,
         code: 'INTERNAL_SERVER_ERROR',
-        message: fallbackMessage,
+        message: 'Da co loi xay ra, vui long thu lai sau',
       },
     }
   }
@@ -107,6 +126,27 @@ export class HttpExceptionFilter implements ExceptionFilter {
     body: ErrorBody
   } {
     switch (err.code) {
+      case 'P1000':
+        return {
+          status: HttpStatus.SERVICE_UNAVAILABLE,
+          body: {
+            success: false,
+            code: 'DATABASE_AUTH_FAILED',
+            message: 'Loi xac thuc database, vui long kiem tra cau hinh ket noi',
+          },
+        }
+      case 'P1001':
+      case 'P1002':
+      case 'P1008':
+      case 'P1017':
+        return {
+          status: HttpStatus.SERVICE_UNAVAILABLE,
+          body: {
+            success: false,
+            code: 'DATABASE_UNAVAILABLE',
+            message: 'Database tam thoi khong kha dung, vui long thu lai sau',
+          },
+        }
       case 'P2002': {
         const target = (err.meta?.target as string[] | string | undefined) ?? 'field'
         return {
@@ -145,7 +185,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
           body: {
             success: false,
             code: `PRISMA_${err.code}`,
-            message: err.message.split('\n').pop() ?? 'Loi database',
+            message: 'Loi database',
           },
         }
     }

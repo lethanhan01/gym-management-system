@@ -3,16 +3,22 @@ import { ConfigModule, ConfigService } from '@nestjs/config'
 import { APP_GUARD } from '@nestjs/core'
 import { JwtModule } from '@nestjs/jwt'
 import { PassportModule } from '@nestjs/passport'
-import { UsersModule } from '../users/users.module'
+import { PrismaModule } from '../prisma/prisma.module'
+import { AuditService } from '../common/audit/audit.service'
+import { RateLimitService } from '../common/rate-limit/rate-limit.service'
+import { UsersService } from './users.service'
 import { AuthController } from './auth.controller'
 import { AuthService } from './auth.service'
+import { PasswordResetService } from './password-reset.service'
+import { EmailVerificationService } from './email-verification.service'
+import { LineOAuthService } from './line-oauth.service'
 import { JwtAuthGuard } from './guards/jwt-auth.guard'
 import { RolesGuard } from './guards/roles.guard'
 import { JwtStrategy } from './strategies/jwt.strategy'
 
 @Module({
   imports: [
-    UsersModule,
+    PrismaModule,
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.registerAsync({
       imports: [ConfigModule],
@@ -27,11 +33,15 @@ import { JwtStrategy } from './strategies/jwt.strategy'
   ],
   controllers: [AuthController],
   providers: [
+    UsersService,
     AuthService,
+    PasswordResetService,
+    EmailVerificationService,
+    LineOAuthService,
+    AuditService,
+    RateLimitService,
     JwtStrategy,
-    // Dang ky JwtAuthGuard + RolesGuard global
-    // -> Moi endpoint mac dinh can dang nhap (tru @Public()).
-    // -> @Roles() chi giai han role cu the.
+    // JwtAuthGuard + RolesGuard global — moi endpoint mac dinh can JWT (tru @Public())
     { provide: APP_GUARD, useClass: JwtAuthGuard },
     { provide: APP_GUARD, useClass: RolesGuard },
   ],

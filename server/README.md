@@ -71,6 +71,29 @@ npm run prisma:seed           # dữ liệu mẫu (owner@gym.local, Password123!
 npm run dev                   # http://localhost:3000 — Nest watch mode
 ```
 
+### Dừng server đang chạy
+
+Nếu port 3000 đã bận (lỗi `EADDRINUSE`), dừng tất cả process Node trước:
+
+```powershell
+# PowerShell
+Stop-Process -Name node -Force -ErrorAction SilentlyContinue
+
+npx kill-process port 3000
+```
+
+```bash
+# Git Bash / WSL
+powershell.exe -Command "Stop-Process -Name node -Force -ErrorAction SilentlyContinue"
+```
+
+Kiểm tra port đã trống chưa:
+
+```powershell
+netstat -ano | findstr ":3000"
+# Không có output = port trống
+```
+
 ### Build production
 
 ```bash
@@ -104,8 +127,8 @@ Tham khảo [`.env.example`](./.env.example).
 
 | Biến | Bắt buộc | Mô tả |
 | --- | --- | --- |
-| `DATABASE_URL` | **yes** | Connection string PostgreSQL cho Prisma (`url` trong `schema.prisma`) |
-| `DIRECT_URL` | –\* | Chuỗi kết nối trực tiếp tới Postgres cho `directUrl` (Prisma dùng cho DDL khi `prisma db push` — với DB qua pooler như Supabase bắt buộc có; có thể trùng `DATABASE_URL` nếu local không dùng pooler) |
+| `DATABASE_URL` | **yes** | Connection string runtime cho Prisma. Dùng **Transaction pooler** cổng `6543` với `pgbouncer=true` |
+| `DIRECT_URL` | –\* | Chuỗi dùng cho DDL khi `prisma db push`: Direct connection cổng `5432`, hoặc Session pooler `5432` nếu mạng không hỗ trợ IPv6/direct host |
 | `JWT_SECRET` | **yes** | Khóa ký JWT |
 | `JWT_EXPIRES_IN` | – | Mặc định `7d` |
 | `NODE_ENV` | – | `development` / `production` / `test` |
@@ -138,7 +161,7 @@ Server chỉ **dùng Postgres của Supabase** qua Prisma (JWT vẫn do NestJS c
 
 1. Tạo project tại [Supabase Dashboard](https://supabase.com/dashboard/project/_/settings/database).
 2. Vào **Project Settings → Database → Connection string**:
-   - **`DATABASE_URL`**: chọn **Transaction pooler** (host `*.pooler.supabase.com`, cổng **6543**). Thêm `?pgbouncer=true` (và `sslmode=require` nếu dashboard gợi ý). Đây là chuỗi dùng cho **Prisma Client** (runtime Nest).
+   - **`DATABASE_URL`**: chọn **Transaction pooler** (host `*.pooler.supabase.com`, cổng **6543**) và thêm `?sslmode=require&pgbouncer=true&connection_limit=1&pool_timeout=20&connect_timeout=20`.
    - **`DIRECT_URL`**: chọn **Direct connection** (`db.<project-ref>.supabase.co`, cổng **5432**), không qua pooler transaction. Prisma dùng cho DDL khi `prisma db push`.
 3. Ghi vào `.env` (đổi mật khẩu, **URL-encode** ký tự đặc biệt trong mật khẩu; host vùng lấy đúng theo dashboard, không cứng region).
 4. Trong `server/`:
@@ -152,6 +175,8 @@ npm run dev
 
 Chi tiết ví dụ chuỗi nằm trong [`.env.example`](./.env.example). Luồng Prisma ↔ Supabase: [Prisma + Supabase](https://www.prisma.io/docs/orm/overview/databases/supabase), [Integration guide](https://supabase.com/partners/integrations/prisma).
 
+Transaction pooler cổng `6543` hỗ trợ IPv4 ổn định hơn trong môi trường local hiện tại. Prisma bắt buộc có `pgbouncer=true` để tắt prepared statements không tương thích với transaction pooling.
+
 #### Tại sao `db push` thay vì `prisma migrate`?
 
 Supabase tạo sẵn schema/extensions trong `public` → `prisma migrate deploy` trả lỗi `P3005: The database schema is not empty`. Project đã chốt `prisma db push` làm cơ chế sync duy nhất:
@@ -160,7 +185,7 @@ Supabase tạo sẵn schema/extensions trong `public` → `prisma migrate deploy
 - Không có folder `prisma/migrations/`. `schema.prisma` là code source-of-truth; Supabase là runtime truth.
 - Trade-off chấp nhận: không có migration rollback history. Nếu cần rollback, restore từ Supabase backup.
 
-#### DIRECT_URL: cổng 5432 bị block
+#### Direct connection bị block hoặc không có IPv6
 
 Một số ISP/firewall chặn cổng 5432 của direct host (`db.<ref>.supabase.co:5432`). Kiểm tra trước:
 
@@ -170,7 +195,7 @@ Test-NetConnection -ComputerName "db.<ref>.supabase.co" -Port 5432 -InformationL
 # False = bị block
 ```
 
-Nếu bị block, dùng **Session pooler** (cùng host với Transaction pooler nhưng cổng **5432**, hỗ trợ DDL):
+Nếu direct host không truy cập được, dùng **Session pooler** (cổng **5432**, hỗ trợ DDL):
 
 ```env
 # .env — thay DIRECT_URL
@@ -179,47 +204,14 @@ DIRECT_URL=postgresql://postgres.<ref>:<password>@aws-X-<region>.pooler.supabase
 
 Lưu ý: username của Session pooler có dạng `postgres.<ref>` (giống Transaction pooler), khác với direct connection (`postgres`).
 
-### Smoke test sau setup
-
-Sau khi `npm run dev` chạy thành công (log `Nest application successfully started` + `Server running on http://localhost:3000`), mở terminal khác và chạy:
-
-```bash
-# 1. Health check (ngay sau cold start có thể trả db:down do PrismaService lazy connect — không phải lỗi)
-curl http://localhost:3000/health
-# Mong đợi: {"status":"ok"|"degraded","timestamp":"...","db":"ok"|"down"}
-
-# 2. Login owner mặc định — kích hoạt connection DB nếu chưa có
-curl -X POST http://localhost:3000/api/v1/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"email":"owner@gym.local","password":"Password123!"}'
-# Mong đợi: {"success":true,"data":{"accessToken":"eyJ...","user":{"userId":"...","email":"owner@gym.local","fullName":"Pham Quoc Hung","roles":["owner"]}}}
-
-# 3. Health check sau khi đã có query — db:ok bền vững
-curl http://localhost:3000/health
-# Mong đợi: {"status":"ok","timestamp":"...","db":"ok"}
-```
-
-Tiêu chí pass: bước 2 trả `accessToken` + `roles:["owner"]`, bước 3 trả `db:"ok"`. Bước 1 có thể là `db:"down"` hoặc `db:"ok"` tuỳ thời điểm — không phải lỗi.
-
-PowerShell (Windows):
+#### Chẩn đoán `P1001`
 
 ```powershell
-# Login với Invoke-RestMethod
-$body = @{ email = 'owner@gym.local'; password = 'Password123!' } | ConvertTo-Json
-Invoke-RestMethod -Method POST -Uri 'http://localhost:3000/api/v1/auth/login' `
-  -ContentType 'application/json' -Body $body
+Test-NetConnection -ComputerName "aws-X-<region>.pooler.supabase.com" -Port 5432
+Invoke-RestMethod http://localhost:3000/health
 ```
 
-### Troubleshooting
-
-| Triệu chứng | Nguyên nhân | Khắc phục |
-| --- | --- | --- |
-| `npm run build` trả exit 0 nhưng `dist/` không tạo | `tsconfig.build.tsbuildinfo` stale (tsc incremental cache không invalidate) | `rm -f tsconfig.build.tsbuildinfo && npm run build` |
-| `/health` luôn trả `db: down` kể cả sau login | DATABASE_URL sai (host/port/credential) hoặc pooler chặn | Kiểm tra log Nest console; chạy `npx prisma db pull` để test connection |
-| Login trả `Email hoac mat khau khong dung` dù password đúng | User `status='locked'` hoặc seed chưa chạy | `npm run prisma:studio` xem `users.status`; nếu thiếu data → `npm run prisma:seed` |
-| `prisma db push` báo `P3005: schema is not empty` | Đã chạy `prisma migrate deploy` trên Supabase trước đó | Project không dùng `migrate` — chỉ dùng `db push`. Đọc section "Tại sao `db push`" ở trên |
-| `prisma db push` timeout / connection refused | `DIRECT_URL` đang dùng direct host nhưng cổng 5432 bị ISP chặn | Đổi sang Session pooler (xem section trên) |
-| OTP `/auth/forgot-password` không gửi email | SMTP chưa integrate (placeholder v1.0) | OTP log ra `console.log` — copy từ stdout server. Production cần chốt SMTP provider (xem Architecture.md §8) |
+Nếu TCP thành công nhưng `/health` vẫn trả `db: down`, chạy một truy vấn Prisma tối thiểu và kiểm tra lại password/project ref. Không trả nguyên văn lỗi Prisma ra frontend vì thông báo có thể chứa host database.
 
 ---
 

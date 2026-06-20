@@ -1,0 +1,163 @@
+@layer components {
+  /* Forms */
+  .rogym-field-label {
+    color: rgba(255, 255, 255, 0.72);
+    font-size: 0.8125rem;
+    font-weight: 500;
+  }
+
+  .rogym-input,
+  .input-base {
+    display: block;
+    width: 100%;
+    border: 1px solid var(--rogym-border-white-dim);
+    border-radius: 0.75rem;
+    padding: 0.75rem 0.875rem;
+    color: var(--rogym-text-primary);
+    background: rgba(255, 255, 255, 0.06);
+    font-family: var(--rogym-font-body);
+    font-size: 0.875rem;
+    outline: none;
+    transition:
+      border-color 200ms var(--rogym-ease-standard),
+      background-color 200ms var(--rogym-ease-standard),
+      box-shadow 200ms var(--rogym-ease-standard);
+  }
+
+  .rogym-input::placeholder,
+  .input-base::placeholder {
+    color: rgba(255, 255, 255, 0.2);
+  }
+
+  .rogym-input:focus,
+  .input-base:focus {
+    border-color: var(--rogym-border-teal-focus);
+    background: rgba(66, 224, 158, 0.05);
+    box-shadow: 0 0 0 3px rgba(66, 224, 158, 0.08);
+  }
+
+  .rogym-input:disabled,
+  .input-base:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+  }
+
+  .rogym-select {
+    display: flex;
+    width: 100%;
+    min-height: 44px;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    overflow: hidden;
+    border: 1px solid var(--rogym-border-teal-dim);
+    border-radius: 1rem;
+    padding: 0.75rem 0.875rem;
+    color: var(--rogym-text-primary);
+    background-color: var(--rogym-bg-card);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+    font-family: var(--rogym-font-body);
+    font-size: 0.875rem;
+    text-align: left;
+    outline: none;
+    cursor: pointer;
+    transition:
+      border-color 200ms var(--rogym-ease-standard),
+      background-color 200ms var(--rogym-ease-standard),
+      box-shadow 200ms var(--rogym-ease-standard);
+  }
+
+  .rogym-select > span:first-child {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .rogym-select:hover {
+    border-color: var(--rogym-border-teal-hover);
+    background-color: var(--rogym-bg-card-hover);
+  }
+
+  .rogym-select:focus-visible,
+  .rogym-select[data-state="open"] {
+    border-color: var(--rogym-border-teal-focus);
+    background-color: var(--rogym-bg-elevated-green);
+    box-shadow: 0 0 0 3px rgba(66, 224, 158, 0.1);
+  }
+
+  .rogym-select:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+  }
+
+  .rogym-select__icon {
+    display: inline-flex;
+    flex: 0 0 auto;
+    color: var(--rogym-text-muted);
+    transition: transform 200ms var(--rogym-ease-standard);
+  }
+
+  .rogym-select[data-state="open"] .rogym-select__icon {
+    color: var(--rogym-teal);
+    transform: rotate(180deg);
+  }
+
+  .rogym-select__content {
+    z-index: 100;
+    width: var(--radix-select-trigger-width);
+    max-height: var(--radix-select-content-available-height);
+    overflow: hidden;
+    border: 1px solid var(--rogym-border-teal-hover);
+    border-radius: 1rem;
+    background-color: var(--rogym-bg-elevated);
+    box-shadow:
+      0 18px 48px rgba(0, 0, 0, 0.45),
+      inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  }
+
+  .rogym-select__viewport {
+    padding: 0.375rem;
+  }
+
+  .rogym-select__item {
+    position: relative;
+    display: flex;
+    min-height: 40px;
+    align-items: center;
+    border-radius: 0.75rem;
+    padding: 0.625rem 2.25rem 0.625rem 0.75rem;
+    margin: 2px 0;
+    color: var(--rogym-text-secondary);
+    font-size: 0.875rem;
+    line-height: 1.35;
+    outline: none;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .rogym-select__item[data-highlighted] {
+    color: var(--rogym-text-primary);
+    background-color: rgba(66, 224, 158, 0.12);
+  }
+
+  .rogym-select__item[data-state="checked"] {
+    color: var(--rogym-teal);
+    background-color: rgba(6, 195, 132, 0.14);
+    font-weight: 600;
+  }
+
+  .rogym-select__item[data-disabled] {
+    cursor: not-allowed;
+    opacity: 0.4;
+  }
+
+  .rogym-select__indicator {
+    position: absolute;
+    right: 0.75rem;
+    display: inline-flex;
+    align-items: center;
+    color: var(--rogym-teal);
+  }
+}

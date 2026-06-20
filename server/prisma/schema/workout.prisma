@@ -1,0 +1,164 @@
+model Exercise {
+  exerciseId       BigInt                @id @default(autoincrement()) @map("exercise_id")
+  name             String                @db.VarChar(100)
+  category         ExerciseCategory
+  muscleGroup      String?               @map("muscle_group") @db.VarChar(100)
+  equipmentNeeded  String?               @map("equipment_needed") @db.VarChar(100)
+  description      String?
+  createdByStaffId BigInt?               @map("created_by_staff_id")
+  deletedAt        DateTime?             @map("deleted_at") @db.Timestamp(6)
+  createdAt        DateTime              @default(now()) @map("created_at") @db.Timestamp(6)
+  imageUrl         String?               @map("image_url") @db.VarChar(1000)
+  createdByStaff   Staff?                @relation(fields: [createdByStaffId], references: [staffId])
+  planExercises    WorkoutPlanExercise[]
+
+  @@index([category])
+  @@index([muscleGroup])
+  @@map("exercises")
+}
+
+model WorkoutPlan {
+  planId          BigInt              @id @default(autoincrement()) @map("plan_id")
+  creatorStaffId  BigInt?             @map("creator_staff_id")
+  creatorMemberId BigInt?             @map("creator_member_id")
+  creatorType     PlanCreatorType     @map("creator_type")
+  name            String              @db.VarChar(100)
+  description     String?
+  status          WorkoutPlanStatus   @default(draft)
+  deletedAt       DateTime?           @map("deleted_at") @db.Timestamp(6)
+  createdAt       DateTime            @default(now()) @map("created_at") @db.Timestamp(6)
+  assignments     MemberWorkoutPlan[]
+  days            WorkoutPlanDay[]
+  creatorMember   Member?             @relation("MemberCreatedPlans", fields: [creatorMemberId], references: [memberId])
+  creatorStaff    Staff?              @relation(fields: [creatorStaffId], references: [staffId])
+
+  @@index([creatorStaffId])
+  @@index([creatorMemberId])
+  @@map("workout_plans")
+}
+
+model WorkoutPlanDay {
+  planDayId  BigInt                @id @default(autoincrement()) @map("plan_day_id")
+  planId     BigInt                @map("plan_id")
+  dayNumber  Int                   @map("day_number")
+  name       String                @db.VarChar(100)
+  notes      String?
+  weekNumber Int                   @default(1) @map("week_number")
+  dayOfWeek  Int                   @map("day_of_week")
+  logs       WorkoutLog[]
+  plan       WorkoutPlan           @relation(fields: [planId], references: [planId], onDelete: Cascade)
+  exercises  WorkoutPlanExercise[]
+  sessions   TrainingSession[]
+
+  @@unique([planId, dayNumber])
+  @@unique([planId, weekNumber, dayOfWeek])
+  @@map("workout_plan_days")
+}
+
+model WorkoutPlanExercise {
+  planExerciseId    BigInt          @id @default(autoincrement()) @map("plan_exercise_id")
+  planDayId         BigInt          @map("plan_day_id")
+  exerciseId        BigInt          @map("exercise_id")
+  orderIndex        Int             @map("order_index")
+  targetSets        Int             @map("target_sets")
+  targetReps        Int?            @map("target_reps")
+  targetDurationSec Int?            @map("target_duration_sec")
+  targetWeightKg    Decimal?        @map("target_weight_kg") @db.Decimal(6, 2)
+  restSeconds       Int?            @default(60) @map("rest_seconds")
+  notes             String?
+  logSets           WorkoutLogSet[]
+  exercise          Exercise        @relation(fields: [exerciseId], references: [exerciseId])
+  planDay           WorkoutPlanDay  @relation(fields: [planDayId], references: [planDayId], onDelete: Cascade)
+
+  @@unique([planDayId, orderIndex])
+  @@index([exerciseId])
+  @@map("workout_plan_exercises")
+}
+
+model MemberWorkoutPlan {
+  assignmentId      BigInt                  @id @default(autoincrement()) @map("assignment_id")
+  memberId          BigInt                  @map("member_id")
+  planId            BigInt                  @map("plan_id")
+  assignedByStaffId BigInt?                 @map("assigned_by_staff_id")
+  startDate         DateTime                @map("start_date") @db.Date
+  status            WorkoutAssignmentStatus @default(active)
+  endedAt           DateTime?               @map("ended_at") @db.Timestamp(6)
+  notes             String?
+  createdAt         DateTime                @default(now()) @map("created_at") @db.Timestamp(6)
+  assignedByStaff   Staff?                  @relation(fields: [assignedByStaffId], references: [staffId])
+  member            Member                  @relation(fields: [memberId], references: [memberId])
+  plan              WorkoutPlan             @relation(fields: [planId], references: [planId])
+  logs              WorkoutLog[]
+  sessions          TrainingSession[]
+
+  @@index([memberId, status])
+  @@index([planId])
+  @@map("member_workout_plans")
+}
+
+model WorkoutLog {
+  logId        BigInt            @id @default(autoincrement()) @map("log_id")
+  memberId     BigInt            @map("member_id")
+  assignmentId BigInt            @map("assignment_id")
+  planDayId    BigInt            @map("plan_day_id")
+  loggedAt     DateTime          @map("logged_at") @db.Timestamp(6)
+  durationMin  Int?              @map("duration_min")
+  notes        String?
+  sets         WorkoutLogSet[]
+  assignment   MemberWorkoutPlan @relation(fields: [assignmentId], references: [assignmentId])
+  member       Member            @relation(fields: [memberId], references: [memberId])
+  planDay      WorkoutPlanDay    @relation(fields: [planDayId], references: [planDayId])
+
+  @@index([memberId, loggedAt(sort: Desc)])
+  @@index([assignmentId])
+  @@map("workout_logs")
+}
+
+model WorkoutLogSet {
+  logSetId          BigInt              @id @default(autoincrement()) @map("log_set_id")
+  logId             BigInt              @map("log_id")
+  planExerciseId    BigInt              @map("plan_exercise_id")
+  setNumber         Int                 @map("set_number")
+  actualReps        Int?                @map("actual_reps")
+  actualWeightKg    Decimal?            @map("actual_weight_kg") @db.Decimal(6, 2)
+  actualDurationSec Int?                @map("actual_duration_sec")
+  completed         Boolean             @default(true)
+  log               WorkoutLog          @relation(fields: [logId], references: [logId], onDelete: Cascade)
+  planExercise      WorkoutPlanExercise @relation(fields: [planExerciseId], references: [planExerciseId])
+
+  @@unique([logId, planExerciseId, setNumber])
+  @@index([planExerciseId])
+  @@map("workout_log_sets")
+}
+
+enum ExerciseCategory {
+  strength
+  cardio
+  flexibility
+  balance
+
+  @@map("exercise_category")
+}
+
+enum WorkoutPlanStatus {
+  draft
+  active
+  archived
+
+  @@map("workout_plan_status")
+}
+
+enum WorkoutAssignmentStatus {
+  active
+  completed
+  replaced
+
+  @@map("workout_assignment_status")
+}
+
+enum PlanCreatorType {
+  staff
+  member
+
+  @@map("plan_creator_type")
+}

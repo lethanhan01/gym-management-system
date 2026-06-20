@@ -1,0 +1,48 @@
+model Payment {
+  paymentId            BigInt        @id @default(autoincrement()) @map("payment_id")
+  memberId             BigInt        @map("member_id")
+  subscriptionId       BigInt        @map("subscription_id")
+  amount               Decimal       @db.Decimal(12, 2)
+  method               PaymentMethod
+  status               PaymentStatus
+  transactionReference String?       @unique @map("transaction_reference") @db.VarChar(100)
+  paidAt               DateTime      @map("paid_at") @db.Timestamp(6)
+  member               Member        @relation(fields: [memberId], references: [memberId])
+  subscription         Subscription  @relation(fields: [subscriptionId], references: [subscriptionId])
+
+  @@index([memberId, paidAt(sort: Desc)])
+  @@index([subscriptionId])
+  @@index([status, paidAt(sort: Desc)])
+  @@map("payments")
+}
+
+model PaymentAccount {
+  accountId  BigInt        @id @default(autoincrement()) @map("account_id")
+  memberId   BigInt        @map("member_id")
+  type       PaymentMethod
+  provider   String?       @db.VarChar(100)
+  accountRef String?       @map("account_ref") @db.VarChar(100)
+  label      String?       @db.VarChar(100)
+  isDefault  Boolean       @default(false) @map("is_default")
+  createdAt  DateTime      @default(now()) @map("created_at") @db.Timestamp(6)
+  deletedAt  DateTime?     @map("deleted_at") @db.Timestamp(6)
+  member     Member        @relation(fields: [memberId], references: [memberId])
+
+  @@index([memberId])
+  @@map("payment_accounts")
+}
+
+enum PaymentMethod {
+  cash
+  bank_card
+  ewallet
+
+  @@map("payment_method")
+}
+
+enum PaymentStatus {
+  success
+  failed
+
+  @@map("payment_status")
+}

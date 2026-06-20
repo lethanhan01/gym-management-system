@@ -1,0 +1,59 @@
+model TrainingSession {
+  sessionId      BigInt                @id @default(autoincrement()) @map("session_id")
+  memberId       BigInt                @map("member_id")
+  trainerStaffId BigInt                @map("trainer_staff_id")
+  roomId         BigInt                @map("room_id")
+  assignmentId   BigInt?               @map("assignment_id")
+  planDayId      BigInt?               @map("plan_day_id")
+  startTime      DateTime              @map("start_time") @db.Timestamp(6)
+  endTime        DateTime              @map("end_time") @db.Timestamp(6)
+  deletedAt      DateTime?             @map("deleted_at") @db.Timestamp(6)
+  status         TrainingSessionStatus @default(scheduled)
+  attendanceLogs AttendanceLog[]
+  assignment     MemberWorkoutPlan?    @relation(fields: [assignmentId], references: [assignmentId])
+  member         Member                @relation(fields: [memberId], references: [memberId])
+  planDay        WorkoutPlanDay?       @relation(fields: [planDayId], references: [planDayId])
+  room           GymRoom               @relation(fields: [roomId], references: [roomId])
+  trainer        Staff                 @relation(fields: [trainerStaffId], references: [staffId])
+
+  @@index([memberId, startTime(sort: Desc)])
+  @@index([trainerStaffId, startTime(sort: Desc)])
+  @@index([assignmentId])
+  @@index([planDayId])
+  @@map("training_sessions")
+}
+
+model AttendanceLog {
+  attendanceId   BigInt           @id @default(autoincrement()) @map("attendance_id")
+  memberId       BigInt           @map("member_id")
+  subscriptionId BigInt           @map("subscription_id")
+  sessionId      BigInt?          @map("session_id")
+  startTime      DateTime         @map("start_time") @db.Timestamp(6)
+  endTime        DateTime?        @map("end_time") @db.Timestamp(6)
+  method         AttendanceMethod
+  member         Member           @relation(fields: [memberId], references: [memberId])
+  session        TrainingSession? @relation(fields: [sessionId], references: [sessionId])
+  subscription   Subscription     @relation(fields: [subscriptionId], references: [subscriptionId])
+
+  @@index([memberId, startTime(sort: Desc)])
+  @@index([subscriptionId])
+  @@index([sessionId])
+  @@map("attendance_logs")
+}
+
+enum AttendanceMethod {
+  realtime
+  manual
+  qr
+
+  @@map("attendance_method")
+}
+
+enum TrainingSessionStatus {
+  scheduled
+  in_progress
+  completed
+  cancelled
+
+  @@map("training_session_status")
+}

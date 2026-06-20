@@ -1,0 +1,71 @@
+@layer components {
+  /* Layout */
+  .rogym-page {
+    min-height: 100vh;
+    overflow-x: hidden;
+    background: var(--rogym-bg-base);
+    color: var(--rogym-text-primary);
+    font-family: var(--rogym-font-body);
+  }
+
+  .rogym-container {
+    width: 100%;
+    max-width: var(--rogym-container-width);
+    margin-inline: auto;
+    padding-inline: var(--rogym-container-padding);
+  }
+
+  .rogym-section {
+    position: relative;
+    width: 100%;
+    padding-block: var(--rogym-section-padding);
+  }
+
+  .rogym-section--dark {
+    background: var(--rogym-bg-base);
+    border-block: 1px solid var(--rogym-border-section);
+  }
+
+  .rogym-section--deep {
+    background: var(--rogym-bg-deep-alt);
+  }
+
+  .rogym-section--light {
+    background: var(--rogym-bg-light);
+    color: var(--rogym-text-on-light);
+  }
+
+  .rogym-navbar {
+    position: fixed;
+    z-index: 50;
+    top: 0;
+    right: 0;
+    left: 0;
+    min-height: 64px;
+    background: transparent;
+    border-bottom: 1px solid transparent;
+    transition:
+      background-color 500ms ease,
+      border-color 500ms ease,
+      backdrop-filter 500ms ease;
+  }
+
+  .rogym-navbar--scrolled {
+    border-bottom-color: rgba(66, 224, 158, 0.08);
+    background: rgba(8, 14, 11, 0.92);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+  }
+
+  .rogym-logo-mark {
+    display: inline-flex;
+    width: 2rem;
+    height: 2rem;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.5rem;
+    color: var(--rogym-text-primary);
+    background: var(--rogym-green);
+  }
+}

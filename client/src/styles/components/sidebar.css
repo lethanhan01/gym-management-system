@@ -1,0 +1,204 @@
+@layer components {
+  .rogym-dashboard-layout {
+    padding-left: 0;
+  }
+
+  .rogym-dashboard-layout.has-sidebar {
+    padding-left: 80px;
+  }
+
+  .rogym-sidebar {
+    position: fixed;
+    inset: 12px auto 12px 12px;
+    z-index: 40;
+    display: flex;
+    width: 68px;
+    flex-direction: column;
+    overflow: hidden;
+    border: 1px solid rgba(66, 224, 158, 0.08);
+    border-radius: 20px;
+    background: var(--rogym-bg-card);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    transition: width 280ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .rogym-sidebar.is-expanded {
+    width: 224px;
+  }
+
+  .rogym-sidebar__logo {
+    height: 60px;
+    flex-shrink: 0;
+    justify-content: center;
+    padding-left: 0;
+    transition: padding-left 280ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .rogym-sidebar.is-expanded .rogym-sidebar__logo {
+    justify-content: flex-start;
+    padding-left: 16px;
+  }
+
+  .rogym-sidebar__label,
+  .rogym-sidebar__brand,
+  .rogym-sidebar__mode-label {
+    max-width: 0;
+    margin-left: 0;
+    overflow: hidden;
+    opacity: 0;
+    white-space: nowrap;
+    transition:
+      opacity 200ms ease,
+      max-width 280ms cubic-bezier(0.4, 0, 0.2, 1),
+      margin-left 280ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .rogym-sidebar__label {
+    flex: 1;
+  }
+
+  .rogym-sidebar__brand {
+    color: #fff;
+    font-family: var(--rogym-font-display);
+    font-size: 18px;
+    letter-spacing: 0.12em;
+  }
+
+  .rogym-sidebar.is-expanded .rogym-sidebar__label {
+    max-width: 160px;
+    margin-left: 12px;
+    opacity: 1;
+  }
+
+  .rogym-sidebar.is-expanded .rogym-sidebar__brand {
+    max-width: 120px;
+    margin-left: 10px;
+    opacity: 1;
+  }
+
+  .rogym-sidebar.is-expanded .rogym-sidebar__mode-label {
+    max-width: 160px;
+    margin-left: 8px;
+    opacity: 1;
+  }
+
+  .rogym-sidebar__subnav {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 260ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .rogym-sidebar__subnav.is-open {
+    max-height: 240px;
+  }
+
+  .rogym-sidebar__mode-button {
+    justify-content: center;
+    padding: 8px 0;
+  }
+
+  .rogym-sidebar.is-expanded .rogym-sidebar__mode-button {
+    justify-content: flex-start;
+    padding-left: 12px;
+  }
+
+  .rogym-topbar__title {
+    color: #fff;
+    font-family: var(--rogym-font-display);
+    font-size: 16px;
+    letter-spacing: 0.04em;
+    opacity: 0;
+    transition: opacity 150ms ease;
+  }
+
+  .rogym-topbar__title.is-visible {
+    opacity: 1;
+  }
+
+  .rogym-topbar__avatar {
+    display: flex;
+    width: 34px;
+    height: 34px;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid transparent;
+    border-radius: 50%;
+    background: var(--rogym-green);
+    color: var(--rogym-green-dark);
+    font-family: var(--rogym-font-body);
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: border-color 150ms ease;
+  }
+
+  .rogym-topbar__avatar.is-open {
+    border-color: var(--rogym-teal);
+  }
+
+  .rogym-dropdown-item {
+    --rogym-button-sweep: rgba(255, 255, 255, 0.07);
+    display: flex;
+    width: 100%;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 16px;
+    border: 0;
+    background: transparent;
+    color: var(--rogym-text-secondary);
+    font-family: var(--rogym-font-body);
+    font-size: 13px;
+    font-weight: 500;
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .rogym-dropdown-item:hover {
+    color: #fff;
+  }
+
+  .rogym-dropdown-item.is-danger {
+    --rogym-button-sweep: rgba(255, 107, 107, 0.1);
+    color: rgba(255, 107, 107, 0.7);
+  }
+
+  .rogym-dropdown-item.is-danger:hover {
+    color: #ff6b6b;
+  }
+
+  .rogym-choice-chip {
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--rogym-text-muted);
+  }
+
+  .rogym-choice-chip.is-active {
+    border-color: rgba(66, 224, 158, 0.27);
+    background: rgba(66, 224, 158, 0.13);
+    color: var(--rogym-teal);
+  }
+
+  /* Section header trong nav — ẩn khi thu gọn, hiện khi mở rộng */
+  .rogym-sidebar__section-label {
+    padding: 0 12px;
+    max-height: 0;
+    overflow: hidden;
+    opacity: 0;
+    color: var(--rogym-text-muted);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    transition:
+      max-height 280ms cubic-bezier(0.4, 0, 0.2, 1),
+      opacity 200ms ease;
+  }
+
+  .rogym-sidebar.is-expanded .rogym-sidebar__section-label {
+    max-height: 28px;
+    padding-top: 8px;
+    padding-bottom: 4px;
+    opacity: 1;
+  }
+}

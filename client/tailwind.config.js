@@ -1,0 +1,50 @@
+/** @type {import('tailwindcss').Config} */
+export default {
+  content: ['./index.html', './src/**/*.{ts,tsx}'],
+  theme: {
+    extend: {
+      colors: {
+        primary: '#f2ca50',
+        'on-primary': '#3c2f00',
+        'primary-container': '#d4af37',
+        'on-primary-container': '#554300',
+        secondary: '#c8c6c5',
+        'on-secondary': '#313030',
+        'secondary-container': '#4a4949',
+        'on-secondary-container': '#bab8b7',
+        tertiary: '#d0cdcd',
+        'on-tertiary': '#313030',
+        'tertiary-container': '#b4b2b2',
+        'on-tertiary-container': '#454544',
+        error: '#ffb4ab',
+        'on-error': '#690005',
+        'error-container': '#93000a',
+        'on-error-container': '#ffdad6',
+        surface: '#121414',
+        'surface-dim': '#121414',
+        'surface-bright': '#38393a',
+        'surface-container-lowest': '#0c0f0f',
+        'surface-container-low': '#1a1c1c',
+        'surface-container': '#1e2020',
+        'surface-container-high': '#282a2b',
+        'surface-container-highest': '#333535',
+        'on-surface': '#e2e2e2',
+        'on-surface-variant': '#d0c5af',
+        'inverse-surface': '#e2e2e2',
+        'inverse-on-surface': '#2f3131',
+        outline: '#99907c',
+        'outline-variant': '#4d4635',
+        'surface-tint': '#e9c349',
+        background: '#121414',
+        'on-background': '#e2e2e2',
+        'surface-variant': '#333535',
+      },
+      fontFamily: {
+  'vietnam': ['"Be Vietnam Pro"', 'sans-serif'],
+  'anton': ['Anton', 'sans-serif'],
+}
+
+    },
+  },
+  plugins: [],
+}

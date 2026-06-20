@@ -1,0 +1,230 @@
+@layer components {
+  .rogym-auth-shell {
+    position: relative;
+    display: flex;
+    width: 100%;
+    min-height: 100vh;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    background: var(--rogym-bg-base);
+  }
+
+  .rogym-auth-background,
+  .rogym-auth-background::before,
+  .rogym-auth-background::after {
+    position: absolute;
+    inset: 0;
+  }
+
+  .rogym-auth-background {
+    pointer-events: none;
+  }
+
+  .rogym-auth-background img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    filter: blur(10px) brightness(0.28) saturate(0.55);
+    transform: scale(1.06);
+  }
+
+  .rogym-auth-background::before {
+    content: "";
+    z-index: 1;
+    background:
+      radial-gradient(
+        ellipse 70% 70% at 50% 50%,
+        rgba(6, 195, 132, 0.07) 0%,
+        transparent 70%
+      );
+  }
+
+  .rogym-auth-background::after {
+    content: "";
+    z-index: 2;
+    background: rgba(8, 14, 11, 0.5);
+  }
+
+  .rogym-auth-frame {
+    position: relative;
+    z-index: 10;
+    width: min(100% - 2rem, 400px);
+  }
+
+  .rogym-radial-glow {
+    background:
+      radial-gradient(
+        ellipse 55% 50% at 50% 50%,
+        rgba(6, 195, 132, 0.08) 0%,
+        transparent 70%
+      );
+  }
+
+  .rogym-auth-text-link {
+    padding: 0;
+    border: 0;
+    background: none;
+    color: #fff;
+    font-family: var(--rogym-font-body);
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+  }
+
+  .rogym-auth-text-link.is-muted {
+    color: rgba(255, 255, 255, 0.4);
+    font-weight: 500;
+  }
+
+  .rogym-auth-field__icon {
+    color: rgba(255, 255, 255, 0.25);
+    transition: color 200ms ease;
+  }
+
+  .rogym-auth-field:focus-within .rogym-auth-field__icon {
+    color: var(--rogym-teal);
+  }
+
+  .rogym-auth-field__input {
+    padding-right: 14px;
+    padding-left: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.06);
+    color: #fff;
+    font-family: var(--rogym-font-body);
+  }
+
+  .rogym-auth-field__input.has-icon {
+    padding-left: 40px;
+  }
+
+  .rogym-auth-field__input.has-action {
+    padding-right: 44px;
+  }
+
+  .rogym-auth-field__input:focus {
+    border-color: var(--rogym-teal);
+    background: rgba(66, 224, 158, 0.05);
+  }
+
+  .rogym-auth-shell__content {
+    max-width: 400px;
+  }
+
+  .rogym-auth-shell__content.is-wide {
+    max-width: 480px;
+  }
+
+  .rogym-quick-role {
+    --rogym-role-color: var(--rogym-green);
+    --rogym-role-soft: rgba(6, 195, 132, 0.13);
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 14px 8px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.04);
+    cursor: pointer;
+    transition: all 180ms ease;
+  }
+
+  .rogym-quick-role--member {
+    --rogym-role-color: #3b82f6;
+    --rogym-role-soft: rgba(59, 130, 246, 0.13);
+  }
+
+  .rogym-quick-role--trainer {
+    --rogym-role-color: #8b5cf6;
+    --rogym-role-soft: rgba(139, 92, 246, 0.13);
+  }
+
+  .rogym-quick-role--staff {
+    --rogym-role-color: #f59e0b;
+    --rogym-role-soft: rgba(245, 158, 11, 0.13);
+  }
+
+  .rogym-quick-role:hover {
+    border-color: var(--rogym-role-color);
+    background: rgba(255, 255, 255, 0.07);
+  }
+
+  .rogym-quick-role__icon {
+    display: flex;
+    width: 36px;
+    height: 36px;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    background: var(--rogym-role-soft);
+    color: var(--rogym-role-color);
+  }
+
+  .rogym-quick-role__label {
+    color: rgba(255, 255, 255, 0.55);
+    font-family: var(--rogym-font-body);
+    font-size: 12px;
+    font-weight: 600;
+    transition: color 180ms ease;
+  }
+
+  .rogym-quick-role:hover .rogym-quick-role__label {
+    color: #fff;
+  }
+
+  .rogym-otp-input {
+    width: 44px;
+    height: 52px;
+    border: 1.5px solid rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.06);
+    color: #fff;
+    caret-color: var(--rogym-teal);
+    font-family: var(--rogym-font-body);
+  }
+
+  .rogym-otp-input.has-value {
+    border-color: rgba(66, 224, 158, 0.4);
+  }
+
+  .rogym-otp-input:focus {
+    border-color: var(--rogym-teal);
+    background: rgba(66, 224, 158, 0.06);
+  }
+
+  .rogym-auth-highlight,
+  .rogym-verify-email {
+    color: var(--rogym-teal);
+    font-weight: 600;
+  }
+
+  .rogym-verify-email {
+    margin-top: 2px;
+    font-family: var(--rogym-font-body);
+    font-size: 14px;
+  }
+
+  .rogym-brand-icon,
+  .rogym-register-success__check {
+    background: var(--rogym-green);
+  }
+
+  .rogym-register-success__check {
+    width: 56px;
+    height: 56px;
+  }
+
+  .rogym-register-success__eyebrow {
+    margin-bottom: 8px;
+    color: var(--rogym-teal);
+    font-family: var(--rogym-font-body);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+  }
+}

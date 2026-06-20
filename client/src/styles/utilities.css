@@ -1,0 +1,91 @@
+@layer utilities {
+  .rogym-text-primary {
+    color: var(--rogym-text-primary);
+  }
+
+  .rogym-text-secondary {
+    color: var(--rogym-text-secondary);
+  }
+
+  .rogym-text-muted {
+    color: var(--rogym-text-muted);
+  }
+
+  .rogym-text-accent {
+    color: var(--rogym-teal);
+  }
+
+  .rogym-text-dim {
+    color: var(--rogym-text-dim);
+  }
+
+  .rogym-text-faint {
+    color: var(--rogym-text-faint);
+  }
+
+  .rogym-text-green {
+    color: var(--rogym-green);
+  }
+
+  .rogym-text-green-dark {
+    color: var(--rogym-green-dark);
+  }
+
+  .rogym-text-base {
+    color: var(--rogym-bg-base);
+  }
+
+  .rogym-bg-base {
+    background: var(--rogym-bg-base);
+  }
+
+  .rogym-bg-card {
+    background: var(--rogym-bg-card);
+  }
+
+  /*
+   * Per-container scrollbar override. Dùng khi cần scrollbar trên dark
+   * background (var(--rogym-bg-base)) thay vì bg-deep.
+   * Màu khác global một chút: 0.55 opacity thay vì border-teal-hover token
+   * để tăng contrast trên nền tối hơn.
+   */
+  .app-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(66, 224, 158, 0.55) var(--rogym-bg-base);
+  }
+
+  .app-scrollbar::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  .app-scrollbar::-webkit-scrollbar-track,
+  .app-scrollbar::-webkit-scrollbar-track-piece {
+    background: var(--rogym-bg-base);
+  }
+
+  .app-scrollbar::-webkit-scrollbar-thumb {
+    border: 0;
+    border-radius: 9999px;
+    background: rgba(66, 224, 158, 0.45);
+  }
+
+  .app-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: var(--rogym-teal);
+  }
+
+  .app-scrollbar::-webkit-scrollbar-button {
+    display: none;
+    width: 0;
+    height: 0;
+  }
+
+  .app-scrollbar::-webkit-scrollbar-corner {
+    background: var(--rogym-bg-base);
+  }
+
+  .rogym-font-display {
+    font-family: var(--rogym-font-display);
+  }
+}
+

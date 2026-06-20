@@ -1,0 +1,29 @@
+model User {
+  userId          BigInt      @id @default(autoincrement()) @map("user_id")
+  email           String      @unique @db.VarChar(255)
+  phone           String?     @unique @db.VarChar(20)
+  passwordHash    String?     @map("password_hash") @db.VarChar(255)
+  fullName        String      @map("full_name") @db.VarChar(200)
+  status          UserStatus  @default(pending_verification)
+  createdAt       DateTime    @default(now()) @map("created_at") @db.Timestamp(6)
+  avatarFileId    BigInt?     @map("avatar_file_id")
+  deletedAt       DateTime?   @map("deleted_at") @db.Timestamp(6)
+  emailVerifiedAt DateTime?   @map("email_verified_at") @db.Timestamp(6)
+  lineId          String?     @unique @map("line_id") @db.VarChar(50)
+  auditLogs       AuditLog[]
+  ownedFiles      File[]      @relation("FileOwner")
+  member          Member?
+  staff           Staff?
+  groups          UserGroup[]
+  avatarFile      File?       @relation("UserAvatar", fields: [avatarFileId], references: [fileId])
+
+  @@map("users")
+}
+
+enum UserStatus {
+  active
+  locked
+  pending_verification
+
+  @@map("user_status")
+}

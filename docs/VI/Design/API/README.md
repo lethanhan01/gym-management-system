@@ -1,137 +1,159 @@
 # API Specification
 
-| Field | Value |
+| Trường | Giá trị |
 |---|---|
-| Document ID | GMS-API-README-001 |
-| Version | 1.0.0 |
-| Status | Draft |
-| Author | Lê Thanh An (initial draft 2026-05-17) |
-| Reviewers | TBD |
-| Last Updated | 2026-05-17 |
-| Related docs | [`Architecture.md`](../Architecture.md), [`Database.md`](../Database.md), [`SRS_VI.md`](../../VI/SRS_VI.md) |
-
----
+| Document ID | `GMS-API-README-001` |
+| Version | `1.1.0` |
+| Trạng thái | Đồng bộ với controller hiện tại |
+| Cập nhật lần cuối | 2026-06-19 |
+| Base URL | `/api/v1` |
+| Tài liệu liên quan | [`Architecture.md`](../Architecture.md), [`Database.md`](../Database.md), [`SRS_VI.md`](../../VI/SRS_VI.md) |
 
 ## 1. Mục đích
 
-Đặc tả contract REST API cho hệ thống Gym Management v1.0. Spec là design contract giữa backend + frontend + QA — build dựa theo, không tự nới scope.
+Thư mục này mô tả contract HTTP đang được triển khai trong `server/src`. Tài liệu phục vụ backend, frontend và QA khi tích hợp hoặc kiểm thử API.
 
-Format kép:
+Nguồn sự thật được ưu tiên theo thứ tự:
 
-- **Markdown per module** — human reference, business logic + side effects + audit + cron interaction (chính).
-- **OpenAPI 3.0 YAML** — machine-readable contract cho codegen + mock server + linter (`openapi.yaml`).
+1. Controller trong `server/src` xác định method, endpoint, guard và HTTP status.
+2. DTO xác định request body, query parameter và validation.
+3. Service xác định response data, business rule và lỗi nghiệp vụ.
+4. Các file `Module-*.md` trình bày lại contract theo từng nhóm chức năng.
 
-## 2. Audience
+Mỗi file module hiện chỉ có hai phần chính:
 
-Backend developer (NestJS impl), frontend developer (React fetch contract), QA (test case design), security reviewer (auth + RBAC + audit scope).
+1. Mục đích module.
+2. Danh sách API của module.
 
-## 3. Module Status
+Mỗi API đều ghi rõ API method, endpoint URL, mô tả, request body, response body và các status lỗi cùng điều kiện xảy ra.
 
-9 module v1.0. Session đầu (2026-05-17) detail Module 1 + 4; còn lại stub, defer session sau theo thứ tự dependency.
+## 2. Trạng thái module
 
-| Module | UC mapping | Endpoint est. | Status | File |
-|---|---|---|---|---|
-| 1 Auth | UC00, UC01, UC02, UC13 | 7 | Detailed | [`Module-1-Auth.md`](./Module-1-Auth.md) |
-| 2 RBAC | (cross-cutting) | 4-6 | Stub | TBD — chờ user cung cấp permission codes |
-| 3 Package | UC10 | 5-7 | Stub | TBD |
-| 4 Member/Subscription/Payment | UC03A/B, UC04A/B, UC06, UC11 (partial) | 14 | Detailed | [`Module-4-Member-Subscription.md`](./Module-4-Member-Subscription.md) |
-| 5 Staff | UC11 (full) | 6-8 | Stub | TBD — depend Module 2 |
-| 6 Facility | UC08 | 5-6 | Stub | TBD |
-| 7 Training | UC05A, UC05B, UC06 (progress write) | 7-9 | Stub | TBD — UC05B cần Architecture §3.3 |
-| 8 Feedback | UC07 | 4-5 | Stub | TBD |
-| 9 Report | UC12 | 3-5 | Stub | TBD — cron + aggregation |
+10 module hiện mô tả đủ **134 endpoint** được đăng ký trong backend.
 
-**Total endpoints v1.0:** 48-64 (Module 1+4 = 21 đã spec, 27-43 còn defer).
+| Module | Phạm vi source | Số API | Tài liệu |
+|---|---|---:|---|
+| 1. Auth | `server/src/auth` | 9 | [`Module-1-Auth.md`](./Module-1-Auth.md) |
+| 2. RBAC và User Admin | `server/src/rbac` | 16 | [`Module-2-RBAC.md`](./Module-2-RBAC.md) |
+| 3. Package | `server/src/membership/packages` | 6 | [`Module-3-Package.md`](./Module-3-Package.md) |
+| 4. Member, Subscription và Payment | `server/src/members`, `server/src/membership/subscriptions`, `server/src/payments` | 24 | [`Module-4-Member-Subscription.md`](./Module-4-Member-Subscription.md) |
+| 5. Staff | `server/src/staff` | 14 | [`Module-5-Staff.md`](./Module-5-Staff.md) |
+| 6. Facility | `server/src/facility` | 14 | [`Module-6-Facility.md`](./Module-6-Facility.md) |
+| 7. Training | `server/src/training` | 13 | [`Module-7-Training.md`](./Module-7-Training.md) |
+| 8. Feedback | `server/src/feedback` | 6 | [`Module-8-Feedback.md`](./Module-8-Feedback.md) |
+| 9. Report | `server/src/reports` | 7 | [`Module-9-Report.md`](./Module-9-Report.md) |
+| 10. Workout | `server/src/workout` | 25 | [`Module-10-Workout.md`](./Module-10-Workout.md) |
+| **Tổng** |  | **134** |  |
 
-## 4. Navigation
+Endpoint `/health` thuộc `HealthModule`, không phải API nghiệp vụ và không được tính vào 134 endpoint trên.
 
-- [`conventions.md`](./conventions.md) — Quy ước chung cho mọi module (auth, pagination, error, audit, rate limit, RBAC notation, DTO naming, business rule format).
-- [`Module-1-Auth.md`](./Module-1-Auth.md) — Auth endpoints chi tiết.
-- [`Module-4-Member-Subscription.md`](./Module-4-Member-Subscription.md) — Member + Subscription + Payment endpoints.
-- [`openapi.yaml`](./openapi.yaml) — OpenAPI 3.0 contract cho Module 1+4.
+## 3. Phạm vi từng module
 
-## 5. Traceability Matrix
+### Module 1 — Auth
 
-UC → Module → Endpoint. Mandate `docs/CLAUDE.md §1.1`.
+Đăng nhập, đăng xuất, lấy user hiện tại, khôi phục mật khẩu bằng OTP, xác thực email, LINE login và đổi mật khẩu.
 
-| UC ID | UC Name | Module | Endpoint(s) |
-|---|---|---|---|
-| UC00 | Đăng nhập | 1 Auth | `POST /auth/login`, `GET /auth/me` |
-| UC01 | Đăng xuất | 1 Auth | `POST /auth/logout` |
-| UC02 | Quên mật khẩu | 1 Auth | `POST /auth/forgot-password`, `POST /auth/reset-password` |
-| UC03A | Đăng ký tại quầy | 4 Member | `POST /members`, `POST /subscriptions`, `POST /payments` |
-| UC03B | Đăng ký online | 4 Member | `POST /members/self-register`, `POST /payments` (sau verify) |
-| UC04A | Gia hạn gói | 4 Member | `POST /subscriptions` (renewal flow), `POST /payments` |
-| UC04B | Hủy gói | 4 Member | `PATCH /subscriptions/:id/cancel` |
-| UC05A | Lập lịch tập | 7 Training | Stub |
-| UC05B | Real-time check-in | 7 Training | Stub — Architecture §3.3 (`POST /devices/access-events`) |
-| UC06 | Theo dõi tiến độ | 4 Member (read), 7 Training (write) | `GET /members/:id/progress` (read v1.0) |
-| UC07 | Gửi phản hồi | 8 Feedback | Stub |
-| UC08 | Quản lý phòng tập | 6 Facility | Stub |
-| UC09 | Quản lý thiết bị | 6 Facility | Stub |
-| UC10 | Thiết lập gói tập | 3 Package | Stub |
-| UC11 (member subset) | Quản lý hội viên | 4 Member | `GET/PATCH/DELETE /members`, `PATCH /members/:id/assign-trainer` |
-| UC11 (staff subset) | Quản lý nhân sự | 5 Staff | Stub |
-| UC12 | Xem báo cáo | 9 Report | Stub |
-| UC13 | Verify email | 1 Auth | `POST /auth/verify-email`, `POST /auth/resend-verify` |
+### Module 2 — RBAC và User Admin
 
-Trigger background sang endpoint thay vì UC trực tiếp (đặc tả Architecture §5.2 cron):
+Permission, group, gán permission cho group, quản trị user và quan hệ user-group. Permission catalog hiện nằm tại `server/prisma/seed/rbac.ts` với 49 permission code và 4 group hệ thống.
 
-| Cron | Trigger | Resource bị tác động |
+### Module 3 — Package
+
+Danh sách, chi tiết, tạo, cập nhật, đổi trạng thái và xóa gói tập.
+
+### Module 4 — Member, Subscription và Payment
+
+Hồ sơ hội viên, tự đăng ký, tự chọn PT, chỉ số cá nhân, subscription, gia hạn/hủy gói, payment và payment account.
+
+### Module 5 — Staff
+
+Hồ sơ nhân viên, danh sách PT, lịch làm việc và chấm công cá nhân.
+
+### Module 6 — Facility
+
+Phòng tập, thiết bị và quy trình báo hỏng/bảo trì thiết bị.
+
+### Module 7 — Training
+
+Training session, attendance, device access event và tiến độ hội viên. Training session có thể liên kết workout-plan assignment và plan day.
+
+### Module 8 — Feedback
+
+Tạo, xem, phân công, cập nhật trạng thái và xóa feedback.
+
+### Module 9 — Report
+
+Báo cáo doanh thu, hội viên, gia hạn, hiệu suất nhân viên/PT và gói tập bán chạy.
+
+### Module 10 — Workout
+
+Thư viện bài tập, workout plan, ngày tập, bài tập trong plan, assignment cho hội viên và workout log.
+
+## 4. Quy ước runtime quan trọng
+
+- Mọi API nghiệp vụ dùng prefix `/api/v1`.
+- `/health` không có prefix và không yêu cầu JWT.
+- `JwtAuthGuard` là global guard; endpoint chỉ public khi có `@Public()`.
+- Các endpoint public hiện gồm login, quên/đặt lại mật khẩu, xác thực/gửi lại OTP, LINE login và member self-register.
+- `GET /api/v1/rooms/lookup` vẫn yêu cầu JWT vì controller không có `@Public()`.
+- `POST /api/v1/devices/access-events` hiện cần cả JWT và header `X-Device-API-Key` do global JWT guard vẫn chạy trước local device guard.
+- `ValidationPipe` bật `whitelist`, `forbidNonWhitelisted`, `transform` và implicit conversion.
+- ID từ cột `BIGINT` được serialize thành JSON string.
+- Lỗi được chuẩn hóa bởi `HttpExceptionFilter` theo shape:
+
+```json
+{
+  "success": false,
+  "code": "ERROR_CODE",
+  "message": "Mô tả lỗi",
+  "details": null
+}
+```
+
+- Lỗi kết nối database trả HTTP 503 với code `DATABASE_AUTH_FAILED` hoặc `DATABASE_UNAVAILABLE`.
+
+## 5. Traceability theo use case
+
+| Use case | Module | API chính |
 |---|---|---|
-| `subscription:expire` (daily 00:05) | `end_date < today_vn` | UPDATE subscriptions SET status='expired' |
-| `subscription:activate-pending` (daily 00:10) | `start_date <= today_vn` AND EXISTS payments status='success' | UPDATE subscriptions SET status='active' |
-| `subscription:cancel-unpaid-pending` (daily 00:15) | created_at > 24h AND NOT EXISTS payments status='success' | UPDATE subscriptions SET status='cancelled' |
+| Đăng nhập/đăng xuất | 1 | `POST /auth/login`, `POST /auth/logout`, `GET /auth/me` |
+| Quên mật khẩu và xác thực email | 1 | `POST /auth/forgot-password`, `POST /auth/reset-password`, `POST /auth/verify-email`, `POST /auth/resend-verify` |
+| Quản trị user và quyền | 2 | `/permissions`, `/groups`, `/users` |
+| Quản lý gói tập | 3 | `/packages` |
+| Đăng ký và quản lý hội viên | 4 | `/members`, `/subscriptions`, `/payments` |
+| Gia hạn/hủy subscription | 4 | `POST /subscriptions/:id/renew`, `PATCH /subscriptions/:id/cancel` |
+| Quản lý nhân viên | 5 | `/staff`, `/staff/:id/schedules`, `/staff/me/attendance` |
+| Quản lý phòng và thiết bị | 6 | `/rooms`, `/equipment`, `/maintenance-logs` |
+| Lập lịch tập | 7 | `/training-sessions` |
+| Check-in/check-out | 7 | `/attendance-logs`, `/attendance/manual-checkin`, `/devices/access-events` |
+| Theo dõi tiến độ | 4 và 7 | `POST /members/me/progress`, `/members/:id/progress`, `/member-progress/:id` |
+| Gửi và xử lý feedback | 8 | `/feedback`, `/feedback/:id/assign`, `/feedback/:id/status` |
+| Xem báo cáo | 9 | `/reports/*` |
+| Lập và giao workout plan | 10 | `/workout-plans`, `/workout-plans/members/:memberId/assign` |
+| Ghi nhận buổi tập | 10 | `/workout-logs` |
 
-## 6. Versioning
+## 6. OpenAPI
 
-- Spec version độc lập với code version, bump khi spec thay đổi.
-- Path-based versioning `/api/v1` ↔ `/api/v2` cho breaking change ở wire (xem `conventions.md §2`).
-- Mỗi Markdown spec có Changelog section ở cuối, bump theo SemVer:
-  - PATCH (1.0.x): typo, clarify wording, add example.
-  - MINOR (1.x.0): thêm endpoint mới, thêm field optional, thêm error code.
-  - MAJOR (x.0.0): thay đổi shape, đổi field bắt buộc, xóa endpoint.
+[`openapi.yaml`](./openapi.yaml) hiện có version `1.0.2`, gồm 35 path và 56 operation. File này chưa bao phủ đủ 134 endpoint, vì vậy chưa được xem là nguồn sự thật đầy đủ.
 
-## 7. Validation
+Khi contract giữa Markdown và OpenAPI khác nhau, ưu tiên controller/DTO/service và file module tương ứng. OpenAPI cần một đợt đồng bộ riêng trước khi dùng để code generation hoặc kiểm thử toàn hệ thống.
 
-OpenAPI lint:
+## 7. Kiểm tra tài liệu
+
+Các kiểm tra tối thiểu sau mỗi lần thay đổi API:
+
+1. So sánh toàn bộ decorator `@Get`, `@Post`, `@Patch`, `@Put`, `@Delete` với bảng API trong module tương ứng.
+2. Kiểm tra request body và query parameter với DTO thực tế.
+3. Kiểm tra response và domain error với service.
+4. Chạy kiểm tra whitespace:
+
+```bash
+git diff --check
+```
+
+5. Khi cập nhật `openapi.yaml`, chạy OpenAPI lint:
 
 ```bash
 npx -y @redocly/cli@latest lint docs/Design/API/openapi.yaml
 ```
 
-Markdown lint qua VSCode markdownlint extension. Warning MD060 (table-pipe-compact) consistent style toàn project — chấp nhận.
-
-## 8. Glossary
-
-| Term | Definition |
-|---|---|
-| API base URL | Prefix `/api/v1` chung cho mọi endpoint (trừ `/health`). |
-| Audit action | Mã `resource.verb` ghi `audit_logs.action` khi mutation xảy ra. |
-| Cron interaction | Background job (Architecture §5.2) đọc/write resource cùng tập với endpoint — phải document trong Notes endpoint. |
-| Error envelope | Shape JSON `{success: false, code, message, details?}` chuẩn hoá. |
-| Idempotency v1.0 | KHÔNG có `Idempotency-Key` header. Mitigation: UNIQUE constraint + client disable button. |
-| JWT | JSON Web Token, HS256, TTL 7 ngày. |
-| OpenAPI 3.0 | Spec format machine-readable cho REST API contract. |
-| RBAC | Role-Based Access Control. V1.0: 4 role `owner`, `staff`, `pt`, `member`. |
-| Soft delete | Set `deleted_at = NOW()` thay vì DELETE row. |
-| Stub | Module được liệt kê + UC mapping + endpoint count estimate, CHƯA có file Markdown chi tiết. |
-| `today_vn` | Helper named convention ngày hiện tại theo timezone `Asia/Ho_Chi_Minh`. |
-| Traceability matrix | Bảng map UC → Module → Endpoint cho audit + impact analysis. |
-
-Thuật ngữ domain (member_code, subscription state machine, package): xem [`Database.md`](../Database.md) Glossary.
-
-## 9. Open Items
-
-
-1. **Permission codes pending Module 2 RBAC.** RBAC column hiện dùng role notation (`Owner | Staff | Self`). Khi user cung cấp permission codes, refactor sang permission-based (vd `member.read.own`, `member.write.any`). Effort ~30 phút mechanical.
-2. **Architecture §4.2 error shape DRIFT.** Architecture ghi `{statusCode, message, error}` (NestJS default); spec match code `{success: false, code, message}`. Sync Architecture v1.1.4 session sau.
-3. **`subscription.activate` audit code.** Architecture §4.3.3 mention code này, §4.4.1 chưa list. Spec dùng `subscription.create` cho cascade-activated. Flag để Architecture v1.1.4 thống nhất.
-4. **SMTP integration pending** (Architecture §8 R8). Endpoint shape `verify-email`, `resend-verify`, `forgot-password` không đổi sau integrate.
-5. **`/doc-review` 4 vòng cho API doc** chưa chạy. Session sau khi spec stable. Anti-AI score risk cần edit pass thủ công trước.
-
-## 10. Changelog
-
-| Version | Date | Author | Change |
-|---|---|---|---|
-| 1.0.0 | 2026-05-17 | Lê Thanh An | Initial draft — Module 1 + 4 detailed, 7 module stub. OpenAPI 3.0 contract cho 21 endpoint. |

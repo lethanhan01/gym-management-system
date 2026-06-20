@@ -2,16 +2,38 @@ name: CI
 
 on:
   push:
-    branches: ['**']
+    branches: ["**"]
   pull_request:
-    branches: ['**']
+    branches: ["**"]
   workflow_dispatch:
 
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+
 jobs:
+  codebase-metrics:
+    name: Codebase metrics (cloc)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Install cloc
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes cloc
+
+      - name: Count files and lines by language
+        run: >-
+          cloc .
+          --exclude-dir=node_modules,dist,build,coverage,.next,.git,.cache
+          --not-match-f='^generated\.css$'
+
   client:
     name: Client (lint • test • build)
     runs-on: ubuntu-latest
@@ -85,6 +107,8 @@ jobs:
     steps:
       - name: Checkout source
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -99,10 +123,49 @@ jobs:
       - name: Lint
         run: npm run lint --if-present
 
-      - name: Test
-        run: npm test --if-present
+      - name: Test with coverage gate
+        run: npm run test:cov -- --runInBand
         env:
           CI: true
+
+      - name: Verify LCOV report
+        if: always()
+        run: test -s coverage/lcov.info
+
+      - name: Check SonarQube Cloud configuration
+        if: always()
+        id: sonar-config
+        shell: bash
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_PROJECT_KEY: ${{ vars.SONAR_PROJECT_KEY }}
+          SONAR_ORGANIZATION: ${{ vars.SONAR_ORGANIZATION }}
+        run: |
+          if [[ -n "$SONAR_TOKEN" && -n "$SONAR_PROJECT_KEY" && -n "$SONAR_ORGANIZATION" ]]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::SonarQube Cloud scan skipped. Configure SONAR_TOKEN, SONAR_PROJECT_KEY, and SONAR_ORGANIZATION."
+          fi
+
+      - name: SonarQube Cloud scan
+        if: always() && steps.sonar-config.outputs.enabled == 'true' && hashFiles('server/coverage/lcov.info') != ''
+        uses: SonarSource/sonarqube-scan-action@v8
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        with:
+          args: >-
+            -Dsonar.projectKey=${{ vars.SONAR_PROJECT_KEY }}
+            -Dsonar.organization=${{ vars.SONAR_ORGANIZATION }}
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: server-coverage
+          path: server/coverage
+          if-no-files-found: warn
+          retention-days: 7
 
       - name: Build
         run: npm run build --if-present

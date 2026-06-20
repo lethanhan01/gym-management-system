@@ -5,7 +5,7 @@ export class ResetPasswordDto {
   email!: string
 
   @IsString()
-  @Length(6, 10, { message: 'OTP phai co do dai 6-10 ky tu' })
+  @Length(6, 6, { message: 'OTP phải có đúng 6 ký tự số' })
   otp!: string
 
   @IsString()

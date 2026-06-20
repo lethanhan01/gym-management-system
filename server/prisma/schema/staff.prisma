@@ -1,0 +1,54 @@
+model Staff {
+  staffId              BigInt               @id @default(autoincrement()) @map("staff_id")
+  userId               BigInt               @unique @map("user_id")
+  staffCode            String               @unique @map("staff_code") @db.VarChar(30)
+  position             String               @db.VarChar(50)
+  deletedAt            DateTime?            @map("deleted_at") @db.Timestamp(6)
+  createdExercises     Exercise[]
+  handledFeedback      Feedback[]           @relation("FeedbackHandledBy")
+  feedbackAboutStaff   Feedback[]           @relation("FeedbackSubjectStaff")
+  maintenanceLogs      MaintenanceLog[]
+  memberProgresses     MemberProgress[]
+  assignedWorkoutPlans MemberWorkoutPlan[]
+  primaryForMembers    Member[]             @relation("MemberPrimaryTrainer")
+  user                 User                 @relation(fields: [userId], references: [userId])
+  schedules            StaffSchedule[]
+  trainingSessions     TrainingSession[]
+  createdWorkoutPlans  WorkoutPlan[]
+  managedSubscriptions Subscription[]       @relation("SubscriptionTrainer")
+  attendanceLogs       StaffAttendanceLog[]
+
+  @@map("staff")
+}
+
+model StaffSchedule {
+  scheduleId BigInt     @id @default(autoincrement()) @map("schedule_id")
+  staffId    BigInt     @map("staff_id")
+  shift      StaffShift
+  workDate   DateTime   @map("work_date") @db.Date
+  deletedAt  DateTime?  @map("deleted_at") @db.Timestamp(6)
+  staff      Staff      @relation(fields: [staffId], references: [staffId])
+
+  @@index([staffId])
+  @@index([workDate, shift])
+  @@map("staff_schedules")
+}
+
+model StaffAttendanceLog {
+  logId    BigInt    @id @default(autoincrement()) @map("log_id")
+  staffId  BigInt    @map("staff_id")
+  checkIn  DateTime  @map("check_in") @db.Timestamp(6)
+  checkOut DateTime? @map("check_out") @db.Timestamp(6)
+  staff    Staff     @relation(fields: [staffId], references: [staffId])
+
+  @@index([staffId, checkIn(sort: Desc)])
+  @@map("staff_attendance_logs")
+}
+
+enum StaffShift {
+  morning
+  afternoon
+  evening
+
+  @@map("staff_shift")
+}

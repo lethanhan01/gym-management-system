@@ -1,0 +1,54 @@
+model Package {
+  packageId     BigInt         @id @default(autoincrement()) @map("package_id")
+  packageCode   String         @unique @map("package_code") @db.VarChar(30)
+  name          String         @db.VarChar(100)
+  durationDays  Int            @map("duration_days")
+  price         Decimal        @db.Decimal(12, 2)
+  benefits      String?        @db.VarChar(255)
+  includesPt    Boolean        @default(false) @map("includes_pt")
+  status        PackageStatus  @default(active)
+  createdAt     DateTime       @default(now()) @map("created_at") @db.Timestamp(6)
+  deletedAt     DateTime?      @map("deleted_at") @db.Timestamp(6)
+  subscriptions Subscription[]
+
+  @@map("packages")
+}
+
+model Subscription {
+  subscriptionId BigInt             @id @default(autoincrement()) @map("subscription_id")
+  memberId       BigInt             @map("member_id")
+  packageId      BigInt             @map("package_id")
+  trainerId      BigInt?            @map("trainer_id")
+  startDate      DateTime           @map("start_date") @db.Date
+  endDate        DateTime           @map("end_date") @db.Date
+  createdAt      DateTime           @default(now()) @map("created_at") @db.Timestamp(6)
+  cancelledAt    DateTime?          @map("cancelled_at") @db.Timestamp(6)
+  deletedAt      DateTime?          @map("deleted_at") @db.Timestamp(6)
+  status         SubscriptionStatus @default(pending)
+  attendanceLogs AttendanceLog[]
+  payments       Payment[]
+  member         Member             @relation(fields: [memberId], references: [memberId])
+  package        Package            @relation(fields: [packageId], references: [packageId])
+  trainer        Staff?             @relation("SubscriptionTrainer", fields: [trainerId], references: [staffId])
+
+  @@index([memberId, status])
+  @@index([packageId, status])
+  @@index([trainerId, status])
+  @@map("subscriptions")
+}
+
+enum PackageStatus {
+  active
+  inactive
+
+  @@map("package_status")
+}
+
+enum SubscriptionStatus {
+  pending
+  active
+  expired
+  cancelled
+
+  @@map("subscription_status")
+}

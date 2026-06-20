@@ -1,0 +1,282 @@
+@layer components {
+  /* Cards and surfaces */
+  .rogym-card,
+  .card {
+    border: 1px solid var(--rogym-border-teal-dim);
+    border-radius: 2.5rem;
+    padding: 1.5rem;
+    color: var(--rogym-text-primary);
+    background: var(--rogym-bg-card);
+    transition:
+      border-color 300ms ease,
+      background-color 300ms ease,
+      box-shadow 350ms ease;
+  }
+
+  .rogym-card:hover,
+  .card:hover {
+    border-color: var(--rogym-border-teal-hover);
+    box-shadow: var(--rogym-shadow-card);
+  }
+
+  .rogym-card--compact {
+    border-radius: 1rem;
+  }
+
+  .rogym-card--md {
+    border-radius: 1.25rem;
+  }
+
+  .rogym-card--glass,
+  .rogym-auth-card {
+    border: 1px solid var(--rogym-border-subtle);
+    border-radius: 1rem;
+    background: var(--rogym-bg-glass);
+    box-shadow: var(--rogym-shadow-glass);
+    backdrop-filter: blur(28px);
+    -webkit-backdrop-filter: blur(28px);
+  }
+
+  .rogym-card--interactive:hover {
+    background: var(--rogym-bg-card-hover);
+  }
+
+  .rogym-mini-card {
+    border: 1px solid var(--rogym-border-teal-dim);
+    border-radius: 1rem;
+    padding: 1.5rem;
+    background: var(--rogym-bg-card);
+    transition:
+      border-color 300ms ease,
+      background-color 300ms ease,
+      box-shadow 350ms ease;
+  }
+
+  .rogym-mini-card:hover,
+  .rogym-mini-card:focus-within {
+    border-color: var(--rogym-border-teal-hover);
+    background: var(--rogym-bg-card-hover);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.28);
+  }
+
+  .rogym-pricing-card {
+    border: 1px solid var(--rogym-border-teal-dim);
+    background: var(--rogym-bg-card);
+    transition:
+      border-color 300ms ease,
+      box-shadow 350ms ease;
+  }
+
+  .rogym-pricing-card--featured {
+    border-color: var(--rogym-green);
+    background: var(--rogym-green);
+    box-shadow: 0 24px 60px -12px rgba(6, 195, 132, 0.45);
+  }
+
+  .rogym-pricing-card__tier {
+    color: var(--rogym-text-muted);
+    font-family: var(--rogym-font-body);
+  }
+
+  .rogym-pricing-card__price {
+    color: #fff;
+    font-family: var(--rogym-font-display);
+    font-size: 52px;
+    line-height: 1;
+  }
+
+  .rogym-pricing-card__unit {
+    color: var(--rogym-text-muted);
+    font-family: var(--rogym-font-body);
+    font-size: 14px;
+  }
+
+  .rogym-pricing-card__check {
+    background: rgba(66, 224, 158, 0.15);
+    color: var(--rogym-teal);
+  }
+
+  .rogym-pricing-card__feature {
+    color: rgba(226, 226, 226, 0.75);
+    font-family: var(--rogym-font-body);
+    font-size: 14px;
+    line-height: 1.55;
+  }
+
+  .rogym-pricing-card--featured .rogym-pricing-card__tier {
+    color: rgba(0, 73, 47, 0.65);
+  }
+
+  .rogym-pricing-card--featured .rogym-pricing-card__price {
+    color: var(--rogym-green-dark);
+  }
+
+  .rogym-pricing-card--featured .rogym-pricing-card__unit {
+    color: rgba(0, 73, 47, 0.55);
+  }
+
+  .rogym-pricing-card--featured .rogym-pricing-card__check {
+    background: rgba(0, 73, 47, 0.15);
+    color: var(--rogym-green-dark);
+  }
+
+  .rogym-pricing-card--featured .rogym-pricing-card__feature {
+    color: rgba(0, 73, 47, 0.85);
+  }
+
+  .rogym-pricing-card:not(.rogym-pricing-card--featured):hover,
+  .rogym-pricing-card:not(.rogym-pricing-card--featured):focus-within {
+    border-color: var(--rogym-border-teal-hover);
+    box-shadow: var(--rogym-shadow-card);
+  }
+
+  .rogym-pricing-card:not(.rogym-pricing-card--featured) .rogym-btn--outline-white {
+    --rogym-button-sweep: rgba(255, 255, 255, 0.1);
+    border-width: 1px;
+    border-color: rgba(255, 255, 255, 0.3);
+  }
+
+  .rogym-pricing-card:not(.rogym-pricing-card--featured) .rogym-btn--outline-white:hover,
+  .rogym-pricing-card:not(.rogym-pricing-card--featured) .rogym-btn--outline-white:focus-visible {
+    border-color: var(--rogym-border-teal-hover);
+  }
+
+  /*
+   * Homepage and future media cards share one hover target. Hovering anywhere
+   * on the card animates its image and any text action inside it.
+   */
+  .rogym-media-card {
+    position: relative;
+  }
+
+  .rogym-media-card__frame {
+    position: relative;
+    overflow: hidden;
+    border: 1px solid var(--rogym-border-subtle);
+    transition:
+      border-color 300ms ease,
+      box-shadow 350ms ease;
+  }
+
+  .rogym-media-card__image {
+    transform: scale(1);
+    transition: transform var(--rogym-duration-image) var(--rogym-ease-standard);
+    will-change: transform;
+  }
+
+  .rogym-media-card__tint {
+    opacity: 0;
+    transition: opacity 300ms var(--rogym-ease-standard);
+  }
+
+  .rogym-media-card:hover .rogym-media-card__image,
+  .rogym-media-card:focus-within .rogym-media-card__image {
+    transform: scale(1.05);
+  }
+
+  .rogym-media-card:hover .rogym-media-card__tint,
+  .rogym-media-card:focus-within .rogym-media-card__tint {
+    opacity: 1;
+  }
+
+  .rogym-media-card:hover .rogym-text-link::after,
+  .rogym-media-card:focus-within .rogym-text-link::after {
+    transform: scaleX(1);
+  }
+
+  .rogym-media-card--dark {
+    border: 1px solid var(--rogym-border-subtle);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+    transition:
+      border-color 300ms ease,
+      box-shadow 350ms ease;
+  }
+
+  .rogym-media-card--dark:hover,
+  .rogym-media-card--dark:focus-within {
+    border-color: var(--rogym-border-teal-hover);
+    box-shadow: var(--rogym-shadow-card);
+  }
+
+  .rogym-media-card--light .rogym-media-card__frame {
+    border-color: rgba(0, 0, 0, 0.06);
+  }
+
+  .rogym-media-card--light:hover .rogym-media-card__frame,
+  .rogym-media-card--light:focus-within .rogym-media-card__frame {
+    border-color: var(--rogym-teal);
+    box-shadow: 0 16px 40px rgba(6, 195, 132, 0.15);
+  }
+
+  .rogym-photo-cover {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    filter: brightness(0.4) saturate(0.75);
+  }
+
+  .rogym-photo-overlay {
+    position: absolute;
+    inset: 0;
+    background:
+      linear-gradient(
+        95deg,
+        rgba(8, 14, 11, 0.95) 0%,
+        rgba(8, 14, 11, 0.55) 60%,
+        transparent 100%
+      ),
+      linear-gradient(
+        0deg,
+        rgba(8, 14, 11, 0.7) 0%,
+        transparent 50%
+      );
+  }
+
+  .rogym-selectable-card,
+  .rogym-severity-option {
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: transparent;
+    color: var(--rogym-text-secondary);
+  }
+
+  .rogym-selectable-card.is-active {
+    border: 1.5px solid var(--rogym-green);
+    background: rgba(6, 195, 132, 0.09);
+    color: var(--rogym-green);
+  }
+
+  .rogym-severity-option.is-active {
+    border: 1.5px solid var(--rogym-tone);
+    background: color-mix(in srgb, var(--rogym-tone) 9%, transparent);
+    color: var(--rogym-tone);
+  }
+
+  .rogym-severity-option__dot {
+    background: var(--rogym-tone);
+    opacity: 0.4;
+  }
+
+  .rogym-severity-option.is-active .rogym-severity-option__dot {
+    opacity: 1;
+  }
+
+  .rogym-plan-card {
+    overflow: hidden;
+    padding: 0;
+  }
+
+  .rogym-plan-card.is-trainer-plan {
+    border-color: rgba(6, 195, 132, 0.2);
+  }
+
+  .rogym-plan-source {
+    background: rgba(66, 224, 158, 0.09);
+    color: var(--rogym-teal);
+  }
+
+  .rogym-plan-source.is-trainer-plan {
+    background: rgba(6, 195, 132, 0.13);
+    color: var(--rogym-green);
+  }
+}

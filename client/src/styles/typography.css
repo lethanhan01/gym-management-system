@@ -1,0 +1,47 @@
+@layer components {
+  .rogym-display,
+  .rogym-logo {
+    font-family: var(--rogym-font-display);
+    font-weight: 400;
+  }
+
+  .rogym-display {
+    line-height: 0.95;
+    text-transform: uppercase;
+  }
+
+  .rogym-logo {
+    letter-spacing: 0.12em;
+  }
+
+  .rogym-eyebrow {
+    color: var(--rogym-teal);
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+  }
+
+  .rogym-body {
+    color: var(--rogym-text-secondary);
+    line-height: 1.7;
+  }
+
+  .rogym-muted {
+    color: var(--rogym-text-muted);
+  }
+
+  /* Dashboard section headers */
+  .rogym-section-title {
+    font-family: var(--rogym-font-display);
+    font-size: 20px;
+    letter-spacing: 0.04em;
+  }
+
+  /* Sidebar brand name */
+  .rogym-brand-text {
+    font-family: var(--rogym-font-display);
+    font-size: 18px;
+    letter-spacing: 0.12em;
+  }
+}

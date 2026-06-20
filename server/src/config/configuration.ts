@@ -48,6 +48,9 @@ export class EnvironmentVariables {
 
   // UC05B device authentication. Optional v1.0 — required khi enable real-time check-in.
   @IsOptional() @IsString() DEVICE_API_KEY?: string
+
+  // LINE LIFF authentication. Required khi feature LINE login được bật.
+  @IsOptional() @IsString() LINE_CHANNEL_ID?: string
 }
 
 export function validateConfig(raw: Record<string, unknown>): EnvironmentVariables {

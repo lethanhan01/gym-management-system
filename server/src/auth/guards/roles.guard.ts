@@ -1,6 +1,6 @@
 import { CanActivate, ExecutionContext, ForbiddenException, Injectable } from '@nestjs/common'
 import { Reflector } from '@nestjs/core'
-import { Role } from '../../users/users.service'
+import { Role } from '../users.service'
 import { ROLES_KEY } from '../decorators/roles.decorator'
 import { AuthenticatedUser } from '../types/jwt-payload.interface'
 

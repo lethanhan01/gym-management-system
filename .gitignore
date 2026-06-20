@@ -63,3 +63,9 @@ CLAUDE.md
 docs/VI/Diagram/picture/*.png
 docs/VI/Diagram/picture/*.svg
 !docs/VI/Diagram/picture/.gitkeep
+
+# Postman exports (collections / environments) for API testing
+docs/Design/API/postman_collections/
+docs/Design/API/*.postman_collection.json
+
+.agents/
