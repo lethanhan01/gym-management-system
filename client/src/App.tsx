@@ -1,6 +1,7 @@
 import { lazy, Suspense } from 'react'
 
 import { Routes, Route, Navigate } from 'react-router-dom'
+import { Analytics } from '@vercel/analytics/react'
 import ProtectedRoute from './components/shared/ProtectedRoute'
 import SubscriptionRequired from './components/shared/SubscriptionRequired'
 import AuthLayout from './layouts/AuthLayout'
@@ -121,6 +122,7 @@ function RouteFallback() {
 export default function App() {
   return (
     <Suspense fallback={<RouteFallback />}>
+      <Analytics />
       <Routes>
         {/* Public */}
         <Route path="/" element={<HomePage />} />
