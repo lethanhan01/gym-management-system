@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import {
   Check, Calendar, PackageX, Dumbbell, ChevronDown, UserCheck, UserX,
@@ -31,6 +32,7 @@ function BtnPrimary({ onClick, disabled, children }: { onClick?: () => void; dis
 }
 
 export default function PaymentPage() {
+  const { t } = useTranslation('member')
   const [packages, setPackages] = useState<Package[]>([])
   const [loading, setLoading]   = useState(true)
   const [selected, setSelected] = useState<Package | null>(null)
@@ -82,7 +84,7 @@ export default function PaymentPage() {
       } else if (status === 409) {
         navigate('/member/subscription/current')
       } else {
-        setError(e?.response?.data?.message || 'Có lỗi xảy ra khi xử lý thanh toán. Vui lòng thử lại sau.')
+        setError(e?.response?.data?.message || t('subscription.payment.errorPayment'))
       }
     } finally {
       setPaying(false)
@@ -100,10 +102,10 @@ export default function PaymentPage() {
           <span className="rogym-sx-28e83c22">ROGYM</span>
         </div>
         <h1 className="rogym-sx-c16b1e4e">
-          Chọn gói tập của bạn
+          {t('subscription.payment.headerTitle')}
         </h1>
         <p className="rogym-sx-4187d75f">
-          Đầu tư vào sức khỏe — linh hoạt và phù hợp với mọi mục tiêu
+          {t('subscription.payment.headerSubtitle')}
         </p>
       </div>
 
@@ -116,7 +118,7 @@ export default function PaymentPage() {
         ) : packages.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 gap-4">
             <PackageX size={48} className="rogym-sx-d88f932f" />
-            <p className="rogym-sx-d88f932f">Hiện tại chưa có gói tập nào. Vui lòng liên hệ gym.</p>
+            <p className="rogym-sx-d88f932f">{t('subscription.payment.emptyPackages')}</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -134,7 +136,7 @@ export default function PaymentPage() {
                 >
                   {isPopular && (
                     <span className="rogym-sx-38d599fa">
-                      Phổ biến nhất
+                      {t('subscription.payment.popularBadge')}
                     </span>
                   )}
                   <p className="rogym-sx-44e91bb7">
@@ -142,20 +144,20 @@ export default function PaymentPage() {
                   </p>
                   <p className="rogym-sx-ebc446b7">
                     {formatVnd(pkg.price)}
-                    <span className="rogym-sx-55a40d82"> /gói</span>
+                    <span className="rogym-sx-55a40d82"> {t('subscription.payment.perPackage')}</span>
                   </p>
                   <div className="flex items-center gap-3 mb-5">
                     <div className="flex items-center gap-2 rogym-sx-c2ff5e7f">
                       <Calendar size={14} />
-                      <span>{pkg.durationDays} ngày</span>
+                      <span>{t('subscription.payment.days', { count: pkg.durationDays })}</span>
                     </div>
                     {pkg.includesPt ? (
                       <span className="flex items-center gap-1 rounded-full bg-[rgba(66,224,158,0.15)] px-2 py-0.5 text-xs font-medium text-[var(--rogym-accent)]">
-                        <UserCheck size={11} /> Có PT
+                        <UserCheck size={11} /> {t('subscription.payment.withPt')}
                       </span>
                     ) : (
                       <span className="flex items-center gap-1 rounded-full bg-white/5 px-2 py-0.5 text-xs font-medium rogym-text-dim">
-                        <UserX size={11} /> Tự tập
+                        <UserX size={11} /> {t('subscription.payment.selfTrain')}
                       </span>
                     )}
                   </div>
@@ -170,7 +172,7 @@ export default function PaymentPage() {
                     </ul>
                   )}
                   <BtnPrimary onClick={() => handleSelect(pkg)}>
-                    {isSelected ? 'Đã chọn' : 'Chọn gói này'}
+                    {isSelected ? t('subscription.payment.buttonSelected') : t('subscription.payment.buttonSelectThis')}
                   </BtnPrimary>
                 </div>
               )
@@ -184,7 +186,7 @@ export default function PaymentPage() {
             <div className="rogym-sx-8f35a167">
               <div className="flex items-center justify-between mb-5">
                 <h2 className="rogym-sx-85be1f38">
-                  Xác nhận thanh toán
+                  {t('subscription.payment.panelTitle')}
                 </h2>
                 <button onClick={() => setShowPanel(false)} className="rogym-sx-c2117916">
                   <ChevronDown size={20} />
@@ -196,14 +198,14 @@ export default function PaymentPage() {
                 <div>
                   <p className="rogym-sx-668e18f3">{selected.name}</p>
                   <div className="flex items-center gap-2 mt-1">
-                    <p className="rogym-sx-0cce7195">{selected.durationDays} ngày</p>
+                    <p className="rogym-sx-0cce7195">{t('subscription.payment.days', { count: selected.durationDays })}</p>
                     {selected.includesPt ? (
                       <span className="flex items-center gap-1 rounded-full bg-[rgba(66,224,158,0.15)] px-2 py-0.5 text-xs font-medium text-[var(--rogym-accent)]">
-                        <UserCheck size={11} /> Có PT
+                        <UserCheck size={11} /> {t('subscription.payment.withPt')}
                       </span>
                     ) : (
                       <span className="flex items-center gap-1 rounded-full bg-white/5 px-2 py-0.5 text-xs font-medium rogym-text-dim">
-                        <UserX size={11} /> Tự tập
+                        <UserX size={11} /> {t('subscription.payment.selfTrain')}
                       </span>
                     )}
                   </div>
@@ -212,7 +214,7 @@ export default function PaymentPage() {
               </div>
 
               {/* Payment method */}
-              <p className="rogym-sx-9259d65d">Phương thức thanh toán</p>
+              <p className="rogym-sx-9259d65d">{t('subscription.payment.paymentMethodLabel')}</p>
               <div className="grid grid-cols-3 gap-3 mb-6">
                 {PAYMENT_METHOD_OPTIONS.map(opt => (
                   <button
@@ -231,7 +233,7 @@ export default function PaymentPage() {
               )}
 
               <BtnPrimary onClick={handlePay} disabled={paying}>
-                {paying ? 'Đang xử lý thanh toán...' : `Thanh toán ${formatVnd(selected.price)}`}
+                {paying ? t('subscription.payment.buttonPaying') : t('subscription.payment.buttonPay', { price: formatVnd(selected.price) })}
               </BtnPrimary>
             </div>
           )}

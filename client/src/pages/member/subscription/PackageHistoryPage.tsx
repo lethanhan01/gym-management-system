@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { PackageSearch, ReceiptText, ChevronLeft, ChevronRight, ArrowUpDown } from 'lucide-react'
 import subscriptionService, { type Subscription } from '@/services/subscription.service'
@@ -109,6 +110,7 @@ function Pagination({ page, total, onChange }: { page: number; total: number; on
 }
 
 export default function PackageHistoryPage() {
+  const { t } = useTranslation('member')
   const [activeTab, setActiveTab]   = useState<'subscriptions' | 'payments'>('subscriptions')
   const [subs, setSubs]             = useState<Subscription[]>([])
   const [payments, setPayments]     = useState<Payment[]>([])
@@ -150,6 +152,18 @@ export default function PackageHistoryPage() {
     if (tab === 'payments') loadPayments()
   }
 
+  const METHOD_OPTIONS = [
+    { value: 'all' as const, label: t('subscription.history.methodAll') },
+    { value: 'cash' as const, label: t('subscription.history.methodCash') },
+    { value: 'bank_card' as const, label: t('subscription.history.methodBankCard') },
+    { value: 'ewallet' as const, label: t('subscription.history.methodEwallet') },
+  ]
+  const STATUS_OPTIONS = [
+    { value: 'all' as const, label: t('subscription.history.statusAll') },
+    { value: 'success' as const, label: t('subscription.history.statusSuccess') },
+    { value: 'failed' as const, label: t('subscription.history.statusFailed') },
+  ]
+
   const filteredPayments = payments
     .filter(p => {
       if (methodFilter !== 'all' && p.method !== methodFilter) return false
@@ -167,27 +181,15 @@ export default function PackageHistoryPage() {
   const totalSubPages = Math.ceil(subs.length / PAGE_SIZE)
   const pagedSubs = subs.slice((subPage - 1) * PAGE_SIZE, subPage * PAGE_SIZE)
 
-  const METHOD_OPTIONS = [
-    { value: 'all' as const, label: 'Tất cả' },
-    { value: 'cash' as const, label: 'Tiền mặt' },
-    { value: 'bank_card' as const, label: 'Thẻ NH' },
-    { value: 'ewallet' as const, label: 'Ví điện tử' },
-  ]
-  const STATUS_OPTIONS = [
-    { value: 'all' as const, label: 'Tất cả' },
-    { value: 'success' as const, label: 'Thành công' },
-    { value: 'failed' as const, label: 'Thất bại' },
-  ]
-
   return (
     <MemberPage>
       <MemberPageHeader
-        eyebrow="Gói tập"
-        title="Lịch sử"
-        description="Xem lại các gói tập đã đăng ký và giao dịch thanh toán."
+        eyebrow={t('subscription.history.eyebrow')}
+        title={t('subscription.history.title')}
+        description={t('subscription.history.description')}
         actions={
           <button onClick={() => navigate('/member/subscription/current')} className="rogym-btn rogym-btn--outline-white">
-            ← Gói hiện tại
+            {t('subscription.history.backToCurrent')}
           </button>
         }
       />
@@ -202,7 +204,7 @@ export default function PackageHistoryPage() {
               activeTab === tab ? 'is-active' : ''
             }`}
           >
-            {tab === 'subscriptions' ? 'Lịch sử gói tập' : 'Lịch sử thanh toán'}
+            {tab === 'subscriptions' ? t('subscription.history.tabSubscriptions') : t('subscription.history.tabPayments')}
           </button>
         ))}
       </div>
@@ -214,13 +216,14 @@ export default function PackageHistoryPage() {
         ) : subs.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 gap-4">
             <PackageSearch size={48} className="rogym-text-secondary" />
-            <p className="rogym-text-secondary">Chưa có lịch sử gói tập nào.</p>
+            <p className="rogym-text-secondary">{t('subscription.history.emptySubscriptions')}</p>
           </div>
         ) : (
           <>
             <div className="flex flex-col gap-3">
               {pagedSubs.map(sub => {
                 const st = SUB_STATUS[sub.status] ?? { label: sub.status, tone: 'muted' }
+                const statusLabel = t(`subscription.history.statusLabel.${sub.status}`, { defaultValue: st.label })
                 return (
                   <div
                     key={sub.subscriptionId}
@@ -235,10 +238,10 @@ export default function PackageHistoryPage() {
                           {formatDate(sub.startDate)} → {formatDate(sub.endDate)}
                         </p>
                         {sub.status === 'cancelled' && sub.cancelledAt && (
-                          <p className="text-xs text-red-400 mt-1">Huỷ lúc {formatDate(sub.cancelledAt)}</p>
+                          <p className="text-xs text-red-400 mt-1">{t('subscription.history.cancelledAt', { date: formatDate(sub.cancelledAt) })}</p>
                         )}
                       </div>
-                      <Badge label={st.label} tone={st.tone} />
+                      <Badge label={statusLabel} tone={st.tone} />
                     </div>
                   </div>
                 )
@@ -263,7 +266,7 @@ export default function PackageHistoryPage() {
               className="rogym-sort-toggle flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium transition-colors rogym-sx-3a671e25"
             >
               <ArrowUpDown size={13} />
-              {sortDir === 'desc' ? 'Mới nhất' : 'Cũ nhất'}
+              {sortDir === 'desc' ? t('subscription.history.sortNewest') : t('subscription.history.sortOldest')}
             </button>
           </div>
 
@@ -272,7 +275,7 @@ export default function PackageHistoryPage() {
           ) : filteredPayments.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 gap-4">
               <ReceiptText size={48} className="rogym-text-secondary" />
-              <p className="rogym-text-secondary">Chưa có giao dịch nào.</p>
+              <p className="rogym-text-secondary">{t('subscription.history.emptyPayments')}</p>
             </div>
           ) : (
             <>
@@ -281,22 +284,23 @@ export default function PackageHistoryPage() {
                 className="grid gap-4 px-4 mb-2 text-xs rogym-text-secondary rogym-sx-03afc6c9"
                 
               >
-                <span>Ngày</span><span>Gói</span><span>Phương thức</span><span>Số tiền</span><span>Trạng thái</span>
+                <span>{t('subscription.history.tableDate')}</span><span>{t('subscription.history.tablePackage')}</span><span>{t('subscription.history.tableMethod')}</span><span>{t('subscription.history.tableAmount')}</span><span>{t('subscription.history.tableStatus')}</span>
               </div>
               <div className="flex flex-col gap-2">
                 {pagedPayments.map(p => {
                   const ps = PAY_STATUS[p.status] ?? { label: p.status, tone: 'muted' }
+                  const payStatusLabel = t(`subscription.history.payStatusLabel.${p.status}`, { defaultValue: ps.label })
                   return (
                     <div
                       key={p.paymentId}
                       className="grid items-center gap-4 rounded-xl px-4 py-3 rogym-sx-88714df9"
-                      
+
                     >
                       <span className="text-white">{formatDate(p.paidAt)}</span>
                       <span className="rogym-text-secondary truncate">{p.packageName ?? '—'}</span>
                       <span className="rogym-text-secondary">{getPaymentMethodLabel(p.method, true)}</span>
                       <span className="font-semibold rogym-sx-b2fbf853" >{formatVnd(p.amount)}</span>
-                      <Badge label={ps.label} tone={ps.tone} />
+                      <Badge label={payStatusLabel} tone={ps.tone} />
                     </div>
                   )
                 })}

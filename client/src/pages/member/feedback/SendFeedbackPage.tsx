@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { CheckCircle2, Users, Wrench, Star } from 'lucide-react'
 import { MemberPage, MemberPageHeader } from '@/components/MemberUI'
@@ -8,20 +9,21 @@ import { useAuthStore } from '@/stores/authStore'
 type FeedbackType = 'staff' | 'equipment' | 'service'
 type Severity = 'low' | 'medium' | 'high'
 
-const TYPE_OPTIONS: { value: FeedbackType; label: string; icon: React.ReactNode }[] = [
-  { value: 'staff',     label: 'Nhân viên', icon: <Users size={18} /> },
-  { value: 'equipment', label: 'Thiết bị',  icon: <Wrench size={18} /> },
-  { value: 'service',   label: 'Dịch vụ',   icon: <Star size={18} /> },
-]
-
-const SEVERITY_OPTIONS: { value: Severity; label: string }[] = [
-  { value: 'low',    label: 'Thấp' },
-  { value: 'medium', label: 'Trung bình' },
-  { value: 'high',   label: 'Cao' },
-]
-
 export default function SendFeedbackPage() {
+  const { t } = useTranslation('member')
   const { user } = useAuthStore()
+
+  const TYPE_OPTIONS: { value: FeedbackType; label: string; icon: React.ReactNode }[] = [
+    { value: 'staff',     label: t('feedback.send.typeLabel.staff'),     icon: <Users size={18} /> },
+    { value: 'equipment', label: t('feedback.send.typeLabel.equipment'), icon: <Wrench size={18} /> },
+    { value: 'service',   label: t('feedback.send.typeLabel.service'),   icon: <Star size={18} /> },
+  ]
+
+  const SEVERITY_OPTIONS: { value: Severity; label: string }[] = [
+    { value: 'low',    label: t('feedback.send.severityLabel.low') },
+    { value: 'medium', label: t('feedback.send.severityLabel.medium') },
+    { value: 'high',   label: t('feedback.send.severityLabel.high') },
+  ]
   const [feedbackType, setFeedbackType] = useState<FeedbackType>('service')
   const [severity, setSeverity] = useState<Severity>('medium')
   const [content, setContent] = useState('')
@@ -31,7 +33,7 @@ export default function SendFeedbackPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!content.trim()) { setError('Vui lòng nhập nội dung phản hồi.'); return }
+    if (!content.trim()) { setError(t('feedback.send.errorEmpty')); return }
     if (!user?.memberId) return
     setSubmitting(true)
     setError(null)
@@ -45,7 +47,7 @@ export default function SendFeedbackPage() {
       setSuccess(true)
     } catch (err) {
       const e = err as { response?: { data?: { message?: string } } }
-      setError(e?.response?.data?.message || 'Có lỗi xảy ra. Vui lòng thử lại.')
+      setError(e?.response?.data?.message || t('feedback.send.errorGeneric'))
     } finally {
       setSubmitting(false)
     }
@@ -54,12 +56,12 @@ export default function SendFeedbackPage() {
   return (
     <MemberPage>
       <MemberPageHeader
-        eyebrow="Phản hồi"
-        title="Gửi phản hồi"
-        description="Chia sẻ trải nghiệm của bạn về dịch vụ, nhân viên hoặc thiết bị"
+        eyebrow={t('feedback.send.eyebrow')}
+        title={t('feedback.send.title')}
+        description={t('feedback.send.description')}
         actions={
           <Link to="/member/feedback" className="rogym-btn rogym-btn--outline-white">
-            Phản hồi của tôi
+            {t('feedback.send.backLink')}
           </Link>
         }
       />
@@ -76,22 +78,22 @@ export default function SendFeedbackPage() {
             >
               <CheckCircle2 size={32} className="rogym-sx-b2fbf853" />
             </div>
-            <h2 className="text-xl font-bold text-white">Phản hồi đã được gửi thành công</h2>
-            <p className="mt-2 text-sm rogym-sx-d88f932f" >
-              Chúng tôi sẽ xem xét và phản hồi bạn sớm nhất có thể.
+            <h2 className="text-xl font-bold text-white">{t('feedback.send.successTitle')}</h2>
+            <p className="mt-2 text-sm rogym-sx-d88f932f">
+              {t('feedback.send.successDesc')}
             </p>
             <div className="mt-8 flex flex-wrap gap-3 justify-center">
               <Link
                 to="/member/feedback"
                 className="rogym-btn rogym-btn--primary px-6 py-2.5 text-sm"
               >
-                Xem phản hồi của tôi
+                {t('feedback.send.buttonViewMy')}
               </Link>
               <button
                 onClick={() => { setSuccess(false); setContent(''); setFeedbackType('service'); setSeverity('medium') }}
                 className="rogym-btn rogym-btn--outline-white px-6 py-2.5 text-sm"
               >
-                Gửi phản hồi khác
+                {t('feedback.send.buttonSendAnother')}
               </button>
             </div>
           </div>
@@ -100,7 +102,7 @@ export default function SendFeedbackPage() {
             <div className="rogym-sx-df69c9fe">
               {/* Type selector */}
               <div className="mb-6">
-                <p className="mb-3 text-sm font-semibold text-white">Loại phản hồi</p>
+                <p className="mb-3 text-sm font-semibold text-white">{t('feedback.send.sectionType')}</p>
                 <div className="grid grid-cols-3 gap-3">
                   {TYPE_OPTIONS.map(opt => (
                     <button
@@ -120,7 +122,7 @@ export default function SendFeedbackPage() {
 
               {/* Severity */}
               <div className="mb-6">
-                <p className="mb-3 text-sm font-semibold text-white">Mức độ nghiêm trọng</p>
+                <p className="mb-3 text-sm font-semibold text-white">{t('feedback.send.sectionSeverity')}</p>
                 <div className="flex gap-3">
                   {SEVERITY_OPTIONS.map(opt => (
                     <button
@@ -143,12 +145,12 @@ export default function SendFeedbackPage() {
 
               {/* Content */}
               <div className="mb-6">
-                <p className="mb-2 text-sm font-semibold text-white">Nội dung phản hồi</p>
+                <p className="mb-2 text-sm font-semibold text-white">{t('feedback.send.sectionContent')}</p>
                 <textarea
                   rows={5}
                   value={content}
                   onChange={e => setContent(e.target.value)}
-                  placeholder="Mô tả chi tiết vấn đề bạn gặp phải..."
+                  placeholder={t('feedback.send.contentPlaceholder')}
                   required
                   className="rogym-input w-full resize-none rogym-sx-75e2c7e4"
                   
@@ -164,7 +166,7 @@ export default function SendFeedbackPage() {
                 disabled={submitting}
                 className="rogym-btn rogym-btn--primary rogym-btn--wide w-full"
               >
-                {submitting ? 'Đang gửi...' : 'Gửi phản hồi'}
+                {submitting ? t('feedback.send.buttonSubmitting') : t('feedback.send.buttonSubmit')}
               </button>
             </div>
           </form>

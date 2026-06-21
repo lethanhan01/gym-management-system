@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import subscriptionService, { type Subscription } from '@/services/subscription.service'
 import { useAuthStore } from '@/stores/authStore'
@@ -10,6 +11,7 @@ function addDays(date: Date, days: number): Date {
 }
 
 export default function RenewPackagePage() {
+  const { t } = useTranslation('member')
   const [activeSub, setActiveSub] = useState<Subscription | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -33,7 +35,7 @@ export default function RenewPackagePage() {
           clearAuth()
           navigate('/login')
         } else {
-          setError('Không thể tải thông tin gói tập.')
+          setError(t('subscription.renew.errorLoad'))
         }
       })
       .finally(() => setLoading(false))
@@ -61,16 +63,16 @@ export default function RenewPackagePage() {
   return (
     <MemberPage>
       <MemberPageHeader
-        eyebrow="Gói tập"
-        title="Gia hạn gói tập"
-        description="Gia hạn gói hiện tại để tiếp tục tập luyện không bị gián đoạn."
+        eyebrow={t('subscription.renew.eyebrow')}
+        title={t('subscription.renew.title')}
+        description={t('subscription.renew.description')}
         actions={
           <button
             type="button"
             onClick={() => navigate('/member/subscription/current')}
             className="rogym-btn rogym-btn--outline-white"
           >
-            ← Gói hiện tại
+            {t('subscription.renew.backToCurrent')}
           </button>
         }
       />
@@ -86,30 +88,25 @@ export default function RenewPackagePage() {
             </h3>
             <div className="grid grid-cols-2 gap-3">
               <div className="rounded-xl bg-white/5 px-4 py-3">
-                <p className="text-xs rogym-text-secondary">Hết hạn hiện tại</p>
+                <p className="text-xs rogym-text-secondary">{t('subscription.renew.currentExpiry')}</p>
                 <p className="mt-1 text-sm font-medium text-white">
                   {formatDate(activeSub.endDate)}
                 </p>
               </div>
               <div className="rounded-xl bg-white/5 px-4 py-3">
-                <p className="text-xs rogym-text-secondary">Hết hạn sau gia hạn</p>
+                <p className="text-xs rogym-text-secondary">{t('subscription.renew.newExpiry')}</p>
                 <p className="mt-1 text-sm font-medium rogym-text-accent">
                   {newEndDate ? formatDate(newEndDate) : '—'}
                 </p>
               </div>
             </div>
             <p className="border-t border-white/5 pt-3 text-sm rogym-text-secondary">
-              Gia hạn thêm{' '}
-              <strong className="text-white">{activeSub.package?.durationDays ?? '?'} ngày</strong>
-              {activeSub.package?.price && (
-                <>
-                  {' '}
-                  với giá{' '}
-                  <strong className="rogym-text-accent">
-                    {Number(activeSub.package.price).toLocaleString('vi-VN')}đ
-                  </strong>
-                </>
-              )}
+              {t('subscription.renew.renewText', {
+                days: activeSub.package?.durationDays ?? '?',
+                price: activeSub.package?.price
+                  ? Number(activeSub.package.price).toLocaleString('vi-VN') + 'đ'
+                  : '',
+              })}
             </p>
           </div>
           <button
@@ -117,7 +114,7 @@ export default function RenewPackagePage() {
             onClick={continueToPayment}
             className="rogym-btn rogym-btn--primary w-full"
           >
-            Thanh toán gia hạn
+            {t('subscription.renew.buttonPay')}
           </button>
         </div>
       ) : null}

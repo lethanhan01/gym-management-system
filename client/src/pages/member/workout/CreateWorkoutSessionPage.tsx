@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import {
   CheckCircle2,
   Circle,
@@ -51,6 +52,7 @@ function PlanCardItem({
   plan: WorkoutPlan | null
   onStartDay: (day: WorkoutPlanDay, assignment: WorkoutAssignmentSummary) => void
 }) {
+  const { t } = useTranslation('member')
   const [expanded, setExpanded] = useState(false)
   const isPT = !!assignment.assignedByStaffId
   const totalDays = plan?.days?.length ?? assignment.plan?.days?.length ?? 0
@@ -81,7 +83,7 @@ function PlanCardItem({
                   isPT ? 'is-trainer-plan' : ''
                 }`}
               >
-                {isPT ? 'PT giao' : 'Cá nhân'}
+                {isPT ? t('workout.createSession.sourceTrainer') : t('workout.createSession.sourcePersonal')}
               </span>
               <h3 className="truncate font-bold text-white">
                 {assignment.plan?.name ?? plan?.name ?? '—'}
@@ -92,17 +94,17 @@ function PlanCardItem({
             )}
             <div className="mt-2 flex gap-3 text-xs rogym-sx-5e5c39ab">
               <span>
-                <span className="font-semibold text-white">{totalDays}</span> ngày
+                <span className="font-semibold text-white">{totalDays}</span> {t('workout.createSession.unitDays')}
               </span>
               {totalExercises > 0 && (
                 <span>
-                  <span className="font-semibold text-white">{totalExercises}</span> bài tập
+                  <span className="font-semibold text-white">{totalExercises}</span> {t('workout.createSession.unitExercises')}
                 </span>
               )}
               {avgMinPerDay > 0 && (
                 <span className="flex items-center gap-1">
                   <Clock size={11} />
-                  <span className="font-semibold text-white">{avgMinPerDay}</span> phút/ngày (ước tính)
+                  <span className="font-semibold text-white">{avgMinPerDay}</span> {t('workout.createSession.unitMinPerDay')}
                 </span>
               )}
             </div>
@@ -115,7 +117,7 @@ function PlanCardItem({
           onClick={() => setExpanded((v) => !v)}
         >
           {expanded ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
-          {expanded ? 'Ẩn chi tiết' : 'Xem chi tiết ngày tập'}
+          {expanded ? t('workout.createSession.buttonHideDetail') : t('workout.createSession.buttonShowDetail')}
         </button>
       </div>
 
@@ -130,14 +132,14 @@ function PlanCardItem({
               >
                 <div>
                   <p className="text-sm font-medium text-white">{day.name}</p>
-                  <p className="text-xs rogym-sx-5e5c39ab">{day.exercises?.length ?? 0} bài tập</p>
+                  <p className="text-xs rogym-sx-5e5c39ab">{day.exercises?.length ?? 0} {t('workout.createSession.unitExercises')}</p>
                 </div>
                 <button
                   type="button"
                   className="rogym-btn rogym-btn--primary px-3 py-1.5 text-xs"
                   onClick={() => onStartDay(day, assignment)}
                 >
-                  <Play size={12} /> Bắt đầu
+                  <Play size={12} /> {t('workout.createSession.buttonStart')}
                 </button>
               </div>
             ))}
@@ -166,6 +168,7 @@ function SessionView({
   submitError: string | null
   done: boolean
 }) {
+  const { t } = useTranslation('member')
   const navigate = useNavigate()
   const sortedExercises = day.exercises
     ? [...day.exercises].sort((a, b) => a.orderIndex - b.orderIndex)
@@ -178,22 +181,22 @@ function SessionView({
     return (
       <div className="flex min-h-[300px] flex-col items-center justify-center gap-4 rounded-[20px] p-6 text-center rogym-sx-25952519">
         <CheckCircle2 size={48} className="rogym-sx-b2fbf853" />
-        <h2 className="text-xl font-bold text-white">Buổi tập hoàn tất!</h2>
-        <p className="text-sm rogym-sx-d88f932f">Kết quả đã được ghi nhận vào lịch sử tập luyện.</p>
+        <h2 className="text-xl font-bold text-white">{t('workout.createSession.completedTitle')}</h2>
+        <p className="text-sm rogym-sx-d88f932f">{t('workout.createSession.completedDesc')}</p>
         <div className="flex gap-3">
           <button
             type="button"
             className="rogym-btn rogym-btn--outline-white"
             onClick={() => navigate('/member/workout/plan')}
           >
-            Về kế hoạch
+            {t('workout.createSession.buttonGoToPlan')}
           </button>
           <button
             type="button"
             className="rogym-btn rogym-btn--primary"
             onClick={() => navigate('/member/workout/history')}
           >
-            Xem lịch sử
+            {t('workout.createSession.buttonViewHistory')}
           </button>
         </div>
       </div>
@@ -204,7 +207,7 @@ function SessionView({
     <div className="rounded-[20px] rogym-sx-25952519 overflow-hidden">
       <div className="px-5 pt-5 pb-3">
         <p className="text-xs font-bold uppercase tracking-widest rogym-sx-b2fbf853">{day.name}</p>
-        <p className="mt-0.5 text-xs rogym-sx-5e5c39ab">{sortedExercises.length} bài tập</p>
+        <p className="mt-0.5 text-xs rogym-sx-5e5c39ab">{sortedExercises.length} {t('workout.createSession.unitExercises')}</p>
       </div>
 
       <div className="space-y-3 px-5 pb-4">
@@ -217,11 +220,11 @@ function SessionView({
                   {exIdx + 1}
                 </div>
                 <div>
-                  <p className="text-sm font-semibold text-white">{ex.exercise?.name ?? 'Bài tập'}</p>
+                  <p className="text-sm font-semibold text-white">{ex.exercise?.name ?? t('workout.session.defaultExerciseName')}</p>
                   <p className="text-xs rogym-sx-5e5c39ab">
                     {ex.targetSets} sets ·{' '}
                     {isCardio
-                      ? `${ex.targetDurationSec ?? 0} giây`
+                      ? `${ex.targetDurationSec ?? 0} ${t('workout.createSession.unitSeconds')}`
                       : `${ex.targetReps ?? 0} reps`}
                     {ex.targetWeightKg ? ` · ${Number(ex.targetWeightKg)} kg` : ''}
                   </p>
@@ -230,7 +233,7 @@ function SessionView({
               <div className="p-4">
                 <div className="rogym-workout-set-grid mb-2 grid text-xs font-medium uppercase">
                   <span>Set</span>
-                  <span>{isCardio ? 'Giây' : 'Reps'}</span>
+                  <span>{isCardio ? t('workout.createSession.unitSeconds') : 'Reps'}</span>
                   <span>Kg</span>
                   <span />
                 </div>
@@ -254,7 +257,7 @@ function SessionView({
                             e.target.value
                           )
                         }
-                        placeholder={isCardio ? 'giây' : 'reps'}
+                        placeholder={isCardio ? t('workout.createSession.unitSeconds') : 'reps'}
                       />
                       <input
                         type="number"
@@ -289,7 +292,7 @@ function SessionView({
 
       <div className="rogym-sx-8553bf9e flex items-center justify-between gap-3 px-5 py-4">
         <p className="text-sm rogym-sx-d88f932f">
-          {completedCount} / {totalSets} set hoàn thành
+          {t('workout.createSession.setsCompleted', { done: completedCount, total: totalSets })}
         </p>
         <button
           type="button"
@@ -297,7 +300,7 @@ function SessionView({
           disabled={!anyCompleted || submitting}
           onClick={onFinish}
         >
-          {submitting ? 'Đang lưu...' : 'Kết thúc buổi tập'}
+          {submitting ? t('workout.createSession.buttonSaving') : t('workout.createSession.buttonFinish')}
         </button>
       </div>
     </div>
@@ -307,6 +310,7 @@ function SessionView({
 // ── Main page ──────────────────────────────────────────────────────────────────
 
 export default function CreateWorkoutSessionPage() {
+  const { t } = useTranslation('member')
   const navigate = useNavigate()
   const { user } = useAuthStore()
   const memberId = user?.memberId ? String(user.memberId) : undefined
@@ -351,7 +355,7 @@ export default function CreateWorkoutSessionPage() {
       }
       setFullPlans(planMap)
     } catch {
-      setError('Không thể tải kế hoạch tập.')
+      setError(t('workout.createSession.errorLoad'))
     } finally {
       setLoading(false)
     }
@@ -416,7 +420,7 @@ export default function CreateWorkoutSessionPage() {
       })
       setDone(true)
     } catch {
-      setSubmitError('Không thể lưu buổi tập. Vui lòng thử lại.')
+      setSubmitError(t('workout.createSession.errorSave'))
     } finally {
       setSubmitting(false)
     }
@@ -425,9 +429,9 @@ export default function CreateWorkoutSessionPage() {
   return (
     <MemberPage>
       <MemberPageHeader
-        eyebrow="Tập luyện"
-        title="Tạo buổi tập"
-        description="Chọn một buổi tập từ kế hoạch của bạn để bắt đầu."
+        eyebrow={t('workout.createSession.eyebrow')}
+        title={t('workout.createSession.title')}
+        description={t('workout.createSession.description')}
       />
       <div className="grid gap-5 lg:grid-cols-2">
         {/* Left: plan list */}
@@ -438,15 +442,15 @@ export default function CreateWorkoutSessionPage() {
             <MemberErrorState message={error} onRetry={load} />
           ) : assignments.length === 0 ? (
             <MemberEmptyState
-              title="Bạn chưa có kế hoạch tập"
-              description="Tạo kế hoạch cá nhân để bắt đầu tập luyện."
+              title={t('workout.createSession.emptyTitle')}
+              description={t('workout.createSession.emptyDescription')}
               action={
                 <button
                   type="button"
                   className="rogym-btn rogym-btn--primary"
                   onClick={() => navigate('/member/workout/builder')}
                 >
-                  <Dumbbell size={14} /> Tạo plan
+                  <Dumbbell size={14} /> {t('workout.createSession.buttonCreatePlan')}
                 </button>
               }
             />
@@ -468,10 +472,10 @@ export default function CreateWorkoutSessionPage() {
             <div className="flex min-h-[300px] flex-col items-center justify-center gap-3 rounded-[20px] p-6 text-center rogym-sx-25952519">
               <Dumbbell size={36} className="rogym-sx-ed519d00" />
               <p className="text-sm font-medium text-white">
-                Vui lòng chọn 1 buổi tập trong plan của bạn để bắt đầu
+                {t('workout.createSession.placeholderTitle')}
               </p>
               <p className="text-xs rogym-sx-5e5c39ab">
-                Nhấn &quot;Bắt đầu&quot; ở buổi tập bên trái.
+                {t('workout.createSession.placeholderHint')}
               </p>
             </div>
           ) : (

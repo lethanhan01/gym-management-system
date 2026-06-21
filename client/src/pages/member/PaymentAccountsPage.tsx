@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Trash2, Star, Check, Wallet } from 'lucide-react'
 import paymentAccountService, { type PaymentAccount, type CreatePaymentAccountPayload } from '@/services/paymentAccount.service'
 import { type PaymentMethod } from '@/services/payment.service'
@@ -28,6 +29,7 @@ function InputField({
 }
 
 export default function PaymentAccountsPage() {
+  const { t } = useTranslation('member')
   const { user } = useAuthStore()
 
   const [accounts, setAccounts]   = useState<PaymentAccount[]>([])
@@ -80,7 +82,7 @@ export default function PaymentAccountsPage() {
       setFormSuccess(true)
       setTimeout(() => setFormSuccess(false), 3000)
     } catch {
-      setFormError('Có lỗi xảy ra. Vui lòng thử lại.')
+      setFormError(t('paymentAccounts.submitError'))
     } finally {
       setSaving(false)
     }
@@ -101,9 +103,9 @@ export default function PaymentAccountsPage() {
   return (
     <MemberPage>
       <MemberPageHeader
-        eyebrow="Thanh toán"
-        title="Tài khoản thanh toán"
-        description="Quản lý các phương thức thanh toán đã lưu."
+        eyebrow={t('paymentAccounts.eyebrow')}
+        title={t('paymentAccounts.title')}
+        description={t('paymentAccounts.description')}
       />
 
       <div className="grid gap-5 xl:grid-cols-2">
@@ -114,9 +116,9 @@ export default function PaymentAccountsPage() {
           ) : accounts.length === 0 ? (
             <div className="rogym-card rogym-card--compact flex flex-col items-center justify-center py-14 gap-3">
               <Wallet size={36} className="rogym-text-faint" />
-              <p className="text-sm rogym-text-secondary">Chưa có tài khoản nào được lưu</p>
+              <p className="text-sm rogym-text-secondary">{t('paymentAccounts.emptyTitle')}</p>
               <p className="text-xs rogym-text-dim text-center max-w-xs">
-                Thêm tài khoản để điền nhanh khi thanh toán gói tập
+                {t('paymentAccounts.emptyDescription')}
               </p>
             </div>
           ) : (
@@ -138,7 +140,7 @@ export default function PaymentAccountsPage() {
                       </p>
                       {acc.isDefault && (
                         <span className="flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full rogym-sx-044401f6" >
-                          <Star size={9} fill="currentColor" /> Mặc định
+                          <Star size={9} fill="currentColor" /> {t('paymentAccounts.defaultBadge')}
                         </span>
                       )}
                     </div>
@@ -152,7 +154,7 @@ export default function PaymentAccountsPage() {
                   {!acc.isDefault && (
                     <button
                       onClick={() => handleSetDefault(acc.accountId)}
-                      title="Đặt làm mặc định"
+                      title={t('paymentAccounts.buttonSetDefault')}
                       className="rogym-account-action is-default-action rogym-btn rogym-btn--icon rogym-btn--elevated rogym-sx-8ae812d4"
                     >
                       <Star size={15} />
@@ -161,7 +163,7 @@ export default function PaymentAccountsPage() {
 
                   <button
                     onClick={() => handleDelete(acc.accountId)}
-                    title="Xoá"
+                    title={t('paymentAccounts.buttonDelete')}
                     className="rogym-account-action is-delete-action rogym-btn rogym-btn--icon rogym-btn--elevated rogym-sx-81543379"
                   >
                     <Trash2 size={15} />
@@ -175,7 +177,7 @@ export default function PaymentAccountsPage() {
         {/* ── RIGHT: quick add card ── */}
         <div className="rogym-card rogym-card--compact p-6 flex flex-col gap-4 xl:self-start">
           <h3 className="text-base font-bold text-white">
-            Thêm tài khoản mới
+            {t('paymentAccounts.formTitle')}
           </h3>
 
           {/* Type selector */}
@@ -195,18 +197,18 @@ export default function PaymentAccountsPage() {
 
           {type === 'bank_card' && (
             <>
-              <InputField label="Tên ngân hàng" placeholder="Vietcombank, BIDV, Techcombank..." value={provider} onChange={setProvider} />
-              <InputField label="Số tài khoản" placeholder="1234567890" value={accountRef} onChange={setAccountRef} />
+              <InputField label={t('paymentAccounts.fieldBankName')} placeholder="Vietcombank, BIDV, Techcombank..." value={provider} onChange={setProvider} />
+              <InputField label={t('paymentAccounts.fieldAccountNo')} placeholder="1234567890" value={accountRef} onChange={setAccountRef} />
             </>
           )}
           {type === 'ewallet' && (
             <>
-              <InputField label="Ví điện tử" placeholder="MoMo, ZaloPay, VNPay..." value={provider} onChange={setProvider} />
-              <InputField label="Số điện thoại" placeholder="0912 345 678" value={accountRef} onChange={setAccountRef} />
+              <InputField label={t('paymentAccounts.fieldWallet')} placeholder="MoMo, ZaloPay, VNPay..." value={provider} onChange={setProvider} />
+              <InputField label={t('paymentAccounts.fieldPhone')} placeholder="0912 345 678" value={accountRef} onChange={setAccountRef} />
             </>
           )}
 
-          <InputField label="Tên hiển thị (tuỳ chọn)" placeholder="VD: Thẻ chính, Ví cá nhân..." value={label} onChange={setLabel} />
+          <InputField label={t('paymentAccounts.fieldDisplayName')} placeholder="VD: Thẻ chính, Ví cá nhân..." value={label} onChange={setLabel} />
 
           <label className="flex items-center gap-2.5 cursor-pointer select-none">
             <div
@@ -217,18 +219,18 @@ export default function PaymentAccountsPage() {
             >
               {isDefault && <Check size={11} className="rogym-sx-b2fbf853" />}
             </div>
-            <span className="text-sm rogym-text-secondary">Đặt làm tài khoản mặc định</span>
+            <span className="text-sm rogym-text-secondary">{t('paymentAccounts.checkboxDefault')}</span>
           </label>
 
           {formError && <p className="text-xs text-red-300">{formError}</p>}
-          {formSuccess && <p className="text-xs rogym-sx-b2fbf853" >Tài khoản đã được thêm.</p>}
+          {formSuccess && <p className="text-xs rogym-sx-b2fbf853">{t('paymentAccounts.submitSuccess')}</p>}
 
           <button
             onClick={handleSave}
             disabled={saving}
             className="rogym-btn rogym-btn--primary w-full justify-center mt-1"
           >
-            {saving ? 'Đang lưu...' : 'Lưu tài khoản'}
+            {saving ? t('paymentAccounts.buttonSaving') : t('paymentAccounts.buttonSave')}
           </button>
         </div>
       </div>

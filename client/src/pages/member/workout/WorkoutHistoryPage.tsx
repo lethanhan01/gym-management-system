@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { ChevronDown, ChevronUp, Dumbbell } from 'lucide-react'
 import { Select } from '@/components/Select'
 import {
@@ -101,6 +102,7 @@ function buildMonthOptions() {
 }
 
 export default function WorkoutHistoryPage() {
+  const { t } = useTranslation('member')
   const { user } = useAuthStore()
   const memberId = user?.memberId ? String(user.memberId) : undefined
 
@@ -119,7 +121,7 @@ export default function WorkoutHistoryPage() {
       setLogs(data)
     } catch (err: unknown) {
       if ((err as { response?: { status?: number } })?.response?.status !== 403)
-        setError('Không thể tải lịch sử tập luyện.')
+        setError(t('workout.history.errorLoad'))
     } finally {
       setLoading(false)
     }
@@ -167,21 +169,21 @@ export default function WorkoutHistoryPage() {
   return (
     <MemberPage>
       <MemberPageHeader
-        eyebrow="Lịch sử"
-        title="Lịch sử tập luyện"
-        description="Các buổi tập đã ghi nhận kết quả thực tế"
+        eyebrow={t('workout.history.eyebrow')}
+        title={t('workout.history.title')}
+        description={t('workout.history.description')}
       />
 
       {/* KPI row */}
       <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-        <StatCard label="Tổng buổi đã log" value={loading ? '—' : String(logs.length)} />
+        <StatCard label={t('workout.history.statTotalSessions')} value={loading ? '—' : String(logs.length)} />
         <StatCard
-          label="Buổi tháng này"
+          label={t('workout.history.statThisMonth')}
           value={loading ? '—' : String(currentMonthLogs)}
           tone="warning"
         />
-        <StatCard label="Bài tập nhiều nhất" value={loading ? '—' : topExercise} />
-        <StatCard label="Set hoàn thành" value={loading ? '—' : String(totalSetsCompleted)} />
+        <StatCard label={t('workout.history.statTopExercise')} value={loading ? '—' : topExercise} />
+        <StatCard label={t('workout.history.statSetsCompleted')} value={loading ? '—' : String(totalSetsCompleted)} />
       </div>
 
       {/* Filter */}
@@ -190,7 +192,7 @@ export default function WorkoutHistoryPage() {
         className="flex items-center gap-3 rogym-sx-58e694fd"
       >
         <label className="text-sm font-medium rogym-sx-d88f932f" >
-          Lọc theo tháng:
+          {t('workout.history.filterLabel')}
         </label>
         <Select value={filterMonth} onValueChange={setFilterMonth} className="min-w-[160px]">
           {monthOptions.map((opt) => (
@@ -207,11 +209,11 @@ export default function WorkoutHistoryPage() {
         <MemberSkeleton rows={5} />
       ) : filtered.length === 0 ? (
         <MemberEmptyState
-          title="Chưa có buổi tập nào"
+          title={t('workout.history.emptyNoSessions')}
           description={
             filterMonth
-              ? 'Không có buổi tập nào trong tháng này.'
-              : 'Bắt đầu tập và ghi nhận kết quả để xem lịch sử.'
+              ? t('workout.history.emptyThisMonth')
+              : t('workout.history.emptyAllTime')
           }
         />
       ) : (
@@ -220,7 +222,7 @@ export default function WorkoutHistoryPage() {
             const expanded = expandedLogs.has(log.logId)
             const done = completedSets(log)
             const total = totalSets(log)
-            const exercises = groupSetsByExercise(log.sets ?? [])
+            const exercises = groupSetsByExercise(log.sets ?? [], t)
 
             return (
               <div
@@ -241,7 +243,7 @@ export default function WorkoutHistoryPage() {
                       <Dumbbell size={18} />
                     </div>
                     <div>
-                      <p className="font-semibold text-white">{log.planDay?.name ?? 'Buổi tập'}</p>
+                      <p className="font-semibold text-white">{log.planDay?.name ?? t('workout.history.defaultSessionName')}</p>
                       <p className="text-xs rogym-sx-5e5c39ab" >
                         {fmtDate(log.loggedAt)}
                       </p>
@@ -268,7 +270,7 @@ export default function WorkoutHistoryPage() {
                   >
                     {exercises.length === 0 ? (
                       <p className="py-3 text-sm rogym-sx-5e5c39ab" >
-                        Không có dữ liệu set.
+                        {t('workout.history.noSetData')}
                       </p>
                     ) : (
                       exercises.map((group) => (
@@ -281,7 +283,7 @@ export default function WorkoutHistoryPage() {
                           >
                             <span>#</span>
                             <span>Target</span>
-                            <span>Thực tế</span>
+                            <span>{t('workout.history.columnActual')}</span>
                             <span>KG target</span>
                             <span>KG thực</span>
                             <span />
@@ -294,7 +296,7 @@ export default function WorkoutHistoryPage() {
                     )}
                     {log.notes && (
                       <p className="mt-3 text-xs rogym-sx-5e5c39ab" >
-                        Ghi chú: {log.notes}
+                        {t('workout.history.notes', { notes: log.notes })}
                       </p>
                     )}
                   </div>
@@ -308,11 +310,14 @@ export default function WorkoutHistoryPage() {
   )
 }
 
-function groupSetsByExercise(sets: WorkoutLogSet[]): { name: string; sets: WorkoutLogSet[] }[] {
+function groupSetsByExercise(
+  sets: WorkoutLogSet[],
+  t: (key: string, opts?: Record<string, unknown>) => string
+): { name: string; sets: WorkoutLogSet[] }[] {
   const map = new Map<string, { name: string; sets: WorkoutLogSet[] }>()
   for (const s of sets) {
     const id = s.planExercise?.exerciseId ?? s.planExerciseId
-    const name = s.planExercise?.exercise?.name ?? `Bài tập ${s.planExerciseId}`
+    const name = s.planExercise?.exercise?.name ?? t('workout.history.exerciseFallback', { id: s.planExerciseId })
     if (!map.has(id)) map.set(id, { name, sets: [] })
     map.get(id)!.sets.push(s)
   }

@@ -1,4 +1,5 @@
 import { FormEvent, memo, useCallback, useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useNavigate, useParams } from 'react-router-dom'
 import {
   Archive,
@@ -49,6 +50,7 @@ const SuggestedPlanCard = memo(function SuggestedPlanCard({
   plan: WorkoutPlan
   onUse: (p: WorkoutPlan) => void
 }) {
+  const { t } = useTranslation('member')
   const [expanded, setExpanded] = useState(false)
   const { totalDays, totalExercises, totalEstimated, sortedDays } = useMemo(() => {
     const days = [...(plan.days ?? [])].sort((a, b) => a.dayNumber - b.dayNumber)
@@ -91,23 +93,22 @@ const SuggestedPlanCard = memo(function SuggestedPlanCard({
             className="rogym-btn rogym-btn--primary shrink-0 px-4 text-sm"
             onClick={() => onUse(plan)}
           >
-            Dùng plan này
+            {t('workout.planBuilder.buttonUsePlan')}
           </button>
         </div>
 
         {/* Stats row */}
         <div className="mt-4 flex flex-wrap gap-4 text-xs rogym-sx-5e5c39ab">
           <span>
-            <span className="font-semibold text-white">{totalDays}</span> ngày
+            <span className="font-semibold text-white">{totalDays}</span> {t('workout.planBuilder.unitDays')}
           </span>
           <span>
-            <span className="font-semibold text-white">{totalExercises}</span> bài tập
+            <span className="font-semibold text-white">{totalExercises}</span> {t('workout.planBuilder.unitExercises')}
           </span>
           {totalEstimated > 0 && (
             <span className="flex items-center gap-1">
               <Clock size={11} />
-              <span className="font-semibold text-white">{totalEstimated}</span> phút/ngày (ước
-              tính)
+              <span className="font-semibold text-white">{totalEstimated}</span> {t('workout.planBuilder.unitMinutes')}/ngày (ước tính)
             </span>
           )}
         </div>
@@ -119,7 +120,7 @@ const SuggestedPlanCard = memo(function SuggestedPlanCard({
           onClick={() => setExpanded((v) => !v)}
         >
           {expanded ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
-          {expanded ? 'Ẩn chi tiết' : 'Xem chi tiết ngày tập'}
+          {expanded ? t('workout.planBuilder.buttonHideDetail') : t('workout.planBuilder.buttonShowDetail')}
         </button>
       </div>
 
@@ -128,7 +129,7 @@ const SuggestedPlanCard = memo(function SuggestedPlanCard({
           {sortedDays.map((day) => (
             <div key={day.planDayId} className="px-5 py-4 rogym-sx-6720cca7">
               <p className="mb-2 text-xs font-bold uppercase tracking-wider rogym-sx-f27dac31">
-                Ngày {day.dayNumber} — {day.name}
+                {t('workout.planBuilder.dayLabel', { n: day.dayNumber, name: day.name })}
               </p>
               {[...(day.exercises ?? [])]
                 .sort((a, b) => a.orderIndex - b.orderIndex)
@@ -156,7 +157,7 @@ const SuggestedPlanCard = memo(function SuggestedPlanCard({
                   </div>
                 ))}
               {!day.exercises?.length && (
-                <p className="text-xs rogym-sx-ed519d00">Chưa có bài tập.</p>
+                <p className="text-xs rogym-sx-ed519d00">{t('workout.planBuilder.noExercisesInDay')}</p>
               )}
             </div>
           ))}
@@ -172,6 +173,7 @@ function todayInput() {
 }
 
 export default function MemberPlanBuilderPage() {
+  const { t } = useTranslation('member')
   const navigate = useNavigate()
   const { planId: editPlanId } = useParams()
   const isEditMode = Boolean(editPlanId)
@@ -234,7 +236,7 @@ export default function MemberPlanBuilderPage() {
     setLoadingPlan(true)
     setError(null)
     loadPlan(editPlanId)
-      .catch((err) => setError(getApiError(err, 'Không thể tải kế hoạch để chỉnh sửa.')))
+      .catch((err) => setError(getApiError(err, t('workout.planBuilder.errorLoadEdit'))))
       .finally(() => setLoadingPlan(false))
   }, [editPlanId, loadPlan])
 
@@ -244,7 +246,7 @@ export default function MemberPlanBuilderPage() {
     workoutService
       .getExercises()
       .then(setExercises)
-      .catch(() => setError('Không thể tải thư viện bài tập.'))
+      .catch(() => setError(t('workout.planBuilder.errorLoadExercises')))
       .finally(() => setLoadingExercises(false))
   }, [phase])
 
@@ -269,7 +271,7 @@ export default function MemberPlanBuilderPage() {
       .then((assignments) => {
         const self = assignments.find((a) => !a.assignedByStaffId)
         const pt = assignments.find((a) => !!a.assignedByStaffId)
-        setExistingSelfPlan(self ? { name: self.plan?.name ?? 'Kế hoạch hiện tại' } : null)
+        setExistingSelfPlan(self ? { name: self.plan?.name ?? t('workout.session.defaultPlanName') } : null)
         setHasActivePtPlan(!!pt)
       })
       .catch(() => {
@@ -294,7 +296,7 @@ export default function MemberPlanBuilderPage() {
         })
         navigate('/member/workout/plan')
       } catch {
-        setError('Không thể áp dụng plan này. Vui lòng thử lại.')
+        setError(t('workout.planBuilder.errorApply'))
       } finally {
         setSubmitting(false)
       }
@@ -305,7 +307,7 @@ export default function MemberPlanBuilderPage() {
   const handleUseSuggestedPlan = useCallback(
     (suggested: WorkoutPlan) => {
       if (hasActivePtPlan) {
-        setError('Bạn đang có kế hoạch từ PT. Không thể áp dụng kế hoạch mới khi PT đang giao kế hoạch cho bạn.')
+        setError(t('workout.planBuilder.errorHasPtPlan'))
         return
       }
       if (existingSelfPlan) {
@@ -321,7 +323,7 @@ export default function MemberPlanBuilderPage() {
     const code = getApiErrorCode(err)
     if (code === 'PLAN_WRITE_BLOCKED') {
       setWriteBlocked(true)
-      setError('Kế hoạch đã có dữ liệu tập luyện hoặc đang được sử dụng nên không thể chỉnh sửa cấu trúc.')
+      setError(t('workout.planBuilder.errorWriteBlocked'))
       return
     }
     setError(getApiError(err, fallback))
@@ -340,7 +342,7 @@ export default function MemberPlanBuilderPage() {
       setPlan(created)
       setPhase('build')
     } catch {
-      setError('Không thể tạo kế hoạch. Vui lòng thử lại.')
+      setError(t('workout.planBuilder.errorCreatePlan'))
     } finally {
       setSubmitting(false)
     }
@@ -362,7 +364,7 @@ export default function MemberPlanBuilderPage() {
       setAddingDay(false)
       await loadPlan(plan.planId)
     } catch (err) {
-      handleMutationError(err, 'Không thể thêm ngày tập.')
+      handleMutationError(err, t('workout.planBuilder.errorAddDay'))
     } finally {
       setSubmitting(false)
     }
@@ -392,7 +394,7 @@ export default function MemberPlanBuilderPage() {
       setAddingExerciseTo(null)
       await loadPlan(plan.planId)
     } catch (err) {
-      handleMutationError(err, 'Không thể thêm bài tập.')
+      handleMutationError(err, t('workout.planBuilder.errorAddExercise'))
     } finally {
       setSubmitting(false)
     }
@@ -407,7 +409,7 @@ export default function MemberPlanBuilderPage() {
       setDeleteDay(null)
       await loadPlan(plan.planId)
     } catch (err) {
-      handleMutationError(err, 'Không thể xóa ngày tập.')
+      handleMutationError(err, t('workout.planBuilder.errorDeleteDay'))
     } finally {
       setSubmitting(false)
     }
@@ -420,7 +422,7 @@ export default function MemberPlanBuilderPage() {
       await workoutService.deletePlanExercise(plan.planId, dayId, planExerciseId)
       await loadPlan(plan.planId)
     } catch (err) {
-      handleMutationError(err, 'Không thể xóa bài tập.')
+      handleMutationError(err, t('workout.planBuilder.errorRemoveExercise'))
     }
   }
 
@@ -436,7 +438,7 @@ export default function MemberPlanBuilderPage() {
       })
       navigate('/member/workout/plan')
     } catch (err) {
-      setError(getApiError(err, 'Không thể kích hoạt kế hoạch. Vui lòng kiểm tra lại.'))
+      setError(getApiError(err, t('workout.planBuilder.errorActivate')))
     } finally {
       setSubmitting(false)
     }
@@ -464,7 +466,7 @@ export default function MemberPlanBuilderPage() {
   if (isEditMode && loadingPlan) {
     return (
       <MemberPage>
-        <MemberPageHeader eyebrow="Plan Builder" title="Chỉnh sửa kế hoạch" />
+        <MemberPageHeader eyebrow={t('workout.planBuilder.builderEyebrow')} title={t('workout.planBuilder.editTitle')} />
         <MemberSkeleton rows={5} />
       </MemberPage>
     )
@@ -473,19 +475,19 @@ export default function MemberPlanBuilderPage() {
     return (
       <MemberPage>
         <MemberPageHeader
-          eyebrow="Plan Builder"
-          title="Chỉnh sửa kế hoạch"
+          eyebrow={t('workout.planBuilder.builderEyebrow')}
+          title={t('workout.planBuilder.editTitle')}
           actions={
             <button
               type="button"
               className="rogym-btn rogym-btn--outline-white"
               onClick={() => navigate('/member/workout/plan')}
             >
-              <ArrowLeft size={15} /> Quay lại
+              <ArrowLeft size={15} /> {t('workout.planBuilder.buttonBack')}
             </button>
           }
         />
-        <MemberErrorState message={error ?? 'Không tìm thấy kế hoạch.'} />
+        <MemberErrorState message={error ?? t('workout.planBuilder.notFound')} />
       </MemberPage>
     )
   }
@@ -495,23 +497,23 @@ export default function MemberPlanBuilderPage() {
     return (
       <MemberPage>
         <MemberPageHeader
-          eyebrow="Kế hoạch cá nhân"
-          title="Tạo kế hoạch tập"
-          description="Đặt tên và mô tả cho kế hoạch trước khi thêm ngày tập"
+          eyebrow={t('workout.planBuilder.eyebrow')}
+          title={t('workout.planBuilder.title')}
+          description={t('workout.planBuilder.namePhaseDesc')}
           actions={
             <button
               type="button"
               className="rogym-btn rogym-btn--outline-white"
               onClick={() => navigate('/member/workout/plan')}
             >
-              <ArrowLeft size={15} /> Quay lại
+              <ArrowLeft size={15} /> {t('workout.planBuilder.buttonBack')}
             </button>
           }
         />
         {error && <MemberErrorState message={error} />}
         <form onSubmit={(e) => void createPlan(e)} className="space-y-4 rogym-sx-19e5bf8c">
           <label className="block space-y-2">
-            <span className="rogym-field-label">Tên kế hoạch *</span>
+            <span className="rogym-field-label">{t('workout.planBuilder.fieldName')}</span>
             <input
               className="rogym-input"
               value={name}
@@ -519,28 +521,28 @@ export default function MemberPlanBuilderPage() {
               maxLength={100}
               required
               autoFocus
-              placeholder="VD: Giảm mỡ - 4 ngày/tuần"
+              placeholder={t('workout.planBuilder.fieldNamePlaceholder2')}
             />
           </label>
           <label className="block space-y-2">
-            <span className="rogym-field-label">Mô tả ngắn (tùy chọn)</span>
+            <span className="rogym-field-label">{t('workout.planBuilder.fieldDesc')}</span>
             <textarea
               className="rogym-input min-h-20"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Mục tiêu, ghi chú..."
+              placeholder={t('workout.planBuilder.fieldDescPlaceholder')}
             />
           </label>
 
           {/* Start date */}
           <div className="block space-y-2">
-            <span className="rogym-field-label">Bắt đầu từ ngày</span>
+            <span className="rogym-field-label">{t('workout.planBuilder.fieldStartDate')}</span>
             <DatePickerInput
               value={startDate}
               onChange={setStartDate}
               min={todayInput()}
-              placeholder="Chọn ngày bắt đầu"
-              aria-label="Ngày bắt đầu"
+              placeholder={t('workout.planBuilder.startDatePlaceholder')}
+              aria-label={t('workout.planBuilder.fieldStartDate')}
             />
           </div>
 
@@ -550,7 +552,7 @@ export default function MemberPlanBuilderPage() {
               className="rogym-btn rogym-btn--primary"
               disabled={!name.trim() || submitting}
             >
-              {submitting ? 'Đang tạo...' : 'Tiếp theo — Thêm ngày tập'}
+              {submitting ? t('workout.planBuilder.buttonCreating') : t('workout.planBuilder.buttonNext')}
             </button>
           </div>
         </form>
@@ -559,9 +561,9 @@ export default function MemberPlanBuilderPage() {
         <div className="mt-2">
           <div className="mb-4 flex items-center gap-3">
             <BookOpen size={18} className="rogym-sx-f27dac31" />
-            <h2 className="text-base font-bold text-white">Plan gợi ý từ PT</h2>
+            <h2 className="text-base font-bold text-white">{t('workout.planBuilder.suggestedTitle')}</h2>
             <span className="rounded-full px-2 py-0.5 text-xs rogym-sx-7041f1d2">
-              Áp dụng ngay, không cần tự xây
+              {t('workout.planBuilder.suggestedDesc')}
             </span>
           </div>
           {loadingSuggested ? (
@@ -569,7 +571,7 @@ export default function MemberPlanBuilderPage() {
           ) : suggestedPlans.length === 0 ? (
             <div className="rounded-[16px] p-5 text-center text-sm rogym-sx-0e44a235">
               <Dumbbell size={28} className="mx-auto mb-2 rogym-sx-ed519d00" />
-              Chưa có plan gợi ý từ PT. Hãy tự tạo plan hoặc liên hệ PT của bạn.
+              {t('workout.planBuilder.noSuggestions')}
             </div>
           ) : (
             <div className="space-y-4">
@@ -584,13 +586,9 @@ export default function MemberPlanBuilderPage() {
         {pendingSuggestedPlan && (
           <div className="fixed inset-0 z-50 flex items-center justify-center px-4 rogym-sx-bd0c1b5e">
             <div className="w-full max-w-sm space-y-4 rounded-[20px] p-6 rogym-sx-70b08524">
-              <p className="text-base font-bold text-white">Thay thế kế hoạch hiện tại?</p>
+              <p className="text-base font-bold text-white">{t('workout.planBuilder.replaceModal.title')}</p>
               <p className="text-sm rogym-sx-d88f932f">
-                Bạn đang có kế hoạch cá nhân{' '}
-                <span className="font-semibold text-white">
-                  &quot;{existingSelfPlan?.name}&quot;
-                </span>{' '}
-                đang chạy. Áp dụng plan mới sẽ kết thúc kế hoạch đó.
+                {t('workout.planBuilder.replaceModal.body', { name: existingSelfPlan?.name ?? '' })}
               </p>
               <div className="flex justify-end gap-2">
                 <button
@@ -598,7 +596,7 @@ export default function MemberPlanBuilderPage() {
                   className="rogym-btn rogym-btn--outline-white px-4"
                   onClick={() => setPendingSuggestedPlan(null)}
                 >
-                  Hủy
+                  {t('workout.planBuilder.replaceModal.buttonCancel')}
                 </button>
                 <button
                   type="button"
@@ -606,7 +604,7 @@ export default function MemberPlanBuilderPage() {
                   disabled={submitting}
                   onClick={() => void applySuggestedPlan(pendingSuggestedPlan)}
                 >
-                  {submitting ? 'Đang xử lý...' : 'Áp dụng'}
+                  {submitting ? t('workout.planBuilder.processingBtn') : t('workout.planBuilder.replaceModal.buttonApply')}
                 </button>
               </div>
             </div>
@@ -620,14 +618,14 @@ export default function MemberPlanBuilderPage() {
   return (
     <MemberPage>
       <MemberPageHeader
-        eyebrow="Plan Builder"
-        title={plan?.name ?? 'Kế hoạch'}
+        eyebrow={t('workout.planBuilder.builderEyebrow')}
+        title={plan?.name ?? t('workout.session.defaultPlanName')}
         description={
           readonly
-            ? 'Kế hoạch đang ở chế độ chỉ xem.'
+            ? t('workout.planBuilder.builderDescReadonly')
             : isEditMode
-              ? 'Chỉnh sửa ngày tập và bài tập trong kế hoạch'
-              : 'Thêm bài tập vào từng ngày đã chọn'
+              ? t('workout.planBuilder.builderDescEdit')
+              : t('workout.planBuilder.builderDescBuild')
         }
         actions={
           <button
@@ -635,7 +633,7 @@ export default function MemberPlanBuilderPage() {
             className="rogym-btn rogym-btn--outline-white"
             onClick={() => navigate('/member/workout/plan')}
           >
-            <ArrowLeft size={15} /> {isEditMode ? 'Quay lại' : 'Hủy'}
+            <ArrowLeft size={15} /> {isEditMode ? t('workout.planBuilder.buttonBack') : t('workout.planBuilder.buttonCancel')}
           </button>
         }
       />
@@ -644,18 +642,17 @@ export default function MemberPlanBuilderPage() {
 
       {readonly && (
         <div className="flex items-center gap-3 rounded-2xl border border-amber-400/20 bg-amber-400/10 p-4 text-sm text-amber-100">
-          <Lock size={18} className="shrink-0" /> Kế hoạch đã lưu trữ hoặc đã có dữ liệu tập luyện nên
-          không thể chỉnh sửa cấu trúc.
+          <Lock size={18} className="shrink-0" /> {t('workout.planBuilder.readonlyBanner')}
         </div>
       )}
 
       {/* Stats mini row */}
       <div className="flex items-center gap-6 text-sm rogym-sx-997622ed">
         <span className="rogym-sx-d88f932f">
-          <span className="font-semibold text-white">{plan?.days?.length ?? 0}</span> ngày
+          <span className="font-semibold text-white">{plan?.days?.length ?? 0}</span> {t('workout.planBuilder.unitDays')}
         </span>
         <span className="rogym-sx-d88f932f">
-          <span className="font-semibold text-white">{exerciseCount}</span> bài tập
+          <span className="font-semibold text-white">{exerciseCount}</span> {t('workout.planBuilder.unitExercises')}
         </span>
       </div>
 
@@ -670,27 +667,27 @@ export default function MemberPlanBuilderPage() {
               <div className="flex items-center justify-between px-4 py-3 rogym-sx-dd0d9e7c">
                 <div>
                   <p className="font-semibold text-white">
-                    Ngày {day.dayNumber} — {day.name}
+                    {t('workout.planBuilder.dayHeader', { n: day.dayNumber, name: day.name })}
                   </p>
-                  <p className="text-xs rogym-sx-5e5c39ab">{day.exercises?.length ?? 0} bài tập</p>
+                  <p className="text-xs rogym-sx-5e5c39ab">{day.exercises?.length ?? 0} {t('workout.planBuilder.unitExercises')}</p>
                 </div>
                 {readonly ? null : deleteDay?.planDayId === day.planDayId ? (
                   <div className="flex items-center gap-2">
-                    <span className="text-xs text-red-200">Xóa ngày này?</span>
+                    <span className="text-xs text-red-200">{t('workout.planBuilder.buttonDeleteDay')}</span>
                     <button
                       type="button"
                       className="rogym-btn rogym-btn--danger px-3 py-1 text-xs"
                       disabled={submitting}
                       onClick={() => void removeDay(day)}
                     >
-                      Xóa
+                      {t('workout.planBuilder.buttonDeleteDayConfirm')}
                     </button>
                     <button
                       type="button"
                       className="rogym-btn rogym-btn--outline-white px-3 py-1 text-xs"
                       onClick={() => setDeleteDay(null)}
                     >
-                      Hủy
+                      {t('workout.planBuilder.buttonDeleteDayCancel')}
                     </button>
                   </div>
                 ) : (
@@ -698,7 +695,7 @@ export default function MemberPlanBuilderPage() {
                     type="button"
                     className="rogym-btn rogym-btn--icon rogym-btn--elevated"
                     onClick={() => setDeleteDay(day)}
-                    aria-label="Xóa ngày"
+                    aria-label={t('workout.planBuilder.buttonDeleteDayConfirm')}
                   >
                     <Trash2 size={15} />
                   </button>
@@ -719,13 +716,13 @@ export default function MemberPlanBuilderPage() {
                       </span>
                       <div className="min-w-0 flex-1">
                         <p className="text-sm font-medium text-white">
-                          {ex.exercise?.name ?? 'Bài tập'}
+                          {ex.exercise?.name ?? t('workout.session.defaultExerciseName')}
                         </p>
                         <p className="text-xs rogym-sx-5e5c39ab">
                           {ex.targetSets} sets ·{' '}
                           {ex.targetReps
                             ? `${ex.targetReps} reps`
-                            : `${ex.targetDurationSec ?? 0} giây`}
+                            : `${ex.targetDurationSec ?? 0} ${t('workout.planBuilder.unitSeconds')}`}
                           {ex.targetWeightKg ? ` · ${Number(ex.targetWeightKg)} kg` : ''}
                         </p>
                       </div>
@@ -734,7 +731,7 @@ export default function MemberPlanBuilderPage() {
                           type="button"
                           className="rogym-btn rogym-btn--icon rogym-btn--elevated"
                           onClick={() => void removeExercise(day.planDayId, ex.planExerciseId)}
-                          aria-label="Xóa bài tập"
+                          aria-label={t('workout.planBuilder.errorRemoveExercise')}
                         >
                           <Trash2 size={13} />
                         </button>
@@ -745,7 +742,7 @@ export default function MemberPlanBuilderPage() {
                 {/* Add exercise inline */}
                 {readonly ? (
                   (day.exercises?.length ?? 0) === 0 && (
-                    <p className="mt-2 text-xs rogym-sx-5e5c39ab">Ngày này chưa có bài tập.</p>
+                    <p className="mt-2 text-xs rogym-sx-5e5c39ab">{t('workout.planBuilder.noExercisesInDay')}</p>
                   )
                 ) : addingExerciseTo?.planDayId === day.planDayId ? (
                   <AddExerciseForm
@@ -761,7 +758,7 @@ export default function MemberPlanBuilderPage() {
                     className="rogym-text-link rogym-text-link--accent mt-3"
                     onClick={() => setAddingExerciseTo(day)}
                   >
-                    + Thêm bài tập
+                    {t('workout.planBuilder.buttonAddExercise')}
                   </button>
                 )}
               </div>
@@ -771,7 +768,7 @@ export default function MemberPlanBuilderPage() {
           {/* Add day */}
           {readonly ? (
             sortedDays.length === 0 && (
-              <p className="text-center text-sm rogym-sx-5e5c39ab">Kế hoạch này chưa có ngày tập.</p>
+              <p className="text-center text-sm rogym-sx-5e5c39ab">{t('workout.planBuilder.noDays')}</p>
             )
           ) : addingDay ? (
             <AddDayForm
@@ -785,7 +782,7 @@ export default function MemberPlanBuilderPage() {
               className="rogym-btn rogym-btn--outline-white w-full justify-center"
               onClick={() => setAddingDay(true)}
             >
-              <Plus size={16} /> Thêm ngày tập
+              <Plus size={16} /> {t('workout.planBuilder.buttonAddDay')}
             </button>
           )}
         </div>
@@ -795,9 +792,9 @@ export default function MemberPlanBuilderPage() {
       <div className="fixed bottom-0 left-20 right-0 px-6 py-4 rogym-sx-e122cbce">
         <div className="flex items-center justify-between gap-4">
           <p className="text-sm rogym-sx-d88f932f">
-            {plan?.days?.length ?? 0} ngày · {exerciseCount} bài tập
+            {t('workout.planBuilder.floatingBar.summary', { days: plan?.days?.length ?? 0, exercises: exerciseCount })}
             {!canActivate && (
-              <span className="rogym-sx-5e5c39ab"> — Cần ít nhất 1 ngày có bài tập</span>
+              <span className="rogym-sx-5e5c39ab"> — {t('workout.planBuilder.floatingBar.validationError')}</span>
             )}
           </p>
           <div className="flex items-center gap-2">
@@ -808,16 +805,16 @@ export default function MemberPlanBuilderPage() {
                 className="rogym-btn rogym-btn--outline-white px-4"
                 onClick={() => navigate('/member/workout/plan')}
               >
-                <ArrowLeft size={15} /> Quay lại
+                <ArrowLeft size={15} /> {t('workout.planBuilder.buttonBack')}
               </button>
             ) : activateConfirm ? (
               <>
                 {existingSelfPlan ? (
                   <span className="text-xs text-amber-200">
-                    Kế hoạch <strong>&quot;{existingSelfPlan.name}&quot;</strong> đang chạy sẽ bị kết thúc.
+                    {t('workout.planBuilder.confirmActivateReplace', { name: existingSelfPlan.name })}
                   </span>
                 ) : (
-                  <span className="text-xs rogym-sx-5e5c39ab">Xác nhận kích hoạt plan này?</span>
+                  <span className="text-xs rogym-sx-5e5c39ab">{t('workout.planBuilder.confirmActivate')}</span>
                 )}
                 <button
                   type="button"
@@ -825,14 +822,14 @@ export default function MemberPlanBuilderPage() {
                   disabled={submitting}
                   onClick={() => void activate()}
                 >
-                  {submitting ? 'Đang xử lý...' : 'Xác nhận'}
+                  {submitting ? t('workout.planBuilder.processingBtn') : t('workout.planBuilder.floatingBar.buttonConfirm')}
                 </button>
                 <button
                   type="button"
                   className="rogym-btn rogym-btn--outline-white px-4"
                   onClick={() => setActivateConfirm(false)}
                 >
-                  Hủy
+                  {t('workout.planBuilder.floatingBar.buttonCancel')}
                 </button>
               </>
             ) : (
@@ -843,7 +840,7 @@ export default function MemberPlanBuilderPage() {
                   disabled={submitting}
                   onClick={saveToList}
                 >
-                  <Archive size={15} /> Lưu vào danh sách
+                  <Archive size={15} /> {t('workout.planBuilder.floatingBar.buttonSave')}
                 </button>
                 {!hasActivePtPlan && (
                   <button
@@ -852,7 +849,7 @@ export default function MemberPlanBuilderPage() {
                     disabled={!canActivate || submitting}
                     onClick={() => setActivateConfirm(true)}
                   >
-                    <Zap size={15} /> Kích hoạt & Áp dụng
+                    <Zap size={15} /> {t('workout.planBuilder.floatingBar.buttonActivate')}
                   </button>
                 )}
               </>
@@ -861,7 +858,7 @@ export default function MemberPlanBuilderPage() {
         </div>
         {hasActivePtPlan && !readonly && !activateConfirm && (
           <p className="mt-2 text-xs text-amber-300">
-            Bạn đang có kế hoạch từ PT — kế hoạch tự tạo chỉ có thể lưu vào danh sách, không thể áp dụng đè lên PT.
+            {t('workout.planBuilder.ptPlanWarning')}
           </p>
         )}
       </div>
@@ -893,6 +890,7 @@ function AddExerciseForm({
   onCancel: () => void
   onSubmit: (day: WorkoutPlanDay, exercise: Exercise, targets: ExerciseTargets) => Promise<void>
 }) {
+  const { t } = useTranslation('member')
   const [exerciseId, setExerciseId] = useState('')
   const [sets, setSets] = useState(3)
   const [reps, setReps] = useState(10)
@@ -924,7 +922,7 @@ function AddExerciseForm({
       className="mt-3 space-y-3 rounded-xl border border-white/10 bg-white/[0.02] p-4"
     >
       <div className="space-y-2">
-        <span className="rogym-field-label block">Chọn bài tập</span>
+        <span className="rogym-field-label block">{t('workout.planBuilder.addExercise.title')}</span>
         <div className="relative flex gap-2">
           <div className="relative flex-1">
             <Search
@@ -935,7 +933,7 @@ function AddExerciseForm({
               className="rogym-input py-2 pl-9 text-sm"
               value={search}
               onChange={(event) => setSearch(event.target.value)}
-              placeholder="Tìm theo tên, nhóm cơ..."
+              placeholder={t('workout.planBuilder.addExercise.searchPlaceholder')}
             />
           </div>
           <button
@@ -949,7 +947,7 @@ function AddExerciseForm({
             }`}
           >
             <SlidersHorizontal size={13} />
-            Lọc
+            {t('workout.planBuilder.addExercise.buttonFilter')}
             {activeFilterCount > 0 && (
               <span className="flex h-4 w-4 items-center justify-center rounded-full text-[10px] font-bold rogym-sx-fc269f1b">
                 {activeFilterCount}
@@ -970,7 +968,7 @@ function AddExerciseForm({
         </div>
         <div className="max-h-44 overflow-y-auto rounded-xl rogym-sx-9ff6a44e">
           {filteredExercises.length === 0 ? (
-            <p className="py-4 text-center text-xs rogym-sx-5e5c39ab">Không tìm thấy bài tập</p>
+            <p className="py-4 text-center text-xs rogym-sx-5e5c39ab">{t('workout.planBuilder.addExercise.notFound')}</p>
           ) : (
             filteredExercises.map((exercise) => (
               <button
@@ -1015,14 +1013,14 @@ function AddExerciseForm({
       />
       <div className="flex justify-end gap-2">
         <button type="button" className="rogym-btn rogym-btn--outline-white" onClick={onCancel}>
-          Hủy
+          {t('workout.planBuilder.addExercise.buttonCancel')}
         </button>
         <button
           type="submit"
           className="rogym-btn rogym-btn--primary"
           disabled={!exerciseId || submitting}
         >
-          {submitting ? 'Đang thêm...' : 'Thêm bài tập'}
+          {submitting ? t('workout.planBuilder.addExercise.buttonAdding') : t('workout.planBuilder.addExercise.buttonAdd')}
         </button>
       </div>
     </form>
@@ -1038,6 +1036,7 @@ function AddDayForm({
   onCancel: () => void
   onSubmit: (name: string) => Promise<void>
 }) {
+  const { t } = useTranslation('member')
   const [name, setName] = useState('')
 
   return (
@@ -1048,9 +1047,9 @@ function AddDayForm({
       }}
       className="space-y-3 rogym-sx-ba262316"
     >
-      <p className="text-sm font-semibold text-white">Thêm ngày tập</p>
+      <p className="text-sm font-semibold text-white">{t('workout.planBuilder.addDayForm.title')}</p>
       <label className="block space-y-1.5">
-        <span className="rogym-field-label">Tên ngày tập</span>
+        <span className="rogym-field-label">{t('workout.planBuilder.addDayForm.fieldName')}</span>
         <input
           className="rogym-input"
           value={name}
@@ -1058,19 +1057,19 @@ function AddDayForm({
           maxLength={100}
           required
           autoFocus
-          placeholder="VD: Ngực & Vai, Push day..."
+          placeholder={t('workout.planBuilder.addDayForm.namePlaceholder')}
         />
       </label>
       <div className="flex justify-end gap-2">
         <button type="button" className="rogym-btn rogym-btn--outline-white" onClick={onCancel}>
-          Hủy
+          {t('workout.planBuilder.buttonCancel')}
         </button>
         <button
           type="submit"
           className="rogym-btn rogym-btn--primary"
           disabled={!name.trim() || submitting}
         >
-          {submitting ? 'Đang thêm...' : 'Thêm ngày'}
+          {submitting ? t('workout.planBuilder.addDayForm.buttonAdding') : t('workout.planBuilder.addDayForm.buttonAdd')}
         </button>
       </div>
     </form>

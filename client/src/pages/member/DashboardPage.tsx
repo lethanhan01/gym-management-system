@@ -1,5 +1,6 @@
 import { memo, useCallback, useEffect, useMemo, useState, type ElementType } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import {
   Dumbbell,
   CheckSquare,
@@ -17,7 +18,6 @@ import {
 } from 'lucide-react'
 import { useAuthStore } from '@/stores/authStore'
 import { useSubscriptionStore } from '@/stores/subscriptionStore'
-import { hasActiveSubscription, isSubscriptionActive } from '@/lib/subscription'
 import subscriptionService, { type Subscription } from '@/services/subscription.service'
 import packageService from '@/services/package.service'
 import { trainingService, type TrainingSession } from '@/services/training.service'
@@ -69,7 +69,7 @@ const Skeleton = memo(function Skeleton({ h = 100 }: { h?: number }) {
 })
 
 const ErrorWidget = memo(function ErrorWidget({
-  message = 'Không thể tải dữ liệu',
+  message = '',
 }: {
   message?: string
 }) {
@@ -95,33 +95,16 @@ const SUB_STATUS_TONE: Record<string, string> = {
   expired: 'danger',
   cancelled: 'muted',
 }
-const SUB_STATUS_LABEL: Record<string, string> = {
-  active: 'Đang hoạt động',
-  pending: 'Chờ kích hoạt',
-  expired: 'Đã hết hạn',
-  cancelled: 'Đã huỷ',
-}
 const SESSION_STATUS_TONE: Record<string, string> = {
   scheduled: 'info',
   in_progress: 'warning',
   completed: 'success',
   cancelled: 'danger',
 }
-const SESSION_STATUS_LABEL: Record<string, string> = {
-  scheduled: 'Đã lên lịch',
-  in_progress: 'Đang diễn ra',
-  completed: 'Hoàn thành',
-  cancelled: 'Đã huỷ',
-}
 const FEEDBACK_TYPE_TONE: Record<string, string> = {
   staff: 'purple',
   equipment: 'warning',
   service: 'info',
-}
-const FEEDBACK_TYPE_LABEL: Record<string, string> = {
-  staff: 'Nhân viên',
-  equipment: 'Thiết bị',
-  service: 'Dịch vụ',
 }
 const STAT_SKELETON_KEYS = [0, 1, 2, 3] as const
 
@@ -143,6 +126,7 @@ const PtInfoCard = memo(function PtInfoCard({
   onChooseTrainer: () => void
   onRemoveTrainer: () => void
 }) {
+  const { t } = useTranslation('member')
   const initials = useMemo(() => {
     if (!trainerName) return ''
     return trainerName
@@ -162,8 +146,8 @@ const PtInfoCard = memo(function PtInfoCard({
         <div className="flex h-14 w-14 items-center justify-center rounded-full bg-white/5 rogym-text-dim">
           <User size={24} />
         </div>
-        <p className="text-sm font-medium text-white">Huấn luyện viên</p>
-        <p className="text-xs rogym-text-secondary">Gói của bạn không bao gồm PT</p>
+        <p className="text-sm font-medium text-white">{t('dashboard.pt.sectionTitle')}</p>
+        <p className="text-xs rogym-text-secondary">{t('dashboard.pt.noPackagePt')}</p>
       </div>
     )
   }
@@ -175,14 +159,14 @@ const PtInfoCard = memo(function PtInfoCard({
           <User size={24} />
         </div>
         <div>
-          <p className="text-sm font-medium text-white">Huấn luyện viên</p>
-          <p className="mt-1 text-xs rogym-text-secondary">Chưa có huấn luyện viên phụ trách</p>
+          <p className="text-sm font-medium text-white">{t('dashboard.pt.sectionTitle')}</p>
+          <p className="mt-1 text-xs rogym-text-secondary">{t('dashboard.pt.noTrainerAssigned')}</p>
         </div>
         <button
           className="rogym-btn rogym-btn--outline-white w-full text-sm"
           onClick={onChooseTrainer}
         >
-          Chọn huấn luyện viên
+          {t('dashboard.pt.chooseTrainer')}
         </button>
       </div>
     )
@@ -190,7 +174,7 @@ const PtInfoCard = memo(function PtInfoCard({
 
   return (
     <div className="rogym-card rogym-card--compact p-5 flex flex-col gap-4">
-      <div className="rogym-eyebrow">Huấn luyện viên</div>
+      <div className="rogym-eyebrow">{t('dashboard.pt.sectionTitle')}</div>
       {/* Avatar */}
       <div className="flex flex-col items-center gap-3 pt-1">
         <div className="flex items-center justify-center rounded-full shrink-0 rogym-sx-20f77b4b">
@@ -198,7 +182,7 @@ const PtInfoCard = memo(function PtInfoCard({
         </div>
         <div className="text-center">
           <h3 className="text-base font-bold text-white">{trainerName}</h3>
-          <p className="mt-1 text-xs rogym-text-secondary">PT đã chọn đi kèm gói</p>
+          <p className="mt-1 text-xs rogym-text-secondary">{t('dashboard.pt.trainerIncluded')}</p>
         </div>
       </div>
 
@@ -226,10 +210,10 @@ const PtInfoCard = memo(function PtInfoCard({
           className="rogym-btn rogym-btn--outline-white w-full text-sm"
           onClick={onChooseTrainer}
         >
-          Đổi PT
+          {t('dashboard.pt.changeTrainer')}
         </button>
         <button className="rogym-btn rogym-btn--danger w-full text-sm" onClick={onRemoveTrainer}>
-          Hủy PT này
+          {t('dashboard.pt.cancelTrainer')}
         </button>
       </div>
     </div>
@@ -250,6 +234,7 @@ const SubscriptionCard = memo(function SubscriptionCard({
   loading: boolean
   error: boolean
 }) {
+  const { t } = useTranslation('member')
   const navigate = useNavigate()
   if (loading) return <Skeleton h={140} />
   if (error) return <ErrorWidget />
@@ -258,17 +243,17 @@ const SubscriptionCard = memo(function SubscriptionCard({
     return (
       <div className="rogym-card rogym-card--compact p-6 flex flex-col gap-3">
         <div className="flex items-center gap-2">
-          <span className="text-base font-bold text-white">Gói tập</span>
-          <Badge label="Chưa có gói" />
+          <span className="text-base font-bold text-white">{t('dashboard.subscription.sectionTitle')}</span>
+          <Badge label={t('dashboard.subscription.noPackage')} />
         </div>
         <p className="text-sm rogym-text-secondary">
-          Bạn chưa có gói tập nào. Hãy chọn gói phù hợp để bắt đầu.
+          {t('dashboard.subscription.noPackageDesc')}
         </p>
         <button
           onClick={() => navigate('/member/subscription/setup')}
           className="rogym-btn rogym-btn--primary self-start"
         >
-          Chọn gói tập
+          {t('dashboard.subscription.choosePlan')}
         </button>
       </div>
     )
@@ -287,10 +272,10 @@ const SubscriptionCard = memo(function SubscriptionCard({
     <div className="rogym-card rogym-card--compact p-6 flex flex-col gap-4">
       <div className="flex items-center gap-3 flex-wrap">
         <span className="rogym-sx-3c31803f">
-          {packageName || subscription.packageName || 'Gói tập'}
+          {packageName || subscription.packageName || t('dashboard.subscription.sectionTitle')}
         </span>
         <Badge
-          label={SUB_STATUS_LABEL[subscription.status] ?? subscription.status}
+          label={t('dashboard.subStatusLabel.' + subscription.status, subscription.status)}
           tone={SUB_STATUS_TONE[subscription.status]}
         />
       </div>
@@ -304,20 +289,20 @@ const SubscriptionCard = memo(function SubscriptionCard({
         />
         <div className="flex justify-between text-xs rogym-text-secondary">
           <span>
-            {daysUsed}/{totalDays} ngày đã dùng
+            {daysUsed}/{totalDays} {t('dashboard.subscription.daysUsed')}
           </span>
           <span className={`rogym-status-text ${isExpired ? 'is-danger' : ''}`}>
-            {isExpired ? 'Đã hết hạn' : `Còn ${daysLeft} ngày`}
+            {isExpired ? t('dashboard.subscription.expired') : t('dashboard.subscription.daysLeft', { count: daysLeft })}
           </span>
         </div>
       </div>
 
       <div className="flex items-center gap-4 flex-wrap text-sm rogym-text-secondary">
         <span>
-          Bắt đầu: <b className="text-white">{fmtDate(subscription.startDate)}</b>
+          {t('dashboard.subscription.startDate')} <b className="text-white">{fmtDate(subscription.startDate)}</b>
         </span>
         <span>
-          Hết hạn:{' '}
+          {t('dashboard.subscription.endDate')}{' '}
           <b className={isExpired ? 'text-red-400' : 'text-white'}>
             {fmtDate(subscription.endDate)}
           </b>
@@ -330,14 +315,14 @@ const SubscriptionCard = memo(function SubscriptionCard({
             onClick={() => navigate('/member/subscription/renew')}
             className="rogym-btn rogym-btn--primary self-start"
           >
-            Gia hạn ngay
+            {t('dashboard.subscription.renew')}
           </button>
         ) : null}
         <button
           onClick={() => navigate('/member/subscription/current')}
           className="rogym-btn rogym-btn--outline-white self-start"
         >
-          Chi tiết gói
+          {t('dashboard.subscription.viewDetail')}
         </button>
       </div>
     </div>
@@ -385,6 +370,7 @@ const SessionsWidget = memo(function SessionsWidget({
   loading: boolean
   error: boolean
 }) {
+  const { t } = useTranslation('member')
   const navigate = useNavigate()
   if (loading) return <Skeleton h={120} />
   if (error) return <ErrorWidget />
@@ -392,7 +378,7 @@ const SessionsWidget = memo(function SessionsWidget({
   return (
     <div className="rogym-card rogym-card--compact p-5 flex flex-col gap-3">
       <div className="flex items-center justify-between">
-        <span className="text-base font-bold text-white">Lịch tập sắp tới</span>
+        <span className="text-base font-bold text-white">{t('dashboard.sessions.widgetTitle')}</span>
         <button
           onClick={() => navigate('/member/workout/sessions')}
           className="rogym-text-link rogym-text-link--accent text-xs"
@@ -403,7 +389,7 @@ const SessionsWidget = memo(function SessionsWidget({
       {sessions.length === 0 ? (
         <div className="flex flex-col items-center gap-2 py-6">
           <CalendarX size={32} className="rogym-text-secondary" />
-          <span className="text-sm rogym-text-secondary">Chưa có lịch tập nào sắp tới</span>
+          <span className="text-sm rogym-text-secondary">{t('sessions.noUpcoming')}</span>
         </div>
       ) : (
         <div className="flex flex-col gap-2">
@@ -426,7 +412,7 @@ const SessionsWidget = memo(function SessionsWidget({
                 </div>
               </div>
               <Badge
-                label={SESSION_STATUS_LABEL[s.status] ?? s.status}
+                label={t('dashboard.sessionStatusLabel.' + s.status, s.status)}
                 tone={SESSION_STATUS_TONE[s.status]}
               />
             </div>
@@ -447,6 +433,7 @@ const WorkoutWidget = memo(function WorkoutWidget({
   loading: boolean
   error: boolean
 }) {
+  const { t } = useTranslation('member')
   const navigate = useNavigate()
   if (loading) return <Skeleton h={100} />
   if (error) return <ErrorWidget />
@@ -454,7 +441,7 @@ const WorkoutWidget = memo(function WorkoutWidget({
   return (
     <div className="rogym-card rogym-card--compact p-5 flex flex-col gap-3">
       <div className="flex items-center justify-between">
-        <span className="text-base font-bold text-white">Kế hoạch tập</span>
+        <span className="text-base font-bold text-white">{t('dashboard.workoutPlan.widgetTitle')}</span>
         <button
           onClick={() => navigate('/member/workout/plan')}
           className="rogym-text-link rogym-text-link--accent text-xs"
@@ -466,14 +453,14 @@ const WorkoutWidget = memo(function WorkoutWidget({
         <div className="flex items-center justify-between">
           <div>
             <p className="text-sm font-semibold text-white">{plan.name}</p>
-            <p className="text-xs rogym-text-secondary mt-0.5">Đang hoạt động</p>
+            <p className="text-xs rogym-text-secondary mt-0.5">{t('dashboard.subStatusLabel.active')}</p>
           </div>
         </div>
       ) : (
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <ClipboardList size={16} className="rogym-text-secondary" />
-            <span className="text-sm rogym-text-secondary">Chưa có kế hoạch tập</span>
+            <span className="text-sm rogym-text-secondary">{t('workout.myPlan.emptyTitle')}</span>
           </div>
         </div>
       )}
@@ -491,6 +478,7 @@ const FeedbackWidget = memo(function FeedbackWidget({
   loading: boolean
   error: boolean
 }) {
+  const { t } = useTranslation('member')
   const navigate = useNavigate()
   if (loading) return <Skeleton h={100} />
   if (error) return <ErrorWidget />
@@ -498,7 +486,7 @@ const FeedbackWidget = memo(function FeedbackWidget({
   return (
     <div className="rogym-card rogym-card--compact p-5 flex flex-col gap-3">
       <div className="flex items-center justify-between">
-        <span className="text-base font-bold text-white">Phản hồi gần đây</span>
+        <span className="text-base font-bold text-white">{t('dashboard.feedbackWidget.widgetTitle')}</span>
         <button
           onClick={() => navigate('/member/feedback')}
           className="rogym-text-link rogym-text-link--accent text-xs"
@@ -509,7 +497,7 @@ const FeedbackWidget = memo(function FeedbackWidget({
       {feedbacks.length === 0 ? (
         <div className="flex items-center gap-2 py-2">
           <MessageSquareOff size={16} className="rogym-text-secondary" />
-          <span className="text-sm rogym-text-secondary">Chưa có phản hồi nào</span>
+          <span className="text-sm rogym-text-secondary">{t('feedback.list.emptyNone')}</span>
         </div>
       ) : (
         <div className="flex flex-col gap-2">
@@ -521,19 +509,11 @@ const FeedbackWidget = memo(function FeedbackWidget({
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">
                   <Badge
-                    label={FEEDBACK_TYPE_LABEL[fb.feedbackType] ?? fb.feedbackType}
+                    label={t('dashboard.feedbackTypeLabel.' + fb.feedbackType, fb.feedbackType)}
                     tone={FEEDBACK_TYPE_TONE[fb.feedbackType]}
                   />
                   <Badge
-                    label={
-                      fb.status === 'open'
-                        ? 'Mở'
-                        : fb.status === 'in_progress'
-                          ? 'Đang xử lý'
-                          : fb.status === 'resolved'
-                            ? 'Đã giải quyết'
-                            : 'Từ chối'
-                    }
+                    label={t('dashboard.feedbackStatusLabel.' + fb.status, fb.status)}
                     tone={
                       fb.status === 'resolved'
                         ? 'success'
@@ -557,10 +537,11 @@ const FeedbackWidget = memo(function FeedbackWidget({
 
 /* ── Main page ── */
 export default function MemberDashboardPage() {
+  const { t } = useTranslation('member')
   const navigate = useNavigate()
   const location = useLocation()
   const { user, clearAuth } = useAuthStore()
-  const setResolvedStatus = useSubscriptionStore((s) => s.setResolvedStatus)
+  const setHasActiveSub = useSubscriptionStore((s) => s.setHasActiveSub)
 
   const [subscription, setSubscription] = useState<Subscription | null>(null)
   const [packageName, setPackageName] = useState('')
@@ -625,14 +606,17 @@ export default function MemberDashboardPage() {
         /* Subscription */
         if (subsR.status === 'fulfilled') {
           const subs = subsR.value
-          const validActive = subs.find((s) => isSubscriptionActive(s, now))
+          const validActive = subs.find(
+            (s) =>
+              s.status === 'active' && new Date(s.startDate) <= now && new Date(s.endDate) >= now
+          )
           const active = validActive ?? subs.find((s) => s.status === 'active') ?? subs[0] ?? null
           setSubscription(active)
           // Gate truy cập theo đúng định nghĩa dùng chung toàn app (status active + chưa hết hạn).
           // KHÔNG ràng buộc startDate <= now: gói mua trong ngày có startDate = 00:00 UTC,
           // khi giờ UTC hiện tại vẫn là hôm trước sẽ bị coi là "chưa bắt đầu" → lệch với
           // SubscriptionSetupPage/DashboardLayout và gây vòng lặp redirect /member ⇄ /setup.
-          setResolvedStatus(hasActiveSubscription(subs, now), memberId)
+          setHasActiveSub(subs.some((s) => s.status === 'active' && new Date(s.endDate) >= now))
           activePackageId = active?.packageId ?? undefined
         } else {
           const err = subsR.reason
@@ -689,7 +673,12 @@ export default function MemberDashboardPage() {
           const p = profileR.value
           setProfile(p)
           const activeSub =
-            p.subscriptions?.find((s) => isSubscriptionActive(s, now)) ??
+            p.subscriptions?.find(
+              (s) =>
+                s.status === 'active' &&
+                new Date(s.startDate) <= now &&
+                new Date(s.endDate) >= now
+            ) ??
             p.subscriptions?.find((s) => s.status === 'active') ??
             p.subscriptions?.[0]
           if (activeSub !== undefined) {
@@ -727,13 +716,13 @@ export default function MemberDashboardPage() {
       {/* Toast */}
       {paymentSuccessToast && (
         <div className="fixed top-5 right-5 z-50 px-5 py-3 rounded-2xl flex items-center gap-2 shadow-lg rogym-sx-46b298d7">
-          <CalendarCheck size={18} /> Thanh toán thành công! Gói tập đã được kích hoạt.
+          <CalendarCheck size={18} /> {t('dashboard.paymentSuccess')}
         </div>
       )}
 
       <MemberPageHeader
         eyebrow="Member workspace"
-        title={`Xin chào, ${user?.fullName ?? 'bạn'}`}
+        title={t('dashboard.greeting', { name: user?.fullName ?? 'bạn' })}
         description={todayDescription}
       />
 
@@ -761,23 +750,23 @@ export default function MemberDashboardPage() {
               <>
                 <StatCard
                   icon={Dumbbell}
-                  label="Buổi tập tháng này"
+                  label={t('dashboard.stats.sessionsThisMonth')}
                   value={sessionsThisMonth}
-                  unit="buổi"
+                  unit={t('dashboard.stats.unitSession')}
                   onClick={() => navigate('/member/workout/sessions')}
                 />
                 <StatCard
                   icon={CheckSquare}
-                  label="Check-in tháng này"
+                  label={t('dashboard.stats.checkInsThisMonth')}
                   value={sessionsThisMonth}
-                  unit="lần"
+                  unit={t('dashboard.stats.unitTimes')}
                   onClick={() => navigate('/member/attendance')}
                 />
                 <StatCard
                   icon={Scale}
-                  label="Cân nặng hiện tại"
+                  label={t('dashboard.stats.currentWeight')}
                   value={progress?.weight ?? '—'}
-                  unit={progress ? 'kg' : ''}
+                  unit={progress ? t('dashboard.stats.unitKg') : ''}
                   onClick={() => navigate('/member/progress')}
                 />
                 <StatCard
