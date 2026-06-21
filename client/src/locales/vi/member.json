@@ -1,0 +1,30 @@
+{
+  "dashboard": {
+    "title": "Dashboard",
+    "errorLoad": "Không thể tải dữ liệu",
+    "networkError": "Không thể kết nối. Kiểm tra mạng và thử lại."
+  },
+  "profile": { "title": "Hồ sơ cá nhân" },
+  "chooseTrainer": { "title": "Chọn huấn luyện viên" },
+  "paymentAccounts": { "title": "Tài khoản thanh toán" },
+  "subscription": {
+    "current": { "title": "Gói tập hiện tại" },
+    "history": { "title": "Lịch sử gói tập" },
+    "setup": { "title": "Đăng ký gói tập" },
+    "renew": { "title": "Gia hạn gói tập" },
+    "checkout": { "title": "Thanh toán" }
+  },
+  "attendance": { "title": "Lịch sử điểm danh" },
+  "feedback": {
+    "list": { "title": "Phản hồi của tôi" },
+    "send": { "title": "Gửi phản hồi" }
+  },
+  "progress": { "title": "Tiến độ tập luyện" },
+  "workout": {
+    "myPlan": { "title": "Kế hoạch tập luyện" },
+    "history": { "title": "Lịch sử tập luyện" },
+    "schedule": { "title": "Lịch tập" },
+    "exercises": { "title": "Bài tập" },
+    "createSession": { "title": "Tạo buổi tập" }
+  }
+}

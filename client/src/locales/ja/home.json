@@ -1,0 +1,15 @@
+{
+  "nav": {
+    "home": "ホーム",
+    "programs": "プログラム",
+    "trainers": "トレーナー",
+    "packages": "プラン",
+    "contact": "お問い合わせ",
+    "login": "ログイン",
+    "register": "登録"
+  },
+  "programs": { "title": "トレーニングプログラム" },
+  "trainers": { "title": "トレーナー" },
+  "packages": { "title": "プラン" },
+  "contact": { "title": "お問い合わせ" }
+}

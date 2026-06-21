@@ -1,0 +1,15 @@
+{
+  "nav": {
+    "home": "Trang chủ",
+    "programs": "Chương trình",
+    "trainers": "Huấn luyện viên",
+    "packages": "Gói tập",
+    "contact": "Liên hệ",
+    "login": "Đăng nhập",
+    "register": "Đăng ký"
+  },
+  "programs": { "title": "Chương trình tập luyện" },
+  "trainers": { "title": "Huấn luyện viên" },
+  "packages": { "title": "Gói tập" },
+  "contact": { "title": "Liên hệ" }
+}

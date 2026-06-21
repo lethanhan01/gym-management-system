@@ -1,0 +1,26 @@
+{
+  "dashboard": {
+    "title": "トレーナーワークスペース",
+    "viewSchedule": "スケジュールを見る",
+    "createSession": "セッションを作成"
+  },
+  "sessions": {
+    "calendar": { "title": "セッションカレンダー" },
+    "create": { "title": "セッションを作成" },
+    "startWith": "{{name}}とのセッションを開始",
+    "completeWith": "{{name}}とのセッションを完了"
+  },
+  "students": {
+    "list": { "title": "受講生一覧" },
+    "detail": { "title": "受講生詳細" },
+    "addProgress": { "title": "進捗を追加" },
+    "progressList": { "title": "進捗一覧" }
+  },
+  "plans": {
+    "workout": { "title": "トレーニングプラン" },
+    "lesson": { "title": "レッスンプラン" },
+    "createLesson": { "title": "レッスンプランを作成" }
+  },
+  "exercises": { "title": "エクササイズ" },
+  "profile": { "title": "プロフィール" }
+}

@@ -1,0 +1,33 @@
+{
+  "dashboard": {
+    "title": "Staff workspace",
+    "todayOverview": "Tổng quan hôm nay",
+    "greeting": "Xin chào{{name}}. Đây là tình trạng hoạt động hôm nay.",
+    "totalMembers": "Tổng hội viên",
+    "checkInToday": "Check-in hôm nay",
+    "checkInCount": "Lượt vào trong ngày",
+    "pendingFeedback": "Phản hồi chờ xử lý",
+    "urgentHandle": "Cần xử lý sớm",
+    "allHandled": "Tất cả đã xử lý",
+    "attendanceToday": "Chấm công hôm nay",
+    "workedTime": "Đã làm {{hours}}g {{minutes}}p",
+    "clockIn": "Chấm vào",
+    "clockOut": "Chấm ra",
+    "memberCheckIns": "Check-in hội viên",
+    "noCheckIns": "Chưa có check-in hôm nay",
+    "noFeedback": "Không có phản hồi mới"
+  },
+  "members": {
+    "list": { "title": "Quản lý hội viên" },
+    "detail": { "title": "Chi tiết hội viên" },
+    "register": { "title": "Đăng ký hội viên" }
+  },
+  "checkIn": { "title": "Check-in hội viên" },
+  "equipment": { "title": "Thiết bị" },
+  "facility": { "title": "Cơ sở vật chất" },
+  "feedback": { "title": "Phản hồi" },
+  "renewal": { "title": "Gia hạn" },
+  "attendance": { "title": "Điểm danh" },
+  "schedule": { "title": "Lịch làm việc" },
+  "profile": { "title": "Hồ sơ" }
+}

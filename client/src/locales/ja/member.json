@@ -1,0 +1,30 @@
+{
+  "dashboard": {
+    "title": "ダッシュボード",
+    "errorLoad": "データを読み込めません",
+    "networkError": "接続できません。ネットワークを確認して再試行してください。"
+  },
+  "profile": { "title": "プロフィール" },
+  "chooseTrainer": { "title": "トレーナーを選択" },
+  "paymentAccounts": { "title": "支払いアカウント" },
+  "subscription": {
+    "current": { "title": "現在のプラン" },
+    "history": { "title": "プラン履歴" },
+    "setup": { "title": "プランに申し込む" },
+    "renew": { "title": "プランを更新" },
+    "checkout": { "title": "お支払い" }
+  },
+  "attendance": { "title": "出席履歴" },
+  "feedback": {
+    "list": { "title": "マイフィードバック" },
+    "send": { "title": "フィードバックを送信" }
+  },
+  "progress": { "title": "トレーニング進捗" },
+  "workout": {
+    "myPlan": { "title": "トレーニングプラン" },
+    "history": { "title": "トレーニング履歴" },
+    "schedule": { "title": "トレーニングスケジュール" },
+    "exercises": { "title": "エクササイズ" },
+    "createSession": { "title": "セッションを作成" }
+  }
+}

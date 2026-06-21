@@ -1,0 +1,50 @@
+{
+  "button": {
+    "save": "Lưu",
+    "cancel": "Hủy",
+    "delete": "Xóa",
+    "edit": "Chỉnh sửa",
+    "view": "Xem",
+    "viewDetail": "Xem chi tiết",
+    "viewAll": "Xem tất cả",
+    "back": "Quay lại",
+    "confirm": "Xác nhận",
+    "close": "Đóng",
+    "add": "Thêm",
+    "create": "Tạo",
+    "submit": "Gửi",
+    "search": "Tìm kiếm",
+    "filter": "Lọc",
+    "export": "Xuất",
+    "start": "Bắt đầu",
+    "complete": "Hoàn thành",
+    "approve": "Duyệt",
+    "reject": "Từ chối"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "profile": "Hồ sơ",
+    "logout": "Đăng xuất"
+  },
+  "status": {
+    "active": "Đang hoạt động",
+    "inactive": "Ngừng hoạt động",
+    "pending": "Chờ kích hoạt",
+    "expired": "Đã hết hạn",
+    "completed": "Hoàn thành",
+    "cancelled": "Đã hủy",
+    "working": "Đang làm việc",
+    "notCheckedIn": "Chưa chấm công hôm nay"
+  },
+  "error": {
+    "network": "Không thể kết nối. Kiểm tra mạng và thử lại.",
+    "unknown": "Đã xảy ra lỗi. Vui lòng thử lại.",
+    "notFound": "Không tìm thấy dữ liệu.",
+    "loadFailed": "Không thể tải dữ liệu."
+  },
+  "loading": "Đang tải...",
+  "noData": "Không có dữ liệu",
+  "ok": "Đồng ý",
+  "yes": "Có",
+  "no": "Không"
+}

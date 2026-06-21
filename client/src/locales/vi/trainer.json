@@ -1,0 +1,26 @@
+{
+  "dashboard": {
+    "title": "Trainer workspace",
+    "viewSchedule": "Xem lịch",
+    "createSession": "Tạo buổi tập"
+  },
+  "sessions": {
+    "calendar": { "title": "Lịch buổi tập" },
+    "create": { "title": "Tạo buổi tập" },
+    "startWith": "Bắt đầu buổi tập với {{name}}",
+    "completeWith": "Hoàn thành buổi tập với {{name}}"
+  },
+  "students": {
+    "list": { "title": "Danh sách học viên" },
+    "detail": { "title": "Chi tiết học viên" },
+    "addProgress": { "title": "Thêm tiến độ" },
+    "progressList": { "title": "Danh sách tiến độ" }
+  },
+  "plans": {
+    "workout": { "title": "Kế hoạch tập luyện" },
+    "lesson": { "title": "Giáo án" },
+    "createLesson": { "title": "Tạo giáo án" }
+  },
+  "exercises": { "title": "Bài tập" },
+  "profile": { "title": "Hồ sơ" }
+}
