@@ -1,17 +1,5 @@
 # API Conventions
 
-| Field | Value |
-|---|---|
-| Document ID | GMS-API-CONV-001 |
-| Version | 1.0.0 |
-| Status | Draft |
-| Author | Lê Thanh An (initial draft 2026-05-17) |
-| Reviewers | TBD — 1 backend lead khi team formed |
-| Last Updated | 2026-05-17 |
-| Related docs | [`Architecture.md §4`](../Architecture.md), [`Database.md`](../Database.md), [`server/src/common/filters/http-exception.filter.ts`](../../../server/src/common/filters/http-exception.filter.ts) |
-
----
-
 ## 1. Mục đích
 
 Quy ước chung áp dụng cho mọi endpoint Module 1-9. Mỗi module spec chỉ định nghĩa endpoint-specific behavior; những gì áp dụng toàn cục (auth header, error shape, pagination, error codes) ghi ở đây để tránh lặp.

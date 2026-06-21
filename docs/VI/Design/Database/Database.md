@@ -1,12 +1,5 @@
 # Database Design — Gym Management System
 
-| Field | Value |
-|---|---|
-| Document ID | `GMS-DB-DESIGN-001` |
-| Version | 1.2 |
-| Last Updated | 2026-06-19 |
-| Related docs | `SRS_VI.md`, `Architecture.md` |
-
 ## Overview
 
 Tài liệu mô tả thiết kế database PostgreSQL cho hệ thống quản lý gym (v1.2). Phạm vi: 29 bảng nghiệp vụ. Mục tiêu cung cấp ERD, mô tả thực thể, ràng buộc, DDL cuối cùng để team backend implement Prisma schema.

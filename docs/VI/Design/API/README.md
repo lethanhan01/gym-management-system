@@ -1,14 +1,5 @@
 # API Specification
 
-| Trường | Giá trị |
-|---|---|
-| Document ID | `GMS-API-README-001` |
-| Version | `1.1.0` |
-| Trạng thái | Đồng bộ với controller hiện tại |
-| Cập nhật lần cuối | 2026-06-19 |
-| Base URL | `/api/v1` |
-| Tài liệu liên quan | [`Architecture.md`](../Architecture.md), [`Database.md`](../Database.md), [`SRS_VI.md`](../../VI/SRS_VI.md) |
-
 ## 1. Mục đích
 
 Thư mục này mô tả contract HTTP đang được triển khai trong `server/src`. Tài liệu phục vụ backend, frontend và QA khi tích hợp hoặc kiểm thử API.
