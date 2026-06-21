@@ -850,11 +850,21 @@ const PlanDayCard = memo(function PlanDayCard({
                 {item.exercise?.name ?? t('plans.builder.editExerciseModal.defaultName')}
               </div>
               <div className="mt-1 text-xs rogym-text-dim">
-                {item.targetSets} set ·{' '}
-                {item.targetReps ? `${item.targetReps} rep` : t('plans.builder.dayCard.timeExercise')}
-                {` · ${formatDuration(item.targetDurationSec ?? null)}`}
-                {item.targetWeightKg ? ` · ${Number(item.targetWeightKg)} kg` : ''}
-                {` · ${formatDuration(item.restSeconds ?? null)}`}
+                {item.targetReps
+                  ? t('plans.builder.dayCard.setRepSummary', {
+                      sets: item.targetSets,
+                      reps: item.targetReps,
+                      duration: formatDuration(item.targetDurationSec ?? null),
+                      rest: item.restSeconds ?? 0,
+                    })
+                  : t('plans.builder.dayCard.setTimeSummary', {
+                      sets: item.targetSets,
+                      duration: formatDuration(item.targetDurationSec ?? null),
+                      rest: item.restSeconds ?? 0,
+                    })}
+                {item.targetWeightKg
+                  ? t('plans.builder.dayCard.setWeightSummary', { weight: Number(item.targetWeightKg) })
+                  : ''}
               </div>
               <div className="mt-1 text-xs rogym-text-secondary">
                 {item.exercise?.muscleGroup ?? t('plans.builder.dayCard.bodyPart')} ·{' '}

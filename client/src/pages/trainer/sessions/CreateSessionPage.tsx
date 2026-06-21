@@ -54,7 +54,12 @@ export default function CreateSessionPage() {
   const [error, setError] = useState<string | null>(null)
 
   function formatPlanDayOption(day: PlanDayOption) {
-    return `${t('sessions.create.fieldPlanDay')} ${day.dayNumber} - ${day.weekNumber}, ${day.dayOfWeek}: ${day.name}`
+    return t('sessions.create.planDayOptionFormat', {
+      dayNumber: day.dayNumber,
+      weekNumber: day.weekNumber,
+      dayOfWeek: day.dayOfWeek,
+      name: day.name,
+    })
   }
 
   useEffect(() => {
@@ -322,7 +327,7 @@ export default function CreateSessionPage() {
             <option value="">{t('sessions.create.selectRoom')}</option>
             {rooms.map((room) => (
               <option key={room.roomId} value={room.roomId}>
-                {room.roomCode} - {room.name} ({room.capacity})
+                {room.roomCode} - {room.name} ({room.capacity} {t('sessions.create.capacityUnit')})
               </option>
             ))}
           </TrainerSelect>
@@ -333,7 +338,7 @@ export default function CreateSessionPage() {
             <DateTimePickerInput
               value={startTime}
               onChange={setStartTime}
-              placeholder={t('sessions.create.fieldStartTime')}
+              placeholder={t('sessions.create.startTimePlaceholder')}
               aria-label={t('sessions.create.fieldStartTime')}
               disabled={editBlocked}
             />

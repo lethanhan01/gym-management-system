@@ -451,7 +451,7 @@ export default function StudentDetailPage() {
                           className="rounded-xl bg-black/15 p-3 text-sm"
                         >
                           <div className="font-medium text-white">
-                            {item.exercise?.name ?? 'Exercise'}
+                            {item.exercise?.name ?? t('plans.builder.editExerciseModal.defaultName')}
                           </div>
                           <div className="mt-1 text-xs rogym-text-dim">
                             {item.targetSets} sets ·{' '}
