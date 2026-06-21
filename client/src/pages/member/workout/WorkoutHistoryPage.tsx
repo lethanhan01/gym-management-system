@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import type { TFunction } from 'i18next'
 import { useTranslation } from 'react-i18next'
 import { ChevronDown, ChevronUp, Dumbbell } from 'lucide-react'
 import { Select } from '@/components/Select'
@@ -312,7 +313,7 @@ export default function WorkoutHistoryPage() {
 
 function groupSetsByExercise(
   sets: WorkoutLogSet[],
-  t: (key: string, opts?: Record<string, unknown>) => string
+  t: TFunction<'member'>
 ): { name: string; sets: WorkoutLogSet[] }[] {
   const map = new Map<string, { name: string; sets: WorkoutLogSet[] }>()
   for (const s of sets) {

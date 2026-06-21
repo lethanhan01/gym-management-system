@@ -1,4 +1,5 @@
 import { memo, useEffect, useMemo, useState } from 'react'
+import type { TFunction } from 'i18next'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { CheckCircle2, Clock, LogIn, LogOut, MessageSquare, Timer, Users } from 'lucide-react'
@@ -341,7 +342,7 @@ export default function StaffDashboardPage() {
   )
 }
 
-function feedbackTypeLabel(type: string, t: (key: string) => string) {
+function feedbackTypeLabel(type: string, t: TFunction<'staff'>) {
   if (type === 'staff') return t('feedback.staff')
   if (type === 'equipment') return t('feedback.equipment')
   return t('feedback.service')

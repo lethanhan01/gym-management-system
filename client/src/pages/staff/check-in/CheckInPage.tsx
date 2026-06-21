@@ -68,8 +68,8 @@ export default function CheckInPage() {
         code === 'MEMBER_NOT_FOUND'
           ? t('checkIn.errorNotFound')
           : code === 'MEMBER_NO_ACTIVE_SUBSCRIPTION'
-            ? t('checkIn.errorNoSubscription')
-            : getApiError(err, t('checkIn.errorGeneric'))
+            ? t('checkIn.errorNoSub')
+            : getApiError(err, t('checkIn.errorDefault'))
       setCheckError(message)
     } finally {
       setChecking(false)
@@ -87,7 +87,7 @@ export default function CheckInPage() {
       <div className="grid gap-5 xl:grid-cols-[420px_1fr]">
         <div className="space-y-5">
           <section className="rogym-card rogym-card--compact p-6">
-            <h2 className="mb-5 text-base font-bold text-white">{t('checkIn.inputTitle')}</h2>
+            <h2 className="mb-5 text-base font-bold text-white">{t('checkIn.enterCode')}</h2>
             <form className="space-y-4" onSubmit={handleCheckin}>
               <label className="block space-y-2">
                 <span className="rogym-field-label">{t('checkIn.memberCode')}</span>
@@ -117,23 +117,23 @@ export default function CheckInPage() {
             <section className="rogym-card rogym-card--compact border-[rgba(6,195,132,0.3)] p-6">
               <div className="mb-3 flex items-center gap-3 rogym-text-accent">
                 <CheckCircle2 size={22} />
-                <span className="font-bold">{t('checkIn.successMessage')}</span>
+                <span className="font-bold">{t('checkIn.checkInSuccess')}</span>
               </div>
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
-                  <span className="rogym-text-dim">{t('checkIn.labelMember')}</span>
+                  <span className="rogym-text-dim">{t('checkIn.member')}</span>
                   <span className="font-semibold text-white">{lastCheckedIn.memberName}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="rogym-text-dim">{t('checkIn.labelCode')}</span>
+                  <span className="rogym-text-dim">{t('checkIn.code')}</span>
                   <span className="text-white">{lastCheckedIn.memberCode}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="rogym-text-dim">{t('checkIn.labelCheckedInAt')}</span>
+                  <span className="rogym-text-dim">{t('checkIn.checkedInAt')}</span>
                   <span className="text-white">{formatTime(lastCheckedIn.startTime)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="rogym-text-dim">{t('checkIn.labelMethod')}</span>
+                  <span className="rogym-text-dim">{t('checkIn.method')}</span>
                   <StaffStatusBadge
                     status={lastCheckedIn.method}
                     tone="muted"
@@ -147,7 +147,7 @@ export default function CheckInPage() {
         <section className="rogym-card rogym-card--compact p-6">
           <div className="mb-5 flex items-center justify-between">
             <h2 className="text-base font-bold text-white">
-              {t('checkIn.todayTitle')}
+              {t('checkIn.todayCheckins')}
               {logTotal > 0 && (
                 <span className="ml-2 text-sm font-normal rogym-text-dim">
                   ({logTotal})

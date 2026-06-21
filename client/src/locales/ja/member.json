@@ -643,6 +643,7 @@
       "readonlyBanner": "このプランはアーカイブ済みまたはトレーニングデータがあるため、構造を編集できません。",
       "unitDays": "日",
       "unitExercises": "エクササイズ",
+      "unitSeconds": "秒",
       "dayHeader": "{{n}}日目 — {{name}}",
       "exerciseCount": "{{count}}エクササイズ",
       "buttonDeleteDay": "この日を削除しますか？",

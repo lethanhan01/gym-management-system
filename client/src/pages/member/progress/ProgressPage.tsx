@@ -1,4 +1,5 @@
 import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react'
+import type { TFunction } from 'i18next'
 import { useTranslation } from 'react-i18next'
 import {
   MemberPage,
@@ -26,7 +27,7 @@ function fmtDateShort(iso: string) {
   return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}`
 }
 
-function bmiLabel(bmi: number, t: (key: string) => string): string {
+function bmiLabel(bmi: number, t: TFunction<'member'>): string {
   if (bmi < 18.5) return t('progress.bmiLabel.underweight')
   if (bmi < 25) return t('progress.bmiLabel.normal')
   if (bmi < 30) return t('progress.bmiLabel.overweight')
@@ -45,7 +46,7 @@ function computeBmi(weightKg: number, heightCm: number): number {
   return Math.round((weightKg / (hm * hm)) * 10) / 10
 }
 
-function SelfReportForm({ onSuccess, t }: { onSuccess: () => void; t: (key: string) => string }) {
+function SelfReportForm({ onSuccess, t }: { onSuccess: () => void; t: TFunction<'member'> }) {
   const [weight, setWeight] = useState('')
   const [height, setHeight] = useState('')
   const [submitting, setSubmitting] = useState(false)

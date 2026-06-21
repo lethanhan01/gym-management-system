@@ -31,45 +31,10 @@ Tiêu đề PR nên theo Conventional Commits, ví dụ:
 ## Khu vực ảnh hưởng
 
 - [ ] `client/` (React/Vite)
-- [ ] `server/` (Express/API)
-- [ ] `server/src/db/` (Migration / Seed)
+- [ ] `server/` (NestJS/API)
+- [ ] `server/prisma/` (Migration / Seed/ Models)
 - [ ] `docs/`
 - [ ] `.github/` (CI / Templates)
-
-## Cách kiểm thử
-
-<!-- Hướng dẫn reviewer tái hiện và kiểm tra thay đổi của bạn (lệnh chạy, dữ liệu mẫu, tài khoản test, ...). -->
-
-```bash
-# Ví dụ:
-# Server
-cd server && npm install && npm run db:migrate && npm run dev
-
-# Client
-cd client && npm install && npm run dev
-```
-
-Các bước thủ công:
-
-1. ...
-2. ...
-3. ...
-
-## Ảnh chụp màn hình / Demo
-
-<!-- Bắt buộc nếu PR thay đổi UI. Đính kèm ảnh "trước / sau" hoặc video ngắn. -->
-
-| Trước | Sau |
-| ----- | --- |
-|       |     |
-
-## Thay đổi liên quan tới Database
-
-- [ ] PR này **không** ảnh hưởng tới schema DB.
-- [ ] Có thêm/sửa migration trong `server/src/db/migrations/`.
-- [ ] Cần chạy lại `npm run db:seed` sau khi merge.
-
-<!-- Nếu có thay đổi schema, mô tả ngắn gọn bảng/cột bị ảnh hưởng. -->
 
 ## Checklist của tác giả
 

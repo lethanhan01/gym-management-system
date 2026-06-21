@@ -643,6 +643,7 @@
       "readonlyBanner": "Kế hoạch đã lưu trữ hoặc đã có dữ liệu tập luyện nên không thể chỉnh sửa cấu trúc.",
       "unitDays": "ngày",
       "unitExercises": "bài tập",
+      "unitSeconds": "giây",
       "dayHeader": "Ngày {{n}} — {{name}}",
       "exerciseCount": "{{count}} bài tập",
       "buttonDeleteDay": "Xóa ngày này?",

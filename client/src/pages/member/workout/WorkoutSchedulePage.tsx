@@ -1,4 +1,5 @@
 import { memo, useCallback, useEffect, useMemo, useState } from 'react'
+import type { TFunction } from 'i18next'
 import { useTranslation } from 'react-i18next'
 import {
   Calendar,
@@ -65,7 +66,7 @@ function todayKey() {
   return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`
 }
 
-function daysUntil(iso: string, t: (key: string, opts?: Record<string, unknown>) => string) {
+function daysUntil(iso: string, t: TFunction<'member'>) {
   const s = new Date(iso)
   const now = new Date()
   now.setHours(0, 0, 0, 0)
