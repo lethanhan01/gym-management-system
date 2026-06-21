@@ -1,7 +1,10 @@
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import packageService, { type Package } from '@/services/package.service'
 import subscriptionService from '@/services/subscription.service'
+import { hasActiveSubscription } from '@/lib/subscription'
+import { useSubscriptionStore } from '@/stores/subscriptionStore'
 import trainerService, { type Trainer } from '@/services/trainer.service'
 import { useAuthStore } from '@/stores/authStore'
 import { MemberPage, MemberPageHeader } from '@/components/MemberUI'
@@ -9,6 +12,7 @@ import { PackagePicker, PackagePickerSkeleton } from '@/components/PackagePicker
 
 
 export default function SubscriptionSetupPage() {
+  const { t } = useTranslation('member')
   const [packages, setPackages] = useState<Package[]>([])
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState(false)
@@ -21,6 +25,7 @@ export default function SubscriptionSetupPage() {
   const [retryCount, setRetryCount] = useState(0)
   const navigate = useNavigate()
   const { user } = useAuthStore()
+  const setResolvedStatus = useSubscriptionStore((state) => state.setResolvedStatus)
 
   useEffect(() => {
     if (!user?.memberId) {
@@ -30,10 +35,8 @@ export default function SubscriptionSetupPage() {
     subscriptionService
       .getByMember(user.memberId)
       .then((subscriptions) => {
-        const now = Date.now()
-        const hasCurrentSubscription = subscriptions.some(
-          (item) => item.status === 'active' && new Date(item.endDate).getTime() >= now
-        )
+        const hasCurrentSubscription = hasActiveSubscription(subscriptions)
+        setResolvedStatus(hasCurrentSubscription, user.memberId ?? undefined)
         if (hasCurrentSubscription) {
           navigate('/member', { replace: true })
           return
@@ -65,7 +68,7 @@ export default function SubscriptionSetupPage() {
       })
       .catch(() => { setPackages([]); setLoadError(true) })
       .finally(() => setLoading(false))
-  }, [navigate, user?.memberId, retryCount])
+  }, [navigate, retryCount, setResolvedStatus, user?.memberId])
 
   const selectedPackage = packages.find((item) => item.packageId === selectedId) ?? null
   const startDate = new Date()
@@ -109,16 +112,16 @@ export default function SubscriptionSetupPage() {
     return (
       <MemberPage>
         <MemberPageHeader
-          eyebrow="Gói tập"
-          title="Chọn huấn luyện viên"
-          description={`Gói "${selectedPackage?.name ?? ''}" bao gồm PT. Chọn huấn luyện viên bạn muốn.`}
+          eyebrow={t('subscription.setup.trainerEyebrow')}
+          title={t('subscription.setup.trainerTitle')}
+          description={t('subscription.setup.trainerDescription', { name: selectedPackage?.name ?? '' })}
           actions={
             <button
               type="button"
               onClick={() => setStep('pick-package')}
               className="rogym-btn rogym-btn--outline-white"
             >
-              ← Chọn lại gói
+              {t('subscription.setup.backToPackages')}
             </button>
           }
         />
@@ -149,7 +152,7 @@ export default function SubscriptionSetupPage() {
               disabled={!selectedTrainerId}
               className="rogym-btn rogym-btn--primary mt-2 w-full disabled:opacity-40"
             >
-              Tiếp tục thanh toán
+              {t('subscription.setup.buttonContinue')}
             </button>
           </div>
         )}
@@ -161,28 +164,28 @@ export default function SubscriptionSetupPage() {
     <MemberPage>
       <div className="text-center">
         <h1 className="font-anton text-[clamp(1.5rem,3vw,2.5rem)] leading-tight tracking-wide text-white">
-          Chọn gói tập phù hợp với bạn
+          {t('subscription.setup.mainTitle')}
         </h1>
         <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-white/50">
-          Cuộn để khám phá các gói tập đang có. Mỗi gói được thiết kế để phù hợp với từng mục tiêu và lịch trình khác nhau của bạn.
+          {t('subscription.setup.mainSubtitle')}
         </p>
       </div>
       {loading || checkingSubscription ? (
         <PackagePickerSkeleton />
       ) : loadError ? (
         <div className="rogym-card rogym-card--compact flex flex-col items-center justify-center gap-4 py-16 text-center">
-          <p className="text-sm text-red-300">Không thể kết nối đến máy chủ. Vui lòng thử lại.</p>
+          <p className="text-sm text-red-300">{t('subscription.setup.errorNetwork')}</p>
           <button
             type="button"
             className="rogym-btn rogym-btn--outline-white"
             onClick={() => { setLoading(true); setLoadError(false); setCheckingSubscription(true); setRetryCount(c => c + 1) }}
           >
-            Thử lại
+            {t('subscription.setup.buttonRetry')}
           </button>
         </div>
       ) : packages.length === 0 ? (
         <div className="rogym-card rogym-card--compact flex items-center justify-center py-16 text-sm rogym-text-secondary">
-          Hiện tại chưa có gói tập nào khả dụng. Vui lòng liên hệ gym.
+          {t('subscription.setup.emptyPackages')}
         </div>
       ) : (
         <PackagePicker
@@ -191,7 +194,7 @@ export default function SubscriptionSetupPage() {
           onSelect={setSelectedId}
           startDate={startDate}
           endDate={endDate}
-          endDateLabel="Hết hạn dự kiến"
+          endDateLabel={t('subscription.setup.endDateLabel')}
           onContinue={handleContinue}
         />
       )}

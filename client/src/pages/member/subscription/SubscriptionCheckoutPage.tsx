@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useNavigate, useLocation } from 'react-router-dom'
 import {
   CreditCard,
@@ -80,12 +81,13 @@ function InputField({
 }
 
 export default function SubscriptionCheckoutPage({ mode }: { mode: 'buy' | 'renew' }) {
+  const { t } = useTranslation('member')
   const navigate = useNavigate()
   const location = useLocation()
   const state = location.state as PayState | null
 
   const { user } = useAuthStore()
-  const { setHasActiveSub } = useSubscriptionStore()
+  const setResolvedStatus = useSubscriptionStore((state) => state.setResolvedStatus)
 
   const [method, setMethod] = useState<PaymentMethod>('cash')
   const [bankName, setBankName] = useState('')
@@ -177,7 +179,7 @@ export default function SubscriptionCheckoutPage({ mode }: { mode: 'buy' | 'rene
       // Không gọi paymentService.create riêng — backend không nhận payment cho sub đang active.
       if (mode === 'renew') {
         if (!state?.subscriptionId) {
-          setError('Không tìm thấy gói tập để gia hạn.')
+          setError(t('subscription.checkout.errorRenewNotFound'))
           return
         }
         await subscriptionService.renew(state.subscriptionId, {
@@ -224,14 +226,14 @@ export default function SubscriptionCheckoutPage({ mode }: { mode: 'buy' | 'rene
         ...(txRef.trim() ? { transactionReference: txRef.trim() } : {}),
       })
       await saveAccountIfNeeded()
-      setHasActiveSub(true)
+      setResolvedStatus(true, user.memberId)
       navigate('/member', { replace: true })
     } catch (err) {
       const e = err as { response?: { status?: number; data?: { message?: string } } }
       if (mode === 'renew' && e?.response?.status === 401) {
         navigate('/login')
       } else {
-        setError(e?.response?.data?.message || 'Có lỗi xảy ra. Vui lòng thử lại.')
+        setError(e?.response?.data?.message || t('subscription.checkout.errorGeneric'))
       }
     } finally {
       setSubmitting(false)
@@ -244,20 +246,20 @@ export default function SubscriptionCheckoutPage({ mode }: { mode: 'buy' | 'rene
         onClick={() => navigate(-1)}
         className="rogym-text-link rogym-text-link--accent rogym-sx-dd54bdbf"
       >
-        <ArrowLeft size={14} /> Quay lại chọn gói
+        <ArrowLeft size={14} /> {t('subscription.checkout.backLink')}
       </button>
 
       <h1 className="text-2xl font-bold text-white mb-1">
-        {mode === 'renew' ? 'Thanh toán gia hạn' : 'Thanh toán'}
+        {mode === 'renew' ? t('subscription.checkout.titleRenew') : t('subscription.checkout.title')}
       </h1>
 
       {/* Order summary bar */}
       <div className="rounded-2xl px-5 py-4 mb-6 flex items-center justify-between rogym-sx-93eaf0d2">
         <div>
-          <p className="rogym-sx-780e0fa6">{mode === 'renew' ? 'Gia hạn gói' : 'Gói đã chọn'}</p>
+          <p className="rogym-sx-780e0fa6">{mode === 'renew' ? t('subscription.checkout.orderRenew') : t('subscription.checkout.orderBuy')}</p>
           <p className="rogym-sx-668e18f3">{state.packageName}</p>
           <p className="rogym-sx-0c98cdd6">
-            {state.durationDays} ngày &nbsp;·&nbsp; {fmtDate(startDate)} → {fmtDate(endDate)}
+            {t('subscription.checkout.orderDays', { count: state.durationDays })} &nbsp;·&nbsp; {t('subscription.checkout.orderDateRange', { startDate: fmtDate(startDate), endDate: fmtDate(endDate) })}
           </p>
         </div>
         <p className="rogym-sx-04751e92">{formatVnd(state.price)}</p>
@@ -266,7 +268,7 @@ export default function SubscriptionCheckoutPage({ mode }: { mode: 'buy' | 'rene
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Card left: payment info */}
         <div className="rounded-2xl p-6 flex flex-col gap-4 rogym-sx-25952519">
-          <h3 className="text-base font-bold text-white">Thông tin thanh toán</h3>
+          <h3 className="text-base font-bold text-white">{t('subscription.checkout.paymentInfoTitle')}</h3>
 
           <div className="flex flex-col gap-2">
             {PAYMENT_METHOD_OPTIONS.map((opt) => (
@@ -282,21 +284,21 @@ export default function SubscriptionCheckoutPage({ mode }: { mode: 'buy' | 'rene
           {method === 'bank_card' && (
             <div className="flex flex-col gap-3">
               <InputField
-                label="Tên ngân hàng"
+                label={t('subscription.checkout.fieldBankName')}
                 placeholder="Vietcombank, BIDV..."
                 value={bankName}
                 onChange={setBankName}
                 icon={<Landmark size={15} />}
               />
               <InputField
-                label="Số tài khoản"
+                label={t('subscription.checkout.fieldAccountNo')}
                 placeholder="1234567890"
                 value={accountNo}
                 onChange={setAccountNo}
                 icon={<CreditCard size={15} />}
               />
               <InputField
-                label="Mã giao dịch (tuỳ chọn)"
+                label={t('subscription.checkout.fieldTxRef')}
                 placeholder="REF-..."
                 value={txRef}
                 onChange={setTxRef}
@@ -308,21 +310,21 @@ export default function SubscriptionCheckoutPage({ mode }: { mode: 'buy' | 'rene
           {method === 'ewallet' && (
             <div className="flex flex-col gap-3">
               <InputField
-                label="Ví điện tử"
+                label={t('subscription.checkout.fieldWallet')}
                 placeholder="MoMo, ZaloPay, VNPay..."
                 value={provider}
                 onChange={setProvider}
                 icon={<WalletCards size={15} />}
               />
               <InputField
-                label="Số điện thoại"
+                label={t('subscription.checkout.fieldPhone')}
                 placeholder="0912 345 678"
                 value={phoneNo}
                 onChange={setPhoneNo}
                 icon={<Phone size={15} />}
               />
               <InputField
-                label="Mã giao dịch (tuỳ chọn)"
+                label={t('subscription.checkout.fieldTxRef')}
                 placeholder="REF-..."
                 value={txRef}
                 onChange={setTxRef}
@@ -339,7 +341,7 @@ export default function SubscriptionCheckoutPage({ mode }: { mode: 'buy' | 'rene
               >
                 {saveAccount && <Check size={11} className="rogym-sx-b2fbf853" />}
               </div>
-              <span className="rogym-sx-c2ff5e7f">Lưu tài khoản này để dùng lại sau</span>
+              <span className="rogym-sx-c2ff5e7f">{t('subscription.checkout.checkboxSave')}</span>
             </label>
           )}
 
@@ -351,15 +353,20 @@ export default function SubscriptionCheckoutPage({ mode }: { mode: 'buy' | 'rene
             className="rogym-btn rogym-btn--primary rogym-btn--wide mt-auto"
           >
             {submitting
-              ? 'Đang xử lý...'
-              : `${mode === 'renew' ? 'Xác nhận gia hạn' : 'Xác nhận thanh toán'} ${formatVnd(state.price)}`}
+              ? t('subscription.checkout.buttonProcessing')
+              : t(
+                  mode === 'renew'
+                    ? 'subscription.checkout.buttonConfirmRenew'
+                    : 'subscription.checkout.buttonConfirmPay',
+                  { price: formatVnd(state.price) }
+                )}
           </button>
         </div>
 
         {/* Card right: saved accounts */}
         <div className="rounded-2xl p-6 flex flex-col gap-3 rogym-sx-25952519">
-          <h3 className="text-base font-bold text-white">Tài khoản đã liên kết</h3>
-          <p className="rogym-sx-61bc6441">Chọn tài khoản đã lưu để điền nhanh thông tin</p>
+          <h3 className="text-base font-bold text-white">{t('subscription.checkout.savedAccountsTitle')}</h3>
+          <p className="rogym-sx-61bc6441">{t('subscription.checkout.savedAccountsHint')}</p>
 
           {accountsLoading ? (
             <div className="flex flex-col gap-2">
@@ -370,9 +377,9 @@ export default function SubscriptionCheckoutPage({ mode }: { mode: 'buy' | 'rene
           ) : accounts.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-10 gap-3 rogym-sx-ee3d55bf">
               <WalletCards size={36} className="rogym-sx-1c327a5d" />
-              <p className="rogym-sx-0ea5ff5a">Chưa có tài khoản nào được lưu</p>
+              <p className="rogym-sx-0ea5ff5a">{t('subscription.checkout.noSavedAccounts')}</p>
               <p className="rogym-sx-78d149e3">
-                Tích &quot;Lưu tài khoản này&quot; bên trái sau khi chọn phương thức
+                {t('subscription.checkout.noSavedAccountsHint')}
               </p>
             </div>
           ) : (
@@ -388,7 +395,7 @@ export default function SubscriptionCheckoutPage({ mode }: { mode: 'buy' | 'rene
                         <p className="rogym-sx-3cb875af">
                           {acc.label || acc.provider || getPaymentMethodLabel(acc.type)}
                         </p>
-                        {acc.isDefault && <span className="rogym-sx-8abe74be">Mặc định</span>}
+                        {acc.isDefault && <span className="rogym-sx-8abe74be">{t('subscription.checkout.defaultBadge')}</span>}
                       </div>
                       {acc.accountRef && (
                         <p className="rogym-sx-8c2d1cde">{maskPaymentAccountRef(acc.accountRef)}</p>
@@ -398,7 +405,7 @@ export default function SubscriptionCheckoutPage({ mode }: { mode: 'buy' | 'rene
                   <button
                     onClick={() => handleDeleteAccount(acc.accountId)}
                     className="rogym-sx-07caf3f9"
-                    title="Xoá tài khoản"
+                    title={t('subscription.checkout.buttonDeleteAccount')}
                   >
                     <Trash2 size={14} />
                   </button>

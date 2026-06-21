@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { Dumbbell, Search, SlidersHorizontal, X } from 'lucide-react'
 import {
   MemberEmptyState,
@@ -14,6 +15,7 @@ import { ExerciseCard, ExerciseCategoryFilterPopover } from '@/components/workou
 import { filterExercises, getExerciseCategoryLabel } from '@/components/workout/exercise-data'
 
 export default function MemberExercisesPage() {
+  const { t } = useTranslation('member')
   const navigate = useNavigate()
   const [exercises, setExercises] = useState<Exercise[]>([])
   const [search, setSearch] = useState('')
@@ -32,7 +34,7 @@ export default function MemberExercisesPage() {
     try {
       setExercises(await workoutService.getExercises({ category: category || undefined }))
     } catch (err) {
-      setError(getApiError(err, 'Không thể tải thư viện bài tập.'))
+      setError(getApiError(err, t('workout.exercises.errorLoad')))
     } finally {
       setLoading(false)
     }
@@ -59,16 +61,16 @@ export default function MemberExercisesPage() {
   return (
     <MemberPage>
       <MemberPageHeader
-        eyebrow="Lịch tập"
-        title="Thư viện bài tập"
-        description="Các bài tập do PT đề xuất — dùng để xây dựng kế hoạch cá nhân"
+        eyebrow={t('workout.exercises.eyebrow')}
+        title={t('workout.exercises.pageTitle')}
+        description={t('workout.exercises.description')}
         actions={
           <button
             type="button"
             className="rogym-btn rogym-btn--primary"
             onClick={() => navigate('/member/workout/builder')}
           >
-            <Dumbbell size={15} /> Mở Plan Builder
+            <Dumbbell size={15} /> {t('workout.exercises.buttonOpenBuilder')}
           </button>
         }
       />
@@ -84,7 +86,7 @@ export default function MemberExercisesPage() {
             className="rogym-input pl-9"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Tìm theo tên, nhóm cơ, dụng cụ..."
+            placeholder={t('workout.exercises.searchPlaceholder')}
           />
         </div>
 
@@ -98,7 +100,7 @@ export default function MemberExercisesPage() {
             }`}
           >
             <SlidersHorizontal size={13} />
-            Lọc
+            {t('workout.exercises.buttonFilter')}
             {activeCount > 0 && (
               <span className="flex h-4 w-4 items-center justify-center rounded-full text-[10px] font-bold rogym-sx-fc269f1b">
                 {activeCount}
@@ -122,8 +124,8 @@ export default function MemberExercisesPage() {
         <MemberSkeleton rows={6} />
       ) : filtered.length === 0 ? (
         <MemberEmptyState
-          title="Không tìm thấy bài tập"
-          description="Thử đổi từ khóa tìm kiếm hoặc chọn danh mục khác."
+          title={t('workout.exercises.emptyTitle')}
+          description={t('workout.exercises.emptyDescription')}
         />
       ) : (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -151,7 +153,7 @@ export default function MemberExercisesPage() {
               <div className="aspect-[16/7] overflow-hidden">
                 <img
                   src={detail.imageUrl}
-                  alt={`Minh họa ${detail.name}`}
+                  alt={t('workout.exercises.imageAlt', { name: detail.name })}
                   className="h-full w-full object-cover"
                   loading="lazy"
                 />
@@ -169,7 +171,7 @@ export default function MemberExercisesPage() {
                   type="button"
                   className="rogym-btn rogym-btn--icon rogym-btn--elevated"
                   onClick={() => setDetail(null)}
-                  aria-label="Đóng"
+                  aria-label={t('workout.exercises.buttonClose')}
                 >
                   <X size={16} />
                 </button>
@@ -179,15 +181,15 @@ export default function MemberExercisesPage() {
               )}
               <div className="mt-5 grid grid-cols-2 gap-4">
                 <div className="rounded-xl p-3 rogym-sx-a38688f0">
-                  <p className="text-xs rogym-sx-5e5c39ab">Nhóm cơ</p>
+                  <p className="text-xs rogym-sx-5e5c39ab">{t('workout.exercises.fieldMuscleGroup')}</p>
                   <p className="mt-1 text-sm font-semibold text-white">
                     {detail.muscleGroup ?? '—'}
                   </p>
                 </div>
                 <div className="rounded-xl p-3 rogym-sx-a38688f0">
-                  <p className="text-xs rogym-sx-5e5c39ab">Dụng cụ cần</p>
+                  <p className="text-xs rogym-sx-5e5c39ab">{t('workout.exercises.fieldEquipment')}</p>
                   <p className="mt-1 text-sm font-semibold text-white">
-                    {detail.equipmentNeeded ?? 'Không cần'}
+                    {detail.equipmentNeeded ?? t('workout.exercises.equipmentNone')}
                   </p>
                 </div>
               </div>
@@ -197,7 +199,7 @@ export default function MemberExercisesPage() {
                   className="rogym-btn rogym-btn--outline-white flex-1 justify-center"
                   onClick={() => setDetail(null)}
                 >
-                  Đóng
+                  {t('workout.exercises.buttonClose')}
                 </button>
                 <button
                   type="button"
@@ -207,7 +209,7 @@ export default function MemberExercisesPage() {
                     navigate('/member/workout/builder')
                   }}
                 >
-                  <Dumbbell size={14} /> Thêm vào Plan Builder
+                  <Dumbbell size={14} /> {t('workout.exercises.buttonAddToBuilder')}
                 </button>
               </div>
             </div>

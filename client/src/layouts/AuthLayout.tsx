@@ -1,6 +1,7 @@
 import { Suspense } from 'react'
 import { Navigate, Outlet } from 'react-router-dom'
 import { useAuthStore } from '@/stores/authStore'
+import { LanguageSwitcher } from '@/components/ui/LanguageSwitcher'
 
 const roleRouteMap: Record<string, string> = {
   member: '/member',
@@ -19,8 +20,13 @@ export default function AuthLayout() {
   }
 
   return (
-    <Suspense fallback={<div className="min-h-screen animate-pulse bg-[#080e0b]" />}>
-      <Outlet />
-    </Suspense>
+    <>
+      <div className="fixed top-4 right-5 z-50">
+        <LanguageSwitcher />
+      </div>
+      <Suspense fallback={<div className="min-h-screen animate-pulse bg-[#080e0b]" />}>
+        <Outlet />
+      </Suspense>
+    </>
   )
 }

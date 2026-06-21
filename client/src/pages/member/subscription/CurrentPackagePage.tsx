@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useNavigate, useLocation } from 'react-router-dom'
 import {
   CalendarCheck,
@@ -27,6 +28,11 @@ import { getPaymentMethodLabel } from '@/components/payment/payment-method-data'
 import { formatVnd } from '@/lib/currency'
 import { formatDate } from '@/lib/date'
 import { parsePackageBenefits } from '@/lib/package'
+import {
+  gymDateKey,
+  isSubscriptionActive,
+  subscriptionEndDateKey,
+} from '@/lib/subscription'
 
 function Badge({ label, tone = 'muted' }: { label: string; tone?: string }) {
   return (
@@ -45,12 +51,14 @@ const SUB_STATUS_MAP: Record<string, { label: string; tone: string }> = {
 }
 
 function getRealStatus(s: Subscription): string {
-  if ((s.status === 'active' || s.status === 'expired') && new Date(s.endDate) < new Date())
+  const endDate = subscriptionEndDateKey(s.endDate)
+  if ((s.status === 'active' || s.status === 'expired') && endDate && endDate < gymDateKey())
     return 'ended'
   return s.status
 }
 
 export default function CurrentPackagePage() {
+  const { t } = useTranslation('member')
   const [subscription, setSubscription] = useState<Subscription | null>(null)
   const [pkg, setPkg] = useState<Package | null>(null)
   const [payments, setPayments] = useState<Payment[]>([])
@@ -71,15 +79,15 @@ export default function CurrentPackagePage() {
   const navigate = useNavigate()
   const location = useLocation()
   const { user, clearAuth } = useAuthStore()
-  const setHasActiveSub = useSubscriptionStore((s) => s.setHasActiveSub)
+  const setResolvedStatus = useSubscriptionStore((s) => s.setResolvedStatus)
 
   useEffect(() => {
     if (location.state?.justActivated) {
-      setToast('Gói tập đã được kích hoạt thành công!')
+      setToast(t('subscription.current.toastActivated'))
       setTimeout(() => setToast(null), 4000)
       window.history.replaceState({}, '')
     }
-  }, [location.state?.justActivated])
+  }, [location.state?.justActivated, t])
 
   useEffect(() => {
     if (!user?.memberId) return
@@ -94,15 +102,14 @@ export default function CurrentPackagePage() {
           const sorted = subRes.value.sort(
             (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
           )
-          const today = new Date()
-          const active =
-            sorted.find((s) => s.status === 'active' && new Date(s.endDate) >= today) ??
-            sorted.find((s) => s.status === 'pending' && new Date(s.endDate) >= today)
-          setSubscription(active ?? null)
-          setHasActiveSub(!!active)
-          if (active?.packageId) {
+          const active = sorted.find((s) => isSubscriptionActive(s))
+          const pending = sorted.find((s) => s.status === 'pending')
+          const current = active ?? pending
+          setSubscription(current ?? null)
+          setResolvedStatus(Boolean(active), memberId)
+          if (current?.packageId) {
             packageService
-              .get(active.packageId)
+              .get(current.packageId)
               .then(setPkg)
               .catch(() => {})
           }
@@ -112,14 +119,14 @@ export default function CurrentPackagePage() {
             clearAuth()
             navigate('/login')
           }
-          setError('Không thể tải thông tin gói tập.')
+          setError(t('subscription.current.errorLoad'))
         }
         if (payRes.status === 'fulfilled') {
           setPayments(payRes.value.slice(0, 3))
         }
       })
       .finally(() => setLoading(false))
-  }, [user?.memberId, navigate, clearAuth, setHasActiveSub])
+  }, [user?.memberId, navigate, clearAuth, setResolvedStatus])
 
   async function handleCancel() {
     if (!cancelTarget || !user?.memberId) return
@@ -128,8 +135,8 @@ export default function CurrentPackagePage() {
     try {
       await subscriptionService.cancel(cancelTarget.subscriptionId)
       setCancelTarget(null)
-      setHasActiveSub(false)
-      setToast('Đã hủy gói tập thành công.')
+      setResolvedStatus(false, user.memberId)
+      setToast(t('subscription.current.toastCancelled'))
       setTimeout(() => {
         setToast(null)
         navigate('/member/subscription/setup', { replace: true })
@@ -192,7 +199,7 @@ export default function CurrentPackagePage() {
           <div className="rounded-2xl p-8 max-w-sm w-full rogym-sx-83e5c542">
             <div className="flex items-center gap-3 mb-4">
               <AlertTriangle size={22} className="text-red-400 shrink-0" />
-              <h3 className="text-lg font-bold text-white m-0">Xác nhận hủy gói</h3>
+              <h3 className="text-lg font-bold text-white m-0">{t('subscription.current.cancelDialog.title')}</h3>
             </div>
             <p className="text-sm rogym-text-secondary leading-relaxed mb-1">
               Hủy gói{' '}
@@ -200,9 +207,8 @@ export default function CurrentPackagePage() {
             </p>
             <p className="text-sm rogym-text-secondary leading-relaxed mb-6">
               {cancelTarget.status === 'pending'
-                ? 'Gói chờ kích hoạt này sẽ bị hủy.'
-                : 'Hủy gói sẽ mất quyền truy cập ngay lập tức.'}{' '}
-              <strong className="text-red-400">KHÔNG hoàn tiền.</strong> Bạn có chắc chắn?
+                ? t('subscription.current.cancelDialog.bodyPending')
+                : t('subscription.current.cancelDialog.bodyActive')}
             </p>
             {cancelError && <p className="text-red-300 text-sm mb-3">{cancelError}</p>}
             <div className="flex gap-3">
@@ -213,14 +219,14 @@ export default function CurrentPackagePage() {
                 }}
                 className="rogym-btn rogym-btn--outline-white flex-1"
               >
-                Không, giữ lại
+                {t('subscription.current.cancelDialog.buttonKeep')}
               </button>
               <button
                 onClick={handleCancel}
                 disabled={cancelling}
                 className="rogym-danger-button flex-1 rounded-full py-2.5 text-sm font-semibold transition-all"
               >
-                {cancelling ? 'Đang hủy...' : 'Xác nhận hủy'}
+                {cancelling ? t('subscription.current.cancelDialog.buttonCancelling') : t('subscription.current.cancelDialog.buttonConfirmCancel')}
               </button>
             </div>
           </div>
@@ -228,15 +234,15 @@ export default function CurrentPackagePage() {
       )}
 
       <MemberPageHeader
-        eyebrow="Gói tập"
-        title="Gói tập hiện tại"
-        description="Thông tin gói đăng ký và quyền lợi của bạn."
+        eyebrow={t('subscription.current.eyebrow')}
+        title={t('subscription.current.title')}
+        description={t('subscription.current.description')}
         actions={
           <button
             onClick={() => void openPkgModal()}
             className="rogym-btn rogym-btn--outline-white"
           >
-            Các gói hiện có
+            {t('subscription.current.actionAvailable')}
           </button>
         }
       />
@@ -251,18 +257,18 @@ export default function CurrentPackagePage() {
             onClick={() => navigate('/member/subscription/setup')}
             className="rogym-btn rogym-btn--primary"
           >
-            Chọn gói tập
+            {t('subscription.current.errorEmpty')}
           </button>
         </div>
       ) : !subscription ? (
         <div className="rogym-card rogym-card--compact flex flex-col items-center justify-center text-center py-16 gap-4">
           <ShoppingBag size={48} className="rogym-text-secondary" />
-          <p className="rogym-text-secondary">Bạn chưa có gói tập nào đang hoạt động.</p>
+          <p className="rogym-text-secondary">{t('subscription.current.emptyState')}</p>
           <button
             onClick={() => navigate('/member/subscription/setup')}
             className="rogym-btn rogym-btn--primary"
           >
-            Chọn gói tập
+            {t('subscription.current.errorEmpty')}
           </button>
         </div>
       ) : (
@@ -272,14 +278,13 @@ export default function CurrentPackagePage() {
             <div className="flex items-center gap-3 rounded-2xl px-5 py-4 rogym-sx-c090d129">
               <AlertTriangle size={20} className="text-amber-400 shrink-0" />
               <p className="text-amber-300 text-sm flex-1">
-                Gói tập sắp hết hạn trong <strong>{daysLeft} ngày</strong>. Hãy gia hạn ngay để
-                không bị gián đoạn.
+                {t('subscription.current.expiringAlert', { days: daysLeft })}
               </p>
               <button
                 onClick={() => navigate('/member/subscription/renew')}
                 className="rogym-btn rogym-btn--primary text-sm px-4 py-2"
               >
-                Gia hạn
+                {t('subscription.current.buttonRenewNow')}
               </button>
             </div>
           )}
@@ -290,7 +295,7 @@ export default function CurrentPackagePage() {
             <div className="rogym-card rogym-card--compact p-8 flex flex-col gap-6">
               <div>
                 <Badge
-                  label={SUB_STATUS_MAP[getRealStatus(subscription)]?.label ?? subscription.status}
+                  label={t(`subscription.current.statusLabel.${getRealStatus(subscription)}`, { defaultValue: subscription.status })}
                   tone={SUB_STATUS_MAP[getRealStatus(subscription)]?.tone}
                 />
                 <h2 className="text-2xl font-bold text-white mt-3">
@@ -303,10 +308,10 @@ export default function CurrentPackagePage() {
                 <div>
                   <div className="flex justify-between mb-2 text-sm rogym-text-secondary">
                     <span>
-                      {daysUsed} ngày đã dùng / {totalDays} ngày
+                      {t('subscription.current.progressDays', { daysUsed, totalDays })}
                     </span>
                     <span className={isExpiring ? 'text-amber-500' : 'rogym-text-accent'}>
-                      Còn {daysLeft} ngày
+                      {t('subscription.current.daysLeft', { daysLeft })}
                     </span>
                   </div>
                   <progress
@@ -323,7 +328,7 @@ export default function CurrentPackagePage() {
                 <div className="flex items-center gap-3 rounded-2xl px-4 py-3 rogym-sx-6930dcd2">
                   <CalendarCheck size={18} className="rogym-sx-b2fbf853" />
                   <div>
-                    <p className="text-xs rogym-text-secondary mb-0.5">Ngày bắt đầu</p>
+                    <p className="text-xs rogym-text-secondary mb-0.5">{t('subscription.current.fieldStartDate')}</p>
                     <p className="text-sm font-medium text-white">
                       {formatDate(subscription.startDate)}
                     </p>
@@ -335,7 +340,7 @@ export default function CurrentPackagePage() {
                     className={isExpiring ? 'text-amber-500' : 'rogym-text-secondary'}
                   />
                   <div>
-                    <p className="text-xs rogym-text-secondary mb-0.5">Ngày hết hạn</p>
+                    <p className="text-xs rogym-text-secondary mb-0.5">{t('subscription.current.fieldEndDate')}</p>
                     <p
                       className={`text-sm font-medium ${isExpiring ? 'text-amber-400' : 'text-white'}`}
                     >
@@ -349,7 +354,7 @@ export default function CurrentPackagePage() {
               {subscription.trainerId && subscription.trainerName && (
                 <div className="flex items-center gap-3 rounded-2xl px-4 py-3 rogym-sx-6930dcd2">
                   <div>
-                    <p className="text-xs rogym-text-secondary mb-0.5">Huấn luyện viên</p>
+                    <p className="text-xs rogym-text-secondary mb-0.5">{t('subscription.current.fieldTrainer')}</p>
                     <p className="text-sm font-medium text-white">{subscription.trainerName}</p>
                   </div>
                 </div>
@@ -360,7 +365,7 @@ export default function CurrentPackagePage() {
                 <div className="flex flex-col gap-3 mt-auto pt-6 border-t border-white/5">
                   {!packageActive && subscription.status === 'active' && (
                     <p className="text-xs text-amber-400 text-center">
-                      Gói tập này đã ngừng bán — bạn vẫn sử dụng đến hết hạn. Khi hết hạn, vui lòng chọn gói mới.
+                      {t('subscription.current.cancelledNote')}
                     </p>
                   )}
                   <div className="flex justify-between gap-3">
@@ -369,7 +374,7 @@ export default function CurrentPackagePage() {
                       className="rogym-cancel-outline rogym-btn flex items-center gap-1.5 rogym-sx-2fb3205c"
                     >
                       <XCircle size={14} />
-                      Hủy gói
+                      {t('subscription.current.buttonCancel')}
                     </button>
                     {packageActive && (
                       <button
@@ -377,7 +382,7 @@ export default function CurrentPackagePage() {
                         className="rogym-btn rogym-btn--primary flex items-center gap-1.5"
                       >
                         <RefreshCw size={14} />
-                        Gia hạn
+                        {t('subscription.current.buttonRenew')}
                       </button>
                     )}
                   </div>
@@ -390,7 +395,7 @@ export default function CurrentPackagePage() {
               {/* Benefits */}
               {benefits.length > 0 && (
                 <div className="rogym-card rogym-card--compact p-5">
-                  <h3 className="text-base font-bold text-white mb-4">Quyền lợi gói tập</h3>
+                  <h3 className="text-base font-bold text-white mb-4">{t('subscription.current.benefitsTitle')}</h3>
                   <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                     {benefits.map((b, i) => (
                       <li key={i} className="flex items-start gap-2 text-sm rogym-text-secondary">
@@ -405,17 +410,17 @@ export default function CurrentPackagePage() {
               {/* Payment history preview */}
               <div className="rogym-card rogym-card--compact p-5">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-base font-bold text-white">Lịch sử thanh toán</h3>
+                  <h3 className="text-base font-bold text-white">{t('subscription.current.paymentHistoryTitle')}</h3>
                   <button
                     onClick={() => navigate('/member/subscription/history')}
                     className="rogym-text-link rogym-text-link--accent flex items-center gap-1 text-sm"
                   >
-                    Xem tất cả <ChevronRight size={14} />
+                    {t('subscription.current.buttonViewAll')} <ChevronRight size={14} />
                   </button>
                 </div>
                 {payments.length === 0 ? (
                   <p className="text-sm rogym-text-secondary py-4 text-center">
-                    Chưa có giao dịch nào.
+                    {t('subscription.current.noTransactions')}
                   </p>
                 ) : (
                   <div className="flex flex-col gap-3">
@@ -435,7 +440,7 @@ export default function CurrentPackagePage() {
                             {formatVnd(p.amount)}
                           </span>
                           <Badge
-                            label={p.status === 'success' ? 'Thành công' : 'Thất bại'}
+                            label={p.status === 'success' ? t('subscription.current.paymentSuccess') : t('subscription.current.paymentFailed')}
                             tone={p.status === 'success' ? 'success' : 'danger'}
                           />
                         </div>
@@ -461,7 +466,7 @@ export default function CurrentPackagePage() {
           >
             {/* Header */}
             <div className="flex items-center justify-between gap-3 px-6 pt-6 pb-4">
-              <h2 className="text-lg font-bold text-white">Danh sách gói tập</h2>
+              <h2 className="text-lg font-bold text-white">{t('subscription.current.packageModal.title')}</h2>
               <button
                 type="button"
                 className="rogym-btn rogym-btn--icon rogym-btn--elevated"
@@ -481,7 +486,7 @@ export default function CurrentPackagePage() {
                 />
                 <input
                   type="text"
-                  placeholder="Tìm tên gói..."
+                  placeholder={t('subscription.current.packageModal.searchPlaceholder')}
                   value={pkgSearch}
                   onChange={(e) => setPkgSearch(e.target.value)}
                   className="w-full rounded-xl border border-white/10 bg-white/5 py-2 pl-9 pr-3 text-sm text-white placeholder:text-white/30 focus:border-[var(--rogym-teal)] focus:outline-none"
@@ -519,14 +524,14 @@ export default function CurrentPackagePage() {
 
             {/* Sort row */}
             <div className="flex items-center gap-2 px-6 pb-3">
-              <span className="text-xs text-white/40">Sắp xếp:</span>
+              <span className="text-xs text-white/40">{t('subscription.current.packageModal.sortLabel')}</span>
               <button
                 type="button"
                 onClick={() => setPkgSortAsc((v) => !v)}
                 className="flex items-center gap-1 rounded-lg border border-white/10 bg-white/5 px-2.5 py-1 text-xs text-white/70 hover:border-white/20 transition-colors"
               >
                 <ArrowUpDown size={11} />
-                Tên {pkgSortAsc ? 'A → Z' : 'Z → A'}
+                {pkgSortAsc ? t('subscription.current.packageModal.sortAZ') : t('subscription.current.packageModal.sortZA')}
               </button>
             </div>
 
@@ -555,7 +560,7 @@ export default function CurrentPackagePage() {
                   if (filtered.length === 0)
                     return (
                       <p className="py-8 text-center text-sm rogym-text-secondary">
-                        Không tìm thấy gói nào.
+                        {t('subscription.current.packageModal.notFound')}
                       </p>
                     )
 
@@ -574,12 +579,12 @@ export default function CurrentPackagePage() {
                                   <h3 className="truncate font-bold text-white">{p.name}</h3>
                                   {p.includesPt && (
                                     <span className="shrink-0 rounded-full bg-[rgba(66,224,158,0.1)] px-2 py-0.5 text-[10px] font-bold uppercase text-[#42e09e]">
-                                      Có PT
+                                      {t('subscription.current.packageDetail.withPt')}
                                     </span>
                                   )}
                                 </div>
                                 <div className="mt-1 flex items-center gap-3 text-xs rogym-text-secondary">
-                                  <span>{p.durationDays} ngày</span>
+                                  <span>{t('subscription.current.packageDetail.days', { count: p.durationDays })}</span>
                                   <span className="font-semibold rogym-sx-b2fbf853">
                                     {formatVnd(p.price)}
                                   </span>

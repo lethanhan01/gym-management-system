@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { Dumbbell, Menu, X } from 'lucide-react'
+import { LanguageSwitcher } from '@/components/ui/LanguageSwitcher'
 
 const NAV_LINKS = [
   { label: 'Trang chủ', to: '/' },
@@ -64,6 +65,7 @@ export default function HomeNavbar() {
         </div>
 
         <div className="hidden md:flex items-center gap-3">
+          <LanguageSwitcher />
           <NavBtn to="/login" variant="green">
             Đăng nhập
           </NavBtn>
@@ -94,7 +96,8 @@ export default function HomeNavbar() {
               {l.label}
             </Link>
           ))}
-          <div className="flex gap-3 mt-2">
+          <div className="flex items-center gap-3 mt-2">
+            <LanguageSwitcher />
             <NavBtn to="/login" variant="green">
               Đăng nhập
             </NavBtn>

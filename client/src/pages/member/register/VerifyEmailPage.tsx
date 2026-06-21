@@ -1,6 +1,7 @@
 import { useRef, useState, useEffect, KeyboardEvent, ClipboardEvent } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Mail } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { AuthShell, BtnPrimary, TextLink, ErrorMsg } from "@/pages/auth/_authui";
 import { authService } from "@/services/auth.service";
 import { useAuthStore } from "@/stores/authStore";
@@ -74,6 +75,7 @@ function OtpInput({ value, onChange }: { value: string[]; onChange: (v: string[]
 /* ── Resend countdown button ── */
 function ResendBtn({ onResend }: { onResend: () => void }) {
   const [seconds, setSeconds] = useState(RESEND_SECONDS);
+  const { t } = useTranslation("auth");
 
   useEffect(() => {
     if (seconds <= 0) return;
@@ -89,13 +91,13 @@ function ResendBtn({ onResend }: { onResend: () => void }) {
   if (seconds > 0) {
     return (
       <span className="rogym-sx-a3c9452a">
-        Gửi lại sau{" "}
+        {t("verifyEmail.resendCountdown")}{" "}
         <span className="rogym-auth-highlight">{seconds}s</span>
       </span>
     );
   }
 
-  return <TextLink onClick={handleClick}>Gửi lại mã</TextLink>;
+  return <TextLink onClick={handleClick}>{t("verifyEmail.resendBtn")}</TextLink>;
 }
 
 /* ── Main page ── */
@@ -106,6 +108,7 @@ export default function VerifyEmailPage() {
   const email = state?.email ?? "";
   const password = state?.password ?? "";
   const { setAuth } = useAuthStore();
+  const { t } = useTranslation("auth");
 
   const [digits, setDigits] = useState<string[]>(
     state?.devOtp ? state.devOtp.split("") : Array(OTP_LENGTH).fill(""),
@@ -132,13 +135,13 @@ export default function VerifyEmailPage() {
       const e = err as { response?: { status?: number } };
       const status = e?.response?.status;
       if (status === 410) {
-        setError("Mã OTP đã hết hạn. Vui lòng gửi lại mã.");
+        setError(t("verifyEmail.otpExpired"));
       } else if (status === 404) {
-        setError("Email không tìm thấy trong hệ thống.");
+        setError(t("verifyEmail.emailNotFound"));
       } else if (status === 429) {
-        setError("Quá nhiều lần thử. Vui lòng đợi trước khi thử lại.");
+        setError(t("verifyEmail.tooManyAttempts"));
       } else {
-        setError("Mã OTP không đúng hoặc đã hết hạn.");
+        setError(t("verifyEmail.invalidOtp"));
       }
       setDigits(Array(OTP_LENGTH).fill(""));
     } finally {
@@ -156,22 +159,21 @@ export default function VerifyEmailPage() {
   }
 
   return (
-    <AuthShell backTo="/member/register" backLabel="Đăng ký">
+    <AuthShell backTo="/member/register" backLabel={t("verifyEmail.backLabel")}>
       <form onSubmit={handleSubmit} className="flex flex-col gap-6">
         {/* Icon + heading */}
         <div className="flex flex-col items-center text-center gap-3">
           <div
             className="w-14 h-14 rounded-2xl flex items-center justify-center rogym-sx-cd8c4f95"
-            
           >
             <Mail size={24} className="rogym-text-accent" strokeWidth={1.5} />
           </div>
           <div>
             <h1 className="rogym-sx-4d6285f7">
-              Xác thực email
+              {t("verifyEmail.title")}
             </h1>
             <p className="rogym-sx-a29e4e5b">
-              Nhập mã 6 chữ số đã được gửi đến
+              {t("verifyEmail.subtitle")}
             </p>
             {email && (
               <p className="rogym-verify-email">
@@ -187,13 +189,13 @@ export default function VerifyEmailPage() {
         {error && <ErrorMsg message={error} />}
 
         <BtnPrimary type="submit" disabled={!isFull || loading}>
-          {loading ? "Đang xác thực..." : "Xác nhận"}
+          {loading ? t("verifyEmail.submitting") : t("verifyEmail.submit")}
         </BtnPrimary>
 
         {/* Resend */}
         <div className="flex items-center justify-center gap-1.5">
           <span className="rogym-sx-a3c9452a">
-            Không nhận được mã?{" "}
+            {t("verifyEmail.noCode")}{" "}
           </span>
           <ResendBtn onResend={handleResend} />
         </div>

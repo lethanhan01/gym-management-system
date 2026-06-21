@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { Search, TrendingUp, UserRound } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { useTrainerStudents } from '@/hooks/useTrainerStudents'
 import { formatDate } from '@/lib/date'
 import {
@@ -14,6 +15,7 @@ import {
 } from '@/components/TrainerUI'
 
 export default function StudentsListPage() {
+  const { t } = useTranslation('trainer')
   const [searchParams, setSearchParams] = useSearchParams()
   const page = Number(searchParams.get('page') ?? 1)
   const status = searchParams.get('status') ?? ''
@@ -42,9 +44,9 @@ export default function StudentsListPage() {
   return (
     <TrainerPage>
       <TrainerPageHeader
-        eyebrow="Quản lý học viên"
-        title="Học viên của tôi"
-        description={`${total} học viên đang được phân công cho bạn.`}
+        eyebrow={t('students.list.eyebrow')}
+        title={t('students.list.title')}
+        description={t('students.list.description', { total })}
       />
 
       <div className="rogym-card rogym-card--compact grid gap-3 p-4 md:grid-cols-[1fr_220px_auto]">
@@ -58,20 +60,20 @@ export default function StudentsListPage() {
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             onKeyDown={(event) => event.key === 'Enter' && applySearch()}
-            placeholder="Tìm theo tên, email hoặc mã hội viên"
+            placeholder={t('students.list.searchPlaceholder')}
           />
         </div>
         <TrainerSelect
           value={status}
           onValueChange={(value) => updateParam('status', value)}
         >
-          <option value="">Mọi trạng thái</option>
-          <option value="active">Đang hoạt động</option>
-          <option value="pending_verification">Chờ xác thực</option>
-          <option value="locked">Đã khóa</option>
+          <option value="">{t('students.list.allStatuses')}</option>
+          <option value="active">{t('students.list.statusActive')}</option>
+          <option value="pending_verification">{t('students.list.statusPending')}</option>
+          <option value="locked">{t('students.list.statusLocked')}</option>
         </TrainerSelect>
         <button type="button" className="rogym-btn rogym-btn--primary" onClick={applySearch}>
-          Tìm kiếm
+          {t('students.list.searchButton')}
         </button>
       </div>
 
@@ -81,8 +83,8 @@ export default function StudentsListPage() {
         <TrainerErrorState message={error} onRetry={reload} />
       ) : data.length === 0 ? (
         <TrainerEmptyState
-          title="Không tìm thấy học viên"
-          description="Thử thay đổi từ khóa hoặc bộ lọc."
+          title={t('students.list.notFound')}
+          description={t('students.list.notFoundDesc')}
         />
       ) : (
         <>
@@ -90,11 +92,11 @@ export default function StudentsListPage() {
             <table className="w-full border-collapse text-left text-sm">
               <thead className="bg-white/5 text-xs uppercase tracking-wider rogym-text-dim">
                 <tr>
-                  <th className="px-5 py-4">Học viên</th>
-                  <th className="px-5 py-4">Gói tập</th>
-                  <th className="px-5 py-4">Ngày hết hạn</th>
-                  <th className="px-5 py-4">Trạng thái</th>
-                  <th className="px-5 py-4 text-right">Thao tác</th>
+                  <th className="px-5 py-4">{t('students.list.colStudent')}</th>
+                  <th className="px-5 py-4">{t('students.list.colPackage')}</th>
+                  <th className="px-5 py-4">{t('students.list.colExpiry')}</th>
+                  <th className="px-5 py-4">{t('students.list.colStatus')}</th>
+                  <th className="px-5 py-4 text-right">{t('students.list.colAction')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -110,7 +112,7 @@ export default function StudentsListPage() {
                       </div>
                     </td>
                     <td className="px-5 py-4 rogym-text-secondary">
-                      {student.activeSubscription?.packageName ?? 'Chưa có gói'}
+                      {student.activeSubscription?.packageName ?? t('students.list.noPackage')}
                     </td>
                     <td className="px-5 py-4 rogym-text-secondary">
                       {formatDate(student.activeSubscription?.endDate)}
@@ -126,13 +128,13 @@ export default function StudentsListPage() {
                           className="rogym-text-link rogym-text-link--accent"
                           to={`/trainer/students/${student.memberId}`}
                         >
-                          Chi tiết
+                          {t('students.list.actionDetail')}
                         </Link>
                         <Link
                           className="rogym-text-link"
                           to={`/trainer/students/${student.memberId}/progress`}
                         >
-                          Ghi tiến độ
+                          {t('students.list.actionProgress')}
                         </Link>
                       </div>
                     </td>
@@ -162,20 +164,20 @@ export default function StudentsListPage() {
                   />
                 </div>
                 <div className="mt-4 text-sm rogym-text-secondary">
-                  {student.activeSubscription?.packageName ?? 'Chưa có gói active'}
+                  {student.activeSubscription?.packageName ?? t('students.list.noPackageActive')}
                 </div>
                 <div className="mt-4 flex gap-3">
                   <Link
                     className="rogym-btn rogym-btn--outline-white flex-1"
                     to={`/trainer/students/${student.memberId}`}
                   >
-                    Chi tiết
+                    {t('students.list.actionDetail')}
                   </Link>
                   <Link
                     className="rogym-btn rogym-btn--primary flex-1"
                     to={`/trainer/students/${student.memberId}/progress`}
                   >
-                    <TrendingUp size={15} /> Tiến độ
+                    <TrendingUp size={15} /> {t('students.list.progressLink')}
                   </Link>
                 </div>
               </div>
@@ -192,10 +194,10 @@ export default function StudentsListPage() {
             disabled={page <= 1}
             onClick={() => updateParam('page', String(page - 1))}
           >
-            Trước
+            {t('students.list.prevPage')}
           </button>
           <span className="text-sm rogym-text-secondary">
-            Trang {page}/{totalPages}
+            {t('students.list.page', { current: page, total: totalPages })}
           </span>
           <button
             type="button"
@@ -203,7 +205,7 @@ export default function StudentsListPage() {
             disabled={page >= totalPages}
             onClick={() => updateParam('page', String(page + 1))}
           >
-            Sau
+            {t('students.list.nextPage')}
           </button>
         </div>
       )}

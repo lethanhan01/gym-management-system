@@ -1,5 +1,6 @@
 import { FormEvent, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { KeyRound, LoaderCircle, LogOut, Save, UserRound } from 'lucide-react'
 import { getApiError } from '@/lib/api-error'
 import { authService } from '@/services/auth.service'
@@ -16,6 +17,7 @@ import { ProfileInfoRow } from '@/components/profile/ProfileInfoRow'
 import { ProfilePasswordField } from '@/components/profile/ProfilePasswordField'
 
 export default function StaffProfilePage() {
+  const { t } = useTranslation('staff')
   const navigate = useNavigate()
   const { user, clearAuth, setAuth, token } = useAuthStore()
   const [profile, setProfile] = useState<StaffProfile | null>(null)
@@ -38,9 +40,9 @@ export default function StaffProfilePage() {
     staffService
       .getMe()
       .then(setProfile)
-      .catch((err) => setError(getApiError(err, 'Không thể tải hồ sơ nhân viên.')))
+      .catch((err) => setError(getApiError(err, t('profile.loadFailed'))))
       .finally(() => setLoading(false))
-  }, [])
+  }, [t])
 
   function startEdit() {
     setEditFullName(profile?.fullName ?? '')
@@ -57,7 +59,7 @@ export default function StaffProfilePage() {
   async function handleSaveProfile() {
     const nameTrimmed = editFullName.trim()
     if (!nameTrimmed) {
-      setProfileSaveError('Họ tên không được trống.')
+      setProfileSaveError(t('profile.fullNameRequired'))
       return
     }
     setProfileSaving(true)
@@ -73,7 +75,7 @@ export default function StaffProfilePage() {
       }
       setIsEditing(false)
     } catch (err) {
-      setProfileSaveError(getApiError(err, 'Lưu thất bại.'))
+      setProfileSaveError(getApiError(err, t('profile.saveFailed')))
     } finally {
       setProfileSaving(false)
     }
@@ -82,11 +84,11 @@ export default function StaffProfilePage() {
   async function changePassword(event: FormEvent) {
     event.preventDefault()
     if (newPassword.length < 8) {
-      setError('Mật khẩu mới cần ít nhất 8 ký tự.')
+      setError(t('profile.passwordMinLength'))
       return
     }
     if (newPassword !== confirmPassword) {
-      setError('Mật khẩu xác nhận không khớp.')
+      setError(t('profile.passwordMismatch'))
       return
     }
     setSaving(true)
@@ -97,9 +99,9 @@ export default function StaffProfilePage() {
       setCurrentPassword('')
       setNewPassword('')
       setConfirmPassword('')
-      setSuccess('Đổi mật khẩu thành công.')
+      setSuccess(t('profile.changePasswordSuccess'))
     } catch (err) {
-      setError(getApiError(err, 'Không thể đổi mật khẩu.'))
+      setError(getApiError(err, t('profile.changePasswordFailed')))
     } finally {
       setSaving(false)
     }
@@ -113,9 +115,9 @@ export default function StaffProfilePage() {
   return (
     <StaffPage>
       <StaffPageHeader
-        eyebrow="Tài khoản"
-        title="Hồ sơ nhân viên"
-        description="Thông tin nhân sự và bảo mật tài khoản của bạn."
+        eyebrow={t('profile.eyebrow')}
+        title={t('profile.title')}
+        description={t('profile.description')}
       />
       {loading ? (
         <StaffSkeleton rows={5} />
@@ -126,7 +128,7 @@ export default function StaffProfilePage() {
               <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[rgba(66,224,158,0.12)] rogym-text-accent">
                 <UserRound size={22} />
               </div>
-              <h2 className="rogym-eyebrow">Thông tin cá nhân</h2>
+              <h2 className="rogym-eyebrow">{t('profile.personalInfo')}</h2>
             </div>
 
             {profileSaveError && (
@@ -137,7 +139,7 @@ export default function StaffProfilePage() {
 
             {isEditing ? (
               <div className="border-b border-white/5 py-3">
-                <label className="mb-1.5 block rogym-field-label">Họ tên</label>
+                <label className="mb-1.5 block rogym-field-label">{t('profile.fullName')}</label>
                 <input
                   type="text"
                   className="rogym-input"
@@ -147,15 +149,15 @@ export default function StaffProfilePage() {
                 />
               </div>
             ) : (
-              <ProfileInfoRow label="Họ tên" value={profile?.fullName ?? user?.fullName ?? '--'} />
+              <ProfileInfoRow label={t('profile.fullName')} value={profile?.fullName ?? user?.fullName ?? '--'} />
             )}
 
-            <ProfileInfoRow label="Mã nhân viên" value={profile?.staffCode ?? '--'} />
-            <ProfileInfoRow label="Email" value={profile?.email ?? user?.email ?? '--'} />
+            <ProfileInfoRow label={t('profile.staffCode')} value={profile?.staffCode ?? '--'} />
+            <ProfileInfoRow label={t('profile.email')} value={profile?.email ?? user?.email ?? '--'} />
 
             {isEditing ? (
               <div className="border-b border-white/5 py-3">
-                <label className="mb-1.5 block rogym-field-label">Điện thoại</label>
+                <label className="mb-1.5 block rogym-field-label">{t('profile.phone')}</label>
                 <input
                   type="tel"
                   className="rogym-input"
@@ -165,10 +167,10 @@ export default function StaffProfilePage() {
                 />
               </div>
             ) : (
-              <ProfileInfoRow label="Điện thoại" value={profile?.phone ?? 'Chưa cập nhật'} />
+              <ProfileInfoRow label={t('profile.phone')} value={profile?.phone ?? t('profile.phoneNotSet')} />
             )}
 
-            <ProfileInfoRow label="Chức vụ" value={profile?.position ?? 'staff'} />
+            <ProfileInfoRow label={t('profile.position')} value={profile?.position ?? 'staff'} />
 
             <div className="mt-auto pt-6 flex gap-3">
               {isEditing ? (
@@ -179,7 +181,7 @@ export default function StaffProfilePage() {
                     onClick={cancelEdit}
                     disabled={profileSaving}
                   >
-                    Hủy
+                    {t('profile.cancel')}
                   </button>
                   <button
                     type="button"
@@ -192,7 +194,7 @@ export default function StaffProfilePage() {
                     ) : (
                       <Save size={16} />
                     )}{' '}
-                    Lưu
+                    {t('profile.save')}
                   </button>
                 </>
               ) : (
@@ -202,14 +204,14 @@ export default function StaffProfilePage() {
                     className="rogym-btn rogym-btn--outline-white flex-1"
                     onClick={startEdit}
                   >
-                    Chỉnh sửa
+                    {t('profile.edit')}
                   </button>
                   <button
                     type="button"
                     className="rogym-btn rogym-btn--danger flex-1"
                     onClick={logout}
                   >
-                    <LogOut size={16} /> Đăng xuất
+                    <LogOut size={16} /> {t('profile.logout')}
                   </button>
                 </>
               )}
@@ -221,7 +223,7 @@ export default function StaffProfilePage() {
               <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[rgba(66,224,158,0.12)] rogym-text-accent">
                 <KeyRound size={22} />
               </div>
-              <h2 className="rogym-eyebrow">Đổi mật khẩu</h2>
+              <h2 className="rogym-eyebrow">{t('profile.changePassword')}</h2>
             </div>
             {error && <StaffErrorState message={error} />}
             {success && (
@@ -232,24 +234,24 @@ export default function StaffProfilePage() {
             <form className="flex flex-col flex-1" onSubmit={changePassword}>
               <div className="space-y-4">
                 <ProfilePasswordField
-                  label="Mật khẩu hiện tại"
+                  label={t('profile.currentPassword')}
                   value={currentPassword}
                   onChange={setCurrentPassword}
                 />
                 <ProfilePasswordField
-                  label="Mật khẩu mới"
+                  label={t('profile.newPassword')}
                   value={newPassword}
                   onChange={setNewPassword}
                 />
                 <ProfilePasswordField
-                  label="Xác nhận mật khẩu"
+                  label={t('profile.confirmPassword')}
                   value={confirmPassword}
                   onChange={setConfirmPassword}
                 />
               </div>
               <div className="mt-auto pt-4">
                 <SubmitButton loading={saving}>
-                  <KeyRound size={16} /> Cập nhật mật khẩu
+                  <KeyRound size={16} /> {t('profile.updatePassword')}
                 </SubmitButton>
               </div>
             </form>

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { CalendarPlus, ChevronLeft, ChevronRight, MapPin } from 'lucide-react'
 import { SessionDetailModal } from '@/components/trainer/SessionDetailModal'
 import { DatePickerInput } from '@/components/DatePickerInput'
@@ -37,6 +38,8 @@ function startOfWeekVN(value: Date) {
 const LIST_PAGE_SIZE = 12
 
 export default function TrainerSessionsPage() {
+  const { t } = useTranslation('trainer')
+
   // ── Calendar ──────────────────────────────────────────────────────────────
   const [anchor, setAnchor] = useState(() => new Date())
   const [calView, setCalView] = useState<'week' | 'day'>('week')
@@ -93,8 +96,6 @@ export default function TrainerSessionsPage() {
 
   // ── List ──────────────────────────────────────────────────────────────────
   const [openedId, setOpenedId] = useState<string | null>(null)
-
-  // ── List ──────────────────────────────────────────────────────────────────
   const [listPage, setListPage] = useState(1)
   const [listMemberId, setListMemberId] = useState('')
   const [listRoomId, setListRoomId] = useState('')
@@ -140,12 +141,12 @@ export default function TrainerSessionsPage() {
   return (
     <TrainerPage>
       <TrainerPageHeader
-        eyebrow="Lịch dạy"
-        title="Lịch buổi tập"
-        description="Theo dõi lịch theo ngày hoặc theo tuần, giờ hiển thị theo múi giờ Việt Nam."
+        eyebrow={t('sessions.calendar.eyebrow')}
+        title={t('sessions.calendar.title')}
+        description={t('sessions.calendar.description')}
         actions={
           <Link className="rogym-btn rogym-btn--primary" to="/trainer/sessions/create">
-            <CalendarPlus size={16} /> Tạo buổi tập
+            <CalendarPlus size={16} /> {t('sessions.calendar.createSession')}
           </Link>
         }
       />
@@ -157,7 +158,7 @@ export default function TrainerSessionsPage() {
             type="button"
             className="rogym-btn rogym-btn--icon rogym-btn--elevated"
             onClick={() => moveCalendar(-1)}
-            aria-label="Kỳ trước"
+            aria-label={t('sessions.calendar.prevPeriod')}
           >
             <ChevronLeft size={18} />
           </button>
@@ -166,13 +167,13 @@ export default function TrainerSessionsPage() {
             className="rogym-btn rogym-btn--outline-white"
             onClick={() => setAnchor(new Date())}
           >
-            Hôm nay
+            {t('sessions.calendar.today')}
           </button>
           <button
             type="button"
             className="rogym-btn rogym-btn--icon rogym-btn--elevated"
             onClick={() => moveCalendar(1)}
-            aria-label="Kỳ sau"
+            aria-label={t('sessions.calendar.nextPeriod')}
           >
             <ChevronRight size={18} />
           </button>
@@ -193,7 +194,7 @@ export default function TrainerSessionsPage() {
             }
             onClick={() => setCalView('day')}
           >
-            Ngày
+            {t('sessions.calendar.dayView')}
           </button>
           <button
             type="button"
@@ -204,7 +205,7 @@ export default function TrainerSessionsPage() {
             }
             onClick={() => setCalView('week')}
           >
-            Tuần
+            {t('sessions.calendar.weekView')}
           </button>
         </div>
       </div>
@@ -236,7 +237,7 @@ export default function TrainerSessionsPage() {
                   <div className="flex items-center justify-between gap-2">
                     <span>{formatDate(day)}</span>
                     {isToday && (
-                      <span className="rogym-today-badge" aria-label="Hôm nay">
+                      <span className="rogym-today-badge" aria-label={t('sessions.calendar.today')}>
                         Today
                       </span>
                     )}
@@ -260,7 +261,7 @@ export default function TrainerSessionsPage() {
                         {session.memberName}
                       </div>
                       <div className="mt-1 truncate text-xs rogym-text-muted">
-                        {session.roomName ?? 'Chưa xếp phòng'}
+                        {session.roomName ?? t('sessions.calendar.noRoom')}
                       </div>
                       <div className="mt-2">
                         <TrainerStatusBadge status={session.status} />
@@ -269,7 +270,7 @@ export default function TrainerSessionsPage() {
                   ))}
                   {daySessions.length === 0 && (
                     <p className="py-6 text-center text-xs rogym-text-muted">
-                      Không có lịch
+                      {t('sessions.calendar.noSession')}
                     </p>
                   )}
                 </div>
@@ -281,7 +282,7 @@ export default function TrainerSessionsPage() {
 
       {/* List section */}
       <section className="rogym-card rogym-card--compact p-5 space-y-4">
-        <h2 className="text-base font-bold text-white">Danh sách buổi tập</h2>
+        <h2 className="text-base font-bold text-white">{t('sessions.calendar.list.title')}</h2>
 
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
           <StudentCombobox
@@ -293,7 +294,7 @@ export default function TrainerSessionsPage() {
             value={listRoomId}
             onValueChange={setListFilter(setListRoomId)}
           >
-            <option value="">Mọi phòng tập</option>
+            <option value="">{t('sessions.calendar.list.allRooms')}</option>
             {rooms.map((room) => (
               <option key={room.roomId} value={room.roomId}>
                 {room.roomCode} - {room.name}
@@ -304,19 +305,19 @@ export default function TrainerSessionsPage() {
             value={listStatus}
             onValueChange={setListFilter(setListStatus)}
           >
-            <option value="">Mọi trạng thái</option>
-            <option value="scheduled">Đã lên lịch</option>
-            <option value="in_progress">Đang diễn ra</option>
-            <option value="completed">Hoàn thành</option>
-            <option value="cancelled">Đã hủy</option>
+            <option value="">{t('sessions.calendar.list.allStatuses')}</option>
+            <option value="scheduled">{t('sessions.calendar.list.scheduled')}</option>
+            <option value="in_progress">{t('sessions.calendar.list.inProgress')}</option>
+            <option value="completed">{t('sessions.calendar.list.completed')}</option>
+            <option value="cancelled">{t('sessions.calendar.list.cancelled')}</option>
           </TrainerSelect>
           <DatePickerInput
-            aria-label="Từ ngày"
+            aria-label={t('sessions.calendar.list.fromDate')}
             value={listFrom}
             onChange={setListFilter(setListFrom)}
           />
           <DatePickerInput
-            aria-label="Đến ngày"
+            aria-label={t('sessions.calendar.list.toDate')}
             value={listTo}
             onChange={setListFilter(setListTo)}
           />
@@ -328,8 +329,8 @@ export default function TrainerSessionsPage() {
           <TrainerErrorState message={listError} onRetry={listReload} />
         ) : listData.length === 0 ? (
           <TrainerEmptyState
-            title="Chưa có buổi tập"
-            description="Thay đổi bộ lọc để xem kết quả."
+            title={t('sessions.calendar.list.noSessions')}
+            description={t('sessions.calendar.list.noSessionsDesc')}
           />
         ) : (
           <>
@@ -337,11 +338,11 @@ export default function TrainerSessionsPage() {
               <table className="w-full border-collapse text-left text-sm">
                 <thead className="bg-white/5 text-xs uppercase tracking-wider rogym-text-dim">
                   <tr>
-                    <th className="px-5 py-4">Thời gian</th>
-                    <th className="px-5 py-4">Học viên</th>
-                    <th className="px-5 py-4">Phòng</th>
-                    <th className="px-5 py-4">Trạng thái</th>
-                    <th className="px-5 py-4 text-right">Thao tác</th>
+                    <th className="px-5 py-4">{t('sessions.calendar.list.colTime')}</th>
+                    <th className="px-5 py-4">{t('sessions.calendar.list.colStudent')}</th>
+                    <th className="px-5 py-4">{t('sessions.calendar.list.colRoom')}</th>
+                    <th className="px-5 py-4">{t('sessions.calendar.list.colStatus')}</th>
+                    <th className="px-5 py-4 text-right">{t('sessions.calendar.list.colAction')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -357,7 +358,7 @@ export default function TrainerSessionsPage() {
                         {session.memberName}
                       </td>
                       <td className="px-5 py-4 rogym-text-secondary">
-                        {session.roomName ?? 'Chưa xếp phòng'}
+                        {session.roomName ?? t('sessions.calendar.noRoom')}
                       </td>
                       <td className="px-5 py-4">
                         <TrainerStatusBadge status={session.status} />
@@ -368,7 +369,7 @@ export default function TrainerSessionsPage() {
                           className="rogym-text-link rogym-text-link--accent"
                           onClick={() => setOpenedId(session.sessionId)}
                         >
-                          Chi tiết
+                          {t('sessions.calendar.list.detail')}
                         </button>
                       </td>
                     </tr>
@@ -395,7 +396,7 @@ export default function TrainerSessionsPage() {
                     <TrainerStatusBadge status={session.status} />
                   </div>
                   <div className="mt-4 flex items-center gap-2 text-sm rogym-text-dim">
-                    <MapPin size={15} /> {session.roomName ?? 'Chưa xếp phòng'}
+                    <MapPin size={15} /> {session.roomName ?? t('sessions.calendar.noRoom')}
                   </div>
                 </button>
               ))}
@@ -411,10 +412,10 @@ export default function TrainerSessionsPage() {
               disabled={listPage <= 1}
               onClick={() => setListPage((p) => p - 1)}
             >
-              Trước
+              {t('sessions.calendar.list.prevPage')}
             </button>
             <span className="text-sm rogym-text-secondary">
-              Trang {listPage}/{listTotalPages}
+              {t('sessions.calendar.list.page', { current: listPage, total: listTotalPages })}
             </span>
             <button
               type="button"
@@ -422,7 +423,7 @@ export default function TrainerSessionsPage() {
               disabled={listPage >= listTotalPages}
               onClick={() => setListPage((p) => p + 1)}
             >
-              Sau
+              {t('sessions.calendar.list.nextPage')}
             </button>
           </div>
         )}

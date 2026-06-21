@@ -1,4 +1,6 @@
 import { memo, useCallback, useEffect, useMemo, useState } from 'react'
+import type { TFunction } from 'i18next'
+import { useTranslation } from 'react-i18next'
 import {
   Calendar,
   CalendarX,
@@ -22,12 +24,6 @@ import {
   MemberSkeleton,
 } from '@/components/MemberUI'
 import { getApiError } from '@/lib/api-error'
-
-const STATUS_LABEL: Record<string, string> = {
-  scheduled: 'Đã lên lịch',
-  in_progress: 'Đang diễn ra',
-  completed: 'Hoàn thành',
-}
 
 // ── Format helpers ─────────────────────────────────────────────────────────────
 
@@ -70,16 +66,16 @@ function todayKey() {
   return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`
 }
 
-function daysUntil(iso: string) {
+function daysUntil(iso: string, t: TFunction<'member'>) {
   const s = new Date(iso)
   const now = new Date()
   now.setHours(0, 0, 0, 0)
   s.setHours(0, 0, 0, 0)
   const diff = Math.ceil((s.getTime() - now.getTime()) / 86400000)
-  if (diff === 0) return 'Hôm nay'
-  if (diff === 1) return 'Ngày mai'
-  if (diff < 0) return 'Đã qua'
-  return `Còn ${diff} ngày`
+  if (diff === 0) return t('workout.schedule.today')
+  if (diff === 1) return t('workout.schedule.tomorrow')
+  if (diff < 0) return t('workout.schedule.passed')
+  return t('workout.schedule.daysLeft', { count: diff })
 }
 
 // ── Session tooltip bubble ─────────────────────────────────────────────────────
@@ -91,6 +87,7 @@ function SessionTooltip({
   session: TrainingSession
   align?: 'left' | 'right'
 }) {
+  const { t } = useTranslation('member')
   return (
     <div
       className={`rogym-session-tooltip pointer-events-none absolute top-full z-30 mt-1 min-w-[200px] rounded-xl p-3 shadow-2xl ${
@@ -105,7 +102,7 @@ function SessionTooltip({
         {session.trainerName && (
           <div className="flex items-center gap-1.5">
             <User size={11} className="rogym-sx-f27dac31" />
-            <span>HLV {session.trainerName}</span>
+            <span>{t('workout.schedule.trainerPrefix')} {session.trainerName}</span>
           </div>
         )}
         {session.roomName && (
@@ -118,7 +115,7 @@ function SessionTooltip({
           className="rogym-session-status mt-1 rounded-md px-2 py-0.5 text-[10px] font-semibold"
           data-status={session.status}
         >
-          {STATUS_LABEL[session.status] ?? session.status}
+          {t(`workout.schedule.statusLabel.${session.status}`, { defaultValue: session.status })}
         </div>
       </div>
     </div>
@@ -164,6 +161,7 @@ function CalendarView({
   sessions: TrainingSession[]
   onSelect: (session: TrainingSession) => void
 }) {
+  const { t } = useTranslation('member')
   const [month, setMonth] = useState(() => {
     const d = new Date()
     d.setDate(1)
@@ -217,8 +215,8 @@ function CalendarView({
       {/* Legend */}
       <div className="mb-4 flex flex-wrap items-center gap-4 text-xs rogym-sx-5e5c39ab">
         {[
-          { status: 'scheduled', label: 'Đã lên lịch' },
-          { status: 'completed', label: 'Hoàn thành' },
+          { status: 'scheduled', label: t('workout.schedule.legendScheduled') },
+          { status: 'completed', label: t('workout.schedule.legendCompleted') },
         ].map(({ status, label }) => (
           <span key={label} className="flex items-center gap-1.5">
             <span
@@ -309,9 +307,10 @@ function CalendarView({
 // ── Session sidebar ────────────────────────────────────────────────────────────
 
 function StatusBadge({ status }: { status: string }) {
+  const { t } = useTranslation('member')
   return (
     <span className="rogym-session-status is-pill" data-status={status}>
-      {STATUS_LABEL[status] ?? status}
+      {t(`workout.schedule.statusLabel.${status}`, { defaultValue: status })}
     </span>
   )
 }
@@ -323,6 +322,7 @@ function UpcomingRow({
   session: TrainingSession
   onSelect: (session: TrainingSession) => void
 }) {
+  const { t } = useTranslation('member')
   return (
     <button
       type="button"
@@ -339,7 +339,7 @@ function UpcomingRow({
             <p className="text-sm font-semibold text-white">{fmtDateShort(session.startTime)}</p>
             {session.trainerName && (
               <p className="mt-0.5 text-xs rogym-sx-5e5c39ab">
-                HLV: {session.trainerName}
+                {t('workout.schedule.trainerPrefix')}: {session.trainerName}
                 {session.roomName ? ` · ${session.roomName}` : ''}
               </p>
             )}
@@ -359,6 +359,7 @@ function PastRow({
   session: TrainingSession
   onSelect: (session: TrainingSession) => void
 }) {
+  const { t } = useTranslation('member')
   return (
     <button
       type="button"
@@ -370,7 +371,7 @@ function PastRow({
         <p className="text-sm font-semibold text-white">{fmtDateShort(session.startTime)}</p>
         {session.trainerName && (
           <p className="mt-0.5 text-xs rogym-sx-5e5c39ab">
-            HLV: {session.trainerName}
+            {t('workout.schedule.trainerPrefix')}: {session.trainerName}
             {session.roomName ? ` · ${session.roomName}` : ''}
           </p>
         )}
@@ -389,8 +390,16 @@ function SessionSidebar({
   past: TrainingSession[]
   onSelect: (session: TrainingSession) => void
 }) {
+  const { t } = useTranslation('member')
   const nextSession = upcoming[0]
-  const countdown = nextSession ? daysUntil(nextSession.startTime) : null
+  const countdown = nextSession ? daysUntil(nextSession.startTime, t) : null
+  const isToday = nextSession ? (() => {
+    const s = new Date(nextSession.startTime)
+    const now = new Date()
+    now.setHours(0, 0, 0, 0)
+    s.setHours(0, 0, 0, 0)
+    return s.getTime() === now.getTime()
+  })() : false
   const upcomingRest = upcoming.slice(1)
 
   return (
@@ -404,7 +413,7 @@ function SessionSidebar({
           data-no-sweep
         >
           <p className="mb-3 text-[11px] font-bold uppercase tracking-widest rogym-sx-b2fbf853">
-            Buổi tập kế tiếp
+            {t('workout.schedule.nextSession')}
           </p>
           <div className="flex items-start gap-4">
             <div className="flex shrink-0 items-center justify-center rounded-[14px] rogym-sx-c3b5e656">
@@ -416,7 +425,7 @@ function SessionSidebar({
                 {nextSession.trainerName && (
                   <span className="flex items-center gap-1">
                     <User size={11} className="rogym-sx-f27dac31" />
-                    HLV {nextSession.trainerName}
+                    {t('workout.schedule.trainerPrefix')} {nextSession.trainerName}
                   </span>
                 )}
                 {nextSession.roomName && (
@@ -428,7 +437,7 @@ function SessionSidebar({
               </div>
               <p
                 className={`mt-2 text-lg font-bold ${
-                  countdown === 'Hôm nay' ? 'rogym-text-green' : 'rogym-text-accent'
+                  isToday ? 'rogym-text-green' : 'rogym-text-accent'
                 }`}
               >
                 {countdown}
@@ -439,15 +448,15 @@ function SessionSidebar({
       ) : (
         <div className="flex flex-col items-center justify-center gap-3 rounded-[20px] p-6 text-center rogym-sx-180e132e">
           <CalendarX size={32} className="rogym-sx-ed519d00" />
-          <p className="text-sm font-medium text-white">Chưa có lịch tập sắp tới</p>
-          <p className="text-xs rogym-sx-5e5c39ab">Liên hệ huấn luyện viên để đặt lịch.</p>
+          <p className="text-sm font-medium text-white">{t('workout.schedule.noUpcoming')}</p>
+          <p className="text-xs rogym-sx-5e5c39ab">{t('workout.schedule.noUpcomingHint')}</p>
         </div>
       )}
 
       {/* Upcoming rest */}
       {upcomingRest.length > 0 && (
         <section className="rounded-[20px] p-5 rogym-sx-25952519">
-          <h2 className="mb-3 text-sm font-bold text-white">Lịch sắp tới</h2>
+          <h2 className="mb-3 text-sm font-bold text-white">{t('workout.schedule.sectionUpcoming')}</h2>
           <div className="space-y-2">
             {upcomingRest.map((s) => (
               <UpcomingRow key={s.sessionId} session={s} onSelect={onSelect} />
@@ -458,11 +467,11 @@ function SessionSidebar({
 
       {/* Past */}
       <section className="rounded-[20px] p-5 rogym-sx-25952519">
-        <h2 className="mb-3 text-sm font-bold text-white">Đã hoàn thành</h2>
+        <h2 className="mb-3 text-sm font-bold text-white">{t('workout.schedule.sectionCompleted')}</h2>
         {past.length === 0 ? (
           <div className="flex flex-col items-center gap-2 py-6">
             <CalendarX size={28} className="rogym-sx-ed519d00" />
-            <p className="text-sm rogym-sx-5e5c39ab">Chưa có buổi tập nào</p>
+            <p className="text-sm rogym-sx-5e5c39ab">{t('workout.schedule.noCompleted')}</p>
           </div>
         ) : (
           <div className="space-y-2">
@@ -487,6 +496,7 @@ function SessionDetailModal({
   error: string | null
   onClose: () => void
 }) {
+  const { t } = useTranslation('member')
   const exercises = session?.planDay?.exercises ?? []
 
   return (
@@ -495,17 +505,17 @@ function SessionDetailModal({
         <div className="flex items-start justify-between gap-4 p-6 pb-4">
           <div>
             <p className="text-xs font-bold uppercase tracking-widest rogym-sx-b2fbf853">
-              Chi tiết buổi tập
+              {t('workout.schedule.modalTitle')}
             </p>
             <h2 className="mt-1 text-xl font-bold text-white">
-              {session?.planDay?.name ?? 'Buổi tập'}
+              {session?.planDay?.name ?? t('workout.session.defaultDayName')}
             </h2>
           </div>
           <button
             type="button"
             className="rogym-btn rogym-btn--icon rogym-btn--elevated"
             onClick={onClose}
-            aria-label="Đóng"
+            aria-label={t('workout.schedule.buttonClose')}
           >
             <X size={16} />
           </button>
@@ -520,21 +530,21 @@ function SessionDetailModal({
             <>
               <div className="grid gap-3 text-sm md:grid-cols-2">
                 <div className="rounded-xl p-4 rogym-sx-a15e2a7c">
-                  <p className="text-xs font-semibold uppercase rogym-sx-ed519d00">Thời gian</p>
+                  <p className="text-xs font-semibold uppercase rogym-sx-ed519d00">{t('workout.schedule.fieldTime')}</p>
                   <p className="mt-1 font-semibold text-white">{fmtDatetime(session.startTime)}</p>
                 </div>
                 <div className="rounded-xl p-4 rogym-sx-a15e2a7c">
-                  <p className="text-xs font-semibold uppercase rogym-sx-ed519d00">Trạng thái</p>
+                  <p className="text-xs font-semibold uppercase rogym-sx-ed519d00">{t('workout.schedule.fieldStatus')}</p>
                   <div className="mt-2">
                     <StatusBadge status={session.status} />
                   </div>
                 </div>
                 <div className="rounded-xl p-4 rogym-sx-a15e2a7c">
-                  <p className="text-xs font-semibold uppercase rogym-sx-ed519d00">Huấn luyện viên</p>
+                  <p className="text-xs font-semibold uppercase rogym-sx-ed519d00">{t('workout.schedule.fieldTrainer')}</p>
                   <p className="mt-1 font-semibold text-white">{session.trainerName ?? '—'}</p>
                 </div>
                 <div className="rounded-xl p-4 rogym-sx-a15e2a7c">
-                  <p className="text-xs font-semibold uppercase rogym-sx-ed519d00">Phòng tập</p>
+                  <p className="text-xs font-semibold uppercase rogym-sx-ed519d00">{t('workout.schedule.fieldRoom')}</p>
                   <p className="mt-1 font-semibold text-white">{session.roomName ?? '—'}</p>
                 </div>
               </div>
@@ -548,8 +558,8 @@ function SessionDetailModal({
                     <div>
                       <p className="font-semibold text-white">{session.workoutPlan.name}</p>
                       <p className="mt-1 text-xs rogym-sx-5e5c39ab">
-                        Ngày {session.planDay.dayNumber} · Tuần {session.planDay.weekNumber} ·{' '}
-                        {exercises.length} bài tập
+                        {t('workout.schedule.dayWeek', { day: session.planDay.dayNumber, week: session.planDay.weekNumber })} ·{' '}
+                        {exercises.length} {t('workout.myPlan.unitExercises')}
                       </p>
                       {session.planDay.notes && (
                         <p className="mt-2 text-xs rogym-sx-d88f932f">{session.planDay.notes}</p>
@@ -559,7 +569,7 @@ function SessionDetailModal({
                 </section>
               ) : (
                 <p className="rounded-xl p-4 text-sm rogym-sx-a15e2a7c">
-                  Buổi tập này chưa liên kết workout plan.
+                  {t('workout.schedule.noWorkoutPlan')}
                 </p>
               )}
 
@@ -580,12 +590,12 @@ function SessionDetailModal({
                           </span>
                           <div className="min-w-0 flex-1">
                             <p className="truncate text-sm font-semibold text-white">
-                              {item.exercise?.name ?? 'Bài tập'}
+                              {item.exercise?.name ?? t('workout.session.defaultExerciseName')}
                             </p>
                             <p className="mt-0.5 text-xs rogym-sx-5e5c39ab">
                               {item.targetSets} sets ·{' '}
                               {isCardio
-                                ? `${item.targetDurationSec ?? 0} giây`
+                                ? `${item.targetDurationSec ?? 0} ${t('workout.schedule.unitSeconds')}`
                                 : `${item.targetReps ?? 0} reps`}
                               {item.targetWeightKg ? ` · ${Number(item.targetWeightKg)} kg` : ''}
                             </p>
@@ -598,7 +608,7 @@ function SessionDetailModal({
 
               <div className="border-t border-white/10 pt-4">
                 <p className="text-xs rogym-sx-5e5c39ab">
-                  Huấn luyện viên sẽ là người bắt đầu và kết thúc buổi tập này.
+                  {t('workout.schedule.trainerManages')}
                 </p>
               </div>
             </>
@@ -612,6 +622,7 @@ function SessionDetailModal({
 // ── Main page ──────────────────────────────────────────────────────────────────
 
 export default function WorkoutSchedulePage() {
+  const { t } = useTranslation('member')
   const [upcoming, setUpcoming] = useState<TrainingSession[]>([])
   const [past, setPast] = useState<TrainingSession[]>([])
   const [all, setAll] = useState<TrainingSession[]>([])
@@ -638,7 +649,7 @@ export default function WorkoutSchedulePage() {
         setPast(doneRes.data)
         setAll([...activeSessions, ...doneRes.data])
       })
-      .catch((err) => setError(getApiError(err, 'Không thể tải lịch tập.')))
+      .catch((err) => setError(getApiError(err, t('workout.schedule.errorLoad'))))
       .finally(() => setLoading(false))
   }, [])
 
@@ -663,7 +674,7 @@ export default function WorkoutSchedulePage() {
         if (active) setSessionDetail(session)
       })
       .catch((err) => {
-        if (active) setDetailError(getApiError(err, 'Không thể tải chi tiết buổi tập.'))
+        if (active) setDetailError(getApiError(err, t('workout.schedule.errorLoad')))
       })
       .finally(() => {
         if (active) setDetailLoading(false)
@@ -681,7 +692,7 @@ export default function WorkoutSchedulePage() {
   if (loading)
     return (
       <MemberPage>
-        <MemberPageHeader eyebrow="Tập luyện" title="Lịch của tôi" />
+        <MemberPageHeader eyebrow={t('workout.schedule.eyebrow')} title={t('workout.schedule.pageTitle')} />
         <MemberSkeleton rows={5} />
       </MemberPage>
     )
@@ -689,7 +700,7 @@ export default function WorkoutSchedulePage() {
   if (error)
     return (
       <MemberPage>
-        <MemberPageHeader eyebrow="Tập luyện" title="Lịch của tôi" />
+        <MemberPageHeader eyebrow={t('workout.schedule.eyebrow')} title={t('workout.schedule.pageTitle')} />
         <MemberErrorState message={error} onRetry={loadSessions} />
       </MemberPage>
     )
@@ -697,9 +708,9 @@ export default function WorkoutSchedulePage() {
   return (
     <MemberPage>
       <MemberPageHeader
-        eyebrow="Tập luyện"
-        title="Lịch của tôi"
-        description="Các buổi tập cá nhân với huấn luyện viên."
+        eyebrow={t('workout.schedule.eyebrow')}
+        title={t('workout.schedule.pageTitle')}
+        description={t('workout.schedule.description')}
       />
       <div className="grid gap-5 lg:grid-cols-[65fr_35fr]">
         <CalendarView sessions={all} onSelect={handleSelectSession} />

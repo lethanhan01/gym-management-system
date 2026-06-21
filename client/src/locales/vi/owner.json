@@ -1,0 +1,38 @@
+{
+  "dashboard": {
+    "title": "Owner workspace",
+    "greeting": "Xin chào, {{name}}",
+    "subtitle": "Đây là tổng quan toàn bộ hệ thống phòng gym.",
+    "staffManagement": "Quản lý nhân sự",
+    "permissions": "Phân quyền & nhóm",
+    "packages": "Cấu hình gói tập",
+    "reports": "Báo cáo thống kê",
+    "viewReports": "Xem báo cáo",
+    "equipmentAlert": "Cảnh báo thiết bị",
+    "totalMembers": "Tổng hội viên",
+    "systemWide": "Toàn bộ hệ thống",
+    "activePackages": "Gói tập đang bán",
+    "activeStatus": "Trạng thái active",
+    "membersAndPackages": "Hội viên & Gói tập",
+    "pendingFeedback": "Phản hồi cần xử lý",
+    "noNewFeedback": "Không có phản hồi mới"
+  },
+  "packages": { "title": "Quản lý gói tập" },
+  "equipment": { "title": "Thiết bị" },
+  "reports": {
+    "revenue": { "title": "Báo cáo doanh thu" },
+    "performance": { "title": "Hiệu suất nhân viên" },
+    "invoices": { "title": "Hóa đơn giao dịch" }
+  },
+  "staffManagement": {
+    "users": { "title": "Quản lý người dùng" },
+    "detail": { "title": "Chi tiết người dùng" },
+    "schedule": { "title": "Lịch làm việc" }
+  },
+  "rbac": {
+    "groups": { "title": "Nhóm quyền" },
+    "permissions": { "title": "Quyền hạn" }
+  },
+  "usersOverview": { "title": "Tổng quan người dùng" },
+  "profile": { "title": "Hồ sơ" }
+}

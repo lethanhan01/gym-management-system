@@ -1,5 +1,7 @@
 import { memo, useEffect, useMemo, useState } from 'react'
+import type { TFunction } from 'i18next'
 import { Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { CheckCircle2, Clock, LogIn, LogOut, MessageSquare, Timer, Users } from 'lucide-react'
 import { getApiError } from '@/lib/api-error'
 import {
@@ -46,6 +48,7 @@ const StaffAttendanceWidget = memo(function StaffAttendanceWidget({
   onCheckIn: () => void
   onCheckOut: () => void
 }) {
+  const { t } = useTranslation('staff')
   const [elapsed, setElapsed] = useState('')
 
   useEffect(() => {
@@ -79,9 +82,9 @@ const StaffAttendanceWidget = memo(function StaffAttendanceWidget({
   return (
     <section className="rogym-card rogym-card--compact p-5 flex flex-col gap-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-base font-bold text-white">Chấm công hôm nay</h2>
+        <h2 className="text-base font-bold text-white">{t('dashboard.attendanceToday')}</h2>
         <Link to="/staff/attendance" className="rogym-text-link rogym-text-link--accent text-xs">
-          Xem chi tiết →
+          {t('dashboard.viewDetail')}
         </Link>
       </div>
 
@@ -89,11 +92,11 @@ const StaffAttendanceWidget = memo(function StaffAttendanceWidget({
         <div className="rounded-xl bg-white/5 p-4 space-y-2">
           <div className="flex items-center gap-2 rogym-text-accent">
             <div className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-            <span className="text-sm font-semibold">Đang làm việc</span>
+            <span className="text-sm font-semibold">{t('dashboard.working')}</span>
           </div>
           <div className="flex items-center gap-2 rogym-text-dim text-xs">
             <LogIn size={12} />
-            <span>Vào lúc {fmtTime(openLog.checkIn)}</span>
+            <span>{t('dashboard.checkedInAt', { time: fmtTime(openLog.checkIn) })}</span>
           </div>
           {elapsed && (
             <div className="flex items-center gap-2 text-sm text-white">
@@ -106,7 +109,7 @@ const StaffAttendanceWidget = memo(function StaffAttendanceWidget({
         <div className="rounded-xl bg-white/5 p-4">
           <div className="flex items-center gap-2 rogym-text-dim text-sm">
             <div className="h-2 w-2 rounded-full bg-white/20" />
-            <span>Chưa chấm công hôm nay</span>
+            <span>{t('dashboard.notCheckedIn')}</span>
           </div>
         </div>
       )}
@@ -115,8 +118,10 @@ const StaffAttendanceWidget = memo(function StaffAttendanceWidget({
         <div className="flex items-center gap-2 text-xs rogym-text-dim">
           <Clock size={12} />
           <span>
-            Đã làm {Math.floor(totalMinutes / 60) > 0 ? `${Math.floor(totalMinutes / 60)}g ` : ''}
-            {totalMinutes % 60 > 0 ? `${totalMinutes % 60}p` : ''}
+            {t('dashboard.workedTime', {
+              hours: Math.floor(totalMinutes / 60),
+              minutes: totalMinutes % 60,
+            })}
           </span>
         </div>
       )}
@@ -137,7 +142,7 @@ const StaffAttendanceWidget = memo(function StaffAttendanceWidget({
           ) : (
             <LogIn size={14} />
           )}
-          Chấm vào
+          {t('dashboard.clockIn')}
         </button>
         <button
           type="button"
@@ -150,7 +155,7 @@ const StaffAttendanceWidget = memo(function StaffAttendanceWidget({
           ) : (
             <LogOut size={14} />
           )}
-          Chấm ra
+          {t('dashboard.clockOut')}
         </button>
       </div>
     </section>
@@ -173,6 +178,7 @@ const MemberCheckInRow = memo(function MemberCheckInRow({ log }: { log: Attendan
 })
 
 const PendingFeedbackRow = memo(function PendingFeedbackRow({ feedback }: { feedback: Feedback }) {
+  const { t } = useTranslation('staff')
   return (
     <div className="rounded-xl border border-white/5 p-3">
       <div className="flex items-start justify-between gap-3">
@@ -189,7 +195,7 @@ const PendingFeedbackRow = memo(function PendingFeedbackRow({ feedback }: { feed
         />
       </div>
       <div className="mt-1 text-xs rogym-text-dim">
-        {formatDate(feedback.createdAt)} · {feedbackTypeLabel(feedback.feedbackType)}
+        {formatDate(feedback.createdAt)} · {feedbackTypeLabel(feedback.feedbackType, t)}
       </div>
     </div>
   )
@@ -198,6 +204,7 @@ const PendingFeedbackRow = memo(function PendingFeedbackRow({ feedback }: { feed
 // ── Main page ──────────────────────────────────────────────────────────────────
 
 export default function StaffDashboardPage() {
+  const { t } = useTranslation('staff')
   const [profile, setProfile] = useState<StaffProfile | null>(null)
   const [attendance, setAttendance] = useState<AttendanceLog[]>([])
   const [feedbacks, setFeedbacks] = useState<Feedback[]>([])
@@ -242,9 +249,9 @@ export default function StaffDashboardPage() {
   return (
     <StaffPage>
       <StaffPageHeader
-        eyebrow="Staff workspace"
-        title="Tổng quan hôm nay"
-        description={`Xin chào${profile ? `, ${profile.fullName}` : ''}. Đây là tình trạng hoạt động hôm nay.`}
+        eyebrow={t('dashboard.eyebrow')}
+        title={t('dashboard.todayOverview')}
+        description={t('dashboard.greeting', { name: profile ? `, ${profile.fullName}` : '' })}
       />
 
       {loading ? (
@@ -257,22 +264,22 @@ export default function StaffDashboardPage() {
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-[1fr_1fr_1fr_1.5fr]">
             <StaffStatCard
               icon={<Users size={20} />}
-              label="Tổng hội viên"
+              label={t('dashboard.totalMembers')}
               value={memberTotal}
               to="/staff/members"
             />
             <StaffStatCard
               icon={<CheckCircle2 size={20} />}
-              label="Check-in hôm nay"
+              label={t('dashboard.checkInToday')}
               value={attendance.length}
-              hint="Lượt vào trong ngày"
+              hint={t('dashboard.checkInCount')}
               to="/staff/check-in"
             />
             <StaffStatCard
               icon={<MessageSquare size={20} />}
-              label="Phản hồi chờ xử lý"
+              label={t('dashboard.pendingFeedback')}
               value={pendingFeedback.length}
-              hint={pendingFeedback.length > 0 ? 'Cần xử lý sớm' : 'Tất cả đã xử lý'}
+              hint={pendingFeedback.length > 0 ? t('dashboard.urgentHandle') : t('dashboard.allHandled')}
               to="/staff/feedback"
             />
             <StaffAttendanceWidget
@@ -289,16 +296,16 @@ export default function StaffDashboardPage() {
           <div className="grid gap-5 xl:grid-cols-[1.4fr_1fr]">
             <section className="rogym-card rogym-card--compact p-6">
               <div className="mb-5 flex items-center justify-between">
-                <h2 className="text-lg font-bold text-white">Check-in hội viên</h2>
+                <h2 className="text-lg font-bold text-white">{t('dashboard.memberCheckIns')}</h2>
                 <Link
                   className="rogym-text-link rogym-text-link--accent text-sm"
                   to="/staff/check-in"
                 >
-                  Xem tất cả
+                  {t('dashboard.viewAll')}
                 </Link>
               </div>
               {attendance.length === 0 ? (
-                <StaffEmptyState title="Chưa có check-in hôm nay" />
+                <StaffEmptyState title={t('dashboard.noCheckIns')} />
               ) : (
                 <div className="space-y-2">
                   {visibleAttendance.map((log) => (
@@ -310,16 +317,16 @@ export default function StaffDashboardPage() {
 
             <section className="rogym-card rogym-card--compact p-6">
               <div className="mb-5 flex items-center justify-between">
-                <h2 className="text-lg font-bold text-white">Phản hồi cần xử lý</h2>
+                <h2 className="text-lg font-bold text-white">{t('dashboard.pendingFeedbackSection')}</h2>
                 <Link
                   className="rogym-text-link rogym-text-link--accent text-sm"
                   to="/staff/feedback"
                 >
-                  Xem tất cả
+                  {t('dashboard.viewAll')}
                 </Link>
               </div>
               {pendingFeedback.length === 0 ? (
-                <StaffEmptyState title="Không có phản hồi mới" />
+                <StaffEmptyState title={t('dashboard.noFeedback')} />
               ) : (
                 <div className="space-y-2">
                   {visiblePendingFeedback.map((fb) => (
@@ -335,8 +342,8 @@ export default function StaffDashboardPage() {
   )
 }
 
-function feedbackTypeLabel(type: string) {
-  if (type === 'staff') return 'Nhân viên'
-  if (type === 'equipment') return 'Thiết bị'
-  return 'Dịch vụ'
+function feedbackTypeLabel(type: string, t: TFunction<'staff'>) {
+  if (type === 'staff') return t('feedback.staff')
+  if (type === 'equipment') return t('feedback.equipment')
+  return t('feedback.service')
 }

@@ -1,4 +1,5 @@
 import { memo, useCallback, useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { CalendarX, ChevronLeft, ChevronRight, Clock } from 'lucide-react'
 import { trainingService, type AttendanceLog } from '@/services/training.service'
 import {
@@ -46,12 +47,6 @@ function dateKey(iso: string) {
 function todayKey() {
   const d = new Date()
   return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`
-}
-
-const METHOD_LABEL: Record<string, { label: string; tone: string }> = {
-  realtime: { label: 'Thiết bị', tone: 'info' },
-  manual: { label: 'Nhân viên', tone: 'warning' },
-  qr: { label: 'QR', tone: 'muted' },
 }
 
 // ── Attendance tooltip ─────────────────────────────────────────────────────────
@@ -245,6 +240,12 @@ function AttendanceListSidebar({
   loading: boolean
   error: string | null
 }) {
+  const { t } = useTranslation('member')
+  const METHOD_LABEL: Record<string, { label: string; tone: string }> = {
+    realtime: { label: t('attendance.methodLabel.realtime'), tone: 'info' },
+    manual: { label: t('attendance.methodLabel.manual'), tone: 'warning' },
+    qr: { label: t('attendance.methodLabel.qr'), tone: 'muted' },
+  }
   return (
     <div className="space-y-5">
       <section className="rounded-[20px] p-5 rogym-sx-25952519">
@@ -254,22 +255,22 @@ function AttendanceListSidebar({
             <DatePickerInput
               value={from}
               onChange={onFromChange}
-              placeholder="Từ ngày"
-              aria-label="Từ ngày"
+              placeholder={t('attendance.fromDate')}
+              aria-label={t('attendance.fromDate')}
             />
           </div>
-          <p className="shrink-0 text-xs rogym-sx-5e5c39ab px-1">tới</p>
+          <p className="shrink-0 text-xs rogym-sx-5e5c39ab px-1">{t('attendance.dateSeparator')}</p>
           <div className="flex-1 min-w-0">
             <DatePickerInput
               value={to}
               onChange={onToChange}
-              placeholder="Đến ngày"
-              aria-label="Đến ngày"
+              placeholder={t('attendance.toDate')}
+              aria-label={t('attendance.toDate')}
             />
           </div>
         </div>
 
-        <h2 className="mb-3 text-sm font-bold text-white">Lịch sử điểm danh</h2>
+        <h2 className="mb-3 text-sm font-bold text-white">{t('attendance.sidebarTitle')}</h2>
 
         {loading ? (
           <div className="space-y-2">
@@ -284,7 +285,7 @@ function AttendanceListSidebar({
         ) : logs.length === 0 ? (
           <div className="flex flex-col items-center gap-2 py-6">
             <CalendarX size={28} className="rogym-sx-ed519d00" />
-            <p className="text-sm rogym-sx-5e5c39ab">Không có lần điểm danh nào</p>
+            <p className="text-sm rogym-sx-5e5c39ab">{t('attendance.noData')}</p>
           </div>
         ) : (
           <div className="space-y-2">
@@ -323,6 +324,7 @@ function AttendanceListSidebar({
 // ── Main page ──────────────────────────────────────────────────────────────────
 
 export default function AttendancePage() {
+  const { t } = useTranslation('member')
   const memberId = useAuthStore((s) => s.user?.memberId) ?? ''
 
   const [calMonth, setCalMonth] = useState(() => {
@@ -357,7 +359,7 @@ export default function AttendancePage() {
     trainingService
       .getAttendance({ memberId, from: fromISO, to: toISO, pageSize: 100 })
       .then((res) => setCalLogs(res.data))
-      .catch((err) => setCalError(getApiError(err, 'Không thể tải lịch điểm danh.')))
+      .catch((err) => setCalError(getApiError(err, t('attendance.errorCalendar'))))
       .finally(() => setCalLoading(false))
   }, [memberId, calMonth])
 
@@ -380,7 +382,7 @@ export default function AttendancePage() {
         )
         setListLogs(sorted)
       })
-      .catch((err) => setListError(getApiError(err, 'Không thể tải lịch sử điểm danh.')))
+      .catch((err) => setListError(getApiError(err, t('attendance.errorList'))))
       .finally(() => setListLoading(false))
   }, [memberId, from, to])
 
@@ -398,9 +400,9 @@ export default function AttendancePage() {
   return (
     <MemberPage>
       <MemberPageHeader
-        eyebrow="Điểm danh"
-        title="Lịch sử điểm danh"
-        description="Theo dõi các lần check-in của bạn tại phòng tập."
+        eyebrow={t('attendance.eyebrow')}
+        title={t('attendance.title')}
+        description={t('attendance.description')}
       />
       <div className="grid gap-5 lg:grid-cols-[65fr_35fr]">
         {calLoading ? (

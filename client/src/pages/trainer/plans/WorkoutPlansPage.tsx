@@ -1,5 +1,6 @@
 import { FormEvent, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import {
   Archive,
   ChevronDown,
@@ -38,6 +39,7 @@ import {
 type PlanAction = { type: 'archive' | 'delete'; plan: WorkoutPlan } | null
 
 export default function WorkoutPlansPage() {
+  const { t } = useTranslation('trainer')
   const navigate = useNavigate()
   const { data, loading, error, reload } = useTrainerPlans()
   const { data: students } = useTrainerStudents({ pageSize: 100 })
@@ -80,7 +82,7 @@ export default function WorkoutPlansPage() {
       setCreateOpen(false)
       navigate(`/trainer/plans/${plan.planId}/builder`)
     } catch (err) {
-      setActionError(getApiError(err, 'Không thể tạo kế hoạch tập.'))
+      setActionError(getApiError(err, t('plans.workout.error.createFailed')))
     } finally {
       setSubmitting(false)
     }
@@ -90,7 +92,7 @@ export default function WorkoutPlansPage() {
     const exerciseCount =
       plan.days?.reduce((sum, day) => sum + (day.exercises?.length ?? 0), 0) ?? 0
     if (!plan.days?.length || exerciseCount === 0) {
-      setActionError('Kế hoạch cần ít nhất một ngày và một bài tập trước khi kích hoạt.')
+      setActionError(t('plans.workout.error.activateEmpty'))
       return
     }
     setActionError(null)
@@ -98,7 +100,7 @@ export default function WorkoutPlansPage() {
       await workoutService.updatePlan(plan.planId, { status: 'active' })
       await reload()
     } catch (err) {
-      setActionError(getApiError(err, 'Không thể kích hoạt kế hoạch.'))
+      setActionError(getApiError(err, t('plans.workout.error.activateFailed')))
     }
   }
 
@@ -119,8 +121,8 @@ export default function WorkoutPlansPage() {
         getApiError(
           err,
           action.type === 'archive'
-            ? 'Không thể lưu trữ kế hoạch khi còn assignment active.'
-            : 'Không thể xóa kế hoạch khi còn dữ liệu đang sử dụng.'
+            ? t('plans.workout.error.archiveFailed')
+            : t('plans.workout.error.deleteFailed')
         )
       )
     } finally {
@@ -142,7 +144,7 @@ export default function WorkoutPlansPage() {
       navigate(`/trainer/students/${memberId}?tab=workout`)
     } catch (err) {
       setActionError(
-        getApiError(err, 'Không thể gán kế hoạch. Hãy kiểm tra trạng thái và cấu trúc kế hoạch.')
+        getApiError(err, t('plans.workout.error.assignFailed'))
       )
     } finally {
       setSubmitting(false)
@@ -164,7 +166,7 @@ export default function WorkoutPlansPage() {
       setPlanAssignments((prev) => ({ ...prev, [planId]: fetched }))
       setExpandedPlan(planId)
     } catch (err) {
-      setActionError(getApiError(err, 'Không thể tải danh sách học viên.'))
+      setActionError(getApiError(err, t('plans.workout.error.loadStudentsFailed')))
     } finally {
       setLoadingExpand(null)
     }
@@ -185,7 +187,7 @@ export default function WorkoutPlansPage() {
       }))
       setUnassignTarget(null)
     } catch (err) {
-      setActionError(getApiError(err, 'Không thể gỡ gán.'))
+      setActionError(getApiError(err, t('plans.workout.error.unassignFailed')))
     } finally {
       setConfirmingUnassign(false)
     }
@@ -194,16 +196,16 @@ export default function WorkoutPlansPage() {
   return (
     <TrainerPage>
       <TrainerPageHeader
-        eyebrow="Workout"
-        title="Kế hoạch tập"
-        description="Tạo template giáo án, kích hoạt và gán cho học viên của bạn."
+        eyebrow={t('plans.workout.eyebrow')}
+        title={t('plans.workout.title')}
+        description={t('plans.workout.description')}
         actions={
           <button
             type="button"
             className="rogym-btn rogym-btn--primary"
             onClick={() => setCreateOpen(true)}
           >
-            <Plus size={16} /> Tạo kế hoạch
+            <Plus size={16} /> {t('plans.workout.createPlan')}
           </button>
         }
       />
@@ -217,13 +219,13 @@ export default function WorkoutPlansPage() {
             className="rogym-input pl-10"
             value={search}
             onChange={(event) => setSearch(event.target.value)}
-            placeholder="Tìm theo tên kế hoạch"
+            placeholder={t('plans.workout.searchPlaceholder')}
           />
         </div>
         <TrainerSelect value={status} onValueChange={setStatus}>
-          <option value="">Mọi trạng thái</option>
-          <option value="active">Đang hoạt động</option>
-          <option value="archived">Lưu trữ</option>
+          <option value="">{t('plans.workout.allStatuses')}</option>
+          <option value="active">{t('plans.workout.statusActive')}</option>
+          <option value="archived">{t('plans.workout.statusArchived')}</option>
         </TrainerSelect>
       </div>
       {(error || actionError) && (
@@ -233,15 +235,15 @@ export default function WorkoutPlansPage() {
         <TrainerSkeleton rows={5} />
       ) : plans.length === 0 ? (
         <TrainerEmptyState
-          title="Chưa có kế hoạch tập"
-          description="Tạo template đầu tiên để bắt đầu xây dựng giáo án."
+          title={t('plans.workout.noPlan')}
+          description={t('plans.workout.noPlanDesc')}
           action={
             <button
               type="button"
               className="rogym-btn rogym-btn--primary"
               onClick={() => setCreateOpen(true)}
             >
-              Tạo kế hoạch
+              {t('plans.workout.createPlan')}
             </button>
           }
         />
@@ -259,17 +261,17 @@ export default function WorkoutPlansPage() {
                   <div>
                     <h2 className="text-lg font-bold text-white">{plan.name}</h2>
                     <p className="mt-2 text-sm leading-6 rogym-text-secondary">
-                      {plan.description ?? 'Chưa có mô tả.'}
+                      {plan.description ?? t('plans.workout.noDescription')}
                     </p>
                   </div>
                   <TrainerStatusBadge status={plan.status} />
                 </div>
 
                 <div className="mt-5 grid grid-cols-4 gap-3 rounded-xl border border-white/5 bg-white/[0.02] p-4 text-center">
-                  <Metric value={plan.days?.length ?? 0} label="Ngày tập" />
-                  <Metric value={exerciseCount} label="Bài tập" />
-                  <Metric value={plan._count?.assignments ?? 0} label="Học viên" />
-                  <Metric value={formatDate(plan.createdAt)} label="Ngày tạo" />
+                  <Metric value={plan.days?.length ?? 0} label={t('plans.workout.metrics.days')} />
+                  <Metric value={exerciseCount} label={t('plans.workout.metrics.exercises')} />
+                  <Metric value={plan._count?.assignments ?? 0} label={t('plans.workout.metrics.students')} />
+                  <Metric value={formatDate(plan.createdAt)} label={t('plans.workout.metrics.createdAt')} />
                 </div>
 
                 <div className="mt-5 flex flex-wrap items-center justify-between gap-2">
@@ -284,7 +286,7 @@ export default function WorkoutPlansPage() {
                           setAssignPlan(plan)
                         }}
                       >
-                        <Send size={15} /> Gán học viên
+                        <Send size={15} /> {t('plans.workout.actions.assignStudent')}
                       </button>
                     )}
                     <button
@@ -292,7 +294,7 @@ export default function WorkoutPlansPage() {
                       className="rogym-btn rogym-btn--outline-white"
                       onClick={() => void toggleExpand(plan.planId)}
                       disabled={isLoadingExpand}
-                      aria-label={isExpanded ? 'Thu gọn danh sách học viên' : 'Xem học viên được gán'}
+                      aria-label={isExpanded ? t('plans.workout.actions.collapseStudents') : t('plans.workout.actions.expandStudents')}
                       data-no-sweep
                     >
                       {isLoadingExpand ? (
@@ -315,7 +317,7 @@ export default function WorkoutPlansPage() {
                       ) : (
                         <Pencil size={15} />
                       )}
-                      {plan.status === 'archived' ? 'Xem' : 'Builder'}
+                      {plan.status === 'archived' ? t('plans.workout.actions.view') : t('plans.workout.actions.builder')}
                     </Link>
                     {plan.status === 'draft' && (
                       <button
@@ -323,7 +325,7 @@ export default function WorkoutPlansPage() {
                         className="rogym-btn rogym-btn--primary"
                         onClick={() => activate(plan)}
                       >
-                        <Zap size={15} /> Kích hoạt
+                        <Zap size={15} /> {t('plans.workout.actions.activate')}
                       </button>
                     )}
                     {plan.status !== 'archived' && (
@@ -332,7 +334,7 @@ export default function WorkoutPlansPage() {
                         className="rogym-btn rogym-btn--outline-white"
                         onClick={() => setAction({ type: 'archive', plan })}
                       >
-                        <Archive size={15} /> Lưu trữ
+                        <Archive size={15} /> {t('plans.workout.actions.archive')}
                       </button>
                     )}
                     <button
@@ -340,7 +342,7 @@ export default function WorkoutPlansPage() {
                       className="rogym-btn rogym-btn--danger"
                       onClick={() => setAction({ type: 'delete', plan })}
                     >
-                      <Trash2 size={15} /> Xóa
+                      <Trash2 size={15} /> {t('plans.workout.actions.delete')}
                     </button>
                   </div>
                 </div>
@@ -349,7 +351,7 @@ export default function WorkoutPlansPage() {
                   <div className="mt-4 border-t border-white/5 pt-4">
                     {assignments.length === 0 ? (
                       <p className="py-3 text-center text-sm rogym-text-dim">
-                        Chưa có học viên nào được gán giáo án này.
+                        {t('plans.workout.assignments.noStudents')}
                       </p>
                     ) : (
                       <div className="space-y-2">
@@ -366,7 +368,7 @@ export default function WorkoutPlansPage() {
                                 <TrainerStatusBadge status={a.status} />
                               </div>
                               <div className="mt-0.5 text-xs rogym-text-muted">
-                                Bắt đầu {formatDate(a.startDate)}
+                                {t('plans.workout.assignments.startedOn', { date: formatDate(a.startDate) })}
                                 {a.notes ? ` · ${a.notes}` : ''}
                               </div>
                             </div>
@@ -375,7 +377,7 @@ export default function WorkoutPlansPage() {
                                 to={`/trainer/students/${a.memberId}`}
                                 className="rogym-text-link text-xs"
                               >
-                                Xem học viên
+                                {t('plans.workout.assignments.viewStudent')}
                               </Link>
                               {a.status === 'active' && (
                                 <button
@@ -384,7 +386,7 @@ export default function WorkoutPlansPage() {
                                   onClick={() => setUnassignTarget(a)}
                                   data-no-sweep
                                 >
-                                  <UserMinus size={12} /> Gỡ gán
+                                  <UserMinus size={12} /> {t('plans.workout.assignments.unassign')}
                                 </button>
                               )}
                             </div>
@@ -403,7 +405,7 @@ export default function WorkoutPlansPage() {
       {/* Create plan modal */}
       <TrainerModal
         open={createOpen}
-        title="Tạo kế hoạch tập"
+        title={t('plans.workout.createModal.title')}
         onClose={() => setCreateOpen(false)}
         footer={
           <>
@@ -412,17 +414,17 @@ export default function WorkoutPlansPage() {
               className="rogym-btn rogym-btn--outline-white"
               onClick={() => setCreateOpen(false)}
             >
-              Hủy
+              {t('plans.workout.createModal.cancel')}
             </button>
             <SubmitButton form="create-plan-form" loading={submitting} disabled={!name.trim()}>
-              Tạo và mở builder
+              {t('plans.workout.createModal.submit')}
             </SubmitButton>
           </>
         }
       >
         <form id="create-plan-form" className="space-y-4" onSubmit={createPlan}>
           <label className="block space-y-2">
-            <span className="rogym-field-label">Tên kế hoạch</span>
+            <span className="rogym-field-label">{t('plans.workout.createModal.fieldName')}</span>
             <input
               className="rogym-input"
               value={name}
@@ -433,7 +435,7 @@ export default function WorkoutPlansPage() {
             />
           </label>
           <label className="block space-y-2">
-            <span className="rogym-field-label">Mô tả</span>
+            <span className="rogym-field-label">{t('plans.workout.createModal.fieldDescription')}</span>
             <textarea
               className="rogym-input min-h-28"
               value={description}
@@ -446,7 +448,7 @@ export default function WorkoutPlansPage() {
       {/* Assign student modal */}
       <TrainerModal
         open={Boolean(assignPlan)}
-        title={`Gán ${assignPlan?.name ?? 'kế hoạch'}`}
+        title={t('plans.workout.assignModal.title', { name: assignPlan?.name ?? '' })}
         onClose={() => setAssignPlan(null)}
         footer={
           <>
@@ -455,25 +457,25 @@ export default function WorkoutPlansPage() {
               className="rogym-btn rogym-btn--outline-white"
               onClick={() => setAssignPlan(null)}
             >
-              Hủy
+              {t('plans.workout.assignModal.cancel')}
             </button>
             <SubmitButton form="assign-plan-list-form" loading={submitting} disabled={!memberId}>
-              Gán kế hoạch
+              {t('plans.workout.assignModal.submit')}
             </SubmitButton>
           </>
         }
       >
         <form id="assign-plan-list-form" className="space-y-4" onSubmit={assign}>
           <label className="block space-y-2">
-            <span className="rogym-field-label">Học viên</span>
+            <span className="rogym-field-label">{t('plans.workout.assignModal.fieldStudent')}</span>
             <StudentCombobox students={students} value={memberId} onChange={setMemberId} />
           </label>
           <label className="block space-y-2">
-            <span className="rogym-field-label">Ngày bắt đầu</span>
+            <span className="rogym-field-label">{t('plans.workout.assignModal.fieldStartDate')}</span>
             <DatePickerInput value={startDate} onChange={(value) => setStartDate(value)} />
           </label>
           <label className="block space-y-2">
-            <span className="rogym-field-label">Ghi chú</span>
+            <span className="rogym-field-label">{t('plans.workout.assignModal.fieldNotes')}</span>
             <textarea
               className="rogym-input min-h-24"
               value={assignNotes}
@@ -481,7 +483,7 @@ export default function WorkoutPlansPage() {
             />
           </label>
           <p className="text-xs leading-5 text-amber-200">
-            Assignment active hiện tại của học viên sẽ tự động chuyển sang trạng thái đã thay thế.
+            {t('plans.workout.assignModal.warning')}
           </p>
         </form>
       </TrainerModal>
@@ -489,7 +491,7 @@ export default function WorkoutPlansPage() {
       {/* Archive / delete confirm modal */}
       <TrainerModal
         open={Boolean(action)}
-        title={action?.type === 'delete' ? 'Xóa kế hoạch' : 'Lưu trữ kế hoạch'}
+        title={action?.type === 'delete' ? t('plans.workout.deleteModal.title') : t('plans.workout.archiveModal.title')}
         onClose={() => setAction(null)}
         footer={
           <>
@@ -498,7 +500,7 @@ export default function WorkoutPlansPage() {
               className="rogym-btn rogym-btn--outline-white"
               onClick={() => setAction(null)}
             >
-              Hủy
+              {t('plans.workout.confirmModal.cancel')}
             </button>
             <button
               type="button"
@@ -510,22 +512,22 @@ export default function WorkoutPlansPage() {
               onClick={confirmAction}
               disabled={submitting}
             >
-              {submitting ? 'Đang xử lý...' : 'Xác nhận'}
+              {submitting ? t('plans.workout.confirmModal.submitting') : t('plans.workout.confirmModal.submit')}
             </button>
           </>
         }
       >
         <p className="text-sm leading-6 rogym-text-secondary">
           {action?.type === 'delete'
-            ? 'Kế hoạch sẽ bị xóa mềm. Thao tác có thể bị từ chối nếu vẫn còn assignment active hoặc dữ liệu lịch sử liên quan.'
-            : 'Kế hoạch lưu trữ sẽ chuyển sang chỉ đọc và không thể kích hoạt lại.'}
+            ? t('plans.workout.deleteModal.confirm')
+            : t('plans.workout.archiveModal.confirm')}
         </p>
       </TrainerModal>
 
       {/* Unassign confirm modal */}
       <TrainerModal
         open={Boolean(unassignTarget)}
-        title="Gỡ gán học viên"
+        title={t('plans.workout.unassignModal.title')}
         onClose={() => setUnassignTarget(null)}
         footer={
           <>
@@ -534,7 +536,7 @@ export default function WorkoutPlansPage() {
               className="rogym-btn rogym-btn--outline-white"
               onClick={() => setUnassignTarget(null)}
             >
-              Hủy
+              {t('plans.workout.unassignModal.cancel')}
             </button>
             <button
               type="button"
@@ -542,15 +544,13 @@ export default function WorkoutPlansPage() {
               onClick={confirmUnassign}
               disabled={confirmingUnassign}
             >
-              {confirmingUnassign ? 'Đang xử lý...' : 'Gỡ gán'}
+              {confirmingUnassign ? t('plans.workout.unassignModal.submitting') : t('plans.workout.assignments.unassign')}
             </button>
           </>
         }
       >
         <p className="text-sm leading-6 rogym-text-secondary">
-          Gỡ gán sẽ kết thúc assignment active của{' '}
-          <span className="font-semibold text-white">{unassignTarget?.memberName}</span>. Dữ liệu
-          lịch sử tập luyện vẫn được giữ nguyên.
+          {t('plans.workout.unassignModal.confirm', { name: unassignTarget?.memberName ?? '' })}
         </p>
       </TrainerModal>
     </TrainerPage>

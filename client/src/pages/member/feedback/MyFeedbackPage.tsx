@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { ChevronLeft, ChevronRight, Trash2 } from 'lucide-react'
 import { MemberPage, MemberPageHeader, MemberSkeleton, MemberEmptyState, MemberErrorState } from '@/components/MemberUI'
@@ -11,32 +12,6 @@ function fmtDate(iso: string) {
   return new Date(iso).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
 }
 
-const STATUS_MAP: Record<string, { label: string; tone: string }> = {
-  open:        { label: 'Chờ xử lý',     tone: 'warning' },
-  in_progress: { label: 'Đang xử lý',    tone: 'info' },
-  resolved:    { label: 'Đã giải quyết', tone: 'success' },
-  rejected:    { label: 'Từ chối',       tone: 'muted' },
-}
-
-const TYPE_MAP: Record<string, string> = {
-  staff:     'Nhân viên',
-  equipment: 'Thiết bị',
-  service:   'Dịch vụ',
-}
-
-const SEVERITY_MAP: Record<string, { label: string; tone: string }> = {
-  low:    { label: 'Thấp',       tone: 'success' },
-  medium: { label: 'Trung bình', tone: 'warning' },
-  high:   { label: 'Cao',        tone: 'danger' },
-}
-
-const FILTER_TABS = [
-  { label: 'Tất cả',         value: '' },
-  { label: 'Chờ xử lý',      value: 'open' },
-  { label: 'Đang xử lý',     value: 'in_progress' },
-  { label: 'Đã giải quyết',  value: 'resolved' },
-  { label: 'Từ chối',        value: 'rejected' },
-]
 
 function Badge({ label, tone = 'muted' }: { label: string; tone?: string }) {
   return (
@@ -96,7 +71,36 @@ function Pagination({ page, total, onChange }: { page: number; total: number; on
 }
 
 export default function MyFeedbackPage() {
+  const { t } = useTranslation('member')
   const { user } = useAuthStore()
+
+  const STATUS_MAP: Record<string, { label: string; tone: string }> = {
+    open:        { label: t('feedback.list.statusLabel.open'),        tone: 'warning' },
+    in_progress: { label: t('feedback.list.statusLabel.in_progress'), tone: 'info' },
+    resolved:    { label: t('feedback.list.statusLabel.resolved'),    tone: 'success' },
+    rejected:    { label: t('feedback.list.statusLabel.rejected'),    tone: 'muted' },
+  }
+
+  const TYPE_MAP: Record<string, string> = {
+    staff:     t('feedback.list.typeLabel.staff'),
+    equipment: t('feedback.list.typeLabel.equipment'),
+    service:   t('feedback.list.typeLabel.service'),
+  }
+
+  const SEVERITY_MAP: Record<string, { label: string; tone: string }> = {
+    low:    { label: t('feedback.list.severityLabel.low'),    tone: 'success' },
+    medium: { label: t('feedback.list.severityLabel.medium'), tone: 'warning' },
+    high:   { label: t('feedback.list.severityLabel.high'),   tone: 'danger' },
+  }
+
+  const FILTER_TABS = [
+    { label: t('feedback.list.filterAll'),        value: '' },
+    { label: t('feedback.list.filterOpen'),       value: 'open' },
+    { label: t('feedback.list.filterInProgress'), value: 'in_progress' },
+    { label: t('feedback.list.filterResolved'),   value: 'resolved' },
+    { label: t('feedback.list.filterRejected'),   value: 'rejected' },
+  ]
+
   const [feedbacks, setFeedbacks] = useState<Feedback[]>([])
   const [loading, setLoading] = useState(true)
   const [fetchError, setFetchError] = useState<string | null>(null)
@@ -112,7 +116,7 @@ export default function MyFeedbackPage() {
       .then(({ data }) => setFeedbacks(data))
       .catch((err: { response?: { status?: number; data?: { message?: string } } }) => {
         if (err?.response?.status !== 403) {
-          setFetchError(err?.response?.data?.message || 'Không thể tải danh sách phản hồi.')
+          setFetchError(err?.response?.data?.message || t('feedback.list.errorLoad'))
         }
       })
       .finally(() => setLoading(false))
@@ -154,12 +158,12 @@ export default function MyFeedbackPage() {
   return (
     <MemberPage>
       <MemberPageHeader
-        eyebrow="Phản hồi"
-        title="Phản hồi của tôi"
-        description="Theo dõi trạng thái các phản hồi bạn đã gửi"
+        eyebrow={t('feedback.list.eyebrow')}
+        title={t('feedback.list.title')}
+        description={t('feedback.list.description')}
         actions={
           <Link to="/member/feedback/send" className="rogym-btn rogym-btn--primary px-5 py-2.5 text-sm">
-            Gửi phản hồi mới
+            {t('feedback.list.buttonSendNew')}
           </Link>
         }
       />
@@ -195,12 +199,12 @@ export default function MyFeedbackPage() {
         <MemberErrorState message={fetchError} onRetry={load} />
       ) : filtered.length === 0 ? (
         <MemberEmptyState
-          title="Chưa có phản hồi nào"
-          description={activeTab ? 'Không có phản hồi nào trong trạng thái này.' : 'Bạn chưa gửi phản hồi nào.'}
+          title={t('feedback.list.emptyAll')}
+          description={activeTab ? t('feedback.list.emptyFiltered') : t('feedback.list.emptyNone')}
           action={
             !activeTab ? (
               <Link to="/member/feedback/send" className="rogym-btn rogym-btn--primary px-5 py-2.5 text-sm">
-                Gửi phản hồi đầu tiên
+                {t('feedback.list.buttonSendFirst')}
               </Link>
             ) : undefined
           }
@@ -246,13 +250,13 @@ export default function MyFeedbackPage() {
                   </p>
 
                   <div className="mt-3 flex items-center justify-between gap-4">
-                    <p className="text-xs rogym-sx-d88f932f" >Gửi lúc {fmtDate(fb.createdAt)}</p>
+                    <p className="text-xs rogym-sx-d88f932f" >{t('feedback.list.sentAt', { date: fmtDate(fb.createdAt) })}</p>
                     {fb.status === 'resolved' && fb.response && (
                       <p
                         className="text-xs max-w-xs text-right rogym-sx-4331cd11"
                         
                       >
-                        Phản hồi: {fb.response}
+                        {t('feedback.list.responsePrefix', { response: fb.response })}
                       </p>
                     )}
                   </div>
@@ -262,20 +266,20 @@ export default function MyFeedbackPage() {
                       className="mt-3 flex items-center gap-3 rounded-xl px-4 py-3 rogym-sx-6a3fe515"
                       
                     >
-                      <p className="flex-1 text-xs rogym-sx-1cfa11b1" >Xóa phản hồi này? Hành động không thể hoàn tác.</p>
+                      <p className="flex-1 text-xs rogym-sx-1cfa11b1" >{t('feedback.list.deleteConfirm')}</p>
                       <button
                         onClick={() => setDeletingId(null)}
                         className="text-xs font-medium rogym-sx-2c9ff230"
-                        
+
                       >
-                        Hủy
+                        {t('feedback.list.buttonCancelDelete')}
                       </button>
                       <button
                         onClick={() => handleDelete(fb.feedbackId)}
                         disabled={isDeleting}
                         className="rogym-danger-button rounded-lg px-3 py-1.5 text-xs font-semibold"
                       >
-                        {isDeleting ? 'Đang xóa...' : 'Xóa'}
+                        {isDeleting ? t('feedback.list.buttonDeleting') : t('feedback.list.buttonDelete')}
                       </button>
                     </div>
                   )}

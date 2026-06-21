@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { CheckCircle2, Circle, ArrowLeft } from 'lucide-react'
 import {
   MemberErrorState,
@@ -33,6 +34,7 @@ function makeDefaultSets(ex: WorkoutPlanExercise): SetState[] {
 }
 
 export default function WorkoutSessionPage() {
+  const { t } = useTranslation('member')
   const { id: planDayId = '' } = useParams()
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
@@ -62,14 +64,14 @@ export default function WorkoutSessionPage() {
         limit: requestedAssignmentId ? 10 : 1,
       })
       if (!assignments.length) {
-        setError('Bạn không có kế hoạch tập đang hoạt động.')
+        setError(t('workout.session.noActivePlan'))
         return
       }
       const active = requestedAssignmentId
         ? assignments.find((item) => item.assignmentId === requestedAssignmentId)
         : assignments[0]
       if (!active) {
-        setError('Kế hoạch tập được gán cho buổi này không còn hoạt động.')
+        setError(t('workout.session.planNotActive'))
         return
       }
       setAssignment(active)
@@ -86,7 +88,7 @@ export default function WorkoutSessionPage() {
       }
     } catch (err: unknown) {
       if ((err as { response?: { status?: number } })?.response?.status !== 403)
-        setError('Không thể tải buổi tập.')
+        setError(t('workout.session.errorLoad'))
     } finally {
       setLoading(false)
     }
@@ -139,7 +141,7 @@ export default function WorkoutSessionPage() {
       })
       setDone(true)
     } catch {
-      setSubmitError('Không thể lưu buổi tập. Vui lòng thử lại.')
+      setSubmitError(t('workout.session.errorSave'))
     } finally {
       setSubmitting(false)
     }
@@ -150,9 +152,9 @@ export default function WorkoutSessionPage() {
       <MemberPage>
         <div className="flex min-h-64 flex-col items-center justify-center gap-4 py-12 text-center">
           <CheckCircle2 size={56} className="rogym-sx-b2fbf853" />
-          <h2 className="text-2xl font-bold text-white">Buổi tập hoàn tất!</h2>
+          <h2 className="text-2xl font-bold text-white">{t('workout.session.completedTitle')}</h2>
           <p className="text-sm rogym-sx-d88f932f" >
-            Kết quả đã được ghi nhận vào lịch sử tập luyện.
+            {t('workout.session.completedDesc')}
           </p>
           <div className="flex gap-3">
             <button
@@ -160,14 +162,14 @@ export default function WorkoutSessionPage() {
               className="rogym-btn rogym-btn--outline-white"
               onClick={() => navigate('/member/workout/plan')}
             >
-              Về kế hoạch
+              {t('workout.session.buttonGoToPlan')}
             </button>
             <button
               type="button"
               className="rogym-btn rogym-btn--primary"
               onClick={() => navigate('/member/workout/history')}
             >
-              Xem lịch sử
+              {t('workout.session.buttonViewHistory')}
             </button>
           </div>
         </div>
@@ -182,12 +184,12 @@ export default function WorkoutSessionPage() {
   return (
     <MemberPage>
       <MemberPageHeader
-        eyebrow={plan?.name ?? 'Kế hoạch tập'}
-        title={day ? `${day.name}` : 'Buổi tập'}
+        eyebrow={plan?.name ?? t('workout.session.defaultPlanName')}
+        title={day ? `${day.name}` : t('workout.session.defaultDayName')}
         description={
           day
-            ? `Ngày ${day.dayNumber} · ${sortedExercises.length} bài tập`
-            : 'Ghi nhận kết quả thực tế'
+            ? t('workout.session.descriptionDay', { day: day.dayNumber, count: sortedExercises.length })
+            : t('workout.session.descriptionDefault')
         }
         actions={
           <button
@@ -195,7 +197,7 @@ export default function WorkoutSessionPage() {
             className="rogym-btn rogym-btn--outline-white"
             onClick={() => navigate('/member/workout/plan')}
           >
-            <ArrowLeft size={15} /> Kế hoạch
+            <ArrowLeft size={15} /> {t('workout.session.buttonGoBack')}
           </button>
         }
       />
@@ -205,7 +207,7 @@ export default function WorkoutSessionPage() {
       ) : error ? (
         <MemberErrorState message={error} onRetry={load} />
       ) : !day ? (
-        <MemberErrorState message="Không tìm thấy ngày tập này." />
+        <MemberErrorState message={t('workout.session.errorNotFound')} />
       ) : (
         <div className="space-y-4 pb-28">
           {sortedExercises.map((ex, exIdx) => {
@@ -224,7 +226,7 @@ export default function WorkoutSessionPage() {
                     {exIdx + 1}
                   </div>
                   <div>
-                    <p className="font-semibold text-white">{ex.exercise?.name ?? 'Bài tập'}</p>
+                    <p className="font-semibold text-white">{ex.exercise?.name ?? t('workout.session.defaultExerciseName')}</p>
                     <p className="text-xs rogym-sx-5e5c39ab" >
                       Target: {ex.targetSets} sets ·{' '}
                       {isCardio
@@ -267,7 +269,7 @@ export default function WorkoutSessionPage() {
                               e.target.value
                             )
                           }
-                          placeholder={isCardio ? 'giây' : 'reps'}
+                          placeholder={isCardio ? t('workout.session.unitSeconds') : 'reps'}
                         />
                         <input
                           type="number"
@@ -312,8 +314,10 @@ export default function WorkoutSessionPage() {
           
         >
           <p className="text-sm rogym-sx-d88f932f" >
-            {sets.flat().filter((s) => s.completed).length} /{' '}
-            {sets.flat().length} set hoàn thành
+            {t('workout.session.setsCompleted', {
+              done: sets.flat().filter((s) => s.completed).length,
+              total: sets.flat().length,
+            })}
           </p>
           <button
             type="button"
@@ -321,7 +325,7 @@ export default function WorkoutSessionPage() {
             disabled={!anyCompleted || submitting}
             onClick={() => void handleFinish()}
           >
-            {submitting ? 'Đang lưu...' : 'Kết thúc buổi tập'}
+            {submitting ? t('workout.session.buttonSaving') : t('workout.session.buttonFinish')}
           </button>
         </div>
       )}

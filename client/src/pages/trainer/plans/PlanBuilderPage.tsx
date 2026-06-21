@@ -1,5 +1,6 @@
 import { FormEvent, memo, useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { Archive, ArrowLeft, Lock, Pencil, Plus, Trash2, Zap } from 'lucide-react'
 import { getApiError, getApiErrorCode, isApiConflict } from '@/lib/api-error'
 import workoutService, {
@@ -26,9 +27,8 @@ type DeleteTarget =
   | { type: 'exercise'; day: WorkoutPlanDay; exercise: WorkoutPlanExercise }
   | null
 
-const DAY_LABELS = ['', 'Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy', 'Chủ Nhật']
-
 export default function TrainerPlanBuilderPage() {
+  const { t } = useTranslation('trainer')
   const { id = '' } = useParams()
   const navigate = useNavigate()
   const [plan, setPlan] = useState<WorkoutPlan | null>(null)
@@ -58,6 +58,18 @@ export default function TrainerPlanBuilderPage() {
   } | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<DeleteTarget>(null)
 
+  // DAY_LABELS moved inside component so t() runs in React context
+  const DAY_LABELS = [
+    '',
+    t('plans.builder.dayLabels.mon'),
+    t('plans.builder.dayLabels.tue'),
+    t('plans.builder.dayLabels.wed'),
+    t('plans.builder.dayLabels.thu'),
+    t('plans.builder.dayLabels.fri'),
+    t('plans.builder.dayLabels.sat'),
+    t('plans.builder.dayLabels.sun'),
+  ]
+
   const load = useCallback(async () => {
     setLoading(true)
     setError(null)
@@ -70,11 +82,11 @@ export default function TrainerPlanBuilderPage() {
       if (planData.status === 'archived') setWriteBlocked(true)
       setExercises(exerciseData)
     } catch (err) {
-      setError(getApiError(err, 'Không thể tải Plan Builder.'))
+      setError(getApiError(err, t('plans.builder.error.loadFailed')))
     } finally {
       setLoading(false)
     }
-  }, [id])
+  }, [id, t])
 
   useEffect(() => {
     void load()
@@ -111,9 +123,7 @@ export default function TrainerPlanBuilderPage() {
       (isApiConflict(err) && message.toLocaleLowerCase('vi').includes('workout log'))
     ) {
       setWriteBlocked(true)
-      setError(
-        'Kế hoạch đã có dữ liệu tập luyện hoặc đang được sử dụng nên cấu trúc được chuyển sang chỉ đọc.'
-      )
+      setError(t('plans.builder.error.readonly'))
       return
     }
     setError(message)
@@ -129,7 +139,7 @@ export default function TrainerPlanBuilderPage() {
       })
       await load()
     } catch (err) {
-      handleMutationError(err, 'Không thể cập nhật thông tin kế hoạch.')
+      handleMutationError(err, t('plans.builder.error.saveMetaFailed'))
     } finally {
       setSubmitting(false)
     }
@@ -174,7 +184,7 @@ export default function TrainerPlanBuilderPage() {
       setDayOpen(false)
       await load()
     } catch (err) {
-      handleMutationError(err, 'Không thể lưu ngày tập. Số thứ tự ngày phải là duy nhất.')
+      handleMutationError(err, t('plans.builder.error.saveDayFailed'))
     } finally {
       setSubmitting(false)
     }
@@ -200,6 +210,7 @@ export default function TrainerPlanBuilderPage() {
     setRestSeconds(exercise.restSeconds ?? 60)
     setExerciseNotes(exercise.notes ?? '')
   }, [])
+
   const requestDeleteDay = useCallback(
     (day: WorkoutPlanDay) => setDeleteTarget({ type: 'day', day }),
     []
@@ -232,7 +243,7 @@ export default function TrainerPlanBuilderPage() {
       setExerciseDay(null)
       await load()
     } catch (err) {
-      handleMutationError(err, 'Không thể thêm bài tập vào ngày này.')
+      handleMutationError(err, t('plans.builder.error.addExerciseFailed'))
     } finally {
       setSubmitting(false)
     }
@@ -261,7 +272,7 @@ export default function TrainerPlanBuilderPage() {
       setEditingPlanExercise(null)
       await load()
     } catch (err) {
-      handleMutationError(err, 'Không thể cập nhật target bài tập.')
+      handleMutationError(err, t('plans.builder.error.updateExerciseFailed'))
     } finally {
       setSubmitting(false)
     }
@@ -284,7 +295,7 @@ export default function TrainerPlanBuilderPage() {
       setDeleteTarget(null)
       await load()
     } catch (err) {
-      handleMutationError(err, 'Không thể xóa vì dữ liệu lịch sử đang được bảo vệ.')
+      handleMutationError(err, t('plans.builder.error.deleteFailed'))
     } finally {
       setSubmitting(false)
     }
@@ -292,7 +303,7 @@ export default function TrainerPlanBuilderPage() {
 
   async function changeStatus(status: 'active' | 'archived') {
     if (status === 'active' && (!plan?.days?.length || exerciseCount === 0)) {
-      setError('Kế hoạch cần ít nhất một ngày và một bài tập trước khi kích hoạt.')
+      setError(t('plans.builder.error.activateEmpty'))
       return
     }
     setSubmitting(true)
@@ -304,8 +315,8 @@ export default function TrainerPlanBuilderPage() {
       handleMutationError(
         err,
         status === 'active'
-          ? 'Không thể kích hoạt kế hoạch.'
-          : 'Không thể lưu trữ kế hoạch khi còn assignment active.'
+          ? t('plans.builder.error.activateFailed')
+          : t('plans.builder.error.archiveFailed')
       )
     } finally {
       setSubmitting(false)
@@ -329,12 +340,12 @@ export default function TrainerPlanBuilderPage() {
   return (
     <TrainerPage>
       <TrainerPageHeader
-        eyebrow="Plan Builder"
+        eyebrow={t('plans.builder.eyebrow')}
         title={plan.name}
         description={
           readonly
-            ? 'Kế hoạch đang ở chế độ chỉ đọc.'
-            : 'Xây dựng cấu trúc ngày tập và target cho từng bài.'
+            ? t('plans.builder.descriptionReadonly')
+            : t('plans.builder.descriptionEdit')
         }
         actions={
           <>
@@ -343,7 +354,7 @@ export default function TrainerPlanBuilderPage() {
               className="rogym-btn rogym-btn--outline-white"
               onClick={() => navigate('/trainer/plans')}
             >
-              <ArrowLeft size={16} /> Danh sách
+              <ArrowLeft size={16} /> {t('plans.builder.backToList')}
             </button>
             {plan.status === 'draft' && !readonly && (
               <button
@@ -352,7 +363,7 @@ export default function TrainerPlanBuilderPage() {
                 disabled={submitting}
                 onClick={() => changeStatus('active')}
               >
-                <Zap size={16} /> Kích hoạt
+                <Zap size={16} /> {t('plans.builder.activate')}
               </button>
             )}
             {plan.status !== 'archived' && !readonly && (
@@ -362,7 +373,7 @@ export default function TrainerPlanBuilderPage() {
                 disabled={submitting}
                 onClick={() => changeStatus('archived')}
               >
-                <Archive size={16} /> Lưu trữ
+                <Archive size={16} /> {t('plans.builder.archive')}
               </button>
             )}
           </>
@@ -371,12 +382,16 @@ export default function TrainerPlanBuilderPage() {
       <div className="flex items-center gap-3">
         <TrainerStatusBadge status={plan.status} />
         <span className="text-sm rogym-text-dim">
-          {groupedWeeks.length} tuần · {plan.days?.length ?? 0} ngày · {exerciseCount} bài tập
+          {t('plans.builder.weekSummary', {
+            weeks: groupedWeeks.length,
+            days: plan.days?.length ?? 0,
+            exercises: exerciseCount,
+          })}
         </span>
       </div>
       {readonly && (
         <div className="flex items-center gap-3 rounded-2xl border border-amber-400/20 bg-amber-400/10 p-4 text-sm text-amber-100">
-          <Lock size={18} /> Plan đã lưu trữ hoặc có workout log nên không thể thay đổi cấu trúc.
+          <Lock size={18} /> {t('plans.builder.readonlyBanner')}
         </div>
       )}
       {error && <TrainerErrorState message={error} onRetry={load} />}
@@ -390,17 +405,17 @@ export default function TrainerPlanBuilderPage() {
       />
 
       <div className="flex items-center justify-between gap-4">
-        <h2 className="text-xl font-bold text-white">Cấu trúc ngày tập</h2>
+        <h2 className="text-xl font-bold text-white">{t('plans.builder.structureTitle')}</h2>
         {!readonly && (
           <button type="button" className="rogym-btn rogym-btn--primary" onClick={openCreateDay}>
-            <Plus size={16} /> Thêm ngày
+            <Plus size={16} /> {t('plans.builder.addDay')}
           </button>
         )}
       </div>
       {!plan.days?.length ? (
         <TrainerEmptyState
-          title="Chưa có ngày tập"
-          description="Thêm ít nhất một ngày, sau đó chọn bài tập từ thư viện."
+          title={t('plans.builder.noDay')}
+          description={t('plans.builder.noDayDesc')}
           action={
             !readonly ? (
               <button
@@ -408,7 +423,7 @@ export default function TrainerPlanBuilderPage() {
                 className="rogym-btn rogym-btn--primary"
                 onClick={openCreateDay}
               >
-                Thêm ngày đầu tiên
+                {t('plans.builder.addFirstDay')}
               </button>
             ) : undefined
           }
@@ -422,14 +437,19 @@ export default function TrainerPlanBuilderPage() {
                   {week}
                 </div>
                 <div>
-                  <h2 className="text-lg font-bold text-white">Tuần {week}</h2>
-                  <p className="text-xs rogym-text-dim">{days.length} ngày có lịch tập</p>
+                  <h2 className="text-lg font-bold text-white">
+                    {t('plans.builder.weekLabel', { number: week })}
+                  </h2>
+                  <p className="text-xs rogym-text-dim">
+                    {t('plans.builder.dayScheduled', { count: days.length })}
+                  </p>
                 </div>
               </div>
               {days.map((day) => (
                 <PlanDayCard
                   key={day.planDayId}
                   day={day}
+                  dayLabels={DAY_LABELS}
                   readonly={readonly}
                   onEditDay={openEditDay}
                   onDeleteDay={requestDeleteDay}
@@ -443,9 +463,10 @@ export default function TrainerPlanBuilderPage() {
         </div>
       )}
 
+      {/* Day create/edit modal */}
       <TrainerModal
         open={dayOpen}
-        title={editingDay ? 'Chỉnh sửa ngày tập' : 'Thêm ngày tập'}
+        title={editingDay ? t('plans.builder.dayModal.editTitle') : t('plans.builder.dayModal.createTitle')}
         onClose={() => setDayOpen(false)}
         footer={
           <>
@@ -454,19 +475,19 @@ export default function TrainerPlanBuilderPage() {
               className="rogym-btn rogym-btn--outline-white"
               onClick={() => setDayOpen(false)}
             >
-              Hủy
+              {t('plans.builder.dayModal.cancel')}
             </button>
             <SubmitButton form="plan-day-form" loading={submitting} disabled={!dayName.trim()}>
-              Lưu ngày tập
+              {t('plans.builder.dayModal.submit')}
             </SubmitButton>
           </>
         }
       >
         <form id="plan-day-form" className="space-y-4" onSubmit={saveDay}>
           <div className="grid gap-4 md:grid-cols-3">
-            <NumberField label="Tuần" min={1} value={weekNumber} onChange={setWeekNumber} />
+            <NumberField label={t('plans.builder.dayModal.fieldWeek')} min={1} value={weekNumber} onChange={setWeekNumber} />
             <label className="block space-y-2">
-              <span className="rogym-field-label">Thứ trong tuần</span>
+              <span className="rogym-field-label">{t('plans.builder.dayModal.fieldDayOfWeek')}</span>
               <TrainerSelect
                 value={String(dayOfWeek)}
                 onValueChange={(value) => setDayOfWeek(Number(value))}
@@ -478,10 +499,10 @@ export default function TrainerPlanBuilderPage() {
                 ))}
               </TrainerSelect>
             </label>
-            <NumberField label="Ngày thứ" min={1} value={dayNumber} onChange={setDayNumber} />
+            <NumberField label={t('plans.builder.dayModal.fieldDayNumber')} min={1} value={dayNumber} onChange={setDayNumber} />
           </div>
           <label className="block space-y-2">
-            <span className="rogym-field-label">Tên ngày tập</span>
+            <span className="rogym-field-label">{t('plans.builder.dayModal.fieldName')}</span>
             <input
               className="rogym-input"
               value={dayName}
@@ -492,7 +513,7 @@ export default function TrainerPlanBuilderPage() {
             />
           </label>
           <label className="block space-y-2">
-            <span className="rogym-field-label">Ghi chú</span>
+            <span className="rogym-field-label">{t('plans.builder.dayModal.fieldNotes')}</span>
             <textarea
               className="rogym-input min-h-24"
               value={dayNotes}
@@ -502,9 +523,10 @@ export default function TrainerPlanBuilderPage() {
         </form>
       </TrainerModal>
 
+      {/* Add exercise to day modal */}
       <TrainerModal
         open={Boolean(exerciseDay)}
-        title={`Thêm bài tập vào ${exerciseDay?.name ?? ''}`}
+        title={t('plans.builder.exerciseModal.title', { dayName: exerciseDay?.name ?? '' })}
         onClose={() => setExerciseDay(null)}
         footer={
           <>
@@ -513,23 +535,23 @@ export default function TrainerPlanBuilderPage() {
               className="rogym-btn rogym-btn--outline-white"
               onClick={() => setExerciseDay(null)}
             >
-              Hủy
+              {t('plans.builder.exerciseModal.cancel')}
             </button>
             <SubmitButton
               form="plan-exercise-form"
               loading={submitting}
               disabled={!exerciseId || targetSets < 1}
             >
-              Thêm bài tập
+              {t('plans.builder.exerciseModal.submit')}
             </SubmitButton>
           </>
         }
       >
         <form id="plan-exercise-form" className="space-y-4" onSubmit={addExercise}>
           <label className="block space-y-2">
-            <span className="rogym-field-label">Bài tập</span>
+            <span className="rogym-field-label">{t('plans.builder.exerciseModal.fieldExercise')}</span>
             <TrainerSelect value={exerciseId} onValueChange={setExerciseId} required>
-              <option value="">Chọn từ thư viện</option>
+              <option value="">{t('plans.builder.exerciseModal.selectFromLib')}</option>
               {exercises.map((exercise) => (
                 <option key={exercise.exerciseId} value={exercise.exerciseId}>
                   {exercise.name} - {exercise.category}
@@ -542,7 +564,7 @@ export default function TrainerPlanBuilderPage() {
               {selectedExercise.imageUrl && (
                 <img
                   src={selectedExercise.imageUrl}
-                  alt={`Minh họa ${selectedExercise.name}`}
+                  alt={t('plans.builder.exerciseModal.illustrationAlt', { name: selectedExercise.name })}
                   className="h-24 w-28 rounded-xl object-cover"
                   loading="lazy"
                 />
@@ -550,8 +572,8 @@ export default function TrainerPlanBuilderPage() {
               <div className="text-sm rogym-text-secondary">
                 <div className="font-semibold text-white">{selectedExercise.name}</div>
                 <div className="mt-1">
-                  {selectedExercise.muscleGroup ?? 'Toàn thân'} ·{' '}
-                  {selectedExercise.equipmentNeeded ?? 'Không cần dụng cụ'}
+                  {selectedExercise.muscleGroup ?? t('plans.builder.dayCard.bodyPart')} ·{' '}
+                  {selectedExercise.equipmentNeeded ?? t('plans.builder.dayCard.noEquipment')}
                 </div>
                 <p className="mt-2 line-clamp-3">{selectedExercise.description}</p>
               </div>
@@ -576,7 +598,7 @@ export default function TrainerPlanBuilderPage() {
             }}
           />
           <label className="block space-y-2">
-            <span className="rogym-field-label">Ghi chú kỹ thuật</span>
+            <span className="rogym-field-label">{t('plans.builder.exerciseModal.fieldNotes')}</span>
             <textarea
               className="rogym-input min-h-24"
               value={exerciseNotes}
@@ -584,14 +606,17 @@ export default function TrainerPlanBuilderPage() {
             />
           </label>
           <p className="text-xs rogym-text-dim">
-            Mỗi bài cần có đủ số set, số rep nếu áp dụng, thời gian tập và thời gian nghỉ.
+            {t('plans.builder.exerciseModal.hint')}
           </p>
         </form>
       </TrainerModal>
 
+      {/* Edit exercise target modal */}
       <TrainerModal
         open={Boolean(editingPlanExercise)}
-        title={`Chỉnh target ${editingPlanExercise?.exercise.exercise?.name ?? 'bài tập'}`}
+        title={t('plans.builder.editExerciseModal.title', {
+          name: editingPlanExercise?.exercise.exercise?.name ?? t('plans.builder.editExerciseModal.defaultName'),
+        })}
         onClose={() => setEditingPlanExercise(null)}
         footer={
           <>
@@ -600,10 +625,10 @@ export default function TrainerPlanBuilderPage() {
               className="rogym-btn rogym-btn--outline-white"
               onClick={() => setEditingPlanExercise(null)}
             >
-              Hủy
+              {t('plans.builder.editExerciseModal.cancel')}
             </button>
             <SubmitButton form="edit-plan-exercise-form" loading={submitting}>
-              Lưu target
+              {t('plans.builder.editExerciseModal.submit')}
             </SubmitButton>
           </>
         }
@@ -628,7 +653,7 @@ export default function TrainerPlanBuilderPage() {
             }}
           />
           <label className="block space-y-2">
-            <span className="rogym-field-label">Ghi chú kỹ thuật</span>
+            <span className="rogym-field-label">{t('plans.builder.editExerciseModal.fieldNotes')}</span>
             <textarea
               className="rogym-input min-h-24"
               value={exerciseNotes}
@@ -638,9 +663,10 @@ export default function TrainerPlanBuilderPage() {
         </form>
       </TrainerModal>
 
+      {/* Delete day / exercise modal */}
       <TrainerModal
         open={Boolean(deleteTarget)}
-        title={deleteTarget?.type === 'day' ? 'Xóa ngày tập' : 'Xóa bài tập khỏi plan'}
+        title={deleteTarget?.type === 'day' ? t('plans.builder.deleteModal.deleteDay') : t('plans.builder.deleteModal.deleteExercise')}
         onClose={() => setDeleteTarget(null)}
         footer={
           <>
@@ -649,7 +675,7 @@ export default function TrainerPlanBuilderPage() {
               className="rogym-btn rogym-btn--outline-white"
               onClick={() => setDeleteTarget(null)}
             >
-              Hủy
+              {t('plans.builder.deleteModal.cancel')}
             </button>
             <button
               type="button"
@@ -657,20 +683,21 @@ export default function TrainerPlanBuilderPage() {
               disabled={submitting}
               onClick={confirmDelete}
             >
-              {submitting ? 'Đang xóa...' : 'Xác nhận xóa'}
+              {submitting ? t('plans.builder.deleteModal.submitting') : t('plans.builder.deleteModal.submit')}
             </button>
           </>
         }
       >
         <p className="text-sm leading-6 rogym-text-secondary">
           {deleteTarget?.type === 'day'
-            ? 'Toàn bộ bài tập trong ngày này cũng sẽ bị xóa.'
-            : 'Dữ liệu lịch sử đã ghi nhận sẽ được backend bảo vệ và có thể chặn thao tác này.'}
+            ? t('plans.builder.deleteModal.confirmDay')
+            : t('plans.builder.deleteModal.confirmExercise')}
         </p>
       </TrainerModal>
+
       <div className="text-right">
         <Link className="rogym-text-link rogym-text-link--accent" to="/trainer/exercises">
-          Mở thư viện bài tập
+          {t('plans.builder.openExerciseLib')}
         </Link>
       </div>
     </TrainerPage>
@@ -690,6 +717,7 @@ function PlanMetadataForm({
   submitting: boolean
   onSave: (name: string, description: string) => Promise<void>
 }) {
+  const { t } = useTranslation('trainer')
   const [name, setName] = useState(initialName)
   const [description, setDescription] = useState(initialDescription)
 
@@ -707,7 +735,7 @@ function PlanMetadataForm({
       }}
     >
       <label className="block space-y-2">
-        <span className="rogym-field-label">Tên kế hoạch</span>
+        <span className="rogym-field-label">{t('plans.builder.metadata.fieldName')}</span>
         <input
           className="rogym-input"
           value={name}
@@ -717,7 +745,7 @@ function PlanMetadataForm({
         />
       </label>
       <label className="block space-y-2">
-        <span className="rogym-field-label">Mô tả</span>
+        <span className="rogym-field-label">{t('plans.builder.metadata.fieldDescription')}</span>
         <input
           className="rogym-input"
           value={description}
@@ -728,7 +756,7 @@ function PlanMetadataForm({
       {!readonly && (
         <div className="self-end">
           <SubmitButton loading={submitting} disabled={!name.trim()}>
-            Lưu thông tin
+            {t('plans.builder.metadata.save')}
           </SubmitButton>
         </div>
       )}
@@ -738,6 +766,7 @@ function PlanMetadataForm({
 
 const PlanDayCard = memo(function PlanDayCard({
   day,
+  dayLabels,
   readonly,
   onEditDay,
   onDeleteDay,
@@ -746,6 +775,7 @@ const PlanDayCard = memo(function PlanDayCard({
   onDeleteExercise,
 }: {
   day: WorkoutPlanDay
+  dayLabels: string[]
   readonly: boolean
   onEditDay: (day: WorkoutPlanDay) => void
   onDeleteDay: (day: WorkoutPlanDay) => void
@@ -753,17 +783,28 @@ const PlanDayCard = memo(function PlanDayCard({
   onEditExercise: (day: WorkoutPlanDay, exercise: WorkoutPlanExercise) => void
   onDeleteExercise: (day: WorkoutPlanDay, exercise: WorkoutPlanExercise) => void
 }) {
+  const { t } = useTranslation('trainer')
   const sortedExercises = useMemo(
     () => [...(day.exercises ?? [])].sort((a, b) => a.orderIndex - b.orderIndex),
     [day.exercises]
   )
+
+  function formatDuration(seconds: number | null): string {
+    if (!seconds) return t('plans.builder.dayCard.durationUnset')
+    if (seconds < 60) return t('plans.builder.dayCard.durationSeconds', { s: seconds })
+    const minutes = Math.floor(seconds / 60)
+    const remaining = seconds % 60
+    return remaining
+      ? t('plans.builder.dayCard.durationMinutesSeconds', { m: minutes, s: remaining })
+      : t('plans.builder.dayCard.durationMinutes', { m: minutes })
+  }
 
   return (
     <section className="rogym-card rogym-card--compact p-5">
       <div className="flex flex-wrap items-start justify-between gap-4 border-b border-white/5 pb-4">
         <div>
           <div className="rogym-eyebrow">
-            {DAY_LABELS[day.dayOfWeek]} · Ngày {day.dayNumber}
+            {t('plans.builder.dayCard.dayLabel', { dayName: dayLabels[day.dayOfWeek], dayNumber: day.dayNumber })}
           </div>
           <h3 className="mt-1 text-lg font-bold text-white">{day.name}</h3>
           {day.notes && <p className="mt-2 text-sm rogym-text-secondary">{day.notes}</p>}
@@ -775,14 +816,14 @@ const PlanDayCard = memo(function PlanDayCard({
               className="rogym-btn rogym-btn--outline-white"
               onClick={() => onEditDay(day)}
             >
-              <Pencil size={15} /> Sửa
+              <Pencil size={15} /> {t('plans.builder.dayCard.edit')}
             </button>
             <button
               type="button"
               className="rogym-btn rogym-btn--danger"
               onClick={() => onDeleteDay(day)}
             >
-              <Trash2 size={15} /> Xóa
+              <Trash2 size={15} /> {t('plans.builder.dayCard.delete')}
             </button>
           </div>
         )}
@@ -799,23 +840,35 @@ const PlanDayCard = memo(function PlanDayCard({
             {item.exercise?.imageUrl && (
               <img
                 src={item.exercise.imageUrl}
-                alt={`Minh họa ${item.exercise.name}`}
+                alt={t('plans.builder.exerciseModal.illustrationAlt', { name: item.exercise.name })}
                 className="h-20 w-full rounded-xl object-cover md:w-24"
                 loading="lazy"
               />
             )}
             <div className="min-w-0 flex-1">
-              <div className="font-semibold text-white">{item.exercise?.name ?? 'Bài tập'}</div>
+              <div className="font-semibold text-white">
+                {item.exercise?.name ?? t('plans.builder.editExerciseModal.defaultName')}
+              </div>
               <div className="mt-1 text-xs rogym-text-dim">
-                {item.targetSets} set ·{' '}
-                {item.targetReps ? `${item.targetReps} rep` : 'Theo thời gian'}
-                {` · tập ${formatDuration(item.targetDurationSec)}`}
-                {item.targetWeightKg ? ` · ${Number(item.targetWeightKg)} kg` : ''}
-                {` · nghỉ ${item.restSeconds ?? 0} giây`}
+                {item.targetReps
+                  ? t('plans.builder.dayCard.setRepSummary', {
+                      sets: item.targetSets,
+                      reps: item.targetReps,
+                      duration: formatDuration(item.targetDurationSec ?? null),
+                      rest: item.restSeconds ?? 0,
+                    })
+                  : t('plans.builder.dayCard.setTimeSummary', {
+                      sets: item.targetSets,
+                      duration: formatDuration(item.targetDurationSec ?? null),
+                      rest: item.restSeconds ?? 0,
+                    })}
+                {item.targetWeightKg
+                  ? t('plans.builder.dayCard.setWeightSummary', { weight: Number(item.targetWeightKg) })
+                  : ''}
               </div>
               <div className="mt-1 text-xs rogym-text-secondary">
-                {item.exercise?.muscleGroup ?? 'Toàn thân'} ·{' '}
-                {item.exercise?.equipmentNeeded ?? 'Không cần dụng cụ'}
+                {item.exercise?.muscleGroup ?? t('plans.builder.dayCard.bodyPart')} ·{' '}
+                {item.exercise?.equipmentNeeded ?? t('plans.builder.dayCard.noEquipment')}
               </div>
               {item.notes && <div className="mt-2 text-xs rogym-text-secondary">{item.notes}</div>}
             </div>
@@ -825,7 +878,7 @@ const PlanDayCard = memo(function PlanDayCard({
                   type="button"
                   className="rogym-btn rogym-btn--icon rogym-btn--elevated"
                   onClick={() => onEditExercise(day, item)}
-                  aria-label="Sửa target bài tập"
+                  aria-label={t('plans.builder.dayCard.editAriaLabel')}
                 >
                   <Pencil size={15} />
                 </button>
@@ -833,7 +886,7 @@ const PlanDayCard = memo(function PlanDayCard({
                   type="button"
                   className="rogym-btn rogym-btn--icon rogym-btn--elevated"
                   onClick={() => onDeleteExercise(day, item)}
-                  aria-label="Xóa bài tập"
+                  aria-label={t('plans.builder.dayCard.deleteAriaLabel')}
                 >
                   <Trash2 size={15} />
                 </button>
@@ -842,7 +895,7 @@ const PlanDayCard = memo(function PlanDayCard({
           </div>
         ))}
         {sortedExercises.length === 0 && (
-          <p className="py-3 text-sm rogym-text-dim">Ngày này chưa có bài tập.</p>
+          <p className="py-3 text-sm rogym-text-dim">{t('plans.builder.dayCard.noDayExercise')}</p>
         )}
         {!readonly && (
           <button
@@ -850,18 +903,10 @@ const PlanDayCard = memo(function PlanDayCard({
             className="rogym-text-link rogym-text-link--accent"
             onClick={() => onAddExercise(day)}
           >
-            + Thêm bài tập
+            {t('plans.builder.dayCard.addExercise')}
           </button>
         )}
       </div>
     </section>
   )
 })
-
-function formatDuration(seconds: number | null) {
-  if (!seconds) return 'chưa đặt'
-  if (seconds < 60) return `${seconds} giây`
-  const minutes = Math.floor(seconds / 60)
-  const remaining = seconds % 60
-  return remaining ? `${minutes} phút ${remaining} giây` : `${minutes} phút`
-}

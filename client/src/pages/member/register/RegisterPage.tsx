@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { User, Phone, Mail, Lock, MapPin } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { DatePickerInput } from '@/components/DatePickerInput'
 import { authService } from '@/services/auth.service'
 import {
@@ -25,19 +26,22 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const navigate = useNavigate()
+  const { t } = useTranslation('auth')
+  const { t: tVal } = useTranslation('validation')
+  const { t: tCommon } = useTranslation('common')
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (pass !== confirm) {
-      setError('Mật khẩu xác nhận không khớp.')
+      setError(tVal('password.mismatch'))
       return
     }
     if (pass.length < 8) {
-      setError('Mật khẩu phải có ít nhất 8 ký tự.')
+      setError(tVal('password.minLength'))
       return
     }
     if (!dob) {
-      setError('Vui lòng nhập ngày sinh.')
+      setError(tVal('dob.required'))
       return
     }
     setError('')
@@ -49,13 +53,13 @@ export default function RegisterPage() {
       const e = err as { response?: { status?: number; data?: { message?: string } } }
       const status = e?.response?.status
       if (status === 409) {
-        setError('Email này đã được đăng ký. Hãy đăng nhập hoặc dùng email khác.')
+        setError(tVal('email.alreadyRegistered'))
       } else if (status === 429) {
-        setError('Bạn thực hiện quá nhiều yêu cầu. Vui lòng thử lại sau vài phút.')
+        setError(tVal('email.rateLimit'))
       } else if (!e?.response) {
-        setError('Không thể kết nối. Kiểm tra mạng và thử lại.')
+        setError(tCommon('error.network'))
       } else {
-        setError(e?.response?.data?.message || 'Đăng ký thất bại. Email có thể đã được sử dụng.')
+        setError(e?.response?.data?.message || tVal('registration.failed'))
       }
     } finally {
       setLoading(false)
@@ -69,40 +73,40 @@ export default function RegisterPage() {
           <h1
             className="rogym-sx-4d6285f7"
           >
-            Tạo tài khoản
+            {t('register.title')}
           </h1>
           <p
             className="rogym-sx-0a664e64"
           >
-            Gia nhập cộng đồng RoGym ngay hôm nay
+            {t('register.subtitle')}
           </p>
         </div>
 
         <Field
-          label="Họ và tên"
+          label={t('register.fullName')}
           name="name"
           autoComplete="name"
-          placeholder="Nguyễn Văn A"
+          placeholder={t('register.fullNamePlaceholder')}
           value={name}
           onChange={setName}
           icon={User}
         />
         <Field
-          label="Email"
+          label={t('register.email')}
           type="email"
           name="email"
           autoComplete="email"
-          placeholder="ten@email.com"
+          placeholder={t('register.emailPlaceholder')}
           value={email}
           onChange={setEmail}
           icon={Mail}
         />
         <Field
-          label="Số điện thoại"
+          label={t('register.phone')}
           type="tel"
           name="tel"
           autoComplete="tel"
-          placeholder="0912 345 678"
+          placeholder={t('register.phonePlaceholder')}
           value={phone}
           onChange={setPhone}
           icon={Phone}
@@ -111,33 +115,33 @@ export default function RegisterPage() {
           <label
             className="rogym-sx-c72a6bf5"
           >
-            Ngày sinh
+            {t('register.dob')}
           </label>
           <DatePickerInput
             value={dob}
             onChange={setDob}
-            aria-label="Ngày sinh"
-            placeholder="Ngày sinh"
+            aria-label={t('register.dob')}
+            placeholder={t('register.dob')}
           />
         </div>
         <Field
-          label="Địa chỉ"
+          label={t('register.address')}
           name="street-address"
           autoComplete="street-address"
-          placeholder="12 Lê Lợi, Q.1, TP.HCM"
+          placeholder={t('register.addressPlaceholder')}
           value={address}
           onChange={setAddress}
           icon={MapPin}
         />
         <PasswordField
-          label="Mật khẩu"
-          placeholder="Tối thiểu 8 ký tự"
+          label={t('register.password')}
+          placeholder={t('register.passwordHint')}
           value={pass}
           onChange={setPass}
           icon={Lock}
         />
         <PasswordField
-          label="Xác nhận mật khẩu"
+          label={t('register.confirmPassword')}
           value={confirm}
           onChange={setConfirm}
           icon={Lock}
@@ -146,20 +150,19 @@ export default function RegisterPage() {
         {error && <ErrorMsg message={error} />}
 
         <BtnPrimary type="submit" disabled={loading}>
-          {loading ? 'Đang tạo tài khoản...' : 'Tạo tài khoản'}
+          {loading ? t('register.submitting') : t('register.submit')}
         </BtnPrimary>
 
         <p
           className="text-center rogym-sx-ccbcbd08"
-          
         >
-          Bằng cách đăng ký, bạn đồng ý với <TextLink>Điều khoản dịch vụ</TextLink> và{' '}
-          <TextLink>Chính sách bảo mật</TextLink>.
+          {t('register.terms')} <TextLink>{t('register.termsLink')}</TextLink> {t('register.and')}{' '}
+          <TextLink>{t('register.privacyLink')}</TextLink>.
         </p>
 
-        <Divider label="đã có tài khoản?" />
+        <Divider label={t('register.hasAccount')} />
 
-        <BtnOutlineWhite onClick={() => navigate('/login')}>Đăng nhập</BtnOutlineWhite>
+        <BtnOutlineWhite onClick={() => navigate('/login')}>{t('register.loginBtn')}</BtnOutlineWhite>
       </form>
     </AuthShell>
   )

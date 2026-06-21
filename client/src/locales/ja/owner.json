@@ -1,0 +1,38 @@
+{
+  "dashboard": {
+    "title": "オーナーワークスペース",
+    "greeting": "{{name}}さん、こんにちは",
+    "subtitle": "ジム全体システムの概要です。",
+    "staffManagement": "スタッフ管理",
+    "permissions": "権限 & グループ",
+    "packages": "プラン設定",
+    "reports": "統計レポート",
+    "viewReports": "レポートを見る",
+    "equipmentAlert": "設備アラート",
+    "totalMembers": "総会員数",
+    "systemWide": "システム全体",
+    "activePackages": "販売中のプラン",
+    "activeStatus": "アクティブ状態",
+    "membersAndPackages": "会員 & プラン",
+    "pendingFeedback": "対応が必要なフィードバック",
+    "noNewFeedback": "新しいフィードバックはありません"
+  },
+  "packages": { "title": "プラン管理" },
+  "equipment": { "title": "設備" },
+  "reports": {
+    "revenue": { "title": "売上レポート" },
+    "performance": { "title": "スタッフパフォーマンス" },
+    "invoices": { "title": "取引請求書" }
+  },
+  "staffManagement": {
+    "users": { "title": "ユーザー管理" },
+    "detail": { "title": "ユーザー詳細" },
+    "schedule": { "title": "勤務スケジュール" }
+  },
+  "rbac": {
+    "groups": { "title": "権限グループ" },
+    "permissions": { "title": "権限" }
+  },
+  "usersOverview": { "title": "ユーザー概要" },
+  "profile": { "title": "プロフィール" }
+}

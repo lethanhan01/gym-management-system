@@ -1,4 +1,6 @@
 import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react'
+import type { TFunction } from 'i18next'
+import { useTranslation } from 'react-i18next'
 import {
   MemberPage,
   MemberPageHeader,
@@ -25,11 +27,11 @@ function fmtDateShort(iso: string) {
   return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}`
 }
 
-function bmiLabel(bmi: number): string {
-  if (bmi < 18.5) return 'Thiếu cân'
-  if (bmi < 25) return 'Bình thường'
-  if (bmi < 30) return 'Thừa cân'
-  return 'Béo phì'
+function bmiLabel(bmi: number, t: TFunction<'member'>): string {
+  if (bmi < 18.5) return t('progress.bmiLabel.underweight')
+  if (bmi < 25) return t('progress.bmiLabel.normal')
+  if (bmi < 30) return t('progress.bmiLabel.overweight')
+  return t('progress.bmiLabel.obese')
 }
 
 function bmiTone(bmi: number): string {
@@ -44,14 +46,7 @@ function computeBmi(weightKg: number, heightCm: number): number {
   return Math.round((weightKg / (hm * hm)) * 10) / 10
 }
 
-const RANGES = [
-  { label: '1T', days: 30 },
-  { label: '3T', days: 90 },
-  { label: '6T', days: 180 },
-  { label: 'Tất cả', days: null as number | null },
-]
-
-function SelfReportForm({ onSuccess }: { onSuccess: () => void }) {
+function SelfReportForm({ onSuccess, t }: { onSuccess: () => void; t: TFunction<'member'> }) {
   const [weight, setWeight] = useState('')
   const [height, setHeight] = useState('')
   const [submitting, setSubmitting] = useState(false)
@@ -67,7 +62,7 @@ function SelfReportForm({ onSuccess }: { onSuccess: () => void }) {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (isNaN(weightNum) || weightNum <= 0) {
-      setError('Cân nặng không hợp lệ.')
+      setError(t('progress.errorInvalidWeight'))
       return
     }
     setError(null)
@@ -81,7 +76,7 @@ function SelfReportForm({ onSuccess }: { onSuccess: () => void }) {
       setHeight('')
       onSuccess()
     } catch (err) {
-      setError(getApiError(err, 'Không thể lưu chỉ số. Vui lòng thử lại.'))
+      setError(getApiError(err, t('progress.errorSave')))
     } finally {
       setSubmitting(false)
     }
@@ -89,11 +84,11 @@ function SelfReportForm({ onSuccess }: { onSuccess: () => void }) {
 
   return (
     <div className="rogym-sx-103d1cc8 p-5">
-      <p className="text-sm font-semibold text-white mb-4">Ghi chỉ số mới</p>
+      <p className="text-sm font-semibold text-white mb-4">{t('progress.form.title')}</p>
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <div className="grid grid-cols-2 gap-3">
           <div className="flex flex-col gap-1">
-            <label className="text-xs rogym-sx-6e4f9432">Cân nặng (kg)</label>
+            <label className="text-xs rogym-sx-6e4f9432">{t('progress.form.fieldWeight')}</label>
             <input
               type="number"
               step="0.1"
@@ -107,7 +102,7 @@ function SelfReportForm({ onSuccess }: { onSuccess: () => void }) {
             />
           </div>
           <div className="flex flex-col gap-1">
-            <label className="text-xs rogym-sx-6e4f9432">Chiều cao (cm)</label>
+            <label className="text-xs rogym-sx-6e4f9432">{t('progress.form.fieldHeight')}</label>
             <input
               type="number"
               step="0.1"
@@ -123,9 +118,9 @@ function SelfReportForm({ onSuccess }: { onSuccess: () => void }) {
 
         {previewBmi != null && (
           <div className="flex items-center gap-2 text-sm">
-            <span className="rogym-sx-d88f932f">BMI dự tính:</span>
+            <span className="rogym-sx-d88f932f">{t('progress.form.bmiPreview')}</span>
             <span className="rogym-tone-text font-semibold" data-tone={bmiTone(previewBmi)}>
-              {previewBmi.toFixed(1)} — {bmiLabel(previewBmi)}
+              {previewBmi.toFixed(1)} — {bmiLabel(previewBmi, t)}
             </span>
           </div>
         )}
@@ -133,7 +128,7 @@ function SelfReportForm({ onSuccess }: { onSuccess: () => void }) {
         {error && <p className="text-xs text-red-400">{error}</p>}
 
         <button type="submit" disabled={submitting} className="btn-primary self-start">
-          {submitting ? 'Đang lưu...' : 'Lưu chỉ số'}
+          {submitting ? t('progress.form.buttonSaving') : t('progress.form.buttonSave')}
         </button>
       </form>
     </div>
@@ -141,7 +136,15 @@ function SelfReportForm({ onSuccess }: { onSuccess: () => void }) {
 }
 
 export default function ProgressPage() {
+  const { t } = useTranslation('member')
   const memberId = useAuthStore((state) => state.user?.memberId)
+
+  const RANGES = [
+    { label: '1T', days: 30 },
+    { label: '3T', days: 90 },
+    { label: '6T', days: 180 },
+    { label: t('progress.rangeAll'), days: null as number | null },
+  ]
   const [data, setData] = useState<MemberProgress[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -158,7 +161,7 @@ export default function ProgressPage() {
     try {
       setData(await trainingService.listProgress(String(memberId)))
     } catch (err) {
-      setError(getApiError(err, 'Không thể tải dữ liệu tiến độ.'))
+      setError(getApiError(err, t('progress.errorLoad')))
     } finally {
       setLoading(false)
     }
@@ -195,39 +198,39 @@ export default function ProgressPage() {
     <MemberPage>
       <div className="flex items-start justify-between gap-4">
         <MemberPageHeader
-          eyebrow="Sức khoẻ & Thể chất"
-          title="Tiến độ của tôi"
-          description="Theo dõi cân nặng, chiều cao và chỉ số BMI"
+          eyebrow={t('progress.eyebrow')}
+          title={t('progress.pageTitle')}
+          description={t('progress.description')}
         />
         <button onClick={() => setShowForm((v) => !v)} className="btn-primary shrink-0 mt-1">
-          {showForm ? 'Đóng' : 'Ghi chỉ số'}
+          {showForm ? t('progress.buttonClose') : t('progress.buttonRecord')}
         </button>
       </div>
 
-      {showForm && <SelfReportForm onSuccess={handleFormSuccess} />}
+      {showForm && <SelfReportForm onSuccess={handleFormSuccess} t={t} />}
 
       {loading ? (
         <MemberSkeleton rows={4} />
       ) : error ? (
         <MemberErrorState message={error} onRetry={loadProgress} />
       ) : data.length === 0 ? (
-        <>{!showForm && <SelfReportForm onSuccess={handleFormSuccess} />}</>
+        <>{!showForm && <SelfReportForm onSuccess={handleFormSuccess} t={t} />}</>
       ) : (
         <div className="space-y-5">
           {/* Stat cards */}
           <div className="grid grid-cols-2 gap-4">
             <div className="rogym-sx-103d1cc8">
               <p className="text-xs font-semibold uppercase tracking-wider rogym-sx-6e4f9432">
-                Cân nặng hiện tại
+                {t('progress.statCurrentWeight')}
               </p>
               <p className="mt-2 text-3xl font-bold text-white">
                 {latest.weight != null ? `${latest.weight} kg` : '—'}
               </p>
-              <p className="mt-1 text-xs rogym-sx-d88f932f">Ghi lúc {fmtDate(latest.recordedAt)}</p>
+              <p className="mt-1 text-xs rogym-sx-d88f932f">{t('progress.recordedAt', { date: fmtDate(latest.recordedAt) })}</p>
             </div>
             <div className="rogym-sx-103d1cc8">
               <p className="text-xs font-semibold uppercase tracking-wider rogym-sx-6e4f9432">
-                BMI hiện tại
+                {t('progress.statCurrentBmi')}
               </p>
               <p
                 className="rogym-tone-text mt-2 text-3xl font-bold"
@@ -236,7 +239,7 @@ export default function ProgressPage() {
                 {latest.bmi != null ? latest.bmi.toFixed(1) : '—'}
               </p>
               {latest.bmi != null && (
-                <p className="mt-1 text-xs rogym-sx-d88f932f">{bmiLabel(latest.bmi)}</p>
+                <p className="mt-1 text-xs rogym-sx-d88f932f">{bmiLabel(latest.bmi, t)}</p>
               )}
             </div>
           </div>
@@ -244,7 +247,7 @@ export default function ProgressPage() {
           {/* Chart */}
           <div className="rogym-sx-103d1cc8">
             <div className="mb-4 flex items-center justify-between">
-              <p className="text-sm font-semibold text-white">Biểu đồ cân nặng</p>
+              <p className="text-sm font-semibold text-white">{t('progress.chartTitle')}</p>
               <div className="flex gap-1">
                 {RANGES.map((r, i) => (
                   <button
@@ -261,7 +264,7 @@ export default function ProgressPage() {
             </div>
             {chartData.length < 2 ? (
               <p className="py-8 text-center text-sm rogym-sx-d88f932f">
-                Cần ít nhất 2 lần đo cân nặng để hiển thị biểu đồ
+                {t('progress.chartNeedMoreData')}
               </p>
             ) : (
               <Suspense
@@ -274,7 +277,7 @@ export default function ProgressPage() {
 
           {/* History */}
           <div className="rogym-sx-103d1cc8">
-            <p className="mb-4 text-sm font-semibold text-white">Lịch sử đo chỉ số</p>
+            <p className="mb-4 text-sm font-semibold text-white">{t('progress.historyTitle')}</p>
             <div>
               {filtered.map((entry) => (
                 <div

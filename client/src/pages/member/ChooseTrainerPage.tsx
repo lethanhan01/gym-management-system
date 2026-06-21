@@ -1,15 +1,12 @@
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
 import { memberService, type TrainerSummary } from '@/services/member.service'
 import { MemberPage, MemberPageHeader, MemberSkeleton, MemberEmptyState } from '@/components/MemberUI'
 
-const POSITION_LABEL: Record<string, string> = {
-  trainer: 'Huấn luyện viên',
-  pt: 'Personal Trainer',
-}
-
 export default function ChooseTrainerPage() {
+  const { t } = useTranslation('member')
   const navigate = useNavigate()
   const [trainers, setTrainers] = useState<TrainerSummary[]>([])
   const [loading, setLoading] = useState(true)
@@ -32,7 +29,7 @@ export default function ChooseTrainerPage() {
       await memberService.selfAssignTrainer(Number(selected))
       navigate('/member', { replace: true })
     } catch {
-      setSubmitError('Không thể chọn PT này. Vui lòng thử lại.')
+      setSubmitError(t('chooseTrainer.submitError'))
       setSubmitting(false)
     }
   }
@@ -40,16 +37,16 @@ export default function ChooseTrainerPage() {
   return (
     <MemberPage>
       <MemberPageHeader
-        eyebrow="Huấn luyện viên"
-        title="Chọn huấn luyện viên"
-        description="Chọn một PT phụ trách cho gói tập của bạn. Bạn có thể đổi PT bất kỳ lúc nào."
+        eyebrow={t('chooseTrainer.eyebrow')}
+        title={t('chooseTrainer.title')}
+        description={t('chooseTrainer.description')}
         actions={
           <button
             className="rogym-btn rogym-btn--outline-white flex items-center gap-1.5 text-sm"
             onClick={() => navigate('/member')}
           >
             <ArrowLeft size={14} />
-            Quay lại
+            {t('chooseTrainer.buttonBack')}
           </button>
         }
       />
@@ -58,24 +55,24 @@ export default function ChooseTrainerPage() {
         <MemberSkeleton rows={4} />
       ) : error ? (
         <MemberEmptyState
-          title="Không thể tải danh sách"
-          description="Đã có lỗi khi tải danh sách huấn luyện viên. Vui lòng thử lại."
+          title={t('chooseTrainer.errorTitle')}
+          description={t('chooseTrainer.errorDescription')}
         />
       ) : trainers.length === 0 ? (
         <MemberEmptyState
-          title="Chưa có huấn luyện viên"
-          description="Hệ thống hiện chưa có PT nào. Vui lòng liên hệ quầy lễ tân để được hỗ trợ."
+          title={t('chooseTrainer.emptyTitle')}
+          description={t('chooseTrainer.emptyDescription')}
         />
       ) : (
         <div className="flex flex-col gap-4">
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {trainers.map((t) => {
-              const initials = t.fullName.split(' ').map(w => w[0]).filter(Boolean).slice(-2).join('').toUpperCase()
-              const isSelected = selected === t.staffId
+            {trainers.map((trainer) => {
+              const initials = trainer.fullName.split(' ').map(w => w[0]).filter(Boolean).slice(-2).join('').toUpperCase()
+              const isSelected = selected === trainer.staffId
               return (
                 <button
-                  key={t.staffId}
-                  onClick={() => setSelected(t.staffId)}
+                  key={trainer.staffId}
+                  onClick={() => setSelected(trainer.staffId)}
                   className={`rogym-card rogym-card--compact p-5 flex flex-col items-center gap-3 text-center cursor-pointer transition-all duration-150 ${
                     isSelected
                       ? 'ring-2 ring-[var(--rogym-teal)] ring-offset-1 ring-offset-transparent'
@@ -86,13 +83,13 @@ export default function ChooseTrainerPage() {
                     <span className="rogym-sx-2e7dd58d">{initials}</span>
                   </div>
                   <div>
-                    <h3 className="text-sm font-bold text-white">{t.fullName}</h3>
+                    <h3 className="text-sm font-bold text-white">{trainer.fullName}</h3>
                     <p className="mt-1 text-xs rogym-text-secondary">
-                      {POSITION_LABEL[t.position] ?? t.position}
+                      {t('chooseTrainer.positionLabel.' + trainer.position, trainer.position)}
                     </p>
                   </div>
                   {isSelected && (
-                    <span className="rogym-tone-badge" data-tone="success">Đã chọn</span>
+                    <span className="rogym-tone-badge" data-tone="success">{t('chooseTrainer.selectedBadge')}</span>
                   )}
                 </button>
               )
@@ -109,7 +106,7 @@ export default function ChooseTrainerPage() {
               disabled={!selected || submitting}
               onClick={handleConfirm}
             >
-              {submitting ? 'Đang xử lý...' : 'Chọn làm PT của tôi'}
+              {submitting ? t('chooseTrainer.buttonProcessing') : t('chooseTrainer.buttonChoose')}
             </button>
           </div>
         </div>

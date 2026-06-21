@@ -28,6 +28,7 @@ import workoutService, {
   type WorkoutPlanDay,
 } from '@/services/workout.service'
 import { useAuthStore } from '@/stores/authStore'
+import { useTranslation } from 'react-i18next'
 
 // ── Active plan card (assignments) ────────────────────────────────────────────
 
@@ -47,6 +48,7 @@ function PlanCard({
   onUnassignSelf?: () => void
 }) {
   const navigate = useNavigate()
+  const { t } = useTranslation('member')
   const [expanded, setExpanded] = useState(false)
   const [deleteConfirm, setDeleteConfirm] = useState(false)
   const [deleting, setDeleting] = useState(false)
@@ -80,7 +82,7 @@ function PlanCard({
       setDeleteConfirm(false)
       onDelete()
     } catch {
-      setDeleteError('Không thể xóa kế hoạch.')
+      setDeleteError(t('workout.myPlan.errorDelete'))
     } finally {
       setDeleting(false)
     }
@@ -108,7 +110,7 @@ function PlanCard({
                   isPT ? 'is-trainer-plan' : ''
                 }`}
               >
-                {isPT ? 'PT giao' : 'Cá nhân'}
+                {isPT ? t('workout.myPlan.sourceTrainer') : t('workout.myPlan.sourcePersonal')}
               </span>
               <h3 className="truncate font-bold text-white">
                 {assignment.plan?.name ?? plan?.name ?? '—'}
@@ -119,18 +121,17 @@ function PlanCard({
             )}
             <div className="mt-2 flex gap-3 text-xs rogym-sx-5e5c39ab">
               <span>
-                <span className="font-semibold text-white">{totalDays}</span> ngày
+                <span className="font-semibold text-white">{totalDays}</span> {t('workout.myPlan.unitDays')}
               </span>
               {totalExercises > 0 && (
                 <span>
-                  <span className="font-semibold text-white">{totalExercises}</span> bài tập
+                  <span className="font-semibold text-white">{totalExercises}</span> {t('workout.myPlan.unitExercises')}
                 </span>
               )}
               {avgMinPerDay > 0 && (
                 <span className="flex items-center gap-1">
                   <Clock size={11} />
-                  <span className="font-semibold text-white">{avgMinPerDay}</span> phút/ngày (ước
-                  tính)
+                  <span className="font-semibold text-white">{avgMinPerDay}</span> {t('workout.myPlan.unitMinPerDay')}
                 </span>
               )}
             </div>
@@ -170,21 +171,21 @@ function PlanCard({
 
         {deleteConfirm && (
           <div className="mt-3 flex items-center gap-2 rounded-xl border border-red-400/30 bg-red-400/10 px-3 py-2">
-            <span className="flex-1 text-xs text-red-200">Xóa kế hoạch này?</span>
+            <span className="flex-1 text-xs text-red-200">{t('workout.myPlan.buttonDeletePlan')}</span>
             <button
               type="button"
               className="rogym-btn rogym-btn--danger px-3 py-1 text-xs"
               disabled={deleting}
               onClick={() => void handleDelete()}
             >
-              {deleting ? 'Đang xóa...' : 'Xóa'}
+              {deleting ? t('workout.myPlan.buttonDeleting') : t('workout.myPlan.buttonDelete')}
             </button>
             <button
               type="button"
               className="rogym-btn rogym-btn--outline-white px-3 py-1 text-xs"
               onClick={() => setDeleteConfirm(false)}
             >
-              Hủy
+              {t('workout.myPlan.buttonCancelDelete')}
             </button>
           </div>
         )}

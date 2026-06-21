@@ -4,32 +4,73 @@ import Sidebar from '@/components/shared/Sidebar'
 import Topbar from '@/components/shared/Topbar'
 import { PageSkeleton } from '@/components/shared/PageUI'
 import { useAuthStore } from '@/stores/authStore'
-import { useSubscriptionStore } from '@/stores/subscriptionStore'
-import subscriptionService from '@/services/subscription.service'
+import {
+  classifySubscriptionCheckError,
+  useSubscriptionStore,
+} from '@/stores/subscriptionStore'
+import { authService } from '@/services/auth.service'
 import { useSubscriptionExpiry } from '@/hooks/useSubscriptionExpiry'
 
 export default function DashboardLayout() {
   const user = useAuthStore((state) => state.user)
+  const setUser = useAuthStore((state) => state.setUser)
   const hasActiveSub = useSubscriptionStore((state) => state.hasActiveSub)
-  const setHasActiveSub = useSubscriptionStore((state) => state.setHasActiveSub)
+  const subscriptionStatus = useSubscriptionStore((state) => state.status)
+  const checkedMemberId = useSubscriptionStore((state) => state.checkedMemberId)
+  const checkSubscription = useSubscriptionStore((state) => state.check)
+  const setSubscriptionError = useSubscriptionStore((state) => state.setError)
   const [showExpiryToast, setShowExpiryToast] = useState(false)
   const navigate = useNavigate()
   const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const refreshedUserIdRef = useRef<string | null>(null)
 
-  const isMember = user?.roles[0] === 'member'
+  const isMember = user?.roles.includes('member') ?? false
 
   useEffect(() => {
-    if (!isMember || hasActiveSub !== null || !user?.memberId) return
-    subscriptionService
-      .getByMember(user.memberId)
-      .then((subs) => {
-        const now = new Date()
-        setHasActiveSub(subs.some((s) => s.status === 'active' && new Date(s.endDate) >= now))
+    if (!isMember) return
+
+    const memberId = user?.memberId ? String(user.memberId) : null
+    if (memberId) {
+      if (checkedMemberId === memberId && subscriptionStatus !== 'idle') return
+      void checkSubscription(memberId).catch(() => {
+        // Store owns the terminal error state; the guard renders it with retry controls.
       })
-      .catch(() => {
-        // Giữ null khi lỗi mạng tạm thời — không force redirect về setup
+      return
+    }
+
+    const userId = user?.userId
+    if (!userId || refreshedUserIdRef.current === userId) return
+    refreshedUserIdRef.current = userId
+    let cancelled = false
+
+    void authService
+      .me()
+      .then((refreshedUser) => {
+        if (cancelled) return
+        setUser(refreshedUser)
+        if (refreshedUser.roles.includes('member') && !refreshedUser.memberId) {
+          setSubscriptionError('missing_member_profile')
+        }
       })
-  }, [isMember, hasActiveSub, user?.memberId, setHasActiveSub])
+      .catch((error: unknown) => {
+        if (cancelled) return
+        const code = classifySubscriptionCheckError(error)
+        setSubscriptionError(code === 'unknown' ? 'missing_member_profile' : code)
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [
+    checkSubscription,
+    checkedMemberId,
+    isMember,
+    setSubscriptionError,
+    setUser,
+    subscriptionStatus,
+    user?.memberId,
+    user?.userId,
+  ])
 
   useSubscriptionExpiry(() => {
     if (!isMember) return

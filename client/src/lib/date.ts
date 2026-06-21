@@ -1,41 +1,44 @@
-const VI_DATE = new Intl.DateTimeFormat('vi-VN', {
-  timeZone: 'Asia/Ho_Chi_Minh',
-  day: '2-digit',
-  month: '2-digit',
-  year: 'numeric',
-})
+import i18n from './i18n'
 
-const VI_DATETIME = new Intl.DateTimeFormat('vi-VN', {
-  timeZone: 'Asia/Ho_Chi_Minh',
-  day: '2-digit',
-  month: '2-digit',
-  year: 'numeric',
-  hour: '2-digit',
-  minute: '2-digit',
-})
-
-const VI_TIME = new Intl.DateTimeFormat('vi-VN', {
-  timeZone: 'Asia/Ho_Chi_Minh',
-  hour: '2-digit',
-  minute: '2-digit',
-})
+function getIntlLocale(): string {
+  return i18n.language === 'ja' ? 'ja-JP' : 'vi-VN'
+}
 
 export function formatDate(value?: string | Date | null): string {
   if (!value) return 'Chưa có'
   const date = value instanceof Date ? value : new Date(value)
-  return Number.isNaN(date.getTime()) ? 'Không hợp lệ' : VI_DATE.format(date)
+  if (Number.isNaN(date.getTime())) return 'Không hợp lệ'
+  return new Intl.DateTimeFormat(getIntlLocale(), {
+    timeZone: 'Asia/Ho_Chi_Minh',
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  }).format(date)
 }
 
 export function formatDateTime(value?: string | Date | null): string {
   if (!value) return 'Chưa có'
   const date = value instanceof Date ? value : new Date(value)
-  return Number.isNaN(date.getTime()) ? 'Không hợp lệ' : VI_DATETIME.format(date)
+  if (Number.isNaN(date.getTime())) return 'Không hợp lệ'
+  return new Intl.DateTimeFormat(getIntlLocale(), {
+    timeZone: 'Asia/Ho_Chi_Minh',
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(date)
 }
 
 export function formatTime(value?: string | Date | null): string {
   if (!value) return 'Chưa có'
   const date = value instanceof Date ? value : new Date(value)
-  return Number.isNaN(date.getTime()) ? 'Không hợp lệ' : VI_TIME.format(date)
+  if (Number.isNaN(date.getTime())) return 'Không hợp lệ'
+  return new Intl.DateTimeFormat(getIntlLocale(), {
+    timeZone: 'Asia/Ho_Chi_Minh',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(date)
 }
 
 export function toDateInput(value?: string | Date | null): string {

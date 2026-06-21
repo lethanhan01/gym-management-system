@@ -1,5 +1,6 @@
 import { FormEvent, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { KeyRound, LoaderCircle, LogOut, Save, UserRound } from 'lucide-react'
 import { getApiError } from '@/lib/api-error'
 import { authService } from '@/services/auth.service'
@@ -15,6 +16,7 @@ import {
 import { ProfileInfoRow } from '@/components/profile/ProfileInfoRow'
 import { ProfilePasswordField } from '@/components/profile/ProfilePasswordField'
 export default function TrainerProfilePage() {
+  const { t } = useTranslation('trainer')
   const navigate = useNavigate()
   const { user, clearAuth, setAuth, token } = useAuthStore()
   const [profile, setProfile] = useState<StaffProfile | null>(null)
@@ -37,9 +39,9 @@ export default function TrainerProfilePage() {
     staffService
       .getMe()
       .then((data) => setProfile(data))
-      .catch((err) => setError(getApiError(err, 'Không thể tải hồ sơ trainer.')))
+      .catch((err) => setError(getApiError(err, t('profile.error.loadFailed'))))
       .finally(() => setLoading(false))
-  }, [])
+  }, [t])
 
   function startEdit() {
     setEditFullName(profile?.fullName ?? '')
@@ -56,7 +58,7 @@ export default function TrainerProfilePage() {
   async function handleSaveProfile() {
     const nameTrimmed = editFullName.trim()
     if (!nameTrimmed) {
-      setProfileSaveError('Họ tên không được trống.')
+      setProfileSaveError(t('profile.error.nameRequired'))
       return
     }
     setProfileSaving(true)
@@ -72,7 +74,7 @@ export default function TrainerProfilePage() {
       }
       setIsEditing(false)
     } catch (err) {
-      setProfileSaveError(getApiError(err, 'Lưu thất bại.'))
+      setProfileSaveError(getApiError(err, t('profile.error.saveFailed')))
     } finally {
       setProfileSaving(false)
     }
@@ -83,8 +85,8 @@ export default function TrainerProfilePage() {
     if (newPassword.length < 8 || newPassword !== confirmPassword) {
       setError(
         newPassword !== confirmPassword
-          ? 'Mật khẩu xác nhận không khớp.'
-          : 'Mật khẩu mới cần ít nhất 8 ký tự.'
+          ? t('profile.error.passwordMismatch')
+          : t('profile.error.passwordTooShort')
       )
       return
     }
@@ -96,9 +98,9 @@ export default function TrainerProfilePage() {
       setCurrentPassword('')
       setNewPassword('')
       setConfirmPassword('')
-      setSuccess('Đổi mật khẩu thành công.')
+      setSuccess(t('profile.changePassword.success'))
     } catch (err) {
-      setError(getApiError(err, 'Không thể đổi mật khẩu.'))
+      setError(getApiError(err, t('profile.error.changePasswordFailed')))
     } finally {
       setSaving(false)
     }
@@ -112,9 +114,9 @@ export default function TrainerProfilePage() {
   return (
     <TrainerPage>
       <TrainerPageHeader
-        eyebrow="Tài khoản"
-        title="Hồ sơ trainer"
-        description="Thông tin nhân sự và lịch làm việc của bạn."
+        eyebrow={t('profile.eyebrow')}
+        title={t('profile.title')}
+        description={t('profile.description')}
       />
       {loading ? (
         <TrainerSkeleton rows={5} />
@@ -125,7 +127,7 @@ export default function TrainerProfilePage() {
               <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[rgba(66,224,158,0.12)] rogym-text-accent">
                 <UserRound size={22} />
               </div>
-              <h2 className="rogym-eyebrow">Thông tin cá nhân</h2>
+              <h2 className="rogym-eyebrow">{t('profile.personalInfo.title')}</h2>
             </div>
 
             {profileSaveError && (
@@ -136,7 +138,7 @@ export default function TrainerProfilePage() {
 
             {isEditing ? (
               <div className="border-b border-white/5 py-3">
-                <label className="mb-1.5 block rogym-field-label">Họ tên</label>
+                <label className="mb-1.5 block rogym-field-label">{t('profile.personalInfo.fullName')}</label>
                 <input
                   type="text"
                   className="rogym-input"
@@ -146,15 +148,15 @@ export default function TrainerProfilePage() {
                 />
               </div>
             ) : (
-              <ProfileInfoRow label="Họ tên" value={profile?.fullName ?? user?.fullName ?? '--'} />
+              <ProfileInfoRow label={t('profile.personalInfo.fullName')} value={profile?.fullName ?? user?.fullName ?? '--'} />
             )}
 
-            <ProfileInfoRow label="Mã nhân viên" value={profile?.staffCode ?? '--'} />
-            <ProfileInfoRow label="Email" value={profile?.email ?? user?.email ?? '--'} />
+            <ProfileInfoRow label={t('profile.personalInfo.staffCode')} value={profile?.staffCode ?? '--'} />
+            <ProfileInfoRow label={t('profile.personalInfo.email')} value={profile?.email ?? user?.email ?? '--'} />
 
             {isEditing ? (
               <div className="border-b border-white/5 py-3">
-                <label className="mb-1.5 block rogym-field-label">Điện thoại</label>
+                <label className="mb-1.5 block rogym-field-label">{t('profile.personalInfo.phone')}</label>
                 <input
                   type="tel"
                   className="rogym-input"
@@ -164,10 +166,10 @@ export default function TrainerProfilePage() {
                 />
               </div>
             ) : (
-              <ProfileInfoRow label="Điện thoại" value={profile?.phone ?? 'Chưa cập nhật'} />
+              <ProfileInfoRow label={t('profile.personalInfo.phone')} value={profile?.phone ?? t('profile.personalInfo.noPhone')} />
             )}
 
-            <ProfileInfoRow label="Chức vụ" value={profile?.position ?? 'trainer'} />
+            <ProfileInfoRow label={t('profile.personalInfo.position')} value={profile?.position ?? 'trainer'} />
 
             <div className="mt-auto pt-6 flex gap-3">
               {isEditing ? (
@@ -178,7 +180,7 @@ export default function TrainerProfilePage() {
                     onClick={cancelEdit}
                     disabled={profileSaving}
                   >
-                    Hủy
+                    {t('profile.actions.cancel')}
                   </button>
                   <button
                     type="button"
@@ -191,7 +193,7 @@ export default function TrainerProfilePage() {
                     ) : (
                       <Save size={16} />
                     )}{' '}
-                    Lưu
+                    {t('profile.actions.save')}
                   </button>
                 </>
               ) : (
@@ -201,14 +203,14 @@ export default function TrainerProfilePage() {
                     className="rogym-btn rogym-btn--outline-white flex-1"
                     onClick={startEdit}
                   >
-                    Chỉnh sửa
+                    {t('profile.actions.edit')}
                   </button>
                   <button
                     type="button"
                     className="rogym-btn rogym-btn--danger flex-1"
                     onClick={logout}
                   >
-                    <LogOut size={16} /> Đăng xuất
+                    <LogOut size={16} /> {t('profile.actions.logout')}
                   </button>
                 </>
               )}
@@ -220,7 +222,7 @@ export default function TrainerProfilePage() {
               <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[rgba(66,224,158,0.12)] rogym-text-accent">
                 <KeyRound size={22} />
               </div>
-              <h2 className="rogym-eyebrow">Đổi mật khẩu</h2>
+              <h2 className="rogym-eyebrow">{t('profile.changePassword.title')}</h2>
             </div>
             {error && <TrainerErrorState message={error} />}
             {success && (
@@ -231,24 +233,24 @@ export default function TrainerProfilePage() {
             <form className="flex flex-col flex-1" onSubmit={changePassword}>
               <div className="space-y-4">
                 <ProfilePasswordField
-                  label="Mật khẩu hiện tại"
+                  label={t('profile.changePassword.currentPassword')}
                   value={currentPassword}
                   onChange={setCurrentPassword}
                 />
                 <ProfilePasswordField
-                  label="Mật khẩu mới"
+                  label={t('profile.changePassword.newPassword')}
                   value={newPassword}
                   onChange={setNewPassword}
                 />
                 <ProfilePasswordField
-                  label="Xác nhận mật khẩu"
+                  label={t('profile.changePassword.confirmPassword')}
                   value={confirmPassword}
                   onChange={setConfirmPassword}
                 />
               </div>
               <div className="mt-auto pt-4">
                 <SubmitButton loading={saving}>
-                  <KeyRound size={16} /> Cập nhật mật khẩu
+                  <KeyRound size={16} /> {t('profile.changePassword.submit')}
                 </SubmitButton>
               </div>
             </form>
