@@ -15,7 +15,7 @@ export default function ProgramsPage() {
       d: t('programs.hiitSubtitle'),
     },
     {
-      t: 'YOGA & LINH HOẠT',
+      t: t('programs.yogaName'),
       d: t('programs.yogaSubtitle'),
     },
   ]

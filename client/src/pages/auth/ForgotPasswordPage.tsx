@@ -52,7 +52,7 @@ function ForgotView({ onSent }: { onSent: (devOtp?: string) => void }) {
         </p>
       </div>
 
-      <Field label={t("forgotPassword.email")} type="email" placeholder="ten@email.com" value={email} onChange={setEmail} icon={Mail} />
+      <Field label={t("forgotPassword.email")} type="email" placeholder={t("forgotPassword.emailPlaceholder")} value={email} onChange={setEmail} icon={Mail} />
 
       {error && <ErrorMsg message={error} />}
 
