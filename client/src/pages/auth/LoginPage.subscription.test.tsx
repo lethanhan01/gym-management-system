@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { render, screen, waitFor } from '@testing-library/react'
+import { act, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import LoginPage from './LoginPage'
@@ -43,14 +43,14 @@ describe('LoginPage subscription handoff', () => {
     useAuthStore.getState().clearAuth()
   })
 
-  it('reuses the successful login check when DashboardLayout mounts', async () => {
+  it('checks a non-primary member role and reuses the result when DashboardLayout mounts', async () => {
     mockedLogin.mockResolvedValue({
       token: 'token',
       user: {
         userId: '1',
         email: 'member@example.com',
         fullName: 'Member',
-        roles: ['member'],
+        roles: ['staff', 'member'],
         memberId: '10',
       },
     })
@@ -113,5 +113,49 @@ describe('LoginPage subscription handoff', () => {
     await screen.findByText(/không có quyền đọc thông tin gói tập/i)
     expect(screen.queryByRole('status')).not.toBeInTheDocument()
     expect(mockedGetByMember).toHaveBeenCalledTimes(1)
+  })
+
+  it('does not navigate an old failed check after logout', async () => {
+    let rejectCheck: ((reason?: unknown) => void) | undefined
+    mockedLogin.mockResolvedValue({
+      token: 'token',
+      user: {
+        userId: '1',
+        email: 'member@example.com',
+        fullName: 'Member',
+        roles: ['member'],
+        memberId: '10',
+      },
+    })
+    mockedGetByMember.mockImplementation(
+      () =>
+        new Promise((_, reject) => {
+          rejectCheck = reject
+        })
+    )
+    const user = userEvent.setup()
+
+    render(
+      <MemoryRouter initialEntries={['/login']}>
+        <Routes>
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/member" element={<div>Member destination</div>} />
+        </Routes>
+      </MemoryRouter>
+    )
+
+    await user.type(screen.getByLabelText('Email'), 'member@example.com')
+    await user.type(screen.getByLabelText('Mật khẩu'), 'Password123!')
+    await user.click(screen.getByRole('button', { name: 'Đăng nhập' }))
+    await waitFor(() => expect(mockedGetByMember).toHaveBeenCalledTimes(1))
+
+    act(() => {
+      useSubscriptionStore.getState().clear()
+      useAuthStore.getState().clearAuth()
+      rejectCheck?.(new Error('old request failed'))
+    })
+
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Đăng nhập' })).toBeEnabled())
+    expect(screen.queryByText('Member destination')).not.toBeInTheDocument()
   })
 })

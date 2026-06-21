@@ -11,6 +11,7 @@ export default function Topbar() {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const user = useAuthStore((state) => state.user);
   const clearAuth = useAuthStore((state) => state.clearAuth);
+  const clearSubscription = useSubscriptionStore((state) => state.clear);
   const navigate = useNavigate();
   const { pathname } = useLocation();
 
@@ -45,6 +46,7 @@ export default function Topbar() {
 
   function handleLogout() {
     setOpen(false);
+    clearSubscription();
     clearAuth();
     navigate('/login', { replace: true });
   }

@@ -32,7 +32,9 @@ export default function LoginPage() {
       setAuth(user, token)
       clearSubscription()
 
-      if (user.roles[0] === 'member' && user.memberId) {
+      const isMember = user.roles.includes('member')
+
+      if (isMember && user.memberId) {
         try {
           const result = await checkSubscription(String(user.memberId))
           if (useAuthStore.getState().user?.userId !== user.userId) return
@@ -65,8 +67,12 @@ export default function LoginPage() {
             }
           }
         } catch {
+          if (useAuthStore.getState().user?.userId !== user.userId) return
           navigate('/member', { replace: true })
         }
+      } else if (isMember) {
+        // DashboardLayout refreshes /auth/me once and owns the missing-profile error state.
+        navigate('/member', { replace: true })
       } else {
         navigate(roleRouteMap[user.roles[0]] ?? '/', { replace: true })
       }

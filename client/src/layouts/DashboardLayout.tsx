@@ -4,8 +4,10 @@ import Sidebar from '@/components/shared/Sidebar'
 import Topbar from '@/components/shared/Topbar'
 import { PageSkeleton } from '@/components/shared/PageUI'
 import { useAuthStore } from '@/stores/authStore'
-import { useSubscriptionStore } from '@/stores/subscriptionStore'
-import { classifySubscriptionCheckError } from '@/stores/subscriptionStore'
+import {
+  classifySubscriptionCheckError,
+  useSubscriptionStore,
+} from '@/stores/subscriptionStore'
 import { authService } from '@/services/auth.service'
 import { useSubscriptionExpiry } from '@/hooks/useSubscriptionExpiry'
 
