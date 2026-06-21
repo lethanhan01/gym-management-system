@@ -35,6 +35,9 @@
       "unitTimes": "回",
       "unitKg": "kg"
     },
+    "viewAll": "すべて見る →",
+    "viewDetail": "詳細 →",
+    "trainerPrefix": "トレーナー",
     "sessions": {
       "widgetTitle": "次回のトレーニング"
     },

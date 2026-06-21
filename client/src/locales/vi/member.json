@@ -35,6 +35,9 @@
       "unitTimes": "lần",
       "unitKg": "kg"
     },
+    "viewAll": "Xem tất cả →",
+    "viewDetail": "Chi tiết →",
+    "trainerPrefix": "HLV",
     "sessions": {
       "widgetTitle": "Lịch tập sắp tới"
     },

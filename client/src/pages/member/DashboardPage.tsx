@@ -69,14 +69,15 @@ const Skeleton = memo(function Skeleton({ h = 100 }: { h?: number }) {
 })
 
 const ErrorWidget = memo(function ErrorWidget({
-  message = '',
+  message,
 }: {
   message?: string
 }) {
+  const { t } = useTranslation('member')
   return (
     <div className="flex items-center gap-2 py-4 px-3 rounded-2xl rogym-sx-6a3fe515">
       <AlertCircle size={16} className="text-red-400 shrink-0" />
-      <span className="text-[13px] text-red-300 rogym-sx-3278ee06">{message}</span>
+      <span className="text-[13px] text-red-300 rogym-sx-3278ee06">{message ?? t('dashboard.errorLoad')}</span>
     </div>
   )
 })
@@ -383,13 +384,13 @@ const SessionsWidget = memo(function SessionsWidget({
           onClick={() => navigate('/member/workout/sessions')}
           className="rogym-text-link rogym-text-link--accent text-xs"
         >
-          Xem tất cả →
+          {t('dashboard.viewAll')}
         </button>
       </div>
       {sessions.length === 0 ? (
         <div className="flex flex-col items-center gap-2 py-6">
           <CalendarX size={32} className="rogym-text-secondary" />
-          <span className="text-sm rogym-text-secondary">{t('sessions.noUpcoming')}</span>
+          <span className="text-sm rogym-text-secondary">{t('workout.schedule.noUpcoming')}</span>
         </div>
       ) : (
         <div className="flex flex-col gap-2">
@@ -405,7 +406,7 @@ const SessionsWidget = memo(function SessionsWidget({
                   <p className="text-sm font-semibold text-white">{fmtDatetime(s.startTime)}</p>
                   {s.trainerName && (
                     <p className="text-xs rogym-text-secondary">
-                      HLV: {s.trainerName}
+                      {t('dashboard.trainerPrefix')}: {s.trainerName}
                       {s.roomName ? ` · ${s.roomName}` : ''}
                     </p>
                   )}
@@ -446,7 +447,7 @@ const WorkoutWidget = memo(function WorkoutWidget({
           onClick={() => navigate('/member/workout/plan')}
           className="rogym-text-link rogym-text-link--accent text-xs"
         >
-          Chi tiết →
+          {t('dashboard.viewDetail')}
         </button>
       </div>
       {plan ? (
@@ -491,7 +492,7 @@ const FeedbackWidget = memo(function FeedbackWidget({
           onClick={() => navigate('/member/feedback')}
           className="rogym-text-link rogym-text-link--accent text-xs"
         >
-          Xem tất cả →
+          {t('dashboard.viewAll')}
         </button>
       </div>
       {feedbacks.length === 0 ? (
@@ -541,7 +542,7 @@ export default function MemberDashboardPage() {
   const navigate = useNavigate()
   const location = useLocation()
   const { user, clearAuth } = useAuthStore()
-  const setHasActiveSub = useSubscriptionStore((s) => s.setHasActiveSub)
+  const setResolvedStatus = useSubscriptionStore((s) => s.setResolvedStatus)
 
   const [subscription, setSubscription] = useState<Subscription | null>(null)
   const [packageName, setPackageName] = useState('')
@@ -616,7 +617,7 @@ export default function MemberDashboardPage() {
           // KHÔNG ràng buộc startDate <= now: gói mua trong ngày có startDate = 00:00 UTC,
           // khi giờ UTC hiện tại vẫn là hôm trước sẽ bị coi là "chưa bắt đầu" → lệch với
           // SubscriptionSetupPage/DashboardLayout và gây vòng lặp redirect /member ⇄ /setup.
-          setHasActiveSub(subs.some((s) => s.status === 'active' && new Date(s.endDate) >= now))
+          setResolvedStatus(subs.some((s) => s.status === 'active' && new Date(s.endDate) >= now))
           activePackageId = active?.packageId ?? undefined
         } else {
           const err = subsR.reason
