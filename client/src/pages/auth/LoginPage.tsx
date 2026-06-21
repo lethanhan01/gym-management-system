@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom'
 import { authService } from '@/services/auth.service'
 import { useAuthStore } from '@/stores/authStore'
 import { useSubscriptionStore } from '@/stores/subscriptionStore'
-import subscriptionService from '@/services/subscription.service'
 import { AuthShell, BtnPrimary, TextLink, MutedLink, Field, ErrorMsg } from './_authui'
 
 const roleRouteMap: Record<string, string> = {
@@ -22,6 +21,7 @@ export default function LoginPage() {
   const navigate = useNavigate()
   const { setAuth } = useAuthStore()
   const clearSubscription = useSubscriptionStore((s) => s.clear)
+  const checkSubscription = useSubscriptionStore((s) => s.check)
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -34,10 +34,10 @@ export default function LoginPage() {
 
       if (user.roles[0] === 'member' && user.memberId) {
         try {
-          const subs = await subscriptionService.getByMember(String(user.memberId))
-          const now = new Date()
-          const hasValid = subs.some((s) => s.status === 'active' && new Date(s.endDate) >= now)
-          if (hasValid) {
+          const result = await checkSubscription(String(user.memberId))
+          if (useAuthStore.getState().user?.userId !== user.userId) return
+          const subs = result.subscriptions
+          if (result.hasActiveSub) {
             navigate('/member', { replace: true })
           } else {
             const pendingSub = subs.find((s) => s.status === 'pending' && s.package)

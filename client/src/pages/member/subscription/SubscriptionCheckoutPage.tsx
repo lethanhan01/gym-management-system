@@ -85,7 +85,7 @@ export default function SubscriptionCheckoutPage({ mode }: { mode: 'buy' | 'rene
   const state = location.state as PayState | null
 
   const { user } = useAuthStore()
-  const { setHasActiveSub } = useSubscriptionStore()
+  const setResolvedStatus = useSubscriptionStore((state) => state.setResolvedStatus)
 
   const [method, setMethod] = useState<PaymentMethod>('cash')
   const [bankName, setBankName] = useState('')
@@ -224,7 +224,7 @@ export default function SubscriptionCheckoutPage({ mode }: { mode: 'buy' | 'rene
         ...(txRef.trim() ? { transactionReference: txRef.trim() } : {}),
       })
       await saveAccountIfNeeded()
-      setHasActiveSub(true)
+      setResolvedStatus(true, user.memberId)
       navigate('/member', { replace: true })
     } catch (err) {
       const e = err as { response?: { status?: number; data?: { message?: string } } }

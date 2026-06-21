@@ -69,7 +69,15 @@ export function PageEmptyState({
   )
 }
 
-export function PageErrorState({ message, onRetry }: { message: string; onRetry?: () => void }) {
+export function PageErrorState({
+  message,
+  onRetry,
+  retryLabel = 'Thử lại',
+}: {
+  message: string
+  onRetry?: () => void
+  retryLabel?: string
+}) {
   return (
     <div className="rogym-card rogym-card--compact flex items-center gap-4 border-red-400/20 p-5">
       <AlertCircle className="shrink-0 text-red-300" size={22} />
@@ -80,7 +88,7 @@ export function PageErrorState({ message, onRetry }: { message: string; onRetry?
           className="rogym-btn rogym-btn--outline-white px-4 py-2 text-xs"
           onClick={onRetry}
         >
-          Thử lại
+          {retryLabel}
         </button>
       )}
     </div>

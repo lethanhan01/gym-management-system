@@ -17,6 +17,7 @@ import {
 } from 'lucide-react'
 import { useAuthStore } from '@/stores/authStore'
 import { useSubscriptionStore } from '@/stores/subscriptionStore'
+import { hasActiveSubscription, isSubscriptionActive } from '@/lib/subscription'
 import subscriptionService, { type Subscription } from '@/services/subscription.service'
 import packageService from '@/services/package.service'
 import { trainingService, type TrainingSession } from '@/services/training.service'
@@ -559,7 +560,7 @@ export default function MemberDashboardPage() {
   const navigate = useNavigate()
   const location = useLocation()
   const { user, clearAuth } = useAuthStore()
-  const setHasActiveSub = useSubscriptionStore((s) => s.setHasActiveSub)
+  const setResolvedStatus = useSubscriptionStore((s) => s.setResolvedStatus)
 
   const [subscription, setSubscription] = useState<Subscription | null>(null)
   const [packageName, setPackageName] = useState('')
@@ -624,17 +625,14 @@ export default function MemberDashboardPage() {
         /* Subscription */
         if (subsR.status === 'fulfilled') {
           const subs = subsR.value
-          const validActive = subs.find(
-            (s) =>
-              s.status === 'active' && new Date(s.startDate) <= now && new Date(s.endDate) >= now
-          )
+          const validActive = subs.find((s) => isSubscriptionActive(s, now))
           const active = validActive ?? subs.find((s) => s.status === 'active') ?? subs[0] ?? null
           setSubscription(active)
           // Gate truy cập theo đúng định nghĩa dùng chung toàn app (status active + chưa hết hạn).
           // KHÔNG ràng buộc startDate <= now: gói mua trong ngày có startDate = 00:00 UTC,
           // khi giờ UTC hiện tại vẫn là hôm trước sẽ bị coi là "chưa bắt đầu" → lệch với
           // SubscriptionSetupPage/DashboardLayout và gây vòng lặp redirect /member ⇄ /setup.
-          setHasActiveSub(subs.some((s) => s.status === 'active' && new Date(s.endDate) >= now))
+          setResolvedStatus(hasActiveSubscription(subs, now), memberId)
           activePackageId = active?.packageId ?? undefined
         } else {
           const err = subsR.reason
@@ -691,12 +689,7 @@ export default function MemberDashboardPage() {
           const p = profileR.value
           setProfile(p)
           const activeSub =
-            p.subscriptions?.find(
-              (s) =>
-                s.status === 'active' &&
-                new Date(s.startDate) <= now &&
-                new Date(s.endDate) >= now
-            ) ??
+            p.subscriptions?.find((s) => isSubscriptionActive(s, now)) ??
             p.subscriptions?.find((s) => s.status === 'active') ??
             p.subscriptions?.[0]
           if (activeSub !== undefined) {

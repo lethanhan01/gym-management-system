@@ -8,6 +8,20 @@
   "chooseTrainer": { "title": "Chọn huấn luyện viên" },
   "paymentAccounts": { "title": "Tài khoản thanh toán" },
   "subscription": {
+    "access": {
+      "loading": "Đang kiểm tra quyền truy cập gói tập",
+      "retry": "Thử lại",
+      "logout": "Đăng xuất",
+      "errors": {
+        "timeout": "Máy chủ phản hồi quá lâu. Hệ thống đã thử lại nhưng chưa thành công.",
+        "network": "Không thể kết nối đến máy chủ. Vui lòng kiểm tra mạng và thử lại.",
+        "forbidden": "Tài khoản không có quyền đọc thông tin gói tập. Vui lòng liên hệ quản trị viên.",
+        "service_unavailable": "Dịch vụ gói tập đang tạm thời không khả dụng. Vui lòng thử lại sau.",
+        "invalid_response": "Máy chủ trả về dữ liệu không hợp lệ. Vui lòng kiểm tra cấu hình API.",
+        "missing_member_profile": "Không tìm thấy hồ sơ hội viên cho tài khoản này. Vui lòng đăng xuất và liên hệ quản trị viên nếu lỗi tiếp diễn.",
+        "unknown": "Không thể kiểm tra gói tập. Vui lòng thử lại."
+      }
+    },
     "current": { "title": "Gói tập hiện tại" },
     "history": { "title": "Lịch sử gói tập" },
     "setup": { "title": "Đăng ký gói tập" },

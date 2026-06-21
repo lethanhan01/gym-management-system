@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { User, CreditCard, LogOut, ShoppingBag } from 'lucide-react';
 import { useAuthStore } from '../../stores/authStore';
 import { useSubscriptionStore } from '../../stores/subscriptionStore';
+import { LanguageSwitcher } from '@/components/ui/LanguageSwitcher';
 
 
 export default function Topbar() {
@@ -58,6 +59,8 @@ export default function Topbar() {
           <ShoppingBag size={13} /> Đăng ký gói tập
         </button>
       )}
+
+      <LanguageSwitcher />
 
       {/* Avatar button + dropdown */}
       <div ref={dropdownRef} className="rogym-sx-50666a57">

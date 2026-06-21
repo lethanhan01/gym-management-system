@@ -1,4 +1,11 @@
 import api from './api'
+import { parseSubscriptionListResponse } from '@/lib/subscriptionResponse'
+
+export { InvalidSubscriptionResponseError } from '@/lib/subscriptionResponse'
+
+export interface SubscriptionRequestOptions {
+  timeout?: number
+}
 
 export interface Subscription {
   subscriptionId: string
@@ -24,11 +31,15 @@ export interface Subscription {
 }
 
 const subscriptionService = {
-  getByMember: async (memberId: string): Promise<Subscription[]> => {
+  getByMember: async (
+    memberId: string,
+    options: SubscriptionRequestOptions = {}
+  ): Promise<Subscription[]> => {
     const res = await api.get<{ success: boolean; data: Subscription[] }>(
-      `/subscriptions/member/${memberId}`
+      `/subscriptions/member/${memberId}`,
+      { timeout: options.timeout }
     )
-    return res.data.data
+    return parseSubscriptionListResponse(res.data)
   },
 
   create: async (

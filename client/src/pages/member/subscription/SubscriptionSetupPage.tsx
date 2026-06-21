@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import packageService, { type Package } from '@/services/package.service'
 import subscriptionService from '@/services/subscription.service'
+import { hasActiveSubscription } from '@/lib/subscription'
+import { useSubscriptionStore } from '@/stores/subscriptionStore'
 import trainerService, { type Trainer } from '@/services/trainer.service'
 import { useAuthStore } from '@/stores/authStore'
 import { MemberPage, MemberPageHeader } from '@/components/MemberUI'
@@ -21,6 +23,7 @@ export default function SubscriptionSetupPage() {
   const [retryCount, setRetryCount] = useState(0)
   const navigate = useNavigate()
   const { user } = useAuthStore()
+  const setResolvedStatus = useSubscriptionStore((state) => state.setResolvedStatus)
 
   useEffect(() => {
     if (!user?.memberId) {
@@ -30,10 +33,8 @@ export default function SubscriptionSetupPage() {
     subscriptionService
       .getByMember(user.memberId)
       .then((subscriptions) => {
-        const now = Date.now()
-        const hasCurrentSubscription = subscriptions.some(
-          (item) => item.status === 'active' && new Date(item.endDate).getTime() >= now
-        )
+        const hasCurrentSubscription = hasActiveSubscription(subscriptions)
+        setResolvedStatus(hasCurrentSubscription, user.memberId ?? undefined)
         if (hasCurrentSubscription) {
           navigate('/member', { replace: true })
           return
@@ -65,7 +66,7 @@ export default function SubscriptionSetupPage() {
       })
       .catch(() => { setPackages([]); setLoadError(true) })
       .finally(() => setLoading(false))
-  }, [navigate, user?.memberId, retryCount])
+  }, [navigate, retryCount, setResolvedStatus, user?.memberId])
 
   const selectedPackage = packages.find((item) => item.packageId === selectedId) ?? null
   const startDate = new Date()

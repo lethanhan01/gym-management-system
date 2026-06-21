@@ -27,6 +27,11 @@ import { getPaymentMethodLabel } from '@/components/payment/payment-method-data'
 import { formatVnd } from '@/lib/currency'
 import { formatDate } from '@/lib/date'
 import { parsePackageBenefits } from '@/lib/package'
+import {
+  gymDateKey,
+  isSubscriptionActive,
+  subscriptionEndDateKey,
+} from '@/lib/subscription'
 
 function Badge({ label, tone = 'muted' }: { label: string; tone?: string }) {
   return (
@@ -45,7 +50,8 @@ const SUB_STATUS_MAP: Record<string, { label: string; tone: string }> = {
 }
 
 function getRealStatus(s: Subscription): string {
-  if ((s.status === 'active' || s.status === 'expired') && new Date(s.endDate) < new Date())
+  const endDate = subscriptionEndDateKey(s.endDate)
+  if ((s.status === 'active' || s.status === 'expired') && endDate && endDate < gymDateKey())
     return 'ended'
   return s.status
 }
@@ -71,7 +77,7 @@ export default function CurrentPackagePage() {
   const navigate = useNavigate()
   const location = useLocation()
   const { user, clearAuth } = useAuthStore()
-  const setHasActiveSub = useSubscriptionStore((s) => s.setHasActiveSub)
+  const setResolvedStatus = useSubscriptionStore((s) => s.setResolvedStatus)
 
   useEffect(() => {
     if (location.state?.justActivated) {
@@ -94,15 +100,14 @@ export default function CurrentPackagePage() {
           const sorted = subRes.value.sort(
             (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
           )
-          const today = new Date()
-          const active =
-            sorted.find((s) => s.status === 'active' && new Date(s.endDate) >= today) ??
-            sorted.find((s) => s.status === 'pending' && new Date(s.endDate) >= today)
-          setSubscription(active ?? null)
-          setHasActiveSub(!!active)
-          if (active?.packageId) {
+          const active = sorted.find((s) => isSubscriptionActive(s))
+          const pending = sorted.find((s) => s.status === 'pending')
+          const current = active ?? pending
+          setSubscription(current ?? null)
+          setResolvedStatus(Boolean(active), memberId)
+          if (current?.packageId) {
             packageService
-              .get(active.packageId)
+              .get(current.packageId)
               .then(setPkg)
               .catch(() => {})
           }
@@ -119,7 +124,7 @@ export default function CurrentPackagePage() {
         }
       })
       .finally(() => setLoading(false))
-  }, [user?.memberId, navigate, clearAuth, setHasActiveSub])
+  }, [user?.memberId, navigate, clearAuth, setResolvedStatus])
 
   async function handleCancel() {
     if (!cancelTarget || !user?.memberId) return
@@ -128,7 +133,7 @@ export default function CurrentPackagePage() {
     try {
       await subscriptionService.cancel(cancelTarget.subscriptionId)
       setCancelTarget(null)
-      setHasActiveSub(false)
+      setResolvedStatus(false, user.memberId)
       setToast('Đã hủy gói tập thành công.')
       setTimeout(() => {
         setToast(null)

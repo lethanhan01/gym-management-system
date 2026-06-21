@@ -285,6 +285,39 @@
     color: var(--rogym-teal);
   }
 
+  .rogym-lang-switcher {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.25rem 0.625rem;
+    border: 1px solid var(--rogym-border-white-dim);
+    border-radius: 9999px;
+    background: var(--rogym-bg-elevated);
+    font-family: var(--rogym-font-body);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    cursor: pointer;
+    transition: border-color 200ms ease;
+  }
+
+  .rogym-lang-switcher:hover {
+    border-color: rgba(255, 255, 255, 0.22);
+  }
+
+  .rogym-lang-switcher__active {
+    color: var(--rogym-green);
+  }
+
+  .rogym-lang-switcher__sep {
+    color: var(--rogym-text-dim);
+    font-weight: 400;
+  }
+
+  .rogym-lang-switcher__inactive {
+    color: var(--rogym-text-muted);
+  }
+
   .rogym-exercise-option {
     border-bottom: 1px solid rgba(255, 255, 255, 0.04);
     background: transparent;

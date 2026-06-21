@@ -41,7 +41,7 @@ export default function PaymentPage() {
 
   const navigate  = useNavigate()
   const { user, isAuthenticated } = useAuthStore()
-  const setHasActiveSub = useSubscriptionStore((s) => s.setHasActiveSub)
+  const setResolvedStatus = useSubscriptionStore((s) => s.setResolvedStatus)
 
   useEffect(() => {
     packageService.list({ status: 'active' })
@@ -72,7 +72,7 @@ export default function PaymentPage() {
         method,
         amount: Number(selected.price),
       })
-      setHasActiveSub(true)
+      setResolvedStatus(true, user.memberId)
       navigate('/member', { state: { paymentSuccess: true } })
     } catch (err) {
       const e = err as { response?: { status?: number; data?: { message?: string } } }
