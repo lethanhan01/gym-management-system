@@ -1,5 +1,6 @@
 import { memo, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import {
   Dumbbell,
   Zap,
@@ -52,128 +53,20 @@ type CoachCardProps = {
 
 type Plan = { tier: string; price: string; unit: string; features: readonly string[]; hot: boolean }
 
-const HERO_STATS = [
-  ['2,500+', 'Thành viên'],
-  ['15+', 'Huấn luyện viên'],
-  ['98%', 'Hài lòng'],
-] as const
+const HERO_STATS_NUMBERS = ['2,500+', '15+', '98%'] as const
 
-const FEATURE_ITEMS: [LucideIcon, string][] = [
-  [Dumbbell, 'THIẾT BỊ HIỆN ĐẠI'],
-  [Users, 'HLV CHUYÊN NGHIỆP'],
-  [Clock, 'MỞ CỬA 24/7'],
-  [Trophy, 'CỘNG ĐỒNG MẠNH MẼ'],
-  [Zap, 'KẾT QUẢ ĐƯỢC CHỨNG MINH'],
-  [Apple, 'DINH DƯỠNG KHOA HỌC'],
-]
+const FEATURE_ICONS: LucideIcon[] = [Dumbbell, Users, Clock, Trophy, Zap, Apple]
 
 const MARQUEE_GROUPS = [0, 1] as const
 
-const TRAINING_PROGRAMS: TrainingCardProps[] = [
-  {
-    img: powerlift,
-    tag: 'ELITE POWER',
-    title: 'POWERLIFTING',
-    desc: 'Tập trung vào ba bài tập cơ bản: Squat, Bench Press, và Deadlift để xây dựng sức mạnh tối đa.',
-    width: 1080,
-    height: 1920,
-  },
-  {
-    img: hiit,
-    tag: 'FAT BURNER',
-    title: 'HIIT TRAINING',
-    desc: 'Đốt cháy calo tối đa với các bài tập cường độ cao ngắt quãng, cải thiện sức bền tim mạch.',
-    width: 1080,
-    height: 1920,
-  },
-]
-
-const EXTRA_PROGRAMS: [LucideIcon, string, string][] = [
-  [Dumbbell, 'Strength Training', 'Xây dựng cơ bắp và sức mạnh cốt lõi'],
-  [Zap, 'Yoga & Linh hoạt', 'Cân bằng cơ thể và tâm trí'],
-  [Trophy, 'Boxing', 'Rèn luyện phản xạ và cardio tối ưu'],
-]
-
-const COACHES: CoachCardProps[] = [
-  {
-    img: pt1,
-    name: 'PHAM YEN NHI',
-    role: 'MASTER POWERLIFTER',
-    bio: 'Chuyên gia dinh dưỡng và giảm cân khoa học.',
-    width: 1179,
-    height: 1470,
-  },
-  {
-    img: pt2,
-    name: 'TRINH VAN MINH',
-    role: 'HIIT SPECIALIST',
-    bio: 'Chuyên đào tạo kỹ thuật nâng tạ và phục hồi chức năng.',
-    width: 736,
-    height: 1104,
-  },
-  {
-    img: pt3,
-    name: 'LE THANH AN',
-    role: 'STRENGTH COACH',
-    bio: '10 năm kinh nghiệm huấn luyện thi đấu chuyên nghiệp.',
-    width: 634,
-    height: 951,
-  },
-]
-
-const PRICING_PLANS: Plan[] = [
-  {
-    tier: 'CƠ BẢN',
-    price: '599K',
-    unit: '/Tháng',
-    features: ['Truy cập gym 24/7', 'Tủ đồ cá nhân', 'Khu vực cardio & tạ rời'],
-    hot: false,
-  },
-  {
-    tier: 'THƯỢNG HẠNG',
-    price: '999K',
-    unit: '/Tháng',
-    features: [
-      'Tất cả quyền lợi Cơ Bản',
-      '4 buổi PT/tháng',
-      'Tư vấn dinh dưỡng',
-      'Lớp nhóm không giới hạn',
-      'Phục hồi chức năng',
-    ],
-    hot: true,
-  },
-  {
-    tier: 'ELITE VIP',
-    price: '1.9M',
-    unit: '/Tháng',
-    features: [
-      'Tất cả quyền lợi Thượng Hạng',
-      'PT không giới hạn',
-      'Khu vực VIP riêng biệt',
-      'Spa & phòng xông hơi',
-      'Ưu tiên đặt lịch',
-    ],
-    hot: false,
-  },
-]
-
-const FOOTER_COLUMNS = [
-  {
-    category: 'Chương trình',
-    links: ['Powerlifting', 'HIIT Training', 'Yoga', 'Boxing', 'Strength'],
-  },
-  {
-    category: 'Thông tin',
-    links: ['Về chúng tôi', 'Chương trình tập luyện', 'Đội ngũ HLV', 'Gói thành viên', 'Liên hệ'],
-  },
-  { category: 'Hỗ trợ', links: ['Câu hỏi thường gặp', 'Liên hệ', 'Chính sách', 'Điều khoản'] },
-] as const
 
 const SOCIAL_LINKS: [LucideIcon, string][] = [
   [Facebook, 'Facebook'],
   [Instagram, 'Instagram'],
   [Youtube, 'YouTube'],
 ]
+
+const FOOTER_PROGRAM_LINKS = ['Powerlifting', 'HIIT Training', 'Yoga', 'Boxing', 'Strength']
 
 /* ── Shared CTA buttons ── */
 const BtnPrimary = memo(function BtnPrimary({ children, to }: ButtonProps) {
@@ -218,6 +111,14 @@ const BtnOutline = memo(function BtnOutline({
 
 /* ── Hero ── */
 const HeroSection = memo(function HeroSection() {
+  const { t } = useTranslation('home')
+
+  const heroStatLabels = [
+    t('hero.statsMembers'),
+    t('hero.statsTrainers'),
+    t('hero.statsSatisfied'),
+  ]
+
   return (
     <section className="relative w-full min-h-screen flex items-center overflow-hidden">
       <div className="absolute inset-0">
@@ -237,33 +138,32 @@ const HeroSection = memo(function HeroSection() {
         <div className="max-w-[640px]">
           <div className="flex items-center gap-3 mb-6">
             <div className="h-px w-10 rounded-full rogym-sx-c3c1e2cb" />
-            <span className="rogym-sx-e07a83ed">ROGYM — Đỉnh cao phong độ</span>
+            <span className="rogym-sx-e07a83ed">{t('hero.tagline')}</span>
           </div>
           <h1 className="uppercase leading-none mb-6 rogym-sx-5ba16c42">
-            KHƠI NGUỒN
+            {t('hero.heading1')}
             <br />
-            <span className="rogym-sx-f27dac31">SỨC MẠNH</span>
+            <span className="rogym-sx-f27dac31">{t('hero.heading2')}</span>
           </h1>
           <p className="mb-8 max-w-[500px] rogym-sx-f2f202e3">
-            Nâng tầm giới hạn thể chất của bạn ngay hôm nay cùng đội ngũ chuyên gia hàng đầu và
-            thiết bị hiện đại nhất.
+            {t('hero.body')}
           </p>
           <div className="flex flex-wrap gap-4">
-            <BtnPrimary to="/login">BẮT ĐẦU NGAY</BtnPrimary>
-            <BtnOutline to="/programs">TÌM HIỂU THÊM</BtnOutline>
+            <BtnPrimary to="/login">{t('hero.ctaStart')}</BtnPrimary>
+            <BtnOutline to="/programs">{t('hero.ctaLearnMore')}</BtnOutline>
           </div>
           <div className="mt-14 flex gap-10 flex-wrap">
-            {HERO_STATS.map(([n, l]) => (
-              <div key={l}>
+            {HERO_STATS_NUMBERS.map((n, i) => (
+              <div key={n}>
                 <div className="rogym-sx-7cd3ffb3">{n}</div>
-                <div className="rogym-sx-d26a35f2">{l}</div>
+                <div className="rogym-sx-d26a35f2">{heroStatLabels[i]}</div>
               </div>
             ))}
           </div>
         </div>
       </div>
       <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 rogym-sx-448054ab">
-        <span className="rogym-sx-a3416a9a">Cuộn xuống</span>
+        <span className="rogym-sx-a3416a9a">{t('hero.scrollDown')}</span>
         <ChevronDown size={16} color="#fff" />
       </div>
     </section>
@@ -272,18 +172,29 @@ const HeroSection = memo(function HeroSection() {
 
 /* ── Feature marquee ── */
 const FeatureBar = memo(function FeatureBar() {
+  const { t } = useTranslation('home')
+
+  const featureTexts = [
+    t('features.equipment'),
+    t('features.trainers'),
+    t('features.hours'),
+    t('features.community'),
+    t('features.results'),
+    t('features.nutrition'),
+  ]
+
   return (
     <div className="rogym-marquee w-full overflow-hidden py-5 border-y rogym-sx-45cdf5dd">
       <div className="rogym-marquee__track">
         {MARQUEE_GROUPS.map((groupIndex) => (
           <div key={groupIndex} className="rogym-marquee__group" aria-hidden={groupIndex === 1}>
-            {FEATURE_ITEMS.map(([Icon, text]) => (
+            {FEATURE_ICONS.map((Icon, idx) => (
               <span
-                key={`${groupIndex}-${text}`}
+                key={`${groupIndex}-${featureTexts[idx]}`}
                 className="flex items-center gap-3 font-bold text-sm uppercase tracking-[0.18em] rogym-sx-d684cd20"
               >
                 <Icon size={15} color={GD} strokeWidth={2.5} />
-                {text}
+                {featureTexts[idx]}
               </span>
             ))}
           </div>
@@ -302,6 +213,7 @@ const TrainingCard = memo(function TrainingCard({
   width,
   height,
 }: TrainingCardProps) {
+  const { t } = useTranslation('home')
   return (
     <div className="rogym-media-card rogym-media-card--dark relative rounded-[40px] overflow-hidden cursor-pointer rogym-sx-6063d874">
       <img
@@ -326,7 +238,7 @@ const TrainingCard = memo(function TrainingCard({
           className="rogym-text-link rogym-text-link--accent mt-4 rogym-sx-f27dac31"
         >
           <span className="text-sm font-bold uppercase tracking-widest rogym-sx-3278ee06">
-            CHI TIẾT
+            {t('programs.detail')}
           </span>
           <ArrowRight size={14} color={T} />
         </button>
@@ -337,29 +249,56 @@ const TrainingCard = memo(function TrainingCard({
 
 /* ── Training section ── */
 const TrainingSection = memo(function TrainingSection() {
+  const { t } = useTranslation('home')
+
+  const trainingPrograms: TrainingCardProps[] = [
+    {
+      img: powerlift,
+      tag: 'ELITE POWER',
+      title: 'POWERLIFTING',
+      desc: t('programs.powerliftingDesc'),
+      width: 1080,
+      height: 1920,
+    },
+    {
+      img: hiit,
+      tag: 'FAT BURNER',
+      title: 'HIIT TRAINING',
+      desc: t('programs.hiitDesc'),
+      width: 1080,
+      height: 1920,
+    },
+  ]
+
+  const extraPrograms: [LucideIcon, string, string][] = [
+    [Dumbbell, t('programs.strengthName'), t('programs.strengthDesc')],
+    [Zap, t('programs.yogaName'), t('programs.yogaDesc')],
+    [Trophy, t('programs.boxingName'), t('programs.boxingDesc')],
+  ]
+
   return (
     <section className="w-full py-32 relative rogym-sx-d8b3875b">
       <div className="max-w-[1280px] mx-auto px-10">
         <div className="flex items-end justify-between mb-16 flex-wrap gap-6">
           <div>
             <div className="text-xs font-bold uppercase tracking-[0.3em] mb-4 rogym-sx-9cd1aaa6">
-              LEVEL UP YOUR GAME
+              {t('programs.sectionLabel')}
             </div>
             <h2 className="uppercase leading-none rogym-sx-37943c0d">
-              CHƯƠNG TRÌNH
+              {t('programs.heading1')}
               <br />
-              TẬP LUYỆN
+              {t('programs.heading2')}
             </h2>
           </div>
           <div className="h-1 w-32 rounded-full rogym-sx-c3c1e2cb" />
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
-          {TRAINING_PROGRAMS.map((program) => (
+          {trainingPrograms.map((program) => (
             <TrainingCard key={program.title} {...program} />
           ))}
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {EXTRA_PROGRAMS.map(([Icon, name, desc]) => (
+          {extraPrograms.map(([Icon, name, desc]) => (
             <div key={name} className="rogym-mini-card p-6 rounded-2xl cursor-pointer">
               <div className="mb-3 w-10 h-10 rounded-xl flex items-center justify-center rogym-sx-30aed1d5">
                 <Icon size={20} color={T} strokeWidth={2} />
@@ -403,24 +342,32 @@ const CoachCard = memo(function CoachCard({ img, name, role, bio, width, height 
 
 /* ── Coaches section ── */
 const CoachSection = memo(function CoachSection() {
+  const { t } = useTranslation('home')
+
+  const coaches: CoachCardProps[] = [
+    { img: pt1, name: 'PHAM YEN NHI', role: 'MASTER POWERLIFTER', bio: t('trainers.phamYenNhiBio'), width: 1179, height: 1470 },
+    { img: pt2, name: 'TRINH VAN MINH', role: 'HIIT SPECIALIST', bio: t('trainers.trinhVanMinhBio'), width: 736, height: 1104 },
+    { img: pt3, name: 'LE THANH AN', role: 'STRENGTH COACH', bio: t('trainers.lethanhAnBio'), width: 634, height: 951 },
+  ]
+
   return (
     <section className="w-full py-32 bg-white relative overflow-hidden">
       <div className="absolute inset-0 pointer-events-none rogym-sx-bee9a30c" />
       <div className="max-w-[1280px] mx-auto px-10 relative">
         <div className="text-center mb-20">
-          <h2 className="uppercase leading-none mb-5 rogym-sx-339ac6c6">ĐỘI NGŨ CHUYÊN GIA</h2>
+          <h2 className="uppercase leading-none mb-5 rogym-sx-339ac6c6">{t('trainers.sectionTitle')}</h2>
           <p className="uppercase font-semibold tracking-[0.15em] opacity-50 rogym-sx-8b36c264">
-            DẪN DẮT BẠN ĐẾN ĐỈNH CAO PHONG ĐỘ
+            {t('trainers.sectionSubtitle')}
           </p>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
-          {COACHES.map((coach) => (
+          {coaches.map((coach) => (
             <CoachCard key={coach.name} {...coach} />
           ))}
         </div>
         <div className="flex justify-center mt-16">
           <BtnOutline dark to="/trainers">
-            Xem tất cả huấn luyện viên
+            {t('trainers.viewAll')}
           </BtnOutline>
         </div>
       </div>
@@ -431,6 +378,7 @@ const CoachSection = memo(function CoachSection() {
 /* ── Pricing ── */
 const PricingCard = memo(function PricingCard({ plan }: { plan: Plan }) {
   const { hot } = plan
+  const { t } = useTranslation('home')
   return (
     <div
       className={`rogym-pricing-card relative rounded-[40px] p-8 flex flex-col cursor-pointer h-full ${
@@ -439,7 +387,7 @@ const PricingCard = memo(function PricingCard({ plan }: { plan: Plan }) {
     >
       {hot && (
         <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-5 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest rogym-sx-15e311e3">
-          PHỔ BIẾN NHẤT
+          {t('packages.popular')}
         </div>
       )}
       <div className="rogym-pricing-card__tier text-xs font-bold uppercase tracking-[0.25em] mb-4">
@@ -465,28 +413,70 @@ const PricingCard = memo(function PricingCard({ plan }: { plan: Plan }) {
           hot ? 'rogym-btn--dark' : 'rogym-btn--outline-white'
         }`}
       >
-        <span>ĐĂNG KÝ NGAY</span>
+        <span>{t('packages.registerBtn')}</span>
       </button>
     </div>
   )
 })
 
 const PricingSection = memo(function PricingSection() {
+  const { t } = useTranslation('home')
+
+  const pricingPlans: Plan[] = [
+    {
+      tier: t('packages.basicTier'),
+      price: '599K',
+      unit: t('packages.perMonth'),
+      features: [
+        t('packages.basicFeature1'),
+        t('packages.basicFeature2'),
+        t('packages.basicFeature3'),
+      ],
+      hot: false,
+    },
+    {
+      tier: t('packages.premiumTier'),
+      price: '999K',
+      unit: t('packages.perMonth'),
+      features: [
+        t('packages.premiumFeature1'),
+        t('packages.premiumFeature2'),
+        t('packages.premiumFeature3'),
+        t('packages.premiumFeature4'),
+        t('packages.premiumFeature5'),
+      ],
+      hot: true,
+    },
+    {
+      tier: t('packages.eliteTier'),
+      price: '1.9M',
+      unit: t('packages.perMonth'),
+      features: [
+        t('packages.eliteFeature1'),
+        t('packages.eliteFeature2'),
+        t('packages.eliteFeature3'),
+        t('packages.eliteFeature4'),
+        t('packages.eliteFeature5'),
+      ],
+      hot: false,
+    },
+  ]
+
   return (
     <section className="w-full py-32 relative rogym-sx-7b5fda64">
       <div className="absolute inset-0 pointer-events-none rogym-sx-49e5c51a" />
       <div className="max-w-[1280px] mx-auto px-10 relative">
         <div className="text-center mb-20">
-          <h2 className="uppercase leading-none mb-5 rogym-sx-37943c0d">GÓI THÀNH VIÊN</h2>
+          <h2 className="uppercase leading-none mb-5 rogym-sx-37943c0d">{t('packages.sectionTitle')}</h2>
           <div className="h-1 w-24 rounded-full mx-auto rogym-sx-c3c1e2cb" />
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch mt-8">
-          {PRICING_PLANS.map((p) => (
+          {pricingPlans.map((p) => (
             <PricingCard key={p.tier} plan={p} />
           ))}
         </div>
         <p className="text-center mt-12 rogym-sx-0ac692a1">
-          * Tất cả gói đều có thể hủy bất kỳ lúc nào. Dùng thử miễn phí 7 ngày.
+          {t('packages.disclaimer')}
         </p>
       </div>
     </section>
@@ -495,24 +485,25 @@ const PricingSection = memo(function PricingSection() {
 
 /* ── CTA Banner ── */
 const CTABanner = memo(function CTABanner() {
+  const { t } = useTranslation('home')
   return (
     <section className="w-full py-28 relative overflow-hidden rogym-sx-3645accf">
       <div className="absolute inset-0 pointer-events-none rogym-sx-4c20acf6" />
       <div className="max-w-[1280px] mx-auto px-10 text-center relative">
         <p className="uppercase font-bold tracking-[0.28em] mb-4 rogym-sx-4c894103">
-          BẮT ĐẦU HÀNH TRÌNH CỦA BẠN
+          {t('cta.eyebrow')}
         </p>
         <h2 className="uppercase leading-none mb-8 rogym-sx-1297467b">
-          SẴN SÀNG PHÁ VỠ
+          {t('cta.heading1')}
           <br />
-          <span className="rogym-sx-f27dac31">GIỚI HẠN?</span>
+          <span className="rogym-sx-f27dac31">{t('cta.heading2')}</span>
         </h2>
         <p className="max-w-md mx-auto mb-10 rogym-sx-31cf2166">
-          Đăng ký thử miễn phí 7 ngày và cảm nhận sự khác biệt ngay hôm nay.
+          {t('cta.body')}
         </p>
         <div className="flex items-center justify-center gap-4 flex-wrap">
-          <BtnPrimary to="/login">THỬ MIỄN PHÍ 7 NGÀY</BtnPrimary>
-          <BtnOutline to="/contact">LIÊN HỆ TƯ VẤN</BtnOutline>
+          <BtnPrimary to="/login">{t('cta.ctaFree')}</BtnPrimary>
+          <BtnOutline to="/contact">{t('cta.ctaContact')}</BtnOutline>
         </div>
       </div>
     </section>
@@ -521,6 +512,29 @@ const CTABanner = memo(function CTABanner() {
 
 /* ── Footer ── */
 const Footer = memo(function Footer() {
+  const { t } = useTranslation('home')
+
+  const footerColumns = [
+    {
+      category: t('footer.colPrograms'),
+      links: FOOTER_PROGRAM_LINKS,
+    },
+    {
+      category: t('footer.colInfo'),
+      links: [
+        t('footer.aboutUs'),
+        t('footer.trainingPrograms'),
+        t('footer.trainerTeam'),
+        t('footer.membership'),
+        t('footer.contact'),
+      ],
+    },
+    {
+      category: t('footer.colSupport'),
+      links: [t('footer.faq'), t('footer.contact'), t('footer.policy'), t('footer.terms')],
+    },
+  ]
+
   return (
     <footer className="w-full py-20 border-t rogym-sx-12fc93c6">
       <div className="max-w-[1280px] mx-auto px-10">
@@ -533,7 +547,7 @@ const Footer = memo(function Footer() {
               <span className="rogym-sx-7722cdfa">ROGYM</span>
             </div>
             <p className="mb-6 rogym-sx-6c6fd0c8">
-              Nơi giới hạn bị phá vỡ, sức mạnh được rèn giũa. Hành trình của bạn bắt đầu từ đây.
+              {t('footer.tagline')}
             </p>
             <div className="flex gap-3">
               {SOCIAL_LINKS.map(([Icon, label]) => (
@@ -548,7 +562,7 @@ const Footer = memo(function Footer() {
               ))}
             </div>
           </div>
-          {FOOTER_COLUMNS.map(({ category, links }) => (
+          {footerColumns.map(({ category, links }) => (
             <div key={category}>
               <div className="text-xs font-bold uppercase tracking-[0.2em] mb-5 rogym-sx-e539da0b">
                 {category}
@@ -568,8 +582,8 @@ const Footer = memo(function Footer() {
           ))}
         </div>
         <div className="flex items-center justify-between flex-wrap gap-4 pt-8 border-t rogym-sx-3636a8d8">
-          <span className="rogym-sx-f419f934">© 2026 RoGym. All rights reserved.</span>
-          <span className="rogym-sx-f419f934">Số 1 Đại Cồ Việt, Bạch Mai, Hà Nội, Việt Nam</span>
+          <span className="rogym-sx-f419f934">{t('footer.copyright')}</span>
+          <span className="rogym-sx-f419f934">{t('footer.address')}</span>
         </div>
       </div>
     </footer>

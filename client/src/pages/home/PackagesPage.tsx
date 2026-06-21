@@ -1,41 +1,58 @@
 import { Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import HomeNavbar from '@/components/home/HomeNavbar'
 
 export default function PackagesPage() {
+  const { t } = useTranslation('home')
+
+  const packages = [
+    {
+      tier: t('packages.basicTier'),
+      price: '599K',
+      hot: false,
+      f: [
+        t('packages.pageBasicFeature1'),
+        t('packages.pageBasicFeature2'),
+        t('packages.pageBasicFeature3'),
+      ],
+    },
+    {
+      tier: t('packages.premiumTier'),
+      price: '999K',
+      hot: true,
+      f: [
+        t('packages.pagePremiumFeature1'),
+        t('packages.pagePremiumFeature2'),
+        t('packages.pagePremiumFeature3'),
+      ],
+    },
+    {
+      tier: t('packages.eliteTier'),
+      price: '1.9M',
+      hot: false,
+      f: [
+        t('packages.pageEliteFeature1'),
+        t('packages.pageEliteFeature2'),
+        t('packages.pageEliteFeature3'),
+      ],
+    },
+  ]
+
   return (
     <div className="rogym-page">
       <HomeNavbar />
       <div className="max-w-[1280px] mx-auto px-10 py-28">
         <div className="mb-10">
           <h1 className="uppercase rogym-sx-37943c0d text-3xl md:text-4xl font-bold">
-            GÓI THÀNH VIÊN
+            {t('packages.pageTitle')}
           </h1>
           <p className="mt-4 max-w-2xl text-white/70">
-            Chọn gói phù hợp mục tiêu của bạn. Hỗ trợ luyện tập và theo dõi tiến độ.
+            {t('packages.pageSubtitle')}
           </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {[
-            {
-              tier: 'CƠ BẢN',
-              price: '599K',
-              hot: false,
-              f: ['Truy cập gym 24/7', 'Tủ đồ cá nhân', 'Khu vực cardio & tạ rời'],
-            },
-            {
-              tier: 'THƯỢNG HẠNG',
-              price: '999K',
-              hot: true,
-              f: ['4 buổi PT/tháng', 'Tư vấn dinh dưỡng', 'Lớp nhóm không giới hạn'],
-            },
-            {
-              tier: 'ELITE VIP',
-              price: '1.9M',
-              hot: false,
-              f: ['PT không giới hạn', 'Khu vực VIP riêng', 'Spa & phòng xông hơi'],
-            },
-          ].map((p) => (
+          {packages.map((p) => (
             <div
               key={p.tier}
               className={`rounded-[40px] border border-white/10 bg-white/5 p-8 ${p.hot ? 'ring-1 ring-[#42e09e]' : ''}`}
@@ -45,7 +62,7 @@ export default function PackagesPage() {
               </div>
               <div className="mt-4 flex items-baseline gap-2">
                 <div className="text-3xl font-extrabold">{p.price}</div>
-                <div className="text-white/60">/Tháng</div>
+                <div className="text-white/60">{t('packages.perMonth')}</div>
               </div>
               <div className="mt-6 space-y-3">
                 {p.f.map((x) => (
@@ -64,7 +81,7 @@ export default function PackagesPage() {
                       : 'rogym-btn rogym-btn--wide rogym-btn--outline-white'
                   }
                 >
-                  <span>ĐĂNG KÝ NGAY</span>
+                  <span>{t('packages.registerBtn')}</span>
                 </Link>
               </div>
             </div>

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Mail, Lock, KeyRound } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { authService } from "@/services/auth.service";
 import {
   AuthShell, BtnPrimary, TextLink,
@@ -18,11 +19,13 @@ export default function ResetPasswordPage() {
   const [error, setError] = useState("");
   const [done, setDone] = useState(false);
   const navigate = useNavigate();
+  const { t } = useTranslation("auth");
+  const { t: tVal } = useTranslation("validation");
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (newPass !== confirm) {
-      setError("Mật khẩu xác nhận không khớp.");
+      setError(tVal("password.mismatch"));
       return;
     }
     setError("");
@@ -31,7 +34,7 @@ export default function ResetPasswordPage() {
       await authService.resetPassword(email, otp, newPass);
       setDone(true);
     } catch {
-      setError("Mã OTP không hợp lệ hoặc đã hết hạn.");
+      setError(t("resetPassword.invalidOtp"));
     } finally {
       setLoading(false);
     }
@@ -48,13 +51,13 @@ export default function ResetPasswordPage() {
           </div>
           <div>
             <h1 className="rogym-sx-28816d54">
-              Đặt lại thành công!
+              {t("resetPassword.successTitle")}
             </h1>
             <p className="rogym-sx-2a7c513c">
-              Mật khẩu của bạn đã được cập nhật. Hãy đăng nhập lại.
+              {t("resetPassword.successBody")}
             </p>
           </div>
-          <BtnPrimary onClick={() => navigate("/login")}>Đăng nhập ngay</BtnPrimary>
+          <BtnPrimary onClick={() => navigate("/login")}>{t("resetPassword.loginNow")}</BtnPrimary>
         </div>
       </AuthShell>
     );
@@ -65,27 +68,27 @@ export default function ResetPasswordPage() {
       <form onSubmit={handleSubmit} className="flex flex-col gap-5">
         <div className="text-center mb-1">
           <h1 className="rogym-sx-4d6285f7">
-            Đặt lại mật khẩu
+            {t("resetPassword.title")}
           </h1>
           <p className="rogym-sx-0a664e64">
-            Nhập mã OTP đã được gửi vào email của bạn
+            {t("resetPassword.subtitle")}
           </p>
         </div>
 
+        <Field label={t("resetPassword.otp")} placeholder={t("resetPassword.otpPlaceholder")} value={otp} onChange={setOtp} icon={KeyRound} />
         <Field label="Email" type="email" placeholder="ten@email.com" value={email} onChange={setEmail} icon={Mail} />
-        <Field label="Mã OTP" placeholder="6 chữ số" value={otp} onChange={setOtp} icon={KeyRound} />
-        <PasswordField label="Mật khẩu mới" placeholder="Tối thiểu 8 ký tự" value={newPass} onChange={setNewPass} icon={Lock} />
-        <PasswordField label="Xác nhận mật khẩu" value={confirm} onChange={setConfirm} icon={Lock} />
+        <PasswordField label={t("resetPassword.newPassword")} placeholder={t("resetPassword.newPasswordPlaceholder")} value={newPass} onChange={setNewPass} icon={Lock} />
+        <PasswordField label={t("resetPassword.confirmPassword")} value={confirm} onChange={setConfirm} icon={Lock} />
 
         {error && <ErrorMsg message={error} />}
 
         <BtnPrimary type="submit" disabled={loading}>
-          {loading ? "Đang xử lý..." : "Xác nhận đặt lại"}
+          {loading ? t("resetPassword.submitting") : t("resetPassword.submit")}
         </BtnPrimary>
 
         <p className="text-center rogym-sx-0668b2bf" >
-          Chưa có mã?{" "}
-          <TextLink to="/forgot-password">Gửi lại OTP</TextLink>
+          {t("resetPassword.noCode")}{" "}
+          <TextLink to="/forgot-password">{t("resetPassword.resendLink")}</TextLink>
         </p>
       </form>
     </AuthShell>

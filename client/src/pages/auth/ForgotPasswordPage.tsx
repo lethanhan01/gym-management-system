@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { ArrowLeft, Mail } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { authService } from "@/services/auth.service";
 import {
   AuthShell, BtnPrimary, TextLink, Field, ErrorMsg, G, T,
@@ -11,6 +12,7 @@ function ForgotView({ onSent }: { onSent: (devOtp?: string) => void }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const navigate = useNavigate();
+  const { t } = useTranslation("auth");
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -20,7 +22,7 @@ function ForgotView({ onSent }: { onSent: (devOtp?: string) => void }) {
       const result = await authService.forgotPassword(email);
       onSent(result.devOtp);
     } catch {
-      setError("Không tìm thấy email. Vui lòng kiểm tra lại.");
+      setError(t("forgotPassword.emailNotFound"));
     } finally {
       setLoading(false);
     }
@@ -32,10 +34,10 @@ function ForgotView({ onSent }: { onSent: (devOtp?: string) => void }) {
         type="button"
         onClick={() => navigate("/login")}
         className="rogym-text-link rogym-text-link--muted rogym-sx-26e7fe5a"
-        
+
       >
         <ArrowLeft size={14} strokeWidth={2} />
-        <span>Quay lại đăng nhập</span>
+        <span>{t("forgotPassword.backToLogin")}</span>
       </button>
 
       <div className="text-center my-2">
@@ -43,19 +45,19 @@ function ForgotView({ onSent }: { onSent: (devOtp?: string) => void }) {
           <Mail size={24} color={T} strokeWidth={1.5} />
         </div>
         <h1 className="rogym-sx-28816d54">
-          Quên mật khẩu?
+          {t("forgotPassword.title")}
         </h1>
         <p className="rogym-sx-a29e4e5b">
-          Nhập email đã đăng ký. Chúng tôi sẽ gửi OTP để đặt lại mật khẩu.
+          {t("forgotPassword.subtitle")}
         </p>
       </div>
 
-      <Field label="Email" type="email" placeholder="ten@email.com" value={email} onChange={setEmail} icon={Mail} />
+      <Field label={t("forgotPassword.email")} type="email" placeholder="ten@email.com" value={email} onChange={setEmail} icon={Mail} />
 
       {error && <ErrorMsg message={error} />}
 
       <BtnPrimary type="submit" disabled={loading}>
-        {loading ? "Đang gửi..." : "Gửi mã OTP"}
+        {loading ? t("forgotPassword.submitting") : t("forgotPassword.submit")}
       </BtnPrimary>
     </form>
   );
@@ -63,6 +65,7 @@ function ForgotView({ onSent }: { onSent: (devOtp?: string) => void }) {
 
 function SentView({ devOtp }: { devOtp?: string }) {
   const navigate = useNavigate();
+  const { t } = useTranslation("auth");
   return (
     <div className="flex flex-col gap-5 items-center text-center">
       <div className="w-16 h-16 rounded-2xl flex items-center justify-center rogym-sx-b1711891" >
@@ -74,20 +77,20 @@ function SentView({ devOtp }: { devOtp?: string }) {
 
       <div>
         <h1 className="rogym-sx-28816d54">
-          Email đã được gửi!
+          {t("forgotPassword.sentTitle")}
         </h1>
         <p className="rogym-sx-2a7c513c">
-          Kiểm tra hộp thư và dùng mã OTP để đặt lại mật khẩu.
+          {t("forgotPassword.sentBody")}
         </p>
       </div>
 
       <BtnPrimary onClick={() => navigate("/reset-password", { state: { devOtp } })}>
-        Nhập mã OTP
+        {t("forgotPassword.enterOtp")}
       </BtnPrimary>
 
       <p className="rogym-sx-a3c9452a">
-        Quay lại?{" "}
-        <TextLink to="/login">Đăng nhập</TextLink>
+        {t("forgotPassword.backToLoginQ")}{" "}
+        <TextLink to="/login">{t("forgotPassword.loginLink")}</TextLink>
       </p>
     </div>
   );

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { authService } from '@/services/auth.service'
 import { useAuthStore } from '@/stores/authStore'
 import { useSubscriptionStore } from '@/stores/subscriptionStore'
@@ -22,6 +23,8 @@ export default function LoginPage() {
   const { setAuth } = useAuthStore()
   const clearSubscription = useSubscriptionStore((s) => s.clear)
   const checkSubscription = useSubscriptionStore((s) => s.check)
+  const { t } = useTranslation('auth')
+  const { t: tCommon } = useTranslation('common')
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -77,7 +80,7 @@ export default function LoginPage() {
         navigate(roleRouteMap[user.roles[0]] ?? '/', { replace: true })
       }
     } catch {
-      setError('Email hoặc mật khẩu không đúng.')
+      setError(t('login.invalidCredentials'))
     } finally {
       setLoading(false)
     }
@@ -96,17 +99,16 @@ export default function LoginPage() {
       {overlayEndDate && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/70 p-4">
           <div className="w-full max-w-sm rounded-2xl border border-white/10 bg-[var(--rogym-bg-card)] p-6 shadow-2xl">
-            <h2 className="mb-3 text-lg font-bold text-white">Gói tập đã hết hạn</h2>
+            <h2 className="mb-3 text-lg font-bold text-white">{t('login.packageExpiredTitle')}</h2>
             <p className="mb-6 text-sm rogym-text-secondary">
-              Gói đã hết hạn từ ngày {fmtExpiry(overlayEndDate)}. Vui lòng gia hạn thêm gói mới để
-              tiếp tục sử dụng dịch vụ.
+              {t('login.packageExpiredMsg', { date: fmtExpiry(overlayEndDate) })}
             </p>
             <div className="flex justify-end">
               <button
                 className="rogym-btn rogym-btn--primary"
                 onClick={() => navigate('/member/subscription/setup', { replace: true })}
               >
-                Đồng ý
+                {tCommon('ok')}
               </button>
             </div>
           </div>
@@ -115,20 +117,20 @@ export default function LoginPage() {
       <AuthShell>
         <form onSubmit={handleSubmit} className="flex flex-col gap-6">
           <div className="text-center space-y-1.5">
-            <h1 className="text-2xl font-bold text-white">Chào mừng trở lại</h1>
-            <p className="text-sm text-white/70">Đăng nhập để tiếp tục hành trình của bạn</p>
+            <h1 className="text-2xl font-bold text-white">{t('login.title')}</h1>
+            <p className="text-sm text-white/70">{t('login.subtitle')}</p>
           </div>
 
           <div className="space-y-4">
             <Field
-              label="Email"
+              label={t('login.email')}
               type="email"
               placeholder="ten@email.com"
               value={email}
               onChange={setEmail}
             />
             <Field
-              label="Mật khẩu"
+              label={t('login.password')}
               type="password"
               placeholder="••••••••"
               value={pass}
@@ -137,17 +139,17 @@ export default function LoginPage() {
           </div>
 
           <div className="flex justify-end">
-            <MutedLink to="/forgot-password">Quên mật khẩu?</MutedLink>
+            <MutedLink to="/forgot-password">{t('login.forgotPassword')}</MutedLink>
           </div>
 
           {error && <ErrorMsg message={error} />}
 
           <BtnPrimary type="submit" disabled={loading}>
-            {loading ? 'Đang đăng nhập...' : 'Đăng nhập'}
+            {loading ? t('login.submitting') : t('login.submit')}
           </BtnPrimary>
 
           <p className="text-center text-sm text-white/70">
-            Chưa có tài khoản? <TextLink to="/member/register">Đăng ký ngay</TextLink>
+            <TextLink to="/member/register">{t('login.noAccount')}</TextLink>
           </p>
         </form>
       </AuthShell>
