@@ -93,3 +93,8 @@
     transform: scale(1.6);
   }
 }
+
+html[lang="ja"] {
+  font-size: 14px;
+  letter-spacing: -0.01em;
+}
