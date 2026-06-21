@@ -1,6 +1,7 @@
 import { FormEvent, useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft, Calculator } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { DatePickerInput } from '@/components/DatePickerInput'
 import { getApiError } from '@/lib/api-error'
 import { todayInput } from '@/lib/date'
@@ -14,6 +15,7 @@ import {
 } from '@/components/TrainerUI'
 
 export default function AddProgressPage() {
+  const { t } = useTranslation('trainer')
   const { id = '' } = useParams()
   const navigate = useNavigate()
   const [student, setStudent] = useState<TrainerStudentDetail | null>(null)
@@ -30,7 +32,7 @@ export default function AddProgressPage() {
     memberService
       .getById(id)
       .then(setStudent)
-      .catch((err) => setError(getApiError(err, 'Không thể tải học viên.')))
+      .catch((err) => setError(getApiError(err, t('students.addProgress.error.loadFailed'))))
       .finally(() => setLoading(false))
   }, [id])
 
@@ -45,11 +47,11 @@ export default function AddProgressPage() {
     event.preventDefault()
     const weightValue = Number(weight)
     if (!(weightValue > 0 && weightValue <= 500)) {
-      setError('Cân nặng phải lớn hơn 0 và không vượt quá 500kg.')
+      setError(t('students.addProgress.error.invalidWeight'))
       return
     }
     if (bmi !== null && (bmi < 10 || bmi > 50)) {
-      setError('BMI cần nằm trong khoảng 10-50.')
+      setError(t('students.addProgress.error.invalidBmi'))
       return
     }
 
@@ -69,7 +71,7 @@ export default function AddProgressPage() {
       })
       navigate(`/trainer/students/${id}?tab=progress`, { replace: true })
     } catch (err) {
-      setError(getApiError(err, 'Không thể lưu tiến độ.'))
+      setError(getApiError(err, t('students.addProgress.error.saveFailed')))
     } finally {
       setSaving(false)
     }
@@ -78,14 +80,18 @@ export default function AddProgressPage() {
   return (
     <TrainerPage className="max-w-3xl">
       <TrainerPageHeader
-        eyebrow="Theo dõi tiến độ"
-        title={student ? `Ghi tiến độ - ${student.fullName}` : 'Ghi tiến độ'}
+        eyebrow={t('students.addProgress.eyebrow')}
+        title={
+          student
+            ? t('students.addProgress.titleWith', { name: student.fullName })
+            : t('students.addProgress.title')
+        }
         actions={
           <Link
             className="rogym-text-link rogym-text-link--muted"
             to={`/trainer/students/${id}?tab=progress`}
           >
-            <ArrowLeft size={15} /> Quay lại
+            <ArrowLeft size={15} /> {t('students.addProgress.back')}
           </Link>
         }
       />
@@ -98,7 +104,7 @@ export default function AddProgressPage() {
           {error && <TrainerErrorState message={error} />}
           <div className="grid gap-5 md:grid-cols-2">
             <label className="space-y-2">
-              <span className="rogym-field-label">Ngày ghi</span>
+              <span className="rogym-field-label">{t('students.addProgress.fieldDate')}</span>
               <DatePickerInput
                 value={recordedAt}
                 onChange={(value) => setRecordedAt(value)}
@@ -106,7 +112,7 @@ export default function AddProgressPage() {
               />
             </label>
             <label className="space-y-2">
-              <span className="rogym-field-label">Cân nặng (kg)</span>
+              <span className="rogym-field-label">{t('students.addProgress.fieldWeight')}</span>
               <input
                 className="rogym-input"
                 type="number"
@@ -119,7 +125,7 @@ export default function AddProgressPage() {
               />
             </label>
             <label className="space-y-2">
-              <span className="rogym-field-label">Chiều cao để tính BMI (cm)</span>
+              <span className="rogym-field-label">{t('students.addProgress.fieldHeight')}</span>
               <input
                 className="rogym-input"
                 type="number"
@@ -132,28 +138,28 @@ export default function AddProgressPage() {
             </label>
             <div className="rounded-xl border border-[var(--rogym-border-teal-dim)] bg-[rgba(66,224,158,0.06)] p-4">
               <div className="flex items-center gap-2 text-sm rogym-text-secondary">
-                <Calculator size={16} className="rogym-text-accent" /> BMI tự tính
+                <Calculator size={16} className="rogym-text-accent" /> {t('students.addProgress.bmiLabel')}
               </div>
               <div className="mt-2 text-2xl font-bold text-white">
                 {bmi ? bmi.toFixed(2) : '--'}
               </div>
               <div className="mt-1 text-xs rogym-text-dim">
-                Chiều cao chỉ dùng để tính, không lưu vào hệ thống.
+                {t('students.addProgress.bmiNote')}
               </div>
             </div>
           </div>
           <label className="block space-y-2">
-            <span className="rogym-field-label">Mục tiêu hiện tại</span>
+            <span className="rogym-field-label">{t('students.addProgress.fieldGoal')}</span>
             <input
               className="rogym-input"
               value={goal}
               maxLength={255}
               onChange={(event) => setGoal(event.target.value)}
-              placeholder="Ví dụ: giảm 3kg trong 2 tháng"
+              placeholder={t('students.addProgress.goalPlaceholder')}
             />
           </label>
           <label className="block space-y-2">
-            <span className="rogym-field-label">Nhận xét của PT</span>
+            <span className="rogym-field-label">{t('students.addProgress.fieldNotes')}</span>
             <textarea
               className="rogym-input min-h-32 resize-y"
               value={notes}
@@ -166,9 +172,9 @@ export default function AddProgressPage() {
               className="rogym-btn rogym-btn--outline-white"
               to={`/trainer/students/${id}?tab=progress`}
             >
-              Hủy
+              {t('students.addProgress.cancel')}
             </Link>
-            <SubmitButton loading={saving}>Lưu tiến độ</SubmitButton>
+            <SubmitButton loading={saving}>{t('students.addProgress.submit')}</SubmitButton>
           </div>
         </form>
       )}

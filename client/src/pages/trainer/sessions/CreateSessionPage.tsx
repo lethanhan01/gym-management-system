@@ -1,6 +1,7 @@
 import { FormEvent, useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { ArrowLeft, Clock3 } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { getApiError } from '@/lib/api-error'
 import { localDateTimeInputToIso, toDateTimeLocalInput } from '@/lib/date'
 import { facilityService, type GymRoom } from '@/services/facility.service'
@@ -27,11 +28,8 @@ type PlanDayOption = Pick<
   'planDayId' | 'dayNumber' | 'weekNumber' | 'dayOfWeek' | 'name'
 >
 
-function formatPlanDayOption(day: PlanDayOption) {
-  return `Ngày ${day.dayNumber} - Tuần ${day.weekNumber}, thứ ${day.dayOfWeek}: ${day.name}`
-}
-
 export default function CreateSessionPage() {
+  const { t } = useTranslation('trainer')
   const { id } = useParams()
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
@@ -54,6 +52,10 @@ export default function CreateSessionPage() {
   const [editBlocked, setEditBlocked] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  function formatPlanDayOption(day: PlanDayOption) {
+    return `${t('sessions.create.fieldPlanDay')} ${day.dayNumber} - ${day.weekNumber}, ${day.dayOfWeek}: ${day.name}`
+  }
 
   useEffect(() => {
     let active = true
@@ -93,11 +95,11 @@ export default function CreateSessionPage() {
             new Date(existingSession.startTime) <= new Date()
           ) {
             setEditBlocked(true)
-            setError('Chỉ có thể sửa buổi tập đã lên lịch và chưa bắt đầu.')
+            setError(t('sessions.create.error.editBlocked'))
           }
         }
       } catch (err) {
-        setError(getApiError(err, 'Không thể tải dữ liệu tạo buổi tập.'))
+        setError(getApiError(err, t('sessions.create.error.loadFailed')))
       } finally {
         if (active) setLoading(false)
       }
@@ -135,7 +137,7 @@ export default function CreateSessionPage() {
       })
       .catch((err) => {
         if (!active) return
-        setAssignmentError(getApiError(err, 'Không thể tải workout plan của học viên.'))
+        setAssignmentError(getApiError(err, t('sessions.create.error.loadPlanFailed')))
       })
       .finally(() => {
         if (active) setAssignmentLoading(false)
@@ -201,12 +203,7 @@ export default function CreateSessionPage() {
       }
       navigate('/trainer/sessions')
     } catch (err) {
-      setError(
-        getApiError(
-          err,
-          'Không thể lưu buổi tập. Hãy kiểm tra trùng lịch, phòng và thời hạn gói tập.'
-        )
-      )
+      setError(getApiError(err, t('sessions.create.error.saveFailed')))
     } finally {
       setSubmitting(false)
     }
@@ -222,22 +219,22 @@ export default function CreateSessionPage() {
   return (
     <TrainerPage className="max-w-3xl">
       <TrainerPageHeader
-        eyebrow="Lịch dạy"
-        title={editing ? 'Chỉnh sửa buổi tập' : 'Tạo buổi tập'}
-        description="Chọn học viên, phòng và thời gian. Hệ thống sẽ kiểm tra gói tập và xung đột lịch."
+        eyebrow={t('sessions.create.eyebrow')}
+        title={editing ? t('sessions.create.titleEdit') : t('sessions.create.title')}
+        description={t('sessions.create.description')}
         actions={
           <Link
             className="rogym-btn rogym-btn--outline-white"
             to={id ? `/trainer/sessions/${id}` : '/trainer/sessions'}
           >
-            <ArrowLeft size={16} /> Quay lại
+            <ArrowLeft size={16} /> {t('sessions.create.back')}
           </Link>
         }
       />
       {error && <TrainerErrorState message={error} />}
       <form className="rogym-card rogym-card--compact space-y-5 p-6" onSubmit={handleSubmit}>
         <label className="block space-y-2">
-          <span className="rogym-field-label">Học viên</span>
+          <span className="rogym-field-label">{t('sessions.create.fieldStudent')}</span>
           <StudentCombobox
             students={students}
             value={memberId}
@@ -248,25 +245,25 @@ export default function CreateSessionPage() {
         {editing ? (
           <>
             <label className="block space-y-2">
-              <span className="rogym-field-label">Workout plan</span>
+              <span className="rogym-field-label">{t('sessions.create.fieldWorkoutPlan')}</span>
               <div className="rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-white">
-                {linkedPlanName ?? 'Buổi tập này chưa liên kết workout plan.'}
+                {linkedPlanName ?? t('sessions.create.notLinked')}
               </div>
             </label>
             <label className="block space-y-2">
-              <span className="rogym-field-label">Ngày tập trong plan</span>
+              <span className="rogym-field-label">{t('sessions.create.fieldPlanDay')}</span>
               <div className="rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-white">
-                {linkedPlanDayName ?? 'Chưa chọn ngày tập.'}
+                {linkedPlanDayName ?? t('sessions.create.noPlanDay')}
               </div>
             </label>
           </>
         ) : memberId ? (
           <>
             <label className="block space-y-2">
-              <span className="rogym-field-label">Workout plan</span>
+              <span className="rogym-field-label">{t('sessions.create.fieldWorkoutPlan')}</span>
               {assignmentLoading ? (
                 <div className="rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm rogym-text-secondary">
-                  Đang tải workout plan của học viên...
+                  {t('sessions.create.loadingPlan')}
                 </div>
               ) : assignmentError ? (
                 <p className="text-sm text-red-300">{assignmentError}</p>
@@ -282,7 +279,7 @@ export default function CreateSessionPage() {
               ) : (
                 <>
                   <TrainerSelect value={selectedPlanId} onValueChange={setSelectedPlanId} required>
-                    <option value="">Chọn workout plan để gán</option>
+                    <option value="">{t('sessions.create.selectPlan')}</option>
                     {plans.map((plan) => (
                       <option key={plan.planId} value={plan.planId}>
                         {plan.name}
@@ -291,14 +288,14 @@ export default function CreateSessionPage() {
                   </TrainerSelect>
                   {plans.length === 0 && (
                     <p className="text-xs rogym-text-secondary">
-                      Chưa có workout plan active để gán cho học viên.
+                      {t('sessions.create.noActivePlan')}
                     </p>
                   )}
                 </>
               )}
             </label>
             <label className="block space-y-2">
-              <span className="rogym-field-label">Ngày tập trong plan</span>
+              <span className="rogym-field-label">{t('sessions.create.fieldPlanDay')}</span>
               <TrainerSelect
                 value={selectedPlanDayId}
                 onValueChange={setSelectedPlanDayId}
@@ -306,7 +303,9 @@ export default function CreateSessionPage() {
                 required
               >
                 <option value="">
-                  {planDayOptions.length > 0 ? 'Chọn ngày tập' : 'Chọn workout plan trước'}
+                  {planDayOptions.length > 0
+                    ? t('sessions.create.selectPlanDay')
+                    : t('sessions.create.selectPlanFirst')}
                 </option>
                 {planDayOptions.map((day) => (
                   <option key={day.planDayId} value={day.planDayId}>
@@ -318,29 +317,29 @@ export default function CreateSessionPage() {
           </>
         ) : null}
         <label className="block space-y-2">
-          <span className="rogym-field-label">Phòng tập</span>
+          <span className="rogym-field-label">{t('sessions.create.fieldRoom')}</span>
           <TrainerSelect value={roomId} onValueChange={setRoomId} required>
-            <option value="">Chọn phòng tập</option>
+            <option value="">{t('sessions.create.selectRoom')}</option>
             {rooms.map((room) => (
               <option key={room.roomId} value={room.roomId}>
-                {room.roomCode} - {room.name} ({room.capacity} người)
+                {room.roomCode} - {room.name} ({room.capacity})
               </option>
             ))}
           </TrainerSelect>
         </label>
         <div className="grid gap-4 md:grid-cols-2">
           <div className="block space-y-2">
-            <span className="rogym-field-label">Thời gian bắt đầu</span>
+            <span className="rogym-field-label">{t('sessions.create.fieldStartTime')}</span>
             <DateTimePickerInput
               value={startTime}
               onChange={setStartTime}
-              placeholder="Chọn ngày & giờ"
-              aria-label="Thời gian bắt đầu"
+              placeholder={t('sessions.create.fieldStartTime')}
+              aria-label={t('sessions.create.fieldStartTime')}
               disabled={editBlocked}
             />
           </div>
           <label className="block space-y-2">
-            <span className="rogym-field-label">Thời lượng (phút)</span>
+            <span className="rogym-field-label">{t('sessions.create.fieldDuration')}</span>
             <input
               className="rogym-input"
               type="number"
@@ -355,15 +354,15 @@ export default function CreateSessionPage() {
         </div>
         <div className="flex items-center gap-2 rounded-xl border border-white/5 bg-white/[0.03] p-4 text-sm rogym-text-secondary">
           <Clock3 size={17} className="rogym-text-accent" />
-          Kết thúc dự kiến:{' '}
-          {endTime ? toDateTimeLocalInput(endTime).replace('T', ' ') : 'Chưa xác định'}
+          {t('sessions.create.estimatedEnd')}{' '}
+          {endTime ? toDateTimeLocalInput(endTime).replace('T', ' ') : t('sessions.create.endUnknown')}
         </div>
         <div className="flex justify-end gap-3 border-t border-white/5 pt-5">
           <Link
             className="rogym-btn rogym-btn--outline-white"
             to={id ? `/trainer/sessions/${id}` : '/trainer/sessions'}
           >
-            Hủy
+            {t('sessions.create.cancel')}
           </Link>
           <SubmitButton
             loading={submitting}
@@ -371,7 +370,7 @@ export default function CreateSessionPage() {
               editBlocked || !memberId || !roomId || !startTime || duration <= 0 || !hasWorkoutPlanLink
             }
           >
-            {editing ? 'Lưu thay đổi' : 'Tạo buổi tập'}
+            {editing ? t('sessions.create.save') : t('sessions.create.submit')}
           </SubmitButton>
         </div>
       </form>

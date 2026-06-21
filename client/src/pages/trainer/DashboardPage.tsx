@@ -1,5 +1,6 @@
 import { Fragment, lazy, memo, Suspense, useCallback, useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { CalendarDays, CheckCircle, CheckCircle2, Clock3, Play, Plus, Users } from 'lucide-react'
 import { getApiError } from '@/lib/api-error'
 import { formatDate, formatDateTime, formatTime, todayInput } from '@/lib/date'
@@ -37,13 +38,14 @@ const SessionDetailModal = lazy(() =>
 type SessionStatusUpdate = 'in_progress' | 'completed'
 
 const TrainerDashboardActions = memo(function TrainerDashboardActions() {
+  const { t } = useTranslation('trainer')
   return (
     <>
       <Link className="rogym-btn rogym-btn--outline-white" to="/trainer/sessions">
-        <CalendarDays size={16} /> Xem lịch
+        <CalendarDays size={16} /> {t('dashboard.viewSchedule')}
       </Link>
       <Link className="rogym-btn rogym-btn--primary" to="/trainer/sessions/create">
-        <Plus size={16} /> Tạo buổi tập
+        <Plus size={16} /> {t('dashboard.createSession')}
       </Link>
     </>
   )
@@ -60,6 +62,7 @@ const TodaySessionRow = memo(function TodaySessionRow({
   onOpen: (sessionId: string) => void
   onUpdateStatus: (sessionId: string, status: SessionStatusUpdate) => void
 }) {
+  const { t } = useTranslation('trainer')
   const canStart = session.status === 'scheduled'
   const canComplete = session.status === 'scheduled' || session.status === 'in_progress'
   const isDone = session.status === 'completed' || session.status === 'cancelled'
@@ -82,27 +85,27 @@ const TodaySessionRow = memo(function TodaySessionRow({
             {canStart && (
               <button
                 type="button"
-                aria-label={`Bắt đầu buổi tập với ${session.memberName}`}
+                aria-label={t('sessions.startWith', { name: session.memberName })}
                 disabled={isLoading}
                 onClick={() => void onUpdateStatus(session.sessionId, 'in_progress')}
                 className="rogym-inline-action rogym-inline-action--start"
                 data-no-sweep
               >
                 <Play size={12} />
-                Bắt đầu
+                {t('dashboard.actions.start')}
               </button>
             )}
             {canComplete && (
               <button
                 type="button"
-                aria-label={`Hoàn thành buổi tập với ${session.memberName}`}
+                aria-label={t('sessions.completeWith', { name: session.memberName })}
                 disabled={isLoading}
                 onClick={() => void onUpdateStatus(session.sessionId, 'completed')}
                 className="rogym-inline-action rogym-inline-action--complete"
                 data-no-sweep
               >
                 <CheckCircle size={12} />
-                Hoàn thành
+                {t('dashboard.actions.complete')}
               </button>
             )}
           </div>
@@ -110,10 +113,10 @@ const TodaySessionRow = memo(function TodaySessionRow({
         <button
           type="button"
           className="rogym-text-link text-xs"
-          aria-label={`Chi tiết buổi tập với ${session.memberName}`}
+          aria-label={t('sessions.detailWith', { name: session.memberName })}
           onClick={() => onOpen(session.sessionId)}
         >
-          Chi tiết
+          {t('dashboard.actions.detail')}
         </button>
       </div>
     </div>
@@ -153,6 +156,7 @@ const ExpiringStudentLink = memo(function ExpiringStudentLink({
 }: {
   student: TrainerStudentSummary
 }) {
+  const { t } = useTranslation('trainer')
   return (
     <Link
       to={`/trainer/students/${student.memberId}`}
@@ -160,13 +164,14 @@ const ExpiringStudentLink = memo(function ExpiringStudentLink({
     >
       <div className="font-semibold rogym-text-primary">{student.fullName}</div>
       <div className="mt-1 text-xs rogym-tone-text" data-tone="warning">
-        Hết hạn {formatDate(student.activeSubscription?.endDate)}
+        {t('dashboard.expiring.expiresOn', { date: formatDate(student.activeSubscription?.endDate) })}
       </div>
     </Link>
   )
 })
 
 export default function TrainerDashboardPage() {
+  const { t } = useTranslation('trainer')
   const [students, setStudents] = useState<TrainerStudentSummary[]>([])
   const [sessions, setSessions] = useState<TrainingSession[]>([])
   const [loading, setLoading] = useState(true)
@@ -193,9 +198,9 @@ export default function TrainerDashboardPage() {
         setStudents(studentResult.data)
         setSessions(sessionResult.data)
       })
-      .catch((err) => setError(getApiError(err, 'Không thể tải tổng quan trainer.')))
+      .catch((err) => setError(getApiError(err, t('dashboard.error.loadFailed'))))
       .finally(() => setLoading(false))
-  }, [reloadKey])
+  }, [reloadKey, t])
 
   const {
     todaySessions,
@@ -271,18 +276,18 @@ export default function TrainerDashboardPage() {
       const updated = await trainingService.updateSessionStatus(sessionId, status)
       setSessions((prev) => prev.map((s) => (s.sessionId === sessionId ? updated : s)))
     } catch (err) {
-      setActionError(getApiError(err, 'Không thể cập nhật trạng thái buổi tập.'))
+      setActionError(getApiError(err, t('dashboard.error.updateStatus')))
     } finally {
       setActionLoading(null)
     }
-  }, [])
+  }, [t])
 
   return (
     <TrainerPage>
       <TrainerPageHeader
-        eyebrow="Trainer workspace"
-        title="Tổng quan hôm nay"
-        description="Theo dõi học viên, lịch dạy và các công việc cần ưu tiên."
+        eyebrow={t('dashboard.eyebrow')}
+        title={t('dashboard.pageTitle')}
+        description={t('dashboard.description')}
         actions={<TrainerDashboardActions />}
       />
       {loading ? (
@@ -294,23 +299,23 @@ export default function TrainerDashboardPage() {
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
             <TrainerStatCard
               icon={<Users size={20} />}
-              label="Học viên đang quản lý"
+              label={t('dashboard.stats.managedStudents')}
               value={students.length}
             />
             <TrainerStatCard
               icon={<CalendarDays size={20} />}
-              label="Buổi tập hôm nay"
+              label={t('dashboard.stats.todaySessions')}
               value={todaySessions.length}
             />
             <TrainerStatCard
               icon={<CheckCircle2 size={20} />}
-              label="Buổi tập hoàn thành tháng này"
+              label={t('dashboard.stats.completedThisMonth')}
               value={completedThisMonth}
             />
             <TrainerStatCard
               icon={<Clock3 size={20} />}
-              label="Buổi sắp tới"
-              value={upcoming[0] ? formatDateTime(upcoming[0].startTime) : 'Chưa có'}
+              label={t('dashboard.stats.nextSession')}
+              value={upcoming[0] ? formatDateTime(upcoming[0].startTime) : t('dashboard.stats.noUpcoming')}
             />
           </div>
 
@@ -318,13 +323,13 @@ export default function TrainerDashboardPage() {
           <section className="rogym-card rogym-card--compact p-6">
             <div className="mb-5 flex items-center justify-between">
               <div>
-                <h2 className="text-lg font-bold text-white">Lịch dạy hôm nay</h2>
+                <h2 className="text-lg font-bold text-white">{t('dashboard.todaySchedule.title')}</h2>
                 <p className="mt-0.5 text-sm rogym-text-dim">
-                  Đánh dấu trạng thái từng buổi tập ngay tại đây
+                  {t('dashboard.todaySchedule.description')}
                 </p>
               </div>
               <Link className="rogym-text-link rogym-text-link--accent" to="/trainer/sessions">
-                Tất cả buổi tập
+                {t('dashboard.todaySchedule.allSessions')}
               </Link>
             </div>
             {actionError && (
@@ -334,8 +339,8 @@ export default function TrainerDashboardPage() {
             )}
             {todaySessions.length === 0 ? (
               <TrainerEmptyState
-                title="Không có buổi tập nào hôm nay"
-                description="Tạo buổi tập mới hoặc kiểm tra lịch tuần tới."
+                title={t('dashboard.todaySchedule.noSessions')}
+                description={t('dashboard.todaySchedule.noSessionsDesc')}
               />
             ) : (
               <div className="space-y-3">
@@ -355,13 +360,13 @@ export default function TrainerDashboardPage() {
           <div className="grid gap-5 xl:grid-cols-[1.4fr_1fr]">
             <section className="rogym-card rogym-card--compact p-6">
               <div className="mb-5 flex items-center justify-between">
-                <h2 className="text-lg font-bold text-white">Lịch 7 ngày tới</h2>
+                <h2 className="text-lg font-bold text-white">{t('dashboard.upcoming.title')}</h2>
                 <Link className="rogym-text-link rogym-text-link--accent" to="/trainer/sessions">
-                  Xem tất cả
+                  {t('dashboard.upcoming.viewAll')}
                 </Link>
               </div>
               {upcoming.length === 0 ? (
-                <TrainerEmptyState title="Chưa có lịch sắp tới" />
+                <TrainerEmptyState title={t('dashboard.upcoming.noUpcoming')} />
               ) : (
                 <div>
                   {groupedUpcoming.map((group, groupIdx) => (
@@ -382,13 +387,13 @@ export default function TrainerDashboardPage() {
 
             <section className="rogym-card rogym-card--compact p-6">
               <div className="mb-5 flex items-center justify-between">
-                <h2 className="text-lg font-bold text-white">Gói sắp hết hạn</h2>
+                <h2 className="text-lg font-bold text-white">{t('dashboard.expiring.title')}</h2>
                 <Link className="rogym-text-link rogym-text-link--accent" to="/trainer/students">
-                  Học viên
+                  {t('dashboard.expiring.students')}
                 </Link>
               </div>
               {expiringStudents.length === 0 ? (
-                <TrainerEmptyState title="Không có gói sắp hết hạn" />
+                <TrainerEmptyState title={t('dashboard.expiring.noExpiring')} />
               ) : (
                 <div className="space-y-3">
                   {visibleExpiringStudents.map((student) => (

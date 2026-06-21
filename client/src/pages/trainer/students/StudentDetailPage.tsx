@@ -2,6 +2,7 @@ import { FormEvent, lazy, Suspense, useCallback, useEffect, useMemo, useState } 
 import { SessionDetailModal } from '@/components/trainer/SessionDetailModal'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
 import { ArrowLeft, CalendarPlus, ClipboardList, Plus, TrendingUp } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { DatePickerInput } from '@/components/DatePickerInput'
 import { getApiError } from '@/lib/api-error'
 import { formatDate, formatDateTime, todayInput } from '@/lib/date'
@@ -31,6 +32,7 @@ type Tab = 'overview' | 'sessions' | 'workout'
 const StudentProgressChart = lazy(() => import('@/components/charts/StudentProgressChart'))
 
 export default function StudentDetailPage() {
+  const { t } = useTranslation('trainer')
   const { id = '' } = useParams()
   const [searchParams, setSearchParams] = useSearchParams()
   const tab = (searchParams.get('tab') as Tab) || 'overview'
@@ -71,7 +73,7 @@ export default function StudentDetailPage() {
       const firstActive = assignmentData.find((item) => item.status === 'active')
       setActivePlan(firstActive ? await workoutService.getPlan(firstActive.planId) : null)
     } catch (err) {
-      setError(getApiError(err, 'Không thể tải chi tiết học viên.'))
+      setError(getApiError(err, t('students.detail.error.loadFailed')))
     } finally {
       setLoading(false)
     }
@@ -136,7 +138,7 @@ export default function StudentDetailPage() {
       await load()
       selectTab('workout')
     } catch (err) {
-      setError(getApiError(err, 'Không thể gán kế hoạch tập.'))
+      setError(getApiError(err, t('students.detail.error.assignFailed')))
     } finally {
       setAssigning(false)
     }
@@ -151,7 +153,7 @@ export default function StudentDetailPage() {
       setUnassignOpen(false)
       await load()
     } catch (err) {
-      setError(getApiError(err, 'Không thể gỡ gán giáo án.'))
+      setError(getApiError(err, t('students.detail.error.unassignFailed')))
     } finally {
       setUnassigning(false)
     }
@@ -177,22 +179,22 @@ export default function StudentDetailPage() {
         to="/trainer/students"
         className="rogym-text-link mb-1 inline-flex items-center gap-1.5 text-xs rogym-text-dim hover:rogym-text-secondary"
       >
-        <ArrowLeft size={13} /> Danh sách học viên
+        <ArrowLeft size={13} /> {t('students.detail.backToList')}
       </Link>
       <TrainerPageHeader
         eyebrow={student.memberCode}
         title={student.fullName}
-        description={`${student.email} · ${student.phone ?? 'Chưa có số điện thoại'}`}
+        description={`${student.email} · ${student.phone ?? t('students.detail.profile.noPhone')}`}
         actions={
           <>
             <Link
               className="rogym-btn rogym-btn--outline-white"
               to={`/trainer/sessions/create?memberId=${id}`}
             >
-              <CalendarPlus size={16} /> Tạo buổi tập
+              <CalendarPlus size={16} /> {t('students.detail.createSession')}
             </Link>
             <Link className="rogym-btn rogym-btn--primary" to={`/trainer/students/${id}/progress`}>
-              <TrendingUp size={16} /> Ghi tiến độ
+              <TrendingUp size={16} /> {t('students.detail.recordProgress')}
             </Link>
           </>
         }
@@ -202,9 +204,9 @@ export default function StudentDetailPage() {
       <div className="flex gap-2 overflow-x-auto border-b border-white/5 pb-3">
         {(
           [
-            ['overview', 'Tổng quan'],
-            ['sessions', 'Buổi tập'],
-            ['workout', 'Giáo án'],
+            ['overview', t('students.detail.tabs.overview')],
+            ['sessions', t('students.detail.tabs.sessions')],
+            ['workout', t('students.detail.tabs.workout')],
           ] as Array<[Tab, string]>
         ).map(([key, label]) => (
           <button
@@ -225,31 +227,31 @@ export default function StudentDetailPage() {
       {tab === 'overview' && (
         <div className="grid gap-5 lg:grid-cols-2">
           <section className="rogym-card rogym-card--compact p-6">
-            <h2 className="mb-5 text-lg font-bold text-white">Hồ sơ cá nhân</h2>
-            <Info label="Mã hội viên" value={student.memberCode} />
-            <Info label="Email" value={student.email} />
-            <Info label="Điện thoại" value={student.phone ?? 'Chưa cập nhật'} />
-            <Info label="Ngày sinh" value={formatDate(student.dateOfBirth)} />
-            <Info label="Địa chỉ" value={student.address ?? 'Chưa cập nhật'} />
+            <h2 className="mb-5 text-lg font-bold text-white">{t('students.detail.profile.title')}</h2>
+            <Info label={t('students.detail.profile.memberCode')} value={student.memberCode} />
+            <Info label={t('students.detail.profile.email')} value={student.email} />
+            <Info label={t('students.detail.profile.phone')} value={student.phone ?? t('students.detail.profile.noPhone')} />
+            <Info label={t('students.detail.profile.dob')} value={formatDate(student.dateOfBirth)} />
+            <Info label={t('students.detail.profile.address')} value={student.address ?? t('students.detail.profile.noAddress')} />
           </section>
 
           <section className="rogym-card rogym-card--compact p-6">
-            <h2 className="mb-5 text-lg font-bold text-white">Tình trạng tập luyện</h2>
+            <h2 className="mb-5 text-lg font-bold text-white">{t('students.detail.training.title')}</h2>
             <Info
-              label="Gói hiện tại"
-              value={activeSubscription?.packageName ?? 'Chưa có gói active'}
+              label={t('students.detail.training.currentPackage')}
+              value={activeSubscription?.packageName ?? t('students.detail.training.noPackage')}
             />
-            <Info label="Hết hạn" value={formatDate(activeSubscription?.endDate)} />
-            <Info label="Buổi tiếp theo" value={formatDateTime(upcomingSession?.startTime)} />
+            <Info label={t('students.detail.training.expiry')} value={formatDate(activeSubscription?.endDate)} />
+            <Info label={t('students.detail.training.nextSession')} value={formatDateTime(upcomingSession?.startTime)} />
             <Info
-              label="Cân nặng mới nhất"
+              label={t('students.detail.training.latestWeight')}
               value={
                 latestProgress?.weight
                   ? `${Number(latestProgress.weight).toFixed(1)} kg`
-                  : 'Chưa ghi'
+                  : t('students.detail.training.noWeight')
               }
             />
-            <Info label="Mục tiêu" value={latestProgress?.goal ?? 'Chưa ghi'} />
+            <Info label={t('students.detail.training.goal')} value={latestProgress?.goal ?? t('students.detail.training.noGoal')} />
           </section>
 
           {activeAssignments.map((assignment) => (
@@ -264,36 +266,38 @@ export default function StudentDetailPage() {
                     : 'border-amber-400/25 bg-amber-400/10 text-amber-300'
                 }`}
               >
-                {assignment.assignedByStaffId ? 'PT gán' : 'Plan cá nhân'}
+                {assignment.assignedByStaffId
+                  ? t('students.detail.plan.ptAssigned')
+                  : t('students.detail.plan.personal')}
               </span>
               <h2 className="mb-2 pr-28 text-lg font-bold text-white">
-                {assignment.plan?.name ?? 'Giáo án không tìm thấy'}
+                {assignment.plan?.name ?? t('students.detail.plan.notFound')}
               </h2>
               <p className="mb-4 text-sm rogym-text-secondary">
-                {assignment.plan?.description ?? 'Không có mô tả'}
+                {assignment.plan?.description ?? t('students.detail.plan.noDescription')}
               </p>
               <button
                 type="button"
                 className="rogym-text-link text-xs"
                 onClick={() => selectTab('workout')}
               >
-                Chi tiết
+                {t('students.detail.workout.detail')}
               </button>
             </section>
           ))}
 
           <section className="rogym-card rogym-card--compact p-5 lg:col-span-2">
             <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-lg font-bold text-white">Tiến độ</h2>
+              <h2 className="text-lg font-bold text-white">{t('students.detail.progress.title')}</h2>
               <Link
                 className="rogym-btn rogym-btn--primary"
                 to={`/trainer/students/${id}/progress`}
               >
-                <Plus size={15} /> Ghi mới
+                <Plus size={15} /> {t('students.detail.progress.addNew')}
               </Link>
             </div>
             {progress.length === 0 ? (
-              <p className="text-sm rogym-text-secondary">Chưa có dữ liệu tiến độ.</p>
+              <p className="text-sm rogym-text-secondary">{t('students.detail.progress.noData')}</p>
             ) : (
               <div className="h-64">
                 <Suspense
@@ -307,16 +311,16 @@ export default function StudentDetailPage() {
 
           {progress.length > 0 && (
             <section className="rogym-card rogym-card--compact p-5 lg:col-span-2">
-              <h2 className="mb-4 text-base font-bold text-white">Lịch sử đo lường</h2>
+              <h2 className="mb-4 text-base font-bold text-white">{t('students.detail.progress.historyTitle')}</h2>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-white/5">
-                      <th className="pb-2 text-left text-xs font-medium rogym-text-dim">Ngày ghi</th>
-                      <th className="pb-2 text-right text-xs font-medium rogym-text-dim">Cân nặng</th>
-                      <th className="pb-2 text-right text-xs font-medium rogym-text-dim">BMI</th>
-                      <th className="pb-2 pl-4 text-left text-xs font-medium rogym-text-dim">Mục tiêu</th>
-                      <th className="pb-2 pl-4 text-left text-xs font-medium rogym-text-dim">Ghi chú</th>
+                      <th className="pb-2 text-left text-xs font-medium rogym-text-dim">{t('students.detail.progress.colDate')}</th>
+                      <th className="pb-2 text-right text-xs font-medium rogym-text-dim">{t('students.detail.progress.colWeight')}</th>
+                      <th className="pb-2 text-right text-xs font-medium rogym-text-dim">{t('students.detail.progress.colBmi')}</th>
+                      <th className="pb-2 pl-4 text-left text-xs font-medium rogym-text-dim">{t('students.detail.progress.colGoal')}</th>
+                      <th className="pb-2 pl-4 text-left text-xs font-medium rogym-text-dim">{t('students.detail.progress.colNotes')}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -348,13 +352,13 @@ export default function StudentDetailPage() {
       {tab === 'sessions' &&
         (sessions.length === 0 ? (
           <TrainerEmptyState
-            title="Chưa có buổi tập"
+            title={t('students.detail.sessions.noSessions')}
             action={
               <Link
                 className="rogym-btn rogym-btn--primary"
                 to={`/trainer/sessions/create?memberId=${id}`}
               >
-                Tạo buổi đầu tiên
+                {t('students.detail.sessions.createFirst')}
               </Link>
             }
           />
@@ -372,7 +376,7 @@ export default function StudentDetailPage() {
                     {formatDateTime(session.startTime)}
                   </div>
                   <div className="mt-1 text-sm rogym-text-secondary">
-                    {session.roomName ?? 'Chưa có phòng'}
+                    {session.roomName ?? t('students.detail.sessions.noRoom')}
                   </div>
                 </div>
                 <TrainerStatusBadge status={session.status} />
@@ -389,13 +393,13 @@ export default function StudentDetailPage() {
               className="rogym-btn rogym-btn--primary"
               onClick={() => setAssignOpen(true)}
             >
-              <ClipboardList size={16} /> Gán giáo án mới
+              <ClipboardList size={16} /> {t('students.detail.workout.assignNew')}
             </button>
           </div>
           {!activePlan ? (
             <TrainerEmptyState
-              title="Chưa có giáo án active"
-              description="Gán một kế hoạch đang active cho học viên này."
+              title={t('students.detail.workout.noActivePlan')}
+              description={t('students.detail.workout.noActivePlanDesc')}
             />
           ) : (
             <section className="rogym-card rogym-card--compact p-6">
@@ -403,7 +407,7 @@ export default function StudentDetailPage() {
                 <div>
                   <h2 className="text-xl font-bold text-white">{activePlan.name}</h2>
                   <p className="mt-2 text-sm rogym-text-secondary">
-                    {activePlan.description ?? 'Không có mô tả'}
+                    {activePlan.description ?? t('students.detail.plan.noDescription')}
                   </p>
                 </div>
                 <div className="flex items-center gap-3">
@@ -415,7 +419,9 @@ export default function StudentDetailPage() {
                           : 'border-amber-400/25 bg-amber-400/10 text-amber-300'
                       }`}
                     >
-                      {activeAssignments[0].assignedByStaffId ? 'PT gán' : 'Plan cá nhân'}
+                      {activeAssignments[0].assignedByStaffId
+                        ? t('students.detail.plan.ptAssigned')
+                        : t('students.detail.plan.personal')}
                     </span>
                   )}
                   {activeAssignments[0]?.assignedByStaffId && (
@@ -424,7 +430,7 @@ export default function StudentDetailPage() {
                       className="rogym-btn rogym-btn--danger rounded-full"
                       onClick={() => setUnassignOpen(true)}
                     >
-                      Gỡ gán
+                      {t('students.detail.workout.unassign')}
                     </button>
                   )}
                 </div>
@@ -445,7 +451,7 @@ export default function StudentDetailPage() {
                           className="rounded-xl bg-black/15 p-3 text-sm"
                         >
                           <div className="font-medium text-white">
-                            {item.exercise?.name ?? 'Bài tập'}
+                            {item.exercise?.name ?? 'Exercise'}
                           </div>
                           <div className="mt-1 text-xs rogym-text-dim">
                             {item.targetSets} sets ·{' '}
@@ -464,7 +470,7 @@ export default function StudentDetailPage() {
           )}
           {assignmentHistory.length > 0 && (
             <section className="rogym-card rogym-card--compact p-6">
-              <h2 className="mb-4 text-lg font-bold text-white">Lịch sử gán giáo án</h2>
+              <h2 className="mb-4 text-lg font-bold text-white">{t('students.detail.workout.historyTitle')}</h2>
               <div className="space-y-3">
                 {assignmentHistory.map((item) => (
                   <div
@@ -473,10 +479,10 @@ export default function StudentDetailPage() {
                   >
                     <div>
                       <div className="text-sm font-medium text-white">
-                        {item.plan?.name ?? 'Giáo án đã xóa'}
+                        {item.plan?.name ?? t('students.detail.plan.notFound')}
                       </div>
                       <div className="text-xs rogym-text-dim">
-                        Bắt đầu {formatDate(item.startDate)}
+                        {t('students.detail.workout.startedOn', { date: formatDate(item.startDate) })}
                       </div>
                     </div>
                     <div className="flex items-center gap-3">
@@ -487,7 +493,9 @@ export default function StudentDetailPage() {
                             : 'border-amber-400/25 bg-amber-400/10 text-amber-300'
                         }`}
                       >
-                        {item.assignedByStaffId ? 'PT gán' : 'Plan cá nhân'}
+                        {item.assignedByStaffId
+                          ? t('students.detail.plan.ptAssigned')
+                          : t('students.detail.plan.personal')}
                       </span>
                       <TrainerStatusBadge status={item.status} />
                     </div>
@@ -501,7 +509,7 @@ export default function StudentDetailPage() {
 
       <TrainerModal
         open={assignOpen}
-        title="Gán giáo án"
+        title={t('students.detail.assignModal.title')}
         onClose={() => setAssignOpen(false)}
         footer={
           <>
@@ -510,19 +518,19 @@ export default function StudentDetailPage() {
               className="rogym-btn rogym-btn--outline-white"
               onClick={() => setAssignOpen(false)}
             >
-              Hủy
+              {t('students.detail.assignModal.cancel')}
             </button>
             <SubmitButton form="assign-plan-form" loading={assigning} disabled={!assignPlanId}>
-              Gán giáo án
+              {t('students.detail.assignModal.submit')}
             </SubmitButton>
           </>
         }
       >
         <form id="assign-plan-form" className="space-y-4" onSubmit={handleAssign}>
           <label className="block space-y-2">
-            <span className="rogym-field-label">Kế hoạch active</span>
+            <span className="rogym-field-label">{t('students.detail.assignModal.fieldPlan')}</span>
             <TrainerSelect value={assignPlanId} onValueChange={setAssignPlanId} required>
-              <option value="">Chọn kế hoạch</option>
+              <option value="">{t('students.detail.assignModal.selectPlan')}</option>
               {plans.map((plan) => (
                 <option key={plan.planId} value={plan.planId}>
                   {plan.name}
@@ -531,11 +539,11 @@ export default function StudentDetailPage() {
             </TrainerSelect>
           </label>
           <label className="block space-y-2">
-            <span className="rogym-field-label">Ngày bắt đầu</span>
+            <span className="rogym-field-label">{t('students.detail.assignModal.fieldStartDate')}</span>
             <DatePickerInput value={assignDate} onChange={(value) => setAssignDate(value)} />
           </label>
           <label className="block space-y-2">
-            <span className="rogym-field-label">Ghi chú</span>
+            <span className="rogym-field-label">{t('students.detail.assignModal.fieldNotes')}</span>
             <textarea
               className="rogym-input min-h-24"
               value={assignNotes}
@@ -543,7 +551,7 @@ export default function StudentDetailPage() {
             />
           </label>
           <p className="text-xs leading-5 text-amber-200">
-            Giáo án active hiện tại sẽ tự động chuyển sang trạng thái đã thay thế.
+            {t('students.detail.assignModal.warning')}
           </p>
           <button type="submit" className="hidden" />
         </form>
@@ -551,7 +559,7 @@ export default function StudentDetailPage() {
 
       <TrainerModal
         open={unassignOpen}
-        title="Xác nhận gỡ gán giáo án"
+        title={t('students.detail.unassignModal.title')}
         onClose={() => setUnassignOpen(false)}
         footer={
           <>
@@ -561,7 +569,7 @@ export default function StudentDetailPage() {
               onClick={() => setUnassignOpen(false)}
               disabled={unassigning}
             >
-              Hủy
+              {t('students.detail.unassignModal.cancel')}
             </button>
             <button
               type="button"
@@ -569,15 +577,15 @@ export default function StudentDetailPage() {
               onClick={handleUnassign}
               disabled={unassigning}
             >
-              {unassigning ? 'Đang gỡ...' : 'Gỡ gán'}
+              {unassigning
+                ? t('students.detail.unassignModal.submitting')
+                : t('students.detail.unassignModal.submit')}
             </button>
           </>
         }
       >
         <p className="text-sm rogym-text-secondary">
-          Bạn có chắc muốn gỡ giáo án{' '}
-          <span className="font-semibold text-white">{activePlan?.name}</span> khỏi học viên này?
-          Thao tác này không thể hoàn tác.
+          {t('students.detail.unassignModal.confirm', { name: activePlan?.name ?? '' })}
         </p>
       </TrainerModal>
 

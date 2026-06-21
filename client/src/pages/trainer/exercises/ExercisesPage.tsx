@@ -1,4 +1,5 @@
 import { FormEvent, useCallback, useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Pencil, Plus, Search } from 'lucide-react'
 import { getApiError } from '@/lib/api-error'
 import workoutService, { type Exercise, type ExerciseCategory } from '@/services/workout.service'
@@ -20,6 +21,7 @@ const CATEGORIES = EXERCISE_CATEGORY_OPTIONS.filter(
 )
 
 export default function ExercisesPage() {
+  const { t } = useTranslation('trainer')
   const [exercises, setExercises] = useState<Exercise[]>([])
   const [search, setSearch] = useState('')
   const [category, setCategory] = useState('')
@@ -46,11 +48,11 @@ export default function ExercisesPage() {
         })
       )
     } catch (err) {
-      setError(getApiError(err, 'Không thể tải thư viện bài tập.'))
+      setError(getApiError(err, t('exercises.error.loadFailed')))
     } finally {
       setLoading(false)
     }
-  }, [category, muscleGroup])
+  }, [category, muscleGroup, t])
 
   useEffect(() => {
     void load()
@@ -107,7 +109,7 @@ export default function ExercisesPage() {
       setModalOpen(false)
       await load()
     } catch (err) {
-      setError(getApiError(err, 'Không thể lưu bài tập.'))
+      setError(getApiError(err, t('exercises.error.saveFailed')))
     } finally {
       setSubmitting(false)
     }
@@ -116,12 +118,12 @@ export default function ExercisesPage() {
   return (
     <TrainerPage>
       <TrainerPageHeader
-        eyebrow="Workout"
-        title="Thư viện bài tập"
-        description="Quản lý các bài tập dùng chung khi xây dựng giáo án."
+        eyebrow={t('exercises.eyebrow')}
+        title={t('exercises.title')}
+        description={t('exercises.description')}
         actions={
           <button type="button" className="rogym-btn rogym-btn--primary" onClick={openCreate}>
-            <Plus size={16} /> Thêm bài tập
+            <Plus size={16} /> {t('exercises.addButton')}
           </button>
         }
       />
@@ -135,11 +137,11 @@ export default function ExercisesPage() {
             className="rogym-input pl-10"
             value={search}
             onChange={(event) => setSearch(event.target.value)}
-            placeholder="Tìm theo tên, nhóm cơ hoặc dụng cụ"
+            placeholder={t('exercises.searchPlaceholder')}
           />
         </div>
         <TrainerSelect value={category} onValueChange={setCategory}>
-          <option value="">Mọi loại bài tập</option>
+          <option value="">{t('exercises.allCategories')}</option>
           {CATEGORIES.map((item) => (
             <option key={item.value} value={item.value}>
               {item.label}
@@ -147,7 +149,7 @@ export default function ExercisesPage() {
           ))}
         </TrainerSelect>
         <TrainerSelect value={muscleGroup} onValueChange={setMuscleGroup}>
-          <option value="">Mọi nhóm cơ</option>
+          <option value="">{t('exercises.allMuscleGroups')}</option>
           {muscleGroupOptions.map((group) => (
             <option key={group} value={group}>
               {group}
@@ -160,8 +162,8 @@ export default function ExercisesPage() {
         <TrainerSkeleton rows={6} />
       ) : filtered.length === 0 ? (
         <TrainerEmptyState
-          title="Không tìm thấy bài tập"
-          description="Thử đổi từ khóa hoặc thêm bài tập mới."
+          title={t('exercises.notFound')}
+          description={t('exercises.notFoundDesc')}
         />
       ) : (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -176,7 +178,7 @@ export default function ExercisesPage() {
                     type="button"
                     className="rogym-btn rogym-btn--icon rogym-btn--elevated"
                     onClick={() => openEdit(exercise)}
-                    aria-label={`Sửa ${exercise.name}`}
+                    aria-label={t('exercises.editAriaLabel', { name: exercise.name })}
                   >
                     <Pencil size={15} />
                   </button>
@@ -188,7 +190,7 @@ export default function ExercisesPage() {
       )}
       <TrainerModal
         open={modalOpen}
-        title={editing ? 'Chỉnh sửa bài tập' : 'Thêm bài tập'}
+        title={editing ? t('exercises.modal.editTitle') : t('exercises.modal.createTitle')}
         onClose={() => setModalOpen(false)}
         footer={
           <>
@@ -197,17 +199,17 @@ export default function ExercisesPage() {
               className="rogym-btn rogym-btn--outline-white"
               onClick={() => setModalOpen(false)}
             >
-              Hủy
+              {t('exercises.modal.cancel')}
             </button>
             <SubmitButton form="exercise-form" loading={submitting} disabled={!name.trim()}>
-              Lưu bài tập
+              {t('exercises.modal.submit')}
             </SubmitButton>
           </>
         }
       >
         <form id="exercise-form" className="space-y-4" onSubmit={submit}>
           <label className="block space-y-2">
-            <span className="rogym-field-label">Tên bài tập</span>
+            <span className="rogym-field-label">{t('exercises.modal.fieldName')}</span>
             <input
               className="rogym-input"
               value={name}
@@ -219,7 +221,7 @@ export default function ExercisesPage() {
             />
           </label>
           <label className="block space-y-2">
-            <span className="rogym-field-label">Loại bài tập</span>
+            <span className="rogym-field-label">{t('exercises.modal.fieldCategory')}</span>
             <TrainerSelect
               value={formCategory}
               onValueChange={(value) => setFormCategory(value as ExerciseCategory)}
@@ -233,7 +235,7 @@ export default function ExercisesPage() {
           </label>
           <div className="grid gap-4 md:grid-cols-2">
             <label className="block space-y-2">
-              <span className="rogym-field-label">Nhóm cơ</span>
+              <span className="rogym-field-label">{t('exercises.modal.fieldMuscleGroup')}</span>
               <input
                 className="rogym-input"
                 value={formMuscleGroup}
@@ -242,7 +244,7 @@ export default function ExercisesPage() {
               />
             </label>
             <label className="block space-y-2">
-              <span className="rogym-field-label">Dụng cụ</span>
+              <span className="rogym-field-label">{t('exercises.modal.fieldEquipment')}</span>
               <input
                 className="rogym-input"
                 value={equipment}
@@ -252,7 +254,7 @@ export default function ExercisesPage() {
             </label>
           </div>
           <label className="block space-y-2">
-            <span className="rogym-field-label">Mô tả</span>
+            <span className="rogym-field-label">{t('exercises.modal.fieldDescription')}</span>
             <textarea
               className="rogym-input min-h-28"
               value={description}
@@ -260,7 +262,7 @@ export default function ExercisesPage() {
             />
           </label>
           <label className="block space-y-2">
-            <span className="rogym-field-label">Đường dẫn hình minh họa</span>
+            <span className="rogym-field-label">{t('exercises.modal.fieldImageUrl')}</span>
             <input
               className="rogym-input"
               value={imageUrl}
