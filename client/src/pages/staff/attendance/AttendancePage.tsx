@@ -1,4 +1,5 @@
 import { memo, useCallback, useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { CalendarX, ChevronLeft, ChevronRight, Clock, LogIn, LogOut, Timer } from 'lucide-react'
 import staffAttendanceService, { type StaffAttendanceLog } from '@/services/staffAttendance.service'
 import { useStaffAttendanceStore } from '@/stores/staffAttendanceStore'
@@ -27,13 +28,6 @@ function fmtMonthYear(d: Date) {
   return d.toLocaleDateString('vi-VN', { month: 'long', year: 'numeric' })
 }
 
-function fmtDuration(minutes: number) {
-  const h = Math.floor(minutes / 60)
-  const m = minutes % 60
-  if (h === 0) return `${m} phút`
-  return m === 0 ? `${h} giờ` : `${h} giờ ${m} phút`
-}
-
 function dateKey(iso: string) {
   const d = new Date(iso)
   return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`
@@ -53,6 +47,16 @@ function AttendanceTooltip({
   log: StaffAttendanceLog
   align?: 'left' | 'right'
 }) {
+  const { t } = useTranslation('staff')
+
+  function fmtDuration(totalMinutes: number) {
+    const h = Math.floor(totalMinutes / 60)
+    const m = totalMinutes % 60
+    if (h === 0) return t('attendance.durationMinutes', { minutes: m })
+    if (m === 0) return t('attendance.durationHours', { hours: h })
+    return t('attendance.durationHoursMinutes', { hours: h, minutes: m })
+  }
+
   return (
     <div
       className={`rogym-session-tooltip pointer-events-none absolute top-full z-30 mt-1 min-w-[140px] rounded-xl p-3 shadow-2xl ${
@@ -118,6 +122,8 @@ function AttendanceCalendarView({
   error: string | null
   onRetry: () => void
 }) {
+  const { t } = useTranslation('staff')
+
   const byDate = useMemo(() => {
     const map = new Map<string, StaffAttendanceLog[]>()
     for (const log of logs) {
@@ -230,7 +236,7 @@ function AttendanceCalendarView({
       {!loading && !error && logs.length === 0 && (
         <div className="flex flex-col items-center gap-2 py-6">
           <CalendarX size={28} className="rogym-sx-ed519d00" />
-          <p className="text-sm rogym-sx-5e5c39ab">Chưa có lần chấm công nào trong tháng</p>
+          <p className="text-sm rogym-sx-5e5c39ab">{t('attendance.noLogsThisMonth')}</p>
         </div>
       )}
     </div>
@@ -252,6 +258,7 @@ function CheckInCard({
   onCheckIn: () => void
   onCheckOut: () => void
 }) {
+  const { t } = useTranslation('staff')
   const [elapsed, setElapsed] = useState('')
 
   useEffect(() => {
@@ -276,18 +283,18 @@ function CheckInCard({
 
   return (
     <section className="rogym-card rogym-card--compact p-6 space-y-5">
-      <h2 className="text-base font-bold text-white">Chấm công</h2>
+      <h2 className="text-base font-bold text-white">{t('attendance.title')}</h2>
 
       {openLog ? (
         <div className="space-y-4">
           <div className="rounded-xl bg-white/5 p-4 space-y-2">
             <div className="flex items-center gap-2 rogym-text-accent">
               <div className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-              <span className="text-sm font-semibold">Đang làm việc</span>
+              <span className="text-sm font-semibold">{t('attendance.working')}</span>
             </div>
             <div className="flex items-center gap-2 rogym-text-dim text-sm">
               <LogIn size={14} />
-              <span>Vào lúc {fmtTime(openLog.checkIn)}</span>
+              <span>{t('attendance.checkedInAt', { time: fmtTime(openLog.checkIn) })}</span>
             </div>
             {elapsed && (
               <div className="flex items-center gap-2 text-sm text-white">
@@ -312,7 +319,7 @@ function CheckInCard({
             ) : (
               <LogOut size={16} />
             )}
-            Chấm ra
+            {t('attendance.clockOut')}
           </button>
         </div>
       ) : (
@@ -320,7 +327,7 @@ function CheckInCard({
           <div className="rounded-xl bg-white/5 p-4">
             <div className="flex items-center gap-2 rogym-text-dim">
               <div className="h-2 w-2 rounded-full bg-white/20" />
-              <span className="text-sm">Chưa chấm công hôm nay</span>
+              <span className="text-sm">{t('attendance.notCheckedIn')}</span>
             </div>
           </div>
 
@@ -339,7 +346,7 @@ function CheckInCard({
             ) : (
               <LogIn size={16} />
             )}
-            Chấm vào
+            {t('attendance.clockIn')}
           </button>
         </div>
       )}
@@ -350,6 +357,8 @@ function CheckInCard({
 // ── Main page ────────────────────────────────────────────────────────────────────
 
 export default function StaffAttendancePage() {
+  const { t } = useTranslation('staff')
+
   // Trạng thái chấm vào/ra + timer dùng chung với Dashboard.
   const openLog = useStaffAttendanceStore((s) => s.openLog)
   const actionLoading = useStaffAttendanceStore((s) => s.actionLoading)
@@ -376,9 +385,9 @@ export default function StaffAttendancePage() {
     staffAttendanceService
       .getMyAttendance({ from, to, pageSize: 100 })
       .then((res) => setCalLogs(res.data))
-      .catch((err) => setCalError(getApiError(err, 'Không thể tải lịch chấm công.')))
+      .catch((err) => setCalError(getApiError(err, t('attendance.loadFailed'))))
       .finally(() => setCalLoading(false))
-  }, [calMonth])
+  }, [calMonth, t])
 
   useEffect(() => {
     loadCalLogs()
@@ -413,9 +422,9 @@ export default function StaffAttendancePage() {
   return (
     <StaffPage>
       <StaffPageHeader
-        eyebrow="Nhân viên"
-        title="Chấm công"
-        description="Ghi nhận giờ vào / ra để tính công và kiểm tra KPI."
+        eyebrow={t('attendance.eyebrow')}
+        title={t('attendance.title')}
+        description={t('attendance.description')}
       />
 
       <div className="grid gap-5 lg:grid-cols-[320px_1fr]">
