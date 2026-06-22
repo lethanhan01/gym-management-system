@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Plus, X } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { staffService, type ScheduleWithStaff, type StaffProfile } from '@/services/staff.service'
 import {
   OwnerErrorState,
@@ -20,6 +21,8 @@ import { getApiError } from '@/lib/api-error'
 import { shiftLabel } from '@/lib/shift'
 
 export default function OwnerSchedulePage() {
+  const { t } = useTranslation('owner')
+  const { t: tCommon } = useTranslation('common')
   const [monthOffset, setMonthOffset] = useState(0)
   const [schedules, setSchedules] = useState<ScheduleWithStaff[]>([])
   const [staffList, setStaffList] = useState<StaffProfile[]>([])
@@ -42,7 +45,7 @@ export default function OwnerSchedulePage() {
     staffService
       .getAllSchedules(monthStart, monthEnd)
       .then(setSchedules)
-      .catch((err) => setError(getApiError(err, 'Không thể tải lịch làm việc.')))
+      .catch((err) => setError(getApiError(err, t('staffManagement.schedule.loadFailed'))))
       .finally(() => setLoading(false))
   }, [monthStart, monthEnd])
 
@@ -88,7 +91,7 @@ export default function OwnerSchedulePage() {
       setAddOpen(false)
       loadSchedules()
     } catch (err) {
-      setAddError(getApiError(err, 'Không thể thêm lịch.'))
+      setAddError(getApiError(err, t('staffManagement.schedule.saveFailed')))
     } finally {
       setAdding(false)
     }
@@ -100,7 +103,7 @@ export default function OwnerSchedulePage() {
       await staffService.deleteSchedule(schedule.staffId, schedule.scheduleId)
       setSchedules((prev) => prev.filter((item) => item.scheduleId !== schedule.scheduleId))
     } catch (err) {
-      alert(getApiError(err, 'Không thể xóa lịch.'))
+      alert(getApiError(err, t('staffManagement.schedule.deleteFailed')))
     } finally {
       setDeleting((prev) => {
         const next = new Set(prev)
@@ -129,9 +132,9 @@ export default function OwnerSchedulePage() {
   return (
     <OwnerPage>
       <OwnerPageHeader
-        eyebrow="Quản lý nhân sự"
-        title="Lịch phân công"
-        description="Xem và phân ca làm việc cho nhân viên theo tháng."
+        eyebrow={t('staffManagement.schedule.eyebrow')}
+        title={t('staffManagement.schedule.title')}
+        description={t('staffManagement.schedule.description')}
       />
 
       <StaffScheduleCalendar
@@ -142,25 +145,25 @@ export default function OwnerSchedulePage() {
         onSelectedDateChange={setSelectedDate}
         onPreviousMonth={() => setMonthOffset((offset) => offset - 1)}
         onNextMonth={() => setMonthOffset((offset) => offset + 1)}
-        detailEyebrow="Nhân sự ngày"
-        emptyDayMessage="Chưa có nhân viên nào trong ngày này."
+        detailEyebrow={t('staffManagement.schedule.detailEyebrow')}
+        emptyDayMessage={t('staffManagement.schedule.emptyDayMessage')}
         emptyDayAction={
           <button
             type="button"
             className="rogym-btn rogym-btn--outline-white text-xs"
             onClick={openAdd}
           >
-            <Plus size={13} /> Thêm nhân viên
+            <Plus size={13} /> {t('staffManagement.schedule.addStaffBtn')}
           </button>
         }
-        emptyShiftMessage="Chưa có nhân viên"
+        emptyShiftMessage={t('staffManagement.schedule.emptyShiftMessage')}
         headerAction={
           <button
             type="button"
             className="rogym-btn rogym-btn--primary rogym-btn--sm text-xs"
             onClick={openAdd}
           >
-            <Plus size={13} /> Thêm
+            <Plus size={13} /> {tCommon('button.add')}
           </button>
         }
         renderEntry={(schedule) => (
@@ -176,7 +179,7 @@ export default function OwnerSchedulePage() {
               onClick={() => handleDelete(schedule)}
               disabled={deleting.has(schedule.scheduleId)}
               className="shrink-0 text-white/30 opacity-0 transition-opacity group-hover:opacity-100 hover:text-red-400 disabled:opacity-50"
-              aria-label={`Xóa ${schedule.fullName}`}
+              aria-label={t('staffManagement.schedule.removeAriaLabel', { name: schedule.fullName })}
             >
               <X size={13} />
             </button>
@@ -186,14 +189,14 @@ export default function OwnerSchedulePage() {
 
       <OwnerModal
         open={addOpen}
-        title={
-          selectedDate
-            ? `Thêm nhân viên - ${new Date(`${selectedDate}T00:00:00`).toLocaleDateString(
-                'vi-VN',
-                { day: '2-digit', month: '2-digit', year: 'numeric' }
-              )}`
-            : 'Thêm nhân viên'
-        }
+        title={(() => {
+          if (!selectedDate) return t('staffManagement.schedule.addStaffBtn')
+          const dateStr = new Date(`${selectedDate}T00:00:00`).toLocaleDateString(
+            'vi-VN',
+            { day: '2-digit', month: '2-digit', year: 'numeric' }
+          )
+          return t('staffManagement.schedule.modalTitle', { date: dateStr })
+        })()}
         onClose={() => setAddOpen(false)}
         footer={
           <>
@@ -202,10 +205,10 @@ export default function OwnerSchedulePage() {
               className="rogym-btn rogym-btn--outline-white"
               onClick={() => setAddOpen(false)}
             >
-              Hủy
+              {tCommon('button.cancel')}
             </button>
             <OwnerSubmitButton form="add-schedule-form" loading={adding} disabled={!addStaffId}>
-              Thêm
+              {tCommon('button.add')}
             </OwnerSubmitButton>
           </>
         }
@@ -225,12 +228,12 @@ export default function OwnerSchedulePage() {
           )}
           {availableStaff.length === 0 ? (
             <p className="text-sm rogym-text-dim">
-              Tất cả nhân viên đã được phân ca này trong ngày đã chọn.
+              {t('staffManagement.schedule.allAssigned')}
             </p>
           ) : (
             <>
               <label className="block space-y-2">
-                <span className="rogym-field-label">Ca làm việc</span>
+                <span className="rogym-field-label">{t('staffManagement.schedule.shiftLabel')}</span>
                 <OwnerSelect
                   value={addShift}
                   onValueChange={(value) => setAddShift(value as StaffScheduleShift)}
@@ -244,9 +247,9 @@ export default function OwnerSchedulePage() {
                 </OwnerSelect>
               </label>
               <label className="block space-y-2">
-                <span className="rogym-field-label">Nhân viên</span>
+                <span className="rogym-field-label">{t('staffManagement.schedule.staffLabel')}</span>
                 <OwnerSelect value={addStaffId} onValueChange={setAddStaffId} required>
-                  <option value="">-- Chọn nhân viên --</option>
+                  <option value="">{t('staffManagement.schedule.selectStaff')}</option>
                   {availableStaff.map((staff) => (
                     <option key={staff.staffId} value={staff.staffId}>
                       {staff.fullName} ({staff.staffCode})

@@ -1,5 +1,6 @@
 import { FormEvent, useCallback, useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { Edit2, Plus, Search, Trash2 } from 'lucide-react'
 import { getApiError } from '@/lib/api-error'
 import { formatDate } from '@/lib/date'
@@ -20,18 +21,6 @@ import {
   OwnerStatusBadge,
   OwnerSubmitButton,
 } from '@/components/OwnerUI'
-
-const STATUS_OPTIONS = [
-  { value: 'active', label: 'Đang hoạt động' },
-  { value: 'repairing', label: 'Đang sửa chữa' },
-  { value: 'broken', label: 'Hỏng' },
-  { value: 'retired', label: 'Ngừng sử dụng' },
-]
-
-const STATUS_FILTER_OPTIONS = [
-  { value: '', label: 'Mọi trạng thái' },
-  ...STATUS_OPTIONS,
-]
 
 type FormState = {
   name: string
@@ -60,6 +49,21 @@ function equipmentToForm(eq: Equipment): FormState {
 }
 
 export default function EquipmentPage() {
+  const { t } = useTranslation('owner')
+  const { t: tCommon } = useTranslation('common')
+
+  const STATUS_OPTIONS = [
+    { value: 'active', label: t('equipment.status.active') },
+    { value: 'repairing', label: t('equipment.status.repairing') },
+    { value: 'broken', label: t('equipment.status.broken') },
+    { value: 'retired', label: t('equipment.status.retired') },
+  ]
+
+  const STATUS_FILTER_OPTIONS = [
+    { value: '', label: t('equipment.status.all') },
+    ...STATUS_OPTIONS,
+  ]
+
   const [searchParams, setSearchParams] = useSearchParams()
   const statusFilter = searchParams.get('status') ?? ''
   const page = Number(searchParams.get('page') ?? 1)
@@ -92,7 +96,7 @@ export default function EquipmentPage() {
         setTotal(result.total)
         setTotalPages(result.totalPages)
       })
-      .catch((err) => setError(getApiError(err, 'Không thể tải danh sách thiết bị.')))
+      .catch((err) => setError(getApiError(err, t('equipment.loadFailed'))))
       .finally(() => setLoading(false))
   }, [statusFilter, page, searchParams])
 
@@ -156,7 +160,7 @@ export default function EquipmentPage() {
       closeModal()
       load()
     } catch (err) {
-      setFormError(getApiError(err, 'Không thể lưu thiết bị.'))
+      setFormError(getApiError(err, t('equipment.saveFailed')))
     } finally {
       setSaving(false)
     }
@@ -181,7 +185,7 @@ export default function EquipmentPage() {
       setDeleteTarget(null)
       load()
     } catch (err) {
-      setDeleteError(getApiError(err, 'Không thể xóa thiết bị.'))
+      setDeleteError(getApiError(err, t('equipment.deleteFailed')))
     } finally {
       setDeleting(false)
     }
@@ -204,12 +208,12 @@ export default function EquipmentPage() {
   return (
     <OwnerPage>
       <OwnerPageHeader
-        eyebrow="Cơ sở vật chất"
-        title="Quản lý thiết bị"
-        description={`${total} thiết bị trong hệ thống.`}
+        eyebrow={t('equipment.eyebrow')}
+        title={t('equipment.title')}
+        description={t('equipment.totalCount', { count: total })}
         actions={
           <button type="button" className="rogym-btn rogym-btn--primary" onClick={openCreate}>
-            <Plus size={16} /> Thêm thiết bị
+            <Plus size={16} /> {t('equipment.addEquipment')}
           </button>
         }
       />
@@ -223,13 +227,13 @@ export default function EquipmentPage() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && applySearch()}
-            placeholder="Tìm theo tên thiết bị hoặc mã"
+            placeholder={t('equipment.searchPlaceholder')}
           />
         </div>
         <OwnerSelect
           value={statusFilter}
           onValueChange={(value) => updateParam('status', value)}
-          ariaLabel="Lọc theo trạng thái"
+          ariaLabel={t('equipment.filterByStatus')}
         >
           {STATUS_FILTER_OPTIONS.map((opt) => (
             <option key={opt.value} value={opt.value}>
@@ -238,7 +242,7 @@ export default function EquipmentPage() {
           ))}
         </OwnerSelect>
         <button type="button" className="rogym-btn rogym-btn--primary" onClick={applySearch}>
-          Tìm
+          {tCommon('button.search')}
         </button>
       </div>
 
@@ -248,11 +252,11 @@ export default function EquipmentPage() {
         <OwnerErrorState message={error} onRetry={load} />
       ) : data.length === 0 ? (
         <OwnerEmptyState
-          title="Không tìm thấy thiết bị"
-          description="Thử thay đổi bộ lọc hoặc thêm thiết bị mới."
+          title={t('equipment.notFound')}
+          description={t('equipment.notFoundDesc')}
           action={
             <button type="button" className="rogym-btn rogym-btn--primary" onClick={openCreate}>
-              <Plus size={15} /> Thêm thiết bị
+              <Plus size={15} /> {t('equipment.addEquipment')}
             </button>
           }
         />
@@ -262,13 +266,13 @@ export default function EquipmentPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-white/5 text-left text-xs rogym-text-dim">
-                  <th className="px-5 py-3 font-medium">Mã</th>
-                  <th className="px-5 py-3 font-medium">Tên thiết bị</th>
-                  <th className="px-5 py-3 font-medium">Phòng</th>
-                  <th className="px-5 py-3 font-medium">Ngày mua</th>
-                  <th className="px-5 py-3 font-medium">Hết bảo hành</th>
-                  <th className="px-5 py-3 font-medium">Trạng thái</th>
-                  <th className="px-5 py-3 font-medium text-right">Hành động</th>
+                  <th className="px-5 py-3 font-medium">{t('equipment.table.code')}</th>
+                  <th className="px-5 py-3 font-medium">{t('equipment.table.name')}</th>
+                  <th className="px-5 py-3 font-medium">{t('equipment.table.room')}</th>
+                  <th className="px-5 py-3 font-medium">{t('equipment.table.importDate')}</th>
+                  <th className="px-5 py-3 font-medium">{t('equipment.table.warrantyUntil')}</th>
+                  <th className="px-5 py-3 font-medium">{t('equipment.table.status')}</th>
+                  <th className="px-5 py-3 font-medium text-right">{t('equipment.table.actions')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5">
@@ -279,7 +283,7 @@ export default function EquipmentPage() {
                     </td>
                     <td className="px-5 py-4 font-semibold text-white">{eq.name}</td>
                     <td className="px-5 py-4 rogym-text-secondary">
-                      {eq.roomName ?? <span className="rogym-text-dim italic">Chưa phân phòng</span>}
+                      {eq.roomName ?? <span className="rogym-text-dim italic">{t('equipment.noRoom')}</span>}
                     </td>
                     <td className="px-5 py-4 rogym-text-secondary">
                       {formatDate(eq.importDate)}
@@ -297,14 +301,14 @@ export default function EquipmentPage() {
                           className="rogym-btn rogym-btn--outline-white rogym-btn--nav"
                           onClick={() => openEdit(eq)}
                         >
-                          <Edit2 size={14} /> Sửa
+                          <Edit2 size={14} /> {tCommon('button.edit')}
                         </button>
                         <button
                           type="button"
                           className="rogym-btn rogym-btn--danger rogym-btn--nav"
                           onClick={() => openDelete(eq)}
                         >
-                          <Trash2 size={14} /> Xóa
+                          <Trash2 size={14} /> {tCommon('button.delete')}
                         </button>
                       </div>
                     </td>
@@ -322,10 +326,10 @@ export default function EquipmentPage() {
                 disabled={page <= 1}
                 onClick={() => updateParam('page', String(page - 1))}
               >
-                Trước
+                {t('equipment.pagination.prev')}
               </button>
               <span className="text-sm rogym-text-secondary">
-                Trang {page}/{totalPages}
+                {t('equipment.pagination.page', { page, total: totalPages })}
               </span>
               <button
                 type="button"
@@ -333,7 +337,7 @@ export default function EquipmentPage() {
                 disabled={page >= totalPages}
                 onClick={() => updateParam('page', String(page + 1))}
               >
-                Sau
+                {t('equipment.pagination.next')}
               </button>
             </div>
           )}
@@ -343,15 +347,15 @@ export default function EquipmentPage() {
       {/* Modal thêm / chỉnh sửa thiết bị */}
       <OwnerModal
         open={modalOpen}
-        title={editing ? `Chỉnh sửa: ${editing.name}` : 'Thêm thiết bị mới'}
+        title={editing ? t('equipment.editTitle', { name: editing.name }) : t('equipment.createTitle')}
         onClose={closeModal}
         footer={
           <>
             <button type="button" className="rogym-btn rogym-btn--outline-white" onClick={closeModal}>
-              Hủy
+              {tCommon('button.cancel')}
             </button>
             <OwnerSubmitButton form="equipment-form" loading={saving} disabled={!form.name.trim() || !form.roomId}>
-              {editing ? 'Lưu thay đổi' : 'Thêm thiết bị'}
+              {editing ? t('equipment.saveChanges') : t('equipment.addEquipment')}
             </OwnerSubmitButton>
           </>
         }
@@ -364,24 +368,24 @@ export default function EquipmentPage() {
           )}
 
           <label className="block space-y-2">
-            <span className="rogym-field-label">Tên thiết bị *</span>
+            <span className="rogym-field-label">{t('equipment.form.name')}</span>
             <input
               className="rogym-input"
               value={form.name}
               onChange={(e) => setField('name', e.target.value)}
-              placeholder="VD: Máy chạy bộ Technogym"
+              placeholder={t('equipment.form.namePlaceholder')}
               required
             />
           </label>
 
           <label className="block space-y-2">
-            <span className="rogym-field-label">Phòng *</span>
+            <span className="rogym-field-label">{t('equipment.form.room')}</span>
             <OwnerSelect
               value={form.roomId}
               onValueChange={(v) => setField('roomId', v)}
               required
             >
-              <option value="">-- Chọn phòng --</option>
+              <option value="">{t('equipment.form.selectRoom')}</option>
               {rooms.map((r) => (
                 <option key={r.roomId} value={r.roomId}>{r.name}</option>
               ))}
@@ -390,26 +394,26 @@ export default function EquipmentPage() {
 
           <div className="grid grid-cols-2 gap-4">
             <label className="block space-y-2">
-              <span className="rogym-field-label">Ngày mua</span>
+              <span className="rogym-field-label">{t('equipment.form.importDate')}</span>
               <DatePickerInput
                 value={form.importDate}
                 onChange={(value) => setField('importDate', value)}
-                aria-label="Ngày mua thiết bị"
+                aria-label={t('equipment.form.importDate')}
               />
             </label>
             <label className="block space-y-2">
-              <span className="rogym-field-label">Hết bảo hành</span>
+              <span className="rogym-field-label">{t('equipment.form.warrantyUntil')}</span>
               <DatePickerInput
                 value={form.warrantyUntil}
                 onChange={(value) => setField('warrantyUntil', value)}
-                aria-label="Ngày hết bảo hành thiết bị"
+                aria-label={t('equipment.form.warrantyUntil')}
               />
             </label>
           </div>
 
           {editing && (
             <label className="block space-y-2">
-              <span className="rogym-field-label">Trạng thái</span>
+              <span className="rogym-field-label">{t('equipment.form.status')}</span>
               <OwnerSelect
                 value={form.status}
                 onValueChange={(v) => setField('status', v)}
@@ -430,7 +434,7 @@ export default function EquipmentPage() {
       {deleteTarget && (
         <OwnerModal
           open={!!deleteTarget}
-          title="Xác nhận xóa thiết bị"
+          title={t('equipment.deleteConfirmTitle')}
           onClose={() => setDeleteTarget(null)}
           footer={
             <>
@@ -439,7 +443,7 @@ export default function EquipmentPage() {
                 className="rogym-btn rogym-btn--outline-white"
                 onClick={() => setDeleteTarget(null)}
               >
-                Hủy
+                {tCommon('button.cancel')}
               </button>
               <button
                 type="button"
@@ -447,7 +451,7 @@ export default function EquipmentPage() {
                 disabled={deleting}
                 onClick={handleDelete}
               >
-                {deleting ? 'Đang xóa...' : 'Xóa thiết bị'}
+                {deleting ? t('equipment.deleting') : t('equipment.deleteBtn')}
               </button>
             </>
           }
@@ -459,12 +463,10 @@ export default function EquipmentPage() {
               </div>
             )}
             <p className="text-sm rogym-text-secondary">
-              Bạn có chắc muốn xóa thiết bị{' '}
-              <strong className="text-white">{deleteTarget.name}</strong>
-              {deleteTarget.equipmentCode && (
-                <span className="rogym-text-dim"> ({deleteTarget.equipmentCode})</span>
-              )}
-              ? Hành động này không thể hoàn tác.
+              {t('equipment.deleteConfirmMsg', {
+                name: deleteTarget.name,
+                code: deleteTarget.equipmentCode ?? '',
+              })}
             </p>
           </div>
         </OwnerModal>

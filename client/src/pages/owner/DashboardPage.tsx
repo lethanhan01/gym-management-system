@@ -1,4 +1,5 @@
 import { memo, useEffect, useState, type ReactNode } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import {
   Users,
@@ -28,17 +29,11 @@ import {
   OwnerBadge,
 } from '@/components/OwnerUI'
 
-const QUICK_LINKS = [
-  { to: '/owner/staff', label: 'Quản lý nhân sự', icon: <Users size={16} /> },
-  { to: '/owner/rbac/groups', label: 'Phân quyền & nhóm', icon: <Shield size={16} /> },
-  { to: '/owner/packages', label: 'Cấu hình gói tập', icon: <Package size={16} /> },
-  { to: '/owner/revenue', label: 'Báo cáo thống kê', icon: <TrendingUp size={16} /> },
-] as const
-
 const OwnerReportAction = memo(function OwnerReportAction() {
+  const { t } = useTranslation('owner')
   return (
     <Link className="rogym-btn rogym-btn--primary" to="/owner/revenue">
-      <TrendingUp size={16} /> Xem báo cáo
+      <TrendingUp size={16} /> {t('dashboard.viewReports')}
     </Link>
   )
 })
@@ -50,13 +45,14 @@ const EquipmentAlert = memo(function EquipmentAlert({
   equipmentBroken: number
   equipmentRepairing: number
 }) {
+  const { t } = useTranslation('owner')
   return (
     <div className="rogym-error-alert flex items-center gap-4">
       <AlertTriangle size={20} className="shrink-0 text-red-400" />
       <div className="flex-1 text-sm">
-        <span className="font-semibold">Cảnh báo thiết bị: </span>
-        {equipmentBroken > 0 && <span>{equipmentBroken} thiết bị hỏng, </span>}
-        {equipmentRepairing > 0 && <span>{equipmentRepairing} đang sửa chữa</span>}
+        <span className="font-semibold">{t('dashboard.equipmentAlert')}: </span>
+        {equipmentBroken > 0 && <span>{t('dashboard.brokenCount', { count: equipmentBroken })} </span>}
+        {equipmentRepairing > 0 && <span>{t('dashboard.repairingCount', { count: equipmentRepairing })}</span>}
       </div>
     </div>
   )
@@ -69,12 +65,13 @@ const MemberPackageSummary = memo(function MemberPackageSummary({
   memberTotal: number
   totalPackages: number
 }) {
+  const { t } = useTranslation('owner')
   return (
     <section className="rogym-card rogym-card--compact p-6">
       <div className="mb-5 flex items-center justify-between">
-        <h2 className="text-lg font-bold text-white">Hội viên & Gói tập</h2>
+        <h2 className="text-lg font-bold text-white">{t('dashboard.membersAndPackages')}</h2>
         <Link className="rogym-text-link rogym-text-link--accent" to="/owner/staff">
-          Xem chi tiết
+          {t('dashboard.viewDetail')}
         </Link>
       </div>
       <div className="space-y-3">
@@ -84,8 +81,8 @@ const MemberPackageSummary = memo(function MemberPackageSummary({
               <Users size={18} className="rogym-text-green" />
             </div>
             <div>
-              <div className="text-sm font-semibold text-white">Tổng hội viên</div>
-              <div className="text-xs rogym-text-dim">Toàn bộ hệ thống</div>
+              <div className="text-sm font-semibold text-white">{t('dashboard.totalMembers')}</div>
+              <div className="text-xs rogym-text-dim">{t('dashboard.systemWide')}</div>
             </div>
           </div>
           <div className="text-xl font-bold text-white">{memberTotal}</div>
@@ -96,8 +93,8 @@ const MemberPackageSummary = memo(function MemberPackageSummary({
               <Package size={18} className="rogym-text-green" />
             </div>
             <div>
-              <div className="text-sm font-semibold text-white">Gói tập đang bán</div>
-              <div className="text-xs rogym-text-dim">Trạng thái active</div>
+              <div className="text-sm font-semibold text-white">{t('dashboard.activePackages')}</div>
+              <div className="text-xs rogym-text-dim">{t('dashboard.activeStatus')}</div>
             </div>
           </div>
           <div className="text-xl font-bold text-white">{totalPackages}</div>
@@ -125,7 +122,16 @@ const OpenFeedbackItem = memo(function OpenFeedbackItem({ feedback }: { feedback
 })
 
 export default function OwnerDashboardPage() {
+  const { t } = useTranslation('owner')
+  const { t: tCommon } = useTranslation('common')
   const user = useAuthStore((s) => s.user)
+
+  const QUICK_LINKS = [
+    { to: '/owner/staff', label: t('dashboard.staffManagement'), icon: <Users size={16} /> },
+    { to: '/owner/rbac/groups', label: t('dashboard.permissions'), icon: <Shield size={16} /> },
+    { to: '/owner/packages', label: t('dashboard.packages'), icon: <Package size={16} /> },
+    { to: '/owner/revenue', label: t('dashboard.reports'), icon: <TrendingUp size={16} /> },
+  ]
 
   const [memberTotal, setMemberTotal] = useState(0)
   const [openFeedbacks, setOpenFeedbacks] = useState<Feedback[]>([])
@@ -153,16 +159,16 @@ export default function OwnerDashboardPage() {
         setEquipmentBroken(brokenEq.total)
         setEquipmentRepairing(repairingEq.total)
       })
-      .catch((err) => setError(getApiError(err, 'Không thể tải tổng quan.')))
+      .catch((err) => setError(getApiError(err, tCommon('error.loadFailed'))))
       .finally(() => setLoading(false))
   }, [])
 
   return (
     <OwnerPage>
       <OwnerPageHeader
-        eyebrow="Owner workspace"
-        title={`Xin chào, ${user?.fullName ?? 'Owner'}`}
-        description="Đây là tổng quan toàn bộ hệ thống phòng gym."
+        eyebrow={t('dashboard.title')}
+        title={t('dashboard.greeting', { name: user?.fullName ?? 'Owner' })}
+        description={t('dashboard.subtitle')}
         actions={<OwnerReportAction />}
       />
 
@@ -176,35 +182,35 @@ export default function OwnerDashboardPage() {
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
             <OwnerStatCard
               icon={<Users size={20} />}
-              label="Tổng hội viên"
+              label={t('dashboard.totalMembers')}
               value={memberTotal}
-              hint="Hội viên trong hệ thống"
+              hint={t('dashboard.membersInSystem')}
               accent
               to="/staff/members"
             />
             <OwnerStatCard
               icon={<Package size={20} />}
-              label="Gói tập đang bán"
+              label={t('dashboard.activePackages')}
               value={totalPackages}
-              hint="Gói active trên hệ thống"
+              hint={t('dashboard.activePackagesInSystem')}
               to="/owner/packages"
             />
             <OwnerStatCard
               icon={<MessageSquare size={20} />}
-              label="Phản hồi chờ xử lý"
+              label={t('dashboard.feedbackPending')}
               value={openFeedbackCount}
-              hint={openFeedbackCount > 0 ? 'Cần xử lý sớm' : 'Tất cả đã xử lý'}
+              hint={openFeedbackCount > 0 ? t('dashboard.needsAttention') : t('dashboard.allHandled')}
               accent={openFeedbackCount > 0}
               to="/staff/feedback"
             />
             <OwnerStatCard
               icon={<Wrench size={20} />}
-              label="Thiết bị hỏng / đang sửa"
+              label={t('dashboard.equipmentBrokenRepairing')}
               value={equipmentBroken + equipmentRepairing}
               hint={
                 equipmentBroken + equipmentRepairing > 0
-                  ? `${equipmentBroken} hỏng, ${equipmentRepairing} đang sửa`
-                  : 'Tất cả thiết bị hoạt động tốt'
+                  ? t('dashboard.equipmentAlertDetails', { broken: equipmentBroken, repairing: equipmentRepairing })
+                  : t('dashboard.allEquipmentOk')
               }
               accent={equipmentBroken + equipmentRepairing > 0}
               to="/owner/equipment"
@@ -227,13 +233,13 @@ export default function OwnerDashboardPage() {
             {/* Open feedback */}
             <section className="rogym-card rogym-card--compact p-6">
               <div className="mb-5 flex items-center justify-between">
-                <h2 className="text-lg font-bold text-white">Phản hồi cần xử lý</h2>
+                <h2 className="text-lg font-bold text-white">{t('dashboard.pendingFeedback')}</h2>
                 <Link className="rogym-text-link rogym-text-link--accent" to="/staff/feedback">
-                  Tất cả phản hồi
+                  {t('dashboard.allFeedback')}
                 </Link>
               </div>
               {openFeedbacks.length === 0 ? (
-                <OwnerEmptyState title="Không có phản hồi mới" />
+                <OwnerEmptyState title={t('dashboard.noNewFeedback')} />
               ) : (
                 <div className="space-y-2">
                   {openFeedbacks.map((fb) => (

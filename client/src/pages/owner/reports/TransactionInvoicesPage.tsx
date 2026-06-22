@@ -7,6 +7,7 @@ import {
   RotateCcw,
   WalletCards,
 } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { DatePickerInput } from '@/components/DatePickerInput'
 import { getPaymentMethodLabel } from '@/components/payment/payment-method-data'
 import { PaymentMethodIcon } from '@/components/payment/payment-methods'
@@ -35,30 +36,6 @@ import paymentService, {
 const PAGE_SIZE = 12
 const EXPORT_PAGE_SIZE = 100
 
-const PAYMENT_METHOD_OPTIONS: Array<{ value: '' | PaymentMethod; label: string }> = [
-  { value: '', label: 'Mọi phương thức' },
-  { value: 'cash', label: 'Tiền mặt' },
-  { value: 'bank_card', label: 'Thẻ ngân hàng' },
-  { value: 'ewallet', label: 'Ví điện tử' },
-]
-
-const PAYMENT_STATUS_OPTIONS: Array<{ value: '' | PaymentStatus; label: string }> = [
-  { value: '', label: 'Mọi trạng thái' },
-  { value: 'success', label: 'Thành công' },
-  { value: 'failed', label: 'Thất bại' },
-]
-
-const SORT_OPTIONS = [
-  { value: 'paid_at:desc', label: 'Mới nhất' },
-  { value: 'paid_at:asc', label: 'Cũ nhất' },
-  { value: 'amount:desc', label: 'Số tiền giảm dần' },
-  { value: 'amount:asc', label: 'Số tiền tăng dần' },
-]
-
-function paymentStatusLabel(status: PaymentStatus): string {
-  return status === 'success' ? 'Thành công' : 'Thất bại'
-}
-
 function paymentStatusTone(status: PaymentStatus): 'success' | 'danger' {
   return status === 'success' ? 'success' : 'danger'
 }
@@ -77,10 +54,6 @@ function memberCode(payment: Payment): string {
 
 function serviceName(payment: Payment): string {
   return payment.service?.name ?? payment.packageName
-}
-
-function staffName(payment: Payment): string {
-  return payment.staff?.fullName ?? 'Chưa phân công'
 }
 
 function staffCode(payment: Payment): string {
@@ -109,22 +82,25 @@ function excelNumberCell(value: number, styleId?: string): string {
 function paymentListExcelXml(
   rows: Payment[],
   filters: { from: string; to: string; method: string; status: string; sort: string },
+  staffNameFn: (p: Payment) => string,
+  statusLabelFn: (s: PaymentStatus) => string,
+  t: (key: string, opts?: Record<string, unknown>) => string,
 ): string {
   const header = [
-    'Ngày thanh toán',
-    'Mã giao dịch',
-    'Hội viên',
-    'Dịch vụ/gói',
-    'Số tiền',
-    'Phương thức',
-    'Trạng thái',
-    'Nhân viên phụ trách',
+    t('reports.invoices.export.colDate'),
+    t('reports.invoices.export.colId'),
+    t('reports.invoices.export.colMember'),
+    t('reports.invoices.export.colPackage'),
+    t('reports.invoices.export.colAmount'),
+    t('reports.invoices.export.colMethod'),
+    t('reports.invoices.export.colStatus'),
+    t('reports.invoices.export.colStaff'),
   ]
   const filterText = [
-    `Từ ngày: ${filters.from || 'Tất cả'}`,
-    `Đến ngày: ${filters.to || 'Tất cả'}`,
-    `Phương thức: ${filters.method || 'Mọi phương thức'}`,
-    `Trạng thái: ${filters.status || 'Mọi trạng thái'}`,
+    t('reports.invoices.export.filterFrom', { value: filters.from || t('reports.revenue.paymentMethod.all') }),
+    t('reports.invoices.export.filterTo', { value: filters.to || t('reports.revenue.paymentMethod.all') }),
+    t('reports.invoices.export.filterMethod', { value: filters.method }),
+    t('reports.invoices.export.filterStatus', { value: filters.status }),
     `Sắp xếp: ${filters.sort}`,
   ].join(' | ')
 
@@ -150,7 +126,7 @@ function paymentListExcelXml(
       <Column ss:Width="120"/>
       <Column ss:Width="110"/>
       <Column ss:Width="190"/>
-      <Row>${excelStringCell('Danh sách hóa đơn giao dịch', 'Title')}</Row>
+      <Row>${excelStringCell(t('reports.invoices.exportSheetTitle'), 'Title')}</Row>
       <Row>${excelStringCell(filterText, 'Meta')}</Row>
       <Row/>
       <Row>${header.map((cell) => excelStringCell(cell, 'Header')).join('')}</Row>
@@ -163,8 +139,8 @@ function paymentListExcelXml(
             excelStringCell(serviceName(payment)),
             excelNumberCell(Number(payment.amount), 'Amount'),
             excelStringCell(getPaymentMethodLabel(payment.method)),
-            excelStringCell(paymentStatusLabel(payment.status)),
-            excelStringCell(`${staffName(payment)} (${staffCode(payment)})`),
+            excelStringCell(statusLabelFn(payment.status)),
+            excelStringCell(`${staffNameFn(payment)} (${staffCode(payment)})`),
           ]
           return `<Row>${cells.join('')}</Row>`
         })
@@ -177,8 +153,11 @@ function paymentListExcelXml(
 function downloadPaymentListExcel(
   rows: Payment[],
   filters: { from: string; to: string; method: string; status: string; sort: string },
+  staffNameFn: (p: Payment) => string,
+  statusLabelFn: (s: PaymentStatus) => string,
+  t: (key: string, opts?: Record<string, unknown>) => string,
 ) {
-  const blob = new Blob([paymentListExcelXml(rows, filters)], {
+  const blob = new Blob([paymentListExcelXml(rows, filters, staffNameFn, statusLabelFn, t)], {
     type: 'application/vnd.ms-excel;charset=utf-8',
   })
   const url = URL.createObjectURL(blob)
@@ -201,6 +180,36 @@ function DetailItem({ label, value }: { label: string; value: string }) {
 }
 
 export default function TransactionInvoicesPage() {
+  const { t } = useTranslation('owner')
+
+  const PAYMENT_METHOD_OPTIONS: Array<{ value: '' | PaymentMethod; label: string }> = [
+    { value: '', label: t('reports.revenue.paymentMethod.all') },
+    { value: 'cash', label: t('reports.revenue.paymentMethod.cash') },
+    { value: 'bank_card', label: t('reports.invoices.methodBankCard') },
+    { value: 'ewallet', label: t('reports.invoices.methodEwallet') },
+  ]
+
+  const PAYMENT_STATUS_OPTIONS: Array<{ value: '' | PaymentStatus; label: string }> = [
+    { value: '', label: t('reports.invoices.filterStatus.all') },
+    { value: 'success', label: t('reports.invoices.filterStatus.success') },
+    { value: 'failed', label: t('reports.invoices.filterStatus.failed') },
+  ]
+
+  const SORT_OPTIONS = [
+    { value: 'paid_at:desc', label: t('reports.invoices.sort.newest') },
+    { value: 'paid_at:asc', label: t('reports.invoices.sort.oldest') },
+    { value: 'amount:desc', label: t('reports.invoices.sort.amountDesc') },
+    { value: 'amount:asc', label: t('reports.invoices.sort.amountAsc') },
+  ]
+
+  function paymentStatusLabel(status: PaymentStatus): string {
+    return status === 'success' ? t('reports.invoices.status.success') : t('reports.invoices.status.failed')
+  }
+
+  function staffName(payment: Payment): string {
+    return payment.staff?.fullName ?? t('reports.invoices.unassigned')
+  }
+
   const [payments, setPayments] = useState<Payment[]>([])
   const [totalItems, setTotalItems] = useState(0)
   const [totalPages, setTotalPages] = useState(1)
@@ -239,12 +248,12 @@ export default function TransactionInvoicesPage() {
         setTotalItems(result.meta.totalItems)
         setTotalPages(result.meta.totalPages)
       } catch (err) {
-        setError(getApiError(err, 'Không thể tải danh sách hóa đơn giao dịch.'))
+        setError(getApiError(err, t('reports.invoices.loadFailed')))
       } finally {
         setLoading(false)
       }
     },
-    [buildListParams, page],
+    [buildListParams, page, t],
   )
 
   const handleExportList = useCallback(async () => {
@@ -253,7 +262,7 @@ export default function TransactionInvoicesPage() {
     try {
       const firstPage = await paymentService.list(buildListParams(1, EXPORT_PAGE_SIZE))
       if (firstPage.meta.totalItems === 0) {
-        setExportError('Không có hóa đơn nào phù hợp với bộ lọc hiện tại.')
+        setExportError(t('reports.invoices.noMatchingInvoices'))
         return
       }
 
@@ -263,23 +272,29 @@ export default function TransactionInvoicesPage() {
         allRows.push(...nextResult.data)
       }
 
-      downloadPaymentListExcel(allRows, {
-        from,
-        to,
-        method:
-          PAYMENT_METHOD_OPTIONS.find((option) => option.value === method)?.label ??
-          'Mọi phương thức',
-        status:
-          PAYMENT_STATUS_OPTIONS.find((option) => option.value === status)?.label ??
-          'Mọi trạng thái',
-        sort: SORT_OPTIONS.find((option) => option.value === sort)?.label ?? sort,
-      })
+      downloadPaymentListExcel(
+        allRows,
+        {
+          from,
+          to,
+          method:
+            PAYMENT_METHOD_OPTIONS.find((option) => option.value === method)?.label ??
+            t('reports.revenue.paymentMethod.all'),
+          status:
+            PAYMENT_STATUS_OPTIONS.find((option) => option.value === status)?.label ??
+            t('reports.invoices.filterStatus.all'),
+          sort: SORT_OPTIONS.find((option) => option.value === sort)?.label ?? sort,
+        },
+        staffName,
+        paymentStatusLabel,
+        t as (key: string, opts?: Record<string, unknown>) => string,
+      )
     } catch (err) {
-      setExportError(getApiError(err, 'Không thể xuất danh sách hóa đơn.'))
+      setExportError(getApiError(err, t('reports.invoices.exportFailed')))
     } finally {
       setExporting(false)
     }
-  }, [buildListParams, from, method, sort, status, to])
+  }, [buildListParams, from, method, sort, status, to, t])
 
   useEffect(() => {
     load(page)
@@ -298,20 +313,20 @@ export default function TransactionInvoicesPage() {
   return (
     <OwnerPage>
       <OwnerPageHeader
-        eyebrow="Báo cáo"
-        title="Danh sách hóa đơn giao dịch"
-        description="Theo dõi chi tiết thanh toán, xuất hóa đơn và kiểm tra điều kiện hoàn tiền."
+        eyebrow={t('reports.invoices.eyebrow')}
+        title={t('reports.invoices.title')}
+        description={t('reports.invoices.subtitle')}
         actions={
           <Button
             variant="outline-white"
             onClick={handleExportList}
             disabled={totalItems === 0}
             loading={exporting}
-            aria-label="Xuất danh sách hóa đơn theo bộ lọc hiện tại"
-            title="Xuất danh sách hóa đơn theo bộ lọc hiện tại"
+            aria-label={t('reports.invoices.exportBtn')}
+            title={t('reports.invoices.exportBtn')}
           >
             <FileDown size={16} />
-            Xuất danh sách hóa đơn
+            {t('reports.invoices.exportBtn')}
           </Button>
         }
       />
@@ -319,28 +334,28 @@ export default function TransactionInvoicesPage() {
       <div className="grid gap-4 md:grid-cols-3">
         <OwnerStatCard
           icon={<ReceiptText size={18} />}
-          label="Tổng giao dịch"
+          label={t('reports.invoices.kpi.totalTransactions')}
           value={String(totalItems)}
-          hint="Theo bộ lọc hiện tại"
+          hint={t('reports.invoices.byCurrentFilter')}
           accent
         />
         <OwnerStatCard
           icon={<WalletCards size={18} />}
-          label="Tổng tiền trang này"
+          label={t('reports.invoices.kpi.pageTotal')}
           value={formatVnd(pageTotal)}
           hint={`${payments.length} giao dịch đang hiển thị`}
         />
         <OwnerStatCard
           icon={<RotateCcw size={18} />}
-          label="Có thể hoàn tiền"
+          label={t('reports.invoices.kpi.refundable')}
           value={String(refundableCount)}
-          hint="Giao dịch thành công trong trang này"
+          hint={t('reports.invoices.successInPage')}
         />
       </div>
 
       <div className="rogym-card rogym-card--compact rogym-report-filter p-5">
         <label className="block space-y-2">
-          <span className="rogym-field-label">Từ ngày</span>
+          <span className="rogym-field-label">{t('reports.invoices.filter.from')}</span>
           <DatePickerInput
             value={from}
             max={to}
@@ -348,11 +363,11 @@ export default function TransactionInvoicesPage() {
               setFrom(value)
               resetToFirstPage()
             }}
-            aria-label="Từ ngày"
+            aria-label={t('reports.invoices.filter.from')}
           />
         </label>
         <label className="block space-y-2">
-          <span className="rogym-field-label">Đến ngày</span>
+          <span className="rogym-field-label">{t('reports.invoices.filter.to')}</span>
           <DatePickerInput
             value={to}
             min={from}
@@ -361,18 +376,18 @@ export default function TransactionInvoicesPage() {
               setTo(value)
               resetToFirstPage()
             }}
-            aria-label="Đến ngày"
+            aria-label={t('reports.invoices.filter.to')}
           />
         </label>
         <label className="block space-y-2">
-          <span className="rogym-field-label">Phương thức</span>
+          <span className="rogym-field-label">{t('reports.invoices.filter.method')}</span>
           <OwnerSelect
             value={method}
             onValueChange={(value) => {
               setMethod(value as '' | PaymentMethod)
               resetToFirstPage()
             }}
-            ariaLabel="Phương thức thanh toán"
+            ariaLabel={t('reports.invoices.filter.method')}
           >
             {PAYMENT_METHOD_OPTIONS.map((option) => (
               <option key={option.value || 'all'} value={option.value}>
@@ -382,14 +397,14 @@ export default function TransactionInvoicesPage() {
           </OwnerSelect>
         </label>
         <label className="block space-y-2">
-          <span className="rogym-field-label">Trạng thái</span>
+          <span className="rogym-field-label">{t('reports.invoices.filter.status')}</span>
           <OwnerSelect
             value={status}
             onValueChange={(value) => {
               setStatus(value as '' | PaymentStatus)
               resetToFirstPage()
             }}
-            ariaLabel="Trạng thái thanh toán"
+            ariaLabel={t('reports.invoices.filter.status')}
           >
             {PAYMENT_STATUS_OPTIONS.map((option) => (
               <option key={option.value || 'all'} value={option.value}>
@@ -399,14 +414,14 @@ export default function TransactionInvoicesPage() {
           </OwnerSelect>
         </label>
         <label className="block space-y-2">
-          <span className="rogym-field-label">Sắp xếp</span>
+          <span className="rogym-field-label">{t('reports.invoices.filter.sort')}</span>
           <OwnerSelect
             value={sort}
             onValueChange={(value) => {
               setSort(value)
               resetToFirstPage()
             }}
-            ariaLabel="Sắp xếp giao dịch"
+            ariaLabel={t('reports.invoices.filter.sort')}
           >
             {SORT_OPTIONS.map((option) => (
               <option key={option.value} value={option.value}>
@@ -422,7 +437,7 @@ export default function TransactionInvoicesPage() {
           disabled={loading}
         >
           {loading && <LoaderCircle size={15} className="animate-spin" />}
-          Tải lại
+          {t('reports.invoices.filter.reload')}
         </button>
       </div>
 
@@ -438,8 +453,8 @@ export default function TransactionInvoicesPage() {
         <OwnerErrorState message={error} onRetry={() => load(page)} />
       ) : payments.length === 0 ? (
         <OwnerEmptyState
-          title="Không có giao dịch"
-          description="Thử thay đổi khoảng ngày, phương thức hoặc trạng thái thanh toán."
+          title={t('reports.invoices.noTransactions')}
+          description={t('reports.invoices.tryOtherFilter')}
         />
       ) : (
         <>
@@ -447,15 +462,15 @@ export default function TransactionInvoicesPage() {
             <table className="rogym-owner-table">
               <thead>
                 <tr>
-                  <th>Ngày thanh toán</th>
-                  <th>Mã giao dịch</th>
-                  <th>Hội viên</th>
-                  <th>Dịch vụ/gói</th>
-                  <th className="is-right">Số tiền</th>
-                  <th>Phương thức</th>
-                  <th>Trạng thái</th>
-                  <th>Nhân viên phụ trách</th>
-                  <th className="is-right">Hành động</th>
+                  <th>{t('reports.invoices.table.date')}</th>
+                  <th>{t('reports.invoices.table.id')}</th>
+                  <th>{t('reports.invoices.table.member')}</th>
+                  <th>{t('reports.invoices.table.package')}</th>
+                  <th className="is-right">{t('reports.invoices.table.amount')}</th>
+                  <th>{t('reports.invoices.table.method')}</th>
+                  <th>{t('reports.invoices.table.status')}</th>
+                  <th>{t('reports.invoices.table.staff')}</th>
+                  <th className="is-right">{t('reports.invoices.table.detail')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -509,7 +524,7 @@ export default function TransactionInvoicesPage() {
                           className="rogym-btn rogym-btn--icon rogym-btn--elevated"
                           onClick={() => setSelectedPayment(payment)}
                           aria-label={`Xem chi tiết giao dịch ${transactionCode(payment)}`}
-                          title="Xem chi tiết"
+                          title={t('reports.invoices.table.detail')}
                         >
                           <Eye size={16} />
                         </button>
@@ -527,7 +542,7 @@ export default function TransactionInvoicesPage() {
 
       <OwnerModal
         open={selectedPayment !== null}
-        title="Chi tiết giao dịch"
+        title={t('reports.invoices.detailModal.title')}
         onClose={() => setSelectedPayment(null)}
         size="2xl"
         footer={
@@ -542,21 +557,21 @@ export default function TransactionInvoicesPage() {
       >
         {selectedPayment && (
           <div className="rogym-detail-grid">
-            <DetailItem label="Ngày thanh toán" value={formatDateTime(selectedPayment.paidAt)} />
-            <DetailItem label="Mã giao dịch" value={transactionCode(selectedPayment)} />
+            <DetailItem label={t('reports.invoices.table.date')} value={formatDateTime(selectedPayment.paidAt)} />
+            <DetailItem label={t('reports.invoices.table.id')} value={transactionCode(selectedPayment)} />
             <DetailItem
-              label="Hội viên"
+              label={t('reports.invoices.table.member')}
               value={`${memberName(selectedPayment)} (${memberCode(selectedPayment)})`}
             />
-            <DetailItem label="Dịch vụ/gói" value={serviceName(selectedPayment)} />
-            <DetailItem label="Số tiền" value={formatVnd(selectedPayment.amount)} />
+            <DetailItem label={t('reports.invoices.table.package')} value={serviceName(selectedPayment)} />
+            <DetailItem label={t('reports.invoices.table.amount')} value={formatVnd(selectedPayment.amount)} />
             <DetailItem
-              label="Phương thức"
+              label={t('reports.invoices.table.method')}
               value={getPaymentMethodLabel(selectedPayment.method)}
             />
-            <DetailItem label="Trạng thái" value={paymentStatusLabel(selectedPayment.status)} />
+            <DetailItem label={t('reports.invoices.table.status')} value={paymentStatusLabel(selectedPayment.status)} />
             <DetailItem
-              label="Nhân viên phụ trách"
+              label={t('reports.invoices.table.staff')}
               value={`${staffName(selectedPayment)} (${staffCode(selectedPayment)})`}
             />
             <DetailItem

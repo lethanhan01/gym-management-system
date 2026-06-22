@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Plus, Edit2, Trash2, LoaderCircle } from 'lucide-react'
 import { Modal } from '@/components/ui/Modal'
 import { getApiError, isApiConflict } from '@/lib/api-error'
@@ -34,6 +35,8 @@ function PackageModal({
   onClose: () => void
   onSaved: (p: Package) => void
 }) {
+  const { t } = useTranslation('owner')
+  const { t: tCommon } = useTranslation('common')
   const isEdit = !!pkg
   const [form, setForm] = useState<CreatePackageDto>({
     name: pkg?.name ?? '',
@@ -59,7 +62,7 @@ function PackageModal({
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!form.name || form.durationDays <= 0 || form.price <= 0) {
-      setError('Vui lòng điền đầy đủ thông tin hợp lệ.')
+      setError(t('packages.form.fillRequired'))
       return
     }
     setSaving(true)
@@ -84,7 +87,7 @@ function PackageModal({
       onSaved(saved)
       onClose()
     } catch (err) {
-      setError(getApiError(err, 'Lưu thất bại.'))
+      setError(getApiError(err, t('packages.form.saveFailed')))
     } finally {
       setSaving(false)
     }
@@ -93,13 +96,13 @@ function PackageModal({
   return (
     <Modal
       open
-      title={isEdit ? 'Sửa gói tập' : 'Tạo gói tập mới'}
+      title={isEdit ? t('packages.modal.editTitle') : t('packages.modal.createTitle')}
       onClose={onClose}
       size="lg"
       footer={
         <>
           <button type="button" className="rogym-btn rogym-btn--outline-white" onClick={onClose}>
-            Hủy
+            {tCommon('button.cancel')}
           </button>
           <button
             type="submit"
@@ -108,7 +111,7 @@ function PackageModal({
             disabled={saving}
           >
             {saving && <LoaderCircle size={16} className="animate-spin" />}
-            {isEdit ? 'Lưu thay đổi' : 'Tạo gói tập'}
+            {isEdit ? t('packages.modal.saveChanges') : t('packages.modal.createBtn')}
           </button>
         </>
       }
@@ -121,40 +124,40 @@ function PackageModal({
         )}
 
         <div>
-          <p className="rogym-field-label mb-2 block">Bao gồm Personal Trainer</p>
+          <p className="rogym-field-label mb-2 block">{t('packages.form.includesPt')}</p>
           <div className="flex gap-3">
             <button
               type="button"
               onClick={() => setForm((f) => ({ ...f, includesPt: true }))}
               className={`rogym-btn ${form.includesPt ? 'rogym-btn--primary' : 'rogym-btn--outline-white'}`}
             >
-              Có HLV
+              {t('packages.form.withPt')}
             </button>
             <button
               type="button"
               onClick={() => setForm((f) => ({ ...f, includesPt: false }))}
               className={`rogym-btn ${!form.includesPt ? 'rogym-btn--primary' : 'rogym-btn--outline-white'}`}
             >
-              Không có HLV
+              {t('packages.form.withoutPt')}
             </button>
           </div>
         </div>
 
         <div>
-          <label className="rogym-field-label mb-1.5 block">Tên gói tập *</label>
+          <label className="rogym-field-label mb-1.5 block">{t('packages.form.name')}</label>
           <input
             type="text"
             value={form.name}
             onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
             className="rogym-input"
-            placeholder="Standard 1 tháng"
+            placeholder={t('packages.form.namePlaceholder')}
             required
           />
         </div>
 
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="rogym-field-label mb-1.5 block">Thời hạn (ngày) *</label>
+            <label className="rogym-field-label mb-1.5 block">{t('packages.form.duration')}</label>
             <input
               type="number"
               value={form.durationDays}
@@ -166,7 +169,7 @@ function PackageModal({
             />
           </div>
           <div>
-            <label className="rogym-field-label mb-1.5 block">Giá (VNĐ) *</label>
+            <label className="rogym-field-label mb-1.5 block">{t('packages.form.price')}</label>
             <input
               type="number"
               value={form.price}
@@ -179,25 +182,25 @@ function PackageModal({
         </div>
 
         <div>
-          <label className="rogym-field-label mb-1.5 block">Quyền lợi</label>
+          <label className="rogym-field-label mb-1.5 block">{t('packages.form.benefits')}</label>
           <textarea
             value={form.benefits ?? ''}
             onChange={(e) => setForm((f) => ({ ...f, benefits: e.target.value }))}
             className="rogym-input min-h-[80px] resize-none"
-            placeholder="Truy cập phòng tập, locker, voucher..."
+            placeholder={t('packages.form.benefitsPlaceholder')}
           />
         </div>
 
         {isEdit && (
           <div>
-            <label className="rogym-field-label mb-1.5 block">Trạng thái</label>
+            <label className="rogym-field-label mb-1.5 block">{t('packages.form.status')}</label>
             <OwnerSelect
               value={form.status ?? 'active'}
               onValueChange={(v) => setForm((f) => ({ ...f, status: v as 'active' | 'inactive' }))}
               required
             >
-              <option value="active">Đang bán</option>
-              <option value="inactive">Ngừng bán</option>
+              <option value="active">{t('packages.status.active')}</option>
+              <option value="inactive">{t('packages.status.inactive')}</option>
             </OwnerSelect>
           </div>
         )}
@@ -215,6 +218,8 @@ function DeleteConfirmModal({
   onClose: () => void
   onDeleted: () => void
 }) {
+  const { t } = useTranslation('owner')
+  const { t: tCommon } = useTranslation('common')
   const [deleting, setDeleting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -231,9 +236,9 @@ function DeleteConfirmModal({
       onClose()
     } catch (err) {
       if (isApiConflict(err)) {
-        setError('Không thể xóa: gói tập đang có hội viên sử dụng.')
+        setError(t('packages.deleteModal.conflictError'))
       } else {
-        setError(getApiError(err, 'Xóa thất bại.'))
+        setError(getApiError(err, t('packages.deleteModal.deleteFailed')))
       }
     } finally {
       setDeleting(false)
@@ -247,11 +252,11 @@ function DeleteConfirmModal({
       aria-modal="true"
     >
       <div className="w-full max-w-sm rounded-2xl border border-white/10 bg-[var(--rogym-bg-card)] p-6">
-        <h2 className="mb-2 text-lg font-bold text-white">Xác nhận</h2>
+        <h2 className="mb-2 text-lg font-bold text-white">{t('packages.deleteModal.title')}</h2>
         <p className="mb-5 text-sm rogym-text-secondary">
           {pkg.status === 'active'
-            ? `Ngừng bán gói "${pkg.name}"? Hội viên đang sử dụng sẽ không bị ảnh hưởng.`
-            : `Xóa vĩnh viễn gói "${pkg.name}"? Hành động không thể hoàn tác.`}
+            ? t('packages.deleteModal.deactivateMsg', { name: pkg.name })
+            : t('packages.deleteModal.deleteMsg', { name: pkg.name })}
         </p>
         {error && (
           <div className="mb-4 rounded-xl border border-red-400/20 bg-red-400/8 px-4 py-3 text-sm text-red-200">
@@ -260,7 +265,7 @@ function DeleteConfirmModal({
         )}
         <div className="flex justify-end gap-3">
           <button className="rogym-btn rogym-btn--outline-white" onClick={onClose}>
-            Hủy
+            {tCommon('button.cancel')}
           </button>
           <button
             className="rogym-btn rogym-btn--danger"
@@ -268,7 +273,7 @@ function DeleteConfirmModal({
             onClick={handleDelete}
           >
             {deleting && <LoaderCircle size={16} className="animate-spin" />}
-            {pkg.status === 'active' ? 'Ngừng bán' : 'Xóa'}
+            {pkg.status === 'active' ? t('packages.deleteModal.deactivateBtn') : tCommon('button.delete')}
           </button>
         </div>
       </div>
@@ -277,6 +282,8 @@ function DeleteConfirmModal({
 }
 
 export default function PackagesPage() {
+  const { t } = useTranslation('owner')
+  const { t: tCommon } = useTranslation('common')
   const [packages, setPackages] = useState<Package[]>([])
   const [total, setTotal] = useState(0)
   const [page, setPage] = useState(1)
@@ -305,12 +312,12 @@ export default function PackagesPage() {
         setPackages(data)
         setTotal(meta.total)
       } catch (err) {
-        setError(getApiError(err, 'Không thể tải danh sách gói tập.'))
+        setError(getApiError(err, t('packages.loadFailed')))
       } finally {
         setLoading(false)
       }
     },
-    [search, statusFilter]
+    [search, statusFilter, t]
   )
 
   useEffect(() => {
@@ -343,12 +350,12 @@ export default function PackagesPage() {
   return (
     <OwnerPage>
       <OwnerPageHeader
-        eyebrow="Cấu hình"
-        title="Quản lý gói tập"
-        description={`${total} gói tập trên hệ thống`}
+        eyebrow={t('packages.eyebrow')}
+        title={t('packages.title')}
+        description={t('packages.totalCount', { total })}
         actions={
           <button className="rogym-btn rogym-btn--primary" onClick={() => setShowCreate(true)}>
-            <Plus size={16} /> Tạo gói mới
+            <Plus size={16} /> {t('packages.createNew')}
           </button>
         }
       />
@@ -358,7 +365,7 @@ export default function PackagesPage() {
         <OwnerSearchInput
           value={search}
           onChange={(v) => handleFilterChange(setSearch, v)}
-          placeholder="Tìm theo tên, mã gói..."
+          placeholder={t('packages.searchPlaceholder')}
           className="flex-1 min-w-[200px]"
         />
         <OwnerSelect
@@ -370,8 +377,8 @@ export default function PackagesPage() {
           className="rogym-select min-w-[160px]"
           required
         >
-          <option value="active">Đang bán</option>
-          <option value="inactive">Ngừng bán</option>
+          <option value="active">{t('packages.status.active')}</option>
+          <option value="inactive">{t('packages.status.inactive')}</option>
         </OwnerSelect>
       </div>
 
@@ -382,11 +389,11 @@ export default function PackagesPage() {
         <OwnerErrorState message={error} onRetry={() => fetchPackages(page)} />
       ) : packages.length === 0 ? (
         <OwnerEmptyState
-          title="Không có gói tập nào"
-          description="Thử thay đổi bộ lọc hoặc tạo gói mới."
+          title={t('packages.notFound')}
+          description={t('packages.notFoundDesc')}
           action={
             <button className="rogym-btn rogym-btn--primary" onClick={() => setShowCreate(true)}>
-              <Plus size={16} /> Tạo gói mới
+              <Plus size={16} /> {t('packages.createNew')}
             </button>
           }
         />
@@ -396,12 +403,12 @@ export default function PackagesPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-white/5 text-left text-xs rogym-text-dim">
-                  <th className="px-5 py-3 font-medium">Mã gói</th>
-                  <th className="px-5 py-3 font-medium">Tên gói</th>
-                  <th className="px-5 py-3 font-medium">Thời hạn</th>
-                  <th className="px-5 py-3 font-medium">Giá</th>
-                  <th className="px-5 py-3 font-medium">Trạng thái</th>
-                  <th className="px-5 py-3 font-medium text-right">Hành động</th>
+                  <th className="px-5 py-3 font-medium">{t('packages.table.code')}</th>
+                  <th className="px-5 py-3 font-medium">{t('packages.table.name')}</th>
+                  <th className="px-5 py-3 font-medium">{t('packages.table.duration')}</th>
+                  <th className="px-5 py-3 font-medium">{t('packages.table.price')}</th>
+                  <th className="px-5 py-3 font-medium">{t('packages.table.status')}</th>
+                  <th className="px-5 py-3 font-medium text-right">{t('packages.table.actions')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5">
@@ -411,7 +418,7 @@ export default function PackagesPage() {
                       {pkg.packageCode}
                     </td>
                     <td className="px-5 py-4 font-semibold text-white">{pkg.name}</td>
-                    <td className="px-5 py-4 rogym-text-secondary">{pkg.durationDays} ngày</td>
+                    <td className="px-5 py-4 rogym-text-secondary">{t('packages.daysCount', { days: pkg.durationDays })}</td>
                     <td className="px-5 py-4 font-semibold rogym-text-green">
                       {formatVnd(Number(pkg.price))}
                     </td>
@@ -419,7 +426,7 @@ export default function PackagesPage() {
                       <OwnerBadge
                         label={
                           pkg.deletedAt
-                            ? 'Đã xóa'
+                            ? t('packages.deleted')
                             : (PACKAGE_STATUS_LABEL[pkg.status] ?? pkg.status)
                         }
                         color={
@@ -433,7 +440,7 @@ export default function PackagesPage() {
                       <div className="ml-auto grid w-[176px] grid-cols-2 gap-2">
                         {pkg.deletedAt ? (
                           <span className="col-span-2 text-center text-xs rogym-text-dim">
-                            Không có thao tác
+                            {t('packages.noActions')}
                           </span>
                         ) : (
                           <>
@@ -441,14 +448,14 @@ export default function PackagesPage() {
                               className="rogym-btn rogym-btn--outline-white rogym-btn--nav w-full justify-center text-xs"
                               onClick={() => setEditingPkg(pkg)}
                             >
-                              <Edit2 size={14} /> Sửa
+                              <Edit2 size={14} /> {tCommon('button.edit')}
                             </button>
                             <button
                               className="rogym-btn rogym-btn--danger rogym-btn--nav w-full justify-center text-xs"
                               onClick={() => setDeletingPkg(pkg)}
                             >
                               <Trash2 size={14} />
-                              {pkg.status === 'active' ? 'Ngừng' : 'Xóa'}
+                              {pkg.status === 'active' ? t('packages.deactivate') : tCommon('button.delete')}
                             </button>
                           </>
                         )}

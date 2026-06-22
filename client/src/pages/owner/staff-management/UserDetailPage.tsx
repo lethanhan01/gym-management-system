@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from 'react'
 import { Link, useParams, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '@/stores/authStore'
 import { ArrowLeft, Save, LoaderCircle, X } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { getApiError } from '@/lib/api-error'
 import { formatDate } from '@/lib/date'
 import { STAFF_POSITION_COLOR, USER_STATUS_COLOR, USER_STATUS_LABEL } from '@/lib/owner-constants'
@@ -22,17 +23,20 @@ import {
   OwnerSelect,
 } from '@/components/OwnerUI'
 
-const SHIFT_LABEL: Record<string, string> = {
-  morning: 'Ca sáng',
-  afternoon: 'Ca chiều',
-  evening: 'Ca tối',
-}
-
 export default function UserDetailPage() {
+  const { t } = useTranslation('owner')
+  const { t: tCommon } = useTranslation('common')
   const { id } = useParams()
   const navigate = useNavigate()
   const isNew = !id || id === 'new'
   const currentUser = useAuthStore((s) => s.user)
+
+  const SHIFT_LABEL: Record<string, string> = {
+    morning: t('staffManagement.detail.shifts.morning'),
+    afternoon: t('staffManagement.detail.shifts.afternoon'),
+    evening: t('staffManagement.detail.shifts.evening'),
+    night: t('staffManagement.detail.shifts.night'),
+  }
 
   const [staff, setStaff] = useState<StaffProfile | null>(null)
   const [schedules, setSchedules] = useState<StaffSchedule[]>([])
@@ -69,7 +73,7 @@ export default function UserDetailPage() {
           position: s.position,
         })
       })
-      .catch((err) => setError(getApiError(err, 'Không thể tải thông tin nhân viên.')))
+      .catch((err) => setError(getApiError(err, t('staffManagement.detail.loadFailed'))))
       .finally(() => setLoading(false))
 
     staffService
@@ -85,7 +89,7 @@ export default function UserDetailPage() {
   async function handleSave(e: React.FormEvent) {
     e.preventDefault()
     if (!form.email || !form.fullName) {
-      setSaveError('Vui lòng điền đầy đủ thông tin.')
+      setSaveError(t('staffManagement.detail.validation.nameRequired'))
       return
     }
     setSaving(true)
@@ -103,7 +107,7 @@ export default function UserDetailPage() {
         setStaff(updated)
       }
     } catch (err) {
-      setSaveError(getApiError(err, 'Lưu thất bại.'))
+      setSaveError(getApiError(err, t('staffManagement.detail.saveFailed')))
     } finally {
       setSaving(false)
     }
@@ -115,7 +119,7 @@ export default function UserDetailPage() {
       await staffService.delete(id!)
       navigate('/owner/staff', { replace: true })
     } catch (err) {
-      setError(getApiError(err, 'Xóa thất bại.'))
+      setError(getApiError(err, t('staffManagement.detail.terminateFailed')))
       setDeleting(false)
       setShowDeleteConfirm(false)
     }
@@ -137,13 +141,13 @@ export default function UserDetailPage() {
   return (
     <OwnerPage>
       <OwnerPageHeader
-        eyebrow="Nhân sự"
-        title={isNew ? 'Thêm nhân viên mới' : (staff?.fullName ?? 'Chi tiết nhân viên')}
-        description={isNew ? 'Tạo tài khoản và hồ sơ nhân viên mới.' : `Mã: ${staff?.staffCode}`}
+        eyebrow={t('staffManagement.detail.eyebrow')}
+        title={isNew ? t('staffManagement.detail.createTitle') : t('staffManagement.detail.editTitle', { name: staff?.fullName ?? '' })}
+        description={isNew ? t('staffManagement.detail.createDesc') : t('staffManagement.detail.editDesc', { code: staff?.staffCode })}
         actions={
           !isNew && staff ? (
             <Link className="rogym-btn rogym-btn--outline-white" to="/owner/staff">
-              <ArrowLeft size={16} /> Quay lại danh sách
+              <ArrowLeft size={16} /> {tCommon('button.back')}
             </Link>
           ) : undefined
         }
@@ -153,7 +157,7 @@ export default function UserDetailPage() {
         <div className="space-y-6">
           <form onSubmit={handleSave} className="rogym-card rogym-card--compact p-6 space-y-5">
             <h2 className="text-base font-bold text-white">
-              {isNew ? 'Thông tin nhân viên mới' : 'Chỉnh sửa thông tin'}
+              {isNew ? t('staffManagement.detail.newInfoTitle') : t('staffManagement.detail.editInfoTitle')}
             </h2>
 
             {saveError && (
@@ -164,18 +168,18 @@ export default function UserDetailPage() {
 
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
-                <label className="rogym-field-label mb-1.5 block">Họ tên *</label>
+                <label className="rogym-field-label mb-1.5 block">{t('staffManagement.detail.form.name')}</label>
                 <input
                   type="text"
                   value={form.fullName}
                   onChange={(e) => setForm((f) => ({ ...f, fullName: e.target.value }))}
                   className="rogym-input"
-                  placeholder="Nguyễn Văn A"
+                  placeholder={t('staffManagement.detail.form.namePlaceholder')}
                   required
                 />
               </div>
               <div>
-                <label className="rogym-field-label mb-1.5 block">Email *</label>
+                <label className="rogym-field-label mb-1.5 block">{t('staffManagement.detail.form.email')}</label>
                 <input
                   type="email"
                   value={form.email}
@@ -187,7 +191,7 @@ export default function UserDetailPage() {
                 />
               </div>
               <div>
-                <label className="rogym-field-label mb-1.5 block">Số điện thoại</label>
+                <label className="rogym-field-label mb-1.5 block">{t('staffManagement.detail.form.phone')}</label>
                 <input
                   type="tel"
                   value={form.phone ?? ''}
@@ -197,7 +201,7 @@ export default function UserDetailPage() {
                 />
               </div>
               <div>
-                <label className="rogym-field-label mb-1.5 block">Vị trí *</label>
+                <label className="rogym-field-label mb-1.5 block">{t('staffManagement.detail.form.position')}</label>
                 <OwnerSelect
                   value={form.position}
                   onValueChange={(value) =>
@@ -205,9 +209,9 @@ export default function UserDetailPage() {
                   }
                   required
                 >
-                  <option value="staff">staff</option>
-                  <option value="trainer">trainer</option>
-                  <option value="owner">owner</option>
+                  <option value="staff">{t('staffManagement.detail.positions.staff')}</option>
+                  <option value="trainer">{t('staffManagement.detail.positions.trainer')}</option>
+                  <option value="owner">{t('staffManagement.detail.positions.owner')}</option>
                 </OwnerSelect>
               </div>
             </div>
@@ -215,12 +219,12 @@ export default function UserDetailPage() {
             <div className="flex justify-end gap-3 pt-2">
               {isNew ? (
                 <Link className="rogym-btn rogym-btn--outline-white" to="/owner/staff">
-                  Hủy
+                  {tCommon('button.cancel')}
                 </Link>
               ) : null}
               <button type="submit" className="rogym-btn rogym-btn--primary" disabled={saving}>
                 {saving && <LoaderCircle size={16} className="animate-spin" />}
-                <Save size={16} /> {isNew ? 'Tạo nhân viên' : 'Lưu thay đổi'}
+                <Save size={16} /> {isNew ? t('staffManagement.detail.createBtn') : tCommon('button.save')}
               </button>
             </div>
           </form>
@@ -228,12 +232,12 @@ export default function UserDetailPage() {
           {!isNew && (
             <div className="rogym-card rogym-card--compact p-6">
               <div className="mb-4 flex items-center justify-between">
-                <h2 className="text-base font-bold text-white">Lịch làm việc</h2>
+                <h2 className="text-base font-bold text-white">{t('staffManagement.detail.scheduleTitle')}</h2>
               </div>
               {schedules.length === 0 ? (
                 <OwnerEmptyState
-                  title="Chưa có lịch làm việc"
-                  description="Nhân viên chưa được gán ca làm việc."
+                  title={t('staffManagement.detail.noSchedule')}
+                  description=""
                 />
               ) : (
                 <div className="space-y-2">
@@ -289,32 +293,32 @@ export default function UserDetailPage() {
 
             {staff.staffId !== currentUser?.staffId && (
               <div className="rogym-card rogym-card--compact p-6">
-                <h3 className="mb-3 text-sm font-semibold text-white">Hành động</h3>
+                <h3 className="mb-3 text-sm font-semibold text-white">{t('staffManagement.detail.actions')}</h3>
                 {!showDeleteConfirm ? (
                   <button
                     className="rogym-btn rogym-btn--danger w-full"
                     onClick={() => setShowDeleteConfirm(true)}
                   >
-                    <X size={16} /> Cho thôi việc
+                    <X size={16} /> {t('staffManagement.detail.terminate')}
                   </button>
                 ) : (
                   <div className="rogym-error-alert space-y-3">
                     <p className="text-sm">
-                      Xác nhận cho nhân viên này thôi việc? Hành động không thể hoàn tác.
+                      {t('staffManagement.detail.terminateConfirm', { name: staff?.fullName ?? '' })}
                     </p>
                     <div className="flex gap-2">
                       <button
                         className="flex-1 rogym-btn rogym-btn--outline-white"
                         onClick={() => setShowDeleteConfirm(false)}
                       >
-                        Hủy
+                        {tCommon('button.cancel')}
                       </button>
                       <button
                         className="flex-1 rounded-lg bg-red-500 px-3 py-2 text-sm font-semibold text-white"
                         disabled={deleting}
                         onClick={handleDelete}
                       >
-                        {deleting && <LoaderCircle size={14} className="animate-spin" />} Xác nhận
+                        {deleting && <LoaderCircle size={14} className="animate-spin" />} {t('staffManagement.detail.terminateConfirmBtn')}
                       </button>
                     </div>
                   </div>
