@@ -112,7 +112,7 @@ function PlanCard({
               >
                 {isPT ? t('workout.myPlan.sourceTrainer') : t('workout.myPlan.sourcePersonal')}
               </span>
-              <h3 className="truncate font-bold text-white">
+              <h3 className="break-words font-bold text-white">
                 {assignment.plan?.name ?? plan?.name ?? '—'}
               </h3>
             </div>
@@ -221,7 +221,7 @@ function PlanCard({
                 className="rogym-text-link rogym-text-link--accent flex items-center gap-1 text-xs"
                 onClick={() => setDoneConfirm(true)}
               >
-                <CheckCircle size={13} /> Đã tập xong
+                <CheckCircle size={13} /> {t('workout.myPlan.buttonDoneTraining')}
               </button>
             )}
           </div>
@@ -233,7 +233,7 @@ function PlanCard({
           onClick={() => setExpanded((v) => !v)}
         >
           {expanded ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
-          {expanded ? 'Ẩn chi tiết' : 'Xem chi tiết ngày tập'}
+          {expanded ? t('workout.myPlan.buttonHideDetail') : t('workout.myPlan.buttonShowDetail')}
         </button>
       </div>
 
@@ -248,7 +248,7 @@ function PlanCard({
               >
                 <div>
                   <p className="text-sm font-medium text-white">{day.name}</p>
-                  <p className="text-xs rogym-sx-5e5c39ab">{day.exercises?.length ?? 0} bài tập</p>
+                  <p className="text-xs rogym-sx-5e5c39ab">{t('workout.myPlan.exerciseCount', { count: day.exercises?.length ?? 0 })}</p>
                 </div>
                 <button
                   type="button"
@@ -275,7 +275,7 @@ function PlanCard({
               <div>
                 <h2 className="text-lg font-bold text-white">{detailDay.name}</h2>
                 <p className="mt-0.5 text-xs rogym-sx-5e5c39ab">
-                  {detailDay.exercises?.length ?? 0} bài tập
+                  {t('workout.myPlan.exerciseCount', { count: detailDay.exercises?.length ?? 0 })}
                 </p>
               </div>
               <button
@@ -337,6 +337,7 @@ function SavedPlanCard({
   onDelete: () => void
 }) {
   const navigate = useNavigate()
+  const { t } = useTranslation('member')
   const [expanded, setExpanded] = useState(false)
   const [deleteConfirm, setDeleteConfirm] = useState(false)
   const [deleting, setDeleting] = useState(false)
@@ -376,27 +377,26 @@ function SavedPlanCard({
             <div className="flex items-center gap-2">
               <span className="flex items-center gap-1 rounded-lg px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider rogym-sx-7041f1d2">
                 <Archive size={10} />{' '}
-                {isArchived ? 'Đã lưu trữ' : plan.status === 'draft' ? 'Nháp' : 'Tạm dừng'}
+                {isArchived ? t('workout.myPlan.savedPlanArchived') : plan.status === 'draft' ? t('workout.myPlan.savedPlanDraft') : t('workout.myPlan.savedPlanPaused')}
               </span>
-              <h3 className="truncate font-bold text-white">{plan.name}</h3>
+              <h3 className="break-words font-bold text-white">{plan.name}</h3>
             </div>
             {plan.description && (
               <p className="mt-1 text-xs rogym-sx-5e5c39ab">{plan.description}</p>
             )}
             <div className="mt-2 flex gap-3 text-xs rogym-sx-5e5c39ab">
               <span>
-                <span className="font-semibold text-white">{totalDays}</span> ngày
+                <span className="font-semibold text-white">{totalDays}</span> {t('workout.myPlan.unitDays')}
               </span>
               {totalExercises > 0 && (
                 <span>
-                  <span className="font-semibold text-white">{totalExercises}</span> bài tập
+                  <span className="font-semibold text-white">{totalExercises}</span> {t('workout.myPlan.unitExercises')}
                 </span>
               )}
               {avgMinPerDay > 0 && (
                 <span className="flex items-center gap-1">
                   <Clock size={11} />
-                  <span className="font-semibold text-white">{avgMinPerDay}</span> phút/ngày (ước
-                  tính)
+                  <span className="font-semibold text-white">{avgMinPerDay}</span> {t('workout.myPlan.unitMinPerDay')}
                 </span>
               )}
             </div>
@@ -409,7 +409,7 @@ function SavedPlanCard({
                 className="rogym-btn rogym-btn--primary px-3 py-1.5 text-xs"
                 onClick={() => onApply(plan)}
               >
-                Áp dụng
+                {t('workout.myPlan.buttonApply')}
               </button>
             )}
             <button
@@ -419,11 +419,11 @@ function SavedPlanCard({
             >
               {isArchived ? (
                 <>
-                  <Eye size={13} /> Xem
+                  <Eye size={13} /> {t('workout.myPlan.buttonView')}
                 </>
               ) : (
                 <>
-                  <Pencil size={13} /> Sửa
+                  <Pencil size={13} /> {t('workout.myPlan.buttonEdit')}
                 </>
               )}
             </button>
@@ -432,7 +432,7 @@ function SavedPlanCard({
                 type="button"
                 className="rogym-btn rogym-btn--icon rogym-btn--elevated"
                 onClick={() => setDeleteConfirm(true)}
-                aria-label="Xóa plan"
+                aria-label={t('workout.myPlan.buttonDelete')}
               >
                 <Trash2 size={14} />
               </button>
@@ -442,21 +442,21 @@ function SavedPlanCard({
 
         {deleteConfirm && (
           <div className="mt-3 flex items-center gap-2 rounded-xl border border-red-400/30 bg-red-400/10 px-3 py-2">
-            <span className="flex-1 text-xs text-red-200">Xóa kế hoạch đã lưu này?</span>
+            <span className="flex-1 text-xs text-red-200">{t('workout.myPlan.deleteSavedConfirm')}</span>
             <button
               type="button"
               className="rogym-btn rogym-btn--danger px-3 py-1 text-xs"
               disabled={deleting}
               onClick={() => void handleDelete()}
             >
-              {deleting ? 'Đang xóa...' : 'Xóa'}
+              {deleting ? t('workout.myPlan.buttonDeleting') : t('workout.myPlan.buttonDelete')}
             </button>
             <button
               type="button"
               className="rogym-btn rogym-btn--outline-white px-3 py-1 text-xs"
               onClick={() => setDeleteConfirm(false)}
             >
-              Hủy
+              {t('workout.myPlan.buttonCancelDelete')}
             </button>
           </div>
         )}
@@ -467,7 +467,7 @@ function SavedPlanCard({
           onClick={() => setExpanded((v) => !v)}
         >
           {expanded ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
-          {expanded ? 'Ẩn chi tiết' : 'Xem chi tiết ngày tập'}
+          {expanded ? t('workout.myPlan.buttonHideDetail') : t('workout.myPlan.buttonShowDetail')}
         </button>
       </div>
 
@@ -478,7 +478,7 @@ function SavedPlanCard({
             .map((day) => (
               <div key={day.planDayId} className="px-5 py-3 rogym-sx-6720cca7">
                 <p className="text-sm font-medium text-white">{day.name}</p>
-                <p className="text-xs rogym-sx-5e5c39ab">{day.exercises?.length ?? 0} bài tập</p>
+                <p className="text-xs rogym-sx-5e5c39ab">{t('workout.myPlan.exerciseCount', { count: day.exercises?.length ?? 0 })}</p>
                 {[...(day.exercises ?? [])]
                   .sort((a, b) => a.orderIndex - b.orderIndex)
                   .map((ex, i) => {
@@ -510,6 +510,7 @@ function SavedPlanCard({
 
 export default function MyPlanPage() {
   const navigate = useNavigate()
+  const { t } = useTranslation('member')
   const { user } = useAuthStore()
   const memberId = user?.memberId ? String(user.memberId) : undefined
 
@@ -552,7 +553,7 @@ export default function MyPlanPage() {
       }
       setFullPlans(planMap)
     } catch {
-      setError('Không thể tải kế hoạch tập.')
+      setError(t('workout.myPlan.errorLoad'))
     } finally {
       setLoading(false)
     }
@@ -611,7 +612,7 @@ export default function MyPlanPage() {
   if (loading)
     return (
       <MemberPage>
-        <MemberPageHeader eyebrow="Kế hoạch tập" title="Kế hoạch của tôi" />
+        <MemberPageHeader eyebrow={t('workout.myPlan.eyebrow')} title={t('workout.myPlan.pageTitle')} />
         <MemberSkeleton rows={6} />
       </MemberPage>
     )
@@ -619,7 +620,7 @@ export default function MyPlanPage() {
   if (error)
     return (
       <MemberPage>
-        <MemberPageHeader eyebrow="Kế hoạch tập" title="Kế hoạch của tôi" />
+        <MemberPageHeader eyebrow={t('workout.myPlan.eyebrow')} title={t('workout.myPlan.pageTitle')} />
         <MemberErrorState message={error} onRetry={load} />
       </MemberPage>
     )
@@ -629,31 +630,31 @@ export default function MyPlanPage() {
   return (
     <MemberPage>
       <MemberPageHeader
-        eyebrow="Kế hoạch tập"
-        title="Kế hoạch của tôi"
-        description="Kế hoạch từ PT và kế hoạch tự xây dựng của bạn"
+        eyebrow={t('workout.myPlan.eyebrow')}
+        title={t('workout.myPlan.pageTitle')}
+        description={t('workout.myPlan.description')}
         actions={
           <button
             type="button"
             className="rogym-btn rogym-btn--primary"
             onClick={() => navigate('/member/workout/builder')}
           >
-            <Dumbbell size={15} /> Tạo plan mới
+            <Dumbbell size={15} /> {t('workout.myPlan.buttonCreateNew')}
           </button>
         }
       />
 
       {!hasAnything ? (
         <MemberEmptyState
-          title="Bạn chưa có kế hoạch tập"
-          description="Tạo kế hoạch cá nhân hoặc liên hệ PT để được giao kế hoạch phù hợp."
+          title={t('workout.myPlan.emptyTitle')}
+          description={t('workout.myPlan.emptyDescription')}
           action={
             <button
               type="button"
               className="rogym-btn rogym-btn--primary"
               onClick={() => navigate('/member/workout/builder')}
             >
-              <Dumbbell size={15} /> Tạo plan cá nhân
+              <Dumbbell size={15} /> {t('workout.myPlan.buttonCreatePersonal')}
             </button>
           }
         />
@@ -663,13 +664,12 @@ export default function MyPlanPage() {
           <section>
             <div className="mb-3 flex items-center gap-2">
               <ClipboardList size={16} className="rogym-sx-b2fbf853" />
-              <h2 className="text-sm font-bold text-white">Do PT giao</h2>
+              <h2 className="text-sm font-bold text-white">{t('workout.myPlan.sectionPtPlans')}</h2>
               <span className="text-xs rogym-sx-5e5c39ab">({ptPlans.length})</span>
             </div>
             {ptPlans.length === 0 ? (
               <div className="rounded-[16px] p-5 text-center text-sm rogym-sx-0e44a235">
-                Liên hệ PT để được giao kế hoạch phù hợp. 
-                Trong lúc đợi, bạn có thể tạo và sử dụng kế hoạch riêng.
+                {t('workout.myPlan.noPtPlans')}
               </div>
             ) : (
               <div className="space-y-4">
@@ -692,7 +692,7 @@ export default function MyPlanPage() {
           <section>
             <div className="mb-3 flex items-center gap-2">
               <List size={16} className="rogym-sx-f27dac31" />
-              <h2 className="text-sm font-bold text-white">Kế hoạch cá nhân</h2>
+              <h2 className="text-sm font-bold text-white">{t('workout.myPlan.sectionPersonalPlans')}</h2>
               <span className="text-xs rogym-sx-5e5c39ab">
                 ({selfPlans.length + savedPlans.length})
               </span>
@@ -700,13 +700,13 @@ export default function MyPlanPage() {
 
             {selfPlans.length === 0 && savedPlans.length === 0 ? (
               <div className="rounded-[16px] p-5 text-center text-sm rogym-sx-0e44a235">
-                Chưa có kế hoạch tự xây dựng.
+                {t('workout.myPlan.noPersonalPlans')}
                 <button
                   type="button"
                   className="rogym-btn rogym-btn--primary mt-3 mx-auto flex"
                   onClick={() => navigate('/member/workout/builder')}
                 >
-                  <Dumbbell size={14} /> Tạo ngay
+                  <Dumbbell size={14} /> {t('workout.myPlan.buttonCreateNow')}
                 </button>
               </div>
             ) : (
@@ -735,7 +735,7 @@ export default function MyPlanPage() {
                 ))}
 
                 {applyingPlan && (
-                  <p className="text-center text-xs rogym-sx-5e5c39ab">Đang áp dụng kế hoạch...</p>
+                  <p className="text-center text-xs rogym-sx-5e5c39ab">{t('workout.myPlan.applying')}</p>
                 )}
               </div>
             )}

@@ -82,7 +82,7 @@ const SuggestedPlanCard = memo(function SuggestedPlanCard({
               <span className="rounded-lg px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider rogym-sx-0c66f6c9">
                 PT
               </span>
-              <h3 className="truncate font-bold text-white">{plan.name}</h3>
+              <h3 className="break-words font-bold text-white">{plan.name}</h3>
             </div>
             {plan.description && (
               <p className="mt-1 text-sm rogym-sx-d88f932f">{plan.description}</p>

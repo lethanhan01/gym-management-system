@@ -273,7 +273,7 @@ function MembersTab({ data }: { data: TrainerStudentSummary[] }) {
                 <td className="px-5 py-4 rogym-text-secondary">
                   {formatDate(member.activeSubscription?.endDate)}
                 </td>
-                <td className="px-5 py-4">
+                <td className="px-5 py-4 min-w-0">
                   <OwnerStatusBadge status={member.activeSubscription?.status ?? member.status} />
                 </td>
                 <td className="px-5 py-4 text-right">

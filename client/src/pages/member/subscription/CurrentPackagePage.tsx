@@ -576,7 +576,7 @@ export default function CurrentPackagePage() {
                             <div className="flex items-start justify-between gap-3">
                               <div className="min-w-0 flex-1">
                                 <div className="flex items-center gap-2">
-                                  <h3 className="truncate font-bold text-white">{p.name}</h3>
+                                  <h3 className="break-words font-bold text-white">{p.name}</h3>
                                   {p.includesPt && (
                                     <span className="shrink-0 rounded-full bg-[rgba(66,224,158,0.1)] px-2 py-0.5 text-[10px] font-bold uppercase text-[#42e09e]">
                                       {t('subscription.current.packageDetail.withPt')}
