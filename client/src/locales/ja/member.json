@@ -458,7 +458,8 @@
       "overweight": "過体重",
       "obese": "肥満"
     },
-    "rangeAll": "すべて"
+    "rangeAll": "すべて",
+    "weightLabel": "体重"
   },
   "workout": {
     "myPlan": {

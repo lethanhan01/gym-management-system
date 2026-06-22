@@ -61,11 +61,11 @@ export function StaffScheduleCalendar<TSchedule extends StaffScheduleCalendarEnt
   detailEyebrow,
   renderEntry,
   className,
-  emptySelectionTitle = 'Chọn ngày để xem lịch',
-  emptySelectionDescription = 'Bấm vào ô ngày bên trái',
-  emptyDayMessage = 'Chưa có ca làm việc trong ngày này.',
+  emptySelectionTitle,
+  emptySelectionDescription,
+  emptyDayMessage,
   emptyDayAction,
-  emptyShiftMessage = 'Chưa có ca',
+  emptyShiftMessage,
   headerAction,
 }: StaffScheduleCalendarProps<TSchedule>) {
   const { t, i18n } = useTranslation('common')
@@ -222,8 +222,8 @@ export function StaffScheduleCalendar<TSchedule extends StaffScheduleCalendarEnt
             <div className="mb-3 flex h-11 w-11 items-center justify-center rounded-full bg-white/5 rogym-text-dim">
               <CalendarDays size={20} />
             </div>
-            <p className="text-sm font-medium text-white">{emptySelectionTitle}</p>
-            <p className="mt-1 text-xs rogym-text-dim">{emptySelectionDescription}</p>
+            <p className="text-sm font-medium text-white">{emptySelectionTitle ?? t('calendar.emptySelectionTitle')}</p>
+            <p className="mt-1 text-xs rogym-text-dim">{emptySelectionDescription ?? t('calendar.emptySelectionDescription')}</p>
           </div>
         ) : (
           <div className="space-y-4">
@@ -237,7 +237,7 @@ export function StaffScheduleCalendar<TSchedule extends StaffScheduleCalendarEnt
 
             {selectedDaySchedules?.every((shift) => shift.entries.length === 0) ? (
               <div className="rounded-xl border border-white/5 bg-white/[0.02] p-6 text-center">
-                <p className="text-sm rogym-text-dim">{emptyDayMessage}</p>
+                <p className="text-sm rogym-text-dim">{emptyDayMessage ?? t('calendar.emptyDayMessage')}</p>
                 {emptyDayAction && <div className="mt-3">{emptyDayAction}</div>}
               </div>
             ) : (
@@ -248,7 +248,7 @@ export function StaffScheduleCalendar<TSchedule extends StaffScheduleCalendarEnt
                       {t(`shift.${shift}` as const)}
                     </p>
                     {entries.length === 0 ? (
-                      <p className="pl-2 text-xs italic rogym-text-dim">{emptyShiftMessage}</p>
+                      <p className="pl-2 text-xs italic rogym-text-dim">{emptyShiftMessage ?? t('calendar.emptyShiftMessage')}</p>
                     ) : (
                       <div className="space-y-1">
                         {entries.map((entry) => (

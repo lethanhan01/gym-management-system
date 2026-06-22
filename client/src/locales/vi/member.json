@@ -458,7 +458,8 @@
       "overweight": "Thừa cân",
       "obese": "Béo phì"
     },
-    "rangeAll": "Tất cả"
+    "rangeAll": "Tất cả",
+    "weightLabel": "Cân nặng"
   },
   "workout": {
     "myPlan": {

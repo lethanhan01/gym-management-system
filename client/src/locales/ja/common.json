@@ -19,7 +19,8 @@
     "start": "開始",
     "complete": "完了",
     "approve": "承認",
-    "reject": "拒否"
+    "reject": "拒否",
+    "retry": "再試行"
   },
   "nav": {
     "dashboard": "ダッシュボード",
@@ -81,9 +82,32 @@
     "afternoon": "午後シフト (12:00–17:00)",
     "evening": "夜間シフト (17:00–22:00)"
   },
+  "search": {
+    "placeholder": "検索...",
+    "clear": "検索をクリア"
+  },
+  "pagination": {
+    "prev": "前へ",
+    "next": "次へ",
+    "pageOf": "{{page}} / {{totalPages}} ページ"
+  },
+  "dateRange": {
+    "from": "開始日",
+    "to": "終了日",
+    "load": "レポートを読み込む"
+  },
+  "datePicker": {
+    "open": "カレンダーを開く",
+    "placeholder": "日時を選択",
+    "time": "時刻"
+  },
   "calendar": {
     "prevMonth": "前の月",
-    "nextMonth": "次の月"
+    "nextMonth": "次の月",
+    "emptySelectionTitle": "日付を選択してスケジュールを確認",
+    "emptySelectionDescription": "左のカレンダーの日付をクリック",
+    "emptyDayMessage": "この日のシフトはありません。",
+    "emptyShiftMessage": "シフトなし"
   },
   "loading": "読み込み中...",
   "noData": "データなし",

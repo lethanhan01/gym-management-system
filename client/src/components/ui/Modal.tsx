@@ -1,5 +1,6 @@
 import { X } from 'lucide-react'
 import { type ReactNode, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 
 type ModalSize = 'sm' | 'md' | 'lg' | 'xl' | '2xl'
 
@@ -21,6 +22,7 @@ interface ModalProps {
 }
 
 export function Modal({ open, title, children, onClose, footer, size = 'xl' }: ModalProps) {
+  const { t } = useTranslation('common')
   useEffect(() => {
     if (!open) return
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -50,7 +52,7 @@ export function Modal({ open, title, children, onClose, footer, size = 'xl' }: M
             type="button"
             className="rogym-btn rogym-btn--icon rogym-btn--elevated"
             onClick={onClose}
-            aria-label="Đóng"
+            aria-label={t('button.close')}
           >
             <X size={17} />
           </button>

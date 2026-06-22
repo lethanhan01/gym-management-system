@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import { AlertCircle, Search } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { cn } from '@/lib/utils'
 
 export function Page({ children, className }: { children: ReactNode; className?: string }) {
@@ -34,8 +35,9 @@ export function PageHeader({
 }
 
 export function PageSkeleton({ rows = 3 }: { rows?: number }) {
+  const { t } = useTranslation('common')
   return (
-    <div className="space-y-3" aria-label="Đang tải">
+    <div className="space-y-3" aria-label={t('loading')}>
       {Array.from({ length: rows }).map((_, index) => (
         <div
           key={index}
@@ -72,12 +74,14 @@ export function PageEmptyState({
 export function PageErrorState({
   message,
   onRetry,
-  retryLabel = 'Thử lại',
+  retryLabel,
 }: {
   message: string
   onRetry?: () => void
   retryLabel?: string
 }) {
+  const { t } = useTranslation('common')
+  const effectiveRetryLabel = retryLabel ?? t('button.retry')
   return (
     <div className="rogym-card rogym-card--compact flex items-center gap-4 border-red-400/20 p-5">
       <AlertCircle className="shrink-0 text-red-300" size={22} />
@@ -88,7 +92,7 @@ export function PageErrorState({
           className="rogym-btn rogym-btn--outline-white px-4 py-2 text-xs"
           onClick={onRetry}
         >
-          {retryLabel}
+          {effectiveRetryLabel}
         </button>
       )}
     </div>

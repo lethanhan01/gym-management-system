@@ -1,5 +1,6 @@
 import { Search, X } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 interface SearchInputProps {
   value: string
@@ -13,11 +14,14 @@ interface SearchInputProps {
 export function SearchInput({
   value,
   onChange,
-  placeholder = 'Tìm kiếm...',
+  placeholder,
   debounceMs = 300,
   className,
-  'aria-label': ariaLabel = 'Tìm kiếm',
+  'aria-label': ariaLabel,
 }: SearchInputProps) {
+  const { t } = useTranslation('common')
+  const effectivePlaceholder = placeholder ?? t('search.placeholder')
+  const effectiveAriaLabel = ariaLabel ?? t('button.search')
   const [localValue, setLocalValue] = useState(value)
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -47,17 +51,17 @@ export function SearchInput({
       <input
         type="search"
         className="rogym-input pl-9 pr-8"
-        placeholder={placeholder}
+        placeholder={effectivePlaceholder}
         value={localValue}
         onChange={handleChange}
-        aria-label={ariaLabel}
+        aria-label={effectiveAriaLabel}
       />
       {localValue && (
         <button
           type="button"
           className="absolute right-3 rogym-text-dim transition-colors hover:text-white"
           onClick={handleClear}
-          aria-label="Xóa tìm kiếm"
+          aria-label={t('search.clear')}
         >
           <X size={14} />
         </button>

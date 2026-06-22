@@ -19,7 +19,8 @@
     "start": "Bắt đầu",
     "complete": "Hoàn thành",
     "approve": "Duyệt",
-    "reject": "Từ chối"
+    "reject": "Từ chối",
+    "retry": "Thử lại"
   },
   "nav": {
     "dashboard": "Dashboard",
@@ -81,9 +82,32 @@
     "afternoon": "Ca chiều (12:00–17:00)",
     "evening": "Ca tối (17:00–22:00)"
   },
+  "search": {
+    "placeholder": "Tìm kiếm...",
+    "clear": "Xóa tìm kiếm"
+  },
+  "pagination": {
+    "prev": "Trước",
+    "next": "Sau",
+    "pageOf": "Trang {{page}} / {{totalPages}}"
+  },
+  "dateRange": {
+    "from": "Từ ngày",
+    "to": "Đến ngày",
+    "load": "Tải báo cáo"
+  },
+  "datePicker": {
+    "open": "Mở lịch",
+    "placeholder": "Chọn ngày & giờ",
+    "time": "Thời gian"
+  },
   "calendar": {
     "prevMonth": "Tháng trước",
-    "nextMonth": "Tháng sau"
+    "nextMonth": "Tháng sau",
+    "emptySelectionTitle": "Chọn ngày để xem lịch",
+    "emptySelectionDescription": "Bấm vào ô ngày bên trái",
+    "emptyDayMessage": "Chưa có ca làm việc trong ngày này.",
+    "emptyShiftMessage": "Chưa có ca"
   },
   "loading": "Đang tải...",
   "noData": "Không có dữ liệu",

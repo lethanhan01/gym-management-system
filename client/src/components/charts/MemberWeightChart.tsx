@@ -7,6 +7,7 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
+import { useTranslation } from 'react-i18next'
 
 const GREEN = '#06c384'
 
@@ -16,6 +17,7 @@ interface WeightPoint {
 }
 
 export default function MemberWeightChart({ data }: { data: WeightPoint[] }) {
+  const { t } = useTranslation('member')
   return (
     <ResponsiveContainer width="100%" height={220}>
       <LineChart data={data} margin={{ top: 4, right: 8, bottom: 0, left: -16 }}>
@@ -40,7 +42,7 @@ export default function MemberWeightChart({ data }: { data: WeightPoint[] }) {
             color: '#fff',
             fontSize: 12,
           }}
-          formatter={(value: number) => [`${value} kg`, 'Cân nặng']}
+          formatter={(value: number) => [`${value} kg`, t('progress.weightLabel')]}
         />
         <Line
           type="monotone"

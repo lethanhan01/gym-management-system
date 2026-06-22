@@ -124,6 +124,7 @@
   },
   "students": {
     "selectStudent": "Chọn học viên",
+    "weightLabel": "Cân nặng",
     "list": {
       "title": "Học viên của tôi",
       "eyebrow": "Quản lý học viên",

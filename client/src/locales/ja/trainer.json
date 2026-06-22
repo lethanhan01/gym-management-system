@@ -124,6 +124,7 @@
   },
   "students": {
     "selectStudent": "受講生を選択",
+    "weightLabel": "体重",
     "list": {
       "title": "担当受講生",
       "eyebrow": "受講生管理",
