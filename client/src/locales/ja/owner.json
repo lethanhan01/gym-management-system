@@ -1,4 +1,24 @@
 {
+  "nav": {
+    "sectionStaff": "スタッフ",
+    "sectionBusiness": "ビジネス",
+    "sectionFacility": "施設",
+    "sectionSystem": "システム",
+    "staff": "スタッフリスト",
+    "addStaff": "スタッフ追加",
+    "schedules": "シフトスケジュール",
+    "packages": "プラン",
+    "reports": "レポート",
+    "revenue": "収益",
+    "invoices": "取引請求書",
+    "performance": "従業員実績",
+    "equipment": "設備",
+    "rbac": "権限管理",
+    "rbacGroups": "権限グループ",
+    "rbacPermissions": "権限",
+    "modeBack": "オーナーに戻る",
+    "modeOperation": "運営モード"
+  },
   "dashboard": {
     "title": "オーナーワークスペース",
     "greeting": "{{name}}さん、こんにちは",

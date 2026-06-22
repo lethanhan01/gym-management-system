@@ -1,4 +1,19 @@
 {
+  "nav": {
+    "sectionMembers": "Hội viên",
+    "sectionFacility": "Cơ sở vật chất",
+    "sectionOperations": "Vận hành",
+    "sectionPersonal": "Cá nhân",
+    "members": "Danh sách hội viên",
+    "registerMember": "Đăng ký hội viên",
+    "renewal": "Gói tập & Gia hạn",
+    "checkIn": "Check-in hội viên",
+    "facility": "Phòng tập",
+    "equipment": "Thiết bị",
+    "feedback": "Phản hồi",
+    "schedule": "Lịch làm việc",
+    "attendance": "Chấm công"
+  },
   "dashboard": {
     "title": "Staff workspace",
     "todayOverview": "Tổng quan hôm nay",

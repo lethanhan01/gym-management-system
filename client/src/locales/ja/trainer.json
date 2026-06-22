@@ -1,4 +1,10 @@
 {
+  "nav": {
+    "students": "生徒",
+    "sessions": "授業スケジュール",
+    "plans": "プラン",
+    "exercises": "エクササイズ"
+  },
   "dashboard": {
     "title": "トレーナーワークスペース",
     "eyebrow": "トレーナーワークスペース",

@@ -1,5 +1,6 @@
 import { useRef, useEffect, useMemo, useState } from 'react'
 import { NavLink, useLocation, useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '../../stores/authStore'
 import { useSubscriptionStore } from '../../stores/subscriptionStore'
 import {
@@ -38,127 +39,6 @@ type NavSection = {
   label?: string
   items: NavItem[]
 }
-
-const BASE_SUBSCRIPTION_CHILDREN_ACTIVE: SubItem[] = [
-  { label: 'Gói hiện tại', to: '/member/subscription/current' },
-  { label: 'Gia hạn', to: '/member/subscription/renew' },
-  { label: 'Lịch sử', to: '/member/subscription/history' },
-]
-
-const BASE_SUBSCRIPTION_CHILDREN_NONE: SubItem[] = [
-  { label: 'Mua gói', to: '/member/subscription/setup' },
-]
-
-const BASE_SUBSCRIPTION_CHILDREN_ALL: SubItem[] = [
-  { label: 'Gói hiện tại', to: '/member/subscription/current' },
-  { label: 'Mua gói', to: '/member/subscription/setup' },
-  { label: 'Gia hạn', to: '/member/subscription/renew' },
-  { label: 'Lịch sử', to: '/member/subscription/history' },
-]
-
-const TRAINER_SECTIONS: NavSection[] = [
-  {
-    items: [
-      { label: 'Dashboard', to: '/trainer', icon: <LayoutDashboard size={18} /> },
-      { label: 'Học viên', to: '/trainer/students', icon: <Users size={18} /> },
-      { label: 'Lịch dạy', to: '/trainer/sessions', icon: <CalendarDays size={18} /> },
-      { label: 'Kế hoạch', to: '/trainer/plans', icon: <BookOpen size={18} /> },
-      { label: 'Bài tập', to: '/trainer/exercises', icon: <Dumbbell size={18} /> },
-      { label: 'Hồ sơ', to: '/trainer/profile', icon: <User size={18} /> },
-    ],
-  },
-]
-
-const STAFF_SECTIONS: NavSection[] = [
-  {
-    items: [
-      { label: 'Dashboard', to: '/staff', icon: <LayoutDashboard size={18} /> },
-    ],
-  },
-  {
-    label: 'Hội viên',
-    items: [
-      { label: 'Danh sách hội viên', to: '/staff/members', icon: <Users size={18} /> },
-      { label: 'Đăng ký hội viên', to: '/staff/members/register', icon: <User size={18} /> },
-      { label: 'Gói tập & Gia hạn', to: '/staff/renewal', icon: <RotateCcw size={18} /> },
-      { label: 'Check-in hội viên', to: '/staff/check-in', icon: <CheckSquare size={18} /> },
-    ],
-  },
-  {
-    label: 'Cơ sở vật chất',
-    items: [
-      { label: 'Phòng tập', to: '/staff/facility', icon: <Building2 size={18} /> },
-      { label: 'Thiết bị', to: '/staff/equipment', icon: <Wrench size={18} /> },
-    ],
-  },
-  {
-    label: 'Vận hành',
-    items: [
-      { label: 'Phản hồi', to: '/staff/feedback', icon: <MessageSquare size={18} /> },
-    ],
-  },
-  {
-    label: 'Cá nhân',
-    items: [
-      { label: 'Lịch làm việc', to: '/staff/schedules', icon: <CalendarDays size={18} /> },
-      { label: 'Chấm công', to: '/staff/attendance', icon: <ClipboardCheck size={18} /> },
-      { label: 'Hồ sơ', to: '/staff/profile', icon: <User size={18} /> },
-    ],
-  },
-]
-
-const OWNER_SECTIONS: NavSection[] = [
-  {
-    items: [
-      { label: 'Dashboard', to: '/owner', icon: <LayoutDashboard size={18} /> },
-    ],
-  },
-  {
-    label: 'Nhân sự',
-    items: [
-      { label: 'Danh sách nhân sự', to: '/owner/staff', icon: <Users size={18} /> },
-      { label: 'Thêm nhân sự', to: '/owner/staff/new', icon: <UserPlus size={18} /> },
-      { label: 'Lịch phân công', to: '/owner/staff/schedules', icon: <CalendarDays size={18} /> },
-    ],
-  },
-  {
-    label: 'Kinh doanh',
-    items: [
-      { label: 'Gói tập', to: '/owner/packages', icon: <Package size={18} /> },
-      {
-        label: 'Báo cáo',
-        to: '/owner/revenue',
-        icon: <BarChart3 size={18} />,
-        children: [
-          { label: 'Doanh thu', to: '/owner/revenue' },
-          { label: 'Hóa đơn giao dịch', to: '/owner/reports/transaction-invoices' },
-          { label: 'Hiệu suất nhân viên', to: '/owner/reports/employee-performance' },
-        ],
-      },
-    ],
-  },
-  {
-    label: 'Cơ sở vật chất',
-    items: [
-      { label: 'Thiết bị', to: '/owner/equipment', icon: <Wrench size={18} /> },
-    ],
-  },
-  {
-    label: 'Hệ thống',
-    items: [
-      {
-        label: 'Phân quyền',
-        to: '/owner/rbac/groups',
-        icon: <Shield size={18} />,
-        children: [
-          { label: 'Nhóm quyền', to: '/owner/rbac/groups' },
-          { label: 'Quyền hạn', to: '/owner/rbac/permissions' },
-        ],
-      },
-      { label: 'Hồ sơ', to: '/owner/profile', icon: <User size={18} /> },
-    ],
-  },
-]
 
 function isGroupActive(item: NavItem, pathname: string): boolean {
   if (!item.children) return false
@@ -248,6 +128,11 @@ export default function Sidebar() {
   const navigate = useNavigate()
   const hasActiveSub = useSubscriptionStore((s) => s.hasActiveSub)
   const clearSubscription = useSubscriptionStore((s) => s.clear)
+  const { t: tMember } = useTranslation('member')
+  const { t: tTrainer } = useTranslation('trainer')
+  const { t: tStaff } = useTranslation('staff')
+  const { t: tOwner } = useTranslation('owner')
+  const { t: tCommon } = useTranslation('common')
 
   // Clear subscription state on logout
   useEffect(() => {
@@ -277,71 +162,189 @@ export default function Sidebar() {
   const isOwnerInStaffMode = role === 'owner' && pathname.startsWith('/staff')
 
   const memberNav = useMemo<NavSection[]>(() => {
+    const childrenActive: SubItem[] = [
+      { label: tMember('nav.current'), to: '/member/subscription/current' },
+      { label: tMember('nav.renew'), to: '/member/subscription/renew' },
+      { label: tMember('nav.history'), to: '/member/subscription/history' },
+    ]
+    const childrenNone: SubItem[] = [
+      { label: tMember('nav.buy'), to: '/member/subscription/setup' },
+    ]
+    const childrenAll: SubItem[] = [
+      { label: tMember('nav.current'), to: '/member/subscription/current' },
+      { label: tMember('nav.buy'), to: '/member/subscription/setup' },
+      { label: tMember('nav.renew'), to: '/member/subscription/renew' },
+      { label: tMember('nav.history'), to: '/member/subscription/history' },
+    ]
     const subscriptionChildren =
       hasActiveSub === false
-        ? BASE_SUBSCRIPTION_CHILDREN_NONE
+        ? childrenNone
         : hasActiveSub === true
-          ? BASE_SUBSCRIPTION_CHILDREN_ACTIVE
-          : BASE_SUBSCRIPTION_CHILDREN_ALL
+          ? childrenActive
+          : childrenAll
     const memberSubTo =
       hasActiveSub === false ? '/member/subscription/setup' : '/member/subscription/current'
 
     return [
       {
         items: [
-          { label: 'Dashboard', to: '/member', icon: <LayoutDashboard size={18} /> },
+          { label: tCommon('nav.dashboard'), to: '/member', icon: <LayoutDashboard size={18} /> },
           {
-            label: 'Gói tập',
+            label: tMember('nav.subscriptionMenu'),
             to: memberSubTo,
             icon: <CreditCard size={18} />,
             children: subscriptionChildren,
           },
           {
-            label: 'Kế hoạch tập',
+            label: tMember('nav.workoutPlan'),
             to: '/member/workout/plan',
             icon: <BookOpen size={18} />,
             children: [
-              { label: 'Kế hoạch', to: '/member/workout/plan' },
-              { label: 'Tạo kế hoạch', to: '/member/workout/builder' },
-              { label: 'Bài tập', to: '/member/workout/exercises' },
+              { label: tMember('nav.workoutPlanSub'), to: '/member/workout/plan' },
+              { label: tMember('nav.workoutCreate'), to: '/member/workout/builder' },
+              { label: tMember('nav.workoutExercises'), to: '/member/workout/exercises' },
             ],
           },
           {
-            label: 'Tập luyện',
+            label: tMember('nav.workoutSessions'),
             to: '/member/workout/sessions',
             icon: <CalendarDays size={18} />,
             children: [
-              { label: 'Lịch của tôi', to: '/member/workout/sessions' },
-              { label: 'Tạo buổi tập', to: '/member/workout/create-session' },
-              { label: 'Lịch sử buổi tập', to: '/member/workout/history' },
+              { label: tMember('nav.mySchedule'), to: '/member/workout/sessions' },
+              { label: tMember('nav.createSession'), to: '/member/workout/create-session' },
+              { label: tMember('nav.workoutHistory'), to: '/member/workout/history' },
             ],
           },
-          { label: 'Check-in', to: '/member/attendance', icon: <CheckSquare size={18} /> },
-          { label: 'Tiến độ', to: '/member/progress', icon: <TrendingUp size={18} /> },
+          { label: tMember('nav.checkIn'), to: '/member/attendance', icon: <CheckSquare size={18} /> },
+          { label: tMember('nav.progress'), to: '/member/progress', icon: <TrendingUp size={18} /> },
           {
-            label: 'Phản hồi',
+            label: tMember('nav.feedback'),
             to: '/member/feedback',
             icon: <MessageSquare size={18} />,
             children: [
-              { label: 'Phản hồi của tôi', to: '/member/feedback' },
-              { label: 'Gửi phản hồi', to: '/member/feedback/send' },
+              { label: tMember('nav.feedbackMine'), to: '/member/feedback' },
+              { label: tMember('nav.feedbackSend'), to: '/member/feedback/send' },
             ],
           },
-          { label: 'Hồ sơ', to: '/member/profile', icon: <User size={18} /> },
+          { label: tCommon('nav.profile'), to: '/member/profile', icon: <User size={18} /> },
         ],
       },
     ]
-  }, [hasActiveSub])
+  }, [hasActiveSub, tMember, tCommon])
+
+  const trainerSections: NavSection[] = [
+    {
+      items: [
+        { label: tCommon('nav.dashboard'), to: '/trainer', icon: <LayoutDashboard size={18} /> },
+        { label: tTrainer('nav.students'), to: '/trainer/students', icon: <Users size={18} /> },
+        { label: tTrainer('nav.sessions'), to: '/trainer/sessions', icon: <CalendarDays size={18} /> },
+        { label: tTrainer('nav.plans'), to: '/trainer/plans', icon: <BookOpen size={18} /> },
+        { label: tTrainer('nav.exercises'), to: '/trainer/exercises', icon: <Dumbbell size={18} /> },
+        { label: tCommon('nav.profile'), to: '/trainer/profile', icon: <User size={18} /> },
+      ],
+    },
+  ]
+
+  const staffSections: NavSection[] = [
+    {
+      items: [
+        { label: tCommon('nav.dashboard'), to: '/staff', icon: <LayoutDashboard size={18} /> },
+      ],
+    },
+    {
+      label: tStaff('nav.sectionMembers'),
+      items: [
+        { label: tStaff('nav.members'), to: '/staff/members', icon: <Users size={18} /> },
+        { label: tStaff('nav.registerMember'), to: '/staff/members/register', icon: <User size={18} /> },
+        { label: tStaff('nav.renewal'), to: '/staff/renewal', icon: <RotateCcw size={18} /> },
+        { label: tStaff('nav.checkIn'), to: '/staff/check-in', icon: <CheckSquare size={18} /> },
+      ],
+    },
+    {
+      label: tStaff('nav.sectionFacility'),
+      items: [
+        { label: tStaff('nav.facility'), to: '/staff/facility', icon: <Building2 size={18} /> },
+        { label: tStaff('nav.equipment'), to: '/staff/equipment', icon: <Wrench size={18} /> },
+      ],
+    },
+    {
+      label: tStaff('nav.sectionOperations'),
+      items: [
+        { label: tStaff('nav.feedback'), to: '/staff/feedback', icon: <MessageSquare size={18} /> },
+      ],
+    },
+    {
+      label: tStaff('nav.sectionPersonal'),
+      items: [
+        { label: tStaff('nav.schedule'), to: '/staff/schedules', icon: <CalendarDays size={18} /> },
+        { label: tStaff('nav.attendance'), to: '/staff/attendance', icon: <ClipboardCheck size={18} /> },
+        { label: tCommon('nav.profile'), to: '/staff/profile', icon: <User size={18} /> },
+      ],
+    },
+  ]
+
+  const ownerSections: NavSection[] = [
+    {
+      items: [
+        { label: tCommon('nav.dashboard'), to: '/owner', icon: <LayoutDashboard size={18} /> },
+      ],
+    },
+    {
+      label: tOwner('nav.sectionStaff'),
+      items: [
+        { label: tOwner('nav.staff'), to: '/owner/staff', icon: <Users size={18} /> },
+        { label: tOwner('nav.addStaff'), to: '/owner/staff/new', icon: <UserPlus size={18} /> },
+        { label: tOwner('nav.schedules'), to: '/owner/staff/schedules', icon: <CalendarDays size={18} /> },
+      ],
+    },
+    {
+      label: tOwner('nav.sectionBusiness'),
+      items: [
+        { label: tOwner('nav.packages'), to: '/owner/packages', icon: <Package size={18} /> },
+        {
+          label: tOwner('nav.reports'),
+          to: '/owner/revenue',
+          icon: <BarChart3 size={18} />,
+          children: [
+            { label: tOwner('nav.revenue'), to: '/owner/revenue' },
+            { label: tOwner('nav.invoices'), to: '/owner/reports/transaction-invoices' },
+            { label: tOwner('nav.performance'), to: '/owner/reports/employee-performance' },
+          ],
+        },
+      ],
+    },
+    {
+      label: tOwner('nav.sectionFacility'),
+      items: [
+        { label: tOwner('nav.equipment'), to: '/owner/equipment', icon: <Wrench size={18} /> },
+      ],
+    },
+    {
+      label: tOwner('nav.sectionSystem'),
+      items: [
+        {
+          label: tOwner('nav.rbac'),
+          to: '/owner/rbac/groups',
+          icon: <Shield size={18} />,
+          children: [
+            { label: tOwner('nav.rbacGroups'), to: '/owner/rbac/groups' },
+            { label: tOwner('nav.rbacPermissions'), to: '/owner/rbac/permissions' },
+          ],
+        },
+        { label: tCommon('nav.profile'), to: '/owner/profile', icon: <User size={18} /> },
+      ],
+    },
+  ]
 
   const navSections: NavSection[] =
     role === 'member'
       ? memberNav
       : role === 'trainer'
-        ? TRAINER_SECTIONS
+        ? trainerSections
         : role === 'staff' || isOwnerInStaffMode
-          ? STAFF_SECTIONS
+          ? staffSections
           : role === 'owner'
-            ? OWNER_SECTIONS
+            ? ownerSections
             : []
 
   return (
@@ -364,20 +367,20 @@ export default function Sidebar() {
           {isOwnerInStaffMode ? (
             <button
               onClick={() => navigate('/owner')}
-              title={!expanded ? 'Quay về Owner' : undefined}
+              title={!expanded ? tOwner('nav.modeBack') : undefined}
               className="rogym-sidebar__mode-button w-full flex items-center rounded-xl border border-[rgba(66,224,158,0.2)] text-xs font-medium text-[#42e09e]"
             >
               <ArrowLeft size={14} className="shrink-0" />
-              <span className="rogym-sidebar__mode-label">Quay về Owner</span>
+              <span className="rogym-sidebar__mode-label">{tOwner('nav.modeBack')}</span>
             </button>
           ) : (
             <button
               onClick={() => navigate('/staff')}
-              title={!expanded ? 'Chế độ vận hành' : undefined}
+              title={!expanded ? tOwner('nav.modeOperation') : undefined}
               className="rogym-sidebar__mode-button w-full flex items-center rounded-xl border border-[rgba(255,255,255,0.1)] text-xs font-medium text-[#bbcabf]"
             >
               <Settings size={14} className="shrink-0" />
-              <span className="rogym-sidebar__mode-label">Chế độ vận hành</span>
+              <span className="rogym-sidebar__mode-label">{tOwner('nav.modeOperation')}</span>
             </button>
           )}
         </div>

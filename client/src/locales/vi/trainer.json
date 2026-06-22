@@ -1,4 +1,10 @@
 {
+  "nav": {
+    "students": "Học viên",
+    "sessions": "Lịch dạy",
+    "plans": "Kế hoạch",
+    "exercises": "Bài tập"
+  },
   "dashboard": {
     "title": "Trainer workspace",
     "eyebrow": "Trainer workspace",

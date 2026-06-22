@@ -1,4 +1,24 @@
 {
+  "nav": {
+    "sectionStaff": "Nhân sự",
+    "sectionBusiness": "Kinh doanh",
+    "sectionFacility": "Cơ sở vật chất",
+    "sectionSystem": "Hệ thống",
+    "staff": "Danh sách nhân sự",
+    "addStaff": "Thêm nhân sự",
+    "schedules": "Lịch phân công",
+    "packages": "Gói tập",
+    "reports": "Báo cáo",
+    "revenue": "Doanh thu",
+    "invoices": "Hóa đơn giao dịch",
+    "performance": "Hiệu suất nhân viên",
+    "equipment": "Thiết bị",
+    "rbac": "Phân quyền",
+    "rbacGroups": "Nhóm quyền",
+    "rbacPermissions": "Quyền hạn",
+    "modeBack": "Quay về Owner",
+    "modeOperation": "Chế độ vận hành"
+  },
   "dashboard": {
     "title": "Owner workspace",
     "greeting": "Xin chào, {{name}}",

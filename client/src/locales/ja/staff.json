@@ -1,4 +1,19 @@
 {
+  "nav": {
+    "sectionMembers": "会員",
+    "sectionFacility": "施設",
+    "sectionOperations": "運営",
+    "sectionPersonal": "個人",
+    "members": "会員リスト",
+    "registerMember": "会員登録",
+    "renewal": "プラン＆更新",
+    "checkIn": "会員チェックイン",
+    "facility": "ジム室",
+    "equipment": "設備",
+    "feedback": "フィードバック",
+    "schedule": "勤務スケジュール",
+    "attendance": "勤怠管理"
+  },
   "dashboard": {
     "title": "スタッフワークスペース",
     "todayOverview": "本日の概要",

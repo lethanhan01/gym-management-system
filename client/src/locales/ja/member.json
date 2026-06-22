@@ -1,4 +1,24 @@
 {
+  "nav": {
+    "subscriptionMenu": "サブスクリプション",
+    "current": "現在のプラン",
+    "renew": "更新",
+    "history": "履歴",
+    "buy": "購入",
+    "workoutPlan": "ワークアウトプラン",
+    "workoutPlanSub": "プラン",
+    "workoutCreate": "プラン作成",
+    "workoutExercises": "エクササイズ",
+    "workoutSessions": "トレーニング",
+    "mySchedule": "マイスケジュール",
+    "createSession": "セッション作成",
+    "workoutHistory": "セッション履歴",
+    "checkIn": "チェックイン",
+    "progress": "進捗",
+    "feedback": "フィードバック",
+    "feedbackMine": "マイフィードバック",
+    "feedbackSend": "フィードバック送信"
+  },
   "dashboard": {
     "title": "ダッシュボード",
     "errorLoad": "データを読み込めません",

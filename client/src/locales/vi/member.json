@@ -1,4 +1,24 @@
 {
+  "nav": {
+    "subscriptionMenu": "Gói tập",
+    "current": "Gói hiện tại",
+    "renew": "Gia hạn",
+    "history": "Lịch sử",
+    "buy": "Mua gói",
+    "workoutPlan": "Kế hoạch tập",
+    "workoutPlanSub": "Kế hoạch",
+    "workoutCreate": "Tạo kế hoạch",
+    "workoutExercises": "Bài tập",
+    "workoutSessions": "Tập luyện",
+    "mySchedule": "Lịch của tôi",
+    "createSession": "Tạo buổi tập",
+    "workoutHistory": "Lịch sử buổi tập",
+    "checkIn": "Check-in",
+    "progress": "Tiến độ",
+    "feedback": "Phản hồi",
+    "feedbackMine": "Phản hồi của tôi",
+    "feedbackSend": "Gửi phản hồi"
+  },
   "dashboard": {
     "title": "Dashboard",
     "errorLoad": "Không thể tải dữ liệu",
