@@ -9,7 +9,7 @@ export interface PaymentMethodOption {
   Icon: LucideIcon
 }
 
-const METHOD_ICON: Record<PaymentMethod, LucideIcon> = {
+export const METHOD_ICON: Record<PaymentMethod, LucideIcon> = {
   cash: Banknote,
   bank_card: CreditCard,
   ewallet: Wallet,
@@ -36,12 +36,6 @@ export function getPaymentMethodOptions(): PaymentMethodOption[] {
   }))
 }
 
-/** @deprecated Dùng getPaymentMethodOptions() trong render để labels phản ánh ngôn ngữ hiện tại */
-export const PAYMENT_METHOD_OPTIONS: PaymentMethodOption[] = [
-  { value: 'cash',      label: 'Tiền mặt',       shortLabel: 'Tiền mặt',  Icon: Banknote },
-  { value: 'bank_card', label: 'Thẻ ngân hàng',  shortLabel: 'Thẻ NH',   Icon: CreditCard },
-  { value: 'ewallet',   label: 'Ví điện tử',     shortLabel: 'Ví điện tử', Icon: Wallet },
-]
 
 export function maskPaymentAccountRef(reference: string | null): string {
   if (!reference) return ''
