@@ -1,18 +1,12 @@
 import { useEffect, useRef, useState } from 'react'
 import { ArrowRight, Calendar, Check, CheckCircle2, UserCheck, UserX } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import type { Package } from '@/services/package.service'
 import { formatVnd } from '@/lib/currency'
 import { parsePackageBenefits } from '@/lib/package'
+import { formatDate } from '@/lib/date'
 
 const ITEM_HEIGHT = 84
-
-function formatDate(value: Date) {
-  return value.toLocaleDateString('vi-VN', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-  })
-}
 
 function useCenteredPackagePicker(
   packages: Package[],
@@ -107,6 +101,7 @@ export function PackagePicker({
   endDateLabel: string
   onContinue: () => void
 }) {
+  const { t } = useTranslation('member')
   const [detailsVisible, setDetailsVisible] = useState(false)
   const selectedPackage =
     packages.find((item) => item.packageId === selectedId) ?? fallbackPackage ?? null
@@ -159,22 +154,22 @@ export function PackagePicker({
                           </span>
                           {isCurrent && (
                             <span className="shrink-0 rounded-full bg-[rgba(66,224,158,0.12)] px-2 py-0.5 text-[10px] rogym-text-accent">
-                              Hiện tại
+                              {t('packagePicker.currentBadge')}
                             </span>
                           )}
                         </div>
                         <div className="flex items-center gap-2">
                           <span className="flex items-center gap-1 text-xs rogym-text-secondary">
                             <Calendar size={11} />
-                            {item.durationDays} ngày
+                            {t('packagePicker.days', { count: item.durationDays })}
                           </span>
                           {item.includesPt ? (
                             <span className="flex items-center gap-1 rounded-full bg-[rgba(66,224,158,0.15)] px-1.5 py-0.5 text-[10px] font-medium text-[var(--rogym-accent)]">
-                              <UserCheck size={9} /> PT
+                              <UserCheck size={9} /> {t('packagePicker.withPt')}
                             </span>
                           ) : (
                             <span className="flex items-center gap-1 rounded-full bg-white/5 px-1.5 py-0.5 text-[10px] font-medium rogym-text-dim">
-                              <UserX size={9} /> Tự tập
+                              <UserX size={9} /> {t('packagePicker.selfTrain')}
                             </span>
                           )}
                         </div>
@@ -200,7 +195,7 @@ export function PackagePicker({
             </>
           ) : (
             <div className="flex h-full items-center justify-center text-sm rogym-text-secondary">
-              Không có gói nào khả dụng
+              {t('packagePicker.noPackage')}
             </div>
           )}
         </div>
@@ -213,19 +208,19 @@ export function PackagePicker({
           {selectedPackage ? (
             <>
               <div className="mb-4 border-b border-white/5 pb-4">
-                <p className="mb-1 text-xs rogym-text-secondary">Gói chọn</p>
+                <p className="mb-1 text-xs rogym-text-secondary">{t('packagePicker.selectedLabel')}</p>
                 <p className="text-base font-bold text-white">{selectedPackage.name}</p>
                 <div className="mt-1.5 flex items-center gap-3 flex-wrap">
                   <span className="flex items-center gap-1 text-xs rogym-text-secondary">
-                    <Calendar size={10} /> {selectedPackage.durationDays} ngày
+                    <Calendar size={10} /> {t('packagePicker.days', { count: selectedPackage.durationDays })}
                   </span>
                   {selectedPackage.includesPt ? (
                     <span className="flex items-center gap-1 rounded-full bg-[rgba(66,224,158,0.15)] px-2 py-0.5 text-xs font-medium text-[var(--rogym-accent)]">
-                      <UserCheck size={11} /> Có PT
+                      <UserCheck size={11} /> {t('packagePicker.withPt')}
                     </span>
                   ) : (
                     <span className="flex items-center gap-1 rounded-full bg-white/5 px-2 py-0.5 text-xs font-medium rogym-text-dim">
-                      <UserX size={11} /> Tự tập
+                      <UserX size={11} /> {t('packagePicker.selfTrain')}
                     </span>
                   )}
                   <span
@@ -238,7 +233,7 @@ export function PackagePicker({
               </div>
               <div className="min-h-0 flex-1 overflow-y-auto">
                 <p className="mb-3 text-xs font-semibold uppercase tracking-widest rogym-text-secondary">
-                  Quyền lợi
+                  {t('packagePicker.benefits')}
                 </p>
                 {benefits.length ? (
                   <ul className="flex flex-col gap-2.5">
@@ -254,14 +249,14 @@ export function PackagePicker({
                   </ul>
                 ) : (
                   <p className="text-sm rogym-text-dim">
-                    Không có thông tin quyền lợi.
+                    {t('packagePicker.noBenefits')}
                   </p>
                 )}
               </div>
               <div className="mt-4 flex flex-col gap-3 border-t border-white/5 pt-4">
                 <div className="flex flex-col gap-1.5 text-xs rogym-text-secondary">
                   <div className="flex justify-between">
-                    <span>Bắt đầu</span>
+                    <span>{t('packagePicker.start')}</span>
                     <span className="text-white">{formatDate(startDate)}</span>
                   </div>
                   {endDate && (
@@ -276,13 +271,13 @@ export function PackagePicker({
                   onClick={onContinue}
                   className="rogym-btn rogym-btn--primary w-full justify-center"
                 >
-                  Tiếp tục <ArrowRight size={15} />
+                  {t('packagePicker.continue')} <ArrowRight size={15} />
                 </button>
               </div>
             </>
           ) : (
             <div className="flex flex-1 items-center justify-center">
-              <p className="text-center text-sm rogym-text-dim">Cuộn để chọn gói</p>
+              <p className="text-center text-sm rogym-text-dim">{t('packagePicker.scrollToSelect')}</p>
             </div>
           )}
         </div>

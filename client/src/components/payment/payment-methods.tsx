@@ -1,6 +1,6 @@
 import { Banknote } from 'lucide-react'
 import type { PaymentMethod } from '@/services/payment.service'
-import { PAYMENT_METHOD_OPTIONS } from './payment-method-data'
+import { METHOD_ICON } from './payment-method-data'
 
 export function PaymentMethodIcon({
   method,
@@ -9,7 +9,6 @@ export function PaymentMethodIcon({
   method: PaymentMethod
   size?: number
 }) {
-  const Icon =
-    PAYMENT_METHOD_OPTIONS.find((item) => item.value === method)?.Icon ?? Banknote
+  const Icon = METHOD_ICON[method] ?? Banknote
   return <Icon size={size} />
 }

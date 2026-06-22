@@ -1,4 +1,24 @@
 {
+  "nav": {
+    "subscriptionMenu": "サブスクリプション",
+    "current": "現在のプラン",
+    "renew": "更新",
+    "history": "履歴",
+    "buy": "購入",
+    "workoutPlan": "ワークアウトプラン",
+    "workoutPlanSub": "プラン",
+    "workoutCreate": "プラン作成",
+    "workoutExercises": "エクササイズ",
+    "workoutSessions": "トレーニング",
+    "mySchedule": "マイスケジュール",
+    "createSession": "セッション作成",
+    "workoutHistory": "セッション履歴",
+    "checkIn": "チェックイン",
+    "progress": "進捗",
+    "feedback": "フィードバック",
+    "feedbackMine": "マイフィードバック",
+    "feedbackSend": "フィードバック送信"
+  },
   "dashboard": {
     "title": "ダッシュボード",
     "errorLoad": "データを読み込めません",
@@ -210,7 +230,8 @@
       },
       "toastActivated": "プランが正常に有効化されました！",
       "toastCancelled": "プランがキャンセルされました。",
-      "cancelledNote": "このプランは販売終了となり、新規登録はできません。"
+      "cancelledNote": "このプランは販売終了となり、新規登録はできません。",
+      "packageFallback": "プラン"
     },
     "history": {
       "title": "プラン履歴",
@@ -247,7 +268,8 @@
       "methodEwallet": "電子ウォレット",
       "statusAll": "すべて",
       "statusSuccess": "成功",
-      "statusFailed": "失敗"
+      "statusFailed": "失敗",
+      "packageFallback": "プラン"
     },
     "setup": {
       "title": "プランに申し込む",
@@ -273,7 +295,8 @@
       "newExpiry": "更新後の終了日",
       "renewText": "{{days}}日延長 — {{price}}",
       "buttonPay": "更新のお支払い",
-      "errorLoad": "プラン情報を読み込めません。"
+      "errorLoad": "プラン情報を読み込めません。",
+      "packageFallback": "プラン"
     },
     "checkout": {
       "title": "お支払い",
@@ -435,7 +458,8 @@
       "overweight": "過体重",
       "obese": "肥満"
     },
-    "rangeAll": "すべて"
+    "rangeAll": "すべて",
+    "weightLabel": "体重"
   },
   "workout": {
     "myPlan": {
@@ -479,7 +503,9 @@
       "applying": "プランを適用中...",
       "errorLoad": "トレーニングプランを読み込めません。",
       "errorDelete": "プランを削除できません。",
-      "unitSeconds": "秒"
+      "unitSeconds": "秒",
+      "buttonDayDetail": "詳細",
+      "exerciseFallback": "エクササイズ"
     },
     "history": {
       "title": "トレーニング履歴",
@@ -537,6 +563,13 @@
       "unitSeconds": "秒",
       "errorLoad": "スケジュールを読み込めません。"
     },
+    "categories": {
+      "all": "すべて",
+      "strength": "筋力トレーニング",
+      "cardio": "有酸素運動",
+      "flexibility": "柔軟性",
+      "balance": "バランス"
+    },
     "exercises": {
       "title": "エクササイズ",
       "eyebrow": "スケジュール",
@@ -553,7 +586,11 @@
       "buttonClose": "閉じる",
       "buttonAddToBuilder": "プランビルダーに追加",
       "imageAlt": "{{name}} のイラスト",
-      "errorLoad": "エクササイズライブラリを読み込めません。"
+      "errorLoad": "エクササイズライブラリを読み込めません。",
+      "noDescription": "説明なし。",
+      "muscleGroupUnknown": "不明",
+      "filterTitle": "フィルター",
+      "categoryLabel": "エクササイズの種類"
     },
     "createSession": {
       "title": "セッションを作成",
@@ -616,6 +653,11 @@
       "fieldDesc": "短い説明（任意）",
       "fieldDescPlaceholder": "目標、メモ...",
       "fieldStartDate": "開始日",
+      "fieldSets": "セット数",
+      "fieldReps": "レップ数",
+      "fieldDuration": "1セットあたりの時間（秒）",
+      "fieldWeight": "重量（kg）",
+      "fieldRest": "セット間の休憩（秒）",
       "startDatePlaceholder": "開始日を選択",
       "buttonCreating": "作成中...",
       "buttonNext": "次へ — トレーニング日を追加",
@@ -695,5 +737,18 @@
       "errorActivate": "プランを有効化できません。再度確認してください。",
       "unitMinutes": "分"
     }
+  },
+  "packagePicker": {
+    "currentBadge": "現在",
+    "days": "{{count}}日",
+    "selfTrain": "自主トレ",
+    "withPt": "PTあり",
+    "noPackage": "利用可能なプランがありません",
+    "selectedLabel": "選択中のプラン",
+    "benefits": "特典・サービス",
+    "noBenefits": "特典情報がありません。",
+    "start": "開始",
+    "continue": "続ける",
+    "scrollToSelect": "スクロールしてプランを選択"
   }
 }

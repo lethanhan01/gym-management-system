@@ -202,8 +202,9 @@ export default function CurrentPackagePage() {
               <h3 className="text-lg font-bold text-white m-0">{t('subscription.current.cancelDialog.title')}</h3>
             </div>
             <p className="text-sm rogym-text-secondary leading-relaxed mb-1">
-              Hủy gói{' '}
-              <strong className="text-white">{cancelTarget.packageName ?? 'gói tập'}</strong>?
+              {t('subscription.current.cancelDialog.titleWithName', {
+                name: cancelTarget.packageName ?? t('subscription.current.packageFallback')
+              })}
             </p>
             <p className="text-sm rogym-text-secondary leading-relaxed mb-6">
               {cancelTarget.status === 'pending'
@@ -299,7 +300,7 @@ export default function CurrentPackagePage() {
                   tone={SUB_STATUS_MAP[getRealStatus(subscription)]?.tone}
                 />
                 <h2 className="text-2xl font-bold text-white mt-3">
-                  {subscription.packageName ?? pkg?.name ?? 'Gói tập'}
+                  {subscription.packageName ?? pkg?.name ?? t('subscription.current.packageFallback')}
                 </h2>
               </div>
 
@@ -576,7 +577,7 @@ export default function CurrentPackagePage() {
                             <div className="flex items-start justify-between gap-3">
                               <div className="min-w-0 flex-1">
                                 <div className="flex items-center gap-2">
-                                  <h3 className="truncate font-bold text-white">{p.name}</h3>
+                                  <h3 className="break-words font-bold text-white">{p.name}</h3>
                                   {p.includesPt && (
                                     <span className="shrink-0 rounded-full bg-[rgba(66,224,158,0.1)] px-2 py-0.5 text-[10px] font-bold uppercase text-[#42e09e]">
                                       {t('subscription.current.packageDetail.withPt')}

@@ -218,7 +218,7 @@ function SelectMemberStep({ onSelect }: { onSelect: (m: TrainerStudentSummary) =
                         ? formatDate(m.activeSubscription.endDate)
                         : '—'}
                     </td>
-                    <td className="px-5 py-4">
+                    <td className="px-5 py-4 min-w-0">
                       {m.activeSubscription ? (
                         <span
                           className="rogym-tone-badge"

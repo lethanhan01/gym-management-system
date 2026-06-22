@@ -1,4 +1,5 @@
 import { LoaderCircle } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { todayInput } from '@/lib/date'
 
 interface OwnerDateRangeFilterProps {
@@ -20,11 +21,12 @@ export function OwnerDateRangeFilter({
   loading = false,
   maxTo,
 }: OwnerDateRangeFilterProps) {
+  const { t } = useTranslation('common')
   const effectiveMaxTo = maxTo ?? todayInput()
   return (
     <div className="flex flex-wrap items-end gap-4 rounded-2xl border border-white/5 bg-white/[0.025] p-5">
       <div className="flex flex-col gap-1.5">
-        <label className="text-xs font-medium rogym-text-dim">Từ ngày</label>
+        <label className="text-xs font-medium rogym-text-dim">{t('dateRange.from')}</label>
         <input
           type="date"
           value={from}
@@ -34,7 +36,7 @@ export function OwnerDateRangeFilter({
         />
       </div>
       <div className="flex flex-col gap-1.5">
-        <label className="text-xs font-medium rogym-text-dim">Đến ngày</label>
+        <label className="text-xs font-medium rogym-text-dim">{t('dateRange.to')}</label>
         <input
           type="date"
           value={to}
@@ -46,7 +48,7 @@ export function OwnerDateRangeFilter({
       </div>
       <button className="rogym-btn rogym-btn--primary" onClick={onLoad} disabled={loading}>
         {loading && <LoaderCircle size={15} className="animate-spin" />}
-        Tải báo cáo
+        {t('dateRange.load')}
       </button>
     </div>
   )

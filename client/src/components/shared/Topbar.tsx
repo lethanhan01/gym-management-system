@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { User, CreditCard, LogOut, ShoppingBag } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '../../stores/authStore';
 import { useSubscriptionStore } from '../../stores/subscriptionStore';
 import { LanguageSwitcher } from '@/components/ui/LanguageSwitcher';
@@ -14,6 +15,8 @@ export default function Topbar() {
   const clearSubscription = useSubscriptionStore((state) => state.clear);
   const navigate = useNavigate();
   const { pathname } = useLocation();
+  const { t: tCommon } = useTranslation('common');
+  const { t: tMember } = useTranslation('member');
 
   const role = user?.roles[0];
   const initials = user?.fullName
@@ -58,7 +61,7 @@ export default function Topbar() {
           onClick={() => navigate('/member/subscription/setup')}
           className="rogym-btn--primary rogym-sx-ca063821"
         >
-          <ShoppingBag size={13} /> Đăng ký gói tập
+          <ShoppingBag size={13} /> {tMember('subscription.setup.title')}
         </button>
       )}
 
@@ -85,18 +88,18 @@ export default function Topbar() {
 
             <div className="rogym-sx-df676766">
               <DropdownItem icon={<User size={15} />} onClick={goProfile}>
-                Hồ sơ
+                {tCommon('nav.profile')}
               </DropdownItem>
               {role === 'member' && (
                 <DropdownItem icon={<CreditCard size={15} />} onClick={goPayment}>
-                  Tài khoản thanh toán
+                  {tMember('paymentAccounts.title')}
                 </DropdownItem>
               )}
             </div>
 
             <div className="rogym-sx-75f1302c">
               <DropdownItem icon={<LogOut size={15} />} onClick={handleLogout} danger>
-                Đăng xuất
+                {tCommon('nav.logout')}
               </DropdownItem>
             </div>
           </div>

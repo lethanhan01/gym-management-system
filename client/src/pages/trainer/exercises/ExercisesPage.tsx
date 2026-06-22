@@ -4,7 +4,7 @@ import { Pencil, Plus, Search } from 'lucide-react'
 import { getApiError } from '@/lib/api-error'
 import workoutService, { type Exercise, type ExerciseCategory } from '@/services/workout.service'
 import { ExerciseCard } from '@/components/workout/ExerciseUI'
-import { EXERCISE_CATEGORY_OPTIONS, filterExercises } from '@/components/workout/exercise-data'
+import { getExerciseCategories, filterExercises } from '@/components/workout/exercise-data'
 import {
   SubmitButton,
   TrainerEmptyState,
@@ -16,12 +16,15 @@ import {
   TrainerSkeleton,
 } from '@/components/TrainerUI'
 
-const CATEGORIES = EXERCISE_CATEGORY_OPTIONS.filter(
-  (item): item is { value: ExerciseCategory; label: string } => item.value !== ''
-)
-
 export default function ExercisesPage() {
   const { t } = useTranslation('trainer')
+  const CATEGORIES = useMemo(
+    () =>
+      getExerciseCategories().filter(
+        (item): item is { value: ExerciseCategory; label: string } => item.value !== ''
+      ),
+    []
+  )
   const [exercises, setExercises] = useState<Exercise[]>([])
   const [search, setSearch] = useState('')
   const [category, setCategory] = useState('')

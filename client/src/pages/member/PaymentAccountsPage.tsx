@@ -7,8 +7,8 @@ import { useAuthStore } from '@/stores/authStore'
 import { MemberPage, MemberPageHeader, MemberSkeleton } from '@/components/MemberUI'
 import {
   getPaymentMethodLabel,
+  getPaymentMethodOptions,
   maskPaymentAccountRef,
-  PAYMENT_METHOD_OPTIONS,
 } from '@/components/payment/payment-method-data'
 import { PaymentMethodIcon } from '@/components/payment/payment-methods'
 
@@ -182,7 +182,7 @@ export default function PaymentAccountsPage() {
 
           {/* Type selector */}
           <div className="flex gap-2">
-            {PAYMENT_METHOD_OPTIONS.map(opt => (
+            {getPaymentMethodOptions().map(opt => (
               <button
                 key={opt.value}
                 onClick={() => setType(opt.value)}

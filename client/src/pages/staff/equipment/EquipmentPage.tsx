@@ -297,7 +297,7 @@ export default function EquipmentPage() {
                     <td className="px-5 py-4 rogym-text-secondary">
                       {formatDate(eq.warrantyUntil)}
                     </td>
-                    <td className="px-5 py-4">
+                    <td className="px-5 py-4 min-w-0">
                       <span
                         className="rogym-tone-badge"
                         data-tone={equipmentStatusTone(eq.status)}

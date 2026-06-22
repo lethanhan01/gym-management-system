@@ -262,9 +262,9 @@ export default function GroupsPage() {
       setError(null)
       try {
         const params = { page: pg, pageSize: PAGE_SIZE, search: search || undefined }
-        const { data, total: t } = await rbacService.listGroups(params)
+        const { data, total: fetchedTotal } = await rbacService.listGroups(params)
         setGroups(data)
-        setTotal(t)
+        setTotal(fetchedTotal)
       } catch (err) {
         setError(getApiError(err, t('rbac.groups.loadFailed')))
       } finally {

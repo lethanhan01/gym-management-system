@@ -85,7 +85,7 @@ function PlanCardItem({
               >
                 {isPT ? t('workout.createSession.sourceTrainer') : t('workout.createSession.sourcePersonal')}
               </span>
-              <h3 className="truncate font-bold text-white">
+              <h3 className="break-words font-bold text-white">
                 {assignment.plan?.name ?? plan?.name ?? '—'}
               </h3>
             </div>

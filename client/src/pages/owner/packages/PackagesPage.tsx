@@ -428,7 +428,7 @@ export default function PackagesPage() {
                     <td className="px-5 py-4 font-semibold rogym-text-green">
                       {formatVnd(Number(pkg.price))}
                     </td>
-                    <td className="px-5 py-4">
+                    <td className="px-5 py-4 min-w-0">
                       <OwnerBadge
                         label={
                           pkg.deletedAt
@@ -447,7 +447,7 @@ export default function PackagesPage() {
                       />
                     </td>
                     <td className="px-5 py-4">
-                      <div className="ml-auto grid w-[176px] grid-cols-2 gap-2">
+                      <div className="ml-auto grid grid-cols-2 gap-2">
                         {pkg.deletedAt ? (
                           <span className="col-span-2 text-center text-xs rogym-text-dim">
                             {t('packages.noActions')}

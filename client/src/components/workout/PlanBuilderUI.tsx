@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import type { ExerciseCategory } from '@/services/workout.service'
 import { cn } from '@/lib/utils'
 
@@ -64,12 +65,13 @@ export function ExerciseTargetFields({
   restOutsideGrid?: boolean
   weightPlaceholder?: string
 }) {
+  const { t } = useTranslation('member')
   const fieldClassName = compact ? 'space-y-1.5' : undefined
   const showReps = category !== 'cardio'
   const showDuration = durationMode === 'always' || category === 'cardio'
   const restField = (
     <NumberField
-      label="Nghỉ giữa sets (giây)"
+      label={t('workout.planBuilder.fieldRest')}
       min={0}
       value={values.restSeconds}
       onChange={onChange.restSeconds}
@@ -81,7 +83,7 @@ export function ExerciseTargetFields({
     <div className={cn(restOutsideGrid && 'space-y-3')}>
       <div className={gridClassName}>
         <NumberField
-          label="Số sets"
+          label={t('workout.planBuilder.fieldSets')}
           min={1}
           value={values.sets}
           onChange={onChange.sets}
@@ -89,7 +91,7 @@ export function ExerciseTargetFields({
         />
         {showReps && (
           <NumberField
-            label="Số reps"
+            label={t('workout.planBuilder.fieldReps')}
             min={1}
             value={values.reps}
             onChange={onChange.reps}
@@ -98,7 +100,7 @@ export function ExerciseTargetFields({
         )}
         {showDuration && (
           <NumberField
-            label="Thời gian tập mỗi set (giây)"
+            label={t('workout.planBuilder.fieldDuration')}
             min={1}
             value={values.duration}
             onChange={onChange.duration}
@@ -106,7 +108,7 @@ export function ExerciseTargetFields({
           />
         )}
         <label className={cn('block space-y-2', fieldClassName)}>
-          <span className="rogym-field-label">Mức tạ (kg)</span>
+          <span className="rogym-field-label">{t('workout.planBuilder.fieldWeight')}</span>
           <input
             className="rogym-input"
             type="number"

@@ -214,13 +214,13 @@ export default function UsersPage() {
                     </td>
                     <td className="px-5 py-4 font-semibold text-white">{staff.fullName}</td>
                     <td className="px-5 py-4 rogym-text-secondary">{staff.email}</td>
-                    <td className="px-5 py-4 text-right">
+                    <td className="px-5 py-4 min-w-0 text-right">
                       <OwnerBadge
                         label={positionLabel[staff.position] ?? staff.position}
                         color={STAFF_POSITION_COLOR[staff.position] ?? '#6b7280'}
                       />
                     </td>
-                    <td className="px-5 py-4">
+                    <td className="px-5 py-4 min-w-0">
                       <OwnerBadge
                         label={userStatusLabel[staff.status] ?? staff.status}
                         color={USER_STATUS_COLOR[staff.status] ?? '#6b7280'}

@@ -1,28 +1,12 @@
 import type { ReactNode } from 'react'
 import { CalendarDays, ChevronLeft, ChevronRight } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import {
   STAFF_SCHEDULE_SHIFTS,
   type StaffScheduleCalendarEntry,
   type StaffScheduleShift,
 } from '@/lib/staff-schedule-calendar'
-import { shiftLabel } from '@/lib/shift'
 import { cn } from '@/lib/utils'
-
-const DOW_LABELS = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN']
-const MONTH_LABELS = [
-  'Tháng 1',
-  'Tháng 2',
-  'Tháng 3',
-  'Tháng 4',
-  'Tháng 5',
-  'Tháng 6',
-  'Tháng 7',
-  'Tháng 8',
-  'Tháng 9',
-  'Tháng 10',
-  'Tháng 11',
-  'Tháng 12',
-]
 
 function isToday(year: number, month: number, day: number): boolean {
   const now = new Date()
@@ -45,15 +29,6 @@ function getMonthGrid(year: number, month: number): (number | null)[][] {
     rows.push(cells.slice(index, index + 7))
   }
   return rows
-}
-
-function formatSelectedDate(date: string): string {
-  return new Date(`${date}T00:00:00`).toLocaleDateString('vi-VN', {
-    weekday: 'long',
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-  })
 }
 
 type StaffScheduleCalendarProps<TSchedule extends StaffScheduleCalendarEntry> = {
@@ -86,13 +61,34 @@ export function StaffScheduleCalendar<TSchedule extends StaffScheduleCalendarEnt
   detailEyebrow,
   renderEntry,
   className,
-  emptySelectionTitle = 'Chọn ngày để xem lịch',
-  emptySelectionDescription = 'Bấm vào ô ngày bên trái',
-  emptyDayMessage = 'Chưa có ca làm việc trong ngày này.',
+  emptySelectionTitle,
+  emptySelectionDescription,
+  emptyDayMessage,
   emptyDayAction,
-  emptyShiftMessage = 'Chưa có ca',
+  emptyShiftMessage,
   headerAction,
 }: StaffScheduleCalendarProps<TSchedule>) {
+  const { t, i18n } = useTranslation('common')
+  const locale = i18n.language === 'ja' ? 'ja-JP' : 'vi-VN'
+
+  // 2024-01-01 is a Monday — generates Mon–Sun day abbreviations for current locale
+  const DOW_LABELS = Array.from({ length: 7 }, (_, i) =>
+    new Intl.DateTimeFormat(locale, { weekday: 'narrow' }).format(new Date(2024, 0, 1 + i))
+  )
+
+  const monthLabel = new Intl.DateTimeFormat(locale, { month: 'long', year: 'numeric' }).format(
+    new Date(targetYear, targetMonth, 1)
+  )
+
+  function formatSelectedDate(date: string): string {
+    return new Date(`${date}T00:00:00`).toLocaleDateString(locale, {
+      weekday: 'long',
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+    })
+  }
+
   const grid = getMonthGrid(targetYear, targetMonth)
   const scheduleMap = new Map<string, Map<StaffScheduleShift, TSchedule[]>>()
 
@@ -140,18 +136,18 @@ export function StaffScheduleCalendar<TSchedule extends StaffScheduleCalendarEnt
             type="button"
             onClick={() => moveMonth('previous')}
             className="flex h-8 w-8 items-center justify-center rounded-full transition-colors hover:bg-white/10"
-            aria-label="Tháng trước"
+            aria-label={t('calendar.prevMonth')}
           >
             <ChevronLeft size={16} className="text-white/60" />
           </button>
           <span className="text-sm font-bold text-white">
-            {MONTH_LABELS[targetMonth]} {targetYear}
+            {monthLabel}
           </span>
           <button
             type="button"
             onClick={() => moveMonth('next')}
             className="flex h-8 w-8 items-center justify-center rounded-full transition-colors hover:bg-white/10"
-            aria-label="Tháng sau"
+            aria-label={t('calendar.nextMonth')}
           >
             <ChevronRight size={16} className="text-white/60" />
           </button>
@@ -226,8 +222,8 @@ export function StaffScheduleCalendar<TSchedule extends StaffScheduleCalendarEnt
             <div className="mb-3 flex h-11 w-11 items-center justify-center rounded-full bg-white/5 rogym-text-dim">
               <CalendarDays size={20} />
             </div>
-            <p className="text-sm font-medium text-white">{emptySelectionTitle}</p>
-            <p className="mt-1 text-xs rogym-text-dim">{emptySelectionDescription}</p>
+            <p className="text-sm font-medium text-white">{emptySelectionTitle ?? t('calendar.emptySelectionTitle')}</p>
+            <p className="mt-1 text-xs rogym-text-dim">{emptySelectionDescription ?? t('calendar.emptySelectionDescription')}</p>
           </div>
         ) : (
           <div className="space-y-4">
@@ -241,7 +237,7 @@ export function StaffScheduleCalendar<TSchedule extends StaffScheduleCalendarEnt
 
             {selectedDaySchedules?.every((shift) => shift.entries.length === 0) ? (
               <div className="rounded-xl border border-white/5 bg-white/[0.02] p-6 text-center">
-                <p className="text-sm rogym-text-dim">{emptyDayMessage}</p>
+                <p className="text-sm rogym-text-dim">{emptyDayMessage ?? t('calendar.emptyDayMessage')}</p>
                 {emptyDayAction && <div className="mt-3">{emptyDayAction}</div>}
               </div>
             ) : (
@@ -249,10 +245,10 @@ export function StaffScheduleCalendar<TSchedule extends StaffScheduleCalendarEnt
                 {selectedDaySchedules?.map(({ shift, entries }) => (
                   <div key={shift}>
                     <p className="mb-1.5 text-xs font-bold uppercase rogym-text-dim">
-                      {shiftLabel(shift)}
+                      {t(`shift.${shift}` as const)}
                     </p>
                     {entries.length === 0 ? (
-                      <p className="pl-2 text-xs italic rogym-text-dim">{emptyShiftMessage}</p>
+                      <p className="pl-2 text-xs italic rogym-text-dim">{emptyShiftMessage ?? t('calendar.emptyShiftMessage')}</p>
                     ) : (
                       <div className="space-y-1">
                         {entries.map((entry) => (

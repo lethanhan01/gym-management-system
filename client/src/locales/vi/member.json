@@ -1,4 +1,24 @@
 {
+  "nav": {
+    "subscriptionMenu": "Gói tập",
+    "current": "Gói hiện tại",
+    "renew": "Gia hạn",
+    "history": "Lịch sử",
+    "buy": "Mua gói",
+    "workoutPlan": "Kế hoạch tập",
+    "workoutPlanSub": "Kế hoạch",
+    "workoutCreate": "Tạo kế hoạch",
+    "workoutExercises": "Bài tập",
+    "workoutSessions": "Tập luyện",
+    "mySchedule": "Lịch của tôi",
+    "createSession": "Tạo buổi tập",
+    "workoutHistory": "Lịch sử buổi tập",
+    "checkIn": "Check-in",
+    "progress": "Tiến độ",
+    "feedback": "Phản hồi",
+    "feedbackMine": "Phản hồi của tôi",
+    "feedbackSend": "Gửi phản hồi"
+  },
   "dashboard": {
     "title": "Dashboard",
     "errorLoad": "Không thể tải dữ liệu",
@@ -210,7 +230,8 @@
       },
       "toastActivated": "Gói tập đã được kích hoạt thành công!",
       "toastCancelled": "Đã hủy gói tập thành công.",
-      "cancelledNote": "Gói tập này đã ngừng bán và không còn khả dụng cho đăng ký mới."
+      "cancelledNote": "Gói tập này đã ngừng bán và không còn khả dụng cho đăng ký mới.",
+      "packageFallback": "Gói tập"
     },
     "history": {
       "title": "Lịch sử gói tập",
@@ -247,7 +268,8 @@
       "methodEwallet": "Ví điện tử",
       "statusAll": "Tất cả",
       "statusSuccess": "Thành công",
-      "statusFailed": "Thất bại"
+      "statusFailed": "Thất bại",
+      "packageFallback": "Gói tập"
     },
     "setup": {
       "title": "Đăng ký gói tập",
@@ -273,7 +295,8 @@
       "newExpiry": "Hết hạn sau gia hạn",
       "renewText": "Gia hạn thêm {{days}} ngày với giá {{price}}",
       "buttonPay": "Thanh toán gia hạn",
-      "errorLoad": "Không thể tải thông tin gói tập."
+      "errorLoad": "Không thể tải thông tin gói tập.",
+      "packageFallback": "Gói tập"
     },
     "checkout": {
       "title": "Thanh toán",
@@ -435,7 +458,8 @@
       "overweight": "Thừa cân",
       "obese": "Béo phì"
     },
-    "rangeAll": "Tất cả"
+    "rangeAll": "Tất cả",
+    "weightLabel": "Cân nặng"
   },
   "workout": {
     "myPlan": {
@@ -479,7 +503,9 @@
       "applying": "Đang áp dụng kế hoạch...",
       "errorLoad": "Không thể tải kế hoạch tập.",
       "errorDelete": "Không thể xóa kế hoạch.",
-      "unitSeconds": "giây"
+      "unitSeconds": "giây",
+      "buttonDayDetail": "Chi tiết",
+      "exerciseFallback": "Bài tập"
     },
     "history": {
       "title": "Lịch sử tập luyện",
@@ -537,6 +563,13 @@
       "unitSeconds": "giây",
       "errorLoad": "Không thể tải lịch tập."
     },
+    "categories": {
+      "all": "Tất cả",
+      "strength": "Sức mạnh",
+      "cardio": "Tim mạch",
+      "flexibility": "Linh hoạt",
+      "balance": "Thăng bằng"
+    },
     "exercises": {
       "title": "Bài tập",
       "eyebrow": "Lịch tập",
@@ -553,7 +586,11 @@
       "buttonClose": "Đóng",
       "buttonAddToBuilder": "Thêm vào Plan Builder",
       "imageAlt": "Minh họa {{name}}",
-      "errorLoad": "Không thể tải thư viện bài tập."
+      "errorLoad": "Không thể tải thư viện bài tập.",
+      "noDescription": "Chưa có mô tả.",
+      "muscleGroupUnknown": "Không xác định",
+      "filterTitle": "Bộ lọc",
+      "categoryLabel": "Loại bài tập"
     },
     "createSession": {
       "title": "Tạo buổi tập",
@@ -616,6 +653,11 @@
       "fieldDesc": "Mô tả ngắn (tùy chọn)",
       "fieldDescPlaceholder": "Mục tiêu, ghi chú...",
       "fieldStartDate": "Bắt đầu từ ngày",
+      "fieldSets": "Số sets",
+      "fieldReps": "Số reps",
+      "fieldDuration": "Thời gian tập mỗi set (giây)",
+      "fieldWeight": "Mức tạ (kg)",
+      "fieldRest": "Nghỉ giữa sets (giây)",
       "startDatePlaceholder": "Chọn ngày bắt đầu",
       "buttonCreating": "Đang tạo...",
       "buttonNext": "Tiếp theo — Thêm ngày tập",
@@ -695,5 +737,18 @@
       "errorActivate": "Không thể kích hoạt kế hoạch. Vui lòng kiểm tra lại.",
       "unitMinutes": "phút"
     }
+  },
+  "packagePicker": {
+    "currentBadge": "Hiện tại",
+    "days": "{{count}} ngày",
+    "selfTrain": "Tự tập",
+    "withPt": "Có PT",
+    "noPackage": "Không có gói nào khả dụng",
+    "selectedLabel": "Gói chọn",
+    "benefits": "Quyền lợi",
+    "noBenefits": "Không có thông tin quyền lợi.",
+    "start": "Bắt đầu",
+    "continue": "Tiếp tục",
+    "scrollToSelect": "Cuộn để chọn gói"
   }
 }

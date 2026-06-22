@@ -1,3 +1,5 @@
+import { useTranslation } from 'react-i18next'
+
 interface OwnerPaginationProps {
   page: number
   totalPages: number
@@ -5,6 +7,8 @@ interface OwnerPaginationProps {
 }
 
 export function OwnerPagination({ page, totalPages, onPageChange }: OwnerPaginationProps) {
+  const { t } = useTranslation('common')
+
   if (totalPages <= 1) return null
 
   function goTo(p: number) {
@@ -19,17 +23,17 @@ export function OwnerPagination({ page, totalPages, onPageChange }: OwnerPaginat
         disabled={page === 1}
         onClick={() => goTo(page - 1)}
       >
-        Trước
+        {t('pagination.prev')}
       </button>
       <span className="text-sm rogym-text-secondary">
-        Trang {page} / {totalPages}
+        {t('pagination.pageOf', { page, totalPages })}
       </span>
       <button
         className="rogym-btn rogym-btn--outline-white rogym-btn--nav"
         disabled={page === totalPages}
         onClick={() => goTo(page + 1)}
       >
-        Sau
+        {t('pagination.next')}
       </button>
     </div>
   )

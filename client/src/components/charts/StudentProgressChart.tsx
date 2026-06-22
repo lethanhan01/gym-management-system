@@ -8,6 +8,7 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
+import { useTranslation } from 'react-i18next'
 
 interface ProgressPoint {
   date: string
@@ -16,6 +17,7 @@ interface ProgressPoint {
 }
 
 export default function StudentProgressChart({ data }: { data: ProgressPoint[] }) {
+  const { t } = useTranslation('trainer')
   return (
     <ResponsiveContainer width="100%" height="100%">
       <LineChart data={data}>
@@ -35,7 +37,7 @@ export default function StudentProgressChart({ data }: { data: ProgressPoint[] }
           yAxisId="weight"
           type="monotone"
           dataKey="weight"
-          name="Cân nặng"
+          name={t('students.weightLabel')}
           stroke="#42e09e"
           strokeWidth={2}
           connectNulls

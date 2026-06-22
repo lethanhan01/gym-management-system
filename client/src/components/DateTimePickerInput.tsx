@@ -3,7 +3,8 @@ import { DayPicker, type DropdownProps } from 'react-day-picker'
 import { Popover } from 'radix-ui'
 import { Calendar, Clock3 } from 'lucide-react'
 import { format, parse, isValid } from 'date-fns'
-import { vi } from 'date-fns/locale'
+import { vi, ja } from 'date-fns/locale'
+import { useTranslation } from 'react-i18next'
 import { Select } from '@/components/Select'
 import { cn } from '@/lib/utils'
 import 'react-day-picker/dist/style.css'
@@ -58,7 +59,7 @@ function pad(n: number): string {
 export function DateTimePickerInput({
   value,
   onChange,
-  placeholder = 'Chọn ngày & giờ',
+  placeholder,
   disabled = false,
   min,
   max,
@@ -66,6 +67,9 @@ export function DateTimePickerInput({
   className,
   minuteStep = 5,
 }: DateTimePickerInputProps) {
+  const { t, i18n } = useTranslation('common')
+  const effectivePlaceholder = placeholder ?? t('datePicker.placeholder')
+  const calendarLocale = i18n.language === 'ja' ? ja : vi
   const [open, setOpen] = useState(false)
 
   const [datePart, timePart] = value ? value.split('T') : ['', '']
@@ -134,7 +138,7 @@ export function DateTimePickerInput({
             className
           )}
         >
-          <span>{displayValue || placeholder}</span>
+          <span>{displayValue || effectivePlaceholder}</span>
           <Calendar size={16} className="shrink-0 rogym-text-muted" />
         </button>
       </Popover.Trigger>
@@ -148,7 +152,7 @@ export function DateTimePickerInput({
             mode="single"
             selected={validDate}
             onSelect={handleDateSelect}
-            locale={vi}
+            locale={calendarLocale}
             fromDate={calendarFromDate}
             toDate={calendarToDate}
             captionLayout="dropdown"
@@ -191,7 +195,7 @@ export function DateTimePickerInput({
             <div className="mb-2 flex items-center gap-1.5">
               <Clock3 size={13} className="rogym-text-muted" />
               <span className="text-xs font-medium rogym-text-secondary">
-                Thời gian
+                {t('datePicker.time')}
               </span>
               {selectedHour !== undefined && (
                 <span

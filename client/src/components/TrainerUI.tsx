@@ -1,4 +1,5 @@
 import { type ReactNode } from 'react'
+import { useTranslation } from 'react-i18next'
 import { statusLabel, statusTone, type StatusTone } from '@/lib/status'
 import { Modal, StatCard, StatusBadge, Button } from '@/components/ui'
 import { Select } from '@/components/Select'
@@ -51,9 +52,10 @@ export function StudentCombobox({
   onChange: (value: string) => void
   disabled?: boolean
 }) {
+  const { t } = useTranslation('trainer')
   return (
     <Select value={value} onValueChange={onChange} disabled={disabled}>
-      <option value="">Chọn học viên</option>
+      <option value="">{t('students.selectStudent')}</option>
       {students.map((student) => (
         <option key={student.memberId} value={student.memberId}>
           {student.memberCode} - {student.fullName}

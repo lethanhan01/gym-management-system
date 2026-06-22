@@ -3,7 +3,8 @@ import { DayPicker, type DropdownProps } from 'react-day-picker'
 import { Popover } from 'radix-ui'
 import { Calendar } from 'lucide-react'
 import { format, parse, isValid, isAfter, isBefore } from 'date-fns'
-import { vi } from 'date-fns/locale'
+import { vi, ja } from 'date-fns/locale'
+import { useTranslation } from 'react-i18next'
 import { Select } from '@/components/Select'
 import { cn } from '@/lib/utils'
 import 'react-day-picker/dist/style.css'
@@ -69,6 +70,8 @@ export function DatePickerInput({
   'aria-label': ariaLabel,
   className,
 }: DatePickerInputProps) {
+  const { t, i18n } = useTranslation('common')
+  const calendarLocale = i18n.language === 'ja' ? ja : vi
   const [open, setOpen] = useState(false)
   const [focused, setFocused] = useState(false)
   const [inputText, setInputText] = useState('')
@@ -164,7 +167,7 @@ export function DatePickerInput({
             disabled={disabled}
             onClick={() => setOpen(!open)}
             className="absolute right-3 top-1/2 -translate-y-1/2 rogym-text-muted hover:text-white transition-colors"
-            aria-label="Mở lịch"
+            aria-label={t('datePicker.open')}
           >
             <Calendar size={16} className="shrink-0" />
           </button>
@@ -180,7 +183,7 @@ export function DatePickerInput({
             mode="single"
             selected={validSelected}
             onSelect={handleSelect}
-            locale={vi}
+            locale={calendarLocale}
             fromDate={calendarFromDate}
             toDate={calendarToDate}
             captionLayout="dropdown"
