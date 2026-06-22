@@ -720,5 +720,18 @@
       "errorActivate": "Không thể kích hoạt kế hoạch. Vui lòng kiểm tra lại.",
       "unitMinutes": "phút"
     }
+  },
+  "packagePicker": {
+    "currentBadge": "Hiện tại",
+    "days": "{{count}} ngày",
+    "selfTrain": "Tự tập",
+    "withPt": "Có PT",
+    "noPackage": "Không có gói nào khả dụng",
+    "selectedLabel": "Gói chọn",
+    "benefits": "Quyền lợi",
+    "noBenefits": "Không có thông tin quyền lợi.",
+    "start": "Bắt đầu",
+    "continue": "Tiếp tục",
+    "scrollToSelect": "Cuộn để chọn gói"
   }
 }

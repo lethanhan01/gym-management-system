@@ -24,7 +24,9 @@
   "nav": {
     "dashboard": "Dashboard",
     "profile": "Hồ sơ",
-    "logout": "Đăng xuất"
+    "logout": "Đăng xuất",
+    "closeMenu": "Đóng menu",
+    "openMenu": "Mở menu"
   },
   "status": {
     "active": "Đang hoạt động",

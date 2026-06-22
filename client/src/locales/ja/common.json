@@ -24,7 +24,9 @@
   "nav": {
     "dashboard": "ダッシュボード",
     "profile": "プロフィール",
-    "logout": "ログアウト"
+    "logout": "ログアウト",
+    "closeMenu": "メニューを閉じる",
+    "openMenu": "メニューを開く"
   },
   "status": {
     "active": "アクティブ",

@@ -720,5 +720,18 @@
       "errorActivate": "プランを有効化できません。再度確認してください。",
       "unitMinutes": "分"
     }
+  },
+  "packagePicker": {
+    "currentBadge": "現在",
+    "days": "{{count}}日",
+    "selfTrain": "自主トレ",
+    "withPt": "PTあり",
+    "noPackage": "利用可能なプランがありません",
+    "selectedLabel": "選択中のプラン",
+    "benefits": "特典・サービス",
+    "noBenefits": "特典情報がありません。",
+    "start": "開始",
+    "continue": "続ける",
+    "scrollToSelect": "スクロールしてプランを選択"
   }
 }

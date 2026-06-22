@@ -1,15 +1,8 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { Dumbbell, Menu, X } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { LanguageSwitcher } from '@/components/ui/LanguageSwitcher'
-
-const NAV_LINKS = [
-  { label: 'Home', to: '/' },
-  { label: 'Training Programs', to: '/programs' },
-  { label: 'Coach', to: '/trainers' },
-  { label: 'Membership', to: '/packages' },
-  { label: 'Contact', to: '/contact' },
-]
 
 function NavBtn({
   to,
@@ -35,6 +28,16 @@ function NavBtn({
 export default function HomeNavbar() {
   const [scrolled, setScrolled] = useState(false)
   const [open, setOpen] = useState(false)
+  const { t: tHome } = useTranslation('home')
+  const { t: tCommon } = useTranslation('common')
+
+  const navLinks = [
+    { label: tHome('nav.home'), to: '/' },
+    { label: tHome('nav.programs'), to: '/programs' },
+    { label: tHome('nav.trainers'), to: '/trainers' },
+    { label: tHome('nav.packages'), to: '/packages' },
+    { label: tHome('nav.contact'), to: '/contact' },
+  ]
 
   useEffect(() => {
     const fn = () => setScrolled(window.scrollY > 40)
@@ -53,7 +56,7 @@ export default function HomeNavbar() {
         </Link>
 
         <div className="hidden md:flex items-center gap-8">
-          {NAV_LINKS.map((l) => (
+          {navLinks.map((l) => (
             <Link
               key={l.to}
               to={l.to}
@@ -67,10 +70,10 @@ export default function HomeNavbar() {
         <div className="hidden md:flex items-center gap-3">
           <LanguageSwitcher />
           <NavBtn to="/login" variant="green">
-            Đăng nhập
+            {tHome('nav.login')}
           </NavBtn>
           <NavBtn to="/member/register" variant="outline">
-            Đăng ký
+            {tHome('nav.register')}
           </NavBtn>
         </div>
 
@@ -78,7 +81,7 @@ export default function HomeNavbar() {
           type="button"
           className="rogym-btn rogym-btn--icon rogym-btn--elevated md:hidden text-white"
           onClick={() => setOpen(!open)}
-          aria-label={open ? 'Đóng menu' : 'Mở menu'}
+          aria-label={open ? tCommon('nav.closeMenu') : tCommon('nav.openMenu')}
         >
           {open ? <X size={22} /> : <Menu size={22} />}
         </button>
@@ -86,7 +89,7 @@ export default function HomeNavbar() {
 
       {open && (
         <div className="md:hidden px-10 pb-6 flex flex-col gap-4 rogym-sx-eb71f2b0">
-          {NAV_LINKS.map((l) => (
+          {navLinks.map((l) => (
             <Link
               key={l.to}
               to={l.to}
@@ -99,10 +102,10 @@ export default function HomeNavbar() {
           <div className="flex items-center gap-3 mt-2">
             <LanguageSwitcher />
             <NavBtn to="/login" variant="green">
-              Đăng nhập
+              {tHome('nav.login')}
             </NavBtn>
             <NavBtn to="/member/register" variant="outline">
-              Đăng ký
+              {tHome('nav.register')}
             </NavBtn>
           </div>
         </div>
