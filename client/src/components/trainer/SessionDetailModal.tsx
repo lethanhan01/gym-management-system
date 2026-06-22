@@ -48,7 +48,7 @@ function DetailRow({
 }
 
 export function SessionDetailModal({ sessionId, onClose, onUpdate }: Props) {
-  const { t } = useTranslation(['trainer', 'common'])
+  const { t } = useTranslation('trainer')
   const [session, setSession] = useState<TrainingSessionDetail | null>(null)
   const [fetchLoading, setFetchLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -80,11 +80,11 @@ export function SessionDetailModal({ sessionId, onClose, onUpdate }: Props) {
       const data = await trainingService.getSession(sessionId)
       setSession(data)
     } catch (err) {
-      setError(getApiError(err, t('trainer:sessionModal.error.loadFailed')))
+      setError(getApiError(err, t('sessionModal.error.loadFailed')))
     } finally {
       setFetchLoading(false)
     }
-  }, [sessionId])
+  }, [sessionId, t])
 
   useEffect(() => {
     setSession(null)
@@ -126,7 +126,7 @@ export function SessionDetailModal({ sessionId, onClose, onUpdate }: Props) {
       onUpdate?.()
       await load()
     } catch (err) {
-      setError(getApiError(err, t('trainer:sessionModal.error.saveFailed')))
+      setError(getApiError(err, t('sessionModal.error.saveFailed')))
       setSaving(false)
     }
   }
@@ -140,7 +140,7 @@ export function SessionDetailModal({ sessionId, onClose, onUpdate }: Props) {
       onUpdate?.()
       await load()
     } catch (err) {
-      setError(getApiError(err, t('trainer:sessionModal.error.cancelFailed')))
+      setError(getApiError(err, t('sessionModal.error.cancelFailed')))
       setCancelling(false)
     }
   }
@@ -154,7 +154,7 @@ export function SessionDetailModal({ sessionId, onClose, onUpdate }: Props) {
       onUpdate?.()
       await load()
     } catch (err) {
-      setError(getApiError(err, t('trainer:sessionModal.error.statusFailed')))
+      setError(getApiError(err, t('sessionModal.error.statusFailed')))
     } finally {
       setUpdatingStatus(false)
     }
@@ -175,7 +175,7 @@ export function SessionDetailModal({ sessionId, onClose, onUpdate }: Props) {
   let modalFooter: React.ReactNode = null
 
   if (fetchLoading || !session) {
-    modalTitle = fetchLoading ? t('trainer:sessionModal.titleLoading') : (error ?? t('trainer:sessionModal.titleError'))
+    modalTitle = fetchLoading ? t('sessionModal.titleLoading') : (error ?? t('sessionModal.titleError'))
     modalBody = fetchLoading ? (
       <div className="flex justify-center py-10">
         <LoaderCircle size={26} className="animate-spin rogym-text-accent" />
@@ -185,13 +185,13 @@ export function SessionDetailModal({ sessionId, onClose, onUpdate }: Props) {
     )
   } else if (mode === 'status-confirm') {
     modalTitle = statusTarget === 'in_progress'
-      ? t('trainer:sessionModal.titleStartSession')
-      : t('trainer:sessionModal.titleCompleteSession')
+      ? t('sessionModal.titleStartSession')
+      : t('sessionModal.titleCompleteSession')
     modalBody = (
       <p className="text-sm leading-6 rogym-text-secondary">
         {statusTarget === 'in_progress'
-          ? t('trainer:sessionModal.confirmStartBody', { name: session.memberName })
-          : t('trainer:sessionModal.confirmCompleteBody', { name: session.memberName })}
+          ? t('sessionModal.confirmStartBody', { name: session.memberName })
+          : t('sessionModal.confirmCompleteBody', { name: session.memberName })}
       </p>
     )
     modalFooter = (
@@ -206,7 +206,7 @@ export function SessionDetailModal({ sessionId, onClose, onUpdate }: Props) {
           }}
           disabled={updatingStatus}
         >
-          {t('trainer:sessionModal.btnDiscard')}
+          {t('sessionModal.btnDiscard')}
         </button>
         <button
           type="button"
@@ -216,13 +216,13 @@ export function SessionDetailModal({ sessionId, onClose, onUpdate }: Props) {
         >
           {updatingStatus && <LoaderCircle size={14} className="animate-spin" />}
           {statusTarget === 'in_progress'
-            ? t('trainer:sessionModal.btnConfirmStart')
-            : t('trainer:sessionModal.btnConfirmComplete')}
+            ? t('sessionModal.btnConfirmStart')
+            : t('sessionModal.btnConfirmComplete')}
         </button>
       </>
     )
   } else if (mode === 'cancel') {
-    modalTitle = t('trainer:sessionModal.titleCancelSession')
+    modalTitle = t('sessionModal.titleCancelSession')
     modalBody = (
       <div className="space-y-4">
         {error && (
@@ -231,7 +231,7 @@ export function SessionDetailModal({ sessionId, onClose, onUpdate }: Props) {
           </div>
         )}
         <label className="block space-y-2">
-          <span className="rogym-field-label">{t('trainer:sessionModal.cancelReasonLabel')}</span>
+          <span className="rogym-field-label">{t('sessionModal.cancelReasonLabel')}</span>
           <textarea
             className="rogym-input min-h-24"
             value={cancelReason}
@@ -251,7 +251,7 @@ export function SessionDetailModal({ sessionId, onClose, onUpdate }: Props) {
           }}
           disabled={cancelling}
         >
-          {t('trainer:sessionModal.btnKeepSchedule')}
+          {t('sessionModal.btnKeepSchedule')}
         </button>
         <button
           type="button"
@@ -264,12 +264,12 @@ export function SessionDetailModal({ sessionId, onClose, onUpdate }: Props) {
           ) : (
             <XCircle size={14} />
           )}
-          {t('trainer:sessionModal.btnConfirmCancel')}
+          {t('sessionModal.btnConfirmCancel')}
         </button>
       </>
     )
   } else if (mode === 'edit') {
-    modalTitle = t('trainer:sessionModal.titleEditSession')
+    modalTitle = t('sessionModal.titleEditSession')
     modalBody = (
       <form
         id="session-edit-form"
@@ -282,27 +282,27 @@ export function SessionDetailModal({ sessionId, onClose, onUpdate }: Props) {
           </div>
         )}
         <label className="block space-y-2">
-          <span className="rogym-field-label">{t('trainer:sessionModal.fieldRoom')}</span>
+          <span className="rogym-field-label">{t('sessionModal.fieldRoom')}</span>
           <TrainerSelect value={editRoomId} onValueChange={setEditRoomId} required>
-            <option value="">{t('trainer:sessionModal.selectRoom')}</option>
+            <option value="">{t('sessionModal.selectRoom')}</option>
             {rooms.map((room) => (
               <option key={room.roomId} value={room.roomId}>
-                {room.roomCode} - {room.name} ({room.capacity} {t('trainer:sessionModal.capacityUnit')})
+                {room.roomCode} - {room.name} ({room.capacity} {t('sessionModal.capacityUnit')})
               </option>
             ))}
           </TrainerSelect>
         </label>
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2">
-            <span className="block rogym-field-label">{t('trainer:sessionModal.fieldStartTime')}</span>
+            <span className="block rogym-field-label">{t('sessionModal.fieldStartTime')}</span>
             <DateTimePickerInput
               value={editStartTime}
               onChange={setEditStartTime}
-              aria-label={t('trainer:sessionModal.fieldStartTime')}
+              aria-label={t('sessionModal.fieldStartTime')}
             />
           </div>
           <label className="block space-y-2">
-            <span className="rogym-field-label">{t('trainer:sessionModal.fieldDuration')}</span>
+            <span className="rogym-field-label">{t('sessionModal.fieldDuration')}</span>
             <input
               className="rogym-input"
               type="number"
@@ -317,8 +317,8 @@ export function SessionDetailModal({ sessionId, onClose, onUpdate }: Props) {
         </div>
         <div className="flex items-center gap-2 rounded-xl border border-white/5 bg-white/[0.03] p-3 text-sm rogym-text-secondary">
           <Clock3 size={15} className="shrink-0 rogym-text-accent" />
-          {t('trainer:sessionModal.endTimePrefix')}{' '}
-          {editEndTime ? toDateTimeLocalInput(editEndTime).replace('T', ' ') : t('trainer:sessionModal.endTimeUnknown')}
+          {t('sessionModal.endTimePrefix')}{' '}
+          {editEndTime ? toDateTimeLocalInput(editEndTime).replace('T', ' ') : t('sessionModal.endTimeUnknown')}
         </div>
       </form>
     )
@@ -333,7 +333,7 @@ export function SessionDetailModal({ sessionId, onClose, onUpdate }: Props) {
           }}
           disabled={saving}
         >
-          {t('trainer:sessionModal.btnCancel')}
+          {t('sessionModal.btnCancel')}
         </button>
         <button
           type="submit"
@@ -342,7 +342,7 @@ export function SessionDetailModal({ sessionId, onClose, onUpdate }: Props) {
           disabled={saving || !editRoomId || !editStartTime || editDuration <= 0}
         >
           {saving && <LoaderCircle size={14} className="animate-spin" />}
-          {t('trainer:sessionModal.btnSave')}
+          {t('sessionModal.btnSave')}
         </button>
       </>
     )
@@ -361,21 +361,21 @@ export function SessionDetailModal({ sessionId, onClose, onUpdate }: Props) {
             {error}
           </div>
         )}
-        <DetailRow icon={<UserRound size={16} />} label={t('trainer:sessionModal.labelStudent')} value={session.memberName} />
+        <DetailRow icon={<UserRound size={16} />} label={t('sessionModal.labelStudent')} value={session.memberName} />
         <DetailRow
           icon={<CalendarClock size={16} />}
-          label={t('trainer:sessionModal.labelStart')}
+          label={t('sessionModal.labelStart')}
           value={formatDateTime(session.startTime)}
         />
         <DetailRow
           icon={<CalendarClock size={16} />}
-          label={t('trainer:sessionModal.labelEnd')}
+          label={t('sessionModal.labelEnd')}
           value={formatDateTime(session.endTime)}
         />
         <DetailRow
           icon={<MapPin size={16} />}
-          label={t('trainer:sessionModal.labelRoom')}
-          value={session.roomName ?? t('trainer:sessionModal.noRoom')}
+          label={t('sessionModal.labelRoom')}
+          value={session.roomName ?? t('sessionModal.noRoom')}
         />
       </div>
     )
@@ -392,7 +392,7 @@ export function SessionDetailModal({ sessionId, onClose, onUpdate }: Props) {
                 setMode('status-confirm')
               }}
             >
-              <Play size={14} /> {t('trainer:sessionModal.btnStart')}
+              <Play size={14} /> {t('sessionModal.btnStart')}
             </button>
           )}
           {canComplete && (
@@ -404,7 +404,7 @@ export function SessionDetailModal({ sessionId, onClose, onUpdate }: Props) {
                 setMode('status-confirm')
               }}
             >
-              <CheckCircle size={14} /> {t('trainer:sessionModal.btnComplete')}
+              <CheckCircle size={14} /> {t('sessionModal.btnComplete')}
             </button>
           )}
           {editable && (
@@ -413,7 +413,7 @@ export function SessionDetailModal({ sessionId, onClose, onUpdate }: Props) {
               className="rogym-btn rogym-btn--outline-white"
               onClick={enterEdit}
             >
-              <Pencil size={14} /> {t('trainer:sessionModal.btnEdit')}
+              <Pencil size={14} /> {t('sessionModal.btnEdit')}
             </button>
           )}
           {editable && (
@@ -425,7 +425,7 @@ export function SessionDetailModal({ sessionId, onClose, onUpdate }: Props) {
                 setError(null)
               }}
             >
-              <XCircle size={14} /> {t('trainer:sessionModal.btnCancelSession')}
+              <XCircle size={14} /> {t('sessionModal.btnCancelSession')}
             </button>
           )}
         </div>
@@ -449,7 +449,7 @@ export function SessionDetailModal({ sessionId, onClose, onUpdate }: Props) {
             type="button"
             className="rogym-btn rogym-btn--icon rogym-btn--elevated shrink-0"
             onClick={onClose}
-            aria-label={t('trainer:sessionModal.ariaClose')}
+            aria-label={t('sessionModal.ariaClose')}
           >
             <X size={17} />
           </button>
