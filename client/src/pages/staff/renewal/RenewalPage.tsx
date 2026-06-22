@@ -456,7 +456,7 @@ function ReviewSubscriptionStep({
             <div className="flex items-center justify-between rounded-xl border border-[rgba(6,195,132,0.25)] bg-[rgba(6,195,132,0.06)] px-4 py-3">
               <div>
                 <span className="rogym-text-secondary text-sm">{t('renewal.renewExtend')} </span>
-                <span className="font-semibold text-white">{subscription.package.durationDays} {t('renewal.durationDays', { days: '' }).trim()}</span>
+                <span className="font-semibold text-white">{t('renewal.renewExtendDays', { days: subscription.package.durationDays })}</span>
               </div>
               <span className="text-lg font-bold text-[var(--rogym-teal)]">
                 {formatVnd(Number(subscription.package.price))}

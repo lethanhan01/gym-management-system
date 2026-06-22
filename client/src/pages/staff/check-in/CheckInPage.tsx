@@ -100,7 +100,7 @@ export default function CheckInPage() {
                     className="rogym-input pl-10 uppercase"
                     value={memberCode}
                     onChange={(event) => setMemberCode(event.target.value)}
-                    placeholder="VD: MEM-0001"
+                    placeholder={t('checkIn.memberCodePlaceholder')}
                     autoComplete="off"
                     autoFocus
                   />

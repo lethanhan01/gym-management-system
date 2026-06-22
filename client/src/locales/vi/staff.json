@@ -169,6 +169,7 @@
     "createRoom": "Tạo phòng",
     "roomName": "Tên phòng *",
     "roomNamePlaceholder": "VD: Phòng gym chính",
+    "roomTypeLabel": "Loại phòng",
     "roomTypePlaceholder": "VD: gym, yoga, cardio",
     "capacityLabel": "Sức chứa (người)",
     "description": "Mô tả",

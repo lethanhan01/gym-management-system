@@ -199,7 +199,7 @@ export default function FacilityPage() {
             />
           </label>
           <label className="block space-y-2">
-            <span className="rogym-field-label">{t('facility.roomTypePlaceholder')}</span>
+            <span className="rogym-field-label">{t('facility.roomTypeLabel')}</span>
             <input
               className="rogym-input"
               value={formType}

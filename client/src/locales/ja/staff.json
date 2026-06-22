@@ -169,6 +169,7 @@
     "createRoom": "ルームを作成",
     "roomName": "ルーム名 *",
     "roomNamePlaceholder": "例：メインジム",
+    "roomTypeLabel": "ルームタイプ",
     "roomTypePlaceholder": "例：gym、yoga、cardio",
     "capacityLabel": "収容人数（名）",
     "description": "説明",
