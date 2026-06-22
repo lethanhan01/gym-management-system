@@ -47,7 +47,7 @@ export default function OwnerSchedulePage() {
       .then(setSchedules)
       .catch((err) => setError(getApiError(err, t('staffManagement.schedule.loadFailed'))))
       .finally(() => setLoading(false))
-  }, [monthStart, monthEnd])
+  }, [monthStart, monthEnd, t])
 
   useEffect(() => {
     loadSchedules()

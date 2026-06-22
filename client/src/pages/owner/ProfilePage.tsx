@@ -42,7 +42,7 @@ export default function OwnerProfilePage() {
       })
       .catch((err) => setError(getApiError(err, t('profile.loadFailed'))))
       .finally(() => setLoading(false))
-  }, [])
+  }, [t])
 
   async function handleSave(e: FormEvent) {
     e.preventDefault()
@@ -181,7 +181,7 @@ export default function OwnerProfilePage() {
           ) : (
             <>
               <ProfileInfoRow label={t('profile.fullName')} value={profile?.fullName ?? '—'} />
-              <ProfileInfoRow label="Email" value={profile?.email ?? '—'} />
+              <ProfileInfoRow label={t('profile.email')} value={profile?.email ?? '—'} />
               <ProfileInfoRow label={t('profile.phone')} value={profile?.phone ?? '—'} />
               <ProfileInfoRow label={t('profile.role')} value={t('profile.roleOwner')} />
               <div className="mt-auto pt-6 flex gap-3">

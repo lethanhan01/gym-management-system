@@ -27,7 +27,17 @@
     "repairingCount": "{{count}}台修理中",
     "allEquipmentOk": "すべての設備が正常に動作しています",
     "equipmentAlertDetails": "{{broken}}台故障、{{repairing}}台修理中",
-    "feedbackPending": "対応待ちフィードバック"
+    "feedbackPending": "対応待ちフィードバック",
+    "severity": {
+      "low": "低",
+      "medium": "中",
+      "high": "高"
+    },
+    "feedbackType": {
+      "staff": "スタッフ",
+      "equipment": "設備",
+      "service": "サービス"
+    }
   },
   "packages": {
     "title": "プラン管理",
@@ -167,6 +177,8 @@
       "monthLabel": "{{month}}月",
       "chartTitle": "期間別売上",
       "topPackages": "人気プラン",
+      "packageSalesCount": "{{count}}件",
+      "packageDurationPrice": "{{days}}日 · {{price}}",
       "collapse": "折りたたむ",
       "showMore": "もっと見る（{{count}}プラン）",
       "transactionDays": "{{count}}日間の取引",
@@ -212,12 +224,15 @@
       "viewDetail": "詳細を見る",
       "actual": "実績：",
       "expected": "目標：",
+      "hoursValue": "{{hours}}時間",
       "legend": {
         "good": "1.0–1.5：良好",
         "average": "1.5–2.5：普通",
         "needsImprovement": "2.5–3.0：要改善"
       },
       "detailModal": "パフォーマンス詳細 — {{name}}",
+      "attendanceSectionTitle": "出勤記録一覧",
+      "scheduleSectionTitle": "勤務シフト一覧",
       "attendanceTable": {
         "date": "日付",
         "checkIn": "チェックイン",
@@ -274,6 +289,11 @@
         "failed": "失敗"
       },
       "unassigned": "未割り当て",
+      "memberFallback": "会員 #{{id}}",
+      "pageTransactionsHint": "{{count}}件の取引を表示中",
+      "packageReference": "プラン {{code}}",
+      "viewDetailAria": "取引{{code}}の詳細を見る",
+      "subscriptionLabel": "サブスクリプション",
       "detailModal": {
         "title": "取引詳細"
       },
@@ -312,7 +332,9 @@
         "filterFrom": "開始日: {{value}}",
         "filterTo": "終了日: {{value}}",
         "filterMethod": "支払方法: {{value}}",
-        "filterStatus": "状態: {{value}}"
+        "filterStatus": "状態: {{value}}",
+        "filterSort": "並び替え: {{value}}",
+        "worksheetName": "取引請求書"
       }
     }
   },
@@ -499,6 +521,9 @@
     "notFound": "ユーザーが見つかりません",
     "notFoundDesc": "キーワードまたはフィルターを変更してください。",
     "noPackage": "プランなし",
+    "description": "システム内の{{type}}：{{total}}件",
+    "pageLabel": "{{page}}/{{totalPages}}ページ",
+    "expiresOn": "有効期限：{{date}}",
     "tabs": {
       "members": "会員",
       "staff": "スタッフ & PT"
@@ -549,7 +574,41 @@
       "active": "アクティブ",
       "pendingVerification": "認証待ち",
       "locked": "ロック済み"
+    },
+    "userStatus": {
+      "active": "アクティブ",
+      "pendingVerification": "認証待ち",
+      "locked": "ロック済み",
+      "deleted": "削除済み"
     }
+  },
+  "status": {
+    "active": "アクティブ",
+    "scheduled": "予定済み",
+    "inProgress": "進行中",
+    "completed": "完了",
+    "cancelled": "キャンセル済み",
+    "expired": "期限切れ",
+    "pending": "対応待ち",
+    "pendingVerification": "認証待ち",
+    "draft": "下書き",
+    "archived": "アーカイブ済み",
+    "replaced": "置換済み",
+    "realtime": "デバイス",
+    "manual": "手動",
+    "qr": "QR",
+    "available": "利用可能",
+    "broken": "故障",
+    "repairing": "修理中",
+    "reported": "報告済み",
+    "resolved": "対応済み",
+    "inactive": "非アクティブ",
+    "suspended": "停止中",
+    "retired": "廃止",
+    "deleted": "削除済み",
+    "locked": "ロック済み",
+    "maintenance": "メンテナンス",
+    "unknown": "不明"
   },
   "profile": {
     "title": "プロフィール",
@@ -557,6 +616,7 @@
     "subtitle": "個人情報とセキュリティを管理します。",
     "personalInfo": "個人情報",
     "fullName": "氏名",
+    "email": "メールアドレス",
     "phone": "電話番号",
     "role": "役割",
     "roleOwner": "オーナー",

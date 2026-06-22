@@ -98,7 +98,7 @@ export default function EquipmentPage() {
       })
       .catch((err) => setError(getApiError(err, t('equipment.loadFailed'))))
       .finally(() => setLoading(false))
-  }, [statusFilter, page, searchParams])
+  }, [statusFilter, page, searchParams, t])
 
   useEffect(() => {
     load()

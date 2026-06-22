@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { Plus, Edit2, Trash2, LoaderCircle, CalendarDays } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { getApiError, isApiConflict } from '@/lib/api-error'
-import { STAFF_POSITION_COLOR, USER_STATUS_COLOR, USER_STATUS_LABEL } from '@/lib/owner-constants'
+import { STAFF_POSITION_COLOR, USER_STATUS_COLOR } from '@/lib/owner-constants'
 import {
   type StaffPosition,
   staffService,
@@ -28,6 +28,18 @@ const PAGE_SIZE = 20
 export default function UsersPage() {
   const { t } = useTranslation('owner')
   const { t: tCommon } = useTranslation('common')
+  const positionLabel: Record<string, string> = {
+    staff: t('staffManagement.users.positions.staff'),
+    trainer: t('staffManagement.users.positions.trainer'),
+    pt: t('staffManagement.users.positions.pt'),
+    owner: t('staffManagement.users.positions.owner'),
+  }
+  const userStatusLabel: Record<string, string> = {
+    active: t('usersOverview.userStatus.active'),
+    pending_verification: t('usersOverview.userStatus.pendingVerification'),
+    locked: t('usersOverview.userStatus.locked'),
+    deleted: t('usersOverview.userStatus.deleted'),
+  }
   const currentUser = useAuthStore((s) => s.user)
   const [staffList, setStaffList] = useState<StaffProfile[]>([])
   const [total, setTotal] = useState(0)
@@ -64,7 +76,7 @@ export default function UsersPage() {
         setLoading(false)
       }
     },
-    [search, position, status]
+    [search, position, status, t]
   )
 
   useEffect(() => {
@@ -139,9 +151,12 @@ export default function UsersPage() {
           required
         >
           <option value="">{t('staffManagement.users.statusFilter.all')}</option>
-          <option value="active">{tCommon('status.active')}</option>
-          <option value="inactive">{tCommon('status.inactive')}</option>
-          <option value="working">{tCommon('status.working')}</option>
+          <option value="active">{t('usersOverview.userStatus.active')}</option>
+          <option value="pending_verification">
+            {t('usersOverview.userStatus.pendingVerification')}
+          </option>
+          <option value="locked">{t('usersOverview.userStatus.locked')}</option>
+          <option value="deleted">{t('usersOverview.userStatus.deleted')}</option>
         </OwnerSelect>
         <button
           type="button"
@@ -197,13 +212,13 @@ export default function UsersPage() {
                     <td className="px-5 py-4 rogym-text-secondary">{staff.email}</td>
                     <td className="px-5 py-4 text-right">
                       <OwnerBadge
-                        label={staff.position}
+                        label={positionLabel[staff.position] ?? staff.position}
                         color={STAFF_POSITION_COLOR[staff.position] ?? '#6b7280'}
                       />
                     </td>
                     <td className="px-5 py-4">
                       <OwnerBadge
-                        label={USER_STATUS_LABEL[staff.status] ?? staff.status}
+                        label={userStatusLabel[staff.status] ?? staff.status}
                         color={USER_STATUS_COLOR[staff.status] ?? '#6b7280'}
                       />
                     </td>

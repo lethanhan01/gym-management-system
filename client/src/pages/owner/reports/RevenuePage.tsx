@@ -688,7 +688,9 @@ export default function RevenuePage() {
                       <div className="flex-1 min-w-0 space-y-1">
                         <div className="flex items-center justify-between gap-2">
                           <span className="truncate text-sm font-semibold text-white">{pkg.name}</span>
-                          <span className="shrink-0 text-xs rogym-text-dim">{pkg.count} lượt</span>
+                          <span className="shrink-0 text-xs rogym-text-dim">
+                            {t('reports.revenue.packageSalesCount', { count: pkg.count })}
+                          </span>
                         </div>
                         <div className="flex items-center gap-3">
                           <div className="flex-1 h-1.5 rounded-full bg-white/10 overflow-hidden">
@@ -702,7 +704,10 @@ export default function RevenuePage() {
                             />
                           </div>
                           <span className="shrink-0 text-xs rogym-text-secondary">
-                            {pkg.durationDays} ngày · {formatVnd(Number(pkg.price))}
+                            {t('reports.revenue.packageDurationPrice', {
+                              days: pkg.durationDays,
+                              price: formatVnd(Number(pkg.price)),
+                            })}
                           </span>
                         </div>
                       </div>

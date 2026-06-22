@@ -3,7 +3,7 @@ import { LoaderCircle } from 'lucide-react'
 import { PieChart, Pie, Cell, Tooltip, Label } from 'recharts'
 import { useTranslation } from 'react-i18next'
 import { getApiError } from '@/lib/api-error'
-import { todayInput } from '@/lib/date'
+import { formatTime, todayInput } from '@/lib/date'
 import {
   reportService,
   type EmployeePerformanceItem,
@@ -75,14 +75,6 @@ function minutesToHours(minutes: number): string {
   return (minutes / 60).toFixed(1)
 }
 
-function formatTime(iso: string): string {
-  return new Date(iso).toLocaleTimeString('vi-VN', {
-    hour: '2-digit',
-    minute: '2-digit',
-    timeZone: 'Asia/Ho_Chi_Minh',
-  })
-}
-
 function PerfTooltipContent({
   active,
   actualMinutes,
@@ -97,11 +89,16 @@ function PerfTooltipContent({
   return (
     <div className="rounded-xl border border-white/10 bg-[var(--rogym-bg-card)] px-3 py-2 text-xs shadow-xl">
       <p className="rogym-text-secondary">
-        {t('reports.performance.actual')} <span className="font-semibold text-white">{minutesToHours(actualMinutes)}h</span>
+        {t('reports.performance.actual')}{' '}
+        <span className="font-semibold text-white">
+          {t('reports.performance.hoursValue', { hours: minutesToHours(actualMinutes) })}
+        </span>
       </p>
       <p className="rogym-text-secondary">
         {t('reports.performance.expected')}{' '}
-        <span className="font-semibold text-white">{minutesToHours(expectedMinutes)}h</span>
+        <span className="font-semibold text-white">
+          {t('reports.performance.hoursValue', { hours: minutesToHours(expectedMinutes) })}
+        </span>
       </p>
     </div>
   )
@@ -164,11 +161,15 @@ function PerformancePieCard({
       <div className="text-xs rogym-text-dim space-y-0.5">
         <p>
           {t('reports.performance.actual')}{' '}
-          <span className="text-white font-medium">{minutesToHours(emp.actualMinutes)}h</span>
+          <span className="text-white font-medium">
+            {t('reports.performance.hoursValue', { hours: minutesToHours(emp.actualMinutes) })}
+          </span>
         </p>
         <p>
           {t('reports.performance.expected')}{' '}
-          <span className="text-white font-medium">{minutesToHours(emp.expectedMinutes)}h</span>
+          <span className="text-white font-medium">
+            {t('reports.performance.hoursValue', { hours: minutesToHours(emp.expectedMinutes) })}
+          </span>
         </p>
       </div>
 
@@ -457,7 +458,9 @@ export default function EmployeePerformanceReportPage() {
           <div className="space-y-6">
             {/* Danh sách chấm công */}
             <section>
-              <h3 className="mb-3 text-sm font-semibold text-white">Danh sách chấm công</h3>
+              <h3 className="mb-3 text-sm font-semibold text-white">
+                {t('reports.performance.attendanceSectionTitle')}
+              </h3>
               {detailData.attendanceLogs.length === 0 ? (
                 <p className="text-xs rogym-text-dim">{t('reports.performance.noAttendance')}</p>
               ) : (
@@ -502,7 +505,9 @@ export default function EmployeePerformanceReportPage() {
 
             {/* Danh sách ca làm việc */}
             <section>
-              <h3 className="mb-3 text-sm font-semibold text-white">Danh sách ca làm việc</h3>
+              <h3 className="mb-3 text-sm font-semibold text-white">
+                {t('reports.performance.scheduleSectionTitle')}
+              </h3>
               {detailData.schedules.length === 0 ? (
                 <p className="text-xs rogym-text-dim">{t('reports.performance.noSchedule')}</p>
               ) : (

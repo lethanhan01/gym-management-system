@@ -42,6 +42,10 @@
     "notFound": "Không tìm thấy dữ liệu.",
     "loadFailed": "Không thể tải dữ liệu."
   },
+  "date": {
+    "notAvailable": "Chưa có",
+    "invalid": "Không hợp lệ"
+  },
   "loading": "Đang tải...",
   "noData": "Không có dữ liệu",
   "ok": "Đồng ý",

@@ -9,7 +9,6 @@ import { type StaffPosition, staffService, type StaffProfile } from '@/services/
 import {
   STAFF_POSITION_COLOR,
   USER_STATUS_COLOR,
-  USER_STATUS_LABEL,
 } from '@/lib/owner-constants'
 import {
   OwnerBadge,
@@ -88,7 +87,7 @@ export default function UsersOverviewPage() {
         .catch((err) => setError(getApiError(err, tCommon('error.loadFailed'))))
         .finally(() => setLoading(false))
     }
-  }, [tab, page, memberStatus, memberSubStatus, staffPosition, searchParams])
+  }, [tab, page, memberStatus, memberSubStatus, staffPosition, searchParams, tCommon])
 
   function applySearch() {
     const next = new URLSearchParams(searchParams)
@@ -117,7 +116,10 @@ export default function UsersOverviewPage() {
       <OwnerPageHeader
         eyebrow={t('usersOverview.eyebrow')}
         title={t('usersOverview.title')}
-        description={`${totalForTab} ${tab === 'members' ? t('usersOverview.tabs.members') : t('usersOverview.tabs.staff')} trong hệ thống.`}
+        description={t('usersOverview.description', {
+          total: totalForTab,
+          type: tab === 'members' ? t('usersOverview.tabs.members') : t('usersOverview.tabs.staff'),
+        })}
       />
 
       {/* Tabs */}
@@ -216,7 +218,7 @@ export default function UsersOverviewPage() {
             {t('usersOverview.pagination.prev')}
           </button>
           <span className="text-sm rogym-text-secondary">
-            Trang {page}/{totalPagesForTab}
+            {t('usersOverview.pageLabel', { page, totalPages: totalPagesForTab })}
           </span>
           <button
             type="button"
@@ -313,7 +315,9 @@ function MembersTab({ data }: { data: TrainerStudentSummary[] }) {
               {member.activeSubscription?.packageName ?? t('usersOverview.noPackage')}
               {member.activeSubscription?.endDate && (
                 <span className="ml-2 text-xs rogym-text-dim">
-                  · Hết {formatDate(member.activeSubscription.endDate)}
+                  · {t('usersOverview.expiresOn', {
+                    date: formatDate(member.activeSubscription.endDate),
+                  })}
                 </span>
               )}
             </div>
@@ -340,6 +344,12 @@ function StaffTab({ data }: { data: StaffProfile[] }) {
     pt: t('usersOverview.positions.pt'),
     staff: t('usersOverview.positions.staff'),
     owner: t('usersOverview.positions.owner'),
+  }
+  const USER_STATUS_LABEL: Record<string, string> = {
+    active: t('usersOverview.userStatus.active'),
+    pending_verification: t('usersOverview.userStatus.pendingVerification'),
+    locked: t('usersOverview.userStatus.locked'),
+    deleted: t('usersOverview.userStatus.deleted'),
   }
 
   if (data.length === 0) {

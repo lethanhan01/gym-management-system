@@ -5,9 +5,9 @@ function getIntlLocale(): string {
 }
 
 export function formatDate(value?: string | Date | null): string {
-  if (!value) return 'Chưa có'
+  if (!value) return i18n.t('common:date.notAvailable')
   const date = value instanceof Date ? value : new Date(value)
-  if (Number.isNaN(date.getTime())) return 'Không hợp lệ'
+  if (Number.isNaN(date.getTime())) return i18n.t('common:date.invalid')
   return new Intl.DateTimeFormat(getIntlLocale(), {
     timeZone: 'Asia/Ho_Chi_Minh',
     day: '2-digit',
@@ -17,9 +17,9 @@ export function formatDate(value?: string | Date | null): string {
 }
 
 export function formatDateTime(value?: string | Date | null): string {
-  if (!value) return 'Chưa có'
+  if (!value) return i18n.t('common:date.notAvailable')
   const date = value instanceof Date ? value : new Date(value)
-  if (Number.isNaN(date.getTime())) return 'Không hợp lệ'
+  if (Number.isNaN(date.getTime())) return i18n.t('common:date.invalid')
   return new Intl.DateTimeFormat(getIntlLocale(), {
     timeZone: 'Asia/Ho_Chi_Minh',
     day: '2-digit',
@@ -31,9 +31,9 @@ export function formatDateTime(value?: string | Date | null): string {
 }
 
 export function formatTime(value?: string | Date | null): string {
-  if (!value) return 'Chưa có'
+  if (!value) return i18n.t('common:date.notAvailable')
   const date = value instanceof Date ? value : new Date(value)
-  if (Number.isNaN(date.getTime())) return 'Không hợp lệ'
+  if (Number.isNaN(date.getTime())) return i18n.t('common:date.invalid')
   return new Intl.DateTimeFormat(getIntlLocale(), {
     timeZone: 'Asia/Ho_Chi_Minh',
     hour: '2-digit',

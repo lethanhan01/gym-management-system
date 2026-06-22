@@ -5,7 +5,7 @@ import { ArrowLeft, Save, LoaderCircle, X } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { getApiError } from '@/lib/api-error'
 import { formatDate } from '@/lib/date'
-import { STAFF_POSITION_COLOR, USER_STATUS_COLOR, USER_STATUS_LABEL } from '@/lib/owner-constants'
+import { STAFF_POSITION_COLOR, USER_STATUS_COLOR } from '@/lib/owner-constants'
 import {
   type StaffPosition,
   staffService,
@@ -36,6 +36,18 @@ export default function UserDetailPage() {
     afternoon: t('staffManagement.detail.shifts.afternoon'),
     evening: t('staffManagement.detail.shifts.evening'),
     night: t('staffManagement.detail.shifts.night'),
+  }
+  const POSITION_LABEL: Record<string, string> = {
+    staff: t('staffManagement.detail.positions.staff'),
+    trainer: t('staffManagement.detail.positions.trainer'),
+    pt: t('staffManagement.detail.positions.pt'),
+    owner: t('staffManagement.detail.positions.owner'),
+  }
+  const USER_STATUS_LABEL: Record<string, string> = {
+    active: t('usersOverview.userStatus.active'),
+    pending_verification: t('usersOverview.userStatus.pendingVerification'),
+    locked: t('usersOverview.userStatus.locked'),
+    deleted: t('usersOverview.userStatus.deleted'),
   }
 
   const [staff, setStaff] = useState<StaffProfile | null>(null)
@@ -80,7 +92,7 @@ export default function UserDetailPage() {
       .getSchedules(id!)
       .then(setSchedules)
       .catch(() => {})
-  }, [id, isNew])
+  }, [id, isNew, t])
 
   useEffect(() => {
     loadStaff()
@@ -281,7 +293,7 @@ export default function UserDetailPage() {
               {staff.phone && <p className="text-sm rogym-text-dim">{staff.phone}</p>}
               <div className="mt-3 flex flex-wrap gap-2">
                 <OwnerBadge
-                  label={staff.position}
+                  label={POSITION_LABEL[staff.position] ?? staff.position}
                   color={STAFF_POSITION_COLOR[staff.position] ?? '#6b7280'}
                 />
                 <OwnerBadge

@@ -4,7 +4,7 @@ import { Plus, Edit2, Trash2, LoaderCircle } from 'lucide-react'
 import { Modal } from '@/components/ui/Modal'
 import { getApiError, isApiConflict } from '@/lib/api-error'
 import { formatVnd } from '@/lib/currency'
-import { PACKAGE_STATUS_COLOR, PACKAGE_STATUS_LABEL } from '@/lib/owner-constants'
+import { PACKAGE_STATUS_COLOR } from '@/lib/owner-constants'
 
 import packageService, {
   type Package,
@@ -427,7 +427,11 @@ export default function PackagesPage() {
                         label={
                           pkg.deletedAt
                             ? t('packages.deleted')
-                            : (PACKAGE_STATUS_LABEL[pkg.status] ?? pkg.status)
+                            : pkg.status === 'active'
+                              ? t('packages.status.active')
+                              : pkg.status === 'inactive'
+                                ? t('packages.status.inactive')
+                                : pkg.status
                         }
                         color={
                           pkg.deletedAt

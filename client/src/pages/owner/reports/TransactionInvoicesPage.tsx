@@ -9,7 +9,6 @@ import {
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { DatePickerInput } from '@/components/DatePickerInput'
-import { getPaymentMethodLabel } from '@/components/payment/payment-method-data'
 import { PaymentMethodIcon } from '@/components/payment/payment-methods'
 import { Button } from '@/components/ui/Button'
 import {
@@ -35,6 +34,7 @@ import paymentService, {
 
 const PAGE_SIZE = 12
 const EXPORT_PAGE_SIZE = 100
+type Translate = (key: string, opts?: Record<string, unknown>) => string
 
 function paymentStatusTone(status: PaymentStatus): 'success' | 'danger' {
   return status === 'success' ? 'success' : 'danger'
@@ -44,8 +44,8 @@ function transactionCode(payment: Payment): string {
   return payment.transactionReference || `PAY-${payment.paymentId.padStart(6, '0')}`
 }
 
-function memberName(payment: Payment): string {
-  return payment.member?.fullName ?? `Hội viên #${payment.memberId}`
+function memberName(payment: Payment, t: Translate): string {
+  return payment.member?.fullName ?? t('reports.invoices.memberFallback', { id: payment.memberId })
 }
 
 function memberCode(payment: Payment): string {
@@ -54,6 +54,13 @@ function memberCode(payment: Payment): string {
 
 function serviceName(payment: Payment): string {
   return payment.service?.name ?? payment.packageName
+}
+
+function paymentMethodLabel(method: PaymentMethod, t: Translate): string {
+  if (method === 'cash') return t('reports.revenue.paymentMethod.cash')
+  if (method === 'bank_card') return t('reports.invoices.methodBankCard')
+  if (method === 'ewallet') return t('reports.invoices.methodEwallet')
+  return method
 }
 
 function staffCode(payment: Payment): string {
@@ -84,7 +91,7 @@ function paymentListExcelXml(
   filters: { from: string; to: string; method: string; status: string; sort: string },
   staffNameFn: (p: Payment) => string,
   statusLabelFn: (s: PaymentStatus) => string,
-  t: (key: string, opts?: Record<string, unknown>) => string,
+  t: Translate,
 ): string {
   const header = [
     t('reports.invoices.export.colDate'),
@@ -101,7 +108,7 @@ function paymentListExcelXml(
     t('reports.invoices.export.filterTo', { value: filters.to || t('reports.revenue.paymentMethod.all') }),
     t('reports.invoices.export.filterMethod', { value: filters.method }),
     t('reports.invoices.export.filterStatus', { value: filters.status }),
-    `Sắp xếp: ${filters.sort}`,
+    t('reports.invoices.export.filterSort', { value: filters.sort }),
   ].join(' | ')
 
   return `<?xml version="1.0" encoding="UTF-8"?>
@@ -116,7 +123,7 @@ function paymentListExcelXml(
     <Style ss:ID="Header"><Font ss:Bold="1"/><Interior ss:Color="#DDF4EA" ss:Pattern="Solid"/></Style>
     <Style ss:ID="Amount"><NumberFormat ss:Format="#,##0"/></Style>
   </Styles>
-  <Worksheet ss:Name="Hoa don giao dich">
+  <Worksheet ss:Name="${escapeXml(t('reports.invoices.export.worksheetName'))}">
     <Table>
       <Column ss:Width="150"/>
       <Column ss:Width="150"/>
@@ -135,10 +142,10 @@ function paymentListExcelXml(
           const cells = [
             excelStringCell(formatDateTime(payment.paidAt)),
             excelStringCell(transactionCode(payment)),
-            excelStringCell(`${memberName(payment)} (${memberCode(payment)})`),
+            excelStringCell(`${memberName(payment, t)} (${memberCode(payment)})`),
             excelStringCell(serviceName(payment)),
             excelNumberCell(Number(payment.amount), 'Amount'),
-            excelStringCell(getPaymentMethodLabel(payment.method)),
+            excelStringCell(paymentMethodLabel(payment.method, t)),
             excelStringCell(statusLabelFn(payment.status)),
             excelStringCell(`${staffNameFn(payment)} (${staffCode(payment)})`),
           ]
@@ -155,7 +162,7 @@ function downloadPaymentListExcel(
   filters: { from: string; to: string; method: string; status: string; sort: string },
   staffNameFn: (p: Payment) => string,
   statusLabelFn: (s: PaymentStatus) => string,
-  t: (key: string, opts?: Record<string, unknown>) => string,
+  t: Translate,
 ) {
   const blob = new Blob([paymentListExcelXml(rows, filters, staffNameFn, statusLabelFn, t)], {
     type: 'application/vnd.ms-excel;charset=utf-8',
@@ -181,6 +188,8 @@ function DetailItem({ label, value }: { label: string; value: string }) {
 
 export default function TransactionInvoicesPage() {
   const { t } = useTranslation('owner')
+  const { t: tCommon } = useTranslation('common')
+  const translate = t as Translate
 
   const PAYMENT_METHOD_OPTIONS: Array<{ value: '' | PaymentMethod; label: string }> = [
     { value: '', label: t('reports.revenue.paymentMethod.all') },
@@ -256,7 +265,7 @@ export default function TransactionInvoicesPage() {
     [buildListParams, page, t],
   )
 
-  const handleExportList = useCallback(async () => {
+  async function handleExportList() {
     setExporting(true)
     setExportError(null)
     try {
@@ -287,14 +296,14 @@ export default function TransactionInvoicesPage() {
         },
         staffName,
         paymentStatusLabel,
-        t as (key: string, opts?: Record<string, unknown>) => string,
+        translate,
       )
     } catch (err) {
       setExportError(getApiError(err, t('reports.invoices.exportFailed')))
     } finally {
       setExporting(false)
     }
-  }, [buildListParams, from, method, sort, status, to, t])
+  }
 
   useEffect(() => {
     load(page)
@@ -343,7 +352,7 @@ export default function TransactionInvoicesPage() {
           icon={<WalletCards size={18} />}
           label={t('reports.invoices.kpi.pageTotal')}
           value={formatVnd(pageTotal)}
-          hint={`${payments.length} giao dịch đang hiển thị`}
+          hint={t('reports.invoices.pageTransactionsHint', { count: payments.length })}
         />
         <OwnerStatCard
           icon={<RotateCcw size={18} />}
@@ -485,13 +494,17 @@ export default function TransactionInvoicesPage() {
                       <span className="rogym-owner-table__mono">{transactionCode(payment)}</span>
                     </td>
                     <td>
-                      <span className="rogym-owner-table__primary">{memberName(payment)}</span>
+                      <span className="rogym-owner-table__primary">
+                        {memberName(payment, translate)}
+                      </span>
                       <span className="rogym-owner-table__secondary">{memberCode(payment)}</span>
                     </td>
                     <td>
                       <span className="rogym-owner-table__primary">{serviceName(payment)}</span>
                       <span className="rogym-owner-table__secondary">
-                        Gói {payment.service?.packageCode ?? payment.subscriptionId}
+                        {t('reports.invoices.packageReference', {
+                          code: payment.service?.packageCode ?? payment.subscriptionId,
+                        })}
                       </span>
                     </td>
                     <td className="is-right">
@@ -502,7 +515,7 @@ export default function TransactionInvoicesPage() {
                     <td>
                       <span className="rogym-method-pill">
                         <PaymentMethodIcon method={payment.method} size={15} />
-                        {getPaymentMethodLabel(payment.method, true)}
+                        {paymentMethodLabel(payment.method, translate)}
                       </span>
                     </td>
                     <td>
@@ -523,7 +536,9 @@ export default function TransactionInvoicesPage() {
                           type="button"
                           className="rogym-btn rogym-btn--icon rogym-btn--elevated"
                           onClick={() => setSelectedPayment(payment)}
-                          aria-label={`Xem chi tiết giao dịch ${transactionCode(payment)}`}
+                          aria-label={t('reports.invoices.viewDetailAria', {
+                            code: transactionCode(payment),
+                          })}
                           title={t('reports.invoices.table.detail')}
                         >
                           <Eye size={16} />
@@ -551,7 +566,7 @@ export default function TransactionInvoicesPage() {
             className="rogym-btn rogym-btn--outline-white"
             onClick={() => setSelectedPayment(null)}
           >
-            Đóng
+            {tCommon('button.close')}
           </button>
         }
       >
@@ -561,13 +576,13 @@ export default function TransactionInvoicesPage() {
             <DetailItem label={t('reports.invoices.table.id')} value={transactionCode(selectedPayment)} />
             <DetailItem
               label={t('reports.invoices.table.member')}
-              value={`${memberName(selectedPayment)} (${memberCode(selectedPayment)})`}
+              value={`${memberName(selectedPayment, translate)} (${memberCode(selectedPayment)})`}
             />
             <DetailItem label={t('reports.invoices.table.package')} value={serviceName(selectedPayment)} />
             <DetailItem label={t('reports.invoices.table.amount')} value={formatVnd(selectedPayment.amount)} />
             <DetailItem
               label={t('reports.invoices.table.method')}
-              value={getPaymentMethodLabel(selectedPayment.method)}
+              value={paymentMethodLabel(selectedPayment.method, translate)}
             />
             <DetailItem label={t('reports.invoices.table.status')} value={paymentStatusLabel(selectedPayment.status)} />
             <DetailItem
@@ -575,7 +590,7 @@ export default function TransactionInvoicesPage() {
               value={`${staffName(selectedPayment)} (${staffCode(selectedPayment)})`}
             />
             <DetailItem
-              label="Subscription"
+              label={t('reports.invoices.subscriptionLabel')}
               value={`#${selectedPayment.service?.subscriptionId ?? selectedPayment.subscriptionId}`}
             />
           </div>

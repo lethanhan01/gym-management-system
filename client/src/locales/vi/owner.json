@@ -27,7 +27,17 @@
     "repairingCount": "{{count}} đang sửa",
     "allEquipmentOk": "Tất cả thiết bị hoạt động tốt",
     "equipmentAlertDetails": "{{broken}} hỏng, {{repairing}} đang sửa chữa",
-    "feedbackPending": "Phản hồi chờ xử lý"
+    "feedbackPending": "Phản hồi chờ xử lý",
+    "severity": {
+      "low": "Thấp",
+      "medium": "Trung bình",
+      "high": "Cao"
+    },
+    "feedbackType": {
+      "staff": "Nhân viên",
+      "equipment": "Thiết bị",
+      "service": "Dịch vụ"
+    }
   },
   "packages": {
     "title": "Quản lý gói tập",
@@ -167,6 +177,8 @@
       "monthLabel": "Tháng {{month}}",
       "chartTitle": "Doanh thu theo thời gian",
       "topPackages": "Top gói tập bán chạy",
+      "packageSalesCount": "{{count}} lượt",
+      "packageDurationPrice": "{{days}} ngày · {{price}}",
       "collapse": "Thu gọn",
       "showMore": "Xem thêm ({{count}} gói)",
       "transactionDays": "{{count}} ngày có giao dịch",
@@ -212,12 +224,15 @@
       "viewDetail": "Xem chi tiết",
       "actual": "Thực tế:",
       "expected": "Kỳ vọng:",
+      "hoursValue": "{{hours}} giờ",
       "legend": {
         "good": "1.0–1.5: Tốt",
         "average": "1.5–2.5: Trung bình",
         "needsImprovement": "2.5–3.0: Cần cải thiện"
       },
       "detailModal": "Chi tiết hiệu suất — {{name}}",
+      "attendanceSectionTitle": "Danh sách chấm công",
+      "scheduleSectionTitle": "Danh sách ca làm việc",
       "attendanceTable": {
         "date": "Ngày",
         "checkIn": "Check-in",
@@ -274,6 +289,11 @@
         "failed": "Thất bại"
       },
       "unassigned": "Chưa phân công",
+      "memberFallback": "Hội viên #{{id}}",
+      "pageTransactionsHint": "{{count}} giao dịch đang hiển thị",
+      "packageReference": "Gói {{code}}",
+      "viewDetailAria": "Xem chi tiết giao dịch {{code}}",
+      "subscriptionLabel": "Đăng ký",
       "detailModal": {
         "title": "Chi tiết giao dịch"
       },
@@ -312,7 +332,9 @@
         "filterFrom": "Từ ngày: {{value}}",
         "filterTo": "Đến ngày: {{value}}",
         "filterMethod": "Phương thức: {{value}}",
-        "filterStatus": "Trạng thái: {{value}}"
+        "filterStatus": "Trạng thái: {{value}}",
+        "filterSort": "Sắp xếp: {{value}}",
+        "worksheetName": "Hóa đơn giao dịch"
       }
     }
   },
@@ -499,6 +521,9 @@
     "notFound": "Không tìm thấy người dùng",
     "notFoundDesc": "Thử thay đổi từ khóa hoặc bộ lọc.",
     "noPackage": "Chưa có gói",
+    "description": "{{total}} {{type}} trong hệ thống.",
+    "pageLabel": "Trang {{page}}/{{totalPages}}",
+    "expiresOn": "Hết hạn {{date}}",
     "tabs": {
       "members": "Hội viên",
       "staff": "Nhân viên & PT"
@@ -549,7 +574,41 @@
       "active": "Đang hoạt động",
       "pendingVerification": "Chờ xác thực",
       "locked": "Đã khóa"
+    },
+    "userStatus": {
+      "active": "Hoạt động",
+      "pendingVerification": "Chờ xác thực",
+      "locked": "Bị khóa",
+      "deleted": "Đã xóa"
     }
+  },
+  "status": {
+    "active": "Đang hoạt động",
+    "scheduled": "Đã lên lịch",
+    "inProgress": "Đang diễn ra",
+    "completed": "Hoàn thành",
+    "cancelled": "Đã hủy",
+    "expired": "Hết hạn",
+    "pending": "Chờ xử lý",
+    "pendingVerification": "Chờ xác thực",
+    "draft": "Bản nháp",
+    "archived": "Lưu trữ",
+    "replaced": "Đã thay thế",
+    "realtime": "Thiết bị",
+    "manual": "Thủ công",
+    "qr": "QR",
+    "available": "Sẵn sàng",
+    "broken": "Hỏng",
+    "repairing": "Đang sửa",
+    "reported": "Đã báo cáo",
+    "resolved": "Đã xử lý",
+    "inactive": "Không hoạt động",
+    "suspended": "Đình chỉ",
+    "retired": "Đã nghỉ",
+    "deleted": "Đã xóa",
+    "locked": "Bị khóa",
+    "maintenance": "Bảo trì",
+    "unknown": "Không xác định"
   },
   "profile": {
     "title": "Hồ sơ",
@@ -557,6 +616,7 @@
     "subtitle": "Quản lý thông tin cá nhân và bảo mật.",
     "personalInfo": "Thông tin cá nhân",
     "fullName": "Họ tên",
+    "email": "Email",
     "phone": "Số điện thoại",
     "role": "Vai trò",
     "roleOwner": "Chủ sở hữu",

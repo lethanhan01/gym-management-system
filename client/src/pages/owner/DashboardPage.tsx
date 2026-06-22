@@ -13,7 +13,7 @@ import {
 } from 'lucide-react'
 import { getApiError } from '@/lib/api-error'
 import { formatDate } from '@/lib/date'
-import { FEEDBACK_SEVERITY_COLOR, FEEDBACK_SEVERITY_LABEL } from '@/lib/owner-constants'
+import { FEEDBACK_SEVERITY_COLOR } from '@/lib/owner-constants'
 import { useAuthStore } from '@/stores/authStore'
 import { feedbackService, type Feedback } from '@/services/feedback.service'
 import { memberService } from '@/services/member.service'
@@ -105,17 +105,29 @@ const MemberPackageSummary = memo(function MemberPackageSummary({
 })
 
 const OpenFeedbackItem = memo(function OpenFeedbackItem({ feedback }: { feedback: Feedback }) {
+  const { t } = useTranslation('owner')
+  const severityLabel = {
+    low: t('dashboard.severity.low'),
+    medium: t('dashboard.severity.medium'),
+    high: t('dashboard.severity.high'),
+  }
+  const feedbackTypeLabel = {
+    staff: t('dashboard.feedbackType.staff'),
+    equipment: t('dashboard.feedbackType.equipment'),
+    service: t('dashboard.feedbackType.service'),
+  }
+
   return (
     <div className="rounded-xl border border-white/5 p-3">
       <div className="flex items-start justify-between gap-3">
         <div className="text-sm font-medium text-white line-clamp-2 flex-1">{feedback.content}</div>
         <OwnerBadge
-          label={FEEDBACK_SEVERITY_LABEL[feedback.severity]}
+          label={severityLabel[feedback.severity]}
           color={FEEDBACK_SEVERITY_COLOR[feedback.severity]}
         />
       </div>
       <div className="mt-1 text-xs rogym-text-dim">
-        {formatDate(feedback.createdAt)} · {feedback.feedbackType}
+        {formatDate(feedback.createdAt)} · {feedbackTypeLabel[feedback.feedbackType]}
       </div>
     </div>
   )
@@ -161,7 +173,7 @@ export default function OwnerDashboardPage() {
       })
       .catch((err) => setError(getApiError(err, tCommon('error.loadFailed'))))
       .finally(() => setLoading(false))
-  }, [])
+  }, [tCommon])
 
   return (
     <OwnerPage>
