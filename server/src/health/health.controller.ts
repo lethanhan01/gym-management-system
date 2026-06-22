@@ -7,6 +7,12 @@ export class HealthController {
   constructor(private readonly prisma: PrismaService) {}
 
   @Public()
+  @Get()
+  root() {
+    return { status: 'ok' }
+  }
+
+  @Public()
   @Get('health')
   async health() {
     let dbStatus: 'ok' | 'down' = 'ok'

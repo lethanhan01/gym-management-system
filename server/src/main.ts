@@ -37,7 +37,7 @@ async function bootstrap(): Promise<void> {
     }),
   )
   app.useGlobalFilters(new HttpExceptionFilter())
-  app.setGlobalPrefix('api/v1', { exclude: ['health'] })
+  app.setGlobalPrefix('api/v1', { exclude: ['health', '/'] })
 
   const port = config.get<number>('PORT') ?? 3000
   await app.listen(port)
