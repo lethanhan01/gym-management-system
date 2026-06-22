@@ -18,8 +18,12 @@ import {
 
 export default function ExercisesPage() {
   const { t } = useTranslation('trainer')
-  const CATEGORIES = getExerciseCategories().filter(
-    (item): item is { value: ExerciseCategory; label: string } => item.value !== ''
+  const CATEGORIES = useMemo(
+    () =>
+      getExerciseCategories().filter(
+        (item): item is { value: ExerciseCategory; label: string } => item.value !== ''
+      ),
+    []
   )
   const [exercises, setExercises] = useState<Exercise[]>([])
   const [search, setSearch] = useState('')
