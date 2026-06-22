@@ -562,6 +562,13 @@
       "unitSeconds": "giây",
       "errorLoad": "Không thể tải lịch tập."
     },
+    "categories": {
+      "all": "Tất cả",
+      "strength": "Sức mạnh",
+      "cardio": "Tim mạch",
+      "flexibility": "Linh hoạt",
+      "balance": "Thăng bằng"
+    },
     "exercises": {
       "title": "Bài tập",
       "eyebrow": "Lịch tập",
@@ -578,7 +585,11 @@
       "buttonClose": "Đóng",
       "buttonAddToBuilder": "Thêm vào Plan Builder",
       "imageAlt": "Minh họa {{name}}",
-      "errorLoad": "Không thể tải thư viện bài tập."
+      "errorLoad": "Không thể tải thư viện bài tập.",
+      "noDescription": "Chưa có mô tả.",
+      "muscleGroupUnknown": "Không xác định",
+      "filterTitle": "Bộ lọc",
+      "categoryLabel": "Loại bài tập"
     },
     "createSession": {
       "title": "Tạo buổi tập",
@@ -641,6 +652,11 @@
       "fieldDesc": "Mô tả ngắn (tùy chọn)",
       "fieldDescPlaceholder": "Mục tiêu, ghi chú...",
       "fieldStartDate": "Bắt đầu từ ngày",
+      "fieldSets": "Số sets",
+      "fieldReps": "Số reps",
+      "fieldDuration": "Thời gian tập mỗi set (giây)",
+      "fieldWeight": "Mức tạ (kg)",
+      "fieldRest": "Nghỉ giữa sets (giây)",
       "startDatePlaceholder": "Chọn ngày bắt đầu",
       "buttonCreating": "Đang tạo...",
       "buttonNext": "Tiếp theo — Thêm ngày tập",

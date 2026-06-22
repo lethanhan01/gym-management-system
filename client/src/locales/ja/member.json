@@ -562,6 +562,13 @@
       "unitSeconds": "秒",
       "errorLoad": "スケジュールを読み込めません。"
     },
+    "categories": {
+      "all": "すべて",
+      "strength": "筋力トレーニング",
+      "cardio": "有酸素運動",
+      "flexibility": "柔軟性",
+      "balance": "バランス"
+    },
     "exercises": {
       "title": "エクササイズ",
       "eyebrow": "スケジュール",
@@ -578,7 +585,11 @@
       "buttonClose": "閉じる",
       "buttonAddToBuilder": "プランビルダーに追加",
       "imageAlt": "{{name}} のイラスト",
-      "errorLoad": "エクササイズライブラリを読み込めません。"
+      "errorLoad": "エクササイズライブラリを読み込めません。",
+      "noDescription": "説明なし。",
+      "muscleGroupUnknown": "不明",
+      "filterTitle": "フィルター",
+      "categoryLabel": "エクササイズの種類"
     },
     "createSession": {
       "title": "セッションを作成",
@@ -641,6 +652,11 @@
       "fieldDesc": "短い説明（任意）",
       "fieldDescPlaceholder": "目標、メモ...",
       "fieldStartDate": "開始日",
+      "fieldSets": "セット数",
+      "fieldReps": "レップ数",
+      "fieldDuration": "1セットあたりの時間（秒）",
+      "fieldWeight": "重量（kg）",
+      "fieldRest": "セット間の休憩（秒）",
       "startDatePlaceholder": "開始日を選択",
       "buttonCreating": "作成中...",
       "buttonNext": "次へ — トレーニング日を追加",

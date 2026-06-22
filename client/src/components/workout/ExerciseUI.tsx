@@ -1,11 +1,12 @@
 import type { ReactNode } from 'react'
+import { useTranslation } from 'react-i18next'
 import { ImageIcon } from 'lucide-react'
 import type {
   Exercise,
 } from '@/services/workout.service'
 import { cn } from '@/lib/utils'
 import {
-  EXERCISE_CATEGORY_OPTIONS,
+  getExerciseCategories,
   getExerciseCategoryLabel,
   type ExerciseCategoryFilter,
 } from './exercise-data'
@@ -21,6 +22,7 @@ export function ExerciseCard({
   onClick?: () => void
   imageAspect?: string
 }) {
+  const { t } = useTranslation('member')
   return (
     <article
       className={cn(
@@ -33,7 +35,7 @@ export function ExerciseCard({
         {exercise.imageUrl ? (
           <img
             src={exercise.imageUrl}
-            alt={`Minh họa ${exercise.name}`}
+            alt={t('workout.exercises.imageAlt', { name: exercise.name })}
             className="h-full w-full object-cover transition duration-300 hover:scale-[1.03]"
             loading="lazy"
           />
@@ -54,16 +56,16 @@ export function ExerciseCard({
           {action}
         </div>
         <p className="mt-4 flex-1 text-sm leading-6 rogym-text-secondary">
-          {exercise.description ?? 'Chưa có mô tả.'}
+          {exercise.description ?? t('workout.exercises.noDescription')}
         </p>
         <div className="mt-5 grid grid-cols-2 gap-3 border-t border-white/5 pt-4 text-xs">
           <div>
-            <span className="rogym-text-dim">Nhóm cơ</span>
-            <div className="mt-1 text-white">{exercise.muscleGroup ?? 'Không xác định'}</div>
+            <span className="rogym-text-dim">{t('workout.exercises.fieldMuscleGroup')}</span>
+            <div className="mt-1 text-white">{exercise.muscleGroup ?? t('workout.exercises.muscleGroupUnknown')}</div>
           </div>
           <div>
-            <span className="rogym-text-dim">Dụng cụ</span>
-            <div className="mt-1 text-white">{exercise.equipmentNeeded ?? 'Không cần'}</div>
+            <span className="rogym-text-dim">{t('workout.exercises.fieldEquipment')}</span>
+            <div className="mt-1 text-white">{exercise.equipmentNeeded ?? t('workout.exercises.equipmentNone')}</div>
           </div>
         </div>
       </div>
@@ -84,15 +86,17 @@ export function ExerciseCategoryFilterPopover({
   onApply: () => void
   onClose: () => void
 }) {
+  const { t } = useTranslation('member')
+  const { t: tc } = useTranslation('common')
   if (!open) return null
   return (
     <>
       <div className="fixed inset-0 z-10" onClick={onClose} />
       <div className="absolute right-0 top-full z-20 mt-2 min-w-[260px] rounded-[20px] border border-[rgba(6,195,132,0.25)] bg-[#0a1f17] p-5 shadow-[0_12px_40px_rgba(0,0,0,0.6)]">
-        <p className="mb-4 text-sm font-bold text-white">Bộ lọc</p>
-        <p className="rogym-field-label mb-2">Loại bài tập</p>
+        <p className="mb-4 text-sm font-bold text-white">{t('workout.exercises.filterTitle')}</p>
+        <p className="rogym-field-label mb-2">{t('workout.exercises.categoryLabel')}</p>
         <div className="mb-5 flex flex-wrap gap-2">
-          {EXERCISE_CATEGORY_OPTIONS.map((option) => (
+          {getExerciseCategories().map((option) => (
             <button
               key={option.value}
               type="button"
@@ -111,14 +115,14 @@ export function ExerciseCategoryFilterPopover({
             className="rogym-btn rogym-btn--outline-white px-4"
             onClick={onClose}
           >
-            Hủy
+            {tc('button.cancel')}
           </button>
           <button
             type="button"
             className="rogym-btn rogym-btn--primary px-4"
             onClick={onApply}
           >
-            Lưu
+            {tc('button.save')}
           </button>
         </div>
       </div>
