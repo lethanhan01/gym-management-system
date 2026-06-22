@@ -4,11 +4,11 @@ import { Dumbbell, Menu, X } from 'lucide-react'
 import { LanguageSwitcher } from '@/components/ui/LanguageSwitcher'
 
 const NAV_LINKS = [
-  { label: 'Trang chủ', to: '/' },
-  { label: 'Chương trình tập luyện', to: '/programs' },
-  { label: 'Huấn luyện viên', to: '/trainers' },
-  { label: 'Gói thành viên', to: '/packages' },
-  { label: 'Liên hệ', to: '/contact' },
+  { label: 'Home', to: '/' },
+  { label: 'Training Programs', to: '/programs' },
+  { label: 'Coach', to: '/trainers' },
+  { label: 'Membership', to: '/packages' },
+  { label: 'Contact', to: '/contact' },
 ]
 
 function NavBtn({
