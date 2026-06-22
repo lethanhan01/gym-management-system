@@ -123,6 +123,7 @@
     "detailWith": "{{name}}とのセッション詳細"
   },
   "students": {
+    "selectStudent": "受講生を選択",
     "list": {
       "title": "担当受講生",
       "eyebrow": "受講生管理",
@@ -501,6 +502,47 @@
     "error": {
       "loadFailed": "エクササイズライブラリを読み込めませんでした。",
       "saveFailed": "エクササイズを保存できませんでした。"
+    }
+  },
+  "sessionModal": {
+    "titleLoading": "読み込み中...",
+    "titleError": "エラー",
+    "titleStartSession": "セッションを開始",
+    "titleCompleteSession": "セッションを完了",
+    "titleCancelSession": "セッションをキャンセル",
+    "titleEditSession": "セッションを編集",
+    "confirmStartBody": "{{name}}とのセッションを開始しますか？ステータスが「進行中」に変わります。",
+    "confirmCompleteBody": "{{name}}とのセッションを完了しますか？ステータスが「完了」に変わり、元に戻すことはできません。",
+    "btnDiscard": "破棄",
+    "btnConfirmStart": "開始を確認",
+    "btnConfirmComplete": "完了を確認",
+    "cancelReasonLabel": "理由（任意）",
+    "btnKeepSchedule": "予定を維持",
+    "btnConfirmCancel": "キャンセルを確認",
+    "fieldRoom": "トレーニングルーム",
+    "selectRoom": "部屋を選択",
+    "capacityUnit": "人",
+    "fieldStartTime": "開始時刻",
+    "fieldDuration": "所要時間（分）",
+    "endTimePrefix": "終了：",
+    "endTimeUnknown": "未定",
+    "btnCancel": "キャンセル",
+    "btnSave": "変更を保存",
+    "labelStudent": "受講生",
+    "labelStart": "開始",
+    "labelEnd": "終了",
+    "labelRoom": "部屋",
+    "noRoom": "部屋未割り当て",
+    "btnStart": "開始",
+    "btnComplete": "完了",
+    "btnEdit": "編集",
+    "btnCancelSession": "キャンセル",
+    "ariaClose": "閉じる",
+    "error": {
+      "loadFailed": "セッションを読み込めませんでした。",
+      "saveFailed": "セッションを保存できませんでした。スケジュールの競合と部屋を確認してください。",
+      "cancelFailed": "セッションをキャンセルできませんでした。",
+      "statusFailed": "ステータスを更新できませんでした。"
     }
   },
   "profile": {

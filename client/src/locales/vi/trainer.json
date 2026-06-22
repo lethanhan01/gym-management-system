@@ -123,6 +123,7 @@
     "detailWith": "Chi tiết buổi tập với {{name}}"
   },
   "students": {
+    "selectStudent": "Chọn học viên",
     "list": {
       "title": "Học viên của tôi",
       "eyebrow": "Quản lý học viên",
@@ -501,6 +502,47 @@
     "error": {
       "loadFailed": "Không thể tải thư viện bài tập.",
       "saveFailed": "Không thể lưu bài tập."
+    }
+  },
+  "sessionModal": {
+    "titleLoading": "Đang tải...",
+    "titleError": "Lỗi",
+    "titleStartSession": "Bắt đầu buổi tập",
+    "titleCompleteSession": "Hoàn thành buổi tập",
+    "titleCancelSession": "Hủy buổi tập",
+    "titleEditSession": "Chỉnh sửa buổi tập",
+    "confirmStartBody": "Xác nhận bắt đầu buổi tập với {{name}}? Trạng thái sẽ chuyển sang \"Đang diễn ra\".",
+    "confirmCompleteBody": "Xác nhận hoàn thành buổi tập với {{name}}? Trạng thái sẽ chuyển sang \"Hoàn thành\" và không thể hoàn tác.",
+    "btnDiscard": "Hủy bỏ",
+    "btnConfirmStart": "Xác nhận bắt đầu",
+    "btnConfirmComplete": "Xác nhận hoàn thành",
+    "cancelReasonLabel": "Lý do (không bắt buộc)",
+    "btnKeepSchedule": "Giữ lịch",
+    "btnConfirmCancel": "Xác nhận hủy",
+    "fieldRoom": "Phòng tập",
+    "selectRoom": "Chọn phòng tập",
+    "capacityUnit": "người",
+    "fieldStartTime": "Thời gian bắt đầu",
+    "fieldDuration": "Thời lượng (phút)",
+    "endTimePrefix": "Kết thúc:",
+    "endTimeUnknown": "Chưa xác định",
+    "btnCancel": "Hủy",
+    "btnSave": "Lưu thay đổi",
+    "labelStudent": "Học viên",
+    "labelStart": "Bắt đầu",
+    "labelEnd": "Kết thúc",
+    "labelRoom": "Phòng",
+    "noRoom": "Chưa xếp phòng",
+    "btnStart": "Bắt đầu",
+    "btnComplete": "Hoàn thành",
+    "btnEdit": "Chỉnh sửa",
+    "btnCancelSession": "Hủy buổi",
+    "ariaClose": "Đóng",
+    "error": {
+      "loadFailed": "Không thể tải buổi tập.",
+      "saveFailed": "Không thể lưu buổi tập. Kiểm tra trùng lịch và phòng.",
+      "cancelFailed": "Không thể hủy buổi tập.",
+      "statusFailed": "Không thể cập nhật trạng thái."
     }
   },
   "profile": {

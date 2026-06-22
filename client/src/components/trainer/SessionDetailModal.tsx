@@ -1,4 +1,5 @@
 import { FormEvent, useCallback, useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   CalendarClock,
   CheckCircle,
@@ -47,6 +48,7 @@ function DetailRow({
 }
 
 export function SessionDetailModal({ sessionId, onClose, onUpdate }: Props) {
+  const { t } = useTranslation(['trainer', 'common'])
   const [session, setSession] = useState<TrainingSessionDetail | null>(null)
   const [fetchLoading, setFetchLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -78,7 +80,7 @@ export function SessionDetailModal({ sessionId, onClose, onUpdate }: Props) {
       const data = await trainingService.getSession(sessionId)
       setSession(data)
     } catch (err) {
-      setError(getApiError(err, 'Không thể tải buổi tập.'))
+      setError(getApiError(err, t('trainer:sessionModal.error.loadFailed')))
     } finally {
       setFetchLoading(false)
     }
@@ -124,7 +126,7 @@ export function SessionDetailModal({ sessionId, onClose, onUpdate }: Props) {
       onUpdate?.()
       await load()
     } catch (err) {
-      setError(getApiError(err, 'Không thể lưu buổi tập. Kiểm tra trùng lịch và phòng.'))
+      setError(getApiError(err, t('trainer:sessionModal.error.saveFailed')))
       setSaving(false)
     }
   }
@@ -138,7 +140,7 @@ export function SessionDetailModal({ sessionId, onClose, onUpdate }: Props) {
       onUpdate?.()
       await load()
     } catch (err) {
-      setError(getApiError(err, 'Không thể hủy buổi tập.'))
+      setError(getApiError(err, t('trainer:sessionModal.error.cancelFailed')))
       setCancelling(false)
     }
   }
@@ -152,7 +154,7 @@ export function SessionDetailModal({ sessionId, onClose, onUpdate }: Props) {
       onUpdate?.()
       await load()
     } catch (err) {
-      setError(getApiError(err, 'Không thể cập nhật trạng thái.'))
+      setError(getApiError(err, t('trainer:sessionModal.error.statusFailed')))
     } finally {
       setUpdatingStatus(false)
     }
@@ -173,7 +175,7 @@ export function SessionDetailModal({ sessionId, onClose, onUpdate }: Props) {
   let modalFooter: React.ReactNode = null
 
   if (fetchLoading || !session) {
-    modalTitle = fetchLoading ? 'Đang tải...' : (error ?? 'Lỗi')
+    modalTitle = fetchLoading ? t('trainer:sessionModal.titleLoading') : (error ?? t('trainer:sessionModal.titleError'))
     modalBody = fetchLoading ? (
       <div className="flex justify-center py-10">
         <LoaderCircle size={26} className="animate-spin rogym-text-accent" />
@@ -182,12 +184,14 @@ export function SessionDetailModal({ sessionId, onClose, onUpdate }: Props) {
       <p className="text-sm rogym-text-secondary">{error}</p>
     )
   } else if (mode === 'status-confirm') {
-    modalTitle = statusTarget === 'in_progress' ? 'Bắt đầu buổi tập' : 'Hoàn thành buổi tập'
+    modalTitle = statusTarget === 'in_progress'
+      ? t('trainer:sessionModal.titleStartSession')
+      : t('trainer:sessionModal.titleCompleteSession')
     modalBody = (
       <p className="text-sm leading-6 rogym-text-secondary">
         {statusTarget === 'in_progress'
-          ? `Xác nhận bắt đầu buổi tập với ${session.memberName}? Trạng thái sẽ chuyển sang "Đang diễn ra".`
-          : `Xác nhận hoàn thành buổi tập với ${session.memberName}? Trạng thái sẽ chuyển sang "Hoàn thành" và không thể hoàn tác.`}
+          ? t('trainer:sessionModal.confirmStartBody', { name: session.memberName })
+          : t('trainer:sessionModal.confirmCompleteBody', { name: session.memberName })}
       </p>
     )
     modalFooter = (
@@ -202,7 +206,7 @@ export function SessionDetailModal({ sessionId, onClose, onUpdate }: Props) {
           }}
           disabled={updatingStatus}
         >
-          Hủy bỏ
+          {t('trainer:sessionModal.btnDiscard')}
         </button>
         <button
           type="button"
@@ -211,12 +215,14 @@ export function SessionDetailModal({ sessionId, onClose, onUpdate }: Props) {
           disabled={updatingStatus}
         >
           {updatingStatus && <LoaderCircle size={14} className="animate-spin" />}
-          {statusTarget === 'in_progress' ? 'Xác nhận bắt đầu' : 'Xác nhận hoàn thành'}
+          {statusTarget === 'in_progress'
+            ? t('trainer:sessionModal.btnConfirmStart')
+            : t('trainer:sessionModal.btnConfirmComplete')}
         </button>
       </>
     )
   } else if (mode === 'cancel') {
-    modalTitle = 'Hủy buổi tập'
+    modalTitle = t('trainer:sessionModal.titleCancelSession')
     modalBody = (
       <div className="space-y-4">
         {error && (
@@ -225,7 +231,7 @@ export function SessionDetailModal({ sessionId, onClose, onUpdate }: Props) {
           </div>
         )}
         <label className="block space-y-2">
-          <span className="rogym-field-label">Lý do (không bắt buộc)</span>
+          <span className="rogym-field-label">{t('trainer:sessionModal.cancelReasonLabel')}</span>
           <textarea
             className="rogym-input min-h-24"
             value={cancelReason}
@@ -245,7 +251,7 @@ export function SessionDetailModal({ sessionId, onClose, onUpdate }: Props) {
           }}
           disabled={cancelling}
         >
-          Giữ lịch
+          {t('trainer:sessionModal.btnKeepSchedule')}
         </button>
         <button
           type="button"
@@ -258,12 +264,12 @@ export function SessionDetailModal({ sessionId, onClose, onUpdate }: Props) {
           ) : (
             <XCircle size={14} />
           )}
-          Xác nhận hủy
+          {t('trainer:sessionModal.btnConfirmCancel')}
         </button>
       </>
     )
   } else if (mode === 'edit') {
-    modalTitle = 'Chỉnh sửa buổi tập'
+    modalTitle = t('trainer:sessionModal.titleEditSession')
     modalBody = (
       <form
         id="session-edit-form"
@@ -276,27 +282,27 @@ export function SessionDetailModal({ sessionId, onClose, onUpdate }: Props) {
           </div>
         )}
         <label className="block space-y-2">
-          <span className="rogym-field-label">Phòng tập</span>
+          <span className="rogym-field-label">{t('trainer:sessionModal.fieldRoom')}</span>
           <TrainerSelect value={editRoomId} onValueChange={setEditRoomId} required>
-            <option value="">Chọn phòng tập</option>
+            <option value="">{t('trainer:sessionModal.selectRoom')}</option>
             {rooms.map((room) => (
               <option key={room.roomId} value={room.roomId}>
-                {room.roomCode} - {room.name} ({room.capacity} người)
+                {room.roomCode} - {room.name} ({room.capacity} {t('trainer:sessionModal.capacityUnit')})
               </option>
             ))}
           </TrainerSelect>
         </label>
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2">
-            <span className="block rogym-field-label">Thời gian bắt đầu</span>
+            <span className="block rogym-field-label">{t('trainer:sessionModal.fieldStartTime')}</span>
             <DateTimePickerInput
               value={editStartTime}
               onChange={setEditStartTime}
-              aria-label="Thời gian bắt đầu"
+              aria-label={t('trainer:sessionModal.fieldStartTime')}
             />
           </div>
           <label className="block space-y-2">
-            <span className="rogym-field-label">Thời lượng (phút)</span>
+            <span className="rogym-field-label">{t('trainer:sessionModal.fieldDuration')}</span>
             <input
               className="rogym-input"
               type="number"
@@ -311,8 +317,8 @@ export function SessionDetailModal({ sessionId, onClose, onUpdate }: Props) {
         </div>
         <div className="flex items-center gap-2 rounded-xl border border-white/5 bg-white/[0.03] p-3 text-sm rogym-text-secondary">
           <Clock3 size={15} className="shrink-0 rogym-text-accent" />
-          Kết thúc:{' '}
-          {editEndTime ? toDateTimeLocalInput(editEndTime).replace('T', ' ') : 'Chưa xác định'}
+          {t('trainer:sessionModal.endTimePrefix')}{' '}
+          {editEndTime ? toDateTimeLocalInput(editEndTime).replace('T', ' ') : t('trainer:sessionModal.endTimeUnknown')}
         </div>
       </form>
     )
@@ -327,7 +333,7 @@ export function SessionDetailModal({ sessionId, onClose, onUpdate }: Props) {
           }}
           disabled={saving}
         >
-          Hủy
+          {t('trainer:sessionModal.btnCancel')}
         </button>
         <button
           type="submit"
@@ -336,7 +342,7 @@ export function SessionDetailModal({ sessionId, onClose, onUpdate }: Props) {
           disabled={saving || !editRoomId || !editStartTime || editDuration <= 0}
         >
           {saving && <LoaderCircle size={14} className="animate-spin" />}
-          Lưu thay đổi
+          {t('trainer:sessionModal.btnSave')}
         </button>
       </>
     )
@@ -355,21 +361,21 @@ export function SessionDetailModal({ sessionId, onClose, onUpdate }: Props) {
             {error}
           </div>
         )}
-        <DetailRow icon={<UserRound size={16} />} label="Học viên" value={session.memberName} />
+        <DetailRow icon={<UserRound size={16} />} label={t('trainer:sessionModal.labelStudent')} value={session.memberName} />
         <DetailRow
           icon={<CalendarClock size={16} />}
-          label="Bắt đầu"
+          label={t('trainer:sessionModal.labelStart')}
           value={formatDateTime(session.startTime)}
         />
         <DetailRow
           icon={<CalendarClock size={16} />}
-          label="Kết thúc"
+          label={t('trainer:sessionModal.labelEnd')}
           value={formatDateTime(session.endTime)}
         />
         <DetailRow
           icon={<MapPin size={16} />}
-          label="Phòng"
-          value={session.roomName ?? 'Chưa xếp phòng'}
+          label={t('trainer:sessionModal.labelRoom')}
+          value={session.roomName ?? t('trainer:sessionModal.noRoom')}
         />
       </div>
     )
@@ -386,7 +392,7 @@ export function SessionDetailModal({ sessionId, onClose, onUpdate }: Props) {
                 setMode('status-confirm')
               }}
             >
-              <Play size={14} /> Bắt đầu
+              <Play size={14} /> {t('trainer:sessionModal.btnStart')}
             </button>
           )}
           {canComplete && (
@@ -398,7 +404,7 @@ export function SessionDetailModal({ sessionId, onClose, onUpdate }: Props) {
                 setMode('status-confirm')
               }}
             >
-              <CheckCircle size={14} /> Hoàn thành
+              <CheckCircle size={14} /> {t('trainer:sessionModal.btnComplete')}
             </button>
           )}
           {editable && (
@@ -407,7 +413,7 @@ export function SessionDetailModal({ sessionId, onClose, onUpdate }: Props) {
               className="rogym-btn rogym-btn--outline-white"
               onClick={enterEdit}
             >
-              <Pencil size={14} /> Chỉnh sửa
+              <Pencil size={14} /> {t('trainer:sessionModal.btnEdit')}
             </button>
           )}
           {editable && (
@@ -419,7 +425,7 @@ export function SessionDetailModal({ sessionId, onClose, onUpdate }: Props) {
                 setError(null)
               }}
             >
-              <XCircle size={14} /> Hủy buổi
+              <XCircle size={14} /> {t('trainer:sessionModal.btnCancelSession')}
             </button>
           )}
         </div>
@@ -443,7 +449,7 @@ export function SessionDetailModal({ sessionId, onClose, onUpdate }: Props) {
             type="button"
             className="rogym-btn rogym-btn--icon rogym-btn--elevated shrink-0"
             onClick={onClose}
-            aria-label="Đóng"
+            aria-label={t('trainer:sessionModal.ariaClose')}
           >
             <X size={17} />
           </button>
