@@ -54,6 +54,15 @@
     "bankCardShort": "Thẻ NH",
     "ewalletShort": "Ví điện tử"
   },
+  "shift": {
+    "morning": "Ca sáng (07:00–12:00)",
+    "afternoon": "Ca chiều (12:00–17:00)",
+    "evening": "Ca tối (17:00–22:00)"
+  },
+  "calendar": {
+    "prevMonth": "Tháng trước",
+    "nextMonth": "Tháng sau"
+  },
   "loading": "Đang tải...",
   "noData": "Không có dữ liệu",
   "ok": "Đồng ý",

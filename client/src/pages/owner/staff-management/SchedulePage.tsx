@@ -18,10 +18,9 @@ import {
   type StaffScheduleShift,
 } from '@/lib/staff-schedule-calendar'
 import { getApiError } from '@/lib/api-error'
-import { shiftLabel } from '@/lib/shift'
 
 export default function OwnerSchedulePage() {
-  const { t } = useTranslation('owner')
+  const { t, i18n } = useTranslation('owner')
   const { t: tCommon } = useTranslation('common')
   const [monthOffset, setMonthOffset] = useState(0)
   const [schedules, setSchedules] = useState<ScheduleWithStaff[]>([])
@@ -193,7 +192,8 @@ export default function OwnerSchedulePage() {
         open={addOpen}
         title={(() => {
           if (!selectedDate) return t('staffManagement.schedule.addStaffBtn')
-          const dateStr = new Date(`${selectedDate}T00:00:00`).toLocaleDateString('vi-VN', {
+          const locale = i18n.language === 'ja' ? 'ja-JP' : 'vi-VN'
+          const dateStr = new Date(`${selectedDate}T00:00:00`).toLocaleDateString(locale, {
             day: '2-digit',
             month: '2-digit',
             year: 'numeric',
@@ -244,7 +244,7 @@ export default function OwnerSchedulePage() {
                 >
                   {STAFF_SCHEDULE_SHIFTS.map((shift) => (
                     <option key={shift} value={shift}>
-                      {shiftLabel(shift)}
+                      {tCommon(`shift.${shift}` as const)}
                     </option>
                   ))}
                 </OwnerSelect>
