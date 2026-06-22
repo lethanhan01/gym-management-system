@@ -210,7 +210,8 @@
       },
       "toastActivated": "プランが正常に有効化されました！",
       "toastCancelled": "プランがキャンセルされました。",
-      "cancelledNote": "このプランは販売終了となり、新規登録はできません。"
+      "cancelledNote": "このプランは販売終了となり、新規登録はできません。",
+      "packageFallback": "プラン"
     },
     "history": {
       "title": "プラン履歴",
@@ -247,7 +248,8 @@
       "methodEwallet": "電子ウォレット",
       "statusAll": "すべて",
       "statusSuccess": "成功",
-      "statusFailed": "失敗"
+      "statusFailed": "失敗",
+      "packageFallback": "プラン"
     },
     "setup": {
       "title": "プランに申し込む",
@@ -273,7 +275,8 @@
       "newExpiry": "更新後の終了日",
       "renewText": "{{days}}日延長 — {{price}}",
       "buttonPay": "更新のお支払い",
-      "errorLoad": "プラン情報を読み込めません。"
+      "errorLoad": "プラン情報を読み込めません。",
+      "packageFallback": "プラン"
     },
     "checkout": {
       "title": "お支払い",
@@ -479,7 +482,9 @@
       "applying": "プランを適用中...",
       "errorLoad": "トレーニングプランを読み込めません。",
       "errorDelete": "プランを削除できません。",
-      "unitSeconds": "秒"
+      "unitSeconds": "秒",
+      "buttonDayDetail": "詳細",
+      "exerciseFallback": "エクササイズ"
     },
     "history": {
       "title": "トレーニング履歴",

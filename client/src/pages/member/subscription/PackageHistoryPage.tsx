@@ -232,7 +232,7 @@ export default function PackageHistoryPage() {
                     <div className="flex items-start justify-between">
                       <div>
                         <p className="text-base font-bold text-white mb-1.5 rogym-sx-d63063a8" >
-                          {sub.packageName ?? 'Gói tập'}
+                          {sub.packageName ?? t('subscription.history.packageFallback')}
                         </p>
                         <p className="text-sm rogym-text-secondary">
                           {formatDate(sub.startDate)} → {formatDate(sub.endDate)}

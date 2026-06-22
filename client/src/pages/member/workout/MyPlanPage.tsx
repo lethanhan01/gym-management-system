@@ -255,7 +255,7 @@ function PlanCard({
                   className="rogym-btn rogym-btn--outline-white px-3 py-1.5 text-xs"
                   onClick={() => setDetailDay(day)}
                 >
-                  Chi tiết
+                  {t('workout.myPlan.buttonDayDetail')}
                 </button>
               </div>
             ))}
@@ -302,12 +302,12 @@ function PlanCard({
                       </span>
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-semibold text-white">
-                          {ex.exercise?.name ?? 'Bài tập'}
+                          {ex.exercise?.name ?? t('workout.myPlan.exerciseFallback')}
                         </p>
                         <p className="mt-0.5 text-xs rogym-sx-5e5c39ab">
                           {ex.targetSets} sets ·{' '}
                           {isCardio
-                            ? `${ex.targetDurationSec ?? 0} giây`
+                            ? `${ex.targetDurationSec ?? 0} ${t('workout.myPlan.unitSeconds')}`
                             : `${ex.targetReps ?? 0} reps`}
                           {ex.targetWeightKg ? ` · ${Number(ex.targetWeightKg)} kg` : ''}
                         </p>

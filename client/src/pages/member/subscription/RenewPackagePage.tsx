@@ -84,7 +84,7 @@ export default function RenewPackagePage() {
         <div className="mx-auto flex max-w-md flex-col gap-5">
           <div className="rogym-card rogym-card--compact flex flex-col gap-4 p-6">
             <h3 className="text-base font-bold text-white">
-              {activeSub.packageName ?? activeSub.package?.name ?? 'Gói tập'}
+              {activeSub.packageName ?? activeSub.package?.name ?? t('subscription.renew.packageFallback')}
             </h3>
             <div className="grid grid-cols-2 gap-3">
               <div className="rounded-xl bg-white/5 px-4 py-3">

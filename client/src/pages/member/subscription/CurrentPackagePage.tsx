@@ -202,8 +202,9 @@ export default function CurrentPackagePage() {
               <h3 className="text-lg font-bold text-white m-0">{t('subscription.current.cancelDialog.title')}</h3>
             </div>
             <p className="text-sm rogym-text-secondary leading-relaxed mb-1">
-              Hủy gói{' '}
-              <strong className="text-white">{cancelTarget.packageName ?? 'gói tập'}</strong>?
+              {t('subscription.current.cancelDialog.titleWithName', {
+                name: cancelTarget.packageName ?? t('subscription.current.packageFallback')
+              })}
             </p>
             <p className="text-sm rogym-text-secondary leading-relaxed mb-6">
               {cancelTarget.status === 'pending'
@@ -299,7 +300,7 @@ export default function CurrentPackagePage() {
                   tone={SUB_STATUS_MAP[getRealStatus(subscription)]?.tone}
                 />
                 <h2 className="text-2xl font-bold text-white mt-3">
-                  {subscription.packageName ?? pkg?.name ?? 'Gói tập'}
+                  {subscription.packageName ?? pkg?.name ?? t('subscription.current.packageFallback')}
                 </h2>
               </div>
 

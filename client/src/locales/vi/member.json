@@ -210,7 +210,8 @@
       },
       "toastActivated": "Gói tập đã được kích hoạt thành công!",
       "toastCancelled": "Đã hủy gói tập thành công.",
-      "cancelledNote": "Gói tập này đã ngừng bán và không còn khả dụng cho đăng ký mới."
+      "cancelledNote": "Gói tập này đã ngừng bán và không còn khả dụng cho đăng ký mới.",
+      "packageFallback": "Gói tập"
     },
     "history": {
       "title": "Lịch sử gói tập",
@@ -247,7 +248,8 @@
       "methodEwallet": "Ví điện tử",
       "statusAll": "Tất cả",
       "statusSuccess": "Thành công",
-      "statusFailed": "Thất bại"
+      "statusFailed": "Thất bại",
+      "packageFallback": "Gói tập"
     },
     "setup": {
       "title": "Đăng ký gói tập",
@@ -273,7 +275,8 @@
       "newExpiry": "Hết hạn sau gia hạn",
       "renewText": "Gia hạn thêm {{days}} ngày với giá {{price}}",
       "buttonPay": "Thanh toán gia hạn",
-      "errorLoad": "Không thể tải thông tin gói tập."
+      "errorLoad": "Không thể tải thông tin gói tập.",
+      "packageFallback": "Gói tập"
     },
     "checkout": {
       "title": "Thanh toán",
@@ -479,7 +482,9 @@
       "applying": "Đang áp dụng kế hoạch...",
       "errorLoad": "Không thể tải kế hoạch tập.",
       "errorDelete": "Không thể xóa kế hoạch.",
-      "unitSeconds": "giây"
+      "unitSeconds": "giây",
+      "buttonDayDetail": "Chi tiết",
+      "exerciseFallback": "Bài tập"
     },
     "history": {
       "title": "Lịch sử tập luyện",
