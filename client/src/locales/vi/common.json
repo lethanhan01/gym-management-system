@@ -46,6 +46,14 @@
     "notAvailable": "Chưa có",
     "invalid": "Không hợp lệ"
   },
+  "paymentMethod": {
+    "cash": "Tiền mặt",
+    "bankCard": "Thẻ ngân hàng",
+    "ewallet": "Ví điện tử",
+    "cashShort": "Tiền mặt",
+    "bankCardShort": "Thẻ NH",
+    "ewalletShort": "Ví điện tử"
+  },
   "loading": "Đang tải...",
   "noData": "Không có dữ liệu",
   "ok": "Đồng ý",

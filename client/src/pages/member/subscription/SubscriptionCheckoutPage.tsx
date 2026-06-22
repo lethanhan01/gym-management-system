@@ -19,8 +19,8 @@ import { useSubscriptionStore } from '@/stores/subscriptionStore'
 import { formatVnd } from '@/lib/currency'
 import {
   getPaymentMethodLabel,
+  getPaymentMethodOptions,
   maskPaymentAccountRef,
-  PAYMENT_METHOD_OPTIONS,
   type PaymentMethodOption,
 } from '@/components/payment/payment-method-data'
 import { PaymentMethodIcon } from '@/components/payment/payment-methods'
@@ -271,7 +271,7 @@ export default function SubscriptionCheckoutPage({ mode }: { mode: 'buy' | 'rene
           <h3 className="text-base font-bold text-white">{t('subscription.checkout.paymentInfoTitle')}</h3>
 
           <div className="flex flex-col gap-2">
-            {PAYMENT_METHOD_OPTIONS.map((opt) => (
+            {getPaymentMethodOptions().map((opt) => (
               <MethodBtn
                 key={opt.value}
                 opt={opt}

@@ -9,7 +9,7 @@ import paymentService, { type PaymentMethod } from '@/services/payment.service'
 import subscriptionService from '@/services/subscription.service'
 import { useAuthStore } from '@/stores/authStore'
 import { useSubscriptionStore } from '@/stores/subscriptionStore'
-import { PAYMENT_METHOD_OPTIONS } from '@/components/payment/payment-method-data'
+import { getPaymentMethodOptions } from '@/components/payment/payment-method-data'
 import { formatVnd } from '@/lib/currency'
 import { parsePackageBenefits } from '@/lib/package'
 
@@ -216,7 +216,7 @@ export default function PaymentPage() {
               {/* Payment method */}
               <p className="rogym-sx-9259d65d">{t('subscription.payment.paymentMethodLabel')}</p>
               <div className="grid grid-cols-3 gap-3 mb-6">
-                {PAYMENT_METHOD_OPTIONS.map(opt => (
+                {getPaymentMethodOptions().map(opt => (
                   <button
                     key={opt.value}
                     onClick={() => setMethod(opt.value)}
