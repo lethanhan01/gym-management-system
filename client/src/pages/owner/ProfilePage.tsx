@@ -1,4 +1,5 @@
 import { FormEvent, useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { KeyRound, LoaderCircle, LogOut, User } from 'lucide-react'
 import { getApiError } from '@/lib/api-error'
@@ -10,6 +11,8 @@ import { ProfileInfoRow } from '@/components/profile/ProfileInfoRow'
 import { ProfilePasswordField } from '@/components/profile/ProfilePasswordField'
 
 export default function OwnerProfilePage() {
+  const { t } = useTranslation('owner')
+  const { t: tCommon } = useTranslation('common')
   const navigate = useNavigate()
   const { clearAuth } = useAuthStore()
   const [profile, setProfile] = useState<OwnerProfile | null>(null)
@@ -37,14 +40,14 @@ export default function OwnerProfilePage() {
         setEditName(data.fullName)
         setEditPhone(data.phone ?? '')
       })
-      .catch((err) => setError(getApiError(err, 'Không thể tải hồ sơ.')))
+      .catch((err) => setError(getApiError(err, t('profile.loadFailed'))))
       .finally(() => setLoading(false))
-  }, [])
+  }, [t])
 
   async function handleSave(e: FormEvent) {
     e.preventDefault()
     if (!editName.trim()) {
-      setSaveError('Họ tên không được trống.')
+      setSaveError(t('profile.nameRequired'))
       return
     }
     setSaving(true)
@@ -55,7 +58,7 @@ export default function OwnerProfilePage() {
       )
       setIsEditing(false)
     } catch (err) {
-      setSaveError(getApiError(err, 'Lưu thất bại.'))
+      setSaveError(getApiError(err, t('profile.saveFailed')))
     } finally {
       setSaving(false)
     }
@@ -64,11 +67,11 @@ export default function OwnerProfilePage() {
   async function handleChangePassword(e: FormEvent) {
     e.preventDefault()
     if (newPw.length < 8) {
-      setPwError('Mật khẩu mới cần ít nhất 8 ký tự.')
+      setPwError(t('profile.passwordMinLength'))
       return
     }
     if (newPw !== confirmPw) {
-      setPwError('Mật khẩu xác nhận không khớp.')
+      setPwError(t('profile.passwordMismatch'))
       return
     }
     setPwSaving(true)
@@ -81,7 +84,7 @@ export default function OwnerProfilePage() {
       setConfirmPw('')
       setPwSuccess(true)
     } catch (err) {
-      setPwError(getApiError(err, 'Không thể đổi mật khẩu.'))
+      setPwError(getApiError(err, t('profile.changePasswordFailed')))
     } finally {
       setPwSaving(false)
     }
@@ -108,9 +111,9 @@ export default function OwnerProfilePage() {
   return (
     <OwnerPage>
       <OwnerPageHeader
-        eyebrow="Hồ sơ"
-        title="Tài khoản Owner"
-        description="Quản lý thông tin cá nhân và bảo mật."
+        eyebrow={t('profile.title')}
+        title={t('profile.accountTitle')}
+        description={t('profile.subtitle')}
       />
 
       <div className="grid gap-5 xl:grid-cols-2">
@@ -120,7 +123,7 @@ export default function OwnerProfilePage() {
             <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[rgba(66,224,158,0.12)] rogym-text-accent">
               <User size={22} />
             </div>
-            <h2 className="rogym-eyebrow">Thông tin cá nhân</h2>
+            <h2 className="rogym-eyebrow">{t('profile.personalInfo')}</h2>
           </div>
 
           {saveError && (
@@ -133,7 +136,7 @@ export default function OwnerProfilePage() {
             <form onSubmit={handleSave} className="flex flex-col flex-1">
               <div className="space-y-4">
                 <div>
-                  <label className="rogym-field-label mb-1.5 block">Họ tên</label>
+                  <label className="rogym-field-label mb-1.5 block">{t('profile.fullName')}</label>
                   <input
                     type="text"
                     value={editName}
@@ -143,7 +146,7 @@ export default function OwnerProfilePage() {
                   />
                 </div>
                 <div>
-                  <label className="rogym-field-label mb-1.5 block">Số điện thoại</label>
+                  <label className="rogym-field-label mb-1.5 block">{t('profile.phone')}</label>
                   <input
                     type="tel"
                     value={editPhone}
@@ -164,37 +167,41 @@ export default function OwnerProfilePage() {
                     setSaveError(null)
                   }}
                 >
-                  Hủy
+                  {tCommon('button.cancel')}
                 </button>
                 <button
                   type="submit"
                   className="rogym-btn rogym-btn--primary flex-1"
                   disabled={saving}
                 >
-                  {saving ? <LoaderCircle size={16} className="animate-spin" /> : 'Lưu'}
+                  {saving ? (
+                    <LoaderCircle size={16} className="animate-spin" />
+                  ) : (
+                    tCommon('button.save')
+                  )}
                 </button>
               </div>
             </form>
           ) : (
             <>
-              <ProfileInfoRow label="Họ tên" value={profile?.fullName ?? '—'} />
-              <ProfileInfoRow label="Email" value={profile?.email ?? '—'} />
-              <ProfileInfoRow label="Số điện thoại" value={profile?.phone ?? '—'} />
-              <ProfileInfoRow label="Vai trò" value="Chủ sở hữu" />
+              <ProfileInfoRow label={t('profile.fullName')} value={profile?.fullName ?? '—'} />
+              <ProfileInfoRow label={t('profile.email')} value={profile?.email ?? '—'} />
+              <ProfileInfoRow label={t('profile.phone')} value={profile?.phone ?? '—'} />
+              <ProfileInfoRow label={t('profile.role')} value={t('profile.roleOwner')} />
               <div className="mt-auto pt-6 flex gap-3">
                 <button
                   type="button"
                   className="rogym-btn rogym-btn--outline-white flex-1"
                   onClick={() => setIsEditing(true)}
                 >
-                  Chỉnh sửa
+                  {tCommon('button.edit')}
                 </button>
                 <button
                   type="button"
                   className="rogym-btn rogym-btn--outline-white flex-1"
                   onClick={handleLogout}
                 >
-                  <LogOut size={16} /> Đăng xuất
+                  <LogOut size={16} /> {tCommon('nav.logout')}
                 </button>
               </div>
             </>
@@ -207,7 +214,7 @@ export default function OwnerProfilePage() {
             <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[rgba(66,224,158,0.12)] rogym-text-accent">
               <KeyRound size={22} />
             </div>
-            <h2 className="rogym-eyebrow">Đổi mật khẩu</h2>
+            <h2 className="rogym-eyebrow">{t('profile.changePassword')}</h2>
           </div>
 
           {pwError && (
@@ -217,20 +224,24 @@ export default function OwnerProfilePage() {
           )}
           {pwSuccess && (
             <div className="mb-4 rounded-xl border border-green-400/20 bg-green-400/10 p-3 text-sm text-green-200">
-              Đổi mật khẩu thành công!
+              {t('profile.changePasswordSuccess')}
             </div>
           )}
 
           <form onSubmit={handleChangePassword} className="flex flex-col flex-1">
             <div className="space-y-4">
               <ProfilePasswordField
-                label="Mật khẩu hiện tại"
+                label={t('profile.currentPassword')}
                 value={currentPw}
                 onChange={setCurrentPw}
               />
-              <ProfilePasswordField label="Mật khẩu mới" value={newPw} onChange={setNewPw} />
               <ProfilePasswordField
-                label="Xác nhận mật khẩu mới"
+                label={t('profile.newPassword')}
+                value={newPw}
+                onChange={setNewPw}
+              />
+              <ProfilePasswordField
+                label={t('profile.confirmPassword')}
                 value={confirmPw}
                 onChange={setConfirmPw}
               />
@@ -241,7 +252,11 @@ export default function OwnerProfilePage() {
                 className="rogym-btn rogym-btn--primary w-full"
                 disabled={pwSaving}
               >
-                {pwSaving ? <LoaderCircle size={16} className="animate-spin" /> : 'Đổi mật khẩu'}
+                {pwSaving ? (
+                  <LoaderCircle size={16} className="animate-spin" />
+                ) : (
+                  t('profile.changePasswordBtn')
+                )}
               </button>
             </div>
           </form>

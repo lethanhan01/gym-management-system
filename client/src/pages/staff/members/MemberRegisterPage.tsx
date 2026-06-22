@@ -1,6 +1,7 @@
 import { FormEvent, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Check, ChevronRight, Dumbbell, User, CreditCard } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { getApiError } from '@/lib/api-error'
 import { memberService } from '@/services/member.service'
 import packageService, { type Package } from '@/services/package.service'
@@ -29,19 +30,15 @@ interface PaymentFormData {
   transactionReference: string
 }
 
-const PAYMENT_METHODS: { value: PaymentMethod; label: string }[] = [
-  { value: 'cash', label: 'Tiền mặt' },
-  { value: 'bank_card', label: 'Thẻ ngân hàng' },
-  { value: 'ewallet', label: 'Ví điện tử' },
-]
-
-const STEPS = [
-  { n: 1, label: 'Thông tin hội viên', icon: User },
-  { n: 2, label: 'Chọn gói tập', icon: Dumbbell },
-  { n: 3, label: 'Thanh toán', icon: CreditCard },
-]
-
 function StepIndicator({ current }: { current: number }) {
+  const { t } = useTranslation('staff')
+
+  const STEPS = [
+    { n: 1, label: t('members.register.step1Label'), icon: User },
+    { n: 2, label: t('members.register.step2Label'), icon: Dumbbell },
+    { n: 3, label: t('members.register.step3Label'), icon: CreditCard },
+  ]
+
   return (
     <div className="flex items-center gap-0 mb-8">
       {STEPS.map((s, i) => {
@@ -95,6 +92,7 @@ function Step1({
   onChange: (d: MemberFormData) => void
   onNext: () => void
 }) {
+  const { t } = useTranslation('staff')
   const [error, setError] = useState<string | null>(null)
 
   function set(field: keyof MemberFormData, value: string) {
@@ -104,11 +102,11 @@ function Step1({
   function handleNext(e: FormEvent) {
     e.preventDefault()
     if (data.password.length < 8) {
-      setError('Mật khẩu phải có ít nhất 8 ký tự.')
+      setError(t('members.register.passwordMinLength'))
       return
     }
     if (data.password !== data.confirmPassword) {
-      setError('Xác nhận mật khẩu không khớp.')
+      setError(t('members.register.passwordMismatch'))
       return
     }
     setError(null)
@@ -122,7 +120,7 @@ function Step1({
       <div className="rogym-card rogym-card--compact p-6 space-y-4">
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <label className="block space-y-2">
-            <span className="rogym-field-label">Họ và tên *</span>
+            <span className="rogym-field-label">{t('members.register.fullName')}</span>
             <input
               className="rogym-input"
               value={data.fullName}
@@ -133,7 +131,7 @@ function Step1({
           </label>
 
           <label className="block space-y-2">
-            <span className="rogym-field-label">Email *</span>
+            <span className="rogym-field-label">{t('members.register.email')}</span>
             <input
               type="email"
               className="rogym-input"
@@ -145,7 +143,7 @@ function Step1({
           </label>
 
           <label className="block space-y-2">
-            <span className="rogym-field-label">Số điện thoại</span>
+            <span className="rogym-field-label">{t('members.register.phone')}</span>
             <input
               type="tel"
               className="rogym-input"
@@ -156,46 +154,46 @@ function Step1({
           </label>
 
           <label className="block space-y-2">
-            <span className="rogym-field-label">Ngày sinh *</span>
+            <span className="rogym-field-label">{t('members.register.dateOfBirth')}</span>
             <DatePickerInput
               value={data.dateOfBirth}
               onChange={(v) => set('dateOfBirth', v)}
               max={new Date().toISOString().split('T')[0]}
-              aria-label="Ngày sinh"
+              aria-label={t('members.register.dateOfBirth')}
             />
           </label>
 
           <label className="col-span-full block space-y-2">
-            <span className="rogym-field-label">Địa chỉ</span>
+            <span className="rogym-field-label">{t('members.register.address')}</span>
             <input
               className="rogym-input"
               value={data.address}
               onChange={(e) => set('address', e.target.value)}
-              placeholder="Số nhà, đường, quận/huyện, tỉnh/thành phố"
+              placeholder={t('members.register.addressPlaceholder')}
             />
           </label>
 
           <label className="block space-y-2">
-            <span className="rogym-field-label">Mật khẩu *</span>
+            <span className="rogym-field-label">{t('members.register.password')}</span>
             <input
               type="password"
               className="rogym-input"
               value={data.password}
               onChange={(e) => set('password', e.target.value)}
-              placeholder="Tối thiểu 8 ký tự"
+              placeholder={t('members.register.passwordPlaceholder')}
               minLength={8}
               required
             />
           </label>
 
           <label className="block space-y-2">
-            <span className="rogym-field-label">Xác nhận mật khẩu *</span>
+            <span className="rogym-field-label">{t('members.register.confirmPassword')}</span>
             <input
               type="password"
               className="rogym-input"
               value={data.confirmPassword}
               onChange={(e) => set('confirmPassword', e.target.value)}
-              placeholder="Nhập lại mật khẩu"
+              placeholder={t('members.register.confirmPasswordPlaceholder')}
               required
             />
           </label>
@@ -204,7 +202,7 @@ function Step1({
 
       <div className="flex justify-end">
         <button type="submit" className="rogym-btn rogym-btn--primary flex items-center gap-2">
-          Tiếp theo <ChevronRight size={16} />
+          {t('members.register.next')} <ChevronRight size={16} />
         </button>
       </div>
     </form>
@@ -222,6 +220,7 @@ function Step2({
   onBack: () => void
   onNext: () => void
 }) {
+  const { t } = useTranslation('staff')
   const [packages, setPackages] = useState<Package[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -230,9 +229,9 @@ function Step2({
     packageService
       .list({ status: 'active', pageSize: 50 })
       .then((res) => setPackages(res.data))
-      .catch(() => setError('Không thể tải danh sách gói tập.'))
+      .catch(() => setError(t('members.register.loadPackagesFailed')))
       .finally(() => setLoading(false))
-  }, [])
+  }, [t])
 
   function formatPrice(price: string) {
     return Number(price).toLocaleString('vi-VN') + 'đ'
@@ -271,16 +270,20 @@ function Step2({
 
                 <div className="space-y-1 text-sm">
                   <div className="flex items-center justify-between">
-                    <span className="rogym-text-dim">Thời hạn</span>
-                    <span className="rogym-text-secondary font-medium">{pkg.durationDays} ngày</span>
+                    <span className="rogym-text-dim">{t('members.register.duration')}</span>
+                    <span className="rogym-text-secondary font-medium">
+                      {t('members.register.durationDays', { days: pkg.durationDays })}
+                    </span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="rogym-text-dim">Giá</span>
+                    <span className="rogym-text-dim">{t('members.register.price')}</span>
                     <span className="text-[var(--rogym-teal)] font-bold">{formatPrice(pkg.price)}</span>
                   </div>
                   {pkg.includesPt && (
                     <div className="mt-2">
-                      <span className="rogym-tone-badge" data-tone="info">Bao gồm PT</span>
+                      <span className="rogym-tone-badge" data-tone="info">
+                        {t('members.register.includesPt')}
+                      </span>
                     </div>
                   )}
                 </div>
@@ -298,7 +301,7 @@ function Step2({
 
       <div className="flex justify-between">
         <button type="button" className="rogym-btn rogym-btn--outline-white" onClick={onBack}>
-          Quay lại
+          {t('members.register.back')}
         </button>
         <button
           type="button"
@@ -306,7 +309,7 @@ function Step2({
           onClick={onNext}
           disabled={!selected}
         >
-          Tiếp theo <ChevronRight size={16} />
+          {t('members.register.next')} <ChevronRight size={16} />
         </button>
       </div>
     </div>
@@ -332,6 +335,14 @@ function Step3({
   submitting: boolean
   error: string | null
 }) {
+  const { t } = useTranslation('staff')
+
+  const PAYMENT_METHODS: { value: PaymentMethod; label: string }[] = [
+    { value: 'cash', label: t('members.register.cash') },
+    { value: 'bank_card', label: t('members.register.bankCard') },
+    { value: 'ewallet', label: t('members.register.ewallet') },
+  ]
+
   function formatPrice(price: string) {
     return Number(price).toLocaleString('vi-VN') + 'đ'
   }
@@ -342,28 +353,30 @@ function Step3({
     <div className="space-y-4">
       {/* Summary */}
       <div className="rogym-card rogym-card--compact p-5 space-y-3">
-        <h3 className="text-sm font-bold text-white mb-4">Tóm tắt đăng ký</h3>
+        <h3 className="text-sm font-bold text-white mb-4">{t('members.register.summarySectionTitle')}</h3>
         <div className="grid grid-cols-2 gap-2 text-sm">
           <div className="rounded-xl border border-white/5 bg-white/[0.03] p-3">
-            <div className="text-xs rogym-text-dim mb-1">Hội viên</div>
+            <div className="text-xs rogym-text-dim mb-1">{t('members.register.summaryMember')}</div>
             <div className="font-medium text-white">{member.fullName}</div>
             <div className="text-xs rogym-text-dim">{member.email}</div>
           </div>
           <div className="rounded-xl border border-white/5 bg-white/[0.03] p-3">
-            <div className="text-xs rogym-text-dim mb-1">Gói tập</div>
+            <div className="text-xs rogym-text-dim mb-1">{t('members.register.summaryPackage')}</div>
             <div className="font-medium text-white">{pkg.name}</div>
-            <div className="text-xs rogym-text-dim">{pkg.durationDays} ngày</div>
+            <div className="text-xs rogym-text-dim">
+              {t('members.register.durationDays', { days: pkg.durationDays })}
+            </div>
           </div>
         </div>
         <div className="flex items-center justify-between rounded-xl border border-[rgba(6,195,132,0.25)] bg-[rgba(6,195,132,0.06)] px-4 py-3">
-          <span className="rogym-text-secondary font-medium">Tổng thanh toán</span>
+          <span className="rogym-text-secondary font-medium">{t('members.register.totalPayment')}</span>
           <span className="text-lg font-bold text-[var(--rogym-teal)]">{formatPrice(pkg.price)}</span>
         </div>
       </div>
 
       {/* Payment method */}
       <div className="rogym-card rogym-card--compact p-5 space-y-4">
-        <h3 className="text-sm font-bold text-white">Phương thức thanh toán</h3>
+        <h3 className="text-sm font-bold text-white">{t('members.register.paymentMethod')}</h3>
 
         <div className="flex gap-3 flex-wrap">
           {PAYMENT_METHODS.map((m) => (
@@ -385,12 +398,12 @@ function Step3({
 
         {needsRef && (
           <label className="block space-y-2">
-            <span className="rogym-field-label">Mã giao dịch / tham chiếu</span>
+            <span className="rogym-field-label">{t('members.register.transactionRef')}</span>
             <input
               className="rogym-input"
               value={data.transactionReference}
               onChange={(e) => onChange({ ...data, transactionReference: e.target.value })}
-              placeholder="Nhập mã giao dịch (nếu có)"
+              placeholder={t('members.register.transactionRefPlaceholder')}
             />
           </label>
         )}
@@ -400,7 +413,7 @@ function Step3({
 
       <div className="flex justify-between">
         <button type="button" className="rogym-btn rogym-btn--outline-white" onClick={onBack} disabled={submitting}>
-          Quay lại
+          {t('members.register.back')}
         </button>
         <button
           type="button"
@@ -408,7 +421,7 @@ function Step3({
           onClick={onSubmit}
           disabled={submitting}
         >
-          {submitting ? 'Đang xử lý...' : 'Hoàn tất đăng ký'}
+          {submitting ? t('members.register.processing') : t('members.register.complete')}
         </button>
       </div>
     </div>
@@ -416,6 +429,7 @@ function Step3({
 }
 
 export default function MemberRegisterPage() {
+  const { t } = useTranslation('staff')
   const navigate = useNavigate()
   const [step, setStep] = useState<1 | 2 | 3>(1)
 
@@ -457,7 +471,7 @@ export default function MemberRegisterPage() {
       })
       navigate('/staff/members', { state: { registeredMember: memberData.fullName } })
     } catch (err) {
-      setSubmitError(getApiError(err, 'Không thể đăng ký hội viên. Vui lòng thử lại.'))
+      setSubmitError(getApiError(err, t('members.register.submitFailed')))
       setSubmitting(false)
     }
   }
@@ -465,9 +479,9 @@ export default function MemberRegisterPage() {
   return (
     <StaffPage>
       <StaffPageHeader
-        eyebrow="Người dùng"
-        title="Đăng ký hội viên tại quầy"
-        description="Tạo tài khoản và đăng ký gói tập cho hội viên mới đăng ký tại quầy."
+        eyebrow={t('members.register.eyebrow')}
+        title={t('members.register.title')}
+        description={t('members.register.description')}
       />
 
       <StepIndicator current={step} />

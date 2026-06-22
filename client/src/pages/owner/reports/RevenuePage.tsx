@@ -8,6 +8,7 @@ import {
   LoaderCircle,
   Info,
 } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { getApiError } from '@/lib/api-error'
 import { formatVnd } from '@/lib/currency'
 import { todayInput } from '@/lib/date'
@@ -47,28 +48,11 @@ const CURRENT_WEEK = getCurrentISOWeek(_now)
 const YEARS = Array.from({ length: CURRENT_YEAR - 2019 }, (_, i) => 2020 + i)
 const WEEKS = Array.from({ length: 53 }, (_, i) => i + 1)
 
-const MONTH_OPTIONS = [
-  { value: 1, label: 'Tháng 1' }, { value: 2, label: 'Tháng 2' },
-  { value: 3, label: 'Tháng 3' }, { value: 4, label: 'Tháng 4' },
-  { value: 5, label: 'Tháng 5' }, { value: 6, label: 'Tháng 6' },
-  { value: 7, label: 'Tháng 7' }, { value: 8, label: 'Tháng 8' },
-  { value: 9, label: 'Tháng 9' }, { value: 10, label: 'Tháng 10' },
-  { value: 11, label: 'Tháng 11' }, { value: 12, label: 'Tháng 12' },
-]
-
-const QUARTER_OPTIONS = [
-  { value: 1, label: 'Quý 1 (Jan – Mar)' }, { value: 2, label: 'Quý 2 (Apr – Jun)' },
-  { value: 3, label: 'Quý 3 (Jul – Sep)' }, { value: 4, label: 'Quý 4 (Oct – Dec)' },
-]
-
-const PAYMENT_METHOD_OPTIONS = [
-  { value: '', label: 'Mọi phương thức' }, { value: 'cash', label: 'Tiền mặt' },
-  { value: 'bank_card', label: 'Chuyển khoản / Thẻ' }, { value: 'ewallet', label: 'Ví điện tử' },
-]
-
 const DOW_HEADERS = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN']
 
-function pad(n: number) { return String(n).padStart(2, '0') }
+function pad(n: number) {
+  return String(n).padStart(2, '0')
+}
 
 // Capped at today (for API calls)
 function getWeekRange(year: number, week: number): { from: string; to: string } {
@@ -163,8 +147,16 @@ function formatVndShort(amount: number): string {
 // ─── Tooltip ──────────────────────────────────────────────────────────────────
 
 function GridTooltip({
-  x, y, date, amount,
-}: { x: number; y: number; date: string; amount: number }) {
+  x,
+  y,
+  date,
+  amount,
+}: {
+  x: number
+  y: number
+  date: string
+  amount: number
+}) {
   return (
     <div
       className="fixed z-50 rounded-xl border border-white/10 bg-[#1a2d22] px-3 py-2 text-sm shadow-xl pointer-events-none"
@@ -172,7 +164,9 @@ function GridTooltip({
     >
       <p className="text-xs rogym-text-dim">
         {new Date(date + 'T00:00:00').toLocaleDateString('vi-VN', {
-          day: 'numeric', month: 'numeric', year: 'numeric',
+          day: 'numeric',
+          month: 'numeric',
+          year: 'numeric',
         })}
       </p>
       <p className="font-bold rogym-text-green">{formatVnd(amount)}</p>
@@ -195,7 +189,10 @@ function RevenueDayGrid({
   mode: FilterMode
   todayStr: string
 }) {
-  const [tip, setTip] = useState<{ x: number; y: number; date: string; amount: number } | null>(null)
+  const { t } = useTranslation('owner')
+  const [tip, setTip] = useState<{ x: number; y: number; date: string; amount: number } | null>(
+    null
+  )
 
   const amountMap = useMemo(() => {
     const m = new Map<string, number>()
@@ -205,7 +202,7 @@ function RevenueDayGrid({
 
   const maxAmount = useMemo(
     () => (data.length > 0 ? Math.max(...data.map((r) => Number(r.amount))) : 1),
-    [data],
+    [data]
   )
 
   const weeks = useMemo(() => buildWeeks(displayFrom, displayTo), [displayFrom, displayTo])
@@ -232,7 +229,11 @@ function RevenueDayGrid({
                   : 'transparent',
                 border: '1px solid rgba(255,255,255,0.06)',
               }}
-              onMouseMove={hasRevenue ? (e) => setTip({ x: e.clientX, y: e.clientY, date: date!, amount }) : undefined}
+              onMouseMove={
+                hasRevenue
+                  ? (e) => setTip({ x: e.clientX, y: e.clientY, date: date!, amount })
+                  : undefined
+              }
             >
               {date && (
                 <>
@@ -247,7 +248,9 @@ function RevenueDayGrid({
                       {formatVndShort(amount)}
                     </span>
                   ) : (
-                    <span className="text-[10px] rogym-text-dim">Trống</span>
+                    <span className="text-[10px] rogym-text-dim">
+                      {t('reports.revenue.gridEmpty')}
+                    </span>
                   )}
                 </>
               )}
@@ -283,9 +286,7 @@ function RevenueDayGrid({
       <div className="space-y-1">
         {weeks.map((week, wi) => {
           const firstReal = week.find((d) => d !== null)
-          const firstRealMonth = firstReal
-            ? new Date(firstReal + 'T00:00:00').getMonth()
-            : -1
+          const firstRealMonth = firstReal ? new Date(firstReal + 'T00:00:00').getMonth() : -1
           const showMonthLabel = !isMonth && firstReal && firstRealMonth !== prevMonth
           if (showMonthLabel) prevMonth = firstRealMonth
 
@@ -293,7 +294,9 @@ function RevenueDayGrid({
             <div key={wi}>
               {showMonthLabel && firstReal && (
                 <p className="text-[10px] font-semibold rogym-text-dim pt-2 pb-0.5 pl-0.5">
-                  Tháng {new Date(firstReal + 'T00:00:00').getMonth() + 1}
+                  {t('reports.revenue.monthLabel', {
+                    month: new Date(firstReal + 'T00:00:00').getMonth() + 1,
+                  })}
                 </p>
               )}
               <div className={`grid grid-cols-7 ${gap}`}>
@@ -348,18 +351,17 @@ function RevenueDayGrid({
 
       {/* Color legend */}
       <div className="flex items-center gap-1.5 mt-4">
-        <span className="text-[10px] rogym-text-dim">Ít hơn</span>
-        {[0, 0.18, 0.38, 0.60, 0.82].map((op, i) => (
+        <span className="text-[10px] rogym-text-dim">{t('reports.revenue.legend.less')}</span>
+        {[0, 0.18, 0.38, 0.6, 0.82].map((op, i) => (
           <div
             key={i}
             className="w-3 h-3 rounded-[3px]"
             style={{
-              backgroundColor:
-                op === 0 ? 'rgba(255,255,255,0.05)' : `rgba(6,195,132,${op})`,
+              backgroundColor: op === 0 ? 'rgba(255,255,255,0.05)' : `rgba(6,195,132,${op})`,
             }}
           />
         ))}
-        <span className="text-[10px] rogym-text-dim">Nhiều hơn</span>
+        <span className="text-[10px] rogym-text-dim">{t('reports.revenue.legend.more')}</span>
       </div>
 
       {tip && <GridTooltip {...tip} />}
@@ -370,13 +372,44 @@ function RevenueDayGrid({
 // ─── Main page ────────────────────────────────────────────────────────────────
 
 export default function RevenuePage() {
+  const { t } = useTranslation('owner')
+
+  const MONTH_OPTIONS = [
+    { value: 1, label: t('reports.revenue.monthLabel', { month: 1 }) },
+    { value: 2, label: t('reports.revenue.monthLabel', { month: 2 }) },
+    { value: 3, label: t('reports.revenue.monthLabel', { month: 3 }) },
+    { value: 4, label: t('reports.revenue.monthLabel', { month: 4 }) },
+    { value: 5, label: t('reports.revenue.monthLabel', { month: 5 }) },
+    { value: 6, label: t('reports.revenue.monthLabel', { month: 6 }) },
+    { value: 7, label: t('reports.revenue.monthLabel', { month: 7 }) },
+    { value: 8, label: t('reports.revenue.monthLabel', { month: 8 }) },
+    { value: 9, label: t('reports.revenue.monthLabel', { month: 9 }) },
+    { value: 10, label: t('reports.revenue.monthLabel', { month: 10 }) },
+    { value: 11, label: t('reports.revenue.monthLabel', { month: 11 }) },
+    { value: 12, label: t('reports.revenue.monthLabel', { month: 12 }) },
+  ]
+
+  const QUARTER_OPTIONS = [
+    { value: 1, label: t('reports.revenue.quarters.q1') },
+    { value: 2, label: t('reports.revenue.quarters.q2') },
+    { value: 3, label: t('reports.revenue.quarters.q3') },
+    { value: 4, label: t('reports.revenue.quarters.q4') },
+  ]
+
+  const PAYMENT_METHOD_OPTIONS = [
+    { value: '', label: t('reports.revenue.paymentMethod.all') },
+    { value: 'cash', label: t('reports.revenue.paymentMethod.cash') },
+    { value: 'bank_card', label: t('reports.revenue.paymentMethod.transfer') },
+    { value: 'ewallet', label: t('reports.revenue.paymentMethod.card') },
+  ]
+
   const [mode, setMode] = useState<FilterMode>('month')
   const [year, setYear] = useState(CURRENT_YEAR)
   const [week, setWeek] = useState(CURRENT_WEEK)
   const [month, setMonth] = useState(CURRENT_MONTH)
   const [quarter, setQuarter] = useState(CURRENT_QUARTER)
   const [customFrom, setCustomFrom] = useState(
-    () => `${_now.getFullYear()}-${pad(_now.getMonth() + 1)}-01`,
+    () => `${_now.getFullYear()}-${pad(_now.getMonth() + 1)}-01`
   )
   const [customTo, setCustomTo] = useState(todayInput)
   const [paymentMethod, setPaymentMethod] = useState('')
@@ -427,16 +460,16 @@ export default function RevenuePage() {
           setTopPackages(topPkgResult)
           setShowAllPackages(false)
         })
-        .catch((err) => setError(getApiError(err, 'Không tải được báo cáo doanh thu.')))
+        .catch((err) => setError(getApiError(err, t('reports.revenue.loadFailed'))))
         .finally(() => setLoading(false))
     },
-    [paymentMethod],
+    [paymentMethod, t]
   )
 
   const handleLoad = useCallback(() => {
     if (mode === 'week') {
-      const api = getWeekRange(year, week)       // capped at today for API
-      const disp = getFullWeekRange(year, week)  // full Mon–Sun for display
+      const api = getWeekRange(year, week) // capped at today for API
+      const disp = getFullWeekRange(year, week) // full Mon–Sun for display
       setLoadedDisplay(disp)
       load(api.from, api.to)
     } else if (mode === 'month') {
@@ -462,9 +495,9 @@ export default function RevenuePage() {
   return (
     <OwnerPage>
       <OwnerPageHeader
-        eyebrow="Tài chính"
-        title="Báo cáo doanh thu"
-        description="Theo dõi doanh thu, cơ cấu và hiệu suất bán hàng."
+        eyebrow={t('reports.revenue.eyebrow')}
+        title={t('reports.revenue.title')}
+        description={t('reports.revenue.subtitle')}
       />
 
       {/* Bộ lọc */}
@@ -482,13 +515,25 @@ export default function RevenuePage() {
                   mode === m ? 'is-active' : ''
                 }`}
               >
-                {m === 'week' ? 'Tuần' : m === 'month' ? 'Tháng' : m === 'quarter' ? 'Quý' : 'Tùy chỉnh'}
+                {m === 'week'
+                  ? t('reports.revenue.tabs.week')
+                  : m === 'month'
+                    ? t('reports.revenue.tabs.month')
+                    : m === 'quarter'
+                      ? t('reports.revenue.tabs.quarter')
+                      : t('reports.revenue.tabs.custom')}
               </button>
             ))}
           </div>
-          <OwnerSelect value={paymentMethod} onValueChange={setPaymentMethod} ariaLabel="Phương thức thanh toán">
+          <OwnerSelect
+            value={paymentMethod}
+            onValueChange={setPaymentMethod}
+            ariaLabel={t('reports.revenue.filter.method')}
+          >
             {PAYMENT_METHOD_OPTIONS.map((opt) => (
-              <option key={opt.value} value={opt.value}>{opt.label}</option>
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
             ))}
           </OwnerSelect>
         </div>
@@ -496,36 +541,76 @@ export default function RevenuePage() {
         <div className="flex flex-wrap items-end gap-4">
           {(mode === 'week' || mode === 'month' || mode === 'quarter') && (
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-medium rogym-text-dim">Năm</label>
-              <OwnerSelect value={String(year)} onValueChange={(v) => setYear(Number(v))} ariaLabel="Năm">
-                {YEARS.map((y) => <option key={y} value={y}>{y}</option>)}
+              <label className="text-xs font-medium rogym-text-dim">
+                {t('reports.revenue.filter.year')}
+              </label>
+              <OwnerSelect
+                value={String(year)}
+                onValueChange={(v) => setYear(Number(v))}
+                ariaLabel={t('reports.revenue.filter.year')}
+              >
+                {YEARS.map((y) => (
+                  <option key={y} value={y}>
+                    {y}
+                  </option>
+                ))}
               </OwnerSelect>
             </div>
           )}
 
           {mode === 'week' && (
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-medium rogym-text-dim">Tuần</label>
-              <OwnerSelect value={String(week)} onValueChange={(v) => setWeek(Number(v))} ariaLabel="Tuần">
-                {WEEKS.map((w) => <option key={w} value={w}>Tuần {w}</option>)}
+              <label className="text-xs font-medium rogym-text-dim">
+                {t('reports.revenue.filter.week')}
+              </label>
+              <OwnerSelect
+                value={String(week)}
+                onValueChange={(v) => setWeek(Number(v))}
+                ariaLabel={t('reports.revenue.filter.week')}
+              >
+                {WEEKS.map((w) => (
+                  <option key={w} value={w}>
+                    {t('reports.revenue.filter.week')} {w}
+                  </option>
+                ))}
               </OwnerSelect>
             </div>
           )}
 
           {mode === 'month' && (
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-medium rogym-text-dim">Tháng</label>
-              <OwnerSelect value={String(month)} onValueChange={(v) => setMonth(Number(v))} ariaLabel="Tháng">
-                {MONTH_OPTIONS.map((opt) => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+              <label className="text-xs font-medium rogym-text-dim">
+                {t('reports.revenue.filter.month')}
+              </label>
+              <OwnerSelect
+                value={String(month)}
+                onValueChange={(v) => setMonth(Number(v))}
+                ariaLabel={t('reports.revenue.filter.month')}
+              >
+                {MONTH_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
               </OwnerSelect>
             </div>
           )}
 
           {mode === 'quarter' && (
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-medium rogym-text-dim">Quý</label>
-              <OwnerSelect value={String(quarter)} onValueChange={(v) => setQuarter(Number(v))} ariaLabel="Quý">
-                {QUARTER_OPTIONS.map((opt) => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+              <label className="text-xs font-medium rogym-text-dim">
+                {t('reports.revenue.filter.quarter')}
+              </label>
+              <OwnerSelect
+                value={String(quarter)}
+                onValueChange={(v) => setQuarter(Number(v))}
+                ariaLabel={t('reports.revenue.filter.quarter')}
+              >
+                {QUARTER_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
               </OwnerSelect>
             </div>
           )}
@@ -533,7 +618,9 @@ export default function RevenuePage() {
           {mode === 'custom' && (
             <>
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-medium rogym-text-dim">Từ ngày</label>
+                <label className="text-xs font-medium rogym-text-dim">
+                  {t('reports.revenue.filter.from')}
+                </label>
                 <input
                   type="date"
                   value={customFrom}
@@ -543,7 +630,9 @@ export default function RevenuePage() {
                 />
               </div>
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-medium rogym-text-dim">Đến ngày</label>
+                <label className="text-xs font-medium rogym-text-dim">
+                  {t('reports.revenue.filter.to')}
+                </label>
                 <input
                   type="date"
                   value={customTo}
@@ -558,7 +647,7 @@ export default function RevenuePage() {
                 disabled={loading}
               >
                 {loading && <LoaderCircle size={15} className="animate-spin" />}
-                Xem báo cáo
+                {t('reports.revenue.viewReport')}
               </button>
             </>
           )}
@@ -575,23 +664,30 @@ export default function RevenuePage() {
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <OwnerStatCard
               icon={<DollarSign size={18} />}
-              label="Tổng doanh thu"
+              label={t('reports.revenue.kpi.totalRevenue')}
               value={formatVnd(total)}
-              hint={`${uniqueDays} ngày có giao dịch`}
+              hint={t('reports.revenue.transactionDays', { count: uniqueDays })}
               accent
             />
             <OwnerStatCard
               icon={<UserPlus size={18} />}
-              label="Hội viên mới"
+              label={t('reports.revenue.kpi.newMembers')}
               value={String(newMembers)}
-              hint="Đăng ký trong kỳ"
+              hint={t('reports.revenue.newSubscriptions')}
               accent={false}
             />
             <OwnerStatCard
               icon={<RefreshCw size={18} />}
-              label="Tỷ lệ gia hạn"
+              label={t('reports.revenue.kpi.renewalRate')}
               value={renewals?.renewalRate != null ? `${renewals.renewalRate.toFixed(1)}%` : '—'}
-              hint={renewals ? `${renewals.renewed} gia hạn · ${renewals.churned} rời bỏ` : 'Chưa có dữ liệu'}
+              hint={
+                renewals
+                  ? t('reports.revenue.renewalHint', {
+                      renewed: renewals.renewed,
+                      churned: renewals.churned,
+                    })
+                  : t('reports.revenue.noDataYet')
+              }
               accent={false}
             />
             <OwnerStatCard
@@ -600,9 +696,9 @@ export default function RevenuePage() {
                   {isPositive ? <TrendingUp size={18} /> : <TrendingDown size={18} />}
                 </span>
               }
-              label="So với kỳ trước"
+              label={t('reports.revenue.kpi.vsLastPeriod')}
               value={growth === null ? '—' : `${growth >= 0 ? '+' : ''}${growth.toFixed(1)}%`}
-              hint={`Kỳ trước: ${formatVnd(Number(prevTotal))}`}
+              hint={t('reports.revenue.prevPeriod', { amount: formatVnd(Number(prevTotal)) })}
               accent={isPositive}
             />
           </div>
@@ -610,21 +706,30 @@ export default function RevenuePage() {
           {/* Chart card */}
           {data.length === 0 && !loading ? (
             <OwnerEmptyState
-              title="Không có doanh thu trong khoảng này"
-              description="Thử chọn khoảng thời gian khác."
+              title={t('reports.revenue.noData')}
+              description={t('reports.revenue.tryOtherPeriod')}
             />
           ) : loadedDisplay ? (
             <div className="rogym-card rogym-card--compact p-6 space-y-4">
               <div className="flex flex-wrap items-start justify-between gap-3">
-                <h2 className="text-base font-bold text-white">Doanh thu theo thời gian</h2>
+                <h2 className="text-base font-bold text-white">
+                  {t('reports.revenue.chartTitle')}
+                </h2>
                 {isPartial && (
                   <div className="flex items-center gap-1.5 rounded-xl bg-amber-500/10 border border-amber-500/20 px-3 py-1.5">
                     <Info size={13} className="text-amber-400 shrink-0" />
                     <span className="text-xs text-amber-300">
-                      Tạm tính từ{' '}
-                      {new Date(loadedDisplay.from + 'T00:00:00').toLocaleDateString('vi-VN', { day: 'numeric', month: 'numeric' })}{' '}
-                      đến{' '}
-                      {new Date(todayStr + 'T00:00:00').toLocaleDateString('vi-VN', { day: 'numeric', month: 'numeric', year: 'numeric' })}
+                      {t('reports.revenue.partialNote', {
+                        from: new Date(loadedDisplay.from + 'T00:00:00').toLocaleDateString(
+                          'vi-VN',
+                          { day: 'numeric', month: 'numeric' }
+                        ),
+                        to: new Date(todayStr + 'T00:00:00').toLocaleDateString('vi-VN', {
+                          day: 'numeric',
+                          month: 'numeric',
+                          year: 'numeric',
+                        }),
+                      })}
                     </span>
                   </div>
                 )}
@@ -643,14 +748,18 @@ export default function RevenuePage() {
           {topPackages.length > 0 && (
             <div className="rogym-card rogym-card--compact p-6 space-y-4">
               <div className="flex items-center justify-between gap-3">
-                <h2 className="text-base font-bold text-white">Top gói tập bán chạy</h2>
+                <h2 className="text-base font-bold text-white">
+                  {t('reports.revenue.topPackages')}
+                </h2>
                 {topPackages.length > 3 && (
                   <button
                     type="button"
                     className="text-xs rogym-text-dim hover:text-white transition-colors"
                     onClick={() => setShowAllPackages((prev) => !prev)}
                   >
-                    {showAllPackages ? 'Thu gọn' : `Xem thêm (${topPackages.length - 3} gói)`}
+                    {showAllPackages
+                      ? t('reports.revenue.collapse')
+                      : t('reports.revenue.showMore', { count: topPackages.length - 3 })}
                   </button>
                 )}
               </div>
@@ -665,8 +774,12 @@ export default function RevenuePage() {
                       </span>
                       <div className="flex-1 min-w-0 space-y-1">
                         <div className="flex items-center justify-between gap-2">
-                          <span className="truncate text-sm font-semibold text-white">{pkg.name}</span>
-                          <span className="shrink-0 text-xs rogym-text-dim">{pkg.count} lượt</span>
+                          <span className="truncate text-sm font-semibold text-white">
+                            {pkg.name}
+                          </span>
+                          <span className="shrink-0 text-xs rogym-text-dim">
+                            {t('reports.revenue.packageSalesCount', { count: pkg.count })}
+                          </span>
                         </div>
                         <div className="flex items-center gap-3">
                           <div className="flex-1 h-1.5 rounded-full bg-white/10 overflow-hidden">
@@ -675,12 +788,16 @@ export default function RevenuePage() {
                               style={{
                                 width: `${barWidth}%`,
                                 backgroundColor: OWNER_ACCENT,
-                                opacity: index === 0 ? 1 : 0.5 + 0.15 * (1 - index / topPackages.length),
+                                opacity:
+                                  index === 0 ? 1 : 0.5 + 0.15 * (1 - index / topPackages.length),
                               }}
                             />
                           </div>
                           <span className="shrink-0 text-xs rogym-text-secondary">
-                            {pkg.durationDays} ngày · {formatVnd(Number(pkg.price))}
+                            {t('reports.revenue.packageDurationPrice', {
+                              days: pkg.durationDays,
+                              price: formatVnd(Number(pkg.price)),
+                            })}
                           </span>
                         </div>
                       </div>

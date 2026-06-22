@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { AlertTriangle, Check, ChevronRight, RotateCcw, Search, UserRound } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { getApiError } from '@/lib/api-error'
 import { formatDate } from '@/lib/date'
 import { formatVnd } from '@/lib/currency'
@@ -21,19 +22,6 @@ type PaymentMethod = 'cash' | 'bank_card' | 'ewallet'
 type WizardStep = 'select-member' | 'review-sub' | 'select-package' | 'select-trainer' | 'payment' | 'success'
 type WizardMode = 'renew' | 'new'
 
-const PAYMENT_METHODS: { value: PaymentMethod; label: string }[] = [
-  { value: 'cash', label: 'Tiền mặt' },
-  { value: 'bank_card', label: 'Thẻ ngân hàng' },
-  { value: 'ewallet', label: 'Ví điện tử' },
-]
-
-const STATUS_FILTERS: { value: string; label: string }[] = [
-  { value: '', label: 'Tất cả' },
-  { value: 'active', label: 'Đang hoạt động' },
-  { value: 'pending_verification', label: 'Chờ xác thực' },
-  { value: 'locked', label: 'Đã khóa' },
-]
-
 function stepToNumber(step: WizardStep): number {
   if (step === 'select-member') return 1
   if (step === 'review-sub' || step === 'select-package' || step === 'select-trainer') return 2
@@ -41,11 +29,12 @@ function stepToNumber(step: WizardStep): number {
 }
 
 function StepIndicator({ step, mode }: { step: WizardStep; mode: WizardMode | null }) {
+  const { t } = useTranslation('staff')
   const current = stepToNumber(step)
   const steps = [
-    { n: 1, label: 'Chọn hội viên' },
-    { n: 2, label: mode === 'new' ? 'Chọn gói mới' : 'Thông tin gói' },
-    { n: 3, label: 'Thanh toán' },
+    { n: 1, label: t('renewal.step1Label') },
+    { n: 2, label: mode === 'new' ? t('renewal.step2LabelNew') : t('renewal.step2LabelRenew') },
+    { n: 3, label: t('renewal.step3Label') },
   ]
   return (
     <div className="flex items-center gap-0 mb-8">
@@ -101,6 +90,15 @@ function subStatusTone(status: string | undefined) {
 }
 
 function SelectMemberStep({ onSelect }: { onSelect: (m: TrainerStudentSummary) => void }) {
+  const { t } = useTranslation('staff')
+
+  const STATUS_FILTERS: { value: string; label: string }[] = [
+    { value: '', label: t('renewal.filterAll') },
+    { value: 'active', label: t('renewal.filterActive') },
+    { value: 'pending_verification', label: t('renewal.filterPendingVerification') },
+    { value: 'locked', label: t('renewal.filterLocked') },
+  ]
+
   const [search, setSearch] = useState('')
   const [appliedSearch, setAppliedSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
@@ -125,9 +123,9 @@ function SelectMemberStep({ onSelect }: { onSelect: (m: TrainerStudentSummary) =
         setMembers(res.data)
         setTotalPages(Math.max(1, Math.ceil(res.total / 12)))
       })
-      .catch((err) => setError(getApiError(err, 'Không thể tải danh sách hội viên.')))
+      .catch((err) => setError(getApiError(err, t('renewal.loadMembersFailed'))))
       .finally(() => setLoading(false))
-  }, [page, appliedSearch, statusFilter])
+  }, [page, appliedSearch, statusFilter, t])
 
   useEffect(() => {
     load()
@@ -154,7 +152,7 @@ function SelectMemberStep({ onSelect }: { onSelect: (m: TrainerStudentSummary) =
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && applySearch()}
-            placeholder="Tên, email hoặc mã hội viên..."
+            placeholder={t('renewal.searchPlaceholder')}
           />
         </div>
 
@@ -177,7 +175,7 @@ function SelectMemberStep({ onSelect }: { onSelect: (m: TrainerStudentSummary) =
         </div>
 
         <button type="button" className="rogym-btn rogym-btn--primary h-9 px-4 text-sm" onClick={applySearch}>
-          Tìm
+          {t('renewal.search')}
         </button>
       </div>
 
@@ -186,7 +184,7 @@ function SelectMemberStep({ onSelect }: { onSelect: (m: TrainerStudentSummary) =
       ) : error ? (
         <StaffErrorState message={error} onRetry={load} />
       ) : members.length === 0 ? (
-        <StaffEmptyState title="Không tìm thấy hội viên" description="Thử thay đổi từ khóa hoặc bộ lọc." />
+        <StaffEmptyState title={t('renewal.noMembers')} description={t('renewal.noMembersDesc')} />
       ) : (
         <>
           {/* Desktop table */}
@@ -194,11 +192,11 @@ function SelectMemberStep({ onSelect }: { onSelect: (m: TrainerStudentSummary) =
             <table className="w-full border-collapse text-left text-sm">
               <thead className="bg-white/5 text-xs uppercase tracking-wider rogym-text-dim">
                 <tr>
-                  <th className="px-5 py-4">Hội viên</th>
-                  <th className="px-5 py-4">Gói tập</th>
-                  <th className="px-5 py-4">Hết hạn</th>
-                  <th className="px-5 py-4">Trạng thái gói</th>
-                  <th className="px-5 py-4 text-right">Thao tác</th>
+                  <th className="px-5 py-4">{t('renewal.colMember')}</th>
+                  <th className="px-5 py-4">{t('renewal.colPackage')}</th>
+                  <th className="px-5 py-4">{t('renewal.colExpiry')}</th>
+                  <th className="px-5 py-4">{t('renewal.colSubStatus')}</th>
+                  <th className="px-5 py-4 text-right">{t('renewal.colActions')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -212,7 +210,7 @@ function SelectMemberStep({ onSelect }: { onSelect: (m: TrainerStudentSummary) =
                     </td>
                     <td className="px-5 py-4 rogym-text-secondary">
                       {m.activeSubscription?.packageName ?? (
-                        <span className="rogym-text-dim italic">Chưa có gói</span>
+                        <span className="rogym-text-dim italic">{t('renewal.noPackage')}</span>
                       )}
                     </td>
                     <td className="px-5 py-4 rogym-text-secondary">
@@ -227,15 +225,15 @@ function SelectMemberStep({ onSelect }: { onSelect: (m: TrainerStudentSummary) =
                           data-tone={subStatusTone(m.activeSubscription.status)}
                         >
                           {m.activeSubscription.status === 'active'
-                            ? 'Đang hoạt động'
+                            ? t('renewal.subStatusActive')
                             : m.activeSubscription.status === 'expired'
-                              ? 'Đã hết hạn'
+                              ? t('renewal.subStatusExpired')
                               : m.activeSubscription.status === 'pending'
-                                ? 'Chờ thanh toán'
+                                ? t('renewal.subStatusPending')
                                 : m.activeSubscription.status}
                         </span>
                       ) : (
-                        <span className="rogym-tone-badge" data-tone="muted">Chưa có gói</span>
+                        <span className="rogym-tone-badge" data-tone="muted">{t('renewal.noPackageBadge')}</span>
                       )}
                     </td>
                     <td className="px-5 py-4 text-right">
@@ -244,7 +242,7 @@ function SelectMemberStep({ onSelect }: { onSelect: (m: TrainerStudentSummary) =
                         className="rogym-text-link rogym-text-link--accent"
                         onClick={() => onSelect(m)}
                       >
-                        Chọn
+                        {t('renewal.select')}
                       </button>
                     </td>
                   </tr>
@@ -277,22 +275,22 @@ function SelectMemberStep({ onSelect }: { onSelect: (m: TrainerStudentSummary) =
                     data-tone={subStatusTone(m.activeSubscription?.status)}
                   >
                     {m.activeSubscription?.status === 'active'
-                      ? 'Đang HĐ'
+                      ? t('renewal.activeShort')
                       : m.activeSubscription?.status === 'expired'
-                        ? 'Hết hạn'
-                        : 'Chưa có'}
+                        ? t('renewal.expiredShort')
+                        : t('renewal.noPackageBadge')}
                   </span>
                 </div>
                 <div className="mt-2.5 text-sm rogym-text-secondary">
-                  {m.activeSubscription?.packageName ?? 'Chưa có gói tập'}
+                  {m.activeSubscription?.packageName ?? t('renewal.noPackage')}
                   {m.activeSubscription?.endDate && (
                     <span className="ml-1.5 text-xs rogym-text-dim">
-                      · đến {formatDate(m.activeSubscription.endDate)}
+                      · {t('renewal.expiryUntil', { date: formatDate(m.activeSubscription.endDate) })}
                     </span>
                   )}
                 </div>
                 <div className="mt-3 flex justify-end">
-                  <span className="rogym-text-link rogym-text-link--accent text-sm">Chọn →</span>
+                  <span className="rogym-text-link rogym-text-link--accent text-sm">{t('renewal.selectArrow')}</span>
                 </div>
               </button>
             ))}
@@ -306,7 +304,7 @@ function SelectMemberStep({ onSelect }: { onSelect: (m: TrainerStudentSummary) =
                 disabled={page <= 1}
                 onClick={() => setPage((p) => p - 1)}
               >
-                Trước
+                {t('renewal.prevPage')}
               </button>
               <span className="text-sm rogym-text-secondary">{page}/{totalPages}</span>
               <button
@@ -315,7 +313,7 @@ function SelectMemberStep({ onSelect }: { onSelect: (m: TrainerStudentSummary) =
                 disabled={page >= totalPages}
                 onClick={() => setPage((p) => p + 1)}
               >
-                Sau
+                {t('renewal.nextPage')}
               </button>
             </div>
           )}
@@ -338,6 +336,7 @@ function ReviewSubscriptionStep({
   onProceed: (sub: Subscription) => void
   onProceedNew: () => void
 }) {
+  const { t } = useTranslation('staff')
   const [subscription, setSubscription] = useState<Subscription | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -369,9 +368,9 @@ function ReviewSubscriptionStep({
           setSubscription(sub)
         }
       })
-      .catch(() => setError('Không thể tải thông tin gói tập.'))
+      .catch(() => setError(t('renewal.loadSubFailed')))
       .finally(() => setLoading(false))
-  }, [member])
+  }, [member, t])
 
   if (loading) {
     return (
@@ -402,48 +401,51 @@ function ReviewSubscriptionStep({
       {noRenewable && !error && (
         <div className="rogym-card rogym-card--compact p-6 text-center space-y-4">
           <div>
-            <p className="font-medium text-white">Không có gói tập phù hợp để gia hạn</p>
-            <p className="mt-1 text-sm rogym-text-dim">
-              Hội viên này chưa có gói tập hoặc gói đã bị huỷ.
-              Nhân viên có thể đăng ký gói mới ngay tại đây.
-            </p>
+            <p className="font-medium text-white">{t('renewal.noRenewable')}</p>
+            <p className="mt-1 text-sm rogym-text-dim">{t('renewal.noRenewableDesc')}</p>
           </div>
           <button
             type="button"
             className="rogym-btn rogym-btn--primary"
             onClick={onProceedNew}
           >
-            Đăng ký gói mới cho hội viên
+            {t('renewal.subscribeNew')}
           </button>
         </div>
       )}
 
       {subscription && (
         <div className="rogym-card rogym-card--compact p-5 space-y-4">
-          <h3 className="text-sm font-bold text-white">Thông tin gói tập hiện tại</h3>
+          <h3 className="text-sm font-bold text-white">{t('renewal.currentSubInfo')}</h3>
 
           <div className="grid grid-cols-2 gap-3 text-sm">
-            <InfoPair label="Tên gói" value={subscription.packageName ?? '—'} />
+            <InfoPair label={t('renewal.subName')} value={subscription.packageName ?? '—'} />
             <InfoPair
-              label="Trạng thái"
+              label={t('renewal.subStatus')}
               value={
                 subscription.status === 'active'
-                  ? 'Đang hoạt động'
+                  ? t('renewal.subStatusActive')
                   : subscription.status === 'expired'
-                    ? 'Đã hết hạn'
+                    ? t('renewal.subStatusExpired')
                     : subscription.status
               }
             />
-            <InfoPair label="Ngày bắt đầu" value={formatDate(subscription.startDate)} />
-            <InfoPair label="Ngày hết hạn" value={formatDate(subscription.endDate)} />
+            <InfoPair label={t('renewal.subStart')} value={formatDate(subscription.startDate)} />
+            <InfoPair label={t('renewal.subEnd')} value={formatDate(subscription.endDate)} />
             {subscription.daysLeft !== null && subscription.daysLeft > 0 && (
-              <InfoPair label="Còn lại" value={`${subscription.daysLeft} ngày`} />
+              <InfoPair
+                label={t('renewal.subDaysLeft')}
+                value={t('renewal.subDaysLeftValue', { days: subscription.daysLeft })}
+              />
             )}
             {subscription.package && (
               <>
-                <InfoPair label="Thời hạn gia hạn" value={`${subscription.package.durationDays} ngày`} />
                 <InfoPair
-                  label="Phí gia hạn"
+                  label={t('renewal.renewDuration')}
+                  value={t('renewal.renewExtendDays', { days: subscription.package.durationDays })}
+                />
+                <InfoPair
+                  label={t('renewal.renewFee')}
                   value={formatVnd(Number(subscription.package.price))}
                 />
               </>
@@ -453,8 +455,8 @@ function ReviewSubscriptionStep({
           {subscription.package && (
             <div className="flex items-center justify-between rounded-xl border border-[rgba(6,195,132,0.25)] bg-[rgba(6,195,132,0.06)] px-4 py-3">
               <div>
-                <span className="rogym-text-secondary text-sm">Gia hạn thêm </span>
-                <span className="font-semibold text-white">{subscription.package.durationDays} ngày</span>
+                <span className="rogym-text-secondary text-sm">{t('renewal.renewExtend')} </span>
+                <span className="font-semibold text-white">{t('renewal.renewExtendDays', { days: subscription.package.durationDays })}</span>
               </div>
               <span className="text-lg font-bold text-[var(--rogym-teal)]">
                 {formatVnd(Number(subscription.package.price))}
@@ -467,16 +469,17 @@ function ReviewSubscriptionStep({
       {packageInactive && subscription && (
         <div className="flex items-start gap-3 rounded-2xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-300">
           <AlertTriangle size={16} className="shrink-0 mt-0.5" />
-          <span>
-            Gói <strong className="text-amber-200">{subscription.packageName}</strong> đã ngừng bán — không thể gia hạn.
-            Hội viên vẫn sử dụng đến hết hạn. Nếu muốn, hãy đăng ký gói mới.
-          </span>
+          <span
+            dangerouslySetInnerHTML={{
+              __html: t('renewal.packageInactiveWarning', { name: `<strong class="text-amber-200">${subscription.packageName}</strong>` }),
+            }}
+          />
         </div>
       )}
 
       <div className="flex justify-between">
         <button type="button" className="rogym-btn rogym-btn--outline-white" onClick={onBack}>
-          Quay lại
+          {t('renewal.back')}
         </button>
         {subscription && !packageInactive && (
           <button
@@ -484,7 +487,7 @@ function ReviewSubscriptionStep({
             className="rogym-btn rogym-btn--primary flex items-center gap-2"
             onClick={() => onProceed(subscription)}
           >
-            Tiến hành gia hạn <ChevronRight size={16} />
+            {t('renewal.proceedRenew')} <ChevronRight size={16} />
           </button>
         )}
         {packageInactive && (
@@ -493,7 +496,7 @@ function ReviewSubscriptionStep({
             className="rogym-btn rogym-btn--primary flex items-center gap-2"
             onClick={onProceedNew}
           >
-            Đăng ký gói mới <ChevronRight size={16} />
+            {t('renewal.subscribeNewPackage')} <ChevronRight size={16} />
           </button>
         )}
       </div>
@@ -512,6 +515,7 @@ function SelectPackageStep({
   onBack: () => void
   onSelect: (pkg: Package) => void
 }) {
+  const { t } = useTranslation('staff')
   const [packages, setPackages] = useState<Package[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -521,9 +525,9 @@ function SelectPackageStep({
     packageService
       .list({ status: 'active' })
       .then((res) => setPackages(res.data))
-      .catch(() => setError('Không thể tải danh sách gói tập.'))
+      .catch(() => setError(t('renewal.loadPackagesFailed')))
       .finally(() => setLoading(false))
-  }, [])
+  }, [t])
 
   return (
     <div className="space-y-4">
@@ -536,7 +540,7 @@ function SelectPackageStep({
           <div className="font-bold text-white">{member.fullName}</div>
           <div className="text-sm rogym-text-dim">{member.memberCode} · {member.email}</div>
         </div>
-        <span className="rogym-tone-badge" data-tone="muted">Chưa có gói</span>
+        <span className="rogym-tone-badge" data-tone="muted">{t('renewal.noPackageBadge')}</span>
       </div>
 
       {loading ? (
@@ -545,8 +549,8 @@ function SelectPackageStep({
         <StaffErrorState message={error} />
       ) : packages.length === 0 ? (
         <StaffEmptyState
-          title="Không có gói tập nào"
-          description="Chưa có gói tập đang hoạt động. Liên hệ quản lý để thêm gói mới."
+          title={t('renewal.noPackages')}
+          description={t('renewal.noPackagesDesc')}
         />
       ) : (
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -570,7 +574,7 @@ function SelectPackageStep({
                     </div>
                   ) : pkg.includesPt ? (
                     <span className="shrink-0 text-xs font-medium px-2 py-0.5 rounded-full border border-[var(--rogym-teal)] text-[var(--rogym-teal)]">
-                      Có PT
+                      {t('renewal.hasPt')}
                     </span>
                   ) : null}
                 </div>
@@ -578,7 +582,8 @@ function SelectPackageStep({
                   {formatVnd(Number(pkg.price))}
                 </div>
                 <div className="text-sm rogym-text-secondary">
-                  {pkg.durationDays} ngày{pkg.includesPt ? ' · Kèm PT cá nhân' : ''}
+                  {t('renewal.durationDays', { days: pkg.durationDays })}
+                  {pkg.includesPt ? ` · ${t('renewal.withPt')}` : ''}
                 </div>
                 {pkg.benefits && (
                   <p className="text-xs rogym-text-dim line-clamp-2">{pkg.benefits}</p>
@@ -591,7 +596,7 @@ function SelectPackageStep({
 
       <div className="flex justify-between">
         <button type="button" className="rogym-btn rogym-btn--outline-white" onClick={onBack}>
-          Quay lại
+          {t('renewal.back')}
         </button>
         <button
           type="button"
@@ -599,7 +604,7 @@ function SelectPackageStep({
           disabled={!selected}
           onClick={() => selected && onSelect(selected)}
         >
-          Tiến hành thanh toán <ChevronRight size={16} />
+          {t('renewal.proceedPayment')} <ChevronRight size={16} />
         </button>
       </div>
     </div>
@@ -619,6 +624,7 @@ function SelectTrainerStep({
   onBack: () => void
   onSelect: (trainer: Trainer) => void
 }) {
+  const { t } = useTranslation('staff')
   const [trainers, setTrainers] = useState<Trainer[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -628,9 +634,9 @@ function SelectTrainerStep({
     trainerService
       .list()
       .then(setTrainers)
-      .catch(() => setError('Không thể tải danh sách PT.'))
+      .catch(() => setError(t('renewal.loadTrainersFailed')))
       .finally(() => setLoading(false))
-  }, [])
+  }, [t])
 
   return (
     <div className="space-y-4">
@@ -640,15 +646,15 @@ function SelectTrainerStep({
         </div>
         <div className="flex-1">
           <div className="font-bold text-white">{member.fullName}</div>
-          <div className="text-sm rogym-text-dim">Gói: {selectedPackage.name}</div>
+          <div className="text-sm rogym-text-dim">{t('renewal.packageLabel', { name: selectedPackage.name })}</div>
         </div>
         <span className="shrink-0 text-xs font-medium px-2 py-0.5 rounded-full border border-[var(--rogym-teal)] text-[var(--rogym-teal)]">
-          Có PT
+          {t('renewal.hasPt')}
         </span>
       </div>
 
       <p className="text-sm rogym-text-secondary px-1">
-        Gói này bao gồm PT cá nhân. Vui lòng chọn PT phụ trách cho hội viên.
+        {t('renewal.ptRequired')}
       </p>
 
       {loading ? (
@@ -656,7 +662,7 @@ function SelectTrainerStep({
       ) : error ? (
         <StaffErrorState message={error} />
       ) : trainers.length === 0 ? (
-        <StaffEmptyState title="Không có PT nào" description="Liên hệ quản lý để thêm PT." />
+        <StaffEmptyState title={t('renewal.noPt')} description={t('renewal.noPtDesc')} />
       ) : (
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {trainers.map((trainer) => {
@@ -688,7 +694,7 @@ function SelectTrainerStep({
 
       <div className="flex justify-between">
         <button type="button" className="rogym-btn rogym-btn--outline-white" onClick={onBack}>
-          Quay lại
+          {t('renewal.back')}
         </button>
         <button
           type="button"
@@ -696,7 +702,7 @@ function SelectTrainerStep({
           disabled={!selected}
           onClick={() => selected && onSelect(selected)}
         >
-          Tiến hành thanh toán <ChevronRight size={16} />
+          {t('renewal.proceedPayment')} <ChevronRight size={16} />
         </button>
       </div>
     </div>
@@ -722,6 +728,14 @@ function PaymentStep({
   onBack: () => void
   onSuccess: (newEndDate: string, packageName: string) => void
 }) {
+  const { t } = useTranslation('staff')
+
+  const PAYMENT_METHODS: { value: PaymentMethod; label: string }[] = [
+    { value: 'cash', label: t('renewal.cash') },
+    { value: 'bank_card', label: t('renewal.bankCard') },
+    { value: 'ewallet', label: t('renewal.ewallet') },
+  ]
+
   const [method, setMethod] = useState<PaymentMethod>('cash')
   const [txRef, setTxRef] = useState('')
   const [submitting, setSubmitting] = useState(false)
@@ -768,7 +782,7 @@ function PaymentStep({
         onSuccess(sub.endDate, selectedPackage.name)
       }
     } catch (err) {
-      setError(getApiError(err, 'Không thể xử lý thanh toán. Vui lòng thử lại.'))
+      setError(getApiError(err, t('renewal.paymentFailed')))
     } finally {
       setSubmitting(false)
     }
@@ -779,38 +793,38 @@ function PaymentStep({
       {/* Summary */}
       <div className="rogym-card rogym-card--compact p-5 space-y-3">
         <h3 className="text-sm font-bold text-white mb-1">
-          {mode === 'renew' ? 'Xác nhận gia hạn' : 'Xác nhận đăng ký gói mới'}
+          {mode === 'renew' ? t('renewal.confirmRenew') : t('renewal.confirmNew')}
         </h3>
         <div className="grid grid-cols-2 gap-3 text-sm">
           <div className="rounded-xl border border-white/5 bg-white/[0.03] p-3">
-            <div className="text-xs rogym-text-dim mb-1">Hội viên</div>
+            <div className="text-xs rogym-text-dim mb-1">{t('renewal.summaryMember')}</div>
             <div className="font-medium text-white">{member.fullName}</div>
             <div className="text-xs rogym-text-dim">{member.memberCode}</div>
           </div>
           <div className="rounded-xl border border-white/5 bg-white/[0.03] p-3">
             <div className="text-xs rogym-text-dim mb-1">
-              {mode === 'renew' ? 'Gói gia hạn' : 'Gói đăng ký'}
+              {mode === 'renew' ? t('renewal.summaryPackageRenew') : t('renewal.summaryPackageNew')}
             </div>
             <div className="font-medium text-white">{displayName}</div>
-            <div className="text-xs rogym-text-dim">+{durationDays} ngày</div>
+            <div className="text-xs rogym-text-dim">{t('renewal.addDays', { days: durationDays })}</div>
           </div>
           {selectedTrainer && (
             <div className="rounded-xl border border-white/5 bg-white/[0.03] p-3 col-span-2">
-              <div className="text-xs rogym-text-dim mb-1">PT phụ trách</div>
+              <div className="text-xs rogym-text-dim mb-1">{t('renewal.summaryTrainer')}</div>
               <div className="font-medium text-white">{selectedTrainer.fullName}</div>
               <div className="text-xs rogym-text-dim capitalize">{selectedTrainer.position}</div>
             </div>
           )}
         </div>
         <div className="flex items-center justify-between rounded-xl border border-[rgba(6,195,132,0.25)] bg-[rgba(6,195,132,0.06)] px-4 py-3">
-          <span className="rogym-text-secondary font-medium">Tổng thanh toán</span>
+          <span className="rogym-text-secondary font-medium">{t('renewal.totalPayment')}</span>
           <span className="text-lg font-bold text-[var(--rogym-teal)]">{formatVnd(price)}</span>
         </div>
       </div>
 
       {/* Payment form */}
       <div className="rogym-card rogym-card--compact p-5 space-y-4">
-        <h3 className="text-sm font-bold text-white">Phương thức thanh toán</h3>
+        <h3 className="text-sm font-bold text-white">{t('renewal.paymentMethod')}</h3>
 
         <div className="flex gap-3 flex-wrap">
           {PAYMENT_METHODS.map((m) => (
@@ -832,12 +846,12 @@ function PaymentStep({
 
         {method !== 'cash' && (
           <label className="block space-y-2">
-            <span className="rogym-field-label">Mã giao dịch (tuỳ chọn)</span>
+            <span className="rogym-field-label">{t('renewal.transactionRef')}</span>
             <input
               className="rogym-input"
               value={txRef}
               onChange={(e) => setTxRef(e.target.value)}
-              placeholder="Nhập mã giao dịch nếu có"
+              placeholder={t('renewal.transactionRefPlaceholder')}
             />
           </label>
         )}
@@ -852,7 +866,7 @@ function PaymentStep({
           onClick={onBack}
           disabled={submitting}
         >
-          Quay lại
+          {t('renewal.back')}
         </button>
         <button
           type="button"
@@ -861,10 +875,10 @@ function PaymentStep({
           disabled={submitting}
         >
           {submitting
-            ? 'Đang xử lý...'
+            ? t('renewal.processingPayment')
             : mode === 'renew'
-              ? `Xác nhận gia hạn — ${formatVnd(price)}`
-              : `Xác nhận đăng ký — ${formatVnd(price)}`}
+              ? t('renewal.confirmRenewBtn', { amount: formatVnd(price) })
+              : t('renewal.confirmNewBtn', { amount: formatVnd(price) })}
         </button>
       </div>
     </div>
@@ -886,6 +900,7 @@ function SuccessState({
   newEndDate: string
   onReset: () => void
 }) {
+  const { t } = useTranslation('staff')
   const isNew = mode === 'new'
   return (
     <div className="flex flex-col items-center text-center py-12 space-y-5">
@@ -894,14 +909,17 @@ function SuccessState({
       </div>
       <div>
         <h2 className="text-xl font-bold text-white">
-          {isNew ? 'Đăng ký gói thành công!' : 'Gia hạn thành công!'}
+          {isNew ? t('renewal.successNew') : t('renewal.successRenew')}
         </h2>
         <p className="mt-1 rogym-text-secondary text-sm">
-          Gói <strong>{packageName}</strong> của <strong>{memberName}</strong> đã được{' '}
-          {isNew ? 'kích hoạt' : 'gia hạn'}.
+          {t('renewal.successDesc', {
+            packageName,
+            memberName,
+            action: isNew ? t('renewal.successActivated') : t('renewal.successRenewed'),
+          })}
         </p>
         <p className="mt-1 text-sm rogym-text-dim">
-          Hết hạn: <strong className="text-white">{formatDate(newEndDate)}</strong>
+          {t('renewal.successExpiry', { date: formatDate(newEndDate) })}
         </p>
       </div>
       <button
@@ -910,7 +928,7 @@ function SuccessState({
         onClick={onReset}
       >
         <RotateCcw size={15} />
-        {isNew ? 'Đăng ký cho hội viên khác' : 'Gia hạn cho hội viên khác'}
+        {isNew ? t('renewal.resetNew') : t('renewal.resetRenew')}
       </button>
     </div>
   )
@@ -930,6 +948,7 @@ function InfoPair({ label, value }: { label: string; value: string }) {
 // ─── Main page ────────────────────────────────────────────────────────────────
 
 export default function RenewalPage() {
+  const { t } = useTranslation('staff')
   const [step, setStep] = useState<WizardStep>('select-member')
   const [mode, setMode] = useState<WizardMode | null>(null)
   const [selectedMember, setSelectedMember] = useState<TrainerStudentSummary | null>(null)
@@ -986,9 +1005,9 @@ export default function RenewalPage() {
   return (
     <StaffPage>
       <StaffPageHeader
-        eyebrow="Dịch vụ tại quầy"
-        title="Gia hạn gói tập"
-        description="Tìm hội viên để gia hạn hoặc đăng ký gói tập mới."
+        eyebrow={t('renewal.eyebrow')}
+        title={t('renewal.title')}
+        description={t('renewal.description')}
       />
 
       {step !== 'success' && <StepIndicator step={step} mode={mode} />}

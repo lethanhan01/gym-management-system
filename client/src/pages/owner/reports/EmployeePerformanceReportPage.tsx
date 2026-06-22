@@ -1,8 +1,9 @@
 import { useEffect, useState, useCallback } from 'react'
 import { LoaderCircle } from 'lucide-react'
 import { PieChart, Pie, Cell, Tooltip, Label } from 'recharts'
+import { useTranslation } from 'react-i18next'
 import { getApiError } from '@/lib/api-error'
-import { todayInput } from '@/lib/date'
+import { formatTime, todayInput } from '@/lib/date'
 import {
   reportService,
   type EmployeePerformanceItem,
@@ -32,40 +33,12 @@ const FIRST_REPORT_YEAR = Math.min(2020, PREVIOUS_MONTH_PERIOD.year, PREVIOUS_QU
 const LAST_REPORT_YEAR = Math.max(
   CURRENT_YEAR,
   PREVIOUS_MONTH_PERIOD.year,
-  PREVIOUS_QUARTER_PERIOD.year,
+  PREVIOUS_QUARTER_PERIOD.year
 )
 const YEARS = Array.from(
   { length: LAST_REPORT_YEAR - FIRST_REPORT_YEAR + 1 },
-  (_, i) => FIRST_REPORT_YEAR + i,
+  (_, i) => FIRST_REPORT_YEAR + i
 )
-
-const MONTH_OPTIONS = [
-  { value: 1, label: 'Tháng 1' },
-  { value: 2, label: 'Tháng 2' },
-  { value: 3, label: 'Tháng 3' },
-  { value: 4, label: 'Tháng 4' },
-  { value: 5, label: 'Tháng 5' },
-  { value: 6, label: 'Tháng 6' },
-  { value: 7, label: 'Tháng 7' },
-  { value: 8, label: 'Tháng 8' },
-  { value: 9, label: 'Tháng 9' },
-  { value: 10, label: 'Tháng 10' },
-  { value: 11, label: 'Tháng 11' },
-  { value: 12, label: 'Tháng 12' },
-]
-
-const QUARTER_OPTIONS = [
-  { value: 1, label: 'Quý 1 (Jan – Mar)' },
-  { value: 2, label: 'Quý 2 (Apr – Jun)' },
-  { value: 3, label: 'Quý 3 (Jul – Sep)' },
-  { value: 4, label: 'Quý 4 (Oct – Dec)' },
-]
-
-const SHIFT_LABEL: Record<string, string> = {
-  morning: 'Ca sáng',
-  afternoon: 'Ca chiều',
-  evening: 'Ca tối',
-}
 
 function pad(n: number) {
   return String(n).padStart(2, '0')
@@ -102,14 +75,6 @@ function minutesToHours(minutes: number): string {
   return (minutes / 60).toFixed(1)
 }
 
-function formatTime(iso: string): string {
-  return new Date(iso).toLocaleTimeString('vi-VN', {
-    hour: '2-digit',
-    minute: '2-digit',
-    timeZone: 'Asia/Ho_Chi_Minh',
-  })
-}
-
 function PerfTooltipContent({
   active,
   actualMinutes,
@@ -119,15 +84,21 @@ function PerfTooltipContent({
   actualMinutes: number
   expectedMinutes: number
 }) {
+  const { t } = useTranslation('owner')
   if (!active) return null
   return (
     <div className="rounded-xl border border-white/10 bg-[var(--rogym-bg-card)] px-3 py-2 text-xs shadow-xl">
       <p className="rogym-text-secondary">
-        Thực tế: <span className="font-semibold text-white">{minutesToHours(actualMinutes)}h</span>
+        {t('reports.performance.actual')}{' '}
+        <span className="font-semibold text-white">
+          {t('reports.performance.hoursValue', { hours: minutesToHours(actualMinutes) })}
+        </span>
       </p>
       <p className="rogym-text-secondary">
-        Kỳ vọng:{' '}
-        <span className="font-semibold text-white">{minutesToHours(expectedMinutes)}h</span>
+        {t('reports.performance.expected')}{' '}
+        <span className="font-semibold text-white">
+          {t('reports.performance.hoursValue', { hours: minutesToHours(expectedMinutes) })}
+        </span>
       </p>
     </div>
   )
@@ -140,10 +111,11 @@ function PerformancePieCard({
   emp: EmployeePerformanceItem
   onViewDetail: (staffId: string) => void
 }) {
+  const { t } = useTranslation('owner')
   const perf = emp.performancePercent
   const chartData = [
-    { name: 'Thực tế', value: perf },
-    { name: 'Còn lại', value: Math.max(0, 100 - perf) },
+    { name: t('reports.performance.actual'), value: perf },
+    { name: t('reports.performance.remaining'), value: Math.max(0, 100 - perf) },
   ]
 
   return (
@@ -188,12 +160,16 @@ function PerformancePieCard({
 
       <div className="text-xs rogym-text-dim space-y-0.5">
         <p>
-          Thực tế:{' '}
-          <span className="text-white font-medium">{minutesToHours(emp.actualMinutes)}h</span>
+          {t('reports.performance.actual')}{' '}
+          <span className="text-white font-medium">
+            {t('reports.performance.hoursValue', { hours: minutesToHours(emp.actualMinutes) })}
+          </span>
         </p>
         <p>
-          Kỳ vọng:{' '}
-          <span className="text-white font-medium">{minutesToHours(emp.expectedMinutes)}h</span>
+          {t('reports.performance.expected')}{' '}
+          <span className="text-white font-medium">
+            {t('reports.performance.hoursValue', { hours: minutesToHours(emp.expectedMinutes) })}
+          </span>
         </p>
       </div>
 
@@ -206,13 +182,44 @@ function PerformancePieCard({
         className="rogym-btn rogym-btn--secondary w-full text-xs"
         onClick={() => onViewDetail(emp.staffId)}
       >
-        Xem chi tiết
+        {t('reports.performance.viewDetail')}
       </button>
     </div>
   )
 }
 
 export default function EmployeePerformanceReportPage() {
+  const { t } = useTranslation('owner')
+
+  const MONTH_OPTIONS = [
+    { value: 1, label: t('reports.revenue.monthLabel', { month: 1 }) },
+    { value: 2, label: t('reports.revenue.monthLabel', { month: 2 }) },
+    { value: 3, label: t('reports.revenue.monthLabel', { month: 3 }) },
+    { value: 4, label: t('reports.revenue.monthLabel', { month: 4 }) },
+    { value: 5, label: t('reports.revenue.monthLabel', { month: 5 }) },
+    { value: 6, label: t('reports.revenue.monthLabel', { month: 6 }) },
+    { value: 7, label: t('reports.revenue.monthLabel', { month: 7 }) },
+    { value: 8, label: t('reports.revenue.monthLabel', { month: 8 }) },
+    { value: 9, label: t('reports.revenue.monthLabel', { month: 9 }) },
+    { value: 10, label: t('reports.revenue.monthLabel', { month: 10 }) },
+    { value: 11, label: t('reports.revenue.monthLabel', { month: 11 }) },
+    { value: 12, label: t('reports.revenue.monthLabel', { month: 12 }) },
+  ]
+
+  const QUARTER_OPTIONS = [
+    { value: 1, label: t('reports.revenue.quarters.q1') },
+    { value: 2, label: t('reports.revenue.quarters.q2') },
+    { value: 3, label: t('reports.revenue.quarters.q3') },
+    { value: 4, label: t('reports.revenue.quarters.q4') },
+  ]
+
+  const SHIFT_LABEL: Record<string, string> = {
+    morning: t('reports.performance.shifts.morning'),
+    afternoon: t('reports.performance.shifts.afternoon'),
+    evening: t('reports.performance.shifts.evening'),
+    night: t('reports.performance.shifts.night'),
+  }
+
   const [mode, setMode] = useState<FilterMode>('month')
   const [monthYear, setMonthYear] = useState(PREVIOUS_MONTH_PERIOD.year)
   const [month, setMonth] = useState(PREVIOUS_MONTH_PERIOD.month)
@@ -233,18 +240,21 @@ export default function EmployeePerformanceReportPage() {
   const [detailLoading, setDetailLoading] = useState(false)
   const [detailError, setDetailError] = useState<string | null>(null)
 
-  const load = useCallback((from: string, to: string) => {
-    setLoading(true)
-    setError(null)
-    reportService
-      .getEmployeePerformance(from, to)
-      .then((result) => {
-        setData(result)
-        setCurrentRange({ from, to })
-      })
-      .catch((err) => setError(getApiError(err)))
-      .finally(() => setLoading(false))
-  }, [])
+  const load = useCallback(
+    (from: string, to: string) => {
+      setLoading(true)
+      setError(null)
+      reportService
+        .getEmployeePerformance(from, to)
+        .then((result) => {
+          setData(result)
+          setCurrentRange({ from, to })
+        })
+        .catch((err) => setError(getApiError(err, t('reports.performance.loadFailed'))))
+        .finally(() => setLoading(false))
+    },
+    [t]
+  )
 
   const handleLoad = useCallback(() => {
     if (mode === 'month') {
@@ -287,9 +297,9 @@ export default function EmployeePerformanceReportPage() {
   return (
     <OwnerPage>
       <OwnerPageHeader
-        eyebrow="Báo cáo"
-        title="Hiệu suất nhân viên"
-        description="Hiệu suất làm việc theo thời gian thực tế / kỳ vọng của từng nhân viên"
+        eyebrow={t('reports.performance.eyebrow')}
+        title={t('reports.performance.title')}
+        description={t('reports.performance.subtitle')}
       />
 
       {/* Bộ lọc */}
@@ -306,7 +316,11 @@ export default function EmployeePerformanceReportPage() {
                 mode === m ? 'is-active' : ''
               }`}
             >
-              {m === 'month' ? 'Tháng' : m === 'quarter' ? 'Quý' : 'Tùy chỉnh'}
+              {m === 'month'
+                ? t('reports.performance.tabs.month')
+                : m === 'quarter'
+                  ? t('reports.performance.tabs.quarter')
+                  : t('reports.performance.tabs.custom')}
             </button>
           ))}
         </div>
@@ -315,11 +329,13 @@ export default function EmployeePerformanceReportPage() {
           {(mode === 'month' || mode === 'quarter') && (
             <>
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-medium rogym-text-dim">Năm</label>
+                <label className="text-xs font-medium rogym-text-dim">
+                  {t('reports.performance.filter.year')}
+                </label>
                 <OwnerSelect
                   value={String(selectedYear)}
                   onValueChange={handleYearChange}
-                  ariaLabel="Năm"
+                  ariaLabel={t('reports.performance.filter.year')}
                 >
                   {YEARS.map((y) => (
                     <option key={y} value={y}>
@@ -331,11 +347,13 @@ export default function EmployeePerformanceReportPage() {
 
               {mode === 'month' && (
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-medium rogym-text-dim">Tháng</label>
+                  <label className="text-xs font-medium rogym-text-dim">
+                    {t('reports.performance.filter.month')}
+                  </label>
                   <OwnerSelect
                     value={String(month)}
                     onValueChange={(v) => setMonth(Number(v))}
-                    ariaLabel="Tháng"
+                    ariaLabel={t('reports.performance.filter.month')}
                   >
                     {MONTH_OPTIONS.map((opt) => (
                       <option key={opt.value} value={opt.value}>
@@ -348,11 +366,13 @@ export default function EmployeePerformanceReportPage() {
 
               {mode === 'quarter' && (
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-medium rogym-text-dim">Quý</label>
+                  <label className="text-xs font-medium rogym-text-dim">
+                    {t('reports.performance.filter.quarter')}
+                  </label>
                   <OwnerSelect
                     value={String(quarter)}
                     onValueChange={(v) => setQuarter(Number(v))}
-                    ariaLabel="Quý"
+                    ariaLabel={t('reports.performance.filter.quarter')}
                   >
                     {QUARTER_OPTIONS.map((opt) => (
                       <option key={opt.value} value={opt.value}>
@@ -368,7 +388,9 @@ export default function EmployeePerformanceReportPage() {
           {mode === 'custom' && (
             <>
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-medium rogym-text-dim">Từ ngày</label>
+                <label className="text-xs font-medium rogym-text-dim">
+                  {t('reports.performance.filter.from')}
+                </label>
                 <input
                   type="date"
                   value={customFrom}
@@ -378,7 +400,9 @@ export default function EmployeePerformanceReportPage() {
                 />
               </div>
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-medium rogym-text-dim">Đến ngày</label>
+                <label className="text-xs font-medium rogym-text-dim">
+                  {t('reports.performance.filter.to')}
+                </label>
                 <input
                   type="date"
                   value={customTo}
@@ -394,7 +418,7 @@ export default function EmployeePerformanceReportPage() {
                 disabled={loading}
               >
                 {loading && <LoaderCircle size={15} className="animate-spin" />}
-                Xem báo cáo
+                {t('reports.performance.filter.view')}
               </button>
             </>
           )}
@@ -407,8 +431,8 @@ export default function EmployeePerformanceReportPage() {
         <OwnerErrorState message={error} onRetry={handleLoad} />
       ) : data.length === 0 ? (
         <OwnerEmptyState
-          title="Không có dữ liệu"
-          description="Không có nhân viên nào trong khoảng thời gian này."
+          title={t('reports.performance.noDataTitle')}
+          description={t('reports.performance.noStaff')}
         />
       ) : (
         <>
@@ -420,13 +444,16 @@ export default function EmployeePerformanceReportPage() {
 
           <div className="flex items-center gap-6 rounded-xl border border-white/5 bg-white/[0.025] p-4 text-xs rogym-text-dim">
             <span className="flex items-center gap-2">
-              <span className="h-2 w-2 rounded-full bg-green-500" /> 1.0–1.5: Tốt
+              <span className="h-2 w-2 rounded-full bg-green-500" />{' '}
+              {t('reports.performance.legend.good')}
             </span>
             <span className="flex items-center gap-2">
-              <span className="h-2 w-2 rounded-full bg-amber-500" /> 1.5–2.5: Trung bình
+              <span className="h-2 w-2 rounded-full bg-amber-500" />{' '}
+              {t('reports.performance.legend.average')}
             </span>
             <span className="flex items-center gap-2">
-              <span className="h-2 w-2 rounded-full bg-red-500" /> 2.5–3.0: Cần cải thiện
+              <span className="h-2 w-2 rounded-full bg-red-500" />{' '}
+              {t('reports.performance.legend.needsImprovement')}
             </span>
           </div>
         </>
@@ -435,7 +462,7 @@ export default function EmployeePerformanceReportPage() {
       {/* Modal chi tiết hiệu suất */}
       <OwnerModal
         open={detailOpen}
-        title={`Chi tiết hiệu suất — ${detailStaffName}`}
+        title={t('reports.performance.detailModal', { name: detailStaffName })}
         onClose={() => setDetailOpen(false)}
         size="2xl"
       >
@@ -447,18 +474,28 @@ export default function EmployeePerformanceReportPage() {
           <div className="space-y-6">
             {/* Danh sách chấm công */}
             <section>
-              <h3 className="mb-3 text-sm font-semibold text-white">Danh sách chấm công</h3>
+              <h3 className="mb-3 text-sm font-semibold text-white">
+                {t('reports.performance.attendanceSectionTitle')}
+              </h3>
               {detailData.attendanceLogs.length === 0 ? (
-                <p className="text-xs rogym-text-dim">Không có dữ liệu chấm công.</p>
+                <p className="text-xs rogym-text-dim">{t('reports.performance.noAttendance')}</p>
               ) : (
                 <div className="overflow-x-auto rounded-xl border border-white/5">
                   <table className="w-full text-xs">
                     <thead>
                       <tr className="border-b border-white/5 text-left rogym-text-dim">
-                        <th className="px-4 py-2.5 font-medium">Ngày</th>
-                        <th className="px-4 py-2.5 font-medium">Check-in</th>
-                        <th className="px-4 py-2.5 font-medium">Check-out</th>
-                        <th className="px-4 py-2.5 font-medium text-right">Thời gian (h)</th>
+                        <th className="px-4 py-2.5 font-medium">
+                          {t('reports.performance.attendanceTable.date')}
+                        </th>
+                        <th className="px-4 py-2.5 font-medium">
+                          {t('reports.performance.attendanceTable.checkIn')}
+                        </th>
+                        <th className="px-4 py-2.5 font-medium">
+                          {t('reports.performance.attendanceTable.checkOut')}
+                        </th>
+                        <th className="px-4 py-2.5 font-medium text-right">
+                          {t('reports.performance.attendanceTable.hours')}
+                        </th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-white/5">
@@ -492,16 +529,22 @@ export default function EmployeePerformanceReportPage() {
 
             {/* Danh sách ca làm việc */}
             <section>
-              <h3 className="mb-3 text-sm font-semibold text-white">Danh sách ca làm việc</h3>
+              <h3 className="mb-3 text-sm font-semibold text-white">
+                {t('reports.performance.scheduleSectionTitle')}
+              </h3>
               {detailData.schedules.length === 0 ? (
-                <p className="text-xs rogym-text-dim">Không có ca làm việc nào.</p>
+                <p className="text-xs rogym-text-dim">{t('reports.performance.noSchedule')}</p>
               ) : (
                 <div className="overflow-x-auto rounded-xl border border-white/5">
                   <table className="w-full text-xs">
                     <thead>
                       <tr className="border-b border-white/5 text-left rogym-text-dim">
-                        <th className="px-4 py-2.5 font-medium">Ngày</th>
-                        <th className="px-4 py-2.5 font-medium">Ca</th>
+                        <th className="px-4 py-2.5 font-medium">
+                          {t('reports.performance.scheduleTable.date')}
+                        </th>
+                        <th className="px-4 py-2.5 font-medium">
+                          {t('reports.performance.scheduleTable.shift')}
+                        </th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-white/5">

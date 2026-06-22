@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { Search, UserRound } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { getApiError } from '@/lib/api-error'
 import { formatDate } from '@/lib/date'
 import { memberService, type TrainerStudentSummary } from '@/services/member.service'
@@ -16,6 +17,7 @@ import {
 } from '@/components/StaffUI'
 
 export default function MembersPage() {
+  const { t } = useTranslation('staff')
   const currentUser = useAuthStore((s) => s.user)
   const [searchParams, setSearchParams] = useSearchParams()
 
@@ -50,9 +52,9 @@ export default function MembersPage() {
         setMemberTotal(result.total)
         setMemberTotalPages(Math.max(1, Math.ceil(result.total / 15)))
       })
-      .catch((err) => setError(getApiError(err, 'Không thể tải danh sách hội viên.')))
+      .catch((err) => setError(getApiError(err, t('members.list.loadFailed'))))
       .finally(() => setLoading(false))
-  }, [page, memberStatus, memberSubStatus, searchParams])
+  }, [page, memberStatus, memberSubStatus, searchParams, t])
 
   function applySearch() {
     const next = new URLSearchParams(searchParams)
@@ -71,9 +73,9 @@ export default function MembersPage() {
   return (
     <StaffPage>
       <StaffPageHeader
-        eyebrow="Quản lý hội viên"
-        title="Danh sách Hội viên"
-        description={`${memberTotal} hội viên trong hệ thống.`}
+        eyebrow={t('members.list.eyebrow')}
+        title={t('members.list.title')}
+        description={t('members.list.descriptionWithTotal', { total: memberTotal })}
       />
 
       {/* Filters */}
@@ -88,22 +90,22 @@ export default function MembersPage() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && applySearch()}
-            placeholder="Tìm theo tên, email hoặc mã hội viên"
+            placeholder={t('members.list.searchPlaceholder')}
           />
         </div>
         <StaffSelect value={memberStatus} onValueChange={(v) => updateParam('status', v)}>
-          <option value="">Mọi trạng thái</option>
-          <option value="active">Đang hoạt động</option>
-          <option value="pending_verification">Chờ xác thực</option>
-          <option value="locked">Đã khóa</option>
+          <option value="">{t('members.list.filterByStatus')}</option>
+          <option value="active">{t('members.list.statusActive')}</option>
+          <option value="pending_verification">{t('members.list.statusPendingVerification')}</option>
+          <option value="locked">{t('members.list.statusLocked')}</option>
         </StaffSelect>
         <StaffSelect value={memberSubStatus} onValueChange={(v) => updateParam('subStatus', v)}>
-          <option value="">Mọi trạng thái gói</option>
-          <option value="active">Gói đang hoạt động</option>
-          <option value="expired">Gói đã hết hạn</option>
+          <option value="">{t('members.list.filterBySubStatus')}</option>
+          <option value="active">{t('members.list.subStatusActive')}</option>
+          <option value="expired">{t('members.list.subStatusExpired')}</option>
         </StaffSelect>
         <button type="button" className="rogym-btn rogym-btn--primary" onClick={applySearch}>
-          Tìm kiếm
+          {t('members.list.search')}
         </button>
       </div>
 
@@ -123,10 +125,10 @@ export default function MembersPage() {
             disabled={page <= 1}
             onClick={() => updateParam('page', String(page - 1))}
           >
-            Trước
+            {t('members.list.prevPage')}
           </button>
           <span className="text-sm rogym-text-secondary">
-            Trang {page}/{memberTotalPages}
+            {t('members.list.page', { page, total: memberTotalPages })}
           </span>
           <button
             type="button"
@@ -134,7 +136,7 @@ export default function MembersPage() {
             disabled={page >= memberTotalPages}
             onClick={() => updateParam('page', String(page + 1))}
           >
-            Sau
+            {t('members.list.nextPage')}
           </button>
         </div>
       )}
@@ -149,11 +151,13 @@ function MembersTab({
   data: TrainerStudentSummary[]
   currentUserId: string
 }) {
+  const { t } = useTranslation('staff')
+
   if (data.length === 0) {
     return (
       <StaffEmptyState
-        title="Không tìm thấy hội viên"
-        description="Thử thay đổi từ khóa hoặc bộ lọc."
+        title={t('members.list.noMembers')}
+        description={t('members.list.noMembersDesc')}
       />
     )
   }
@@ -163,11 +167,11 @@ function MembersTab({
         <table className="w-full border-collapse text-left text-sm">
           <thead className="bg-white/5 text-xs uppercase tracking-wider rogym-text-dim">
             <tr>
-              <th className="px-5 py-4">Hội viên</th>
-              <th className="px-5 py-4">Gói tập</th>
-              <th className="px-5 py-4">Hết hạn</th>
-              <th className="px-5 py-4">Trạng thái</th>
-              <th className="px-5 py-4 text-right">Thao tác</th>
+              <th className="px-5 py-4">{t('members.list.colMember')}</th>
+              <th className="px-5 py-4">{t('members.list.colPackage')}</th>
+              <th className="px-5 py-4">{t('members.list.colExpiry')}</th>
+              <th className="px-5 py-4">{t('members.list.colStatus')}</th>
+              <th className="px-5 py-4 text-right">{t('members.list.colActions')}</th>
             </tr>
           </thead>
           <tbody>
@@ -185,7 +189,7 @@ function MembersTab({
                     </div>
                   </td>
                   <td className="px-5 py-4 rogym-text-secondary">
-                    {member.activeSubscription?.packageName ?? 'Chưa có gói'}
+                    {member.activeSubscription?.packageName ?? t('members.list.noPackage')}
                   </td>
                   <td className="px-5 py-4 rogym-text-secondary">
                     {formatDate(member.activeSubscription?.endDate)}
@@ -197,13 +201,13 @@ function MembersTab({
                   </td>
                   <td className="px-5 py-4 text-right">
                     {isSelf ? (
-                      <span className="text-xs rogym-text-dim">Bạn</span>
+                      <span className="text-xs rogym-text-dim">{t('members.list.you')}</span>
                     ) : (
                       <Link
                         className="rogym-text-link rogym-text-link--accent"
                         to={`/staff/members/${member.memberId}`}
                       >
-                        Chi tiết
+                        {t('members.list.viewDetail')}
                       </Link>
                     )}
                   </td>
@@ -232,10 +236,10 @@ function MembersTab({
                 <StaffStatusBadge status={member.activeSubscription?.status ?? 'inactive'} />
               </div>
               <div className="mt-3 text-sm rogym-text-secondary">
-                {member.activeSubscription?.packageName ?? 'Chưa có gói active'}
+                {member.activeSubscription?.packageName ?? t('members.list.noActivePackage')}
                 {member.activeSubscription?.endDate && (
                   <span className="ml-2 text-xs rogym-text-dim">
-                    · Hết {formatDate(member.activeSubscription.endDate)}
+                    · {t('members.list.expiry', { date: formatDate(member.activeSubscription.endDate) })}
                   </span>
                 )}
               </div>
@@ -245,7 +249,7 @@ function MembersTab({
                     className="rogym-btn rogym-btn--outline-white w-full"
                     to={`/staff/members/${member.memberId}`}
                   >
-                    Xem chi tiết
+                    {t('members.list.viewDetailFull')}
                   </Link>
                 </div>
               )}

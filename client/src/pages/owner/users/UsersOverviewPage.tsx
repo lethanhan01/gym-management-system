@@ -1,15 +1,12 @@
 import { useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { Search, UserRound } from 'lucide-react'
 import { getApiError } from '@/lib/api-error'
 import { formatDate } from '@/lib/date'
 import { memberService, type TrainerStudentSummary } from '@/services/member.service'
 import { type StaffPosition, staffService, type StaffProfile } from '@/services/staff.service'
-import {
-  STAFF_POSITION_COLOR,
-  USER_STATUS_COLOR,
-  USER_STATUS_LABEL,
-} from '@/lib/owner-constants'
+import { STAFF_POSITION_COLOR, USER_STATUS_COLOR } from '@/lib/owner-constants'
 import {
   OwnerBadge,
   OwnerEmptyState,
@@ -23,14 +20,10 @@ import {
 
 type Tab = 'members' | 'staff'
 
-const POSITION_LABEL: Record<string, string> = {
-  trainer: 'Huấn luyện viên',
-  pt: 'Personal Trainer',
-  staff: 'Nhân viên',
-  owner: 'Chủ gym',
-}
-
 export default function UsersOverviewPage() {
+  const { t } = useTranslation('owner')
+  const { t: tCommon } = useTranslation('common')
+
   const [searchParams, setSearchParams] = useSearchParams()
 
   const tab = (searchParams.get('tab') as Tab | null) ?? 'members'
@@ -71,7 +64,7 @@ export default function UsersOverviewPage() {
           setMemberTotal(result.total)
           setMemberTotalPages(Math.max(1, Math.ceil(result.total / 15)))
         })
-        .catch((err) => setError(getApiError(err, 'Không thể tải danh sách hội viên.')))
+        .catch((err) => setError(getApiError(err, tCommon('error.loadFailed'))))
         .finally(() => setLoading(false))
     } else {
       staffService
@@ -79,19 +72,19 @@ export default function UsersOverviewPage() {
           page,
           pageSize: 15,
           search: searchParams.get('search') ?? undefined,
-          position: (['owner', 'staff', 'trainer', 'member'].includes(staffPosition)
+          position: ['owner', 'staff', 'trainer', 'member'].includes(staffPosition)
             ? (staffPosition as StaffPosition)
-            : undefined),
+            : undefined,
         })
         .then((result) => {
           setStaffList(result.data)
           setStaffTotal(result.total)
           setStaffTotalPages(Math.max(1, Math.ceil(result.total / 15)))
         })
-        .catch((err) => setError(getApiError(err, 'Không thể tải danh sách nhân viên.')))
+        .catch((err) => setError(getApiError(err, tCommon('error.loadFailed'))))
         .finally(() => setLoading(false))
     }
-  }, [tab, page, memberStatus, memberSubStatus, staffPosition, searchParams])
+  }, [tab, page, memberStatus, memberSubStatus, staffPosition, searchParams, tCommon])
 
   function applySearch() {
     const next = new URLSearchParams(searchParams)
@@ -118,9 +111,12 @@ export default function UsersOverviewPage() {
   return (
     <OwnerPage>
       <OwnerPageHeader
-        eyebrow="Quản lý"
-        title="Danh sách người dùng"
-        description={`${totalForTab} ${tab === 'members' ? 'hội viên' : 'nhân viên & PT'} trong hệ thống.`}
+        eyebrow={t('usersOverview.eyebrow')}
+        title={t('usersOverview.title')}
+        description={t('usersOverview.description', {
+          total: totalForTab,
+          type: tab === 'members' ? t('usersOverview.tabs.members') : t('usersOverview.tabs.staff'),
+        })}
       />
 
       {/* Tabs */}
@@ -134,7 +130,7 @@ export default function UsersOverviewPage() {
               : 'rogym-text-secondary hover:text-white'
           }`}
         >
-          Hội viên
+          {t('usersOverview.tabs.members')}
         </button>
         <button
           type="button"
@@ -145,17 +141,14 @@ export default function UsersOverviewPage() {
               : 'rogym-text-secondary hover:text-white'
           }`}
         >
-          Nhân viên & PT
+          {t('usersOverview.tabs.staff')}
         </button>
       </div>
 
       {/* Filters */}
       <div className="rogym-card rogym-card--compact grid gap-3 p-4 md:grid-cols-[1fr_160px_160px_auto]">
         <div className="relative">
-          <Search
-            className="absolute left-3 top-1/2 -translate-y-1/2 rogym-text-dim"
-            size={17}
-          />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 rogym-text-dim" size={17} />
           <input
             className="rogym-input pl-10"
             value={search}
@@ -163,38 +156,40 @@ export default function UsersOverviewPage() {
             onKeyDown={(e) => e.key === 'Enter' && applySearch()}
             placeholder={
               tab === 'members'
-                ? 'Tìm theo tên, email hoặc mã hội viên'
-                : 'Tìm theo tên, email hoặc mã nhân viên'
+                ? t('usersOverview.filter.searchMember')
+                : t('usersOverview.filter.searchStaff')
             }
           />
         </div>
         {tab === 'members' ? (
           <>
             <OwnerSelect value={memberStatus} onValueChange={(v) => updateParam('status', v)}>
-              <option value="">Mọi trạng thái</option>
-              <option value="active">Đang hoạt động</option>
-              <option value="pending_verification">Chờ xác thực</option>
-              <option value="locked">Đã khóa</option>
+              <option value="">{t('usersOverview.memberStatus.all')}</option>
+              <option value="active">{t('usersOverview.memberStatus.active')}</option>
+              <option value="pending_verification">
+                {t('usersOverview.memberStatus.pendingVerification')}
+              </option>
+              <option value="locked">{t('usersOverview.memberStatus.locked')}</option>
             </OwnerSelect>
             <OwnerSelect value={memberSubStatus} onValueChange={(v) => updateParam('subStatus', v)}>
-              <option value="">Mọi trạng thái gói</option>
-              <option value="active">Gói đang hoạt động</option>
-              <option value="expired">Gói đã hết hạn</option>
+              <option value="">{t('usersOverview.packageStatus.all')}</option>
+              <option value="active">{t('usersOverview.packageStatus.active')}</option>
+              <option value="expired">{t('usersOverview.packageStatus.expired')}</option>
             </OwnerSelect>
           </>
         ) : (
           <>
             <OwnerSelect value={staffPosition} onValueChange={(v) => updateParam('position', v)}>
-              <option value="">Mọi chức vụ</option>
-              <option value="trainer">Huấn luyện viên</option>
-              <option value="staff">Nhân viên</option>
-              <option value="owner">Quản lý</option>
+              <option value="">{t('usersOverview.filter.position')}</option>
+              <option value="trainer">{t('usersOverview.positions.trainer')}</option>
+              <option value="staff">{t('usersOverview.positions.staff')}</option>
+              <option value="owner">{t('usersOverview.positions.owner')}</option>
             </OwnerSelect>
             <div />
           </>
         )}
         <button type="button" className="rogym-btn rogym-btn--primary" onClick={applySearch}>
-          Tìm kiếm
+          {tCommon('button.search')}
         </button>
       </div>
 
@@ -216,10 +211,10 @@ export default function UsersOverviewPage() {
             disabled={page <= 1}
             onClick={() => updateParam('page', String(page - 1))}
           >
-            Trước
+            {t('usersOverview.pagination.prev')}
           </button>
           <span className="text-sm rogym-text-secondary">
-            Trang {page}/{totalPagesForTab}
+            {t('usersOverview.pageLabel', { page, totalPages: totalPagesForTab })}
           </span>
           <button
             type="button"
@@ -227,7 +222,7 @@ export default function UsersOverviewPage() {
             disabled={page >= totalPagesForTab}
             onClick={() => updateParam('page', String(page + 1))}
           >
-            Sau
+            {t('usersOverview.pagination.next')}
           </button>
         </div>
       )}
@@ -236,11 +231,14 @@ export default function UsersOverviewPage() {
 }
 
 function MembersTab({ data }: { data: TrainerStudentSummary[] }) {
+  const { t } = useTranslation('owner')
+  const { t: tCommon } = useTranslation('common')
+
   if (data.length === 0) {
     return (
       <OwnerEmptyState
-        title="Không tìm thấy hội viên"
-        description="Thử thay đổi từ khóa hoặc bộ lọc."
+        title={t('usersOverview.notFound')}
+        description={t('usersOverview.notFoundDesc')}
       />
     )
   }
@@ -250,11 +248,11 @@ function MembersTab({ data }: { data: TrainerStudentSummary[] }) {
         <table className="w-full border-collapse text-left text-sm">
           <thead className="bg-white/5 text-xs uppercase tracking-wider rogym-text-dim">
             <tr>
-              <th className="px-5 py-4">Hội viên</th>
-              <th className="px-5 py-4">Gói tập</th>
-              <th className="px-5 py-4">Hết hạn</th>
-              <th className="px-5 py-4">Trạng thái</th>
-              <th className="px-5 py-4 text-right">Thao tác</th>
+              <th className="px-5 py-4">{t('usersOverview.memberTable.name')}</th>
+              <th className="px-5 py-4">{t('usersOverview.memberTable.package')}</th>
+              <th className="px-5 py-4">{t('usersOverview.memberTable.expiry')}</th>
+              <th className="px-5 py-4">{t('usersOverview.memberTable.status')}</th>
+              <th className="px-5 py-4 text-right">{t('usersOverview.memberTable.actions')}</th>
             </tr>
           </thead>
           <tbody>
@@ -270,22 +268,20 @@ function MembersTab({ data }: { data: TrainerStudentSummary[] }) {
                   </div>
                 </td>
                 <td className="px-5 py-4 rogym-text-secondary">
-                  {member.activeSubscription?.packageName ?? 'Chưa có gói'}
+                  {member.activeSubscription?.packageName ?? t('usersOverview.noPackage')}
                 </td>
                 <td className="px-5 py-4 rogym-text-secondary">
                   {formatDate(member.activeSubscription?.endDate)}
                 </td>
                 <td className="px-5 py-4">
-                  <OwnerStatusBadge
-                    status={member.activeSubscription?.status ?? member.status}
-                  />
+                  <OwnerStatusBadge status={member.activeSubscription?.status ?? member.status} />
                 </td>
                 <td className="px-5 py-4 text-right">
                   <Link
                     className="rogym-text-link rogym-text-link--accent"
                     to={`/staff/members/${member.memberId}`}
                   >
-                    Chi tiết
+                    {tCommon('button.viewDetail')}
                   </Link>
                 </td>
               </tr>
@@ -310,10 +306,13 @@ function MembersTab({ data }: { data: TrainerStudentSummary[] }) {
               <OwnerStatusBadge status={member.activeSubscription?.status ?? member.status} />
             </div>
             <div className="mt-3 text-sm rogym-text-secondary">
-              {member.activeSubscription?.packageName ?? 'Chưa có gói active'}
+              {member.activeSubscription?.packageName ?? t('usersOverview.noPackage')}
               {member.activeSubscription?.endDate && (
                 <span className="ml-2 text-xs rogym-text-dim">
-                  · Hết {formatDate(member.activeSubscription.endDate)}
+                  ·{' '}
+                  {t('usersOverview.expiresOn', {
+                    date: formatDate(member.activeSubscription.endDate),
+                  })}
                 </span>
               )}
             </div>
@@ -322,7 +321,7 @@ function MembersTab({ data }: { data: TrainerStudentSummary[] }) {
                 className="rogym-btn rogym-btn--outline-white w-full"
                 to={`/staff/members/${member.memberId}`}
               >
-                Xem chi tiết
+                {tCommon('button.viewDetail')}
               </Link>
             </div>
           </div>
@@ -333,11 +332,26 @@ function MembersTab({ data }: { data: TrainerStudentSummary[] }) {
 }
 
 function StaffTab({ data }: { data: StaffProfile[] }) {
+  const { t } = useTranslation('owner')
+
+  const POSITION_LABEL: Record<string, string> = {
+    trainer: t('usersOverview.positions.trainer'),
+    pt: t('usersOverview.positions.pt'),
+    staff: t('usersOverview.positions.staff'),
+    owner: t('usersOverview.positions.owner'),
+  }
+  const USER_STATUS_LABEL: Record<string, string> = {
+    active: t('usersOverview.userStatus.active'),
+    pending_verification: t('usersOverview.userStatus.pendingVerification'),
+    locked: t('usersOverview.userStatus.locked'),
+    deleted: t('usersOverview.userStatus.deleted'),
+  }
+
   if (data.length === 0) {
     return (
       <OwnerEmptyState
-        title="Không tìm thấy nhân viên"
-        description="Thử thay đổi từ khóa hoặc bộ lọc."
+        title={t('usersOverview.notFound')}
+        description={t('usersOverview.notFoundDesc')}
       />
     )
   }
@@ -347,18 +361,15 @@ function StaffTab({ data }: { data: StaffProfile[] }) {
         <table className="w-full border-collapse text-left text-sm">
           <thead className="bg-white/5 text-xs uppercase tracking-wider rogym-text-dim">
             <tr>
-              <th className="px-5 py-4">Nhân viên</th>
-              <th className="px-5 py-4">Chức vụ</th>
-              <th className="px-5 py-4">Liên hệ</th>
-              <th className="px-5 py-4">Trạng thái</th>
+              <th className="px-5 py-4">{t('usersOverview.staffTable.name')}</th>
+              <th className="px-5 py-4">{t('usersOverview.staffTable.position')}</th>
+              <th className="px-5 py-4">{t('usersOverview.staffTable.contact')}</th>
+              <th className="px-5 py-4">{t('usersOverview.staffTable.status')}</th>
             </tr>
           </thead>
           <tbody>
             {data.map((s) => (
-              <tr
-                key={s.staffId}
-                className="border-t border-white/5 bg-[var(--rogym-bg-card)]"
-              >
+              <tr key={s.staffId} className="border-t border-white/5 bg-[var(--rogym-bg-card)]">
                 <td className="px-5 py-4">
                   <div className="font-semibold text-white">{s.fullName}</div>
                   <div className="mt-1 text-xs rogym-text-dim">{s.staffCode}</div>
@@ -375,7 +386,7 @@ function StaffTab({ data }: { data: StaffProfile[] }) {
                 </td>
                 <td className="px-5 py-4">
                   <OwnerBadge
-                    label={USER_STATUS_LABEL[s.status ?? 'active'] ?? (s.status ?? 'active')}
+                    label={USER_STATUS_LABEL[s.status ?? 'active'] ?? s.status ?? 'active'}
                     color={USER_STATUS_COLOR[s.status ?? 'active'] ?? '#6b7280'}
                   />
                 </td>

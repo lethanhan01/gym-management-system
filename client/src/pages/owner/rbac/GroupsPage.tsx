@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from 'react'
 import { Users, LoaderCircle, X, Check } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { getApiError, isApiConflict } from '@/lib/api-error'
 import { rbacService, type Group, type GroupDetail, type Permission } from '@/services/rbac.service'
 import {
@@ -25,6 +26,8 @@ function EditGroupModal({
   onClose: () => void
   onUpdated: (g: Group) => void
 }) {
+  const { t } = useTranslation('owner')
+  const { t: tCommon } = useTranslation('common')
   const [description, setDescription] = useState(group.description ?? '')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -32,11 +35,11 @@ function EditGroupModal({
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!description) {
-      setError('Vui lòng điền đầy đủ.')
+      setError(t('rbac.groups.editModal.fillRequired'))
       return
     }
     if (description.length < 10) {
-      setError('Mô tả phải ít nhất 10 ký tự.')
+      setError(t('rbac.groups.editModal.descTooShort'))
       return
     }
     setSaving(true)
@@ -46,7 +49,7 @@ function EditGroupModal({
       onUpdated(saved as unknown as Group)
       onClose()
     } catch (err) {
-      setError(getApiError(err, 'Lưu thất bại.'))
+      setError(getApiError(err, t('rbac.groups.editModal.saveFailed')))
     } finally {
       setSaving(false)
     }
@@ -60,12 +63,12 @@ function EditGroupModal({
     >
       <div className="w-full max-w-md rounded-2xl border border-white/10 bg-[var(--rogym-bg-card)] shadow-2xl">
         <div className="flex items-center justify-between border-b border-white/5 px-6 py-4">
-          <h2 className="text-lg font-bold text-white">Sửa nhóm quyền</h2>
+          <h2 className="text-lg font-bold text-white">{t('rbac.groups.editModal.title')}</h2>
           <button
             type="button"
             className="rogym-btn rogym-btn--icon rogym-btn--elevated"
             onClick={onClose}
-            aria-label="Đóng"
+            aria-label={tCommon('button.close')}
           >
             <X size={17} />
           </button>
@@ -77,26 +80,26 @@ function EditGroupModal({
             </div>
           )}
           <div>
-            <label className="rogym-field-label mb-1.5 block">Tên nhóm *</label>
+            <label className="rogym-field-label mb-1.5 block">{t('rbac.groups.editModal.groupName')}</label>
             <input type="text" value={group.name} className="rogym-input" disabled />
           </div>
           <div>
-            <label className="rogym-field-label mb-1.5 block">Mô tả *</label>
+            <label className="rogym-field-label mb-1.5 block">{t('rbac.groups.editModal.description')}</label>
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               className="rogym-input min-h-[80px] resize-none"
-              placeholder="Mô tả chức năng nhóm..."
+              placeholder={t('rbac.groups.editModal.descPlaceholder')}
               required
             />
           </div>
           <div className="flex justify-end gap-3 pt-2">
             <button type="button" className="rogym-btn rogym-btn--outline-white" onClick={onClose}>
-              Hủy
+              {tCommon('button.cancel')}
             </button>
             <button type="submit" className="rogym-btn rogym-btn--primary" disabled={saving}>
               {saving && <LoaderCircle size={16} className="animate-spin" />}
-              Lưu thay đổi
+              {t('rbac.groups.editModal.saveChanges')}
             </button>
           </div>
         </form>
@@ -116,6 +119,8 @@ function PermissionsModal({
   onClose: () => void
   onSaved?: () => void
 }) {
+  const { t } = useTranslation('owner')
+  const { t: tCommon } = useTranslation('common')
   const [selected, setSelected] = useState<Set<string>>(
     new Set(group.permissions.map((p) => p.permissionId))
   )
@@ -145,7 +150,7 @@ function PermissionsModal({
       onSaved?.()
       onClose()
     } catch (err) {
-      setError(getApiError(err, 'Lưu quyền thất bại.'))
+      setError(getApiError(err, t('rbac.groups.permsModal.saveFailed')))
     } finally {
       setSaving(false)
     }
@@ -168,12 +173,12 @@ function PermissionsModal({
     >
       <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl border border-white/10 bg-[var(--rogym-bg-card)] shadow-2xl">
         <div className="flex items-center justify-between border-b border-white/5 px-6 py-4">
-          <h2 className="text-lg font-bold text-white">Phân quyền: {group.name}</h2>
+          <h2 className="text-lg font-bold text-white">{t('rbac.groups.permsModal.title', { name: group.name })}</h2>
           <button
             type="button"
             className="rogym-btn rogym-btn--icon rogym-btn--elevated"
             onClick={onClose}
-            aria-label="Đóng"
+            aria-label={tCommon('button.close')}
           >
             <X size={17} />
           </button>
@@ -222,11 +227,11 @@ function PermissionsModal({
 
         <div className="flex justify-end gap-3 border-t border-white/5 px-6 py-4">
           <button className="rogym-btn rogym-btn--outline-white" onClick={onClose}>
-            Hủy
+            {tCommon('button.cancel')}
           </button>
           <button className="rogym-btn rogym-btn--primary" disabled={saving} onClick={handleSave}>
             {saving && <LoaderCircle size={16} className="animate-spin" />}
-            Lưu phân quyền
+            {t('rbac.groups.permsModal.saveBtn')}
           </button>
         </div>
       </div>
@@ -235,6 +240,8 @@ function PermissionsModal({
 }
 
 export default function GroupsPage() {
+  const { t } = useTranslation('owner')
+  const { t: tCommon } = useTranslation('common')
   const [groups, setGroups] = useState<Group[]>([])
   const [total, setTotal] = useState(0)
   const [page, setPage] = useState(1)
@@ -259,12 +266,12 @@ export default function GroupsPage() {
         setGroups(data)
         setTotal(t)
       } catch (err) {
-        setError(getApiError(err, 'Không thể tải danh sách nhóm quyền.'))
+        setError(getApiError(err, t('rbac.groups.loadFailed')))
       } finally {
         setLoading(false)
       }
     },
-    [search]
+    [search, t]
   )
 
   useEffect(() => {
@@ -284,9 +291,9 @@ export default function GroupsPage() {
       setTotal((t) => t - 1)
     } catch (err) {
       if (isApiConflict(err)) {
-        setDeleteError('Nhóm đang có thành viên, không thể xóa.')
+        setDeleteError(t('rbac.groups.deleteConflict'))
       } else {
-        setDeleteError(getApiError(err, 'Xóa thất bại.'))
+        setDeleteError(getApiError(err, t('rbac.groups.deleteFailed')))
       }
     }
   }
@@ -298,7 +305,7 @@ export default function GroupsPage() {
       const detail = await rbacService.getGroup(group.groupId)
       setPermissionsGroup(detail)
     } catch (err) {
-      setPermissionsError(getApiError(err, 'Không thể tải quyền của nhóm.'))
+      setPermissionsError(getApiError(err, t('rbac.groups.permissionsLoadFailed')))
     }
   }
 
@@ -316,9 +323,9 @@ export default function GroupsPage() {
   return (
     <OwnerPage>
       <OwnerPageHeader
-        eyebrow="Phân quyền"
-        title="Nhóm quyền"
-        description={`${total} nhóm quyền trong hệ thống`}
+        eyebrow={t('rbac.groups.eyebrow')}
+        title={t('rbac.groups.title')}
+        description={t('rbac.groups.totalCount', { total })}
       />
 
       <div className="flex flex-wrap gap-3">
@@ -328,7 +335,7 @@ export default function GroupsPage() {
             setSearch(v)
             setPage(1)
           }}
-          placeholder="Tìm nhóm..."
+          placeholder={t('rbac.groups.searchPlaceholder')}
           className="flex-1 min-w-[200px]"
         />
       </div>
@@ -351,8 +358,8 @@ export default function GroupsPage() {
         <OwnerErrorState message={error} onRetry={() => fetchGroups(page)} />
       ) : groups.length === 0 ? (
         <OwnerEmptyState
-          title="Không có nhóm quyền nào"
-          description="Chưa có nhóm quyền nào trong hệ thống."
+          title={t('rbac.groups.notFound')}
+          description={t('rbac.groups.notFoundDesc')}
         />
       ) : (
         <>
@@ -369,7 +376,7 @@ export default function GroupsPage() {
                         <h3 className="font-bold text-white">{group.name}</h3>
                         {SYSTEM_GROUPS.has(group.name) && (
                           <span className="rounded border border-white/15 bg-white/[0.06] px-1.5 py-0.5 text-[10px] uppercase tracking-wider rogym-text-dim">
-                            hệ thống
+                            {t('rbac.groups.systemBadge')}
                           </span>
                         )}
                       </div>
@@ -381,13 +388,13 @@ export default function GroupsPage() {
                 </div>
                 <div className="flex gap-4 text-sm rogym-text-secondary">
                   <span className="flex items-center gap-1">
-                    <Users size={13} /> {group.memberCount} thành viên
+                    <Users size={13} /> {t('rbac.groups.memberCount', { count: group.memberCount })}
                   </span>
-                  <span>{group.permissionCount} quyền</span>
+                  <span>{t('rbac.groups.permissionCount', { count: group.permissionCount })}</span>
                 </div>
                 <div className="mb-1 min-h-[88px] rounded-xl border border-white/5 bg-white/[0.025] p-3">
                   <div className="mb-2 text-[11px] font-bold uppercase tracking-wider rogym-text-dim">
-                    Quyền được gán
+                    {t('rbac.groups.assignedPermissions')}
                   </div>
                   {group.permissions && group.permissions.length > 0 ? (
                     <div className="flex flex-wrap gap-1.5">
@@ -402,25 +409,25 @@ export default function GroupsPage() {
                       ))}
                       {group.permissions.length > 6 && (
                         <span className="rounded-lg border border-white/10 bg-white/[0.04] px-2 py-1 text-[11px] font-medium rogym-text-secondary">
-                          +{group.permissions.length - 6} khác
+                          {t('rbac.groups.morePermissions', { count: group.permissions.length - 6 })}
                         </span>
                       )}
                     </div>
                   ) : (
-                    <p className="text-xs rogym-text-dim">Chưa có quyền nào.</p>
+                    <p className="text-xs rogym-text-dim">{t('rbac.groups.noPermissions')}</p>
                   )}
                 </div>
                 <div className="mt-auto flex gap-2 pt-2">
                   {group.name === 'owner' ? (
                     <div className="flex-1 rounded-xl border border-[rgba(245,158,11,0.22)] bg-[rgba(245,158,11,0.08)] px-3 py-2 text-xs font-medium text-amber-200">
-                      Quyền cao nhất trong hệ thống, không cần phân quyền.
+                      {t('rbac.groups.ownerNote')}
                     </div>
                   ) : (
                     <button
                       className="rogym-btn rogym-btn--outline-white flex-1 text-xs"
                       onClick={() => openPermissions(group)}
                     >
-                      Phân quyền
+                      {t('rbac.groups.assignBtn')}
                     </button>
                   )}
                   {!SYSTEM_GROUPS.has(group.name) && (
@@ -428,7 +435,7 @@ export default function GroupsPage() {
                       className="rogym-btn rogym-btn--outline-white rogym-btn--nav text-xs"
                       onClick={() => setEditingGroup(group)}
                     >
-                      Sửa
+                      {tCommon('button.edit')}
                     </button>
                   )}
                   {!SYSTEM_GROUPS.has(group.name) && (
@@ -436,7 +443,7 @@ export default function GroupsPage() {
                       className="rogym-btn rogym-btn--danger rogym-btn--nav text-xs"
                       onClick={() => handleDelete(group)}
                     >
-                      Xóa
+                      {tCommon('button.delete')}
                     </button>
                   )}
                 </div>

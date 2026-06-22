@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { getApiError } from '@/lib/api-error'
 import { formatDate } from '@/lib/date'
 import { memberService, type TrainerStudentDetail } from '@/services/member.service'
@@ -14,6 +15,7 @@ import {
 } from '@/components/StaffUI'
 
 export default function MemberDetailPage() {
+  const { t } = useTranslation('staff')
   const { id = '' } = useParams()
   const [member, setMember] = useState<TrainerStudentDetail | null>(null)
   const [loading, setLoading] = useState(true)
@@ -26,11 +28,11 @@ export default function MemberDetailPage() {
       const data = await memberService.getById(id)
       setMember(data)
     } catch (err) {
-      setError(getApiError(err, 'Không thể tải thông tin hội viên.'))
+      setError(getApiError(err, t('members.detail.loadFailed')))
     } finally {
       setLoading(false)
     }
-  }, [id])
+  }, [id, t])
 
   useEffect(() => {
     void load()
@@ -60,10 +62,10 @@ export default function MemberDetailPage() {
       <StaffPageHeader
         eyebrow={member.memberCode}
         title={member.fullName}
-        description={`${member.email} · ${member.phone ?? 'Chưa có số điện thoại'}`}
+        description={`${member.email} · ${member.phone ?? t('members.detail.phoneNotSet')}`}
         actions={
           <Link className="rogym-btn rogym-btn--outline-white" to="/staff/members">
-            <ArrowLeft size={16} /> Danh sách
+            <ArrowLeft size={16} /> {t('members.detail.backToList')}
           </Link>
         }
       />
@@ -71,49 +73,52 @@ export default function MemberDetailPage() {
 
       <div className="grid gap-5 lg:grid-cols-2">
         <section className="rogym-card rogym-card--compact p-6">
-          <h2 className="mb-5 text-lg font-bold text-white">Hồ sơ cá nhân</h2>
-          <Info label="Mã hội viên" value={member.memberCode} />
-          <Info label="Email" value={member.email} />
-          <Info label="Điện thoại" value={member.phone ?? 'Chưa cập nhật'} />
-          <Info label="Ngày sinh" value={formatDate(member.dateOfBirth)} />
-          <Info label="Địa chỉ" value={member.address ?? 'Chưa cập nhật'} />
+          <h2 className="mb-5 text-lg font-bold text-white">{t('members.detail.personalInfo')}</h2>
+          <Info label={t('members.detail.memberCode')} value={member.memberCode} />
+          <Info label={t('members.detail.email')} value={member.email} />
+          <Info label={t('members.detail.phone')} value={member.phone ?? t('members.detail.phoneNotUpdated')} />
+          <Info label={t('members.detail.dateOfBirth')} value={formatDate(member.dateOfBirth)} />
+          <Info label={t('members.detail.address')} value={member.address ?? t('members.detail.addressNotUpdated')} />
           <Info
-            label="Trainer phụ trách"
-            value={member.primaryTrainer?.fullName ?? 'Chưa phân công'}
+            label={t('members.detail.trainer')}
+            value={member.primaryTrainer?.fullName ?? t('members.detail.trainerNotAssigned')}
           />
-          <Info label="Ngày tham gia" value={formatDate(member.createdAt)} />
+          <Info label={t('members.detail.joinedAt')} value={formatDate(member.createdAt)} />
         </section>
 
         <section className="rogym-card rogym-card--compact p-6">
-          <h2 className="mb-5 text-lg font-bold text-white">Gói tập hiện tại</h2>
+          <h2 className="mb-5 text-lg font-bold text-white">{t('members.detail.currentPackage')}</h2>
           {activeSubscription ? (
             <>
-              <Info label="Gói" value={activeSubscription.packageName} />
-              <Info label="Bắt đầu" value={formatDate(activeSubscription.startDate)} />
-              <Info label="Hết hạn" value={formatDate(activeSubscription.endDate)} />
+              <Info label={t('members.detail.package')} value={activeSubscription.packageName} />
+              <Info label={t('members.detail.startDate')} value={formatDate(activeSubscription.startDate)} />
+              <Info label={t('members.detail.endDate')} value={formatDate(activeSubscription.endDate)} />
               <div className="flex items-start justify-between gap-5 border-b border-white/5 py-3 last:border-0">
-                <span className="text-sm rogym-text-dim">Trạng thái</span>
+                <span className="text-sm rogym-text-dim">{t('members.detail.status')}</span>
                 <StaffStatusBadge status={activeSubscription.status} />
               </div>
             </>
           ) : (
-            <StaffEmptyState title="Chưa có gói tập active" description="Hội viên chưa đăng ký gói hoặc gói đã hết hạn." />
+            <StaffEmptyState
+              title={t('members.detail.noActivePackage')}
+              description={t('members.detail.noActivePackageDesc')}
+            />
           )}
         </section>
       </div>
 
       {subscriptionHistory.length > 0 && (
         <section className="rogym-card rogym-card--compact p-6">
-          <h2 className="mb-5 text-lg font-bold text-white">Lịch sử gói tập</h2>
+          <h2 className="mb-5 text-lg font-bold text-white">{t('members.detail.packageHistory')}</h2>
           <div className="overflow-x-auto">
             <table className="w-full border-collapse text-left text-sm">
               <thead className="border-b border-white/5 text-xs uppercase tracking-wider rogym-text-dim">
                 <tr>
-                  <th className="py-3 pr-6">Gói tập</th>
-                  <th className="py-3 pr-6">Bắt đầu</th>
-                  <th className="py-3 pr-6">Hết hạn</th>
-                  <th className="py-3 pr-6">Trạng thái</th>
-                  <th className="py-3">Ngày hủy</th>
+                  <th className="py-3 pr-6">{t('members.detail.colPackage')}</th>
+                  <th className="py-3 pr-6">{t('members.detail.colStart')}</th>
+                  <th className="py-3 pr-6">{t('members.detail.colEnd')}</th>
+                  <th className="py-3 pr-6">{t('members.detail.colStatus')}</th>
+                  <th className="py-3">{t('members.detail.colCancelledAt')}</th>
                 </tr>
               </thead>
               <tbody>

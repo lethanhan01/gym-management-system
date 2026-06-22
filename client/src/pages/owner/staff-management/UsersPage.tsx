@@ -1,8 +1,9 @@
 import { useEffect, useState, useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import { Plus, Edit2, Trash2, LoaderCircle, CalendarDays } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { getApiError, isApiConflict } from '@/lib/api-error'
-import { STAFF_POSITION_COLOR, USER_STATUS_COLOR, USER_STATUS_LABEL } from '@/lib/owner-constants'
+import { STAFF_POSITION_COLOR, USER_STATUS_COLOR } from '@/lib/owner-constants'
 import {
   type StaffPosition,
   staffService,
@@ -25,6 +26,20 @@ import {
 const PAGE_SIZE = 20
 
 export default function UsersPage() {
+  const { t } = useTranslation('owner')
+  const { t: tCommon } = useTranslation('common')
+  const positionLabel: Record<string, string> = {
+    staff: t('staffManagement.users.positions.staff'),
+    trainer: t('staffManagement.users.positions.trainer'),
+    pt: t('staffManagement.users.positions.pt'),
+    owner: t('staffManagement.users.positions.owner'),
+  }
+  const userStatusLabel: Record<string, string> = {
+    active: t('usersOverview.userStatus.active'),
+    pending_verification: t('usersOverview.userStatus.pendingVerification'),
+    locked: t('usersOverview.userStatus.locked'),
+    deleted: t('usersOverview.userStatus.deleted'),
+  }
   const currentUser = useAuthStore((s) => s.user)
   const [staffList, setStaffList] = useState<StaffProfile[]>([])
   const [total, setTotal] = useState(0)
@@ -52,16 +67,16 @@ export default function UsersPage() {
           position: (position as StaffPosition) || undefined,
           search: search || undefined,
         }
-        const { data, total: t } = await staffService.list(params)
+        const { data, total: fetchedTotal } = await staffService.list(params)
         setStaffList(data)
-        setTotal(t)
+        setTotal(fetchedTotal)
       } catch (err) {
-        setError(getApiError(err, 'Không thể tải danh sách nhân sự.'))
+        setError(getApiError(err, t('staffManagement.users.loadFailed')))
       } finally {
         setLoading(false)
       }
     },
-    [search, position, status]
+    [search, position, status, t]
   )
 
   useEffect(() => {
@@ -85,9 +100,9 @@ export default function UsersPage() {
       setTotal((prev) => prev - 1)
     } catch (err) {
       if (isApiConflict(err)) {
-        setDeleteError('Không thể xóa nhân viên này.')
+        setDeleteError(t('staffManagement.users.deleteFailed'))
       } else {
-        setDeleteError(getApiError(err, 'Xóa thất bại.'))
+        setDeleteError(getApiError(err, t('staffManagement.users.deleteFailed')))
       }
     } finally {
       setDeletingId(null)
@@ -99,16 +114,16 @@ export default function UsersPage() {
   return (
     <OwnerPage>
       <OwnerPageHeader
-        eyebrow="Nhân sự"
-        title="Quản lý nhân sự"
-        description={`${total} nhân viên trong hệ thống`}
+        eyebrow={t('staffManagement.users.eyebrow')}
+        title={t('staffManagement.users.title')}
+        description={t('staffManagement.users.totalCount', { total })}
         actions={
           <div className="flex gap-2">
             <Link className="rogym-btn rogym-btn--outline-white" to="/owner/staff/schedules">
-              <CalendarDays size={16} /> Lịch phân công
+              <CalendarDays size={16} /> {t('staffManagement.users.scheduleBtn')}
             </Link>
             <Link className="rogym-btn rogym-btn--primary" to="/owner/staff/new">
-              <Plus size={16} /> Thêm nhân viên
+              <Plus size={16} /> {t('staffManagement.users.addBtn')}
             </Link>
           </div>
         }
@@ -119,33 +134,32 @@ export default function UsersPage() {
         <OwnerSearchInput
           value={search}
           onChange={handleFilterChange(setSearch)}
-          placeholder="Tìm theo tên, email, mã nhân viên..."
+          placeholder={t('staffManagement.users.searchPlaceholder')}
         />
-        <OwnerSelect
-          value={position}
-          onValueChange={handleFilterChange(setPosition)}
-        >
-          <option value="">Tất cả vị trí</option>
-          <option value="staff">Nhân viên</option>
-          <option value="trainer">Huấn luyện viên</option>
-          <option value="owner">Quản lý</option>
+        <OwnerSelect value={position} onValueChange={handleFilterChange(setPosition)}>
+          <option value="">{t('staffManagement.users.positions.all')}</option>
+          <option value="staff">{t('staffManagement.users.positions.staff')}</option>
+          <option value="trainer">{t('staffManagement.users.positions.trainer')}</option>
+          <option value="owner">{t('staffManagement.users.positions.owner')}</option>
         </OwnerSelect>
-        <OwnerSelect
-          value={status}
-          onValueChange={handleFilterChange(setStatus)}
-          required
-        >
-          <option value="active">Hoạt động</option>
-          <option value="pending_verification">Chờ xác thực</option>
-          <option value="locked">Bị khóa</option>
-          <option value="deleted">Đã xóa</option>
+        <OwnerSelect value={status} onValueChange={handleFilterChange(setStatus)} required>
+          <option value="">{t('staffManagement.users.statusFilter.all')}</option>
+          <option value="active">{t('usersOverview.userStatus.active')}</option>
+          <option value="pending_verification">
+            {t('usersOverview.userStatus.pendingVerification')}
+          </option>
+          <option value="locked">{t('usersOverview.userStatus.locked')}</option>
+          <option value="deleted">{t('usersOverview.userStatus.deleted')}</option>
         </OwnerSelect>
         <button
           type="button"
           className="rogym-btn rogym-btn--primary"
-          onClick={() => { setPage(1); fetchStaff(1) }}
+          onClick={() => {
+            setPage(1)
+            fetchStaff(1)
+          }}
         >
-          Tìm
+          {tCommon('button.search')}
         </button>
       </div>
 
@@ -162,11 +176,11 @@ export default function UsersPage() {
         <OwnerErrorState message={error} onRetry={() => fetchStaff(page)} />
       ) : staffList.length === 0 ? (
         <OwnerEmptyState
-          title="Không có nhân viên nào"
-          description="Thử thay đổi bộ lọc hoặc thêm nhân viên mới."
+          title={t('staffManagement.users.notFound')}
+          description={t('staffManagement.users.notFoundDesc')}
           action={
             <Link className="rogym-btn rogym-btn--primary" to="/owner/staff/new">
-              <Plus size={16} /> Thêm nhân viên
+              <Plus size={16} /> {t('staffManagement.users.addBtn')}
             </Link>
           }
         />
@@ -176,12 +190,20 @@ export default function UsersPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-white/5 text-left text-xs rogym-text-dim">
-                  <th className="px-5 py-3 font-medium">Mã NV</th>
-                  <th className="px-5 py-3 font-medium">Họ tên</th>
-                  <th className="px-5 py-3 font-medium">Email</th>
-                  <th className="px-5 py-3 font-medium text-right">Vị trí</th>
-                  <th className="px-5 py-3 font-medium">Trạng thái</th>
-                  <th className="px-5 py-3 font-medium text-right">Hành động</th>
+                  <th className="px-5 py-3 font-medium">{t('staffManagement.users.table.code')}</th>
+                  <th className="px-5 py-3 font-medium">{t('staffManagement.users.table.name')}</th>
+                  <th className="px-5 py-3 font-medium">
+                    {t('staffManagement.users.table.email')}
+                  </th>
+                  <th className="px-5 py-3 font-medium text-right">
+                    {t('staffManagement.users.table.position')}
+                  </th>
+                  <th className="px-5 py-3 font-medium">
+                    {t('staffManagement.users.table.status')}
+                  </th>
+                  <th className="px-5 py-3 font-medium text-right">
+                    {t('staffManagement.users.table.actions')}
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5">
@@ -194,13 +216,13 @@ export default function UsersPage() {
                     <td className="px-5 py-4 rogym-text-secondary">{staff.email}</td>
                     <td className="px-5 py-4 text-right">
                       <OwnerBadge
-                        label={staff.position}
+                        label={positionLabel[staff.position] ?? staff.position}
                         color={STAFF_POSITION_COLOR[staff.position] ?? '#6b7280'}
                       />
                     </td>
                     <td className="px-5 py-4">
                       <OwnerBadge
-                        label={USER_STATUS_LABEL[staff.status] ?? staff.status}
+                        label={userStatusLabel[staff.status] ?? staff.status}
                         color={USER_STATUS_COLOR[staff.status] ?? '#6b7280'}
                       />
                     </td>
@@ -210,7 +232,7 @@ export default function UsersPage() {
                           to={`/owner/staff/${staff.staffId}`}
                           className="rogym-btn rogym-btn--outline-white rogym-btn--nav"
                         >
-                          <Edit2 size={14} /> Chi tiết
+                          <Edit2 size={14} /> {t('staffManagement.users.detailBtn')}
                         </Link>
                         {staff.status !== 'deleted' && staff.staffId !== currentUser?.staffId && (
                           <button
@@ -223,7 +245,7 @@ export default function UsersPage() {
                             ) : (
                               <Trash2 size={14} />
                             )}
-                            Xóa
+                            {tCommon('button.delete')}
                           </button>
                         )}
                       </div>
