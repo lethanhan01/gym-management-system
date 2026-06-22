@@ -51,8 +51,12 @@ const EquipmentAlert = memo(function EquipmentAlert({
       <AlertTriangle size={20} className="shrink-0 text-red-400" />
       <div className="flex-1 text-sm">
         <span className="font-semibold">{t('dashboard.equipmentAlert')}: </span>
-        {equipmentBroken > 0 && <span>{t('dashboard.brokenCount', { count: equipmentBroken })} </span>}
-        {equipmentRepairing > 0 && <span>{t('dashboard.repairingCount', { count: equipmentRepairing })}</span>}
+        {equipmentBroken > 0 && (
+          <span>{t('dashboard.brokenCount', { count: equipmentBroken })} </span>
+        )}
+        {equipmentRepairing > 0 && (
+          <span>{t('dashboard.repairingCount', { count: equipmentRepairing })}</span>
+        )}
       </div>
     </div>
   )
@@ -93,7 +97,9 @@ const MemberPackageSummary = memo(function MemberPackageSummary({
               <Package size={18} className="rogym-text-green" />
             </div>
             <div>
-              <div className="text-sm font-semibold text-white">{t('dashboard.activePackages')}</div>
+              <div className="text-sm font-semibold text-white">
+                {t('dashboard.activePackages')}
+              </div>
               <div className="text-xs rogym-text-dim">{t('dashboard.activeStatus')}</div>
             </div>
           </div>
@@ -211,7 +217,9 @@ export default function OwnerDashboardPage() {
               icon={<MessageSquare size={20} />}
               label={t('dashboard.feedbackPending')}
               value={openFeedbackCount}
-              hint={openFeedbackCount > 0 ? t('dashboard.needsAttention') : t('dashboard.allHandled')}
+              hint={
+                openFeedbackCount > 0 ? t('dashboard.needsAttention') : t('dashboard.allHandled')
+              }
               accent={openFeedbackCount > 0}
               to="/staff/feedback"
             />
@@ -221,7 +229,10 @@ export default function OwnerDashboardPage() {
               value={equipmentBroken + equipmentRepairing}
               hint={
                 equipmentBroken + equipmentRepairing > 0
-                  ? t('dashboard.equipmentAlertDetails', { broken: equipmentBroken, repairing: equipmentRepairing })
+                  ? t('dashboard.equipmentAlertDetails', {
+                      broken: equipmentBroken,
+                      repairing: equipmentRepairing,
+                    })
                   : t('dashboard.allEquipmentOk')
               }
               accent={equipmentBroken + equipmentRepairing > 0}

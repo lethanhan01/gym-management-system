@@ -154,8 +154,16 @@ export default function UserDetailPage() {
     <OwnerPage>
       <OwnerPageHeader
         eyebrow={t('staffManagement.detail.eyebrow')}
-        title={isNew ? t('staffManagement.detail.createTitle') : t('staffManagement.detail.editTitle', { name: staff?.fullName ?? '' })}
-        description={isNew ? t('staffManagement.detail.createDesc') : t('staffManagement.detail.editDesc', { code: staff?.staffCode })}
+        title={
+          isNew
+            ? t('staffManagement.detail.createTitle')
+            : t('staffManagement.detail.editTitle', { name: staff?.fullName ?? '' })
+        }
+        description={
+          isNew
+            ? t('staffManagement.detail.createDesc')
+            : t('staffManagement.detail.editDesc', { code: staff?.staffCode })
+        }
         actions={
           !isNew && staff ? (
             <Link className="rogym-btn rogym-btn--outline-white" to="/owner/staff">
@@ -169,7 +177,9 @@ export default function UserDetailPage() {
         <div className="space-y-6">
           <form onSubmit={handleSave} className="rogym-card rogym-card--compact p-6 space-y-5">
             <h2 className="text-base font-bold text-white">
-              {isNew ? t('staffManagement.detail.newInfoTitle') : t('staffManagement.detail.editInfoTitle')}
+              {isNew
+                ? t('staffManagement.detail.newInfoTitle')
+                : t('staffManagement.detail.editInfoTitle')}
             </h2>
 
             {saveError && (
@@ -180,7 +190,9 @@ export default function UserDetailPage() {
 
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
-                <label className="rogym-field-label mb-1.5 block">{t('staffManagement.detail.form.name')}</label>
+                <label className="rogym-field-label mb-1.5 block">
+                  {t('staffManagement.detail.form.name')}
+                </label>
                 <input
                   type="text"
                   value={form.fullName}
@@ -191,7 +203,9 @@ export default function UserDetailPage() {
                 />
               </div>
               <div>
-                <label className="rogym-field-label mb-1.5 block">{t('staffManagement.detail.form.email')}</label>
+                <label className="rogym-field-label mb-1.5 block">
+                  {t('staffManagement.detail.form.email')}
+                </label>
                 <input
                   type="email"
                   value={form.email}
@@ -203,7 +217,9 @@ export default function UserDetailPage() {
                 />
               </div>
               <div>
-                <label className="rogym-field-label mb-1.5 block">{t('staffManagement.detail.form.phone')}</label>
+                <label className="rogym-field-label mb-1.5 block">
+                  {t('staffManagement.detail.form.phone')}
+                </label>
                 <input
                   type="tel"
                   value={form.phone ?? ''}
@@ -213,7 +229,9 @@ export default function UserDetailPage() {
                 />
               </div>
               <div>
-                <label className="rogym-field-label mb-1.5 block">{t('staffManagement.detail.form.position')}</label>
+                <label className="rogym-field-label mb-1.5 block">
+                  {t('staffManagement.detail.form.position')}
+                </label>
                 <OwnerSelect
                   value={form.position}
                   onValueChange={(value) =>
@@ -236,7 +254,8 @@ export default function UserDetailPage() {
               ) : null}
               <button type="submit" className="rogym-btn rogym-btn--primary" disabled={saving}>
                 {saving && <LoaderCircle size={16} className="animate-spin" />}
-                <Save size={16} /> {isNew ? t('staffManagement.detail.createBtn') : tCommon('button.save')}
+                <Save size={16} />{' '}
+                {isNew ? t('staffManagement.detail.createBtn') : tCommon('button.save')}
               </button>
             </div>
           </form>
@@ -244,13 +263,12 @@ export default function UserDetailPage() {
           {!isNew && (
             <div className="rogym-card rogym-card--compact p-6">
               <div className="mb-4 flex items-center justify-between">
-                <h2 className="text-base font-bold text-white">{t('staffManagement.detail.scheduleTitle')}</h2>
+                <h2 className="text-base font-bold text-white">
+                  {t('staffManagement.detail.scheduleTitle')}
+                </h2>
               </div>
               {schedules.length === 0 ? (
-                <OwnerEmptyState
-                  title={t('staffManagement.detail.noSchedule')}
-                  description=""
-                />
+                <OwnerEmptyState title={t('staffManagement.detail.noSchedule')} description="" />
               ) : (
                 <div className="space-y-2">
                   {schedules.map((s) => (
@@ -305,7 +323,9 @@ export default function UserDetailPage() {
 
             {staff.staffId !== currentUser?.staffId && (
               <div className="rogym-card rogym-card--compact p-6">
-                <h3 className="mb-3 text-sm font-semibold text-white">{t('staffManagement.detail.actions')}</h3>
+                <h3 className="mb-3 text-sm font-semibold text-white">
+                  {t('staffManagement.detail.actions')}
+                </h3>
                 {!showDeleteConfirm ? (
                   <button
                     className="rogym-btn rogym-btn--danger w-full"
@@ -316,7 +336,9 @@ export default function UserDetailPage() {
                 ) : (
                   <div className="rogym-error-alert space-y-3">
                     <p className="text-sm">
-                      {t('staffManagement.detail.terminateConfirm', { name: staff?.fullName ?? '' })}
+                      {t('staffManagement.detail.terminateConfirm', {
+                        name: staff?.fullName ?? '',
+                      })}
                     </p>
                     <div className="flex gap-2">
                       <button
@@ -330,7 +352,8 @@ export default function UserDetailPage() {
                         disabled={deleting}
                         onClick={handleDelete}
                       >
-                        {deleting && <LoaderCircle size={14} className="animate-spin" />} {t('staffManagement.detail.terminateConfirmBtn')}
+                        {deleting && <LoaderCircle size={14} className="animate-spin" />}{' '}
+                        {t('staffManagement.detail.terminateConfirmBtn')}
                       </button>
                     </div>
                   </div>

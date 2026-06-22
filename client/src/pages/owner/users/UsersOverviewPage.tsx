@@ -6,10 +6,7 @@ import { getApiError } from '@/lib/api-error'
 import { formatDate } from '@/lib/date'
 import { memberService, type TrainerStudentSummary } from '@/services/member.service'
 import { type StaffPosition, staffService, type StaffProfile } from '@/services/staff.service'
-import {
-  STAFF_POSITION_COLOR,
-  USER_STATUS_COLOR,
-} from '@/lib/owner-constants'
+import { STAFF_POSITION_COLOR, USER_STATUS_COLOR } from '@/lib/owner-constants'
 import {
   OwnerBadge,
   OwnerEmptyState,
@@ -75,9 +72,9 @@ export default function UsersOverviewPage() {
           page,
           pageSize: 15,
           search: searchParams.get('search') ?? undefined,
-          position: (['owner', 'staff', 'trainer', 'member'].includes(staffPosition)
+          position: ['owner', 'staff', 'trainer', 'member'].includes(staffPosition)
             ? (staffPosition as StaffPosition)
-            : undefined),
+            : undefined,
         })
         .then((result) => {
           setStaffList(result.data)
@@ -151,10 +148,7 @@ export default function UsersOverviewPage() {
       {/* Filters */}
       <div className="rogym-card rogym-card--compact grid gap-3 p-4 md:grid-cols-[1fr_160px_160px_auto]">
         <div className="relative">
-          <Search
-            className="absolute left-3 top-1/2 -translate-y-1/2 rogym-text-dim"
-            size={17}
-          />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 rogym-text-dim" size={17} />
           <input
             className="rogym-input pl-10"
             value={search}
@@ -172,7 +166,9 @@ export default function UsersOverviewPage() {
             <OwnerSelect value={memberStatus} onValueChange={(v) => updateParam('status', v)}>
               <option value="">{t('usersOverview.memberStatus.all')}</option>
               <option value="active">{t('usersOverview.memberStatus.active')}</option>
-              <option value="pending_verification">{t('usersOverview.memberStatus.pendingVerification')}</option>
+              <option value="pending_verification">
+                {t('usersOverview.memberStatus.pendingVerification')}
+              </option>
               <option value="locked">{t('usersOverview.memberStatus.locked')}</option>
             </OwnerSelect>
             <OwnerSelect value={memberSubStatus} onValueChange={(v) => updateParam('subStatus', v)}>
@@ -278,9 +274,7 @@ function MembersTab({ data }: { data: TrainerStudentSummary[] }) {
                   {formatDate(member.activeSubscription?.endDate)}
                 </td>
                 <td className="px-5 py-4">
-                  <OwnerStatusBadge
-                    status={member.activeSubscription?.status ?? member.status}
-                  />
+                  <OwnerStatusBadge status={member.activeSubscription?.status ?? member.status} />
                 </td>
                 <td className="px-5 py-4 text-right">
                   <Link
@@ -315,7 +309,8 @@ function MembersTab({ data }: { data: TrainerStudentSummary[] }) {
               {member.activeSubscription?.packageName ?? t('usersOverview.noPackage')}
               {member.activeSubscription?.endDate && (
                 <span className="ml-2 text-xs rogym-text-dim">
-                  · {t('usersOverview.expiresOn', {
+                  ·{' '}
+                  {t('usersOverview.expiresOn', {
                     date: formatDate(member.activeSubscription.endDate),
                   })}
                 </span>
@@ -374,10 +369,7 @@ function StaffTab({ data }: { data: StaffProfile[] }) {
           </thead>
           <tbody>
             {data.map((s) => (
-              <tr
-                key={s.staffId}
-                className="border-t border-white/5 bg-[var(--rogym-bg-card)]"
-              >
+              <tr key={s.staffId} className="border-t border-white/5 bg-[var(--rogym-bg-card)]">
                 <td className="px-5 py-4">
                   <div className="font-semibold text-white">{s.fullName}</div>
                   <div className="mt-1 text-xs rogym-text-dim">{s.staffCode}</div>
@@ -394,7 +386,7 @@ function StaffTab({ data }: { data: StaffProfile[] }) {
                 </td>
                 <td className="px-5 py-4">
                   <OwnerBadge
-                    label={USER_STATUS_LABEL[s.status ?? 'active'] ?? (s.status ?? 'active')}
+                    label={USER_STATUS_LABEL[s.status ?? 'active'] ?? s.status ?? 'active'}
                     color={USER_STATUS_COLOR[s.status ?? 'active'] ?? '#6b7280'}
                   />
                 </td>

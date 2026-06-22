@@ -273,7 +273,9 @@ function DeleteConfirmModal({
             onClick={handleDelete}
           >
             {deleting && <LoaderCircle size={16} className="animate-spin" />}
-            {pkg.status === 'active' ? t('packages.deleteModal.deactivateBtn') : tCommon('button.delete')}
+            {pkg.status === 'active'
+              ? t('packages.deleteModal.deactivateBtn')
+              : tCommon('button.delete')}
           </button>
         </div>
       </div>
@@ -408,7 +410,9 @@ export default function PackagesPage() {
                   <th className="px-5 py-3 font-medium">{t('packages.table.duration')}</th>
                   <th className="px-5 py-3 font-medium">{t('packages.table.price')}</th>
                   <th className="px-5 py-3 font-medium">{t('packages.table.status')}</th>
-                  <th className="px-5 py-3 font-medium text-right">{t('packages.table.actions')}</th>
+                  <th className="px-5 py-3 font-medium text-right">
+                    {t('packages.table.actions')}
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5">
@@ -418,7 +422,9 @@ export default function PackagesPage() {
                       {pkg.packageCode}
                     </td>
                     <td className="px-5 py-4 font-semibold text-white">{pkg.name}</td>
-                    <td className="px-5 py-4 rogym-text-secondary">{t('packages.daysCount', { days: pkg.durationDays })}</td>
+                    <td className="px-5 py-4 rogym-text-secondary">
+                      {t('packages.daysCount', { days: pkg.durationDays })}
+                    </td>
                     <td className="px-5 py-4 font-semibold rogym-text-green">
                       {formatVnd(Number(pkg.price))}
                     </td>
@@ -459,7 +465,9 @@ export default function PackagesPage() {
                               onClick={() => setDeletingPkg(pkg)}
                             >
                               <Trash2 size={14} />
-                              {pkg.status === 'active' ? t('packages.deactivate') : tCommon('button.delete')}
+                              {pkg.status === 'active'
+                                ? t('packages.deactivate')
+                                : tCommon('button.delete')}
                             </button>
                           </>
                         )}

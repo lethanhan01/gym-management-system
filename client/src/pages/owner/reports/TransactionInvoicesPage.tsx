@@ -1,12 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import {
-  Eye,
-  FileDown,
-  LoaderCircle,
-  ReceiptText,
-  RotateCcw,
-  WalletCards,
-} from 'lucide-react'
+import { Eye, FileDown, LoaderCircle, ReceiptText, RotateCcw, WalletCards } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { DatePickerInput } from '@/components/DatePickerInput'
 import { PaymentMethodIcon } from '@/components/payment/payment-methods'
@@ -91,7 +84,7 @@ function paymentListExcelXml(
   filters: { from: string; to: string; method: string; status: string; sort: string },
   staffNameFn: (p: Payment) => string,
   statusLabelFn: (s: PaymentStatus) => string,
-  t: Translate,
+  t: Translate
 ): string {
   const header = [
     t('reports.invoices.export.colDate'),
@@ -104,8 +97,12 @@ function paymentListExcelXml(
     t('reports.invoices.export.colStaff'),
   ]
   const filterText = [
-    t('reports.invoices.export.filterFrom', { value: filters.from || t('reports.revenue.paymentMethod.all') }),
-    t('reports.invoices.export.filterTo', { value: filters.to || t('reports.revenue.paymentMethod.all') }),
+    t('reports.invoices.export.filterFrom', {
+      value: filters.from || t('reports.revenue.paymentMethod.all'),
+    }),
+    t('reports.invoices.export.filterTo', {
+      value: filters.to || t('reports.revenue.paymentMethod.all'),
+    }),
     t('reports.invoices.export.filterMethod', { value: filters.method }),
     t('reports.invoices.export.filterStatus', { value: filters.status }),
     t('reports.invoices.export.filterSort', { value: filters.sort }),
@@ -162,7 +159,7 @@ function downloadPaymentListExcel(
   filters: { from: string; to: string; method: string; status: string; sort: string },
   staffNameFn: (p: Payment) => string,
   statusLabelFn: (s: PaymentStatus) => string,
-  t: Translate,
+  t: Translate
 ) {
   const blob = new Blob([paymentListExcelXml(rows, filters, staffNameFn, statusLabelFn, t)], {
     type: 'application/vnd.ms-excel;charset=utf-8',
@@ -212,7 +209,9 @@ export default function TransactionInvoicesPage() {
   ]
 
   function paymentStatusLabel(status: PaymentStatus): string {
-    return status === 'success' ? t('reports.invoices.status.success') : t('reports.invoices.status.failed')
+    return status === 'success'
+      ? t('reports.invoices.status.success')
+      : t('reports.invoices.status.failed')
   }
 
   function staffName(payment: Payment): string {
@@ -244,7 +243,7 @@ export default function TransactionInvoicesPage() {
       status: status || undefined,
       sort,
     }),
-    [from, method, sort, status, to],
+    [from, method, sort, status, to]
   )
 
   const load = useCallback(
@@ -262,7 +261,7 @@ export default function TransactionInvoicesPage() {
         setLoading(false)
       }
     },
-    [buildListParams, page, t],
+    [buildListParams, page, t]
   )
 
   async function handleExportList() {
@@ -296,7 +295,7 @@ export default function TransactionInvoicesPage() {
         },
         staffName,
         paymentStatusLabel,
-        translate,
+        translate
       )
     } catch (err) {
       setExportError(getApiError(err, t('reports.invoices.exportFailed')))
@@ -315,7 +314,7 @@ export default function TransactionInvoicesPage() {
 
   const pageTotal = useMemo(
     () => payments.reduce((sum, payment) => sum + Number(payment.amount), 0),
-    [payments],
+    [payments]
   )
   const refundableCount = payments.filter((payment) => payment.canRefund).length
 
@@ -508,9 +507,7 @@ export default function TransactionInvoicesPage() {
                       </span>
                     </td>
                     <td className="is-right">
-                      <span className="rogym-owner-table__amount">
-                        {formatVnd(payment.amount)}
-                      </span>
+                      <span className="rogym-owner-table__amount">{formatVnd(payment.amount)}</span>
                     </td>
                     <td>
                       <span className="rogym-method-pill">
@@ -572,19 +569,34 @@ export default function TransactionInvoicesPage() {
       >
         {selectedPayment && (
           <div className="rogym-detail-grid">
-            <DetailItem label={t('reports.invoices.table.date')} value={formatDateTime(selectedPayment.paidAt)} />
-            <DetailItem label={t('reports.invoices.table.id')} value={transactionCode(selectedPayment)} />
+            <DetailItem
+              label={t('reports.invoices.table.date')}
+              value={formatDateTime(selectedPayment.paidAt)}
+            />
+            <DetailItem
+              label={t('reports.invoices.table.id')}
+              value={transactionCode(selectedPayment)}
+            />
             <DetailItem
               label={t('reports.invoices.table.member')}
               value={`${memberName(selectedPayment, translate)} (${memberCode(selectedPayment)})`}
             />
-            <DetailItem label={t('reports.invoices.table.package')} value={serviceName(selectedPayment)} />
-            <DetailItem label={t('reports.invoices.table.amount')} value={formatVnd(selectedPayment.amount)} />
+            <DetailItem
+              label={t('reports.invoices.table.package')}
+              value={serviceName(selectedPayment)}
+            />
+            <DetailItem
+              label={t('reports.invoices.table.amount')}
+              value={formatVnd(selectedPayment.amount)}
+            />
             <DetailItem
               label={t('reports.invoices.table.method')}
               value={paymentMethodLabel(selectedPayment.method, translate)}
             />
-            <DetailItem label={t('reports.invoices.table.status')} value={paymentStatusLabel(selectedPayment.status)} />
+            <DetailItem
+              label={t('reports.invoices.table.status')}
+              value={paymentStatusLabel(selectedPayment.status)}
+            />
             <DetailItem
               label={t('reports.invoices.table.staff')}
               value={`${staffName(selectedPayment)} (${staffCode(selectedPayment)})`}
@@ -596,7 +608,6 @@ export default function TransactionInvoicesPage() {
           </div>
         )}
       </OwnerModal>
-
     </OwnerPage>
   )
 }

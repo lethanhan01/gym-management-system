@@ -33,11 +33,11 @@ const FIRST_REPORT_YEAR = Math.min(2020, PREVIOUS_MONTH_PERIOD.year, PREVIOUS_QU
 const LAST_REPORT_YEAR = Math.max(
   CURRENT_YEAR,
   PREVIOUS_MONTH_PERIOD.year,
-  PREVIOUS_QUARTER_PERIOD.year,
+  PREVIOUS_QUARTER_PERIOD.year
 )
 const YEARS = Array.from(
   { length: LAST_REPORT_YEAR - FIRST_REPORT_YEAR + 1 },
-  (_, i) => FIRST_REPORT_YEAR + i,
+  (_, i) => FIRST_REPORT_YEAR + i
 )
 
 function pad(n: number) {
@@ -240,18 +240,21 @@ export default function EmployeePerformanceReportPage() {
   const [detailLoading, setDetailLoading] = useState(false)
   const [detailError, setDetailError] = useState<string | null>(null)
 
-  const load = useCallback((from: string, to: string) => {
-    setLoading(true)
-    setError(null)
-    reportService
-      .getEmployeePerformance(from, to)
-      .then((result) => {
-        setData(result)
-        setCurrentRange({ from, to })
-      })
-      .catch((err) => setError(getApiError(err, t('reports.performance.loadFailed'))))
-      .finally(() => setLoading(false))
-  }, [t])
+  const load = useCallback(
+    (from: string, to: string) => {
+      setLoading(true)
+      setError(null)
+      reportService
+        .getEmployeePerformance(from, to)
+        .then((result) => {
+          setData(result)
+          setCurrentRange({ from, to })
+        })
+        .catch((err) => setError(getApiError(err, t('reports.performance.loadFailed'))))
+        .finally(() => setLoading(false))
+    },
+    [t]
+  )
 
   const handleLoad = useCallback(() => {
     if (mode === 'month') {
@@ -326,7 +329,9 @@ export default function EmployeePerformanceReportPage() {
           {(mode === 'month' || mode === 'quarter') && (
             <>
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-medium rogym-text-dim">{t('reports.performance.filter.year')}</label>
+                <label className="text-xs font-medium rogym-text-dim">
+                  {t('reports.performance.filter.year')}
+                </label>
                 <OwnerSelect
                   value={String(selectedYear)}
                   onValueChange={handleYearChange}
@@ -342,7 +347,9 @@ export default function EmployeePerformanceReportPage() {
 
               {mode === 'month' && (
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-medium rogym-text-dim">{t('reports.performance.filter.month')}</label>
+                  <label className="text-xs font-medium rogym-text-dim">
+                    {t('reports.performance.filter.month')}
+                  </label>
                   <OwnerSelect
                     value={String(month)}
                     onValueChange={(v) => setMonth(Number(v))}
@@ -359,7 +366,9 @@ export default function EmployeePerformanceReportPage() {
 
               {mode === 'quarter' && (
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-medium rogym-text-dim">{t('reports.performance.filter.quarter')}</label>
+                  <label className="text-xs font-medium rogym-text-dim">
+                    {t('reports.performance.filter.quarter')}
+                  </label>
                   <OwnerSelect
                     value={String(quarter)}
                     onValueChange={(v) => setQuarter(Number(v))}
@@ -379,7 +388,9 @@ export default function EmployeePerformanceReportPage() {
           {mode === 'custom' && (
             <>
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-medium rogym-text-dim">{t('reports.performance.filter.from')}</label>
+                <label className="text-xs font-medium rogym-text-dim">
+                  {t('reports.performance.filter.from')}
+                </label>
                 <input
                   type="date"
                   value={customFrom}
@@ -389,7 +400,9 @@ export default function EmployeePerformanceReportPage() {
                 />
               </div>
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-medium rogym-text-dim">{t('reports.performance.filter.to')}</label>
+                <label className="text-xs font-medium rogym-text-dim">
+                  {t('reports.performance.filter.to')}
+                </label>
                 <input
                   type="date"
                   value={customTo}
@@ -431,13 +444,16 @@ export default function EmployeePerformanceReportPage() {
 
           <div className="flex items-center gap-6 rounded-xl border border-white/5 bg-white/[0.025] p-4 text-xs rogym-text-dim">
             <span className="flex items-center gap-2">
-              <span className="h-2 w-2 rounded-full bg-green-500" /> {t('reports.performance.legend.good')}
+              <span className="h-2 w-2 rounded-full bg-green-500" />{' '}
+              {t('reports.performance.legend.good')}
             </span>
             <span className="flex items-center gap-2">
-              <span className="h-2 w-2 rounded-full bg-amber-500" /> {t('reports.performance.legend.average')}
+              <span className="h-2 w-2 rounded-full bg-amber-500" />{' '}
+              {t('reports.performance.legend.average')}
             </span>
             <span className="flex items-center gap-2">
-              <span className="h-2 w-2 rounded-full bg-red-500" /> {t('reports.performance.legend.needsImprovement')}
+              <span className="h-2 w-2 rounded-full bg-red-500" />{' '}
+              {t('reports.performance.legend.needsImprovement')}
             </span>
           </div>
         </>
@@ -468,10 +484,18 @@ export default function EmployeePerformanceReportPage() {
                   <table className="w-full text-xs">
                     <thead>
                       <tr className="border-b border-white/5 text-left rogym-text-dim">
-                        <th className="px-4 py-2.5 font-medium">{t('reports.performance.attendanceTable.date')}</th>
-                        <th className="px-4 py-2.5 font-medium">{t('reports.performance.attendanceTable.checkIn')}</th>
-                        <th className="px-4 py-2.5 font-medium">{t('reports.performance.attendanceTable.checkOut')}</th>
-                        <th className="px-4 py-2.5 font-medium text-right">{t('reports.performance.attendanceTable.hours')}</th>
+                        <th className="px-4 py-2.5 font-medium">
+                          {t('reports.performance.attendanceTable.date')}
+                        </th>
+                        <th className="px-4 py-2.5 font-medium">
+                          {t('reports.performance.attendanceTable.checkIn')}
+                        </th>
+                        <th className="px-4 py-2.5 font-medium">
+                          {t('reports.performance.attendanceTable.checkOut')}
+                        </th>
+                        <th className="px-4 py-2.5 font-medium text-right">
+                          {t('reports.performance.attendanceTable.hours')}
+                        </th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-white/5">
@@ -515,8 +539,12 @@ export default function EmployeePerformanceReportPage() {
                   <table className="w-full text-xs">
                     <thead>
                       <tr className="border-b border-white/5 text-left rogym-text-dim">
-                        <th className="px-4 py-2.5 font-medium">{t('reports.performance.scheduleTable.date')}</th>
-                        <th className="px-4 py-2.5 font-medium">{t('reports.performance.scheduleTable.shift')}</th>
+                        <th className="px-4 py-2.5 font-medium">
+                          {t('reports.performance.scheduleTable.date')}
+                        </th>
+                        <th className="px-4 py-2.5 font-medium">
+                          {t('reports.performance.scheduleTable.shift')}
+                        </th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-white/5">

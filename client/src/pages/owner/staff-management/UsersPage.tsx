@@ -136,20 +136,13 @@ export default function UsersPage() {
           onChange={handleFilterChange(setSearch)}
           placeholder={t('staffManagement.users.searchPlaceholder')}
         />
-        <OwnerSelect
-          value={position}
-          onValueChange={handleFilterChange(setPosition)}
-        >
+        <OwnerSelect value={position} onValueChange={handleFilterChange(setPosition)}>
           <option value="">{t('staffManagement.users.positions.all')}</option>
           <option value="staff">{t('staffManagement.users.positions.staff')}</option>
           <option value="trainer">{t('staffManagement.users.positions.trainer')}</option>
           <option value="owner">{t('staffManagement.users.positions.owner')}</option>
         </OwnerSelect>
-        <OwnerSelect
-          value={status}
-          onValueChange={handleFilterChange(setStatus)}
-          required
-        >
+        <OwnerSelect value={status} onValueChange={handleFilterChange(setStatus)} required>
           <option value="">{t('staffManagement.users.statusFilter.all')}</option>
           <option value="active">{t('usersOverview.userStatus.active')}</option>
           <option value="pending_verification">
@@ -161,7 +154,10 @@ export default function UsersPage() {
         <button
           type="button"
           className="rogym-btn rogym-btn--primary"
-          onClick={() => { setPage(1); fetchStaff(1) }}
+          onClick={() => {
+            setPage(1)
+            fetchStaff(1)
+          }}
         >
           {tCommon('button.search')}
         </button>
@@ -196,10 +192,18 @@ export default function UsersPage() {
                 <tr className="border-b border-white/5 text-left text-xs rogym-text-dim">
                   <th className="px-5 py-3 font-medium">{t('staffManagement.users.table.code')}</th>
                   <th className="px-5 py-3 font-medium">{t('staffManagement.users.table.name')}</th>
-                  <th className="px-5 py-3 font-medium">{t('staffManagement.users.table.email')}</th>
-                  <th className="px-5 py-3 font-medium text-right">{t('staffManagement.users.table.position')}</th>
-                  <th className="px-5 py-3 font-medium">{t('staffManagement.users.table.status')}</th>
-                  <th className="px-5 py-3 font-medium text-right">{t('staffManagement.users.table.actions')}</th>
+                  <th className="px-5 py-3 font-medium">
+                    {t('staffManagement.users.table.email')}
+                  </th>
+                  <th className="px-5 py-3 font-medium text-right">
+                    {t('staffManagement.users.table.position')}
+                  </th>
+                  <th className="px-5 py-3 font-medium">
+                    {t('staffManagement.users.table.status')}
+                  </th>
+                  <th className="px-5 py-3 font-medium text-right">
+                    {t('staffManagement.users.table.actions')}
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5">

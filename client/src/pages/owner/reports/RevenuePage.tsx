@@ -50,7 +50,9 @@ const WEEKS = Array.from({ length: 53 }, (_, i) => i + 1)
 
 const DOW_HEADERS = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN']
 
-function pad(n: number) { return String(n).padStart(2, '0') }
+function pad(n: number) {
+  return String(n).padStart(2, '0')
+}
 
 // Capped at today (for API calls)
 function getWeekRange(year: number, week: number): { from: string; to: string } {
@@ -145,8 +147,16 @@ function formatVndShort(amount: number): string {
 // ─── Tooltip ──────────────────────────────────────────────────────────────────
 
 function GridTooltip({
-  x, y, date, amount,
-}: { x: number; y: number; date: string; amount: number }) {
+  x,
+  y,
+  date,
+  amount,
+}: {
+  x: number
+  y: number
+  date: string
+  amount: number
+}) {
   return (
     <div
       className="fixed z-50 rounded-xl border border-white/10 bg-[#1a2d22] px-3 py-2 text-sm shadow-xl pointer-events-none"
@@ -154,7 +164,9 @@ function GridTooltip({
     >
       <p className="text-xs rogym-text-dim">
         {new Date(date + 'T00:00:00').toLocaleDateString('vi-VN', {
-          day: 'numeric', month: 'numeric', year: 'numeric',
+          day: 'numeric',
+          month: 'numeric',
+          year: 'numeric',
         })}
       </p>
       <p className="font-bold rogym-text-green">{formatVnd(amount)}</p>
@@ -178,7 +190,9 @@ function RevenueDayGrid({
   todayStr: string
 }) {
   const { t } = useTranslation('owner')
-  const [tip, setTip] = useState<{ x: number; y: number; date: string; amount: number } | null>(null)
+  const [tip, setTip] = useState<{ x: number; y: number; date: string; amount: number } | null>(
+    null
+  )
 
   const amountMap = useMemo(() => {
     const m = new Map<string, number>()
@@ -188,7 +202,7 @@ function RevenueDayGrid({
 
   const maxAmount = useMemo(
     () => (data.length > 0 ? Math.max(...data.map((r) => Number(r.amount))) : 1),
-    [data],
+    [data]
   )
 
   const weeks = useMemo(() => buildWeeks(displayFrom, displayTo), [displayFrom, displayTo])
@@ -215,7 +229,11 @@ function RevenueDayGrid({
                   : 'transparent',
                 border: '1px solid rgba(255,255,255,0.06)',
               }}
-              onMouseMove={hasRevenue ? (e) => setTip({ x: e.clientX, y: e.clientY, date: date!, amount }) : undefined}
+              onMouseMove={
+                hasRevenue
+                  ? (e) => setTip({ x: e.clientX, y: e.clientY, date: date!, amount })
+                  : undefined
+              }
             >
               {date && (
                 <>
@@ -230,7 +248,9 @@ function RevenueDayGrid({
                       {formatVndShort(amount)}
                     </span>
                   ) : (
-                    <span className="text-[10px] rogym-text-dim">{t('reports.revenue.gridEmpty')}</span>
+                    <span className="text-[10px] rogym-text-dim">
+                      {t('reports.revenue.gridEmpty')}
+                    </span>
                   )}
                 </>
               )}
@@ -266,9 +286,7 @@ function RevenueDayGrid({
       <div className="space-y-1">
         {weeks.map((week, wi) => {
           const firstReal = week.find((d) => d !== null)
-          const firstRealMonth = firstReal
-            ? new Date(firstReal + 'T00:00:00').getMonth()
-            : -1
+          const firstRealMonth = firstReal ? new Date(firstReal + 'T00:00:00').getMonth() : -1
           const showMonthLabel = !isMonth && firstReal && firstRealMonth !== prevMonth
           if (showMonthLabel) prevMonth = firstRealMonth
 
@@ -276,7 +294,9 @@ function RevenueDayGrid({
             <div key={wi}>
               {showMonthLabel && firstReal && (
                 <p className="text-[10px] font-semibold rogym-text-dim pt-2 pb-0.5 pl-0.5">
-                  {t('reports.revenue.monthLabel', { month: new Date(firstReal + 'T00:00:00').getMonth() + 1 })}
+                  {t('reports.revenue.monthLabel', {
+                    month: new Date(firstReal + 'T00:00:00').getMonth() + 1,
+                  })}
                 </p>
               )}
               <div className={`grid grid-cols-7 ${gap}`}>
@@ -332,13 +352,12 @@ function RevenueDayGrid({
       {/* Color legend */}
       <div className="flex items-center gap-1.5 mt-4">
         <span className="text-[10px] rogym-text-dim">{t('reports.revenue.legend.less')}</span>
-        {[0, 0.18, 0.38, 0.60, 0.82].map((op, i) => (
+        {[0, 0.18, 0.38, 0.6, 0.82].map((op, i) => (
           <div
             key={i}
             className="w-3 h-3 rounded-[3px]"
             style={{
-              backgroundColor:
-                op === 0 ? 'rgba(255,255,255,0.05)' : `rgba(6,195,132,${op})`,
+              backgroundColor: op === 0 ? 'rgba(255,255,255,0.05)' : `rgba(6,195,132,${op})`,
             }}
           />
         ))}
@@ -390,7 +409,7 @@ export default function RevenuePage() {
   const [month, setMonth] = useState(CURRENT_MONTH)
   const [quarter, setQuarter] = useState(CURRENT_QUARTER)
   const [customFrom, setCustomFrom] = useState(
-    () => `${_now.getFullYear()}-${pad(_now.getMonth() + 1)}-01`,
+    () => `${_now.getFullYear()}-${pad(_now.getMonth() + 1)}-01`
   )
   const [customTo, setCustomTo] = useState(todayInput)
   const [paymentMethod, setPaymentMethod] = useState('')
@@ -444,13 +463,13 @@ export default function RevenuePage() {
         .catch((err) => setError(getApiError(err, t('reports.revenue.loadFailed'))))
         .finally(() => setLoading(false))
     },
-    [paymentMethod, t],
+    [paymentMethod, t]
   )
 
   const handleLoad = useCallback(() => {
     if (mode === 'week') {
-      const api = getWeekRange(year, week)       // capped at today for API
-      const disp = getFullWeekRange(year, week)  // full Mon–Sun for display
+      const api = getWeekRange(year, week) // capped at today for API
+      const disp = getFullWeekRange(year, week) // full Mon–Sun for display
       setLoadedDisplay(disp)
       load(api.from, api.to)
     } else if (mode === 'month') {
@@ -506,9 +525,15 @@ export default function RevenuePage() {
               </button>
             ))}
           </div>
-          <OwnerSelect value={paymentMethod} onValueChange={setPaymentMethod} ariaLabel={t('reports.revenue.filter.method')}>
+          <OwnerSelect
+            value={paymentMethod}
+            onValueChange={setPaymentMethod}
+            ariaLabel={t('reports.revenue.filter.method')}
+          >
             {PAYMENT_METHOD_OPTIONS.map((opt) => (
-              <option key={opt.value} value={opt.value}>{opt.label}</option>
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
             ))}
           </OwnerSelect>
         </div>
@@ -516,36 +541,76 @@ export default function RevenuePage() {
         <div className="flex flex-wrap items-end gap-4">
           {(mode === 'week' || mode === 'month' || mode === 'quarter') && (
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-medium rogym-text-dim">{t('reports.revenue.filter.year')}</label>
-              <OwnerSelect value={String(year)} onValueChange={(v) => setYear(Number(v))} ariaLabel={t('reports.revenue.filter.year')}>
-                {YEARS.map((y) => <option key={y} value={y}>{y}</option>)}
+              <label className="text-xs font-medium rogym-text-dim">
+                {t('reports.revenue.filter.year')}
+              </label>
+              <OwnerSelect
+                value={String(year)}
+                onValueChange={(v) => setYear(Number(v))}
+                ariaLabel={t('reports.revenue.filter.year')}
+              >
+                {YEARS.map((y) => (
+                  <option key={y} value={y}>
+                    {y}
+                  </option>
+                ))}
               </OwnerSelect>
             </div>
           )}
 
           {mode === 'week' && (
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-medium rogym-text-dim">{t('reports.revenue.filter.week')}</label>
-              <OwnerSelect value={String(week)} onValueChange={(v) => setWeek(Number(v))} ariaLabel={t('reports.revenue.filter.week')}>
-                {WEEKS.map((w) => <option key={w} value={w}>{t('reports.revenue.filter.week')} {w}</option>)}
+              <label className="text-xs font-medium rogym-text-dim">
+                {t('reports.revenue.filter.week')}
+              </label>
+              <OwnerSelect
+                value={String(week)}
+                onValueChange={(v) => setWeek(Number(v))}
+                ariaLabel={t('reports.revenue.filter.week')}
+              >
+                {WEEKS.map((w) => (
+                  <option key={w} value={w}>
+                    {t('reports.revenue.filter.week')} {w}
+                  </option>
+                ))}
               </OwnerSelect>
             </div>
           )}
 
           {mode === 'month' && (
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-medium rogym-text-dim">{t('reports.revenue.filter.month')}</label>
-              <OwnerSelect value={String(month)} onValueChange={(v) => setMonth(Number(v))} ariaLabel={t('reports.revenue.filter.month')}>
-                {MONTH_OPTIONS.map((opt) => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+              <label className="text-xs font-medium rogym-text-dim">
+                {t('reports.revenue.filter.month')}
+              </label>
+              <OwnerSelect
+                value={String(month)}
+                onValueChange={(v) => setMonth(Number(v))}
+                ariaLabel={t('reports.revenue.filter.month')}
+              >
+                {MONTH_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
               </OwnerSelect>
             </div>
           )}
 
           {mode === 'quarter' && (
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-medium rogym-text-dim">{t('reports.revenue.filter.quarter')}</label>
-              <OwnerSelect value={String(quarter)} onValueChange={(v) => setQuarter(Number(v))} ariaLabel={t('reports.revenue.filter.quarter')}>
-                {QUARTER_OPTIONS.map((opt) => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+              <label className="text-xs font-medium rogym-text-dim">
+                {t('reports.revenue.filter.quarter')}
+              </label>
+              <OwnerSelect
+                value={String(quarter)}
+                onValueChange={(v) => setQuarter(Number(v))}
+                ariaLabel={t('reports.revenue.filter.quarter')}
+              >
+                {QUARTER_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
               </OwnerSelect>
             </div>
           )}
@@ -553,7 +618,9 @@ export default function RevenuePage() {
           {mode === 'custom' && (
             <>
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-medium rogym-text-dim">{t('reports.revenue.filter.from')}</label>
+                <label className="text-xs font-medium rogym-text-dim">
+                  {t('reports.revenue.filter.from')}
+                </label>
                 <input
                   type="date"
                   value={customFrom}
@@ -563,7 +630,9 @@ export default function RevenuePage() {
                 />
               </div>
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-medium rogym-text-dim">{t('reports.revenue.filter.to')}</label>
+                <label className="text-xs font-medium rogym-text-dim">
+                  {t('reports.revenue.filter.to')}
+                </label>
                 <input
                   type="date"
                   value={customTo}
@@ -611,7 +680,14 @@ export default function RevenuePage() {
               icon={<RefreshCw size={18} />}
               label={t('reports.revenue.kpi.renewalRate')}
               value={renewals?.renewalRate != null ? `${renewals.renewalRate.toFixed(1)}%` : '—'}
-              hint={renewals ? t('reports.revenue.renewalHint', { renewed: renewals.renewed, churned: renewals.churned }) : t('reports.revenue.noDataYet')}
+              hint={
+                renewals
+                  ? t('reports.revenue.renewalHint', {
+                      renewed: renewals.renewed,
+                      churned: renewals.churned,
+                    })
+                  : t('reports.revenue.noDataYet')
+              }
               accent={false}
             />
             <OwnerStatCard
@@ -636,14 +712,23 @@ export default function RevenuePage() {
           ) : loadedDisplay ? (
             <div className="rogym-card rogym-card--compact p-6 space-y-4">
               <div className="flex flex-wrap items-start justify-between gap-3">
-                <h2 className="text-base font-bold text-white">{t('reports.revenue.chartTitle')}</h2>
+                <h2 className="text-base font-bold text-white">
+                  {t('reports.revenue.chartTitle')}
+                </h2>
                 {isPartial && (
                   <div className="flex items-center gap-1.5 rounded-xl bg-amber-500/10 border border-amber-500/20 px-3 py-1.5">
                     <Info size={13} className="text-amber-400 shrink-0" />
                     <span className="text-xs text-amber-300">
                       {t('reports.revenue.partialNote', {
-                        from: new Date(loadedDisplay.from + 'T00:00:00').toLocaleDateString('vi-VN', { day: 'numeric', month: 'numeric' }),
-                        to: new Date(todayStr + 'T00:00:00').toLocaleDateString('vi-VN', { day: 'numeric', month: 'numeric', year: 'numeric' }),
+                        from: new Date(loadedDisplay.from + 'T00:00:00').toLocaleDateString(
+                          'vi-VN',
+                          { day: 'numeric', month: 'numeric' }
+                        ),
+                        to: new Date(todayStr + 'T00:00:00').toLocaleDateString('vi-VN', {
+                          day: 'numeric',
+                          month: 'numeric',
+                          year: 'numeric',
+                        }),
                       })}
                     </span>
                   </div>
@@ -663,7 +748,9 @@ export default function RevenuePage() {
           {topPackages.length > 0 && (
             <div className="rogym-card rogym-card--compact p-6 space-y-4">
               <div className="flex items-center justify-between gap-3">
-                <h2 className="text-base font-bold text-white">{t('reports.revenue.topPackages')}</h2>
+                <h2 className="text-base font-bold text-white">
+                  {t('reports.revenue.topPackages')}
+                </h2>
                 {topPackages.length > 3 && (
                   <button
                     type="button"
@@ -687,7 +774,9 @@ export default function RevenuePage() {
                       </span>
                       <div className="flex-1 min-w-0 space-y-1">
                         <div className="flex items-center justify-between gap-2">
-                          <span className="truncate text-sm font-semibold text-white">{pkg.name}</span>
+                          <span className="truncate text-sm font-semibold text-white">
+                            {pkg.name}
+                          </span>
                           <span className="shrink-0 text-xs rogym-text-dim">
                             {t('reports.revenue.packageSalesCount', { count: pkg.count })}
                           </span>
@@ -699,7 +788,8 @@ export default function RevenuePage() {
                               style={{
                                 width: `${barWidth}%`,
                                 backgroundColor: OWNER_ACCENT,
-                                opacity: index === 0 ? 1 : 0.5 + 0.15 * (1 - index / topPackages.length),
+                                opacity:
+                                  index === 0 ? 1 : 0.5 + 0.15 * (1 - index / topPackages.length),
                               }}
                             />
                           </div>

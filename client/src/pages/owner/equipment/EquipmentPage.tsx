@@ -5,11 +5,7 @@ import { Edit2, Plus, Search, Trash2 } from 'lucide-react'
 import { getApiError } from '@/lib/api-error'
 import { formatDate } from '@/lib/date'
 import { DatePickerInput } from '@/components/DatePickerInput'
-import {
-  facilityService,
-  type Equipment,
-  type GymRoom,
-} from '@/services/facility.service'
+import { facilityService, type Equipment, type GymRoom } from '@/services/facility.service'
 import {
   OwnerEmptyState,
   OwnerErrorState,
@@ -59,10 +55,7 @@ export default function EquipmentPage() {
     { value: 'retired', label: t('equipment.status.retired') },
   ]
 
-  const STATUS_FILTER_OPTIONS = [
-    { value: '', label: t('equipment.status.all') },
-    ...STATUS_OPTIONS,
-  ]
+  const STATUS_FILTER_OPTIONS = [{ value: '', label: t('equipment.status.all') }, ...STATUS_OPTIONS]
 
   const [searchParams, setSearchParams] = useSearchParams()
   const statusFilter = searchParams.get('status') ?? ''
@@ -78,7 +71,10 @@ export default function EquipmentPage() {
   const [rooms, setRooms] = useState<GymRoom[]>([])
 
   useEffect(() => {
-    facilityService.listRooms().then(setRooms).catch(() => {})
+    facilityService
+      .listRooms()
+      .then(setRooms)
+      .catch(() => {})
   }, [])
 
   const load = useCallback(() => {
@@ -272,7 +268,9 @@ export default function EquipmentPage() {
                   <th className="px-5 py-3 font-medium">{t('equipment.table.importDate')}</th>
                   <th className="px-5 py-3 font-medium">{t('equipment.table.warrantyUntil')}</th>
                   <th className="px-5 py-3 font-medium">{t('equipment.table.status')}</th>
-                  <th className="px-5 py-3 font-medium text-right">{t('equipment.table.actions')}</th>
+                  <th className="px-5 py-3 font-medium text-right">
+                    {t('equipment.table.actions')}
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5">
@@ -283,11 +281,11 @@ export default function EquipmentPage() {
                     </td>
                     <td className="px-5 py-4 font-semibold text-white">{eq.name}</td>
                     <td className="px-5 py-4 rogym-text-secondary">
-                      {eq.roomName ?? <span className="rogym-text-dim italic">{t('equipment.noRoom')}</span>}
+                      {eq.roomName ?? (
+                        <span className="rogym-text-dim italic">{t('equipment.noRoom')}</span>
+                      )}
                     </td>
-                    <td className="px-5 py-4 rogym-text-secondary">
-                      {formatDate(eq.importDate)}
-                    </td>
+                    <td className="px-5 py-4 rogym-text-secondary">{formatDate(eq.importDate)}</td>
                     <td className="px-5 py-4 rogym-text-secondary">
                       {formatDate(eq.warrantyUntil)}
                     </td>
@@ -347,14 +345,24 @@ export default function EquipmentPage() {
       {/* Modal thêm / chỉnh sửa thiết bị */}
       <OwnerModal
         open={modalOpen}
-        title={editing ? t('equipment.editTitle', { name: editing.name }) : t('equipment.createTitle')}
+        title={
+          editing ? t('equipment.editTitle', { name: editing.name }) : t('equipment.createTitle')
+        }
         onClose={closeModal}
         footer={
           <>
-            <button type="button" className="rogym-btn rogym-btn--outline-white" onClick={closeModal}>
+            <button
+              type="button"
+              className="rogym-btn rogym-btn--outline-white"
+              onClick={closeModal}
+            >
               {tCommon('button.cancel')}
             </button>
-            <OwnerSubmitButton form="equipment-form" loading={saving} disabled={!form.name.trim() || !form.roomId}>
+            <OwnerSubmitButton
+              form="equipment-form"
+              loading={saving}
+              disabled={!form.name.trim() || !form.roomId}
+            >
               {editing ? t('equipment.saveChanges') : t('equipment.addEquipment')}
             </OwnerSubmitButton>
           </>
@@ -380,14 +388,12 @@ export default function EquipmentPage() {
 
           <label className="block space-y-2">
             <span className="rogym-field-label">{t('equipment.form.room')}</span>
-            <OwnerSelect
-              value={form.roomId}
-              onValueChange={(v) => setField('roomId', v)}
-              required
-            >
+            <OwnerSelect value={form.roomId} onValueChange={(v) => setField('roomId', v)} required>
               <option value="">{t('equipment.form.selectRoom')}</option>
               {rooms.map((r) => (
-                <option key={r.roomId} value={r.roomId}>{r.name}</option>
+                <option key={r.roomId} value={r.roomId}>
+                  {r.name}
+                </option>
               ))}
             </OwnerSelect>
           </label>
@@ -420,7 +426,9 @@ export default function EquipmentPage() {
                 required
               >
                 {STATUS_OPTIONS.map((opt) => (
-                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
                 ))}
               </OwnerSelect>
             </label>

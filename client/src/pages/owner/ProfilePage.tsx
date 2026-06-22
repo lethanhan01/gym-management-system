@@ -174,7 +174,11 @@ export default function OwnerProfilePage() {
                   className="rogym-btn rogym-btn--primary flex-1"
                   disabled={saving}
                 >
-                  {saving ? <LoaderCircle size={16} className="animate-spin" /> : tCommon('button.save')}
+                  {saving ? (
+                    <LoaderCircle size={16} className="animate-spin" />
+                  ) : (
+                    tCommon('button.save')
+                  )}
                 </button>
               </div>
             </form>
@@ -231,7 +235,11 @@ export default function OwnerProfilePage() {
                 value={currentPw}
                 onChange={setCurrentPw}
               />
-              <ProfilePasswordField label={t('profile.newPassword')} value={newPw} onChange={setNewPw} />
+              <ProfilePasswordField
+                label={t('profile.newPassword')}
+                value={newPw}
+                onChange={setNewPw}
+              />
               <ProfilePasswordField
                 label={t('profile.confirmPassword')}
                 value={confirmPw}
@@ -244,7 +252,11 @@ export default function OwnerProfilePage() {
                 className="rogym-btn rogym-btn--primary w-full"
                 disabled={pwSaving}
               >
-                {pwSaving ? <LoaderCircle size={16} className="animate-spin" /> : t('profile.changePasswordBtn')}
+                {pwSaving ? (
+                  <LoaderCircle size={16} className="animate-spin" />
+                ) : (
+                  t('profile.changePasswordBtn')
+                )}
               </button>
             </div>
           </form>

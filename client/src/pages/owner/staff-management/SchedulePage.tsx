@@ -179,7 +179,9 @@ export default function OwnerSchedulePage() {
               onClick={() => handleDelete(schedule)}
               disabled={deleting.has(schedule.scheduleId)}
               className="shrink-0 text-white/30 opacity-0 transition-opacity group-hover:opacity-100 hover:text-red-400 disabled:opacity-50"
-              aria-label={t('staffManagement.schedule.removeAriaLabel', { name: schedule.fullName })}
+              aria-label={t('staffManagement.schedule.removeAriaLabel', {
+                name: schedule.fullName,
+              })}
             >
               <X size={13} />
             </button>
@@ -191,10 +193,11 @@ export default function OwnerSchedulePage() {
         open={addOpen}
         title={(() => {
           if (!selectedDate) return t('staffManagement.schedule.addStaffBtn')
-          const dateStr = new Date(`${selectedDate}T00:00:00`).toLocaleDateString(
-            'vi-VN',
-            { day: '2-digit', month: '2-digit', year: 'numeric' }
-          )
+          const dateStr = new Date(`${selectedDate}T00:00:00`).toLocaleDateString('vi-VN', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+          })
           return t('staffManagement.schedule.modalTitle', { date: dateStr })
         })()}
         onClose={() => setAddOpen(false)}
@@ -227,13 +230,13 @@ export default function OwnerSchedulePage() {
             </div>
           )}
           {availableStaff.length === 0 ? (
-            <p className="text-sm rogym-text-dim">
-              {t('staffManagement.schedule.allAssigned')}
-            </p>
+            <p className="text-sm rogym-text-dim">{t('staffManagement.schedule.allAssigned')}</p>
           ) : (
             <>
               <label className="block space-y-2">
-                <span className="rogym-field-label">{t('staffManagement.schedule.shiftLabel')}</span>
+                <span className="rogym-field-label">
+                  {t('staffManagement.schedule.shiftLabel')}
+                </span>
                 <OwnerSelect
                   value={addShift}
                   onValueChange={(value) => setAddShift(value as StaffScheduleShift)}
@@ -247,7 +250,9 @@ export default function OwnerSchedulePage() {
                 </OwnerSelect>
               </label>
               <label className="block space-y-2">
-                <span className="rogym-field-label">{t('staffManagement.schedule.staffLabel')}</span>
+                <span className="rogym-field-label">
+                  {t('staffManagement.schedule.staffLabel')}
+                </span>
                 <OwnerSelect value={addStaffId} onValueChange={setAddStaffId} required>
                   <option value="">{t('staffManagement.schedule.selectStaff')}</option>
                   {availableStaff.map((staff) => (

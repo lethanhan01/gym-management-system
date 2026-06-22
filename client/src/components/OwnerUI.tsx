@@ -42,20 +42,38 @@ export function OwnerStatusBadge({ status, tone }: { status: string; tone?: Stat
     return statusTone(s)
   }
   const statusKey: Record<string, string> = {
-    active: 'status.active', scheduled: 'status.scheduled', in_progress: 'status.inProgress',
-    completed: 'status.completed', cancelled: 'status.cancelled', expired: 'status.expired',
-    pending: 'status.pending', pending_verification: 'status.pendingVerification',
-    draft: 'status.draft', archived: 'status.archived', replaced: 'status.replaced',
-    realtime: 'status.realtime', manual: 'status.manual', qr: 'status.qr',
-    available: 'status.available', broken: 'status.broken', repairing: 'status.repairing',
-    reported: 'status.reported', resolved: 'status.resolved', inactive: 'status.inactive',
-    suspended: 'status.suspended', retired: 'status.retired', deleted: 'status.deleted',
-    locked: 'status.locked', maintenance: 'status.maintenance',
+    active: 'status.active',
+    scheduled: 'status.scheduled',
+    in_progress: 'status.inProgress',
+    completed: 'status.completed',
+    cancelled: 'status.cancelled',
+    expired: 'status.expired',
+    pending: 'status.pending',
+    pending_verification: 'status.pendingVerification',
+    draft: 'status.draft',
+    archived: 'status.archived',
+    replaced: 'status.replaced',
+    realtime: 'status.realtime',
+    manual: 'status.manual',
+    qr: 'status.qr',
+    available: 'status.available',
+    broken: 'status.broken',
+    repairing: 'status.repairing',
+    reported: 'status.reported',
+    resolved: 'status.resolved',
+    inactive: 'status.inactive',
+    suspended: 'status.suspended',
+    retired: 'status.retired',
+    deleted: 'status.deleted',
+    locked: 'status.locked',
+    maintenance: 'status.maintenance',
   }
   const translate = t as (key: string) => string
   const label = statusKey[status] ? translate(statusKey[status]) : status.replace(/_/g, ' ')
 
-  return <StatusBadge status={label || translate('status.unknown')} tone={tone ?? ownerTone(status)} />
+  return (
+    <StatusBadge status={label || translate('status.unknown')} tone={tone ?? ownerTone(status)} />
+  )
 }
 
 export function OwnerSubmitButton({
