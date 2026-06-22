@@ -1,6 +1,7 @@
 import { FormEvent, useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Building2, Plus, Wrench } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { getApiError } from '@/lib/api-error'
 import { facilityService, type GymRoom } from '@/services/facility.service'
 import {
@@ -14,6 +15,8 @@ import {
 } from '@/components/StaffUI'
 
 export default function FacilityPage() {
+  const { t } = useTranslation('staff')
+
   const [rooms, setRooms] = useState<GymRoom[]>([])
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
@@ -37,9 +40,9 @@ export default function FacilityPage() {
         setRooms(result.data)
         setTotal(result.total)
       })
-      .catch((err) => setError(getApiError(err, 'Không thể tải danh sách phòng tập.')))
+      .catch((err) => setError(getApiError(err, t('facility.loadFailed'))))
       .finally(() => setLoading(false))
-  }, [])
+  }, [t])
 
   useEffect(() => {
     load()
@@ -91,7 +94,7 @@ export default function FacilityPage() {
       closeModal()
       load()
     } catch (err) {
-      setFormError(getApiError(err, 'Không thể lưu phòng tập.'))
+      setFormError(getApiError(err, t('facility.saveFailed')))
     } finally {
       setSaving(false)
     }
@@ -100,12 +103,12 @@ export default function FacilityPage() {
   return (
     <StaffPage>
       <StaffPageHeader
-        eyebrow="Cơ sở vật chất"
-        title="Quản lý phòng tập"
-        description={`${total} phòng trong hệ thống.`}
+        eyebrow={t('facility.eyebrow')}
+        title={t('facility.title')}
+        description={t('facility.descriptionWithTotal', { total })}
         actions={
           <button type="button" className="rogym-btn rogym-btn--primary" onClick={openCreate}>
-            <Plus size={16} /> Thêm phòng
+            <Plus size={16} /> {t('facility.addRoom')}
           </button>
         }
       />
@@ -116,11 +119,11 @@ export default function FacilityPage() {
         <StaffErrorState message={error} onRetry={load} />
       ) : rooms.length === 0 ? (
         <StaffEmptyState
-          title="Chưa có phòng nào"
-          description="Thêm phòng tập đầu tiên."
+          title={t('facility.noRooms')}
+          description={t('facility.noRoomsDesc')}
           action={
             <button type="button" className="rogym-btn rogym-btn--primary" onClick={openCreate}>
-              <Plus size={15} /> Thêm phòng
+              <Plus size={15} /> {t('facility.addRoom')}
             </button>
           }
         />
@@ -136,8 +139,8 @@ export default function FacilityPage() {
                 <div className="mt-0.5 text-xs rogym-text-dim">{room.roomCode}</div>
               )}
               <div className="mt-3 space-y-1 text-sm rogym-text-secondary">
-                {room.roomType && <div>Loại: {room.roomType}</div>}
-                <div>Sức chứa: {room.capacity} người</div>
+                {room.roomType && <div>{t('facility.roomType', { type: room.roomType })}</div>}
+                <div>{t('facility.capacity', { n: room.capacity })}</div>
                 {room.description && (
                   <div className="text-xs rogym-text-dim line-clamp-2">
                     {room.description}
@@ -150,13 +153,13 @@ export default function FacilityPage() {
                   className="rogym-btn rogym-btn--outline-white flex-1 text-sm"
                   onClick={() => openEdit(room)}
                 >
-                  Chỉnh sửa
+                  {t('facility.edit')}
                 </button>
                 <Link
                   className="rogym-btn rogym-btn--outline-green flex-1 text-sm"
                   to={`/staff/equipment?roomId=${room.roomId}`}
                 >
-                  <Wrench size={14} /> Thiết bị
+                  <Wrench size={14} /> {t('facility.equipment')}
                 </Link>
               </div>
             </div>
@@ -166,7 +169,7 @@ export default function FacilityPage() {
 
       <StaffModal
         open={modalOpen}
-        title={editing ? 'Chỉnh sửa phòng tập' : 'Thêm phòng tập'}
+        title={editing ? t('facility.editModal') : t('facility.createModal')}
         onClose={closeModal}
         footer={
           <>
@@ -175,10 +178,10 @@ export default function FacilityPage() {
               className="rogym-btn rogym-btn--outline-white"
               onClick={closeModal}
             >
-              Hủy
+              {t('facility.cancel')}
             </button>
             <SubmitButton form="room-form" loading={saving} disabled={!formName.trim()}>
-              {editing ? 'Lưu thay đổi' : 'Tạo phòng'}
+              {editing ? t('facility.saveChanges') : t('facility.createRoom')}
             </SubmitButton>
           </>
         }
@@ -186,26 +189,26 @@ export default function FacilityPage() {
         <form id="room-form" className="space-y-4" onSubmit={handleSubmit}>
           {formError && <StaffErrorState message={formError} />}
           <label className="block space-y-2">
-            <span className="rogym-field-label">Tên phòng *</span>
+            <span className="rogym-field-label">{t('facility.roomName')}</span>
             <input
               className="rogym-input"
               value={formName}
               onChange={(event) => setFormName(event.target.value)}
               required
-              placeholder="VD: Phòng gym chính"
+              placeholder={t('facility.roomNamePlaceholder')}
             />
           </label>
           <label className="block space-y-2">
-            <span className="rogym-field-label">Loại phòng</span>
+            <span className="rogym-field-label">{t('facility.roomTypePlaceholder')}</span>
             <input
               className="rogym-input"
               value={formType}
               onChange={(event) => setFormType(event.target.value)}
-              placeholder="VD: gym, yoga, cardio"
+              placeholder={t('facility.roomTypePlaceholder')}
             />
           </label>
           <label className="block space-y-2">
-            <span className="rogym-field-label">Sức chứa (người)</span>
+            <span className="rogym-field-label">{t('facility.capacityLabel')}</span>
             <input
               className="rogym-input"
               type="number"
@@ -216,12 +219,12 @@ export default function FacilityPage() {
             />
           </label>
           <label className="block space-y-2">
-            <span className="rogym-field-label">Mô tả</span>
+            <span className="rogym-field-label">{t('facility.description')}</span>
             <textarea
               className="rogym-input min-h-20"
               value={formDesc}
               onChange={(event) => setFormDesc(event.target.value)}
-              placeholder="Mô tả ngắn về phòng tập..."
+              placeholder={t('facility.descriptionPlaceholder')}
             />
           </label>
           <button type="submit" className="hidden" />

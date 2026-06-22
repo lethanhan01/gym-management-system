@@ -1,6 +1,7 @@
 import { FormEvent, useCallback, useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { MessageSquare } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { getApiError } from '@/lib/api-error'
 import { formatDate } from '@/lib/date'
 import { feedbackService, type Feedback } from '@/services/feedback.service'
@@ -16,26 +17,28 @@ import {
   SubmitButton,
 } from '@/components/StaffUI'
 
-const FEEDBACK_STATUS_OPTIONS = [
-  { value: '', label: 'Mọi trạng thái' },
-  { value: 'open', label: 'Chờ xử lý' },
-  { value: 'in_progress', label: 'Đang xử lý' },
-  { value: 'resolved', label: 'Đã giải quyết' },
-  { value: 'rejected', label: 'Đã từ chối' },
-]
-
-const NEXT_STATUS_OPTIONS: Record<string, Array<{ value: string; label: string }>> = {
-  open: [
-    { value: 'in_progress', label: 'Tiếp nhận xử lý' },
-    { value: 'rejected', label: 'Từ chối' },
-  ],
-  in_progress: [
-    { value: 'resolved', label: 'Đánh dấu đã giải quyết' },
-    { value: 'rejected', label: 'Từ chối' },
-  ],
-}
-
 export default function StaffFeedbackPage() {
+  const { t } = useTranslation('staff')
+
+  const FEEDBACK_STATUS_OPTIONS = [
+    { value: '', label: t('feedback.statusAll') },
+    { value: 'open', label: t('feedback.statusOpen') },
+    { value: 'in_progress', label: t('feedback.statusInProgress') },
+    { value: 'resolved', label: t('feedback.statusResolved') },
+    { value: 'rejected', label: t('feedback.statusRejected') },
+  ]
+
+  const NEXT_STATUS_OPTIONS: Record<string, Array<{ value: string; label: string }>> = {
+    open: [
+      { value: 'in_progress', label: t('feedback.actionInProgress') },
+      { value: 'rejected', label: t('feedback.actionReject') },
+    ],
+    in_progress: [
+      { value: 'resolved', label: t('feedback.actionResolved') },
+      { value: 'rejected', label: t('feedback.actionReject') },
+    ],
+  }
+
   const [searchParams, setSearchParams] = useSearchParams()
   const status = searchParams.get('status') ?? ''
   const feedbackType = searchParams.get('type') ?? ''
@@ -67,9 +70,9 @@ export default function StaffFeedbackPage() {
         setData(result.data)
         setTotal(result.total)
       })
-      .catch((err) => setError(getApiError(err, 'Không thể tải danh sách phản hồi.')))
+      .catch((err) => setError(getApiError(err, t('feedback.loadFailed'))))
       .finally(() => setLoading(false))
-  }, [status, feedbackType, page])
+  }, [status, feedbackType, page, t])
 
   useEffect(() => {
     load()
@@ -109,27 +112,47 @@ export default function StaffFeedbackPage() {
       closeDetail()
       load()
     } catch (err) {
-      setSaveError(getApiError(err, 'Không thể cập nhật phản hồi.'))
+      setSaveError(getApiError(err, t('feedback.saveFailed')))
     } finally {
       setSaving(false)
     }
   }
 
+  function feedbackTypeLabel(type: string) {
+    if (type === 'staff') return t('feedback.staff')
+    if (type === 'equipment') return t('feedback.equipment')
+    return t('feedback.service')
+  }
+
+  function severityLabel(severity: string) {
+    if (severity === 'high') return t('feedback.severityHigh')
+    if (severity === 'medium') return t('feedback.severityMedium')
+    return t('feedback.severityLow')
+  }
+
   const totalPages = Math.max(1, Math.ceil(total / 15))
+
+  const statusLabel = status
+    ? FEEDBACK_STATUS_OPTIONS.find((o) => o.value === status)?.label ?? status
+    : null
 
   return (
     <StaffPage>
       <StaffPageHeader
-        eyebrow="Xử lý phản hồi"
-        title="Phản hồi hội viên"
-        description={`${total} phản hồi${status ? ` trạng thái "${FEEDBACK_STATUS_OPTIONS.find((o) => o.value === status)?.label ?? status}"` : ''}.`}
+        eyebrow={t('feedback.eyebrow')}
+        title={t('feedback.title')}
+        description={
+          statusLabel
+            ? t('feedback.descriptionFiltered', { total, status: statusLabel })
+            : t('feedback.descriptionAll', { total })
+        }
       />
 
       <div className="rogym-card rogym-card--compact flex flex-wrap gap-3 p-4">
         <StaffSelect
           value={status}
           onValueChange={(value) => updateParam('status', value)}
-          ariaLabel="Lọc theo trạng thái"
+          ariaLabel={t('feedback.filterByStatus')}
         >
           {FEEDBACK_STATUS_OPTIONS.map((opt) => (
             <option key={opt.value} value={opt.value}>
@@ -140,12 +163,12 @@ export default function StaffFeedbackPage() {
         <StaffSelect
           value={feedbackType}
           onValueChange={(value) => updateParam('type', value)}
-          ariaLabel="Lọc theo loại"
+          ariaLabel={t('feedback.filterByType')}
         >
-          <option value="">Mọi loại</option>
-          <option value="staff">Nhân viên</option>
-          <option value="equipment">Thiết bị</option>
-          <option value="service">Dịch vụ</option>
+          <option value="">{t('feedback.typeAll')}</option>
+          <option value="staff">{t('feedback.staff')}</option>
+          <option value="equipment">{t('feedback.equipment')}</option>
+          <option value="service">{t('feedback.service')}</option>
         </StaffSelect>
       </div>
 
@@ -155,8 +178,8 @@ export default function StaffFeedbackPage() {
         <StaffErrorState message={error} onRetry={load} />
       ) : data.length === 0 ? (
         <StaffEmptyState
-          title="Không có phản hồi nào"
-          description="Thử thay đổi bộ lọc hoặc chờ hội viên gửi phản hồi mới."
+          title={t('feedback.noFeedback')}
+          description={t('feedback.noFeedbackDesc')}
         />
       ) : (
         <div className="grid gap-3">
@@ -181,7 +204,7 @@ export default function StaffFeedbackPage() {
                       {fb.subjectStaffName && (
                         <>
                           <span>·</span>
-                          <span>NV: {fb.subjectStaffName}</span>
+                          <span>{t('feedback.staffLabel', { name: fb.subjectStaffName })}</span>
                         </>
                       )}
                     </div>
@@ -199,7 +222,7 @@ export default function StaffFeedbackPage() {
               </div>
               {fb.response && (
                 <div className="mt-3 rounded-lg bg-white/[0.03] px-3 py-2 text-xs rogym-text-secondary line-clamp-2">
-                  Phản hồi: {fb.response}
+                  {t('feedback.responseLabel', { text: fb.response })}
                 </div>
               )}
             </button>
@@ -215,10 +238,10 @@ export default function StaffFeedbackPage() {
             disabled={page <= 1}
             onClick={() => updateParam('page', String(page - 1))}
           >
-            Trước
+            {t('feedback.prevPage')}
           </button>
           <span className="text-sm rogym-text-secondary">
-            Trang {page}/{totalPages}
+            {t('feedback.page', { page, total: totalPages })}
           </span>
           <button
             type="button"
@@ -226,14 +249,14 @@ export default function StaffFeedbackPage() {
             disabled={page >= totalPages}
             onClick={() => updateParam('page', String(page + 1))}
           >
-            Sau
+            {t('feedback.nextPage')}
           </button>
         </div>
       )}
 
       <StaffModal
         open={!!selected}
-        title="Chi tiết phản hồi"
+        title={t('feedback.detailTitle')}
         onClose={closeDetail}
         footer={
           selected && NEXT_STATUS_OPTIONS[selected.status] ? (
@@ -243,10 +266,10 @@ export default function StaffFeedbackPage() {
                 className="rogym-btn rogym-btn--outline-white"
                 onClick={closeDetail}
               >
-                Đóng
+                {t('feedback.close')}
               </button>
               <SubmitButton form="feedback-handle-form" loading={saving} disabled={!nextStatus}>
-                Cập nhật
+                {t('feedback.update')}
               </SubmitButton>
             </>
           ) : (
@@ -255,7 +278,7 @@ export default function StaffFeedbackPage() {
               className="rogym-btn rogym-btn--outline-white"
               onClick={closeDetail}
             >
-              Đóng
+              {t('feedback.close')}
             </button>
           )
         }
@@ -279,15 +302,17 @@ export default function StaffFeedbackPage() {
                 {selected.content}
               </p>
               <div className="flex justify-between text-xs rogym-text-dim">
-                <span>Gửi lúc {formatDate(selected.createdAt)}</span>
-                {selected.handledAt && <span>Xử lý lúc {formatDate(selected.handledAt)}</span>}
+                <span>{t('feedback.sentAt', { date: formatDate(selected.createdAt) })}</span>
+                {selected.handledAt && (
+                  <span>{t('feedback.handledAt', { date: formatDate(selected.handledAt) })}</span>
+                )}
               </div>
             </div>
 
             {selected.response && (
               <div className="rounded-xl border border-white/5 bg-white/[0.03] p-4">
                 <div className="mb-1 text-xs font-semibold uppercase tracking-wider rogym-text-dim">
-                  Phản hồi trước
+                  {t('feedback.previousResponse')}
                 </div>
                 <p className="text-sm rogym-text-secondary">{selected.response}</p>
               </div>
@@ -297,7 +322,7 @@ export default function StaffFeedbackPage() {
               <form id="feedback-handle-form" className="space-y-4" onSubmit={handleUpdate}>
                 {saveError && <StaffErrorState message={saveError} />}
                 <label className="block space-y-2">
-                  <span className="rogym-field-label">Hành động</span>
+                  <span className="rogym-field-label">{t('feedback.action')}</span>
                   <StaffSelect value={nextStatus} onValueChange={setNextStatus} required>
                     {NEXT_STATUS_OPTIONS[selected.status].map((opt) => (
                       <option key={opt.value} value={opt.value}>
@@ -307,12 +332,12 @@ export default function StaffFeedbackPage() {
                   </StaffSelect>
                 </label>
                 <label className="block space-y-2">
-                  <span className="rogym-field-label">Nội dung phản hồi (tuỳ chọn)</span>
+                  <span className="rogym-field-label">{t('feedback.responseContent')}</span>
                   <textarea
                     className="rogym-input min-h-24"
                     value={response}
                     onChange={(event) => setResponse(event.target.value)}
-                    placeholder="Nhập nội dung phản hồi cho hội viên..."
+                    placeholder={t('feedback.responsePlaceholder')}
                   />
                 </label>
                 <button type="submit" className="hidden" />
@@ -323,18 +348,6 @@ export default function StaffFeedbackPage() {
       </StaffModal>
     </StaffPage>
   )
-}
-
-function feedbackTypeLabel(type: string) {
-  if (type === 'staff') return 'Nhân viên'
-  if (type === 'equipment') return 'Thiết bị'
-  return 'Dịch vụ'
-}
-
-function severityLabel(severity: string) {
-  if (severity === 'high') return 'Cao'
-  if (severity === 'medium') return 'Trung bình'
-  return 'Thấp'
 }
 
 function severityTone(severity: string) {

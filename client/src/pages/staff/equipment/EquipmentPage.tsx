@@ -1,6 +1,7 @@
 import { FormEvent, useCallback, useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { AlertTriangle, Search, Wrench } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { getApiError } from '@/lib/api-error'
 import { formatDate } from '@/lib/date'
 import {
@@ -22,14 +23,6 @@ import {
 } from '@/components/StaffUI'
 import { cn } from '@/lib/utils'
 
-const STATUS_OPTIONS = [
-  { value: '', label: 'Mọi trạng thái' },
-  { value: 'active', label: 'Đang hoạt động' },
-  { value: 'repairing', label: 'Đang sửa chữa' },
-  { value: 'broken', label: 'Hỏng' },
-  { value: 'retired', label: 'Ngừng sử dụng' },
-]
-
 function equipmentStatusTone(status: string) {
   if (status === 'active') return 'success'
   if (status === 'repairing') return 'warning'
@@ -37,11 +30,21 @@ function equipmentStatusTone(status: string) {
   return 'muted'
 }
 
-function equipmentStatusLabel(status: string) {
-  return STATUS_OPTIONS.find((o) => o.value === status)?.label ?? status
-}
-
 export default function EquipmentPage() {
+  const { t } = useTranslation('staff')
+
+  const STATUS_OPTIONS = [
+    { value: '', label: t('equipment.statusAll') },
+    { value: 'active', label: t('equipment.statusActive') },
+    { value: 'repairing', label: t('equipment.statusRepairing') },
+    { value: 'broken', label: t('equipment.statusBroken') },
+    { value: 'retired', label: t('equipment.statusRetired') },
+  ]
+
+  function equipmentStatusLabel(status: string) {
+    return STATUS_OPTIONS.find((o) => o.value === status)?.label ?? status
+  }
+
   const [searchParams, setSearchParams] = useSearchParams()
   const statusFilter = searchParams.get('status') ?? ''
   const roomId = searchParams.get('roomId') ?? ''
@@ -85,9 +88,9 @@ export default function EquipmentPage() {
         setTotal(result.total)
         setTotalPages(result.totalPages)
       })
-      .catch((err) => setError(getApiError(err, 'Không thể tải danh sách thiết bị.')))
+      .catch((err) => setError(getApiError(err, t('equipment.loadFailed'))))
       .finally(() => setLoading(false))
-  }, [statusFilter, roomId, page, searchParams])
+  }, [statusFilter, roomId, page, searchParams, t])
 
   useEffect(() => {
     load()
@@ -144,7 +147,7 @@ export default function EquipmentPage() {
       closeReport()
       await refreshDetail(selected.equipmentId)
     } catch (err) {
-      setReportError(getApiError(err, 'Không thể gửi báo cáo bảo trì.'))
+      setReportError(getApiError(err, t('equipment.reportFailed')))
     } finally {
       setReporting(false)
     }
@@ -214,9 +217,9 @@ export default function EquipmentPage() {
   return (
     <StaffPage>
       <StaffPageHeader
-        eyebrow="Cơ sở vật chất"
-        title="Thiết bị tập luyện"
-        description={`${total} thiết bị trong hệ thống.`}
+        eyebrow={t('equipment.eyebrow')}
+        title={t('equipment.title')}
+        description={t('equipment.descriptionWithTotal', { total })}
       />
 
       <div className="rogym-card rogym-card--compact grid gap-3 p-4 md:grid-cols-[1fr_180px_180px_auto]">
@@ -230,13 +233,13 @@ export default function EquipmentPage() {
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             onKeyDown={(event) => event.key === 'Enter' && applySearch()}
-            placeholder="Tìm theo tên thiết bị"
+            placeholder={t('equipment.searchPlaceholder')}
           />
         </div>
         <StaffSelect
           value={statusFilter}
           onValueChange={(value) => updateParam('status', value)}
-          ariaLabel="Lọc theo trạng thái"
+          ariaLabel={t('equipment.filterByStatus')}
         >
           {STATUS_OPTIONS.map((opt) => (
             <option key={opt.value} value={opt.value}>
@@ -247,15 +250,15 @@ export default function EquipmentPage() {
         <StaffSelect
           value={roomId}
           onValueChange={(value) => updateParam('roomId', value)}
-          ariaLabel="Lọc theo phòng"
+          ariaLabel={t('equipment.filterByRoom')}
         >
-          <option value="">Mọi phòng</option>
+          <option value="">{t('equipment.allRooms')}</option>
           {rooms.map((r) => (
             <option key={r.roomId} value={r.roomId}>{r.name}</option>
           ))}
         </StaffSelect>
         <button type="button" className="rogym-btn rogym-btn--primary" onClick={applySearch}>
-          Tìm
+          {t('equipment.search')}
         </button>
       </div>
 
@@ -265,8 +268,8 @@ export default function EquipmentPage() {
         <StaffErrorState message={error} onRetry={load} />
       ) : data.length === 0 ? (
         <StaffEmptyState
-          title="Không tìm thấy thiết bị"
-          description="Thử thay đổi bộ lọc hoặc từ khóa."
+          title={t('equipment.noEquipment')}
+          description={t('equipment.noEquipmentDesc')}
         />
       ) : (
         <>
@@ -274,11 +277,11 @@ export default function EquipmentPage() {
             <table className="w-full border-collapse text-left text-sm">
               <thead className="bg-white/5 text-xs uppercase tracking-wider rogym-text-dim">
                 <tr>
-                  <th className="px-5 py-4">Thiết bị</th>
-                  <th className="px-5 py-4">Phòng</th>
-                  <th className="px-5 py-4">Bảo hành</th>
-                  <th className="px-5 py-4">Trạng thái</th>
-                  <th className="px-5 py-4 text-right">Thao tác</th>
+                  <th className="px-5 py-4">{t('equipment.colDevice')}</th>
+                  <th className="px-5 py-4">{t('equipment.colRoom')}</th>
+                  <th className="px-5 py-4">{t('equipment.colWarranty')}</th>
+                  <th className="px-5 py-4">{t('equipment.colStatus')}</th>
+                  <th className="px-5 py-4 text-right">{t('equipment.colActions')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -289,7 +292,7 @@ export default function EquipmentPage() {
                       <div className="text-xs rogym-text-dim">{eq.equipmentCode}</div>
                     </td>
                     <td className="px-5 py-4 rogym-text-secondary">
-                      {eq.roomName ?? 'Chưa phân phòng'}
+                      {eq.roomName ?? t('equipment.notAssignedRoom')}
                     </td>
                     <td className="px-5 py-4 rogym-text-secondary">
                       {formatDate(eq.warrantyUntil)}
@@ -308,7 +311,7 @@ export default function EquipmentPage() {
                         className="rogym-text-link rogym-text-link--accent"
                         onClick={() => openDetail(eq)}
                       >
-                        Chi tiết
+                        {t('equipment.detail')}
                       </button>
                     </td>
                   </tr>
@@ -343,7 +346,7 @@ export default function EquipmentPage() {
                   </span>
                 </div>
                 <div className="mt-2 text-sm rogym-text-secondary">
-                  {eq.roomName ?? 'Chưa phân phòng'}
+                  {eq.roomName ?? t('equipment.notAssignedRoom')}
                 </div>
               </button>
             ))}
@@ -359,10 +362,10 @@ export default function EquipmentPage() {
             disabled={page <= 1}
             onClick={() => updateParam('page', String(page - 1))}
           >
-            Trước
+            {t('equipment.prevPage')}
           </button>
           <span className="text-sm rogym-text-secondary">
-            Trang {page}/{totalPages}
+            {t('equipment.page', { page, total: totalPages })}
           </span>
           <button
             type="button"
@@ -370,7 +373,7 @@ export default function EquipmentPage() {
             disabled={page >= totalPages}
             onClick={() => updateParam('page', String(page + 1))}
           >
-            Sau
+            {t('equipment.nextPage')}
           </button>
         </div>
       )}
@@ -378,7 +381,7 @@ export default function EquipmentPage() {
       {/* Modal chi tiết thiết bị */}
       <StaffModal
         open={!!selected}
-        title={selected?.name ?? 'Chi tiết thiết bị'}
+        title={selected?.name ?? t('equipment.detailTitle')}
         onClose={closeDetail}
         footer={
           selected ? (
@@ -388,7 +391,7 @@ export default function EquipmentPage() {
                 className="rogym-btn rogym-btn--outline-white"
                 onClick={closeDetail}
               >
-                Đóng
+                {t('equipment.close')}
               </button>
 
               {selected.status === 'active' && (
@@ -397,7 +400,7 @@ export default function EquipmentPage() {
                   className="rogym-btn rogym-btn--danger"
                   onClick={openReport}
                 >
-                  <AlertTriangle size={15} /> Báo cáo sự cố
+                  <AlertTriangle size={15} /> {t('equipment.reportIncident')}
                 </button>
               )}
 
@@ -408,7 +411,7 @@ export default function EquipmentPage() {
                   disabled={!!updatingLogId || logsLoading}
                   onClick={handleStartRepair}
                 >
-                  {updatingLogId ? 'Đang xử lý...' : 'Bắt đầu sửa chữa'}
+                  {updatingLogId ? t('equipment.processing') : t('equipment.startRepair')}
                 </button>
               )}
 
@@ -420,7 +423,7 @@ export default function EquipmentPage() {
                     disabled={updatingStatus || logsLoading}
                     onClick={handleRetireFromRepairing}
                   >
-                    {updatingStatus ? 'Đang xử lý...' : 'Ngừng sử dụng'}
+                    {updatingStatus ? t('equipment.processing') : t('equipment.retire')}
                   </button>
                   <button
                     type="button"
@@ -428,7 +431,7 @@ export default function EquipmentPage() {
                     disabled={!!updatingLogId || logsLoading}
                     onClick={handleFinishRepair}
                   >
-                    {updatingLogId ? 'Đang xử lý...' : 'Đã sửa xong'}
+                    {updatingLogId ? t('equipment.processing') : t('equipment.finishRepair')}
                   </button>
                 </>
               )}
@@ -439,12 +442,12 @@ export default function EquipmentPage() {
         {selected && (
           <div className="space-y-5">
             <div className="grid grid-cols-2 gap-3 text-sm">
-              <InfoPair label="Mã thiết bị" value={selected.equipmentCode} />
-              <InfoPair label="Phòng" value={selected.roomName ?? 'Chưa phân'} />
-              <InfoPair label="Ngày mua" value={formatDate(selected.importDate)} />
-              <InfoPair label="Hết bảo hành" value={formatDate(selected.warrantyUntil)} />
+              <InfoPair label={t('equipment.deviceCode')} value={selected.equipmentCode} />
+              <InfoPair label={t('equipment.room')} value={selected.roomName ?? t('equipment.notAssigned')} />
+              <InfoPair label={t('equipment.importDate')} value={formatDate(selected.importDate)} />
+              <InfoPair label={t('equipment.warrantyUntil')} value={formatDate(selected.warrantyUntil)} />
               <div className="col-span-2 flex items-center justify-between rounded-xl border border-white/5 bg-white/[0.03] p-3">
-                <span className="rogym-text-dim">Trạng thái</span>
+                <span className="rogym-text-dim">{t('equipment.colStatus')}</span>
                 <span
                   className="rogym-tone-badge"
                   data-tone={equipmentStatusTone(selected.status)}
@@ -455,11 +458,11 @@ export default function EquipmentPage() {
             </div>
 
             <div>
-              <h3 className="mb-3 text-sm font-bold text-white">Lịch sử bảo trì</h3>
+              <h3 className="mb-3 text-sm font-bold text-white">{t('equipment.maintenanceHistory')}</h3>
               {logsLoading ? (
                 <div className="h-16 animate-pulse rounded-xl bg-white/5" />
               ) : logs.length === 0 ? (
-                <p className="text-sm rogym-text-dim">Chưa có báo cáo bảo trì.</p>
+                <p className="text-sm rogym-text-dim">{t('equipment.noMaintenance')}</p>
               ) : (
                 <div className="space-y-2">
                   {logs.map((log) => (
@@ -472,8 +475,8 @@ export default function EquipmentPage() {
                         <StaffStatusBadge status={log.status} />
                       </div>
                       <div className="mt-1 text-xs rogym-text-dim">
-                        {formatDate(log.reportedAt)} · {log.reportedByStaff?.fullName ?? 'Không rõ'}
-                        {log.resolvedAt && ` · Giải quyết ${formatDate(log.resolvedAt)}`}
+                        {formatDate(log.reportedAt)} · {log.reportedByStaff?.fullName ?? t('equipment.unknownStaff')}
+                        {log.resolvedAt && ` · ${t('equipment.resolvedAt', { date: formatDate(log.resolvedAt) })}`}
                       </div>
                     </div>
                   ))}
@@ -487,7 +490,7 @@ export default function EquipmentPage() {
       {/* Modal báo cáo sự cố */}
       <StaffModal
         open={reportOpen}
-        title={`Báo cáo sự cố — ${selected?.name ?? ''}`}
+        title={t('equipment.reportTitle', { name: selected?.name ?? '' })}
         onClose={closeReport}
         footer={
           <>
@@ -496,10 +499,10 @@ export default function EquipmentPage() {
               className="rogym-btn rogym-btn--outline-white"
               onClick={closeReport}
             >
-              Hủy
+              {t('equipment.cancel')}
             </button>
             <SubmitButton form="report-form" loading={reporting} disabled={!reportDesc.trim()}>
-              Gửi báo cáo
+              {t('equipment.sendReport')}
             </SubmitButton>
           </>
         }
@@ -507,12 +510,12 @@ export default function EquipmentPage() {
         <form id="report-form" className="space-y-4" onSubmit={handleReport}>
           {reportError && <StaffErrorState message={reportError} />}
           <label className="block space-y-2">
-            <span className="rogym-field-label">Mô tả sự cố *</span>
+            <span className="rogym-field-label">{t('equipment.incidentDesc')}</span>
             <textarea
               className="rogym-input min-h-24"
               value={reportDesc}
               onChange={(event) => setReportDesc(event.target.value)}
-              placeholder="Mô tả chi tiết sự cố thiết bị..."
+              placeholder={t('equipment.incidentPlaceholder')}
               required
             />
           </label>
