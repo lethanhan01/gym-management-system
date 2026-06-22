@@ -78,4 +78,14 @@ Nếu chưa cấu hình SonarQube Cloud, workflow ghi một notice và bỏ qua 
 
 `sonar-project.properties` đã cấu hình source, test, exclusions, TypeScript config và đường dẫn LCOV. Project/organization key được truyền từ GitHub Variables để file cấu hình không chứa giá trị chưa biết của tài khoản SonarQube Cloud.
 
+Phép đo copy/paste (`sonar.cpd.exclusions`) loại các nhóm không phản ánh duplication của mã sản phẩm:
+
+- fixture seed trong `server/prisma/seed.ts` và `server/prisma/seed/**`;
+- Prisma schema/migration mang tính khai báo trong `server/prisma/schema.prisma`, `server/prisma/schema/**` và `server/prisma/migrations/**`;
+- tài nguyên bản dịch trong `client/src/locales/**`;
+- test, test factory và test setup của frontend;
+- các file khai báo kiểu `*.d.ts`.
+
+Đây chỉ là exclusion của CPD, không phải yêu cầu loại các file đó khỏi toàn bộ phân tích Sonar. Các page, component, service, DTO, helper, stylesheet viết tay và bảng ánh xạ dùng bởi mã sản phẩm vẫn nằm trong phạm vi đo duplication.
+
 Kết quả chi tiết được xem trong project trên SonarQube Cloud. GitHub Actions log cho biết scan thành công, thất bại Quality Gate, hoặc bị bỏ qua do thiếu cấu hình.
