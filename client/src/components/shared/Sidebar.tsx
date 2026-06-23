@@ -119,13 +119,25 @@ function NavItems({ sections, expanded }: { sections: NavSection[]; expanded: bo
   )
 }
 
-export default function Sidebar() {
+export default function Sidebar({
+  isMobileOpen = false,
+  onCloseMobile,
+}: {
+  isMobileOpen?: boolean
+  onCloseMobile?: () => void
+}) {
   const [expanded, setExpanded] = useState(false)
   const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const user = useAuthStore((state) => state.user)
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
   const { pathname } = useLocation()
   const navigate = useNavigate()
+
+  // Đóng sidebar khi route thay đổi (người dùng nhấn link trên mobile)
+  useEffect(() => {
+    onCloseMobile?.()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pathname])
   const hasActiveSub = useSubscriptionStore((s) => s.hasActiveSub)
   const clearSubscription = useSubscriptionStore((s) => s.clear)
   const { t: tMember } = useTranslation('member')
@@ -351,7 +363,7 @@ export default function Sidebar() {
     <aside
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
-      className={`rogym-sidebar ${expanded ? 'is-expanded' : ''}`}
+      className={`rogym-sidebar ${expanded ? 'is-expanded' : ''} ${isMobileOpen ? 'is-mobile-open' : ''}`}
     >
       {/* Logo */}
       <div className="rogym-sidebar__logo flex items-center">
