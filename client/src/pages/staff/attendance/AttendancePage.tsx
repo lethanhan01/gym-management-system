@@ -176,7 +176,9 @@ function AttendanceCalendarView({
         </button>
       </div>
 
-      <div className="mb-1 grid grid-cols-7">
+      {/* Wrapper scroll ngang cho mobile — calendar 7 cột cần tối thiểu ~350px */}
+      <div className="overflow-x-auto -mx-1 px-1">
+      <div className="mb-1 grid grid-cols-7 min-w-[320px]">
         {DOW_LABELS.map((d) => (
           <div
             key={d}
@@ -192,7 +194,7 @@ function AttendanceCalendarView({
       ) : error ? (
         <StaffErrorState message={error} onRetry={onRetry} />
       ) : (
-        <div className="space-y-0.5">
+        <div className="space-y-0.5 min-w-[320px]">
           {grid.map((row, ri) => (
             <div key={ri} className="grid grid-cols-7">
               {row.map((cell, ci) => {
@@ -239,6 +241,7 @@ function AttendanceCalendarView({
           <p className="text-sm rogym-sx-5e5c39ab">{t('attendance.noLogsThisMonth')}</p>
         </div>
       )}
+      </div>{/* end overflow-x-auto */}
     </div>
   )
 }

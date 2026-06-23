@@ -210,54 +210,57 @@ function RevenueDayGrid({
   // ── Week: single row, tall cells, header baked in ──────────────────────────
   if (mode === 'week') {
     const days = weeks[0] ?? []
+    /* Scroll ngang trên mobile — 7 cột cần tối thiểu ~350px */
     return (
-      <div className="grid grid-cols-7 gap-2" onMouseLeave={() => setTip(null)}>
-        {days.map((date, di) => {
-          const isFuture = date ? date > todayStr : false
-          const amount = date ? (amountMap.get(date) ?? 0) : 0
-          const d = date ? new Date(date + 'T00:00:00') : null
-          const hasRevenue = !isFuture && amount > 0
-          return (
-            <div
-              key={di}
-              className="rounded-xl flex flex-col items-center justify-center gap-1 min-h-[84px] px-1 py-3 transition-colors"
-              style={{
-                backgroundColor: date
-                  ? isFuture
-                    ? 'rgba(255,255,255,0.03)'
-                    : getCellColor(amount, maxAmount)
-                  : 'transparent',
-                border: '1px solid rgba(255,255,255,0.06)',
-              }}
-              onMouseMove={
-                hasRevenue
-                  ? (e) => setTip({ x: e.clientX, y: e.clientY, date: date!, amount })
-                  : undefined
-              }
-            >
-              {date && (
-                <>
-                  <span className="text-[11px] rogym-text-dim font-medium">{DOW_HEADERS[di]}</span>
-                  <span className="text-sm font-bold text-white">
-                    {d!.getDate()}/{d!.getMonth() + 1}
-                  </span>
-                  {isFuture ? (
-                    <span className="text-[10px] rogym-text-dim">—</span>
-                  ) : hasRevenue ? (
-                    <span className="text-xs font-semibold rogym-text-green leading-tight text-center">
-                      {formatVndShort(amount)}
+      <div className="overflow-x-auto -mx-1 px-1">
+        <div className="grid grid-cols-7 gap-2 min-w-[320px]" onMouseLeave={() => setTip(null)}>
+          {days.map((date, di) => {
+            const isFuture = date ? date > todayStr : false
+            const amount = date ? (amountMap.get(date) ?? 0) : 0
+            const d = date ? new Date(date + 'T00:00:00') : null
+            const hasRevenue = !isFuture && amount > 0
+            return (
+              <div
+                key={di}
+                className="rounded-xl flex flex-col items-center justify-center gap-1 min-h-[84px] px-1 py-3 transition-colors"
+                style={{
+                  backgroundColor: date
+                    ? isFuture
+                      ? 'rgba(255,255,255,0.03)'
+                      : getCellColor(amount, maxAmount)
+                    : 'transparent',
+                  border: '1px solid rgba(255,255,255,0.06)',
+                }}
+                onMouseMove={
+                  hasRevenue
+                    ? (e) => setTip({ x: e.clientX, y: e.clientY, date: date!, amount })
+                    : undefined
+                }
+              >
+                {date && (
+                  <>
+                    <span className="text-[11px] rogym-text-dim font-medium">{DOW_HEADERS[di]}</span>
+                    <span className="text-sm font-bold text-white">
+                      {d!.getDate()}/{d!.getMonth() + 1}
                     </span>
-                  ) : (
-                    <span className="text-[10px] rogym-text-dim">
-                      {t('reports.revenue.gridEmpty')}
-                    </span>
-                  )}
-                </>
-              )}
-            </div>
-          )
-        })}
-        {tip && <GridTooltip {...tip} />}
+                    {isFuture ? (
+                      <span className="text-[10px] rogym-text-dim">—</span>
+                    ) : hasRevenue ? (
+                      <span className="text-xs font-semibold rogym-text-green leading-tight text-center">
+                        {formatVndShort(amount)}
+                      </span>
+                    ) : (
+                      <span className="text-[10px] rogym-text-dim">
+                        {t('reports.revenue.gridEmpty')}
+                      </span>
+                    )}
+                  </>
+                )}
+              </div>
+            )
+          })}
+          {tip && <GridTooltip {...tip} />}
+        </div>
       </div>
     )
   }
@@ -273,8 +276,10 @@ function RevenueDayGrid({
 
   return (
     <div onMouseLeave={() => setTip(null)}>
+      {/* Scroll ngang trên mobile — calendar 7 cột cần tối thiểu ~350px */}
+      <div className="overflow-x-auto -mx-1 px-1">
       {/* DOW header */}
-      <div className={`grid grid-cols-7 ${gap} mb-1`}>
+      <div className={`grid grid-cols-7 ${gap} mb-1 min-w-[300px]`}>
         {DOW_HEADERS.map((h) => (
           <div key={h} className="text-center text-[10px] font-semibold rogym-text-dim py-1">
             {h}
@@ -283,7 +288,7 @@ function RevenueDayGrid({
       </div>
 
       {/* Week rows */}
-      <div className="space-y-1">
+      <div className="space-y-1 min-w-[300px]">
         {weeks.map((week, wi) => {
           const firstReal = week.find((d) => d !== null)
           const firstRealMonth = firstReal ? new Date(firstReal + 'T00:00:00').getMonth() : -1
@@ -348,6 +353,8 @@ function RevenueDayGrid({
           )
         })}
       </div>
+
+      </div>{/* end overflow-x-auto */}
 
       {/* Color legend */}
       <div className="flex items-center gap-1.5 mt-4">
@@ -660,8 +667,8 @@ export default function RevenuePage() {
         <OwnerErrorState message={error} onRetry={handleLoad} />
       ) : (
         <>
-          {/* KPI cards */}
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {/* KPI cards — 2 cột từ mobile, 4 cột ở desktop */}
+          <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
             <OwnerStatCard
               icon={<DollarSign size={18} />}
               label={t('reports.revenue.kpi.totalRevenue')}

@@ -196,8 +196,8 @@ export default function OwnerDashboardPage() {
         <OwnerErrorState message={error} />
       ) : (
         <>
-          {/* KPI Cards */}
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          {/* KPI Cards — 2 cột ngay từ mobile, 4 cột ở desktop */}
+          <div className="grid grid-cols-2 gap-4 xl:grid-cols-4">
             <OwnerStatCard
               icon={<Users size={20} />}
               label={t('dashboard.totalMembers')}
@@ -273,8 +273,8 @@ export default function OwnerDashboardPage() {
             </section>
           </div>
 
-          {/* Quick Actions */}
-          <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {/* Quick Actions — 2 cột từ mobile */}
+          <section className="grid grid-cols-2 gap-4 lg:grid-cols-4">
             {QUICK_LINKS.map((link) => (
               <QuickLink key={link.to} {...link} />
             ))}

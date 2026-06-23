@@ -260,8 +260,8 @@ export default function StaffDashboardPage() {
         <StaffErrorState message={error} />
       ) : (
         <>
-          {/* Top row: 3 stat cards + attendance widget (wider) */}
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-[1fr_1fr_1fr_1.5fr]">
+          {/* Top row: 3 stat cards + attendance widget — 2 cột từ mobile, 4 cột ở desktop */}
+          <div className="grid grid-cols-2 gap-4 xl:grid-cols-[1fr_1fr_1fr_1.5fr]">
             <StaffStatCard
               icon={<Users size={20} />}
               label={t('dashboard.totalMembers')}
