@@ -23,11 +23,19 @@
     "retry": "再試行"
   },
   "nav": {
-    "dashboard": "ダッシュボード",
+    "dashboard": "ホーム",
     "profile": "プロフィール",
     "logout": "ログアウト",
     "closeMenu": "メニューを閉じる",
-    "openMenu": "メニューを開く"
+    "openMenu": "メニューを開く",
+    "workout": "トレーニング",
+    "subscription": "プラン",
+    "students": "受講生",
+    "sessions": "スケジュール",
+    "members": "会員",
+    "checkIn": "チェックイン",
+    "staff": "スタッフ",
+    "reports": "レポート"
   },
   "status": {
     "active": "アクティブ",

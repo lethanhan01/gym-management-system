@@ -3,6 +3,7 @@ import { Outlet, useNavigate } from 'react-router-dom'
 import { Menu } from 'lucide-react'
 import Sidebar from '@/components/shared/Sidebar'
 import Topbar from '@/components/shared/Topbar'
+import BottomNav from '@/components/shared/BottomNav'
 import { PageSkeleton } from '@/components/shared/PageUI'
 import { useAuthStore } from '@/stores/authStore'
 import {
@@ -135,6 +136,7 @@ export default function DashboardLayout() {
           </Suspense>
         </main>
       </div>
+      <BottomNav />
     </div>
   )
 }

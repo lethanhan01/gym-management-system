@@ -254,4 +254,51 @@
       backdrop-filter: blur(2px);
     }
   }
+
+  /* ========= BOTTOM NAVIGATION (mobile only) ========= */
+  .rogym-bottom-nav {
+    display: none; /* ẩn trên desktop */
+  }
+
+  @media (max-width: 767px) {
+    .rogym-bottom-nav {
+      display: flex;
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      z-index: 40;
+      justify-content: space-around;
+      align-items: center;
+      height: 64px;
+      background: var(--rogym-bg-card);
+      border-top: 1px solid var(--rogym-border-teal-dim);
+      padding-bottom: env(safe-area-inset-bottom, 0); /* iPhone notch/home indicator */
+    }
+
+    .rogym-bottom-nav__item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      flex: 1;
+      padding: 8px 4px;
+      color: var(--rogym-text-dim);
+      text-decoration: none;
+      transition: color 150ms ease;
+      min-height: 44px;
+      justify-content: center;
+    }
+
+    .rogym-bottom-nav__item.is-active {
+      color: var(--rogym-teal);
+    }
+
+    .rogym-bottom-nav__label {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.01em;
+      white-space: nowrap;
+    }
+  }
 }
