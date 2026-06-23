@@ -243,8 +243,9 @@ export function AuthShell({
         <span>{backLabel}</span>
       </Link>
 
+      {/* px-4 trên mobile đảm bảo card không chạm mép màn hình nhỏ */}
       <div
-        className={`rogym-auth-shell__content relative z-10 w-full mx-4 ${maxWidth > 400 ? 'is-wide' : ''}`}
+        className={`rogym-auth-shell__content relative z-10 w-full px-4 sm:px-0 ${maxWidth > 400 ? 'is-wide' : ''}`}
       >
         <div className="flex items-center justify-center gap-2.5 mb-7">
           <div className="w-9 h-9 rounded-xl flex items-center justify-center rogym-sx-1c639e32">
@@ -253,7 +254,8 @@ export function AuthShell({
           <span className="rogym-sx-f326e6e8">ROGYM</span>
         </div>
 
-        <div className="rounded-2xl p-8 rogym-sx-a4968112">{children}</div>
+        {/* p-5 trên mobile, p-8 trên sm+ để tránh form bị chật trên màn hình nhỏ */}
+        <div className="rounded-2xl p-5 sm:p-8 rogym-sx-a4968112">{children}</div>
       </div>
     </div>
   )
