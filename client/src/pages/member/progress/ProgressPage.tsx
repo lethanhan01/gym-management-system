@@ -86,7 +86,8 @@ function SelfReportForm({ onSuccess, t }: { onSuccess: () => void; t: TFunction<
     <div className="rogym-sx-103d1cc8 p-5">
       <p className="text-sm font-semibold text-white mb-4">{t('progress.form.title')}</p>
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-        <div className="grid grid-cols-2 gap-3">
+        {/* trên mobile hiển thị 1 cột, từ sm trở lên 2 cột */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div className="flex flex-col gap-1">
             <label className="text-xs rogym-sx-6e4f9432">{t('progress.form.fieldWeight')}</label>
             <input

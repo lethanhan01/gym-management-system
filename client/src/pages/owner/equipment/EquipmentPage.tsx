@@ -398,7 +398,8 @@ export default function EquipmentPage() {
             </OwnerSelect>
           </label>
 
-          <div className="grid grid-cols-2 gap-4">
+          {/* trên mobile hiển thị 1 cột, từ sm trở lên 2 cột */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <label className="block space-y-2">
               <span className="rogym-field-label">{t('equipment.form.importDate')}</span>
               <DatePickerInput

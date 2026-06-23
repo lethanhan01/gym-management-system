@@ -155,7 +155,8 @@ function PackageModal({
           />
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        {/* trên mobile hiển thị 1 cột, từ sm trở lên 2 cột */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className="rogym-field-label mb-1.5 block">{t('packages.form.duration')}</label>
             <input

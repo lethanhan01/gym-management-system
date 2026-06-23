@@ -41,8 +41,9 @@ export function Modal({ open, title, children, onClose, footer, size = 'xl' }: M
       aria-modal="true"
       aria-labelledby="modal-title"
     >
+      {/* w-[90vw] ngăn modal chạm sát cạnh màn hình nhỏ; md:w-full trở lại full-width bên trong backdrop p-4 */}
       <div
-        className={`max-h-[90vh] w-full ${SIZE_CLASS[size]} overflow-y-auto rounded-2xl border border-white/10 bg-[var(--rogym-bg-card)] shadow-2xl`}
+        className={`max-h-[90vh] w-[90vw] md:w-full ${SIZE_CLASS[size]} overflow-y-auto rounded-2xl border border-white/10 bg-[var(--rogym-bg-card)] shadow-2xl`}
       >
         <div className="flex items-center justify-between border-b border-white/5 px-6 py-4">
           <h2 id="modal-title" className="text-lg font-bold text-white">
