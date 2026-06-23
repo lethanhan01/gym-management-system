@@ -196,7 +196,7 @@ function PermissionsModal({
               <h3 className="mb-3 text-xs font-bold uppercase tracking-widest rogym-text-accent">
                 {resource}
               </h3>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {perms.map((p) => {
                   const isOn = selected.has(p.permissionId)
                   return (
