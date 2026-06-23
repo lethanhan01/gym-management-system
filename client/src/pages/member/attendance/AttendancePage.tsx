@@ -397,6 +397,13 @@ export default function AttendancePage() {
     setCalMonth((m) => new Date(m.getFullYear(), m.getMonth() + 1, 1))
   }
 
+  // Tính METHOD_LABEL cho inline mobile card list (dùng lại logic từ AttendanceListSidebar)
+  const METHOD_LABEL_MOBILE: Record<string, { label: string; tone: string }> = {
+    realtime: { label: t('attendance.methodLabel.realtime'), tone: 'info' },
+    manual: { label: t('attendance.methodLabel.manual'), tone: 'warning' },
+    qr: { label: t('attendance.methodLabel.qr'), tone: 'muted' },
+  }
+
   return (
     <MemberPage>
       <MemberPageHeader
@@ -404,7 +411,9 @@ export default function AttendancePage() {
         title={t('attendance.title')}
         description={t('attendance.description')}
       />
-      <div className="grid gap-5 lg:grid-cols-[65fr_35fr]">
+
+      {/* Desktop: calendar + sidebar nằm ngang */}
+      <div className="hidden lg:grid gap-5 lg:grid-cols-[65fr_35fr]">
         {calLoading ? (
           <MemberSkeleton rows={5} />
         ) : calError ? (
@@ -426,6 +435,68 @@ export default function AttendancePage() {
           loading={listLoading}
           error={listError}
         />
+      </div>
+
+      {/* Mobile: calendar stack trên, card list stack dưới */}
+      <div className="lg:hidden space-y-5">
+        {calLoading ? (
+          <MemberSkeleton rows={5} />
+        ) : calError ? (
+          <MemberErrorState message={calError} onRetry={loadCalLogs} />
+        ) : (
+          <AttendanceCalendarView
+            logs={calLogs}
+            month={calMonth}
+            onPrevMonth={prevMonth}
+            onNextMonth={nextMonth}
+          />
+        )}
+
+        {/* Mobile: card view cho danh sách records */}
+        <div className="space-y-2">
+          {listLoading ? (
+            <div className="space-y-2">
+              {[0, 1, 2, 3].map((i) => (
+                <div key={i} className="h-14 animate-pulse rounded-xl bg-white/5" />
+              ))}
+            </div>
+          ) : listError ? (
+            <div className="flex flex-col items-center gap-2 py-6">
+              <p className="text-center text-sm rogym-sx-5e5c39ab">{listError}</p>
+            </div>
+          ) : listLogs.length === 0 ? (
+            <div className="flex flex-col items-center gap-2 py-6">
+              <CalendarX size={28} className="rogym-sx-ed519d00" />
+              <p className="text-sm rogym-sx-5e5c39ab">{t('attendance.noData')}</p>
+            </div>
+          ) : (
+            listLogs.map((log) => {
+              const method = METHOD_LABEL_MOBILE[log.method] ?? { label: log.method, tone: 'muted' }
+              return (
+                <div
+                  key={log.attendanceId}
+                  className="flex items-center justify-between gap-3 rounded-xl px-4 py-3 rogym-sx-a15e2a7c"
+                >
+                  <div className="flex items-center gap-3">
+                    <Clock size={14} className="rogym-sx-f27dac31 shrink-0" />
+                    <div>
+                      <p className="text-sm font-semibold text-white">
+                        {fmtDateShort(log.startTime)}
+                      </p>
+                      <p className="text-xs rogym-sx-5e5c39ab mt-0.5">
+                        {fmtTime(log.startTime)}
+                        {log.endTime ? ` → ${fmtTime(log.endTime)}` : ''}
+                      </p>
+                    </div>
+                  </div>
+                  <span className="rogym-tone-badge" data-tone={method.tone}>
+                    {method.label}
+                  </span>
+                </div>
+              )
+            })
+          )}
+        </div>
       </div>
     </MemberPage>
   )
