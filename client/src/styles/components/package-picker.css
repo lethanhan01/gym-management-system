@@ -72,6 +72,14 @@
     min-height: 540px;
   }
 
+  /* mobile: không giới hạn chiều cao cố định, để stacked layout tự co giãn */
+  @media (max-width: 767px) {
+    .rogym-package-picker {
+      height: auto;
+      min-height: unset;
+    }
+  }
+
   .rogym-package-picker__spacer,
   .rogym-package-picker__fade {
     height: 168px;
