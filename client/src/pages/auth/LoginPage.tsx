@@ -98,6 +98,7 @@ export default function LoginPage() {
 
   async function handleLineLogin() {
     setLineLoading(true)
+    setError('')
     try {
       const liff = await initLiff()
       if (liff.isLoggedIn()) {
