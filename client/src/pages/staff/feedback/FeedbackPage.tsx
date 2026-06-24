@@ -1,6 +1,6 @@
 import { FormEvent, useCallback, useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { MessageSquare } from 'lucide-react'
+import { ChevronLeft, ChevronRight, MessageSquare } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { getApiError } from '@/lib/api-error'
 import { formatDate } from '@/lib/date'
@@ -19,6 +19,7 @@ import {
 
 export default function StaffFeedbackPage() {
   const { t } = useTranslation('staff')
+  const { t: tCommon } = useTranslation('common')
 
   const FEEDBACK_STATUS_OPTIONS = [
     { value: '', label: t('feedback.statusAll') },
@@ -234,22 +235,24 @@ export default function StaffFeedbackPage() {
         <div className="flex items-center justify-center gap-3">
           <button
             type="button"
-            className="rogym-btn rogym-btn--outline-white"
+            className="rogym-btn rogym-btn--icon rogym-btn--elevated"
             disabled={page <= 1}
             onClick={() => updateParam('page', String(page - 1))}
+            aria-label={tCommon('pagination.prev')}
           >
-            {t('feedback.prevPage')}
+            <ChevronLeft size={17} />
           </button>
           <span className="text-sm rogym-text-secondary">
             {t('feedback.page', { page, total: totalPages })}
           </span>
           <button
             type="button"
-            className="rogym-btn rogym-btn--outline-white"
+            className="rogym-btn rogym-btn--icon rogym-btn--elevated"
             disabled={page >= totalPages}
             onClick={() => updateParam('page', String(page + 1))}
+            aria-label={tCommon('pagination.next')}
           >
-            {t('feedback.nextPage')}
+            <ChevronRight size={17} />
           </button>
         </div>
       )}
