@@ -175,6 +175,9 @@ export class LineOAuthService {
     }
 
     if (!res.ok) {
+      // Lấy body lỗi thật từ LINE để phân biệt expired token vs client_id/aud mismatch.
+      const errorBody = await res.text().catch(() => '<no body>')
+      this.logger.warn(`LINE verify failed (${res.status}): ${errorBody}`)
       throw new UnauthorizedException({
         success: false,
         code: 'LINE_AUTH_FAILED',

@@ -5,7 +5,6 @@ import { authService } from '@/services/auth.service'
 import { useAuthStore } from '@/stores/authStore'
 import { useSubscriptionStore } from '@/stores/subscriptionStore'
 import { AuthShell, BtnPrimary, TextLink, MutedLink, Field, ErrorMsg } from './_authui'
-import { initLiff } from '@/lib/liff'
 
 const roleRouteMap: Record<string, string> = {
   member: '/member',
@@ -108,20 +107,13 @@ export default function LoginPage() {
     return `${mm}/${dd}/${yyyy}`
   }
 
-  async function handleLineLogin() {
+  function handleLineLogin() {
     setLineLoading(true)
     setError('')
-    try {
-      const liff = await initLiff()
-      if (liff.isLoggedIn()) {
-        navigate('/liff', { replace: true })
-      } else {
-        liff.login({ redirectUri: window.location.origin + '/liff' })
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : t('login.lineError'))
-      setLineLoading(false)
-    }
+    // Full page redirect — để LiffEntryPage xử lý liff.init() và LINE auth params đúng cách.
+    // React Router navigate('/liff') bỏ qua LINE redirect, khiến LIFF auto-redirect
+    // về LIFF Endpoint URL thay vì redirectUri được chỉ định.
+    window.location.href = '/liff'
   }
 
   return (
