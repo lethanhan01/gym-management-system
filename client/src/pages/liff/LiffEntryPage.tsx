@@ -3,10 +3,12 @@ import { useNavigate } from 'react-router-dom'
 import { initLiff } from '@/lib/liff'
 import { authService } from '@/services/auth.service'
 import { useAuthStore } from '@/stores/authStore'
+import { useSubscriptionStore } from '@/stores/subscriptionStore'
 
 export default function LiffEntryPage() {
   const navigate = useNavigate()
   const { setAuth } = useAuthStore()
+  const clearSubscription = useSubscriptionStore((s) => s.clear)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
@@ -28,6 +30,7 @@ export default function LiffEntryPage() {
         if (cancelled) return
 
         setAuth(user, token)
+        clearSubscription()
         navigate('/member', { replace: true })
       } catch (err) {
         if (cancelled) return
