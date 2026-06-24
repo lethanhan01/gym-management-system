@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Plus, Edit2, Trash2, LoaderCircle } from 'lucide-react'
+import { Edit2, LoaderCircle, Plus, Trash2 } from 'lucide-react'
 import { Modal } from '@/components/ui/Modal'
 import { getApiError, isApiConflict } from '@/lib/api-error'
 import { formatVnd } from '@/lib/currency'
@@ -448,27 +448,30 @@ export default function PackagesPage() {
                       />
                     </td>
                     <td className="px-5 py-4">
-                      <div className="ml-auto grid grid-cols-2 gap-2">
+                      <div className="flex items-center justify-end gap-2">
                         {pkg.deletedAt ? (
-                          <span className="col-span-2 text-center text-xs rogym-text-dim">
-                            {t('packages.noActions')}
-                          </span>
+                          <span className="text-xs rogym-text-dim">{t('packages.noActions')}</span>
                         ) : (
                           <>
                             <button
-                              className="rogym-btn rogym-btn--outline-white rogym-btn--nav w-full justify-center text-xs"
+                              type="button"
+                              className="rogym-btn rogym-btn--icon rogym-btn--elevated"
                               onClick={() => setEditingPkg(pkg)}
+                              aria-label={tCommon('button.edit')}
                             >
-                              <Edit2 size={14} /> {tCommon('button.edit')}
+                              <Edit2 size={15} />
                             </button>
                             <button
-                              className="rogym-btn rogym-btn--danger rogym-btn--nav w-full justify-center text-xs"
+                              type="button"
+                              className="rogym-btn rogym-btn--icon rogym-btn--danger"
                               onClick={() => setDeletingPkg(pkg)}
+                              aria-label={
+                                pkg.status === 'active'
+                                  ? t('packages.deactivate')
+                                  : tCommon('button.delete')
+                              }
                             >
-                              <Trash2 size={14} />
-                              {pkg.status === 'active'
-                                ? t('packages.deactivate')
-                                : tCommon('button.delete')}
+                              <Trash2 size={15} />
                             </button>
                           </>
                         )}
