@@ -24,6 +24,8 @@
     "errorLoad": "データを読み込めません",
     "networkError": "接続できません。ネットワークを確認して再試行してください。",
     "greeting": "こんにちは、{{name}}",
+    "greetingFallback": "あなた",
+    "defaultPlanName": "トレーニングプラン",
     "paymentSuccess": "お支払いが完了しました！プランが有効になりました。",
     "pt": {
       "sectionTitle": "トレーナー",
