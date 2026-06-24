@@ -97,6 +97,16 @@
     font-family: var(--rogym-font-body);
   }
 
+  /* Hide native browser password reveal icon (Edge/IE/Chrome) */
+  .rogym-auth-field__input::-ms-reveal,
+  .rogym-auth-field__input::-ms-clear {
+    display: none;
+  }
+  .rogym-auth-field__input::-webkit-credentials-auto-fill-button,
+  .rogym-auth-field__input::-webkit-textfield-decoration-container {
+    display: none !important;
+  }
+
   .rogym-auth-field__input.has-icon {
     padding-left: 40px;
   }

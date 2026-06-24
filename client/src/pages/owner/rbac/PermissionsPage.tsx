@@ -136,7 +136,7 @@ export default function PermissionsPage() {
       ) : error ? (
         <OwnerErrorState message={error} onRetry={() => window.location.reload()} />
       ) : (
-        <div className="space-y-8">
+        <div className="space-y-4 md:space-y-8">
           {Object.entries(grouped).map(([res, perms]) => (
             <div key={res}>
               <div className="mb-3 flex items-center gap-3">

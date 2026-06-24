@@ -292,7 +292,7 @@ const TrainingSection = memo(function TrainingSection() {
           </div>
           <div className="h-1 w-32 rounded-full rogym-sx-c3c1e2cb" />
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8 mb-4 md:mb-8">
           {trainingPrograms.map((program) => (
             <TrainingCard key={program.title} {...program} />
           ))}
