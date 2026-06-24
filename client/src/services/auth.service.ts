@@ -22,6 +22,7 @@ interface ServerMeData {
   phone?: string | null
   staffId?: string | null
   memberId?: string | null
+  lineLinked?: boolean
 }
 
 export const authService = {
@@ -66,6 +67,18 @@ export const authService = {
     })
     const { accessToken, user } = res.data.data
     return { user: user as AuthUser, token: accessToken }
+  },
+
+  linkLine: async (idToken: string): Promise<{ lineName: string }> => {
+    const res = await api.post<{ success: boolean; data: { lineName: string } }>(
+      '/auth/line-link',
+      { idToken },
+    )
+    return res.data.data
+  },
+
+  unlinkLine: async (): Promise<void> => {
+    await api.delete('/auth/line-link')
   },
 
   register: async (
