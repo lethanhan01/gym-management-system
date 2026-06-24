@@ -1,5 +1,6 @@
 import { useId, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import type { LucideIcon } from 'lucide-react'
 import { ArrowLeft, Dumbbell, Eye, EyeOff } from 'lucide-react'
 import gym from '@/assets/gym-bg-optimized.jpg'
@@ -14,18 +15,20 @@ export function BtnPrimary({
   type = 'button',
   onClick,
   disabled,
+  className = ''
 }: {
   children: React.ReactNode
   type?: 'button' | 'submit'
   onClick?: () => void
   disabled?: boolean
+  className?: string
 }) {
   return (
     <button
       type={type}
       onClick={onClick}
       disabled={disabled}
-      className="rogym-btn rogym-btn--primary rogym-btn--wide"
+      className={`rogym-btn rogym-btn--primary rogym-btn--wide ${className}`}
     >
       <span className="flex items-center justify-center gap-2">{children}</span>
     </button>
@@ -216,13 +219,15 @@ export function AuthShell({
   children,
   maxWidth = 400,
   backTo = '/',
-  backLabel = 'Trang chủ',
+  backLabel,
 }: {
   children: React.ReactNode
   maxWidth?: number
   backTo?: string
   backLabel?: string
 }) {
+  const { t } = useTranslation('auth')
+  const label = backLabel ?? t('login.backHome')
   return (
     <div className="min-h-screen w-full flex items-center justify-center relative overflow-hidden rogym-sx-7b5fda64">
       <div className="absolute inset-0">
@@ -240,7 +245,7 @@ export function AuthShell({
         className="rogym-text-link rogym-text-link--muted absolute top-6 left-6 z-20 rogym-sx-aa61ae66"
       >
         <ArrowLeft size={14} strokeWidth={2} className="rogym-sx-c2bafe49" />
-        <span>{backLabel}</span>
+        <span>{label}</span>
       </Link>
 
       {/* px-4 trên mobile đảm bảo card không chạm mép màn hình nhỏ */}

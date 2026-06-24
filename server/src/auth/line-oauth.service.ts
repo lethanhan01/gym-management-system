@@ -1,4 +1,4 @@
-import { Injectable, Logger, UnauthorizedException, InternalServerErrorException, ForbiddenException } from '@nestjs/common'
+import { Injectable, Logger, UnauthorizedException, InternalServerErrorException, ForbiddenException, ConflictException } from '@nestjs/common'
 import { JwtService } from '@nestjs/jwt'
 import { ConfigService } from '@nestjs/config'
 import { UserStatus } from '@prisma/client'
@@ -117,6 +117,35 @@ export class LineOAuthService {
         memberId: memberRecord?.memberId ? memberRecord.memberId.toString() : undefined,
       },
     }
+  }
+
+  async linkLine(userId: bigint, idToken: string): Promise<{ lineName: string }> {
+    const profile = await this.verifyLineToken(idToken)
+
+    const existing = await this.users.findByLineIdWithRoles(profile.sub)
+    if (existing && existing.userId !== userId) {
+      throw new ConflictException({
+        success: false,
+        code: 'LINE_ALREADY_LINKED',
+        message: 'Tài khoản LINE này đã liên kết với người dùng khác',
+      })
+    }
+
+    await this.prisma.user.update({
+      where: { userId },
+      data: { lineId: profile.sub },
+    })
+
+    this.logger.log(`User ${userId} linked LINE account: ${profile.sub}`)
+    return { lineName: profile.name }
+  }
+
+  async unlinkLine(userId: bigint): Promise<void> {
+    await this.prisma.user.update({
+      where: { userId },
+      data: { lineId: null },
+    })
+    this.logger.log(`User ${userId} unlinked LINE account`)
   }
 
   private async verifyLineToken(idToken: string): Promise<LineProfile> {

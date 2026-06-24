@@ -24,6 +24,9 @@ const ContactPage = lazy(() => import('./pages/home/ContactPage'))
 // NOTE: Owner's protected PackagesPage is imported below with the same name.
 // Keep variable names distinct to avoid TS redeclare errors.
 
+// LINE LIFF
+const LiffEntryPage = lazy(() => import('./pages/liff/LiffEntryPage'))
+
 // Member — public registration flow
 
 const RegisterPage = lazy(() => import('./pages/member/register/RegisterPage'))
@@ -137,6 +140,9 @@ export default function App() {
         <Route path="/packages" element={<MemberPackagesHomePage />} />
 
         <Route path="/contact" element={<ContactPage />} />
+
+        {/* LIFF — LINE entry point (public) */}
+        <Route path="/liff" element={<LiffEntryPage />} />
 
         <Route element={<AuthLayout />}>
           <Route path="/login" element={<LoginPage />} />
