@@ -72,6 +72,14 @@
     min-height: 540px;
   }
 
+  /* mobile: không giới hạn chiều cao cố định, để stacked layout tự co giãn */
+  @media (max-width: 767px) {
+    .rogym-package-picker {
+      height: auto;
+      min-height: unset;
+    }
+  }
+
   .rogym-package-picker__spacer,
   .rogym-package-picker__fade {
     height: 168px;
@@ -153,5 +161,16 @@
   .rogym-package-picker__details.is-visible {
     opacity: 1;
     transform: translateX(0);
+  }
+
+  /* Trên mobile, panel stack dọc — slide từ dưới lên thay vì từ phải sang */
+  @media (max-width: 767px) {
+    .rogym-package-picker__details {
+      transform: translateY(20px);
+    }
+
+    .rogym-package-picker__details.is-visible {
+      transform: translateY(0);
+    }
   }
 }

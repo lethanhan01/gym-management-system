@@ -146,4 +146,21 @@
     font-weight: 700;
     overflow-wrap: anywhere;
   }
+
+  /* Mobile: giảm font và min-width bảng để scroll ít hơn */
+  @media (max-width: 767px) {
+    .rogym-owner-table {
+      font-size: 0.8125rem; /* 13px, was 14px */
+      min-width: 800px;     /* giảm từ 1120px để scroll ít hơn */
+    }
+
+    .rogym-owner-table th,
+    .rogym-owner-table td {
+      padding: 0.75rem; /* was 0.875rem 1rem */
+    }
+
+    table.w-full {
+      font-size: 0.8125rem;
+    }
+  }
 }

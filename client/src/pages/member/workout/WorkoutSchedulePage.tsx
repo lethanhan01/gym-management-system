@@ -27,12 +27,12 @@ import { getApiError } from '@/lib/api-error'
 
 // ── Format helpers ─────────────────────────────────────────────────────────────
 
-function fmtTime(iso: string) {
-  return new Date(iso).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
+function fmtTime(iso: string, locale: string) {
+  return new Date(iso).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })
 }
 
-function fmtDatetime(iso: string) {
-  return new Date(iso).toLocaleDateString('vi-VN', {
+function fmtDatetime(iso: string, locale: string) {
+  return new Date(iso).toLocaleDateString(locale, {
     weekday: 'long',
     day: '2-digit',
     month: '2-digit',
@@ -42,8 +42,8 @@ function fmtDatetime(iso: string) {
   })
 }
 
-function fmtDateShort(iso: string) {
-  return new Date(iso).toLocaleDateString('vi-VN', {
+function fmtDateShort(iso: string, locale: string) {
+  return new Date(iso).toLocaleDateString(locale, {
     weekday: 'short',
     day: '2-digit',
     month: '2-digit',
@@ -52,8 +52,17 @@ function fmtDateShort(iso: string) {
   })
 }
 
-function fmtMonthYear(d: Date) {
-  return d.toLocaleDateString('vi-VN', { month: 'long', year: 'numeric' })
+function fmtMonthYear(d: Date, locale: string) {
+  return d.toLocaleDateString(locale, { month: 'long', year: 'numeric' })
+}
+
+function getDowLabels(locale: string): string[] {
+  const base = new Date(2024, 0, 1) // Monday 1 Jan 2024
+  return Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(base)
+    d.setDate(base.getDate() + i)
+    return d.toLocaleDateString(locale, { weekday: 'short' })
+  })
 }
 
 function dateKey(iso: string) {
@@ -82,9 +91,11 @@ function daysUntil(iso: string, t: TFunction<'member'>) {
 
 function SessionTooltip({
   session,
+  locale,
   align = 'left',
 }: {
   session: TrainingSession
+  locale: string
   align?: 'left' | 'right'
 }) {
   const { t } = useTranslation('member')
@@ -97,7 +108,7 @@ function SessionTooltip({
       <div className="space-y-1.5 text-xs rogym-sx-d88f932f">
         <div className="flex items-center gap-1.5">
           <Clock size={11} className="rogym-sx-f27dac31" />
-          <span>{fmtDatetime(session.startTime)}</span>
+          <span>{fmtDatetime(session.startTime, locale)}</span>
         </div>
         {session.trainerName && (
           <div className="flex items-center gap-1.5">
@@ -124,10 +135,12 @@ function SessionTooltip({
 
 const CalendarSession = memo(function CalendarSession({
   session,
+  locale,
   align,
   onSelect,
 }: {
   session: TrainingSession
+  locale: string
   align: 'left' | 'right'
   onSelect: (session: TrainingSession) => void
 }) {
@@ -142,17 +155,15 @@ const CalendarSession = memo(function CalendarSession({
         className="rogym-calendar-session truncate rounded-md px-1.5 py-0.5 text-[10px] font-semibold leading-tight"
         data-status={session.status}
       >
-        {fmtTime(session.startTime)}
+        {fmtTime(session.startTime, locale)}
         {session.trainerName ? ` · ${session.trainerName.split(' ').pop()}` : ''}
       </div>
-      <SessionTooltip session={session} align={align} />
+      <SessionTooltip session={session} locale={locale} align={align} />
     </button>
   )
 })
 
 // ── Calendar view ──────────────────────────────────────────────────────────────
-
-const DOW_LABELS = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN']
 
 function CalendarView({
   sessions,
@@ -161,7 +172,9 @@ function CalendarView({
   sessions: TrainingSession[]
   onSelect: (session: TrainingSession) => void
 }) {
-  const { t } = useTranslation('member')
+  const { t, i18n } = useTranslation('member')
+  const locale = i18n.language
+  const dowLabels = useMemo(() => getDowLabels(locale), [locale])
   const [month, setMonth] = useState(() => {
     const d = new Date()
     d.setDate(1)
@@ -237,7 +250,7 @@ function CalendarView({
         >
           <ChevronLeft size={16} />
         </button>
-        <p className="text-sm font-bold text-white capitalize">{fmtMonthYear(month)}</p>
+        <p className="text-sm font-bold text-white capitalize">{fmtMonthYear(month, locale)}</p>
         <button
           type="button"
           onClick={nextMonth}
@@ -249,7 +262,7 @@ function CalendarView({
 
       {/* DOW header */}
       <div className="mb-1 grid grid-cols-7">
-        {DOW_LABELS.map((d) => (
+        {dowLabels.map((d) => (
           <div
             key={d}
             className="py-1 text-center text-[11px] font-bold uppercase tracking-wider rogym-sx-ed519d00"
@@ -287,6 +300,7 @@ function CalendarView({
                           <CalendarSession
                             key={s.sessionId}
                             session={s}
+                            locale={locale}
                             align={ci >= 4 ? 'right' : 'left'}
                             onSelect={onSelect}
                           />
@@ -322,7 +336,7 @@ function UpcomingRow({
   session: TrainingSession
   onSelect: (session: TrainingSession) => void
 }) {
-  const { t } = useTranslation('member')
+  const { t, i18n } = useTranslation('member')
   return (
     <button
       type="button"
@@ -336,7 +350,7 @@ function UpcomingRow({
             <Calendar size={16} className="rogym-sx-b2fbf853" />
           </div>
           <div>
-            <p className="text-sm font-semibold text-white">{fmtDateShort(session.startTime)}</p>
+            <p className="text-sm font-semibold text-white">{fmtDateShort(session.startTime, i18n.language)}</p>
             {session.trainerName && (
               <p className="mt-0.5 text-xs rogym-sx-5e5c39ab">
                 {t('workout.schedule.trainerPrefix')}: {session.trainerName}
@@ -347,7 +361,7 @@ function UpcomingRow({
         </div>
         <StatusBadge status={session.status} />
       </div>
-      <SessionTooltip session={session} />
+      <SessionTooltip session={session} locale={i18n.language} />
     </button>
   )
 }
@@ -359,7 +373,7 @@ function PastRow({
   session: TrainingSession
   onSelect: (session: TrainingSession) => void
 }) {
-  const { t } = useTranslation('member')
+  const { t, i18n } = useTranslation('member')
   return (
     <button
       type="button"
@@ -368,7 +382,7 @@ function PastRow({
       data-no-sweep
     >
       <div>
-        <p className="text-sm font-semibold text-white">{fmtDateShort(session.startTime)}</p>
+        <p className="text-sm font-semibold text-white">{fmtDateShort(session.startTime, i18n.language)}</p>
         {session.trainerName && (
           <p className="mt-0.5 text-xs rogym-sx-5e5c39ab">
             {t('workout.schedule.trainerPrefix')}: {session.trainerName}
@@ -390,7 +404,7 @@ function SessionSidebar({
   past: TrainingSession[]
   onSelect: (session: TrainingSession) => void
 }) {
-  const { t } = useTranslation('member')
+  const { t, i18n } = useTranslation('member')
   const nextSession = upcoming[0]
   const countdown = nextSession ? daysUntil(nextSession.startTime, t) : null
   const isToday = nextSession ? (() => {
@@ -420,7 +434,7 @@ function SessionSidebar({
               <User size={24} className="rogym-sx-b2fbf853" />
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-base font-bold text-white">{fmtDatetime(nextSession.startTime)}</p>
+              <p className="text-base font-bold text-white">{fmtDatetime(nextSession.startTime, i18n.language)}</p>
               <div className="mt-1.5 flex flex-wrap gap-2 text-xs rogym-sx-d88f932f">
                 {nextSession.trainerName && (
                   <span className="flex items-center gap-1">
@@ -496,7 +510,7 @@ function SessionDetailModal({
   error: string | null
   onClose: () => void
 }) {
-  const { t } = useTranslation('member')
+  const { t, i18n } = useTranslation('member')
   const exercises = session?.planDay?.exercises ?? []
 
   return (
@@ -531,7 +545,7 @@ function SessionDetailModal({
               <div className="grid gap-3 text-sm md:grid-cols-2">
                 <div className="rounded-xl p-4 rogym-sx-a15e2a7c">
                   <p className="text-xs font-semibold uppercase rogym-sx-ed519d00">{t('workout.schedule.fieldTime')}</p>
-                  <p className="mt-1 font-semibold text-white">{fmtDatetime(session.startTime)}</p>
+                  <p className="mt-1 font-semibold text-white">{fmtDatetime(session.startTime, i18n.language)}</p>
                 </div>
                 <div className="rounded-xl p-4 rogym-sx-a15e2a7c">
                   <p className="text-xs font-semibold uppercase rogym-sx-ed519d00">{t('workout.schedule.fieldStatus')}</p>

@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react'
-import { Users, LoaderCircle, X, Check } from 'lucide-react'
+import { Check, LoaderCircle, Pencil, Users, X } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { getApiError, isApiConflict } from '@/lib/api-error'
 import { rbacService, type Group, type GroupDetail, type Permission } from '@/services/rbac.service'
@@ -196,7 +196,7 @@ function PermissionsModal({
               <h3 className="mb-3 text-xs font-bold uppercase tracking-widest rogym-text-accent">
                 {resource}
               </h3>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {perms.map((p) => {
                   const isOn = selected.has(p.permissionId)
                   return (
@@ -432,10 +432,12 @@ export default function GroupsPage() {
                   )}
                   {!SYSTEM_GROUPS.has(group.name) && (
                     <button
-                      className="rogym-btn rogym-btn--outline-white rogym-btn--nav text-xs"
+                      type="button"
+                      className="rogym-btn rogym-btn--icon rogym-btn--elevated"
                       onClick={() => setEditingGroup(group)}
+                      aria-label={tCommon('button.edit')}
                     >
-                      {tCommon('button.edit')}
+                      <Pencil size={15} />
                     </button>
                   )}
                   {!SYSTEM_GROUPS.has(group.name) && (

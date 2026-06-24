@@ -33,16 +33,16 @@ function todayYYYYMM() {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
 }
 
-function fmtDate(iso: string) {
-  return new Date(iso).toLocaleDateString('vi-VN', {
+function fmtDate(iso: string, locale: string) {
+  return new Date(iso).toLocaleDateString(locale, {
     day: '2-digit',
     month: '2-digit',
     year: 'numeric',
   })
 }
 
-function fmtDatetime(iso: string) {
-  return new Date(iso).toLocaleDateString('vi-VN', {
+function fmtDatetime(iso: string, locale: string) {
+  return new Date(iso).toLocaleDateString(locale, {
     weekday: 'short',
     day: '2-digit',
     month: '2-digit',
@@ -51,8 +51,8 @@ function fmtDatetime(iso: string) {
   })
 }
 
-function todayFull() {
-  return new Date().toLocaleDateString('vi-VN', {
+function todayFull(locale: string) {
+  return new Date().toLocaleDateString(locale, {
     weekday: 'long',
     day: 'numeric',
     month: 'long',
@@ -235,7 +235,7 @@ const SubscriptionCard = memo(function SubscriptionCard({
   loading: boolean
   error: boolean
 }) {
-  const { t } = useTranslation('member')
+  const { t, i18n } = useTranslation('member')
   const navigate = useNavigate()
   if (loading) return <Skeleton h={140} />
   if (error) return <ErrorWidget />
@@ -286,7 +286,7 @@ const SubscriptionCard = memo(function SubscriptionCard({
           className={`rogym-progress ${isExpired ? 'is-danger' : ''}`}
           max={100}
           value={pct}
-          aria-label={`${pct}% thời hạn gói đã sử dụng`}
+          aria-label={`${pct}%`}
         />
         <div className="flex justify-between text-xs rogym-text-secondary">
           <span>
@@ -300,12 +300,12 @@ const SubscriptionCard = memo(function SubscriptionCard({
 
       <div className="flex items-center gap-4 flex-wrap text-sm rogym-text-secondary">
         <span>
-          {t('dashboard.subscription.startDate')} <b className="text-white">{fmtDate(subscription.startDate)}</b>
+          {t('dashboard.subscription.startDate')} <b className="text-white">{fmtDate(subscription.startDate, i18n.language)}</b>
         </span>
         <span>
           {t('dashboard.subscription.endDate')}{' '}
           <b className={isExpired ? 'text-red-400' : 'text-white'}>
-            {fmtDate(subscription.endDate)}
+            {fmtDate(subscription.endDate, i18n.language)}
           </b>
         </span>
       </div>
@@ -371,7 +371,7 @@ const SessionsWidget = memo(function SessionsWidget({
   loading: boolean
   error: boolean
 }) {
-  const { t } = useTranslation('member')
+  const { t, i18n } = useTranslation('member')
   const navigate = useNavigate()
   if (loading) return <Skeleton h={120} />
   if (error) return <ErrorWidget />
@@ -403,7 +403,7 @@ const SessionsWidget = memo(function SessionsWidget({
               <div className="flex items-center gap-2.5">
                 <Calendar size={14} color={T} />
                 <div>
-                  <p className="text-sm font-semibold text-white">{fmtDatetime(s.startTime)}</p>
+                  <p className="text-sm font-semibold text-white">{fmtDatetime(s.startTime, i18n.language)}</p>
                   {s.trainerName && (
                     <p className="text-xs rogym-text-secondary">
                       {t('dashboard.trainerPrefix')}: {s.trainerName}
@@ -538,7 +538,7 @@ const FeedbackWidget = memo(function FeedbackWidget({
 
 /* ── Main page ── */
 export default function MemberDashboardPage() {
-  const { t } = useTranslation('member')
+  const { t, i18n } = useTranslation('member')
   const navigate = useNavigate()
   const location = useLocation()
   const { user, clearAuth } = useAuthStore()
@@ -568,7 +568,7 @@ export default function MemberDashboardPage() {
   const [errorFeedbacks, setErrorFeedbacks] = useState(false)
 
   const [paymentSuccessToast, setPaymentSuccessToast] = useState(false)
-  const todayDescription = useMemo(() => todayFull(), [])
+  const todayDescription = useMemo(() => todayFull(i18n.language), [i18n.language])
   const handleChooseTrainer = useCallback(() => navigate('/member/choose-trainer'), [navigate])
   const handleRemoveTrainer = useCallback(async () => {
     await memberService.selfAssignTrainer(null)
@@ -654,7 +654,7 @@ export default function MemberDashboardPage() {
           const list = res.data?.data ?? []
           const latest = list[0] ?? null
           setWorkoutPlan(
-            latest?.plan ?? (latest ? { name: latest.notes ?? 'Kế hoạch tập' } : null),
+            latest?.plan ?? (latest ? { name: latest.notes ?? t('dashboard.defaultPlanName') } : null),
           )
         } else {
           setWorkoutPlan(null)
@@ -723,7 +723,7 @@ export default function MemberDashboardPage() {
 
       <MemberPageHeader
         eyebrow="Member workspace"
-        title={t('dashboard.greeting', { name: user?.fullName ?? 'bạn' })}
+        title={t('dashboard.greeting', { name: user?.fullName ?? t('dashboard.greetingFallback') })}
         description={todayDescription}
       />
 

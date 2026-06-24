@@ -1,7 +1,7 @@
 import { FormEvent, useCallback, useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { Edit2, Plus, Search, Trash2 } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Edit2, Plus, Search, Trash2 } from 'lucide-react'
 import { getApiError } from '@/lib/api-error'
 import { formatDate } from '@/lib/date'
 import { DatePickerInput } from '@/components/DatePickerInput'
@@ -237,8 +237,13 @@ export default function EquipmentPage() {
             </option>
           ))}
         </OwnerSelect>
-        <button type="button" className="rogym-btn rogym-btn--primary" onClick={applySearch}>
-          {tCommon('button.search')}
+        <button
+          type="button"
+          className="rogym-btn rogym-btn--icon rogym-btn--elevated"
+          onClick={applySearch}
+          aria-label={tCommon('button.search')}
+        >
+          <Search size={17} />
         </button>
       </div>
 
@@ -296,17 +301,19 @@ export default function EquipmentPage() {
                       <div className="flex items-center justify-end gap-2">
                         <button
                           type="button"
-                          className="rogym-btn rogym-btn--outline-white rogym-btn--nav"
+                          className="rogym-btn rogym-btn--icon rogym-btn--elevated"
                           onClick={() => openEdit(eq)}
+                          aria-label={tCommon('button.edit')}
                         >
-                          <Edit2 size={14} /> {tCommon('button.edit')}
+                          <Edit2 size={15} />
                         </button>
                         <button
                           type="button"
-                          className="rogym-btn rogym-btn--danger rogym-btn--nav"
+                          className="rogym-btn rogym-btn--icon rogym-btn--danger"
                           onClick={() => openDelete(eq)}
+                          aria-label={tCommon('button.delete')}
                         >
-                          <Trash2 size={14} /> {tCommon('button.delete')}
+                          <Trash2 size={15} />
                         </button>
                       </div>
                     </td>
@@ -320,22 +327,24 @@ export default function EquipmentPage() {
             <div className="flex items-center justify-center gap-3">
               <button
                 type="button"
-                className="rogym-btn rogym-btn--outline-white"
+                className="rogym-btn rogym-btn--icon rogym-btn--elevated"
                 disabled={page <= 1}
                 onClick={() => updateParam('page', String(page - 1))}
+                aria-label={tCommon('pagination.prev')}
               >
-                {t('equipment.pagination.prev')}
+                <ChevronLeft size={17} />
               </button>
               <span className="text-sm rogym-text-secondary">
                 {t('equipment.pagination.page', { page, total: totalPages })}
               </span>
               <button
                 type="button"
-                className="rogym-btn rogym-btn--outline-white"
+                className="rogym-btn rogym-btn--icon rogym-btn--elevated"
                 disabled={page >= totalPages}
                 onClick={() => updateParam('page', String(page + 1))}
+                aria-label={tCommon('pagination.next')}
               >
-                {t('equipment.pagination.next')}
+                <ChevronRight size={17} />
               </button>
             </div>
           )}
@@ -398,7 +407,8 @@ export default function EquipmentPage() {
             </OwnerSelect>
           </label>
 
-          <div className="grid grid-cols-2 gap-4">
+          {/* trên mobile hiển thị 1 cột, từ sm trở lên 2 cột */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <label className="block space-y-2">
               <span className="rogym-field-label">{t('equipment.form.importDate')}</span>
               <DatePickerInput

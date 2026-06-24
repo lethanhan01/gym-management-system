@@ -99,5 +99,9 @@
   :root {
     --rogym-container-padding: 20px;
     --rogym-section-padding: 80px;
+    /* Khoảng cách padding nội dung dashboard trên mobile */
+    --rogym-dashboard-padding: 16px;
+    /* Chiều cao bottom nav — dùng để tính padding của main content */
+    --rogym-bottom-nav-height: 64px;
   }
 }

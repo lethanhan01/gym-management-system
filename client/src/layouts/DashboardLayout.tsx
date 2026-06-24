@@ -1,7 +1,9 @@
 import { Suspense, useEffect, useRef, useState } from 'react'
 import { Outlet, useNavigate } from 'react-router-dom'
+import { Menu } from 'lucide-react'
 import Sidebar from '@/components/shared/Sidebar'
 import Topbar from '@/components/shared/Topbar'
+import BottomNav from '@/components/shared/BottomNav'
 import { PageSkeleton } from '@/components/shared/PageUI'
 import { useAuthStore } from '@/stores/authStore'
 import {
@@ -90,14 +92,40 @@ export default function DashboardLayout() {
 
   const showSidebar = isMember ? hasActiveSub === true : true
 
+  // Trạng thái drawer mobile — chỉ có hiệu lực khi viewport < 768px
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false)
+
   return (
     <div
       className={`rogym-dashboard-layout min-h-screen bg-[#080e0b] ${showSidebar ? 'has-sidebar' : ''}`}
     >
-      {showSidebar && <Sidebar />}
+      {showSidebar && (
+        <>
+          {/* Backdrop — chỉ hiện trên mobile khi drawer mở */}
+          {isSidebarOpen && (
+            <button
+              className="rogym-sidebar-backdrop md:hidden"
+              aria-label="Đóng menu điều hướng"
+              onClick={() => setIsSidebarOpen(false)}
+            />
+          )}
+          <Sidebar isMobileOpen={isSidebarOpen} onCloseMobile={() => setIsSidebarOpen(false)} />
+        </>
+      )}
       <div className="flex flex-col min-h-screen">
         <Topbar />
-        <main className="flex-1 overflow-auto p-6">
+        {/* Hamburger button — chỉ hiện trên mobile khi có sidebar */}
+        {showSidebar && (
+          <button
+            onClick={() => setIsSidebarOpen(true)}
+            className="fixed top-[14px] left-4 z-40 md:hidden flex items-center justify-center w-11 h-11 rounded-full border border-white/10 text-white"
+            style={{ background: 'var(--rogym-bg-card)' }}
+            aria-label="Mở menu điều hướng"
+          >
+            <Menu size={20} />
+          </button>
+        )}
+        <main className="flex-1 overflow-auto p-6 pb-24 md:pb-6">
           {showExpiryToast && (
             <div className="fixed top-5 right-5 z-50 px-5 py-3 rounded-2xl bg-red-900/90 text-red-200 text-sm font-medium shadow-xl border border-red-700/40">
               Gói tập đã hết hạn. Đang chuyển về trang đăng ký...
@@ -108,6 +136,7 @@ export default function DashboardLayout() {
           </Suspense>
         </main>
       </div>
+      <BottomNav />
     </div>
   )
 }

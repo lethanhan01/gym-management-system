@@ -1,3 +1,4 @@
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
 interface OwnerPaginationProps {
@@ -19,21 +20,25 @@ export function OwnerPagination({ page, totalPages, onPageChange }: OwnerPaginat
   return (
     <div className="flex items-center justify-center gap-3">
       <button
-        className="rogym-btn rogym-btn--outline-white rogym-btn--nav"
+        type="button"
+        className="rogym-btn rogym-btn--icon rogym-btn--elevated"
         disabled={page === 1}
         onClick={() => goTo(page - 1)}
+        aria-label={t('pagination.prev')}
       >
-        {t('pagination.prev')}
+        <ChevronLeft size={17} />
       </button>
       <span className="text-sm rogym-text-secondary">
         {t('pagination.pageOf', { page, totalPages })}
       </span>
       <button
-        className="rogym-btn rogym-btn--outline-white rogym-btn--nav"
+        type="button"
+        className="rogym-btn rogym-btn--icon rogym-btn--elevated"
         disabled={page === totalPages}
         onClick={() => goTo(page + 1)}
+        aria-label={t('pagination.next')}
       >
-        {t('pagination.next')}
+        <ChevronRight size={17} />
       </button>
     </div>
   )

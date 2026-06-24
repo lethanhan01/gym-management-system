@@ -267,7 +267,8 @@ export default function WorkoutPlansPage() {
                   <TrainerStatusBadge status={plan.status} />
                 </div>
 
-                <div className="mt-5 grid grid-cols-4 gap-3 rounded-xl border border-white/5 bg-white/[0.02] p-4 text-center">
+                {/* 2 cột trên mobile, 4 cột từ md trở lên */}
+                <div className="mt-5 grid grid-cols-2 md:grid-cols-4 gap-3 rounded-xl border border-white/5 bg-white/[0.02] p-4 text-center">
                   <Metric value={plan.days?.length ?? 0} label={t('plans.workout.metrics.days')} />
                   <Metric value={exerciseCount} label={t('plans.workout.metrics.exercises')} />
                   <Metric value={plan._count?.assignments ?? 0} label={t('plans.workout.metrics.students')} />

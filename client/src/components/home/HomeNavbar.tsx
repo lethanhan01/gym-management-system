@@ -88,12 +88,13 @@ export default function HomeNavbar() {
       </div>
 
       {open && (
-        <div className="md:hidden px-10 pb-6 flex flex-col gap-4 rogym-sx-eb71f2b0">
+        <div className="md:hidden px-10 pb-6 flex flex-col gap-1 rogym-sx-eb71f2b0">
+          {/* py-3 đảm bảo touch target tối thiểu 44px (WCAG 2.1 AA) trên mobile */}
           {navLinks.map((l) => (
             <Link
               key={l.to}
               to={l.to}
-              className="rogym-text-link rogym-text-link--nav text-sm font-medium rogym-sx-f917938c"
+              className="rogym-text-link rogym-text-link--nav text-sm font-medium py-3 rogym-sx-f917938c"
               onClick={() => setOpen(false)}
             >
               {l.label}

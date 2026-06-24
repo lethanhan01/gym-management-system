@@ -1,6 +1,6 @@
 import { FormEvent, useCallback, useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { AlertTriangle, Search, Wrench } from 'lucide-react'
+import { AlertTriangle, ChevronLeft, ChevronRight, Eye, Search, Wrench } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { getApiError } from '@/lib/api-error'
 import { formatDate } from '@/lib/date'
@@ -32,6 +32,7 @@ function equipmentStatusTone(status: string) {
 
 export default function EquipmentPage() {
   const { t } = useTranslation('staff')
+  const { t: tCommon } = useTranslation('common')
 
   const STATUS_OPTIONS = [
     { value: '', label: t('equipment.statusAll') },
@@ -257,8 +258,13 @@ export default function EquipmentPage() {
             <option key={r.roomId} value={r.roomId}>{r.name}</option>
           ))}
         </StaffSelect>
-        <button type="button" className="rogym-btn rogym-btn--primary" onClick={applySearch}>
-          {t('equipment.search')}
+        <button
+          type="button"
+          className="rogym-btn rogym-btn--icon rogym-btn--elevated"
+          onClick={applySearch}
+          aria-label={t('equipment.search')}
+        >
+          <Search size={17} />
         </button>
       </div>
 
@@ -308,10 +314,11 @@ export default function EquipmentPage() {
                     <td className="px-5 py-4 text-right">
                       <button
                         type="button"
-                        className="rogym-text-link rogym-text-link--accent"
+                        className="rogym-btn rogym-btn--icon rogym-btn--elevated"
                         onClick={() => openDetail(eq)}
+                        aria-label={tCommon('button.viewDetail')}
                       >
-                        {t('equipment.detail')}
+                        <Eye size={15} />
                       </button>
                     </td>
                   </tr>
@@ -358,22 +365,24 @@ export default function EquipmentPage() {
         <div className="flex items-center justify-center gap-3">
           <button
             type="button"
-            className="rogym-btn rogym-btn--outline-white"
+            className="rogym-btn rogym-btn--icon rogym-btn--elevated"
             disabled={page <= 1}
             onClick={() => updateParam('page', String(page - 1))}
+            aria-label={tCommon('pagination.prev')}
           >
-            {t('equipment.prevPage')}
+            <ChevronLeft size={17} />
           </button>
           <span className="text-sm rogym-text-secondary">
             {t('equipment.page', { page, total: totalPages })}
           </span>
           <button
             type="button"
-            className="rogym-btn rogym-btn--outline-white"
+            className="rogym-btn rogym-btn--icon rogym-btn--elevated"
             disabled={page >= totalPages}
             onClick={() => updateParam('page', String(page + 1))}
+            aria-label={tCommon('pagination.next')}
           >
-            {t('equipment.nextPage')}
+            <ChevronRight size={17} />
           </button>
         </div>
       )}

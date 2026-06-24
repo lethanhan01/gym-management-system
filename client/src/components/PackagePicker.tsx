@@ -119,8 +119,10 @@ export function PackagePicker({
 
   return (
     <div className="rogym-package-picker flex flex-col gap-4">
-      <div className="flex min-h-0 flex-1 gap-5">
-        <div className="rogym-card rogym-card--compact relative flex-1 overflow-hidden">
+      {/* mobile: stack dọc (scroller trên, chi tiết dưới); md+: side-by-side */}
+      <div className="flex flex-col md:flex-row min-h-0 flex-1 gap-5">
+        {/* min-h-[280px] đảm bảo scroll hoạt động khi parent là flex-col trên mobile */}
+        <div className="rogym-card rogym-card--compact relative flex-1 min-h-[280px] overflow-hidden">
           {packages.length ? (
             <>
               <div
@@ -201,7 +203,7 @@ export function PackagePicker({
         </div>
 
         <div
-          className={`rogym-package-picker__details rogym-card rogym-card--compact flex w-[300px] shrink-0 flex-col p-6 ${
+          className={`rogym-package-picker__details rogym-card rogym-card--compact flex w-full md:w-[300px] md:shrink-0 flex-col p-6 ${
             detailsVisible ? 'is-visible' : ''
           }`}
         >

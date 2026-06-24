@@ -23,11 +23,19 @@
     "retry": "Thử lại"
   },
   "nav": {
-    "dashboard": "Dashboard",
+    "dashboard": "Trang chủ",
     "profile": "Hồ sơ",
     "logout": "Đăng xuất",
     "closeMenu": "Đóng menu",
-    "openMenu": "Mở menu"
+    "openMenu": "Mở menu",
+    "workout": "Luyện tập",
+    "subscription": "Gói tập",
+    "students": "Học viên",
+    "sessions": "Lịch học",
+    "members": "Hội viên",
+    "checkIn": "Check-in",
+    "staff": "Nhân viên",
+    "reports": "Báo cáo"
   },
   "status": {
     "active": "Đang hoạt động",

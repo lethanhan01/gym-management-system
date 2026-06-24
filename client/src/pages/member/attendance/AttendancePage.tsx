@@ -21,12 +21,12 @@ function toISODate(d: Date): string {
   return `${y}-${m}-${day}`
 }
 
-function fmtTime(iso: string) {
-  return new Date(iso).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
+function fmtTime(iso: string, locale: string) {
+  return new Date(iso).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })
 }
 
-function fmtDateShort(iso: string) {
-  return new Date(iso).toLocaleDateString('vi-VN', {
+function fmtDateShort(iso: string, locale: string) {
+  return new Date(iso).toLocaleDateString(locale, {
     day: '2-digit',
     month: '2-digit',
     year: 'numeric',
@@ -35,8 +35,18 @@ function fmtDateShort(iso: string) {
   })
 }
 
-function fmtMonthYear(d: Date) {
-  return d.toLocaleDateString('vi-VN', { month: 'long', year: 'numeric' })
+function fmtMonthYear(d: Date, locale: string) {
+  return d.toLocaleDateString(locale, { month: 'long', year: 'numeric' })
+}
+
+function getDowLabels(locale: string): string[] {
+  // Generate Mon-Sun abbreviated day names using Intl, starting from Monday
+  const base = new Date(2024, 0, 1) // Monday 1 Jan 2024
+  return Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(base)
+    d.setDate(base.getDate() + i)
+    return d.toLocaleDateString(locale, { weekday: 'short' })
+  })
 }
 
 function dateKey(iso: string) {
@@ -53,9 +63,11 @@ function todayKey() {
 
 function AttendanceTooltip({
   log,
+  locale,
   align = 'left',
 }: {
   log: AttendanceLog
+  locale: string
   align?: 'left' | 'right'
 }) {
   return (
@@ -68,8 +80,8 @@ function AttendanceTooltip({
         <div className="flex items-center gap-1.5">
           <Clock size={11} className="rogym-sx-f27dac31" />
           <span className="text-white">
-            {fmtTime(log.startTime)}
-            {log.endTime ? ` → ${fmtTime(log.endTime)}` : ''}
+            {fmtTime(log.startTime, locale)}
+            {log.endTime ? ` → ${fmtTime(log.endTime, locale)}` : ''}
           </span>
         </div>
       </div>
@@ -79,9 +91,11 @@ function AttendanceTooltip({
 
 const AttendanceCalendarItem = memo(function AttendanceCalendarItem({
   log,
+  locale,
   align,
 }: {
   log: AttendanceLog
+  locale: string
   align: 'left' | 'right'
 }) {
   return (
@@ -90,28 +104,29 @@ const AttendanceCalendarItem = memo(function AttendanceCalendarItem({
         className="rogym-calendar-session cursor-default truncate rounded-md px-1.5 py-0.5 text-[10px] font-semibold leading-tight"
         data-status="completed"
       >
-        {fmtTime(log.startTime)}
+        {fmtTime(log.startTime, locale)}
       </div>
-      <AttendanceTooltip log={log} align={align} />
+      <AttendanceTooltip log={log} locale={locale} align={align} />
     </div>
   )
 })
 
 // ── Calendar view ──────────────────────────────────────────────────────────────
 
-const DOW_LABELS = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN']
-
 function AttendanceCalendarView({
   logs,
   month,
+  locale,
   onPrevMonth,
   onNextMonth,
 }: {
   logs: AttendanceLog[]
   month: Date
+  locale: string
   onPrevMonth: () => void
   onNextMonth: () => void
 }) {
+  const dowLabels = useMemo(() => getDowLabels(locale), [locale])
   const byDate = useMemo(() => {
     const map = new Map<string, AttendanceLog[]>()
     for (const log of logs) {
@@ -155,7 +170,7 @@ function AttendanceCalendarView({
         >
           <ChevronLeft size={16} />
         </button>
-        <p className="text-sm font-bold text-white capitalize">{fmtMonthYear(month)}</p>
+        <p className="text-sm font-bold text-white capitalize">{fmtMonthYear(month, locale)}</p>
         <button
           type="button"
           onClick={onNextMonth}
@@ -167,7 +182,7 @@ function AttendanceCalendarView({
 
       {/* DOW header */}
       <div className="mb-1 grid grid-cols-7">
-        {DOW_LABELS.map((d) => (
+        {dowLabels.map((d) => (
           <div
             key={d}
             className="py-1 text-center text-[11px] font-bold uppercase tracking-wider rogym-sx-ed519d00"
@@ -205,6 +220,7 @@ function AttendanceCalendarView({
                           <AttendanceCalendarItem
                             key={log.attendanceId}
                             log={log}
+                            locale={locale}
                             align={ci >= 4 ? 'right' : 'left'}
                           />
                         ))}
@@ -240,7 +256,8 @@ function AttendanceListSidebar({
   loading: boolean
   error: string | null
 }) {
-  const { t } = useTranslation('member')
+  const { t, i18n } = useTranslation('member')
+  const locale = i18n.language
   const METHOD_LABEL: Record<string, { label: string; tone: string }> = {
     realtime: { label: t('attendance.methodLabel.realtime'), tone: 'info' },
     manual: { label: t('attendance.methodLabel.manual'), tone: 'warning' },
@@ -300,11 +317,11 @@ function AttendanceListSidebar({
                     <Clock size={14} className="rogym-sx-f27dac31 shrink-0" />
                     <div>
                       <p className="text-sm font-semibold text-white">
-                        {fmtDateShort(log.startTime)}
+                        {fmtDateShort(log.startTime, locale)}
                       </p>
                       <p className="text-xs rogym-sx-5e5c39ab mt-0.5">
-                        {fmtTime(log.startTime)}
-                        {log.endTime ? ` → ${fmtTime(log.endTime)}` : ''}
+                        {fmtTime(log.startTime, locale)}
+                        {log.endTime ? ` → ${fmtTime(log.endTime, locale)}` : ''}
                       </p>
                     </div>
                   </div>
@@ -324,7 +341,7 @@ function AttendanceListSidebar({
 // ── Main page ──────────────────────────────────────────────────────────────────
 
 export default function AttendancePage() {
-  const { t } = useTranslation('member')
+  const { t, i18n } = useTranslation('member')
   const memberId = useAuthStore((s) => s.user?.memberId) ?? ''
 
   const [calMonth, setCalMonth] = useState(() => {
@@ -397,6 +414,13 @@ export default function AttendancePage() {
     setCalMonth((m) => new Date(m.getFullYear(), m.getMonth() + 1, 1))
   }
 
+  // Tính METHOD_LABEL cho inline mobile card list (dùng lại logic từ AttendanceListSidebar)
+  const METHOD_LABEL_MOBILE: Record<string, { label: string; tone: string }> = {
+    realtime: { label: t('attendance.methodLabel.realtime'), tone: 'info' },
+    manual: { label: t('attendance.methodLabel.manual'), tone: 'warning' },
+    qr: { label: t('attendance.methodLabel.qr'), tone: 'muted' },
+  }
+
   return (
     <MemberPage>
       <MemberPageHeader
@@ -404,7 +428,9 @@ export default function AttendancePage() {
         title={t('attendance.title')}
         description={t('attendance.description')}
       />
-      <div className="grid gap-5 lg:grid-cols-[65fr_35fr]">
+
+      {/* Desktop: calendar + sidebar nằm ngang */}
+      <div className="hidden lg:grid gap-5 lg:grid-cols-[65fr_35fr]">
         {calLoading ? (
           <MemberSkeleton rows={5} />
         ) : calError ? (
@@ -413,6 +439,7 @@ export default function AttendancePage() {
           <AttendanceCalendarView
             logs={calLogs}
             month={calMonth}
+            locale={i18n.language}
             onPrevMonth={prevMonth}
             onNextMonth={nextMonth}
           />
@@ -426,6 +453,63 @@ export default function AttendancePage() {
           loading={listLoading}
           error={listError}
         />
+      </div>
+
+      {/* Mobile: calendar stack trên, card list stack dưới */}
+      <div className="lg:hidden space-y-5">
+        {calLoading ? (
+          <MemberSkeleton rows={5} />
+        ) : calError ? (
+          <MemberErrorState message={calError} onRetry={loadCalLogs} />
+        ) : (
+          <AttendanceCalendarView
+            logs={calLogs}
+            month={calMonth}
+            locale={i18n.language}
+            onPrevMonth={prevMonth}
+            onNextMonth={nextMonth}
+          />
+        )}
+
+        {/* Mobile: card list — cùng tháng với calendar, tự cập nhật khi navigate tháng */}
+        {!calLoading && !calError && (
+          <div className="space-y-2">
+            {calLogs.length === 0 ? (
+              <div className="flex flex-col items-center gap-2 py-6">
+                <CalendarX size={28} className="rogym-sx-ed519d00" />
+                <p className="text-sm rogym-sx-5e5c39ab">{t('attendance.noData')}</p>
+              </div>
+            ) : (
+              [...calLogs]
+                .sort((a, b) => new Date(b.startTime).getTime() - new Date(a.startTime).getTime())
+                .map((log) => {
+                  const method = METHOD_LABEL_MOBILE[log.method] ?? { label: log.method, tone: 'muted' }
+                  return (
+                    <div
+                      key={log.attendanceId}
+                      className="flex items-center justify-between gap-3 rounded-xl px-4 py-3 rogym-sx-a15e2a7c"
+                    >
+                      <div className="flex items-center gap-3">
+                        <Clock size={14} className="rogym-sx-f27dac31 shrink-0" />
+                        <div>
+                          <p className="text-sm font-semibold text-white">
+                            {fmtDateShort(log.startTime, i18n.language)}
+                          </p>
+                          <p className="text-xs rogym-sx-5e5c39ab mt-0.5">
+                            {fmtTime(log.startTime, i18n.language)}
+                            {log.endTime ? ` → ${fmtTime(log.endTime, i18n.language)}` : ''}
+                          </p>
+                        </div>
+                      </div>
+                      <span className="rogym-tone-badge" data-tone={method.tone}>
+                        {method.label}
+                      </span>
+                    </div>
+                  )
+                })
+            )}
+          </div>
+        )}
       </div>
     </MemberPage>
   )

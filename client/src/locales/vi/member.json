@@ -24,6 +24,8 @@
     "errorLoad": "Không thể tải dữ liệu",
     "networkError": "Không thể kết nối. Kiểm tra mạng và thử lại.",
     "greeting": "Xin chào, {{name}}",
+    "greetingFallback": "bạn",
+    "defaultPlanName": "Kế hoạch tập",
     "paymentSuccess": "Thanh toán thành công! Gói tập đã được kích hoạt.",
     "pt": {
       "sectionTitle": "Huấn luyện viên",

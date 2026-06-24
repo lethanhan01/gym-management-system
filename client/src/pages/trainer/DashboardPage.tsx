@@ -296,7 +296,8 @@ export default function TrainerDashboardPage() {
         <TrainerErrorState message={error} />
       ) : (
         <>
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          {/* Mobile: 2 cột stat cards; desktop: 4 cột */}
+          <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
             <TrainerStatCard
               icon={<Users size={20} />}
               label={t('dashboard.stats.managedStudents')}
