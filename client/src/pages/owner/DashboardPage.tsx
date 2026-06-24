@@ -197,7 +197,7 @@ export default function OwnerDashboardPage() {
       ) : (
         <>
           {/* KPI Cards — 2 cột ngay từ mobile, 4 cột ở desktop */}
-          <div className="grid grid-cols-2 gap-4 xl:grid-cols-4">
+          <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
             <OwnerStatCard
               icon={<Users size={20} />}
               label={t('dashboard.totalMembers')}

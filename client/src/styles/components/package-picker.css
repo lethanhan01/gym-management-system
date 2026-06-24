@@ -162,4 +162,15 @@
     opacity: 1;
     transform: translateX(0);
   }
+
+  /* Trên mobile, panel stack dọc — slide từ dưới lên thay vì từ phải sang */
+  @media (max-width: 767px) {
+    .rogym-package-picker__details {
+      transform: translateY(20px);
+    }
+
+    .rogym-package-picker__details.is-visible {
+      transform: translateY(0);
+    }
+  }
 }
