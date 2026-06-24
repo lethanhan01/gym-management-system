@@ -31,6 +31,10 @@ describe('StaffAttendanceService', () => {
     jest.clearAllMocks()
   })
 
+  afterEach(() => {
+    jest.useRealTimers()
+  })
+
   // ---------------------------------------------------------------------------
   // checkIn
   // ---------------------------------------------------------------------------
@@ -86,9 +90,13 @@ describe('StaffAttendanceService', () => {
     })
 
     it('happy path: records check-out and returns duration', async () => {
-      const checkIn = new Date(Date.now() - 3600_000)
+      // 10:00 giờ VN — checkIn 1 giờ trước vẫn cùng ngày (tránh flaky gần 00:00 VN)
+      const fixedNow = new Date('2026-06-25T03:00:00.000Z')
+      jest.useFakeTimers({ now: fixedNow })
+
+      const checkIn = new Date(fixedNow.getTime() - 3600_000)
       const open = makeLog({ logId: 1n, checkIn })
-      const checkOut = new Date()
+      const checkOut = new Date(fixedNow)
       mockPrisma.staffAttendanceLog.findFirst.mockResolvedValue(open)
       mockPrisma.staffAttendanceLog.update.mockResolvedValue(makeLog({ checkIn, checkOut }))
 

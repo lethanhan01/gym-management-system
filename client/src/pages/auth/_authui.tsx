@@ -15,18 +15,20 @@ export function BtnPrimary({
   type = 'button',
   onClick,
   disabled,
+  className = ''
 }: {
   children: React.ReactNode
   type?: 'button' | 'submit'
   onClick?: () => void
   disabled?: boolean
+  className?: string
 }) {
   return (
     <button
       type={type}
       onClick={onClick}
       disabled={disabled}
-      className="rogym-btn rogym-btn--primary rogym-btn--wide"
+      className={`rogym-btn rogym-btn--primary rogym-btn--wide ${className}`}
     >
       <span className="flex items-center justify-center gap-2">{children}</span>
     </button>
