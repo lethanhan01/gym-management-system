@@ -183,6 +183,14 @@ export class AuthService {
     return this.lineOAuth.lineLogin(idToken, ctx)
   }
 
+  async linkLine(userId: bigint, idToken: string): Promise<{ lineName: string }> {
+    return this.lineOAuth.linkLine(userId, idToken)
+  }
+
+  async unlinkLine(userId: bigint): Promise<void> {
+    return this.lineOAuth.unlinkLine(userId)
+  }
+
   // ---------------------------------------------------------------------------
   // Change password (authenticated user đổi mật khẩu của chính mình)
   // ---------------------------------------------------------------------------

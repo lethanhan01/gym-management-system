@@ -1,4 +1,4 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, NotFoundException, Post, Req, BadRequestException } from '@nestjs/common'
+import { Body, Controller, Delete, Get, HttpCode, HttpStatus, NotFoundException, Post, Req, BadRequestException } from '@nestjs/common'
 import { Request } from 'express'
 import { UsersService } from './users.service'
 import { CurrentUser } from './decorators/current-user.decorator'
@@ -73,6 +73,7 @@ export class AuthController {
         roles: user.roles,
         staffId: current.staffId?.toString() ?? null,
         memberId: user.memberId?.toString() ?? null,
+        lineLinked: !!user.lineId,
       },
     }
   }
@@ -135,6 +136,22 @@ export class AuthController {
   async lineLogin(@Body() dto: LineLoginDto, @Req() req: Request) {
     const result = await this.authService.lineLogin(dto.idToken, this.getCtx(req))
     return { success: true, data: result }
+  }
+
+  // LINE — Lien ket tai khoan LINE voi tai khoan hien tai (JWT required)
+  @Post('line-link')
+  @HttpCode(HttpStatus.OK)
+  async linkLine(@Body() dto: LineLoginDto, @CurrentUser() user: AuthenticatedUser) {
+    const result = await this.authService.linkLine(user.userId, dto.idToken)
+    return { success: true, data: result }
+  }
+
+  // LINE — Huy lien ket tai khoan LINE (JWT required)
+  @Delete('line-link')
+  @HttpCode(HttpStatus.OK)
+  async unlinkLine(@CurrentUser() user: AuthenticatedUser) {
+    await this.authService.unlinkLine(user.userId)
+    return { success: true, message: 'Đã hủy liên kết tài khoản LINE' }
   }
 
   @Post('change-password')
