@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { Search, UserRound } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Search, UserRound } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { getApiError } from '@/lib/api-error'
 import { formatDate } from '@/lib/date'
@@ -104,8 +104,13 @@ export default function MembersPage() {
           <option value="active">{t('members.list.subStatusActive')}</option>
           <option value="expired">{t('members.list.subStatusExpired')}</option>
         </StaffSelect>
-        <button type="button" className="rogym-btn rogym-btn--primary" onClick={applySearch}>
-          {t('members.list.search')}
+        <button
+          type="button"
+          className="rogym-btn rogym-btn--icon rogym-btn--elevated"
+          onClick={applySearch}
+          aria-label={t('members.list.search')}
+        >
+          <Search size={17} />
         </button>
       </div>
 
@@ -121,22 +126,24 @@ export default function MembersPage() {
         <div className="flex items-center justify-center gap-3">
           <button
             type="button"
-            className="rogym-btn rogym-btn--outline-white"
+            className="rogym-btn rogym-btn--icon rogym-btn--elevated"
             disabled={page <= 1}
             onClick={() => updateParam('page', String(page - 1))}
+            aria-label={t('members.list.prevPage')}
           >
-            {t('members.list.prevPage')}
+            <ChevronLeft size={17} />
           </button>
           <span className="text-sm rogym-text-secondary">
             {t('members.list.page', { page, total: memberTotalPages })}
           </span>
           <button
             type="button"
-            className="rogym-btn rogym-btn--outline-white"
+            className="rogym-btn rogym-btn--icon rogym-btn--elevated"
             disabled={page >= memberTotalPages}
             onClick={() => updateParam('page', String(page + 1))}
+            aria-label={t('members.list.nextPage')}
           >
-            {t('members.list.nextPage')}
+            <ChevronRight size={17} />
           </button>
         </div>
       )}
