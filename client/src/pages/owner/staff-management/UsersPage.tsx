@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react'
 import { Link } from 'react-router-dom'
-import { Plus, Edit2, Trash2, LoaderCircle, CalendarDays } from 'lucide-react'
+import { CalendarDays, Eye, LoaderCircle, Plus, Search, Trash2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { getApiError, isApiConflict } from '@/lib/api-error'
 import { STAFF_POSITION_COLOR, USER_STATUS_COLOR } from '@/lib/owner-constants'
@@ -153,13 +153,14 @@ export default function UsersPage() {
         </OwnerSelect>
         <button
           type="button"
-          className="rogym-btn rogym-btn--primary"
+          className="rogym-btn rogym-btn--icon rogym-btn--elevated"
           onClick={() => {
             setPage(1)
             fetchStaff(1)
           }}
+          aria-label={tCommon('button.search')}
         >
-          {tCommon('button.search')}
+          <Search size={17} />
         </button>
       </div>
 
@@ -230,9 +231,10 @@ export default function UsersPage() {
                       <div className="flex items-center justify-end gap-2">
                         <Link
                           to={`/owner/staff/${staff.staffId}`}
-                          className="rogym-btn rogym-btn--outline-white rogym-btn--nav"
+                          className="rogym-btn rogym-btn--icon rogym-btn--elevated"
+                          aria-label={tCommon('button.viewDetail')}
                         >
-                          <Edit2 size={14} /> {t('staffManagement.users.detailBtn')}
+                          <Eye size={15} />
                         </Link>
                         {staff.status !== 'deleted' && staff.staffId !== currentUser?.staffId && (
                           <button
