@@ -15,12 +15,25 @@ const queryClient = new QueryClient({
   },
 })
 
-ReactDOM.createRoot(document.getElementById('root')!).render(
-  <React.StrictMode>
-    <BrowserRouter>
-      <QueryClientProvider client={queryClient}>
-        <App />
-      </QueryClientProvider>
-    </BrowserRouter>
-  </React.StrictMode>
-)
+// LIFF Endpoint URL đang là root '/' nên LINE thả callback về '/?liff.state=/liff&code=...'.
+// LiffEntryPage chỉ mount ở route '/liff' -> liff.init() không chạy ở root, 'code' không được
+// xử lý, app render HomePage. Chuyển sớm sang '/liff' giữ nguyên query để liff.init() tiêu thụ
+// 'code'. Chỉ kích hoạt khi có key đặc trưng của LIFF (tránh nhầm với query thường).
+const liffSearch = window.location.search
+const isLiffRootCallback =
+  window.location.pathname === '/' &&
+  /[?&](liff\.state|liffClientId)=/.test(liffSearch)
+
+if (isLiffRootCallback) {
+  window.location.replace('/liff' + liffSearch + window.location.hash)
+} else {
+  ReactDOM.createRoot(document.getElementById('root')!).render(
+    <React.StrictMode>
+      <BrowserRouter>
+        <QueryClientProvider client={queryClient}>
+          <App />
+        </QueryClientProvider>
+      </BrowserRouter>
+    </React.StrictMode>
+  )
+}
