@@ -4,7 +4,7 @@ import { Menu } from 'lucide-react'
 import Sidebar from '@/components/shared/Sidebar'
 import Topbar from '@/components/shared/Topbar'
 import BottomNav from '@/components/shared/BottomNav'
-import { PageSkeleton } from '@/components/shared/PageUI'
+import { PageLoader } from '@/components/shared/Spinner'
 import { useAuthStore } from '@/stores/authStore'
 import {
   classifySubscriptionCheckError,
@@ -125,13 +125,13 @@ export default function DashboardLayout() {
             <Menu size={20} />
           </button>
         )}
-        <main className="flex-1 overflow-auto p-6 pb-24 md:pb-6">
+        <main className="flex-1 overflow-auto px-6 pt-20 pb-24 md:p-6 md:pb-6">
           {showExpiryToast && (
             <div className="fixed top-5 right-5 z-50 px-5 py-3 rounded-2xl bg-red-900/90 text-red-200 text-sm font-medium shadow-xl border border-red-700/40">
               Gói tập đã hết hạn. Đang chuyển về trang đăng ký...
             </div>
           )}
-          <Suspense fallback={<PageSkeleton rows={4} />}>
+          <Suspense fallback={<PageLoader />}>
             <Outlet />
           </Suspense>
         </main>

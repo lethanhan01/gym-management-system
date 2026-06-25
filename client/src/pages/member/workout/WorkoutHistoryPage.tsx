@@ -89,21 +89,23 @@ function SetComparison({ set }: { set: WorkoutLogSet }) {
   )
 }
 
-// Months to offer in the filter
-function buildMonthOptions() {
-  const options: { label: string; value: string }[] = [{ label: 'Tất cả', value: '' }]
+// Months to offer in the filter — nhãn theo ngôn ngữ hiện tại
+function buildMonthOptions(t: TFunction<'member'>, locale: string) {
+  const options: { label: string; value: string }[] = [
+    { label: t('workout.history.filterAll'), value: '' },
+  ]
   const now = new Date()
   for (let i = 0; i < 6; i++) {
     const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
     const val = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
-    const label = d.toLocaleDateString('vi-VN', { month: 'long', year: 'numeric' })
+    const label = d.toLocaleDateString(locale, { month: 'long', year: 'numeric' })
     options.push({ value: val, label })
   }
   return options
 }
 
 export default function WorkoutHistoryPage() {
-  const { t } = useTranslation('member')
+  const { t, i18n } = useTranslation('member')
   const { user } = useAuthStore()
   const memberId = user?.memberId ? String(user.memberId) : undefined
 
@@ -156,7 +158,7 @@ export default function WorkoutHistoryPage() {
     return top ? top[0] : '—'
   }, [logs])
 
-  const monthOptions = buildMonthOptions()
+  const monthOptions = useMemo(() => buildMonthOptions(t, i18n.language), [t, i18n.language])
 
   function toggleLog(id: string) {
     setExpandedLogs((prev) => {
