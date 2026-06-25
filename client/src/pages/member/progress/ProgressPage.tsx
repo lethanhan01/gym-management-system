@@ -12,6 +12,8 @@ import { memberService } from '@/services/member.service'
 import { useAuthStore } from '@/stores/authStore'
 import { getApiError } from '@/lib/api-error'
 
+import { PageLoader } from '@/components/shared/Spinner'
+
 const MemberWeightChart = lazy(() => import('@/components/charts/MemberWeightChart'))
 
 function fmtDate(iso: string) {
@@ -268,9 +270,7 @@ export default function ProgressPage() {
                 {t('progress.chartNeedMoreData')}
               </p>
             ) : (
-              <Suspense
-                fallback={<div className="h-[220px] animate-pulse rounded-xl bg-white/5" />}
-              >
+              <Suspense fallback={<PageLoader minHeight="220px" />}>
                 <MemberWeightChart data={chartData} />
               </Suspense>
             )}

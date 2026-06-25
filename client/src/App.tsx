@@ -6,6 +6,7 @@ import { Analytics } from '@vercel/analytics/react'
 import ProtectedRoute from './components/shared/ProtectedRoute'
 import SubscriptionRequired from './components/shared/SubscriptionRequired'
 import AuthLayout from './layouts/AuthLayout'
+import { FullScreenLoader } from './components/shared/Spinner'
 
 const DashboardLayout = lazy(() => import('./layouts/DashboardLayout'))
 
@@ -111,18 +112,6 @@ const TransactionInvoicesPage = lazy(
   () => import('./pages/owner/reports/TransactionInvoicesPage')
 )
 
-function RouteFallback() {
-  return (
-    <div className="min-h-screen bg-[#080e0b] px-6 py-10" role="status" aria-label="Đang tải trang">
-      <div className="mx-auto max-w-[1280px] space-y-4">
-        <div className="h-8 w-56 animate-pulse rounded-lg bg-white/10" />
-        <div className="h-24 animate-pulse rounded-2xl border border-white/5 bg-white/5" />
-        <div className="h-24 animate-pulse rounded-2xl border border-white/5 bg-white/5" />
-      </div>
-    </div>
-  )
-}
-
 export default function App() {
   const { i18n } = useTranslation()
   useEffect(() => {
@@ -130,7 +119,7 @@ export default function App() {
   }, [i18n.language])
 
   return (
-    <Suspense fallback={<RouteFallback />}>
+    <Suspense fallback={<FullScreenLoader />}>
       <Analytics />
       <Routes>
         {/* Public */}

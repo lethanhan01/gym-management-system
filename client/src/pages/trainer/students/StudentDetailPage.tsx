@@ -27,8 +27,10 @@ import {
   TrainerSkeleton,
   TrainerStatusBadge,
 } from '@/components/TrainerUI'
+import { PageLoader } from '@/components/shared/Spinner'
 
 type Tab = 'overview' | 'sessions' | 'workout'
+
 const StudentProgressChart = lazy(() => import('@/components/charts/StudentProgressChart'))
 
 export default function StudentDetailPage() {
@@ -300,9 +302,7 @@ export default function StudentDetailPage() {
               <p className="text-sm rogym-text-secondary">{t('students.detail.progress.noData')}</p>
             ) : (
               <div className="h-64">
-                <Suspense
-                  fallback={<div className="h-full animate-pulse rounded-xl bg-white/5" />}
-                >
+                <Suspense fallback={<PageLoader minHeight="100%" />}>
                   <StudentProgressChart data={chartData} />
                 </Suspense>
               </div>

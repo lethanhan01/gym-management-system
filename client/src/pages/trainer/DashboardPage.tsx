@@ -15,6 +15,7 @@ import {
   TrainerStatCard,
   TrainerStatusBadge,
 } from '@/components/TrainerUI'
+import { PageLoader } from '@/components/shared/Spinner'
 
 const LOCAL_DAY_FORMATTER = new Intl.DateTimeFormat('en-CA', {
   timeZone: 'Asia/Ho_Chi_Minh',
@@ -409,7 +410,9 @@ export default function TrainerDashboardPage() {
       )}
 
       {openedSessionId && (
-        <Suspense fallback={null}>
+        <Suspense
+          fallback={<PageLoader className="fixed inset-0 z-50 bg-black/60" minHeight="100vh" size={40} />}
+        >
           <SessionDetailModal
             sessionId={openedSessionId}
             onClose={handleCloseSession}

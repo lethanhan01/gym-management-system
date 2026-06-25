@@ -152,62 +152,64 @@ export default function TrainerSessionsPage() {
       />
 
       {/* Calendar toolbar */}
-      <div className="rogym-card rogym-card--compact flex flex-wrap items-center justify-between gap-3 p-4">
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            className="rogym-btn rogym-btn--icon rogym-btn--elevated"
-            onClick={() => moveCalendar(-1)}
-            aria-label={t('sessions.calendar.prevPeriod')}
-          >
-            <ChevronLeft size={18} />
-          </button>
-          <button
-            type="button"
-            className="rogym-btn rogym-btn--outline-white"
-            onClick={() => setAnchor(new Date())}
-          >
-            {t('sessions.calendar.today')}
-          </button>
-          <button
-            type="button"
-            className="rogym-btn rogym-btn--icon rogym-btn--elevated"
-            onClick={() => moveCalendar(1)}
-            aria-label={t('sessions.calendar.nextPeriod')}
-          >
-            <ChevronRight size={18} />
-          </button>
-          <span className="ml-2 text-sm font-semibold rogym-text-primary">
-            {formatDate(calRange.from)}
-            {calView === 'week'
-              ? ` - ${formatDate(new Date(calRange.to.getTime() - 1))}`
-              : ''}
-          </span>
+      <div className="rogym-card rogym-card--compact flex flex-col gap-2 p-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              className="rogym-btn rogym-btn--icon rogym-btn--elevated"
+              onClick={() => moveCalendar(-1)}
+              aria-label={t('sessions.calendar.prevPeriod')}
+            >
+              <ChevronLeft size={18} />
+            </button>
+            <button
+              type="button"
+              className="rogym-btn rogym-btn--outline-white"
+              onClick={() => setAnchor(new Date())}
+            >
+              {t('sessions.calendar.today')}
+            </button>
+            <button
+              type="button"
+              className="rogym-btn rogym-btn--icon rogym-btn--elevated"
+              onClick={() => moveCalendar(1)}
+              aria-label={t('sessions.calendar.nextPeriod')}
+            >
+              <ChevronRight size={18} />
+            </button>
+          </div>
+          <div className="flex rounded-full bg-white/10 p-0.5">
+            <button
+              type="button"
+              onClick={() => setCalView('day')}
+              className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors duration-150 ${
+                calView === 'day'
+                  ? 'bg-[var(--rogym-green)] text-black'
+                  : 'text-white/60 hover:text-white/90'
+              }`}
+            >
+              {t('sessions.calendar.dayView')}
+            </button>
+            <button
+              type="button"
+              onClick={() => setCalView('week')}
+              className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors duration-150 ${
+                calView === 'week'
+                  ? 'bg-[var(--rogym-green)] text-black'
+                  : 'text-white/60 hover:text-white/90'
+              }`}
+            >
+              {t('sessions.calendar.weekView')}
+            </button>
+          </div>
         </div>
-        <div className="flex gap-2">
-          <button
-            type="button"
-            className={
-              calView === 'day'
-                ? 'rogym-btn rogym-btn--primary'
-                : 'rogym-btn rogym-btn--outline-white'
-            }
-            onClick={() => setCalView('day')}
-          >
-            {t('sessions.calendar.dayView')}
-          </button>
-          <button
-            type="button"
-            className={
-              calView === 'week'
-                ? 'rogym-btn rogym-btn--primary'
-                : 'rogym-btn rogym-btn--outline-white'
-            }
-            onClick={() => setCalView('week')}
-          >
-            {t('sessions.calendar.weekView')}
-          </button>
-        </div>
+        <span className="text-sm font-semibold rogym-text-primary">
+          {formatDate(calRange.from)}
+          {calView === 'week'
+            ? ` – ${formatDate(new Date(calRange.to.getTime() - 1))}`
+            : ''}
+        </span>
       </div>
 
       {/* Calendar grid */}
