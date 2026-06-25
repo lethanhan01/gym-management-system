@@ -221,7 +221,7 @@ export default function ProgressPage() {
       ) : (
         <div className="space-y-5">
           {/* Stat cards */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4">
             <div className="rogym-sx-103d1cc8">
               <p className="text-xs font-semibold uppercase tracking-wider rogym-sx-6e4f9432">
                 {t('progress.statCurrentWeight')}

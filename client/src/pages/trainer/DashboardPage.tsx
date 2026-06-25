@@ -69,20 +69,27 @@ const TodaySessionRow = memo(function TodaySessionRow({
   const isDone = session.status === 'completed' || session.status === 'cancelled'
 
   return (
-    <div className="rogym-session-row is-today">
-      <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-2">
-          <div className="font-semibold rogym-text-primary">{session.memberName}</div>
-          <TrainerStatusBadge status={session.status} />
-        </div>
-        <div className="mt-1 text-xs rogym-text-muted">
-          {formatDateTime(session.startTime)}
-          {session.roomName ? ` · ${session.roomName}` : ''}
-        </div>
-      </div>
+    <div className="rogym-session-row is-today flex-col items-stretch">
+      {/* Hàng 1: tên + badge */}
       <div className="flex items-center gap-2">
+        <p className="min-w-0 flex-1 truncate font-semibold rogym-text-primary">
+          {session.memberName}
+        </p>
+        <span className="shrink-0">
+          <TrainerStatusBadge status={session.status} />
+        </span>
+      </div>
+
+      {/* Hàng 2: ngày giờ + phòng */}
+      <p className="text-xs rogym-text-muted">
+        {formatDateTime(session.startTime)}
+        {session.roomName ? ` · ${session.roomName}` : ''}
+      </p>
+
+      {/* Hàng 3: action buttons */}
+      <div className="flex items-center gap-2 flex-wrap">
         {!isDone && (
-          <div className="flex gap-2">
+          <>
             {canStart && (
               <button
                 type="button"
@@ -109,11 +116,11 @@ const TodaySessionRow = memo(function TodaySessionRow({
                 {t('dashboard.actions.complete')}
               </button>
             )}
-          </div>
+          </>
         )}
         <button
           type="button"
-          className="rogym-text-link text-xs"
+          className="rogym-text-link text-xs ml-auto"
           aria-label={t('sessions.detailWith', { name: session.memberName })}
           onClick={() => onOpen(session.sessionId)}
         >
@@ -297,8 +304,8 @@ export default function TrainerDashboardPage() {
         <TrainerErrorState message={error} />
       ) : (
         <>
-          {/* Mobile: 2 cột stat cards; desktop: 4 cột */}
-          <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+          {/* Mobile: 1 cột stat cards; desktop: 4 cột */}
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-4">
             <TrainerStatCard
               icon={<Users size={20} />}
               label={t('dashboard.stats.managedStudents')}
@@ -323,14 +330,14 @@ export default function TrainerDashboardPage() {
 
           {/* Today's schedule — attendance panel */}
           <section className="rogym-card rogym-card--compact p-6">
-            <div className="mb-5 flex items-center justify-between">
-              <div>
+            <div className="mb-5 flex items-start justify-between gap-3">
+              <div className="min-w-0">
                 <h2 className="text-lg font-bold text-white">{t('dashboard.todaySchedule.title')}</h2>
                 <p className="mt-0.5 text-sm rogym-text-dim">
                   {t('dashboard.todaySchedule.description')}
                 </p>
               </div>
-              <Link className="rogym-text-link rogym-text-link--accent" to="/trainer/sessions">
+              <Link className="rogym-text-link rogym-text-link--accent shrink-0 whitespace-nowrap text-sm" to="/trainer/sessions">
                 {t('dashboard.todaySchedule.allSessions')}
               </Link>
             </div>

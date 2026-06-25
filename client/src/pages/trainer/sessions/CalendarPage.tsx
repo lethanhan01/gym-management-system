@@ -153,7 +153,7 @@ export default function TrainerSessionsPage() {
 
       {/* Calendar toolbar */}
       <div className="rogym-card rogym-card--compact flex flex-col gap-2 p-4">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-2">
             <button
               type="button"
@@ -165,7 +165,7 @@ export default function TrainerSessionsPage() {
             </button>
             <button
               type="button"
-              className="rogym-btn rogym-btn--outline-white"
+              className="rogym-btn rogym-btn--outline-white text-sm px-3 py-1.5"
               onClick={() => setAnchor(new Date())}
             >
               {t('sessions.calendar.today')}
@@ -179,11 +179,11 @@ export default function TrainerSessionsPage() {
               <ChevronRight size={18} />
             </button>
           </div>
-          <div className="flex rounded-full bg-white/10 p-0.5">
+          <div className="flex rounded-full bg-white/10 p-0.5 self-start sm:self-auto">
             <button
               type="button"
               onClick={() => setCalView('day')}
-              className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors duration-150 ${
+              className={`rounded-full px-3 py-1 text-xs font-medium transition-colors duration-150 sm:px-4 sm:py-1.5 sm:text-sm ${
                 calView === 'day'
                   ? 'bg-[var(--rogym-green)] text-black'
                   : 'text-white/60 hover:text-white/90'
@@ -194,7 +194,7 @@ export default function TrainerSessionsPage() {
             <button
               type="button"
               onClick={() => setCalView('week')}
-              className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors duration-150 ${
+              className={`rounded-full px-3 py-1 text-xs font-medium transition-colors duration-150 sm:px-4 sm:py-1.5 sm:text-sm ${
                 calView === 'week'
                   ? 'bg-[var(--rogym-green)] text-black'
                   : 'text-white/60 hover:text-white/90'
@@ -410,22 +410,24 @@ export default function TrainerSessionsPage() {
           <div className="flex items-center justify-center gap-3">
             <button
               type="button"
-              className="rogym-btn rogym-btn--outline-white"
+              className="rogym-btn rogym-btn--icon rogym-btn--outline-white"
               disabled={listPage <= 1}
               onClick={() => setListPage((p) => p - 1)}
+              aria-label={t('sessions.calendar.list.prevPage')}
             >
-              {t('sessions.calendar.list.prevPage')}
+              <ChevronLeft size={18} />
             </button>
             <span className="text-sm rogym-text-secondary">
               {t('sessions.calendar.list.page', { current: listPage, total: listTotalPages })}
             </span>
             <button
               type="button"
-              className="rogym-btn rogym-btn--outline-white"
+              className="rogym-btn rogym-btn--icon rogym-btn--outline-white"
               disabled={listPage >= listTotalPages}
               onClick={() => setListPage((p) => p + 1)}
+              aria-label={t('sessions.calendar.list.nextPage')}
             >
-              {t('sessions.calendar.list.nextPage')}
+              <ChevronRight size={18} />
             </button>
           </div>
         )}

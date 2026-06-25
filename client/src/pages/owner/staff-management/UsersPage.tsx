@@ -118,11 +118,11 @@ export default function UsersPage() {
         title={t('staffManagement.users.title')}
         description={t('staffManagement.users.totalCount', { total })}
         actions={
-          <div className="flex gap-2">
-            <Link className="rogym-btn rogym-btn--outline-white" to="/owner/staff/schedules">
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <Link className="rogym-btn rogym-btn--outline-white whitespace-nowrap" to="/owner/staff/schedules">
               <CalendarDays size={16} /> {t('staffManagement.users.scheduleBtn')}
             </Link>
-            <Link className="rogym-btn rogym-btn--primary" to="/owner/staff/new">
+            <Link className="rogym-btn rogym-btn--primary whitespace-nowrap" to="/owner/staff/new">
               <Plus size={16} /> {t('staffManagement.users.addBtn')}
             </Link>
           </div>
@@ -238,16 +238,16 @@ export default function UsersPage() {
                         </Link>
                         {staff.status !== 'deleted' && staff.staffId !== currentUser?.staffId && (
                           <button
-                            className="rogym-btn rogym-btn--danger rogym-btn--nav"
+                            className="rogym-btn rogym-btn--danger rogym-btn--icon"
                             disabled={deletingId === staff.staffId}
                             onClick={() => handleDelete(staff)}
+                            aria-label={tCommon('button.delete')}
                           >
                             {deletingId === staff.staffId ? (
                               <LoaderCircle size={14} className="animate-spin" />
                             ) : (
                               <Trash2 size={14} />
                             )}
-                            {tCommon('button.delete')}
                           </button>
                         )}
                       </div>

@@ -246,13 +246,13 @@ export default function UserDetailPage() {
               </div>
             </div>
 
-            <div className="flex justify-end gap-3 pt-2">
+            <div className="flex flex-col gap-3 pt-2 sm:flex-row sm:justify-end">
               {isNew ? (
-                <Link className="rogym-btn rogym-btn--outline-white" to="/owner/staff">
+                <Link className="rogym-btn rogym-btn--outline-white whitespace-nowrap w-full sm:w-auto" to="/owner/staff">
                   {tCommon('button.cancel')}
                 </Link>
               ) : null}
-              <button type="submit" className="rogym-btn rogym-btn--primary" disabled={saving}>
+              <button type="submit" className="rogym-btn rogym-btn--primary whitespace-nowrap w-full sm:w-auto" disabled={saving}>
                 {saving && <LoaderCircle size={16} className="animate-spin" />}
                 <Save size={16} />{' '}
                 {isNew ? t('staffManagement.detail.createBtn') : tCommon('button.save')}

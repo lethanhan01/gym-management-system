@@ -4,7 +4,13 @@
   }
 
   .rogym-dashboard-layout.has-sidebar {
-    padding-left: 80px;
+    padding-left: 0;
+  }
+
+  @media (min-width: 768px) {
+    .rogym-dashboard-layout.has-sidebar {
+      padding-left: 80px;
+    }
   }
 
   .rogym-sidebar {
@@ -204,11 +210,6 @@
 
   /* ========= MOBILE DRAWER ========= */
   @media (max-width: 767px) {
-    /* Xóa padding sidebar — trên mobile sidebar là overlay, không chiếm không gian */
-    .rogym-dashboard-layout.has-sidebar {
-      padding-left: 0;
-    }
-
     /* Sidebar thành full-height drawer, ẩn mặc định bằng transform */
     .rogym-sidebar {
       inset: 0;
