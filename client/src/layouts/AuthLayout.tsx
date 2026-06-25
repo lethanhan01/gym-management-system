@@ -17,7 +17,12 @@ export default function AuthLayout() {
 
   if (isAuthenticated && user) {
     const destination = roleRouteMap[user.roles[0]] ?? '/'
-    return <Navigate to={destination} replace />
+    return (
+      <>
+        <Navigate to={destination} replace />
+        <FullScreenLoader />
+      </>
+    )
   }
 
   return (
