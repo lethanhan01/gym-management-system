@@ -41,14 +41,14 @@ type SessionStatusUpdate = 'in_progress' | 'completed'
 const TrainerDashboardActions = memo(function TrainerDashboardActions() {
   const { t } = useTranslation('trainer')
   return (
-    <>
-      <Link className="rogym-btn rogym-btn--outline-white" to="/trainer/sessions">
+    <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+      <Link className="rogym-btn rogym-btn--outline-white justify-center" to="/trainer/sessions">
         <CalendarDays size={16} /> {t('dashboard.viewSchedule')}
       </Link>
-      <Link className="rogym-btn rogym-btn--primary" to="/trainer/sessions/create">
+      <Link className="rogym-btn rogym-btn--primary justify-center" to="/trainer/sessions/create">
         <Plus size={16} /> {t('dashboard.createSession')}
       </Link>
-    </>
+    </div>
   )
 })
 

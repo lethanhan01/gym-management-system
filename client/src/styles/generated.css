@@ -23,7 +23,7 @@
   .rogym-sx-013ea4c1 { background: #0f1c16; border: 1px solid rgba(66,224,158,0.10); border-radius: 16px; }
   .rogym-sx-03afc6c9 { grid-template-columns: 1fr 1fr 100px 130px 90px; }
   .rogym-sx-044401f6 { background: #06c38422; border: 1px solid #06c38433; color: #06c384; }
-  .rogym-sx-04751e92 { color: #06c384; font-family: 'Anton',sans-serif; font-size: 24px; }
+  .rogym-sx-04751e92 { color: #06c384; font-family: 'Anton','Noto Sans JP',sans-serif; font-size: 24px; }
   .rogym-sx-0668b2bf { color: rgba(255,255,255,0.35); font-family: 'Be Vietnam Pro',sans-serif; font-size: 13px; }
   .rogym-sx-07caf3f9 { background: none; border: none; color: rgba(255,255,255,0.2); cursor: pointer; flex-shrink: 0; padding: 4px; }
   .rogym-sx-0881c59b { background: rgba(255,255,255,0.08); }
@@ -40,12 +40,12 @@
   .rogym-sx-0ea5ff5a { color: #bbcabf; font-size: 13px; text-align: center; }
   .rogym-sx-103d1cc8 { background: #0f1c16; border: 1px solid rgba(66,224,158,0.10); border-radius: 20px; padding: 20px 24px; }
   .rogym-sx-118408dc { color: rgba(255,255,255,0.6); font-family: 'Be Vietnam Pro',sans-serif; font-size: 13px; line-height: 1.5; }
-  .rogym-sx-1297467b { color: #fff; font-family: 'Anton',sans-serif; font-size: clamp(40px,6vw,80px); line-height: 0.92; }
+  .rogym-sx-1297467b { color: #fff; font-family: 'Anton','Noto Sans JP',sans-serif; font-size: clamp(40px,6vw,80px); font-weight: 900; line-height: 0.92; }
   .rogym-sx-12fc93c6 { background: #030907; border-color: rgba(255,255,255,0.05); }
   .rogym-sx-13d95242 { font-family: 'Be Vietnam Pro',sans-serif; margin: 0 auto; max-width: 960px; }
   .rogym-sx-15e311e3 { background: #fff; color: #00492f; font-family: 'Be Vietnam Pro',sans-serif; }
   .rogym-sx-15fa32ae { flex: 1; min-width: 0; }
-  .rogym-sx-16228059 { color: #06c384; font-family: 'Anton',sans-serif; font-size: 32px; }
+  .rogym-sx-16228059 { color: #06c384; font-family: 'Anton','Noto Sans JP',sans-serif; font-size: 32px; }
   .rogym-sx-180e132e { background: #0f1c16; border: 1px solid rgba(255,255,255,0.06); }
   .rogym-sx-18b166bc { margin: 0 auto; max-width: 960px; padding: 48px 24px 32px; }
   .rogym-sx-19e5bf8c { background: #0f1c16; border: 1px solid rgba(66,224,158,0.10); border-radius: 20px; padding: 24px; }
@@ -53,7 +53,7 @@
   .rogym-sx-1c639e32 { background: #06c384; }
   .rogym-sx-1cbde76c { background: rgba(6,195,132,0.07); border: 1px solid rgba(6,195,132,0.18); }
   .rogym-sx-1cfa11b1 { color: #fca5a5; }
-  .rogym-sx-1eee35cb { color: #06c384; font-family: 'Anton',sans-serif; font-size: 22px; }
+  .rogym-sx-1eee35cb { color: #06c384; font-family: 'Anton','Noto Sans JP',sans-serif; font-size: 22px; }
   .rogym-sx-1f8ae2ef { background: #0a1710; border: 1px solid rgba(66,224,158,0.15); }
   .rogym-sx-1fad55bf { background: #42e09e12; border: 1px solid #42e09e33; }
   .rogym-sx-20f77b4b { background: #06c3841a; border: 2px solid #06c38444; height: 72px; width: 72px; }
@@ -65,31 +65,31 @@
   .rogym-sx-27af414f { filter: blur(10px) brightness(0.28) saturate(0.55); transform: scale(1.06); }
   .rogym-sx-287036c1 { background: currentColor; border-radius: 50%; display: inline-block; flex-shrink: 0; height: 5px; margin-right: 8px; opacity: 0.6; width: 5px; }
   .rogym-sx-28816d54 { color: #fff; font-family: 'Be Vietnam Pro',sans-serif; font-size: 22px; font-weight: 700; line-height: 1.3; margin-bottom: 8px; }
-  .rogym-sx-28e83c22 { color: #fff; font-family: 'Anton',sans-serif; font-size: 20px; letter-spacing: 0.1em; }
+  .rogym-sx-28e83c22 { color: #fff; font-family: 'Anton','Noto Sans JP',sans-serif; font-size: 20px; letter-spacing: 0.1em; }
   .rogym-sx-28f2f99c { margin: 0 auto; max-width: 640px; }
   .rogym-sx-2a7c513c { color: rgba(255,255,255,0.45); font-family: 'Be Vietnam Pro',sans-serif; font-size: 14px; line-height: 1.7; }
   .rogym-sx-2c8110d4 { max-width: 400px; }
   .rogym-sx-2c9ff230 { background: transparent; border: none; color: #bbcabf; cursor: pointer; padding: 4px 8px; }
   .rogym-sx-2cd52ab9 { min-width: 0; }
-  .rogym-sx-2e7dd58d { color: #06c384; font-family: 'Anton',sans-serif; font-size: 28px; }
+  .rogym-sx-2e7dd58d { color: #06c384; font-family: 'Anton','Noto Sans JP',sans-serif; font-size: 28px; }
   .rogym-sx-2fb3205c { background: none; border: 1px solid rgba(239,68,68,0.35); border-radius: 999px; color: #ef4444; cursor: pointer; font-family: 'Be Vietnam Pro',sans-serif; font-size: 13px; font-weight: 500; padding: 7px 18px; transition: all 200ms; }
   .rogym-sx-30aed1d5 { background: rgba(66,224,158,0.12); }
   .rogym-sx-31cf2166 { color: #8ab89c; font-family: 'Be Vietnam Pro',sans-serif; font-size: 16px; line-height: 1.7; }
   .rogym-sx-3278ee06 { font-family: 'Be Vietnam Pro',sans-serif; }
   .rogym-sx-33370ee3 { background: rgba(6,195,132,0.18); height: 72px; width: 72px; }
-  .rogym-sx-339ac6c6 { color: #0a0f0e; font-family: 'Anton',sans-serif; font-size: clamp(48px,7vw,96px); line-height: 0.95; }
+  .rogym-sx-339ac6c6 { color: #0a0f0e; font-family: 'Anton','Noto Sans JP',sans-serif; font-size: clamp(48px,7vw,96px); font-weight: 900; line-height: 0.95; }
   .rogym-sx-3592cfe5 { background: linear-gradient(0deg,rgba(6,195,132,0.15) 0%,transparent 60%); }
   .rogym-sx-3636a8d8 { border-color: rgba(255,255,255,0.05); }
   .rogym-sx-3645accf { background: #040d08; }
   .rogym-sx-369a0f0c { height: 100%; overflow-y: scroll; scrollbar-width: none; scroll-snap-type: y mandatory; }
-  .rogym-sx-37943c0d { color: #fff; font-family: 'Anton',sans-serif; font-size: clamp(48px,7vw,96px); line-height: 0.95; }
+  .rogym-sx-37943c0d { color: #fff; font-family: 'Anton','Noto Sans JP',sans-serif; font-size: clamp(48px,7vw,96px); font-weight: 900; line-height: 0.95; }
   .rogym-sx-38202e62 { align-items: center; background: transparent; border: 1px solid rgba(239,68,68,0.25); border-radius: 8px; color: #ef4444; cursor: pointer; display: flex; height: 28px; justify-content: center; transition: all 150ms; width: 28px; }
   .rogym-sx-38664d25 { background: rgba(255,255,255,0.04); height: 56px; }
   .rogym-sx-38d599fa { background: #06c38422; border: 1px solid #06c38444; border-radius: 999px; color: #06c384; font-size: 11px; font-weight: 600; padding: 2px 10px; position: absolute; right: 20px; top: 20px; }
   .rogym-sx-38f967f1 { padding-bottom: 88px; }
   .rogym-sx-3a671e25 { background: transparent; border: 1px solid rgba(255,255,255,0.1); color: var(--rogym-text-secondary); cursor: pointer; font-family: 'Be Vietnam Pro',sans-serif; }
   .rogym-sx-3b31904d { color: #f87171; font-size: 13px; margin-bottom: 16px; }
-  .rogym-sx-3c31803f { color: #fff; font-family: 'Anton',sans-serif; font-size: 20px; letter-spacing: 0.04em; }
+  .rogym-sx-3c31803f { color: #fff; font-family: 'Anton','Noto Sans JP',sans-serif; font-size: 20px; letter-spacing: 0.04em; }
   .rogym-sx-3cb875af { color: #fff; font-family: 'Be Vietnam Pro',sans-serif; font-size: 13px; }
   .rogym-sx-3d17be38 { align-items: center; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; gap: 10px; padding: 14px 16px 12px; }
   .rogym-sx-3e33f998 { background: radial-gradient(ellipse 70% 70% at 50% 50%, rgba(6,195,132,0.07) 0%, transparent 70%); }
@@ -100,7 +100,7 @@
   .rogym-sx-4331cd11 { color: #8ab89c; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .rogym-sx-448054ab { opacity: 0.35; }
   .rogym-sx-44a5f107 { grid-template-columns: 1fr 300px; }
-  .rogym-sx-44e91bb7 { color: #fff; font-family: 'Anton',sans-serif; font-size: 22px; margin-bottom: 8px; }
+  .rogym-sx-44e91bb7 { color: #fff; font-family: 'Anton','Noto Sans JP',sans-serif; font-size: 22px; margin-bottom: 8px; }
   .rogym-sx-45cdf5dd { background: #06c384; border-color: rgba(0,0,0,0.1); }
   .rogym-sx-46079668 { background: #0f1c16; border: 1px solid rgba(66,224,158,0.10); border-radius: 16px; overflow: hidden; }
   .rogym-sx-46b298d7 { background: #06c38422; border: 1px solid #06c38466; color: #06c384; font-family: 'Be Vietnam Pro',sans-serif; font-size: 14px; }
@@ -121,11 +121,11 @@
   .rogym-sx-55da34ac { border-bottom: 1px solid rgba(255,255,255,0.06); color: #8ab89c; grid-template-columns: 24px 1fr 1fr 1fr 1fr 24px; letter-spacing: 0.08em; }
   .rogym-sx-572c9565 { background: #06c38422; border: 1px solid #06c38444; box-shadow: 0 8px 24px rgba(0,0,0,0.4); color: #06c384; font-family: 'Be Vietnam Pro',sans-serif; font-size: 14px; }
   .rogym-sx-58e694fd { background: #0f1c16; border: 1px solid rgba(66,224,158,0.08); border-radius: 20px; padding: 16px 20px; }
-  .rogym-sx-5ba16c42 { color: #fff; font-family: 'Anton',sans-serif; font-size: clamp(64px,9vw,118px); line-height: 0.9; }
+  .rogym-sx-5ba16c42 { color: #fff; font-family: 'Anton','Noto Sans JP',sans-serif; font-size: clamp(64px,9vw,118px); font-weight: 900; line-height: 0.9; }
   .rogym-sx-5e5c39ab { color: #8ab89c; }
   .rogym-sx-6063d874 { height: 500px; }
   .rogym-sx-61bc6441 { color: #bbcabf; font-size: 12px; margin-bottom: 4px; }
-  .rogym-sx-668e18f3 { color: #fff; font-family: 'Anton',sans-serif; font-size: 18px; }
+  .rogym-sx-668e18f3 { color: #fff; font-family: 'Anton','Noto Sans JP',sans-serif; font-size: 18px; }
   .rogym-sx-6720cca7 { border-bottom: 1px solid rgba(255,255,255,0.04); }
   .rogym-sx-68a7452b { background: none; border: none; color: rgba(255,255,255,0.45); cursor: pointer; font-family: 'Be Vietnam Pro',sans-serif; font-size: 13px; font-weight: 500; padding: 0; }
   .rogym-sx-6930dcd2 { background: rgba(255,255,255,0.03); }
@@ -140,13 +140,13 @@
   .rogym-sx-7479d1c6 { color: #06c384; font-family: 'Be Vietnam Pro',sans-serif; font-size: 12px; letter-spacing: 0.15em; }
   .rogym-sx-75e2c7e4 { font-family: var(--rogym-font-body); }
   .rogym-sx-75f1302c { border-top: 1px solid rgba(255,255,255,0.05); padding: 6px 0; }
-  .rogym-sx-7722cdfa { color: #fff; font-family: 'Anton',sans-serif; font-size: 18px; letter-spacing: 0.12em; }
+  .rogym-sx-7722cdfa { color: #fff; font-family: 'Anton','Noto Sans JP',sans-serif; font-size: 18px; letter-spacing: 0.12em; }
   .rogym-sx-780e0fa6 { color: #bbcabf; font-size: 12px; margin-bottom: 2px; }
   .rogym-sx-78d149e3 { color: rgba(255,255,255,0.3); font-size: 12px; text-align: center; }
-  .rogym-sx-7989cb59 { color: #fff; font-family: 'Anton',sans-serif; font-size: 34px; line-height: 1.1; }
+  .rogym-sx-7989cb59 { color: #fff; font-family: 'Anton','Noto Sans JP',sans-serif; font-size: 34px; line-height: 1.1; }
   .rogym-sx-7b5fda64 { background: #080e0b; }
   .rogym-sx-7bbccc2e { background: rgba(8,14,11,0.5); }
-  .rogym-sx-7cd3ffb3 { color: #42e09e; font-family: 'Anton',sans-serif; font-size: 38px; line-height: 1; }
+  .rogym-sx-7cd3ffb3 { color: #42e09e; font-family: 'Anton','Noto Sans JP',sans-serif; font-size: 38px; line-height: 1; }
   .rogym-sx-7d3000c1 { color: rgba(255,255,255,0.25); font-family: 'Be Vietnam Pro',sans-serif; font-size: 12px; }
   .rogym-sx-81543379 { color: rgba(255,255,255,0.2); }
   .rogym-sx-81c0f5bd { height: 88px; width: 88px; }
@@ -154,7 +154,7 @@
   .rogym-sx-83e5c542 { background: #0f1c16; border: 1px solid rgba(239,68,68,0.3); }
   .rogym-sx-8553bf9e { border-top: 1px solid rgba(255,255,255,0.05); }
   .rogym-sx-8578aed4 { backdrop-filter: blur(6px); background: rgba(0,0,0,0.7); }
-  .rogym-sx-85be1f38 { color: #fff; font-family: 'Anton',sans-serif; font-size: 20px; }
+  .rogym-sx-85be1f38 { color: #fff; font-family: 'Anton','Noto Sans JP',sans-serif; font-size: 20px; }
   .rogym-sx-87386abd { border-color: #06c384; border-top-color: transparent; }
   .rogym-sx-88714df9 { background: #0f1c16; border: 1px solid rgba(66,224,158,0.06); font-size: 13px; grid-template-columns: 1fr 1fr 100px 130px 90px; }
   .rogym-sx-8a118ffb { color: rgba(255,255,255,0.35); font-family: 'Be Vietnam Pro',sans-serif; font-size: 13px; line-height: 1.6; }
@@ -195,7 +195,7 @@
   .rogym-sx-ae19996e { background: rgba(255,255,255,0.08); flex: 1; height: 1px; }
   .rogym-sx-af383d3e { max-width: 420px; }
   .rogym-sx-b11a482f { animation: ping 2s cubic-bezier(0,0,0.2,1) infinite; background: rgba(6,195,132,0.12); inset: 0; }
-  .rogym-sx-b170d9f3 { color: #fff; font-family: 'Anton',sans-serif; font-size: 28px; letter-spacing: 0.04em; line-height: 1; }
+  .rogym-sx-b170d9f3 { color: #fff; font-family: 'Anton','Noto Sans JP',sans-serif; font-size: 28px; letter-spacing: 0.04em; line-height: 1; }
   .rogym-sx-b1711891 { background: rgba(6,195,132,0.12); border: 1px solid rgba(6,195,132,0.25); }
   .rogym-sx-b2fbf853 { color: #06c384; }
   .rogym-sx-ba262316 { background: #0f1c16; border: 1px solid rgba(66,224,158,0.15); border-radius: 16px; padding: 20px; }
@@ -203,7 +203,7 @@
   .rogym-sx-bd0c1b5e { background: rgba(0,0,0,0.7); }
   .rogym-sx-bee9a30c { background: radial-gradient(ellipse 60% 40% at 50% 0%,rgba(6,195,132,0.06) 0%,transparent 70%); }
   .rogym-sx-c090d129 { background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.3); }
-  .rogym-sx-c16b1e4e { color: #fff; font-family: 'Anton',sans-serif; font-size: 36px; margin-bottom: 8px; margin-top: 24px; }
+  .rogym-sx-c16b1e4e { color: #fff; font-family: 'Anton','Noto Sans JP',sans-serif; font-size: 36px; margin-bottom: 8px; margin-top: 24px; }
   .rogym-sx-c2117916 { background: none; border: none; color: #bbcabf; cursor: pointer; }
   .rogym-sx-c255490f { background: linear-gradient(0deg,rgba(8,14,11,0.7) 0%,transparent 50%); }
   .rogym-sx-c2bafe49 { flex-shrink: 0; }
@@ -221,7 +221,7 @@
   .rogym-sx-d025733d { color: rgba(255,255,255,0.3); font-family: 'Be Vietnam Pro',sans-serif; font-size: 11px; font-weight: 600; letter-spacing: 0.1em; margin-bottom: 12px; text-align: center; text-transform: uppercase; }
   .rogym-sx-d26a35f2 { color: rgba(255,255,255,0.45); font-family: 'Be Vietnam Pro',sans-serif; font-size: 12px; letter-spacing: 0.12em; margin-top: 4px; text-transform: uppercase; }
   .rogym-sx-d50aacc0 { color: #ff6b6b; font-family: 'Be Vietnam Pro',sans-serif; font-size: 13px; text-align: center; }
-  .rogym-sx-d63063a8 { font-family: 'Anton',sans-serif; }
+  .rogym-sx-d63063a8 { font-family: 'Anton','Noto Sans JP',sans-serif; }
   .rogym-sx-d684cd20 { color: #00492f; font-family: 'Be Vietnam Pro',sans-serif; }
   .rogym-sx-d88f932f { color: #bbcabf; }
   .rogym-sx-d8b3875b { background: #080e0b; border-bottom: 1px solid rgba(255,255,255,0.04); border-top: 1px solid rgba(255,255,255,0.04); }
@@ -239,7 +239,7 @@
   .rogym-sx-e36c668b { filter: brightness(0.5) saturate(0.7); }
   .rogym-sx-e539da0b { color: rgba(255,255,255,0.55); font-family: 'Be Vietnam Pro',sans-serif; }
   .rogym-sx-eb71f2b0 { background: rgba(8,14,11,0.97); }
-  .rogym-sx-ebc446b7 { color: #06c384; font-family: 'Anton',sans-serif; font-size: 34px; margin-bottom: 4px; }
+  .rogym-sx-ebc446b7 { color: #06c384; font-family: 'Anton','Noto Sans JP',sans-serif; font-size: 34px; margin-bottom: 4px; }
   .rogym-sx-ed519d00 { color: #4a7060; }
   .rogym-sx-ee3d55bf { flex: 1; }
   .rogym-sx-f03babc1 { background: rgba(255,255,255,0.08); border-radius: 999px; height: 8px; overflow: hidden; }
@@ -248,12 +248,12 @@
   .rogym-sx-f1ead95f { background: linear-gradient(135deg, #0a1f17 0%, #0f2a1e 100%); border-color: rgba(6,195,132,0.25); box-shadow: 0 0 40px rgba(6,195,132,0.06); }
   .rogym-sx-f27dac31 { color: #42e09e; }
   .rogym-sx-f2f202e3 { color: #bbcabf; font-family: 'Be Vietnam Pro',sans-serif; font-size: 18px; line-height: 1.75; }
-  .rogym-sx-f326e6e8 { color: #fff; font-family: 'Anton',sans-serif; font-size: 22px; letter-spacing: 0.12em; }
+  .rogym-sx-f326e6e8 { color: #fff; font-family: 'Anton','Noto Sans JP',sans-serif; font-size: 32px; letter-spacing: 0.15em; text-shadow: 0 2px 16px rgba(6,195,132,0.35); }
   .rogym-sx-f40d0e9c { height: 84px; transform: translateY(-50%); }
   .rogym-sx-f419f934 { color: rgba(255,255,255,0.2); font-family: 'Be Vietnam Pro',sans-serif; font-size: 12px; }
   .rogym-sx-f57809e3 { color: rgba(255,255,255,0.35); font-family: 'Be Vietnam Pro',sans-serif; font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .rogym-sx-f6d7ded8 { color: #fff; font-family: 'Anton',sans-serif; font-size: 20px; letter-spacing: 0.12em; }
-  .rogym-sx-f7b2327a { color: #0a0f0e; font-family: 'Anton',sans-serif; font-size: 26px; line-height: 1.2; }
+  .rogym-sx-f6d7ded8 { color: #fff; font-family: 'Anton','Noto Sans JP',sans-serif; font-size: 24px; letter-spacing: 0.15em; }
+  .rogym-sx-f7b2327a { color: #0a0f0e; font-family: 'Anton','Noto Sans JP',sans-serif; font-size: 26px; line-height: 1.2; }
   .rogym-sx-f917938c { color: #fff; font-family: 'Be Vietnam Pro',sans-serif; }
   .rogym-sx-fc269f1b { background: #42e09e; color: #0a1f17; }
   .rogym-sx-fff6a280 { color: #f87171; font-size: 13px; }

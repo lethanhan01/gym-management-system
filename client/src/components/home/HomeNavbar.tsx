@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { Dumbbell, Menu, X } from 'lucide-react'
+import { Menu, X } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { LanguageSwitcher } from '@/components/ui/LanguageSwitcher'
+import roGymLogo from '@/assets/rogym_logo.svg'
 
 function NavBtn({
   to,
@@ -49,9 +50,7 @@ export default function HomeNavbar() {
     <nav className={`rogym-navbar ${scrolled ? 'rogym-navbar--scrolled' : ''}`}>
       <div className="rogym-container h-16 flex items-center justify-between">
         <Link to="/" className="flex items-center gap-2.5 shrink-0 rogym-sx-bc605c49">
-          <div className="w-8 h-8 rounded-lg flex items-center justify-center rogym-sx-1c639e32">
-            <Dumbbell size={16} color="#fff" strokeWidth={2.2} />
-          </div>
+          <img src={roGymLogo} alt="ROGYM" className="w-11 h-11 object-contain" />
           <span className="rogym-sx-f6d7ded8">ROGYM</span>
         </Link>
 
