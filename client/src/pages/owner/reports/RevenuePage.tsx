@@ -379,7 +379,7 @@ function RevenueDayGrid({
 // ─── Main page ────────────────────────────────────────────────────────────────
 
 export default function RevenuePage() {
-  const { t } = useTranslation('owner')
+  const { t, i18n } = useTranslation('owner')
 
   const MONTH_OPTIONS = [
     { value: 1, label: t('reports.revenue.monthLabel', { month: 1 }) },
@@ -672,7 +672,7 @@ export default function RevenuePage() {
             <OwnerStatCard
               icon={<DollarSign size={18} />}
               label={t('reports.revenue.kpi.totalRevenue')}
-              value={formatVndCompact(total)}
+              value={formatVndCompact(total, i18n.language)}
               hint={t('reports.revenue.transactionDays', { count: uniqueDays })}
               accent
             />
@@ -705,7 +705,7 @@ export default function RevenuePage() {
               }
               label={t('reports.revenue.kpi.vsLastPeriod')}
               value={growth === null ? '—' : `${growth >= 0 ? '+' : ''}${growth.toFixed(1)}%`}
-              hint={t('reports.revenue.prevPeriod', { amount: formatVndCompact(Number(prevTotal)) })}
+              hint={t('reports.revenue.prevPeriod', { amount: formatVndCompact(Number(prevTotal), i18n.language) })}
               accent={isPositive}
             />
           </div>
