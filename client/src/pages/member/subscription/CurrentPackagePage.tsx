@@ -299,7 +299,7 @@ export default function CurrentPackagePage() {
                   label={t(`subscription.current.statusLabel.${getRealStatus(subscription)}`, { defaultValue: subscription.status })}
                   tone={SUB_STATUS_MAP[getRealStatus(subscription)]?.tone}
                 />
-                <h2 className="text-2xl font-bold text-white mt-3">
+                <h2 className="text-xl sm:text-2xl font-bold text-white mt-3">
                   {subscription.packageName ?? pkg?.name ?? t('subscription.current.packageFallback')}
                 </h2>
               </div>
@@ -325,25 +325,25 @@ export default function CurrentPackagePage() {
               )}
 
               {/* Dates */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="flex items-center gap-3 rounded-2xl px-4 py-3 rogym-sx-6930dcd2">
-                  <CalendarCheck size={18} className="rogym-sx-b2fbf853" />
-                  <div>
+              <div className="grid grid-cols-2 gap-3 sm:gap-4">
+                <div className="flex items-center gap-2 sm:gap-3 rounded-2xl px-3 sm:px-4 py-2.5 sm:py-3 rogym-sx-6930dcd2">
+                  <CalendarCheck size={16} className="rogym-sx-b2fbf853 shrink-0" />
+                  <div className="min-w-0">
                     <p className="text-xs rogym-text-secondary mb-0.5">{t('subscription.current.fieldStartDate')}</p>
-                    <p className="text-sm font-medium text-white">
+                    <p className="text-xs sm:text-sm font-medium text-white truncate">
                       {formatDate(subscription.startDate)}
                     </p>
                   </div>
                 </div>
-                <div className="flex items-center gap-3 rounded-2xl px-4 py-3 rogym-sx-6930dcd2">
+                <div className="flex items-center gap-2 sm:gap-3 rounded-2xl px-3 sm:px-4 py-2.5 sm:py-3 rogym-sx-6930dcd2">
                   <CalendarX
-                    size={18}
-                    className={isExpiring ? 'text-amber-500' : 'rogym-text-secondary'}
+                    size={16}
+                    className={`shrink-0 ${isExpiring ? 'text-amber-500' : 'rogym-text-secondary'}`}
                   />
-                  <div>
+                  <div className="min-w-0">
                     <p className="text-xs rogym-text-secondary mb-0.5">{t('subscription.current.fieldEndDate')}</p>
                     <p
-                      className={`text-sm font-medium ${isExpiring ? 'text-amber-400' : 'text-white'}`}
+                      className={`text-xs sm:text-sm font-medium truncate ${isExpiring ? 'text-amber-400' : 'text-white'}`}
                     >
                       {formatDate(subscription.endDate)}
                     </p>
@@ -369,10 +369,10 @@ export default function CurrentPackagePage() {
                       {t('subscription.current.cancelledNote')}
                     </p>
                   )}
-                  <div className="flex justify-between gap-3">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:justify-between">
                     <button
                       onClick={() => setCancelTarget(subscription)}
-                      className="rogym-cancel-outline rogym-btn flex items-center gap-1.5 rogym-sx-2fb3205c"
+                      className="rogym-cancel-outline rogym-btn flex items-center justify-center gap-1.5 whitespace-nowrap w-full sm:w-auto rogym-sx-2fb3205c"
                     >
                       <XCircle size={14} />
                       {t('subscription.current.buttonCancel')}
@@ -380,7 +380,7 @@ export default function CurrentPackagePage() {
                     {packageActive && (
                       <button
                         onClick={() => navigate('/member/subscription/renew')}
-                        className="rogym-btn rogym-btn--primary flex items-center gap-1.5"
+                        className="rogym-btn rogym-btn--primary flex items-center justify-center gap-1.5 whitespace-nowrap w-full sm:w-auto"
                       >
                         <RefreshCw size={14} />
                         {t('subscription.current.buttonRenew')}

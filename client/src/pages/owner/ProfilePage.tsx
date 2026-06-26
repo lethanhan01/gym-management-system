@@ -188,17 +188,17 @@ export default function OwnerProfilePage() {
               <ProfileInfoRow label={t('profile.email')} value={profile?.email ?? '—'} />
               <ProfileInfoRow label={t('profile.phone')} value={profile?.phone ?? '—'} />
               <ProfileInfoRow label={t('profile.role')} value={t('profile.roleOwner')} />
-              <div className="mt-auto pt-6 flex gap-3">
+              <div className="mt-auto pt-6 flex flex-col gap-3 sm:flex-row">
                 <button
                   type="button"
-                  className="rogym-btn rogym-btn--outline-white flex-1"
+                  className="rogym-btn rogym-btn--outline-white flex-1 whitespace-nowrap"
                   onClick={() => setIsEditing(true)}
                 >
                   {tCommon('button.edit')}
                 </button>
                 <button
                   type="button"
-                  className="rogym-btn rogym-btn--outline-white flex-1"
+                  className="rogym-btn rogym-btn--outline-white flex-1 whitespace-nowrap"
                   onClick={handleLogout}
                 >
                   <LogOut size={16} /> {tCommon('nav.logout')}

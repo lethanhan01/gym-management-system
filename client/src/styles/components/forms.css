@@ -107,7 +107,7 @@
 
   .rogym-select__content {
     z-index: 100;
-    width: var(--radix-select-trigger-width);
+    min-width: var(--radix-select-trigger-width);
     max-height: var(--radix-select-content-available-height);
     overflow: hidden;
     border: 1px solid var(--rogym-border-teal-hover);
@@ -133,6 +133,7 @@
     color: var(--rogym-text-secondary);
     font-size: 0.875rem;
     line-height: 1.35;
+    white-space: nowrap;
     outline: none;
     cursor: pointer;
     user-select: none;

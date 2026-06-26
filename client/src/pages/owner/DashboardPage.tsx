@@ -196,8 +196,8 @@ export default function OwnerDashboardPage() {
         <OwnerErrorState message={error} />
       ) : (
         <>
-          {/* KPI Cards — 2 cột ngay từ mobile, 4 cột ở desktop */}
-          <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+          {/* KPI Cards — 1 cột mobile, 2 cột sm, 4 cột lg */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:grid-cols-4">
             <OwnerStatCard
               icon={<Users size={20} />}
               label={t('dashboard.totalMembers')}
@@ -273,8 +273,8 @@ export default function OwnerDashboardPage() {
             </section>
           </div>
 
-          {/* Quick Actions — 2 cột từ mobile */}
-          <section className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+          {/* Quick Actions — 1 cột mobile, 2 cột sm, 4 cột lg */}
+          <section className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:grid-cols-4">
             {QUICK_LINKS.map((link) => (
               <QuickLink key={link.to} {...link} />
             ))}
@@ -296,7 +296,7 @@ const QuickLink = memo(function QuickLink({
 }) {
   return (
     <Link className="rogym-btn rogym-btn--outline-white w-full justify-between py-4" to={to}>
-      <span className="flex items-center gap-2">
+      <span className="flex items-center gap-2 whitespace-nowrap">
         {icon} {label}
       </span>
       <ArrowRight size={15} />

@@ -10,7 +10,7 @@ import {
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { getApiError } from '@/lib/api-error'
-import { formatVnd } from '@/lib/currency'
+import { formatVnd, formatVndCompact } from '@/lib/currency'
 import { todayInput } from '@/lib/date'
 import { OWNER_ACCENT } from '@/lib/owner-constants'
 import {
@@ -379,7 +379,7 @@ function RevenueDayGrid({
 // ─── Main page ────────────────────────────────────────────────────────────────
 
 export default function RevenuePage() {
-  const { t } = useTranslation('owner')
+  const { t, i18n } = useTranslation('owner')
 
   const MONTH_OPTIONS = [
     { value: 1, label: t('reports.revenue.monthLabel', { month: 1 }) },
@@ -518,7 +518,7 @@ export default function RevenuePage() {
                   if (m === 'custom') setData([])
                   setMode(m)
                 }}
-                className={`rogym-filter-chip rounded-lg px-4 py-1.5 text-sm font-medium transition-colors ${
+                className={`rogym-filter-chip rounded-lg px-3 py-1.5 text-xs sm:px-4 sm:text-sm font-medium transition-colors whitespace-nowrap ${
                   mode === m ? 'is-active' : ''
                 }`}
               >
@@ -668,11 +668,11 @@ export default function RevenuePage() {
       ) : (
         <>
           {/* KPI cards — 2 cột từ mobile, 4 cột ở desktop */}
-          <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:grid-cols-4">
             <OwnerStatCard
               icon={<DollarSign size={18} />}
               label={t('reports.revenue.kpi.totalRevenue')}
-              value={formatVnd(total)}
+              value={formatVndCompact(total, i18n.language)}
               hint={t('reports.revenue.transactionDays', { count: uniqueDays })}
               accent
             />
@@ -705,7 +705,7 @@ export default function RevenuePage() {
               }
               label={t('reports.revenue.kpi.vsLastPeriod')}
               value={growth === null ? '—' : `${growth >= 0 ? '+' : ''}${growth.toFixed(1)}%`}
-              hint={t('reports.revenue.prevPeriod', { amount: formatVnd(Number(prevTotal)) })}
+              hint={t('reports.revenue.prevPeriod', { amount: formatVndCompact(Number(prevTotal), i18n.language) })}
               accent={isPositive}
             />
           </div>
