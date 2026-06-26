@@ -1,8 +1,9 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Dumbbell, ArrowRight } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import gym from "@/assets/gym-bg-optimized.jpg";
+import roGymLogo from "@/assets/rogym_logo.svg";
 import { T, BtnPrimary } from "@/pages/auth/_authui";
 
 /* ── Animated check ring ── */
@@ -56,12 +57,8 @@ export default function RegisterSuccessPage() {
       <div className="relative z-10 w-full mx-4 rogym-sx-af383d3e" >
         {/* Logo */}
         <div className="flex items-center justify-center gap-2.5 mb-7">
-          <div className="rogym-brand-icon w-9 h-9 rounded-xl flex items-center justify-center">
-            <Dumbbell size={18} color="#fff" strokeWidth={2.2} />
-          </div>
-          <span className="rogym-sx-f326e6e8">
-            ROGYM
-          </span>
+          <img src={roGymLogo} alt="ROGYM" className="w-11 h-11 object-contain" />
+          <span className="rogym-sx-f326e6e8">ROGYM</span>
         </div>
 
         {/* Glass card */}

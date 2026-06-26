@@ -17,7 +17,7 @@ import {
   type LucideIcon,
 } from 'lucide-react'
 
-import heroImage from '@/assets/dashboard4-hero.webp'
+import heroImage from '@/assets/cover_photo.jpg'
 import powerlift from '@/assets/powerlifting.jpg'
 import hiit from '@/assets/hiittraining.jpg'
 import pt1 from '@/assets/trainer1.jpg'

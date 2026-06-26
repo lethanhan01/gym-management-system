@@ -3,6 +3,7 @@ import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '../../stores/authStore'
 import { useSubscriptionStore } from '../../stores/subscriptionStore'
+import roGymLogo from '@/assets/rogym_logo.svg'
 import {
   LayoutDashboard,
   User,
@@ -367,9 +368,7 @@ export default function Sidebar({
     >
       {/* Logo */}
       <div className="rogym-sidebar__logo flex items-center">
-        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#06c384]">
-          <Dumbbell size={16} strokeWidth={2.2} className="text-white" />
-        </div>
+        <img src={roGymLogo} alt="ROGYM" className="h-10 w-10 shrink-0 object-contain" />
         <span className="rogym-sidebar__brand">ROGYM</span>
       </div>
 

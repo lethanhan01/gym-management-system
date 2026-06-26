@@ -2,8 +2,9 @@ import { useId, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import type { LucideIcon } from 'lucide-react'
-import { ArrowLeft, Dumbbell, Eye, EyeOff } from 'lucide-react'
+import { ArrowLeft, Eye, EyeOff } from 'lucide-react'
 import gym from '@/assets/gym-bg-optimized.jpg'
+import roGymLogo from '@/assets/rogym_logo.svg'
 
 export const G = '#06c384'
 export const T = '#42e09e'
@@ -229,7 +230,7 @@ export function AuthShell({
   const { t } = useTranslation('auth')
   const label = backLabel ?? t('login.backHome')
   return (
-    <div className="min-h-screen w-full flex items-center justify-center relative overflow-hidden rogym-sx-7b5fda64">
+    <div className="min-h-screen w-full flex flex-col items-center justify-start sm:justify-center relative overflow-hidden rogym-sx-7b5fda64">
       <div className="absolute inset-0">
         <img
           src={gym}
@@ -248,14 +249,12 @@ export function AuthShell({
         <span>{label}</span>
       </Link>
 
-      {/* px-4 trên mobile đảm bảo card không chạm mép màn hình nhỏ */}
+      {/* pt-20 trên mobile để tránh overlap với back button absolute; sm+ căn giữa bình thường */}
       <div
-        className={`rogym-auth-shell__content relative z-10 w-full px-4 sm:px-0 ${maxWidth > 400 ? 'is-wide' : ''}`}
+        className={`rogym-auth-shell__content relative z-10 w-full px-4 sm:px-0 pt-20 sm:pt-0 pb-8 sm:pb-0 ${maxWidth > 400 ? 'is-wide' : ''}`}
       >
-        <div className="flex items-center justify-center gap-2.5 mb-7">
-          <div className="w-9 h-9 rounded-xl flex items-center justify-center rogym-sx-1c639e32">
-            <Dumbbell size={18} color="#fff" strokeWidth={2.2} />
-          </div>
+        <div className="flex items-center justify-center gap-3.5 mb-8">
+          <img src={roGymLogo} alt="ROGYM" className="w-16 h-16 object-contain drop-shadow-lg" />
           <span className="rogym-sx-f326e6e8">ROGYM</span>
         </div>
 
