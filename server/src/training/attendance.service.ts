@@ -11,6 +11,7 @@ import { PrismaService } from '../prisma/prisma.service'
 import { CheckoutDto } from './dto/checkout.dto'
 import { ListAttendanceLogsDto } from './dto/list-attendance.dto'
 import { ManualCheckinDto } from './dto/manual-checkin.dto'
+import { NotificationsService } from '../notifications/notifications.service'
 
 type Caller = {
   userId: bigint
@@ -22,7 +23,7 @@ type Caller = {
 export interface AttendanceRow {
   attendanceId: bigint
   memberId: bigint
-  member: { memberCode: string; user: { fullName: string } }
+  member: { memberCode: string; userId?: bigint; primaryTrainerId?: bigint | null; user: { fullName: string } }
   subscriptionId: bigint
   sessionId?: bigint | null
   startTime: Date
@@ -40,6 +41,7 @@ export class AttendanceService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly audit: AuditService,
+    private readonly notifications: NotificationsService,
   ) {}
 
   async listAttendance(dto: ListAttendanceLogsDto, caller: Caller) {
@@ -88,7 +90,7 @@ export class AttendanceService {
         orderBy: { startTime: 'desc' },
         include: {
           member: {
-            select: { memberId: true, memberCode: true, user: { select: { fullName: true } } },
+            select: { memberId: true, memberCode: true, userId: true, primaryTrainerId: true, user: { select: { fullName: true } } },
           },
           subscription: { select: { subscriptionId: true, startDate: true, endDate: true } },
           session: { select: { sessionId: true, startTime: true, endTime: true } },
@@ -155,7 +157,7 @@ export class AttendanceService {
       },
       include: {
         member: {
-          select: { memberId: true, memberCode: true, user: { select: { fullName: true } } },
+          select: { memberId: true, memberCode: true, userId: true, primaryTrainerId: true, user: { select: { fullName: true } } },
         },
         subscription: { select: { subscriptionId: true, endDate: true } },
       },
@@ -167,6 +169,8 @@ export class AttendanceService {
       resourceType: 'attendance_log',
       resourceId: attendance.attendanceId.toString(),
     })
+
+    await this.notifyAttendanceCheckin(attendance)
 
     return { data: this.serializeAttendance(attendance) }
   }
@@ -263,6 +267,28 @@ export class AttendanceService {
       select: { staffId: true },
     })
     return staff?.staffId ?? null
+  }
+
+  private async notifyAttendanceCheckin(attendance: AttendanceRow) {
+    const payload = {
+      type: 'attendance.checkin',
+      title: 'Check-in thanh cong',
+      message: `Hoi vien ${attendance.member.user.fullName} da check-in thanh cong.`,
+      resourceType: 'attendance_log',
+      resourceId: attendance.attendanceId.toString(),
+      dedupeKey: `attendance:${attendance.attendanceId.toString()}:checkin`,
+    }
+    await this.notifications.safeNotifyUser(attendance.member.userId, payload)
+
+    if (!attendance.member.primaryTrainerId) return
+    const trainer = await this.prisma.staff.findFirst({
+      where: { staffId: attendance.member.primaryTrainerId, deletedAt: null },
+      select: { userId: true },
+    })
+    await this.notifications.safeNotifyUser(trainer?.userId, {
+      ...payload,
+      message: `Hoc vien ${attendance.member.user.fullName} vua check-in.`,
+    })
   }
 
   private async resolveCallerMemberId(caller: Caller): Promise<bigint | null> {

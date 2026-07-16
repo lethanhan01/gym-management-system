@@ -6,9 +6,10 @@ import { SubscriptionsController } from './subscriptions/subscriptions.controlle
 import { SubscriptionsService } from './subscriptions/subscriptions.service'
 import { SubscriptionScheduleService } from './schedule/subscription-schedule.service'
 import { AuditService } from '../common/audit/audit.service'
+import { NotificationsModule } from '../notifications/notifications.module'
 
 @Module({
-  imports: [ScheduleModule.forRoot()],
+  imports: [ScheduleModule.forRoot(), NotificationsModule],
   controllers: [PackagesController, SubscriptionsController],
   providers: [
     PackagesService,

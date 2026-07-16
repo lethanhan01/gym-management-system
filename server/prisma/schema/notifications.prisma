@@ -1,0 +1,18 @@
+model Notification {
+  notificationId  BigInt    @id @default(autoincrement()) @map("notification_id")
+  recipientUserId BigInt    @map("recipient_user_id")
+  type            String    @db.VarChar(80)
+  title           String    @db.VarChar(160)
+  message         String
+  resourceType    String?   @map("resource_type") @db.VarChar(80)
+  resourceId      String?   @map("resource_id") @db.VarChar(80)
+  metadata        Json?
+  dedupeKey       String?   @unique @map("dedupe_key") @db.VarChar(180)
+  readAt          DateTime? @map("read_at") @db.Timestamp(6)
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamp(6)
+  recipient       User      @relation(fields: [recipientUserId], references: [userId], onDelete: Cascade)
+
+  @@index([recipientUserId, readAt, createdAt(sort: Desc)])
+  @@index([recipientUserId, notificationId(sort: Desc)])
+  @@map("notifications")
+}

@@ -2,6 +2,7 @@ import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/commo
 import { AttendanceMethod, TrainingSessionStatus } from '@prisma/client'
 import { AuditService } from '../common/audit/audit.service'
 import { PrismaService } from '../prisma/prisma.service'
+import { NotificationsService } from '../notifications/notifications.service'
 
 type DeviceAccessResponse = {
   success: true
@@ -39,6 +40,7 @@ export class DeviceAccessService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly audit: AuditService,
+    private readonly notifications: NotificationsService,
   ) {}
 
   async deviceAccessEvent(body: {
@@ -170,6 +172,8 @@ export class DeviceAccessService {
       resourceId: attendance.attendanceId.toString(),
     })
 
+    await this.notifyDeviceCheckin(attendance.attendanceId, member.userId, member.primaryTrainerId, member.user.fullName)
+
     return response
   }
 
@@ -180,5 +184,32 @@ export class DeviceAccessService {
         deviceAccessDedupe.delete(key)
       }
     }
+  }
+
+  private async notifyDeviceCheckin(
+    attendanceId: bigint,
+    memberUserId: bigint,
+    primaryTrainerId: bigint | null,
+    memberName: string,
+  ) {
+    const payload = {
+      type: 'attendance.checkin',
+      title: 'Check-in thanh cong',
+      message: `Hoi vien ${memberName} da check-in thanh cong.`,
+      resourceType: 'attendance_log',
+      resourceId: attendanceId.toString(),
+      dedupeKey: `attendance:${attendanceId.toString()}:checkin`,
+    }
+    await this.notifications.safeNotifyUser(memberUserId, payload)
+
+    if (!primaryTrainerId) return
+    const trainer = await this.prisma.staff.findFirst({
+      where: { staffId: primaryTrainerId, deletedAt: null },
+      select: { userId: true },
+    })
+    await this.notifications.safeNotifyUser(trainer?.userId, {
+      ...payload,
+      message: `Hoc vien ${memberName} vua check-in.`,
+    })
   }
 }

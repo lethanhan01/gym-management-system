@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '../../stores/authStore';
 import { useSubscriptionStore } from '../../stores/subscriptionStore';
 import { LanguageSwitcher } from '@/components/ui/LanguageSwitcher';
+import NotificationBell from '@/components/shared/NotificationBell';
 
 
 export default function Topbar() {
@@ -66,6 +67,8 @@ export default function Topbar() {
       )}
 
       <LanguageSwitcher />
+
+      <NotificationBell />
 
       {/* Avatar button + dropdown */}
       <div ref={dropdownRef} className="rogym-sx-50666a57">

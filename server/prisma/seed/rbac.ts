@@ -124,7 +124,11 @@ const PERMISSIONS = [
     name: 'Xu ly phan hoi',
     description: 'Tiep nhan / phan loai / xu ly phan hoi (2.4.5)',
   },
-  // V1.0 da bo notification feature (xem Database.md). Re-add khi UC14 phuc hoi o v1.1+.
+  {
+    code: 'notification.read',
+    name: 'Xem thong bao',
+    description: 'Xem va danh dau da doc thong bao ca nhan',
+  },
   // Lich lam viec & bao cao (UC11, UC12)
   { code: 'schedule.read', name: 'Xem lich lam viec', description: 'Xem lich ca lam cua nhan su' },
   {
@@ -218,6 +222,7 @@ const ROLE_PERMISSIONS: Record<(typeof GROUPS)[number]['name'], string[]> = {
     'feedback.read',
     'feedback.create',
     'feedback.handle',
+    'notification.read',
     'schedule.read',
     'exercise.read',
     'exercise.create',
@@ -238,6 +243,7 @@ const ROLE_PERMISSIONS: Record<(typeof GROUPS)[number]['name'], string[]> = {
     'progress.read',
     'progress.record',
     'feedback.read',
+    'notification.read',
     'schedule.read',
     'exercise.read',
     'exercise.create',
@@ -260,6 +266,7 @@ const ROLE_PERMISSIONS: Record<(typeof GROUPS)[number]['name'], string[]> = {
     'progress.read',
     'feedback.read',
     'feedback.create',
+    'notification.read',
     'exercise.read',
     'workout_plan.create',
     'workout_plan.update',
