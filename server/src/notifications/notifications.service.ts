@@ -128,7 +128,9 @@ export class NotificationsService {
     try {
       await this.notifyUser(userId, payload)
     } catch (error) {
-      this.logger.warn(`Notification create failed: ${this.describeError(error)}`)
+      this.logger.warn(
+        `Notification create failed (${this.describePayload(payload)}, recipientUserId=${this.describeBigInt(userId)}): ${this.describeError(error)}`
+      )
     }
   }
 
@@ -136,7 +138,9 @@ export class NotificationsService {
     try {
       await this.notifyManyUsers(userIds, payload, options)
     } catch (error) {
-      this.logger.warn(`Notification batch create failed: ${this.describeError(error)}`)
+      this.logger.warn(
+        `Notification batch create failed (${this.describePayload(payload)}, recipientUserIds=${this.describeBigIntList(userIds)}, excludeActorUserId=${this.describeBigInt(options.excludeActorUserId)}): ${this.describeError(error)}`
+      )
     }
   }
 
@@ -144,7 +148,9 @@ export class NotificationsService {
     try {
       await this.notifyGroups(groupNames, payload, options)
     } catch (error) {
-      this.logger.warn(`Notification group create failed: ${this.describeError(error)}`)
+      this.logger.warn(
+        `Notification group create failed (${this.describePayload(payload)}, groups=${groupNames.join(',')}, excludeActorUserId=${this.describeBigInt(options.excludeActorUserId)}): ${this.describeError(error)}`
+      )
     }
   }
 
@@ -204,7 +210,26 @@ export class NotificationsService {
   }
 
   private describeError(error: unknown) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      return `Prisma ${error.code}: ${error.message}`
+    }
     if (error instanceof Error) return error.message
     return String(error)
+  }
+
+  private describePayload(payload: NotificationPayload) {
+    return [
+      `type=${payload.type}`,
+      `resourceType=${payload.resourceType ?? 'null'}`,
+      `resourceId=${payload.resourceId ?? 'null'}`,
+    ].join(', ')
+  }
+
+  private describeBigInt(value: bigint | null | undefined) {
+    return value?.toString() ?? 'null'
+  }
+
+  private describeBigIntList(values: Array<bigint | null | undefined>) {
+    return values.map((value) => this.describeBigInt(value)).join(',')
   }
 }

@@ -1,3 +1,4 @@
+import { Prisma } from '@prisma/client'
 import { NotificationsService } from './notifications.service'
 
 const mockPrisma = {
@@ -97,6 +98,33 @@ describe('NotificationsService', () => {
       })
     )
     expect(mockPrisma.notification.create).toHaveBeenCalledTimes(1)
+    expect(mockPrisma.notification.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          recipientUserId: 2n,
+          dedupeKey: 'event:1:user:2',
+        }),
+      })
+    )
+  })
+
+  it('ignores duplicate dedupe key writes from Prisma P2002', async () => {
+    const duplicate = new Prisma.PrismaClientKnownRequestError('Unique constraint failed', {
+      code: 'P2002',
+      clientVersion: 'test',
+      meta: { target: ['dedupe_key'] },
+    })
+    mockPrisma.notification.create.mockRejectedValue(duplicate)
+
+    await expect(
+      service.notifyUser(2n, {
+        type: 'test',
+        title: 'Title',
+        message: 'Message',
+        dedupeKey: 'event:1',
+      })
+    ).resolves.toBeUndefined()
+
     expect(mockPrisma.notification.create).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({

@@ -255,6 +255,16 @@ describe('FeedbackService', () => {
       expect(mockAudit.log).toHaveBeenCalledWith(
         expect.objectContaining({ action: 'feedback.create' })
       )
+      expect(mockNotifications.safeNotifyGroups).toHaveBeenCalledWith(
+        ['owner', 'staff'],
+        expect.objectContaining({
+          type: 'feedback.created',
+          resourceType: 'feedback',
+          resourceId: '10',
+          dedupeKey: 'feedback:10:created',
+        }),
+        { excludeActorUserId: caller.userId }
+      )
       expect((result.data as any).feedbackId).toBe('10')
     })
   })

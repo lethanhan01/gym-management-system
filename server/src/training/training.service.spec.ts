@@ -325,6 +325,25 @@ describe('TrainingService', () => {
       expect(mockAudit.log).toHaveBeenCalledWith(
         expect.objectContaining({ action: 'training.create' })
       )
+      expect(mockNotifications.safeNotifyUser).toHaveBeenCalledWith(
+        100n,
+        expect.objectContaining({
+          type: 'training.created',
+          resourceType: 'training_session',
+          resourceId: '1',
+          dedupeKey: 'training:1:created',
+        })
+      )
+      expect(mockNotifications.safeNotifyManyUsers).toHaveBeenCalledWith(
+        [200n],
+        expect.objectContaining({
+          type: 'training.created',
+          resourceType: 'training_session',
+          resourceId: '1',
+          dedupeKey: 'training:1:created',
+        }),
+        { excludeActorUserId: caller.userId }
+      )
       expect(result.data.sessionId).toBe('1')
     })
   })

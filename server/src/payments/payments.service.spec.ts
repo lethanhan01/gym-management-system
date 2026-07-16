@@ -166,6 +166,25 @@ describe('PaymentsService', () => {
       expect(mockAudit.log).toHaveBeenCalledWith(
         expect.objectContaining({ action: 'subscription.activate' })
       )
+      expect(mockNotifications.safeNotifyUser).toHaveBeenCalledWith(
+        100n,
+        expect.objectContaining({
+          type: 'payment.success',
+          resourceType: 'payment',
+          resourceId: '100',
+          dedupeKey: 'payment:100:success',
+        })
+      )
+      expect(mockNotifications.safeNotifyGroups).toHaveBeenCalledWith(
+        ['owner', 'staff'],
+        expect.objectContaining({
+          type: 'payment.success.admin',
+          resourceType: 'payment',
+          resourceId: '100',
+          dedupeKey: 'payment:100:success:admin',
+        }),
+        { excludeActorUserId: caller.userId }
+      )
     })
 
     it('happy path: payment created but NOT activated when another active subscription exists', async () => {
