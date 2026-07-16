@@ -9,6 +9,7 @@ import { PaymentStatus, Prisma, SubscriptionStatus } from '@prisma/client'
 import { AuthenticatedUser } from '../auth/types/jwt-payload.interface'
 import { AuditService } from '../common/audit/audit.service'
 import { PrismaService } from '../prisma/prisma.service'
+import { NotificationsService } from '../notifications/notifications.service'
 import { CreatePaymentDto } from './dto/create-payment.dto'
 import { ListPaymentsDto } from './dto/list-payments.dto'
 import { CreatePaymentAccountDto } from './dto/create-payment-account.dto'
@@ -27,6 +28,7 @@ export class PaymentsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly audit: AuditService,
+    private readonly notifications: NotificationsService,
   ) {}
 
   async createPayment(dto: CreatePaymentDto, caller: AuthenticatedUser) {
@@ -116,6 +118,16 @@ export class PaymentsService {
         afterData: { activatedByPaymentId: result.payment.paymentId.toString() } as unknown as Record<string, unknown>,
       })
     }
+
+    await this.notifyPaymentResult({
+      paymentId: result.payment.paymentId,
+      subscriptionId: sub.subscriptionId,
+      memberUserId: sub.member.userId,
+      packageName: sub.package?.name ?? null,
+      status: paymentStatus,
+      subscriptionActivated: shouldActivate,
+      actorUserId: caller.userId,
+    })
 
     return {
       data: {
@@ -256,6 +268,51 @@ export class PaymentsService {
     const member = await this.prisma.member.findFirst({ where: { userId: caller.userId, deletedAt: null } })
     if (!member) throw new ForbiddenException({ success: false, code: 'MEMBER_PROFILE_NOT_FOUND', message: 'Khong tim thay member profile' })
     return member.memberId
+  }
+
+  private async notifyPaymentResult(args: {
+    paymentId: bigint
+    subscriptionId: bigint
+    memberUserId: bigint
+    packageName: string | null
+    status: PaymentStatus
+    subscriptionActivated: boolean
+    actorUserId: bigint
+  }) {
+    const isSuccess = args.status === PaymentStatus.success
+    const memberTitle = !isSuccess
+      ? 'Thanh toan that bai'
+      : args.subscriptionActivated
+        ? 'Thanh toan thanh cong'
+        : 'Da ghi nhan thanh toan'
+    const memberMessage = !isSuccess
+      ? `Thanh toan cho goi ${args.packageName ?? ''} khong thanh cong.`
+      : args.subscriptionActivated
+        ? `Thanh toan thanh cong, goi ${args.packageName ?? ''} da duoc kich hoat.`
+        : `Thanh toan cho goi ${args.packageName ?? ''} da duoc ghi nhan va dang cho kich hoat.`
+
+    await this.notifications.safeNotifyUser(args.memberUserId, {
+      type: isSuccess ? 'payment.success' : 'payment.failed',
+      title: memberTitle,
+      message: memberMessage,
+      resourceType: 'payment',
+      resourceId: args.paymentId.toString(),
+      metadata: { subscriptionId: args.subscriptionId.toString(), subscriptionActivated: args.subscriptionActivated },
+      dedupeKey: `payment:${args.paymentId.toString()}:${args.status}`,
+    })
+    await this.notifications.safeNotifyGroups(
+      ['owner', 'staff'],
+      {
+        type: isSuccess ? 'payment.success.admin' : 'payment.failed.admin',
+        title: isSuccess ? 'Thanh toan moi' : 'Thanh toan that bai',
+        message: isSuccess ? 'Co mot giao dich thanh toan moi.' : 'Co mot giao dich thanh toan that bai.',
+        resourceType: 'payment',
+        resourceId: args.paymentId.toString(),
+        metadata: { subscriptionId: args.subscriptionId.toString(), subscriptionActivated: args.subscriptionActivated },
+        dedupeKey: `payment:${args.paymentId.toString()}:${args.status}:admin`,
+      },
+      { excludeActorUserId: args.actorUserId },
+    )
   }
 
   private async assertSubscriptionBelongsToMember(subscriptionId: bigint, memberId: bigint) {

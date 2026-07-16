@@ -30,8 +30,8 @@ function makeSession(overrides: object = {}) {
     deletedAt: null,
     createdAt: new Date(),
     updatedAt: new Date(),
-    member: { memberId: 10n, user: { fullName: 'Test Member' } },
-    trainer: { staffId: 5n, user: { fullName: 'Test Trainer' } },
+    member: { memberId: 10n, userId: 100n, user: { fullName: 'Test Member' } },
+    trainer: { staffId: 5n, userId: 200n, user: { fullName: 'Test Trainer' } },
     room: { roomId: 3n, name: 'Room A' },
     assignment: null,
     planDay: null,
@@ -173,6 +173,12 @@ const mockDeviceAccessService = {
   deviceAccessEvent: jest.fn(),
 }
 
+const mockNotifications = {
+  safeNotifyUser: jest.fn(),
+  safeNotifyManyUsers: jest.fn(),
+  safeNotifyGroups: jest.fn(),
+}
+
 // ---------------------------------------------------------------------------
 // Suite
 // ---------------------------------------------------------------------------
@@ -181,7 +187,13 @@ describe('TrainingService', () => {
   let service: TrainingService
 
   beforeEach(() => {
-    service = new TrainingService(mockPrisma as any, mockAudit as any, mockAttendanceService as any, mockDeviceAccessService as any)
+    service = new TrainingService(
+      mockPrisma as any,
+      mockAudit as any,
+      mockAttendanceService as any,
+      mockDeviceAccessService as any,
+      mockNotifications as any,
+    )
     jest.clearAllMocks()
   })
 
@@ -312,6 +324,25 @@ describe('TrainingService', () => {
       expect(mockPrisma.trainingSession.create).toHaveBeenCalled()
       expect(mockAudit.log).toHaveBeenCalledWith(
         expect.objectContaining({ action: 'training.create' })
+      )
+      expect(mockNotifications.safeNotifyUser).toHaveBeenCalledWith(
+        100n,
+        expect.objectContaining({
+          type: 'training.created',
+          resourceType: 'training_session',
+          resourceId: '1',
+          dedupeKey: 'training:1:created',
+        })
+      )
+      expect(mockNotifications.safeNotifyManyUsers).toHaveBeenCalledWith(
+        [200n],
+        expect.objectContaining({
+          type: 'training.created',
+          resourceType: 'training_session',
+          resourceId: '1',
+          dedupeKey: 'training:1:created',
+        }),
+        { excludeActorUserId: caller.userId }
       )
       expect(result.data.sessionId).toBe('1')
     })

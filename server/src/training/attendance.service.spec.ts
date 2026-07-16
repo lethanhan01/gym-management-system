@@ -14,6 +14,7 @@ const mockPrisma = {
 }
 
 const mockAudit = { log: jest.fn() }
+const mockNotifications = { safeNotifyUser: jest.fn() }
 
 function makeCaller(overrides: object = {}): any {
   return { userId: 1n, roles: ['owner'], staffId: undefined, memberId: undefined, ...overrides }
@@ -22,6 +23,7 @@ function makeCaller(overrides: object = {}): any {
 function makeMember(overrides: object = {}) {
   return {
     memberId: 10n,
+    userId: 100n,
     memberCode: 'MEM-001',
     primaryTrainerId: null,
     deletedAt: null,
@@ -43,7 +45,7 @@ function makeAttendanceRow(overrides: object = {}) {
     startTime: new Date(),
     endTime: null,
     method: 'manual',
-    member: { memberId: 10n, memberCode: 'MEM-001', user: { fullName: 'Test Member' } },
+    member: { memberId: 10n, memberCode: 'MEM-001', userId: 100n, primaryTrainerId: null, user: { fullName: 'Test Member' } },
     subscription: { subscriptionId: 20n, startDate: new Date(), endDate: new Date() },
     session: null,
     ...overrides,
@@ -54,7 +56,7 @@ describe('AttendanceService', () => {
   let service: AttendanceService
 
   beforeEach(() => {
-    service = new AttendanceService(mockPrisma as any, mockAudit as any)
+    service = new AttendanceService(mockPrisma as any, mockAudit as any, mockNotifications as any)
     jest.clearAllMocks()
     mockAudit.log.mockResolvedValue(undefined)
   })

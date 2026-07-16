@@ -9,6 +9,7 @@ import { FeedbackSeverity, FeedbackStatus, FeedbackType, Prisma } from '@prisma/
 import { PrismaService } from '../prisma/prisma.service'
 import { AuditService } from '../common/audit/audit.service'
 import { type Role } from '../auth/users.service'
+import { NotificationsService } from '../notifications/notifications.service'
 import { ListFeedbackDto } from './dto/list-feedback.dto'
 import { CreateFeedbackDto } from './dto/create-feedback.dto'
 import { AssignFeedbackDto } from './dto/assign-feedback.dto'
@@ -19,7 +20,7 @@ const SLA_DAYS: Record<string, number> = { high: 1, medium: 3, low: 7 }
 interface FeedbackRow {
   feedbackId: bigint
   memberId: bigint
-  member: { memberCode: string; memberId: bigint; user: { fullName: string } }
+  member: { memberCode: string; memberId: bigint; userId?: bigint; user: { fullName: string } }
   feedbackType: FeedbackType
   content: string
   severity: FeedbackSeverity
@@ -31,7 +32,7 @@ interface FeedbackRow {
   subjectEquipmentId?: bigint | null
   resolutionNote?: string | null
   deletedAt?: Date | null
-  handledByStaff?: { staffId: bigint; user: { fullName: string } } | null
+  handledByStaff?: { staffId: bigint; userId?: bigint; user: { fullName: string } } | null
   subjectStaff?: { staffId: bigint; user: { fullName: string } } | null
   subjectEquipment?: { equipmentId: bigint; name: string } | null
 }
@@ -41,6 +42,7 @@ export class FeedbackService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly audit: AuditService,
+    private readonly notifications: NotificationsService,
   ) {}
 
   // ---------------------------------------------------------------------------
@@ -165,11 +167,26 @@ export class FeedbackService {
         subjectEquipmentId: dto.subjectEquipmentId ? BigInt(dto.subjectEquipmentId) : null,
       },
       include: {
-        member: { select: { memberId: true, memberCode: true, user: { select: { fullName: true } } } },
+        member: { select: { memberId: true, memberCode: true, userId: true, user: { select: { fullName: true } } } },
       },
     })
 
     this.audit.log({ actorUserId: caller.userId, action: 'feedback.create', resourceType: 'feedback', resourceId: feedback.feedbackId.toString(), afterData: this.serialize(feedback) as unknown as Record<string, unknown> })
+
+    if (isMember) {
+      await this.notifications.safeNotifyGroups(
+        ['owner', 'staff'],
+        {
+          type: 'feedback.created',
+          title: 'Phan hoi moi',
+          message: 'Co mot phan hoi moi tu hoi vien.',
+          resourceType: 'feedback',
+          resourceId: feedback.feedbackId.toString(),
+          dedupeKey: `feedback:${feedback.feedbackId.toString()}:created`,
+        },
+        { excludeActorUserId: caller.userId },
+      )
+    }
 
     return { data: this.serialize(feedback) }
   }
@@ -216,13 +233,26 @@ export class FeedbackService {
       },
       include: {
         member: { select: { memberId: true, memberCode: true, user: { select: { fullName: true } } } },
-        handledByStaff: { select: { staffId: true, user: { select: { fullName: true } } } },
+        handledByStaff: { select: { staffId: true, userId: true, user: { select: { fullName: true } } } },
         subjectStaff: { select: { staffId: true, user: { select: { fullName: true } } } },
         subjectEquipment: { select: { equipmentId: true, name: true } },
       },
     })
 
     this.audit.log({ actorUserId: caller.userId, action: 'feedback.assign', resourceType: 'feedback', resourceId: id.toString(), beforeData: { status: feedback.status }, afterData: { status: 'in_progress', handledByStaffId: handledByStaffId.toString() } })
+
+    await this.notifications.safeNotifyManyUsers(
+      [updated.handledByStaff?.userId],
+      {
+        type: 'feedback.assigned',
+        title: 'Ban duoc giao xu ly phan hoi',
+        message: 'Mot phan hoi vua duoc giao cho ban xu ly.',
+        resourceType: 'feedback',
+        resourceId: id.toString(),
+        dedupeKey: `feedback:${id.toString()}:assigned:${handledByStaffId.toString()}`,
+      },
+      { excludeActorUserId: caller.userId },
+    )
 
     return { data: this.serialize(updated, true) }
   }
@@ -263,8 +293,8 @@ export class FeedbackService {
       where: { feedbackId: id },
       data,
       include: {
-        member: { select: { memberId: true, memberCode: true, user: { select: { fullName: true } } } },
-        handledByStaff: { select: { staffId: true, user: { select: { fullName: true } } } },
+        member: { select: { memberId: true, memberCode: true, userId: true, user: { select: { fullName: true } } } },
+        handledByStaff: { select: { staffId: true, userId: true, user: { select: { fullName: true } } } },
         subjectStaff: { select: { staffId: true, user: { select: { fullName: true } } } },
         subjectEquipment: { select: { equipmentId: true, name: true } },
       },
@@ -272,6 +302,17 @@ export class FeedbackService {
 
     const action = newStatus === 'resolved' ? 'feedback.resolve' : newStatus === 'rejected' ? 'feedback.reject' : 'feedback.update'
     this.audit.log({ actorUserId: caller.userId, action, resourceType: 'feedback', resourceId: id.toString(), beforeData: { status: feedback.status }, afterData: { status: newStatus, resolutionNote: dto.resolutionNote } })
+
+    if (newStatus === FeedbackStatus.resolved || newStatus === FeedbackStatus.rejected) {
+      await this.notifications.safeNotifyUser(updated.member.userId, {
+        type: newStatus === FeedbackStatus.resolved ? 'feedback.resolved' : 'feedback.rejected',
+        title: newStatus === FeedbackStatus.resolved ? 'Phan hoi da duoc xu ly' : 'Phan hoi da bi tu choi',
+        message: newStatus === FeedbackStatus.resolved ? 'Phan hoi cua ban da duoc xu ly.' : 'Phan hoi cua ban da bi tu choi.',
+        resourceType: 'feedback',
+        resourceId: id.toString(),
+        dedupeKey: `feedback:${id.toString()}:${newStatus}`,
+      })
+    }
 
     return { data: this.serialize(updated, true) }
   }

@@ -5,9 +5,11 @@ const mockPrisma = {
   subscription: { findFirst: jest.fn() },
   attendanceLog: { findFirst: jest.fn(), update: jest.fn(), create: jest.fn() },
   trainingSession: { findFirst: jest.fn(), update: jest.fn() },
+  staff: { findFirst: jest.fn() },
 }
 
 const mockAudit = { log: jest.fn() }
+const mockNotifications = { safeNotifyUser: jest.fn() }
 
 let occurredAtCounter = 1000000
 
@@ -24,7 +26,9 @@ function makeBody(overrides: object = {}) {
 function makeMember() {
   return {
     memberId: 10n,
+    userId: 100n,
     memberCode: 'MEM-001',
+    primaryTrainerId: null,
     deletedAt: null,
     user: { fullName: 'Test Member', avatarFileId: null },
   }
@@ -49,7 +53,7 @@ describe('DeviceAccessService', () => {
   let service: DeviceAccessService
 
   beforeEach(() => {
-    service = new DeviceAccessService(mockPrisma as any, mockAudit as any)
+    service = new DeviceAccessService(mockPrisma as any, mockAudit as any, mockNotifications as any)
     jest.clearAllMocks()
     mockAudit.log.mockResolvedValue(undefined)
   })

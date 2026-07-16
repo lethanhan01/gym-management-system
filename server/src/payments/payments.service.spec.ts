@@ -17,7 +17,7 @@ function makeSub(overrides: object = {}) {
     status: SubscriptionStatus.pending,
     deletedAt: null,
     package: { name: 'Basic', price: { toFixed: (_n: number) => '500000.00' } },
-    member: { user: { fullName: 'Test Member', emailVerifiedAt: new Date() } },
+    member: { userId: 100n, user: { fullName: 'Test Member', emailVerifiedAt: new Date() } },
     ...overrides,
   }
 }
@@ -76,6 +76,10 @@ const mockPrisma = {
 const mockAudit = {
   log: jest.fn(),
 }
+const mockNotifications = {
+  safeNotifyUser: jest.fn(),
+  safeNotifyGroups: jest.fn(),
+}
 
 // ---------------------------------------------------------------------------
 // Suite
@@ -85,7 +89,7 @@ describe('PaymentsService', () => {
   let service: PaymentsService
 
   beforeEach(() => {
-    service = new PaymentsService(mockPrisma as any, mockAudit as any)
+    service = new PaymentsService(mockPrisma as any, mockAudit as any, mockNotifications as any)
     jest.clearAllMocks()
 
     // Default $transaction passthrough
@@ -161,6 +165,25 @@ describe('PaymentsService', () => {
       expect(result.data.subscriptionActivated).toBe(true)
       expect(mockAudit.log).toHaveBeenCalledWith(
         expect.objectContaining({ action: 'subscription.activate' })
+      )
+      expect(mockNotifications.safeNotifyUser).toHaveBeenCalledWith(
+        100n,
+        expect.objectContaining({
+          type: 'payment.success',
+          resourceType: 'payment',
+          resourceId: '100',
+          dedupeKey: 'payment:100:success',
+        })
+      )
+      expect(mockNotifications.safeNotifyGroups).toHaveBeenCalledWith(
+        ['owner', 'staff'],
+        expect.objectContaining({
+          type: 'payment.success.admin',
+          resourceType: 'payment',
+          resourceId: '100',
+          dedupeKey: 'payment:100:success:admin',
+        }),
+        { excludeActorUserId: caller.userId }
       )
     })
 

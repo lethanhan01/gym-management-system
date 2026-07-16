@@ -9,6 +9,7 @@ import { PackageStatus, PaymentStatus, Prisma, SubscriptionStatus } from '@prism
 import { AuthenticatedUser } from '../../auth/types/jwt-payload.interface'
 import { AuditService } from '../../common/audit/audit.service'
 import { PrismaService } from '../../prisma/prisma.service'
+import { NotificationsService } from '../../notifications/notifications.service'
 import { CreateSubscriptionDto } from './dto/create-subscription.dto'
 import { ListSubscriptionsDto } from './dto/list-subscriptions.dto'
 import { RenewSubscriptionDto } from './dto/renew-subscription.dto'
@@ -32,7 +33,8 @@ function isOwnerOrStaff(user: Pick<AuthenticatedUser, 'roles'>): boolean {
 export class SubscriptionsService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly audit: AuditService
+    private readonly audit: AuditService,
+    private readonly notifications: NotificationsService,
   ) {}
 
   async createSubscription(dto: CreateSubscriptionDto, caller: AuthenticatedUser) {
@@ -158,6 +160,8 @@ export class SubscriptionsService {
       } as unknown as Record<string, unknown>,
     })
 
+    await this.notifySubscriptionCreated(subscription, caller.userId)
+
     return { data: this.serializeSubscription(subscription) }
   }
 
@@ -223,6 +227,8 @@ export class SubscriptionsService {
       beforeData: { endDate: sub.endDate } as unknown as Record<string, unknown>,
       afterData: { endDate: newEndDate } as unknown as Record<string, unknown>,
     })
+
+    await this.notifySubscriptionRenewed(updated, caller.userId)
 
     return { data: this.serializeSubscription(updated) }
   }
@@ -381,6 +387,8 @@ export class SubscriptionsService {
       afterData: { status: 'cancelled' } as unknown as Record<string, unknown>,
     })
 
+    await this.notifySubscriptionCancelled(sub, caller.userId)
+
     return {
       data: {
         subscriptionId: subscriptionId.toString(),
@@ -444,6 +452,84 @@ export class SubscriptionsService {
         message: 'Khong tim thay member profile',
       })
     return member.memberId
+  }
+
+  private async notifySubscriptionCreated(
+    subscription: { subscriptionId: bigint; member: { userId: bigint }; package?: { name: string } | null },
+    actorUserId: bigint,
+  ) {
+    await this.notifications.safeNotifyUser(subscription.member.userId, {
+      type: 'subscription.created',
+      title: 'Da tao yeu cau dang ky goi',
+      message: `Yeu cau dang ky goi ${subscription.package?.name ?? ''} da duoc tao va dang cho thanh toan.`,
+      resourceType: 'subscription',
+      resourceId: subscription.subscriptionId.toString(),
+      dedupeKey: `subscription:${subscription.subscriptionId.toString()}:created`,
+    })
+    await this.notifications.safeNotifyGroups(
+      ['owner', 'staff'],
+      {
+        type: 'subscription.created.admin',
+        title: 'Dang ky goi moi',
+        message: 'Co mot yeu cau dang ky goi moi dang cho xu ly.',
+        resourceType: 'subscription',
+        resourceId: subscription.subscriptionId.toString(),
+        dedupeKey: `subscription:${subscription.subscriptionId.toString()}:created-admin`,
+      },
+      { excludeActorUserId: actorUserId },
+    )
+  }
+
+  private async notifySubscriptionRenewed(
+    subscription: { subscriptionId: bigint; member: { userId: bigint }; package?: { name: string } | null },
+    actorUserId: bigint,
+  ) {
+    await this.notifications.safeNotifyUser(subscription.member.userId, {
+      type: 'subscription.renewed',
+      title: 'Gia han goi thanh cong',
+      message: `Goi ${subscription.package?.name ?? ''} da duoc gia han thanh cong.`,
+      resourceType: 'subscription',
+      resourceId: subscription.subscriptionId.toString(),
+      dedupeKey: `subscription:${subscription.subscriptionId.toString()}:renewed:${Date.now()}`,
+    })
+    await this.notifications.safeNotifyGroups(
+      ['owner', 'staff'],
+      {
+        type: 'subscription.renewed.admin',
+        title: 'Goi tap duoc gia han',
+        message: 'Co mot goi tap vua duoc gia han thanh cong.',
+        resourceType: 'subscription',
+        resourceId: subscription.subscriptionId.toString(),
+        dedupeKey: `subscription:${subscription.subscriptionId.toString()}:renewed-admin:${Date.now()}`,
+      },
+      { excludeActorUserId: actorUserId },
+    )
+  }
+
+  private async notifySubscriptionCancelled(
+    subscription: { subscriptionId: bigint; member: { userId: bigint }; package?: { name: string } | null },
+    actorUserId: bigint,
+  ) {
+    await this.notifications.safeNotifyUser(subscription.member.userId, {
+      type: 'subscription.cancelled',
+      title: 'Goi tap da huy',
+      message: `Goi ${subscription.package?.name ?? ''} da duoc huy.`,
+      resourceType: 'subscription',
+      resourceId: subscription.subscriptionId.toString(),
+      dedupeKey: `subscription:${subscription.subscriptionId.toString()}:cancelled`,
+    })
+    await this.notifications.safeNotifyGroups(
+      ['owner', 'staff'],
+      {
+        type: 'subscription.cancelled.admin',
+        title: 'Goi tap da huy',
+        message: 'Co mot goi tap vua duoc huy.',
+        resourceType: 'subscription',
+        resourceId: subscription.subscriptionId.toString(),
+        dedupeKey: `subscription:${subscription.subscriptionId.toString()}:cancelled-admin`,
+      },
+      { excludeActorUserId: actorUserId },
+    )
   }
 
   private buildOrder(sort: string): Prisma.SubscriptionOrderByWithRelationInput {

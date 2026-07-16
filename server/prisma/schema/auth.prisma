@@ -15,6 +15,7 @@ model User {
   member          Member?
   staff           Staff?
   groups          UserGroup[]
+  notifications   Notification[]
   avatarFile      File?       @relation("UserAvatar", fields: [avatarFileId], references: [fileId])
 
   @@map("users")

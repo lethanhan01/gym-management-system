@@ -16,6 +16,7 @@ import { StaffModule } from './staff/staff.module'
 import { FacilityModule } from './facility/facility.module'
 import { ReportsModule } from './reports/reports.module'
 import { PermissionCacheModule } from './common/cache/permission-cache.module'
+import { NotificationsModule } from './notifications/notifications.module'
 
 @Module({
   imports: [
@@ -39,6 +40,7 @@ import { PermissionCacheModule } from './common/cache/permission-cache.module'
     StaffModule,
     FacilityModule,
     ReportsModule,
+    NotificationsModule,
   ],
 })
 export class AppModule {}

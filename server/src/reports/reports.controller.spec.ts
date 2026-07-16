@@ -6,7 +6,10 @@ const mockService = {
   revenue: jest.fn(),
   members: jest.fn(),
   renewals: jest.fn(),
+  employeePerformance: jest.fn(),
+  employeePerformanceDetail: jest.fn(),
   staffPerformance: jest.fn(),
+  topPackages: jest.fn(),
 } as unknown as ReportsService
 
 const ctrl = new ReportsController(mockService)
@@ -83,6 +86,43 @@ describe('ReportsController', () => {
         '2025-01-31',
         undefined
       )
+      expect(res).toEqual({ success: true, ...serviceResult })
+    })
+  })
+
+  describe('employeePerformance', () => {
+    it('delegates to employeePerformance service and wraps success', async () => {
+      const serviceResult = { data: [{ staffId: '1', performancePercent: 100 }], meta: {} }
+      ;(mockService.employeePerformance as jest.Mock).mockResolvedValue(serviceResult)
+      const query = { from: '2025-01-01', to: '2025-01-31' } as any
+      const res = await ctrl.employeePerformance(query)
+      expect(mockService.employeePerformance).toHaveBeenCalledWith('2025-01-01', '2025-01-31')
+      expect(res).toEqual({ success: true, ...serviceResult })
+    })
+  })
+
+  describe('employeePerformanceDetail', () => {
+    it('delegates to employeePerformanceDetail service and wraps success', async () => {
+      const serviceResult = { data: { staffId: '3', attendanceLogs: [] }, meta: {} }
+      ;(mockService.employeePerformanceDetail as jest.Mock).mockResolvedValue(serviceResult)
+      const query = { from: '2025-01-01', to: '2025-01-31' } as any
+      const res = await ctrl.employeePerformanceDetail('3', query)
+      expect(mockService.employeePerformanceDetail).toHaveBeenCalledWith(
+        '3',
+        '2025-01-01',
+        '2025-01-31'
+      )
+      expect(res).toEqual({ success: true, ...serviceResult })
+    })
+  })
+
+  describe('topPackages', () => {
+    it('delegates to topPackages service and wraps success', async () => {
+      const serviceResult = { data: [{ packageId: '1', count: 3 }], meta: {} }
+      ;(mockService.topPackages as jest.Mock).mockResolvedValue(serviceResult)
+      const query = { from: '2025-01-01', to: '2025-01-31' } as any
+      const res = await ctrl.topPackages(query)
+      expect(mockService.topPackages).toHaveBeenCalledWith('2025-01-01', '2025-01-31')
       expect(res).toEqual({ success: true, ...serviceResult })
     })
   })

@@ -83,12 +83,16 @@ const mockPrisma = {
 const mockAudit = {
   log: jest.fn(),
 }
+const mockNotifications = {
+  safeNotifyUser: jest.fn(),
+  safeNotifyGroups: jest.fn(),
+}
 
 describe('SubscriptionsService', () => {
   let service: SubscriptionsService
 
   beforeEach(() => {
-    service = new SubscriptionsService(mockPrisma as any, mockAudit as any)
+    service = new SubscriptionsService(mockPrisma as any, mockAudit as any, mockNotifications as any)
     jest.clearAllMocks()
     mockPrisma.$transaction.mockImplementation(async (fn: (tx: any) => Promise<any>) =>
       fn(mockPrisma)

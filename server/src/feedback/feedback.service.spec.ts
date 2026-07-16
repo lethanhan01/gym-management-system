@@ -13,6 +13,7 @@ import { FeedbackService } from './feedback.service'
 function makeMember(overrides: object = {}) {
   return {
     memberId: 1n,
+    userId: 100n,
     memberCode: 'MEM-001',
     deletedAt: null,
     user: { fullName: 'Test Member' },
@@ -35,7 +36,7 @@ function makeFeedback(overrides: object = {}) {
     resolutionNote: null,
     createdAt: new Date('2024-01-01'),
     deletedAt: null,
-    member: { memberId: 1n, memberCode: 'MEM-001', user: { fullName: 'Test Member' } },
+    member: { memberId: 1n, memberCode: 'MEM-001', userId: 100n, user: { fullName: 'Test Member' } },
     handledByStaff: null,
     subjectStaff: null,
     subjectEquipment: null,
@@ -71,6 +72,11 @@ const mockPrisma = {
 }
 
 const mockAudit = { log: jest.fn() }
+const mockNotifications = {
+  safeNotifyUser: jest.fn(),
+  safeNotifyManyUsers: jest.fn(),
+  safeNotifyGroups: jest.fn(),
+}
 
 // ---------------------------------------------------------------------------
 // Suite
@@ -80,7 +86,7 @@ describe('FeedbackService', () => {
   let service: FeedbackService
 
   beforeEach(() => {
-    service = new FeedbackService(mockPrisma as any, mockAudit as any)
+    service = new FeedbackService(mockPrisma as any, mockAudit as any, mockNotifications as any)
     jest.clearAllMocks()
   })
 
@@ -248,6 +254,16 @@ describe('FeedbackService', () => {
       expect(mockPrisma.feedback.create).toHaveBeenCalled()
       expect(mockAudit.log).toHaveBeenCalledWith(
         expect.objectContaining({ action: 'feedback.create' })
+      )
+      expect(mockNotifications.safeNotifyGroups).toHaveBeenCalledWith(
+        ['owner', 'staff'],
+        expect.objectContaining({
+          type: 'feedback.created',
+          resourceType: 'feedback',
+          resourceId: '10',
+          dedupeKey: 'feedback:10:created',
+        }),
+        { excludeActorUserId: caller.userId }
       )
       expect((result.data as any).feedbackId).toBe('10')
     })

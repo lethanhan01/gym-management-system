@@ -19,6 +19,7 @@ import { ListSessionsDto } from './dto/list-sessions.dto'
 import { ManualCheckinDto } from './dto/manual-checkin.dto'
 import { UpdateSessionDto } from './dto/update-session.dto'
 import { resolveCallerFilter } from './filters/caller-query-filter'
+import { NotificationsService } from '../notifications/notifications.service'
 
 type Caller = {
   userId: bigint
@@ -30,9 +31,9 @@ type Caller = {
 interface SessionRow {
   sessionId: bigint
   memberId: bigint
-  member: { user: { fullName: string } }
+  member: { userId: bigint; user: { fullName: string } }
   trainerStaffId: bigint
-  trainer: { user: { fullName: string } }
+  trainer: { userId: bigint; user: { fullName: string } }
   roomId: bigint
   room: { name: string }
   assignmentId: bigint | null
@@ -105,8 +106,8 @@ const SESSION_PLAN_DAY_SELECT = {
 } satisfies Prisma.WorkoutPlanDaySelect
 
 const SESSION_SUMMARY_INCLUDE = {
-  member: { select: { memberId: true, user: { select: { fullName: true } } } },
-  trainer: { select: { staffId: true, user: { select: { fullName: true } } } },
+  member: { select: { memberId: true, userId: true, user: { select: { fullName: true } } } },
+  trainer: { select: { staffId: true, userId: true, user: { select: { fullName: true } } } },
   room: { select: { roomId: true, name: true } },
   assignment: {
     select: {
@@ -145,6 +146,7 @@ export class TrainingService {
     private readonly audit: AuditService,
     private readonly attendance: AttendanceService,
     private readonly deviceAccess: DeviceAccessService,
+    private readonly notifications: NotificationsService,
   ) {}
 
   async listSessions(dto: ListSessionsDto, caller: Caller) {
@@ -372,6 +374,8 @@ export class TrainingService {
       afterData: this.serializeSession(session) as unknown as Record<string, unknown>,
     })
 
+    await this.notifySessionCreated(session, caller.userId)
+
     return { data: this.serializeSession(session) }
   }
 
@@ -455,6 +459,8 @@ export class TrainingService {
       afterData: this.serializeSession(updated) as unknown as Record<string, unknown>,
     })
 
+    await this.notifySessionUpdated(session, updated, caller.userId)
+
     return { data: this.serializeSession(updated) }
   }
 
@@ -490,9 +496,10 @@ export class TrainingService {
       })
     }
 
-    await this.prisma.trainingSession.update({
+    const cancelled = await this.prisma.trainingSession.update({
       where: { sessionId: id },
       data: { status: TrainingSessionStatus.cancelled },
+      include: SESSION_SUMMARY_INCLUDE,
     })
 
     await this.audit.log({
@@ -502,6 +509,8 @@ export class TrainingService {
       resourceId: id.toString(),
       afterData: { reason: dto.reason ?? null, cancelledBy: caller.userId.toString() },
     })
+
+    await this.notifySessionCancelled(cancelled, caller.userId)
   }
 
   async updateSessionStatus(id: bigint, status: 'in_progress' | 'completed', caller: Caller) {
@@ -564,6 +573,17 @@ export class TrainingService {
       beforeData: { status: session.status },
       afterData: { status: newStatus },
     })
+
+    if (newStatus === TrainingSessionStatus.completed) {
+      await this.notifications.safeNotifyUser(updated.member.userId, {
+        type: 'training.completed',
+        title: 'Buoi tap da hoan thanh',
+        message: `Buoi tap voi PT ${updated.trainer.user.fullName} da duoc danh dau hoan thanh.`,
+        resourceType: 'training_session',
+        resourceId: updated.sessionId.toString(),
+        dedupeKey: `training:${updated.sessionId.toString()}:completed`,
+      })
+    }
 
     return { data: this.serializeSession(updated) }
   }
@@ -754,6 +774,64 @@ export class TrainingService {
       select: { staffId: true },
     })
     return staff?.staffId ?? null
+  }
+
+  private async notifySessionCreated(session: SessionRow, actorUserId: bigint) {
+    const payload = {
+      type: 'training.created',
+      title: 'Lich tap moi',
+      message: `Ban co lich tap voi PT ${session.trainer.user.fullName}.`,
+      resourceType: 'training_session',
+      resourceId: session.sessionId.toString(),
+      dedupeKey: `training:${session.sessionId.toString()}:created`,
+    }
+    await this.notifications.safeNotifyUser(session.member.userId, payload)
+    await this.notifications.safeNotifyManyUsers(
+      [session.trainer.userId],
+      {
+        ...payload,
+        message: `Ban co lich tap moi voi hoi vien ${session.member.user.fullName}.`,
+      },
+      { excludeActorUserId: actorUserId },
+    )
+  }
+
+  private async notifySessionUpdated(before: SessionRow, after: SessionRow, actorUserId: bigint) {
+    const changed =
+      before.startTime.getTime() !== after.startTime.getTime() ||
+      before.endTime?.getTime() !== after.endTime?.getTime() ||
+      before.roomId !== after.roomId ||
+      before.trainerStaffId !== after.trainerStaffId
+    if (!changed) return
+
+    const payload = {
+      type: 'training.updated',
+      title: 'Lich tap da cap nhat',
+      message: `Lich tap voi PT ${after.trainer.user.fullName} da duoc cap nhat.`,
+      resourceType: 'training_session',
+      resourceId: after.sessionId.toString(),
+      dedupeKey: `training:${after.sessionId.toString()}:updated:${Date.now()}`,
+    }
+    await this.notifications.safeNotifyManyUsers(
+      [after.member.userId, before.trainer.userId, after.trainer.userId],
+      payload,
+      { excludeActorUserId: actorUserId },
+    )
+  }
+
+  private async notifySessionCancelled(session: SessionRow, actorUserId: bigint) {
+    await this.notifications.safeNotifyManyUsers(
+      [session.member.userId, session.trainer.userId],
+      {
+        type: 'training.cancelled',
+        title: 'Lich tap da huy',
+        message: `Lich tap voi PT ${session.trainer.user.fullName} da duoc huy.`,
+        resourceType: 'training_session',
+        resourceId: session.sessionId.toString(),
+        dedupeKey: `training:${session.sessionId.toString()}:cancelled`,
+      },
+      { excludeActorUserId: actorUserId },
+    )
   }
 
   private async resolveCallerMemberId(caller: Caller): Promise<bigint | null> {

@@ -16,6 +16,25 @@ CREATE TABLE public.users (
   CONSTRAINT users_pkey PRIMARY KEY (user_id),
   CONSTRAINT users_avatar_file_id_fkey FOREIGN KEY (avatar_file_id) REFERENCES public.files(file_id)
 );
+CREATE TABLE public.notifications (
+  notification_id bigint GENERATED ALWAYS AS IDENTITY NOT NULL,
+  recipient_user_id bigint NOT NULL,
+  type character varying(80) NOT NULL,
+  title character varying(160) NOT NULL,
+  message text NOT NULL,
+  resource_type character varying(80),
+  resource_id character varying(80),
+  metadata jsonb,
+  dedupe_key character varying(180) UNIQUE,
+  read_at timestamp(6) without time zone,
+  created_at timestamp(6) without time zone NOT NULL DEFAULT now(),
+  CONSTRAINT notifications_pkey PRIMARY KEY (notification_id),
+  CONSTRAINT notifications_recipient_user_id_fkey FOREIGN KEY (recipient_user_id) REFERENCES public.users(user_id) ON DELETE CASCADE
+);
+CREATE INDEX notifications_recipient_user_id_read_at_created_at_idx
+  ON public.notifications (recipient_user_id, read_at, created_at DESC);
+CREATE INDEX notifications_recipient_user_id_notification_id_idx
+  ON public.notifications (recipient_user_id, notification_id DESC);
 CREATE TABLE public.members (
   member_id bigint GENERATED ALWAYS AS IDENTITY NOT NULL,
   user_id bigint NOT NULL UNIQUE,
