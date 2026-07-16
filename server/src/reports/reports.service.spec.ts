@@ -1,4 +1,4 @@
-import { BadRequestException, InternalServerErrorException } from '@nestjs/common'
+import { BadRequestException, InternalServerErrorException, NotFoundException } from '@nestjs/common'
 import { Prisma } from '@prisma/client'
 import { ReportsService } from './reports.service'
 
@@ -13,8 +13,11 @@ const TO = '2024-01-31'
 const mockPrisma = {
   payment: { findMany: jest.fn() },
   member: { findMany: jest.fn() },
-  subscription: { findMany: jest.fn(), findFirst: jest.fn() },
-  staff: { findMany: jest.fn() },
+  subscription: { findMany: jest.fn(), findFirst: jest.fn(), groupBy: jest.fn() },
+  package: { findMany: jest.fn() },
+  staff: { findMany: jest.fn(), findFirst: jest.fn() },
+  staffSchedule: { findMany: jest.fn() },
+  staffAttendanceLog: { findMany: jest.fn() },
   trainingSession: { count: jest.fn() },
   feedback: { findMany: jest.fn() },
 }
@@ -235,6 +238,194 @@ describe('ReportsService', () => {
       mockPrisma.staff.findMany.mockRejectedValue(new Error('DB down'))
 
       await expect(service.staffPerformance(FROM, TO)).rejects.toThrow(InternalServerErrorException)
+    })
+  })
+
+  // -------------------------------------------------------------------------
+  // employeePerformance
+  // -------------------------------------------------------------------------
+
+  describe('employeePerformance', () => {
+    it('summarizes employee attendance and feedback, then sorts by performance', async () => {
+      mockPrisma.staff.findMany.mockResolvedValue([
+        {
+          staffId: 2n,
+          staffCode: 'EMP-002',
+          position: 'receptionist',
+          user: { fullName: 'Employee B' },
+        },
+        {
+          staffId: 1n,
+          staffCode: 'EMP-001',
+          position: 'cashier',
+          user: { fullName: 'Employee A' },
+        },
+      ])
+      mockPrisma.staffSchedule.findMany
+        .mockResolvedValueOnce([])
+        .mockResolvedValueOnce([{ shift: 'morning' }])
+      mockPrisma.staffAttendanceLog.findMany
+        .mockResolvedValueOnce([])
+        .mockResolvedValueOnce([
+          {
+            checkIn: new Date('2024-01-10T07:00:00+07:00'),
+            checkOut: new Date('2024-01-10T12:00:00+07:00'),
+          },
+        ])
+      mockPrisma.feedback.findMany
+        .mockResolvedValueOnce([])
+        .mockResolvedValueOnce([{ severity: 'high' }, { severity: 'medium' }])
+
+      const result = await service.employeePerformance(FROM, TO)
+
+      expect(mockPrisma.staff.findMany).toHaveBeenCalledWith({
+        where: { deletedAt: null, NOT: { position: 'trainer' } },
+        include: { user: true },
+      })
+      expect(result.data[0]).toMatchObject({
+        staffId: '1',
+        staffCode: 'EMP-001',
+        fullName: 'Employee A',
+        position: 'cashier',
+        shiftsWorked: 1,
+        avgFeedbackSeverityScore: 2.5,
+        performancePercent: 100,
+        actualMinutes: 300,
+        expectedMinutes: 300,
+      })
+      expect(result.data[1]).toMatchObject({
+        staffId: '2',
+        avgFeedbackSeverityScore: null,
+        performancePercent: 0,
+      })
+    })
+
+    it('throws InternalServerErrorException on DB error', async () => {
+      mockPrisma.staff.findMany.mockRejectedValue(new Error('DB down'))
+
+      await expect(service.employeePerformance(FROM, TO)).rejects.toThrow(
+        InternalServerErrorException,
+      )
+    })
+  })
+
+  // -------------------------------------------------------------------------
+  // employeePerformanceDetail
+  // -------------------------------------------------------------------------
+
+  describe('employeePerformanceDetail', () => {
+    it('throws BadRequestException when staffId is not numeric', async () => {
+      await expect(service.employeePerformanceDetail('abc', FROM, TO)).rejects.toThrow(
+        BadRequestException,
+      )
+    })
+
+    it('throws NotFoundException when staff does not exist', async () => {
+      mockPrisma.staff.findFirst.mockResolvedValue(null)
+
+      await expect(service.employeePerformanceDetail('1', FROM, TO)).rejects.toThrow(
+        NotFoundException,
+      )
+    })
+
+    it('returns staff attendance logs and schedules', async () => {
+      mockPrisma.staff.findFirst.mockResolvedValue({
+        staffId: 1n,
+        staffCode: 'EMP-001',
+        position: 'cashier',
+        user: { fullName: 'Employee A' },
+      })
+      mockPrisma.staffSchedule.findMany.mockResolvedValue([
+        {
+          scheduleId: 10n,
+          shift: 'morning',
+          workDate: new Date('2024-01-10T00:00:00+07:00'),
+        },
+      ])
+      mockPrisma.staffAttendanceLog.findMany.mockResolvedValue([
+        {
+          logId: 20n,
+          checkIn: new Date('2024-01-10T07:00:00+07:00'),
+          checkOut: new Date('2024-01-10T11:30:00+07:00'),
+        },
+      ])
+
+      const result = await service.employeePerformanceDetail('1', FROM, TO)
+
+      expect(result.data).toMatchObject({
+        staffId: '1',
+        staffCode: 'EMP-001',
+        fullName: 'Employee A',
+        position: 'cashier',
+        attendanceLogs: [
+          {
+            logId: '20',
+            date: '2024-01-10',
+            durationMinutes: 270,
+          },
+        ],
+        schedules: [
+          {
+            scheduleId: '10',
+            shift: 'morning',
+            workDate: '2024-01-10',
+          },
+        ],
+      })
+    })
+  })
+
+  // -------------------------------------------------------------------------
+  // topPackages
+  // -------------------------------------------------------------------------
+
+  describe('topPackages', () => {
+    it('returns an empty list when there are no subscriptions', async () => {
+      mockPrisma.subscription.groupBy.mockResolvedValue([])
+
+      const result = await service.topPackages(FROM, TO)
+
+      expect(result).toEqual({ data: [], meta: { from: FROM, to: TO } })
+    })
+
+    it('maps grouped subscriptions to package details', async () => {
+      mockPrisma.subscription.groupBy.mockResolvedValue([
+        { packageId: 1n, _count: { subscriptionId: 3 } },
+        { packageId: 2n, _count: { subscriptionId: 1 } },
+      ])
+      mockPrisma.package.findMany.mockResolvedValue([
+        {
+          packageId: 1n,
+          name: 'Gold',
+          price: new Prisma.Decimal('1200000'),
+          durationDays: 30,
+        },
+      ])
+
+      const result = await service.topPackages(FROM, TO)
+
+      expect(result.data).toEqual([
+        {
+          packageId: '1',
+          name: 'Gold',
+          price: '1200000',
+          durationDays: 30,
+          count: 3,
+        },
+        {
+          packageId: '2',
+          name: '—',
+          price: '0',
+          durationDays: 0,
+          count: 1,
+        },
+      ])
+    })
+
+    it('throws InternalServerErrorException on DB error', async () => {
+      mockPrisma.subscription.groupBy.mockRejectedValue(new Error('DB down'))
+
+      await expect(service.topPackages(FROM, TO)).rejects.toThrow(InternalServerErrorException)
     })
   })
 })
