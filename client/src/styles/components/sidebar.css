@@ -143,6 +143,21 @@
     border-color: var(--rogym-teal);
   }
 
+  .rogym-topbar__notification {
+    display: grid;
+    width: 34px;
+    height: 34px;
+    min-width: 34px;
+    min-height: 34px;
+    place-items: center;
+    flex-shrink: 0;
+    padding: 0;
+  }
+
+  .rogym-topbar__notification svg {
+    display: block;
+  }
+
   .rogym-dropdown-item {
     --rogym-button-sweep: rgba(255, 255, 255, 0.07);
     display: flex;
