@@ -538,7 +538,8 @@
       "statusLabel": {
         "scheduled": "スケジュール済み",
         "in_progress": "進行中",
-        "completed": "完了"
+        "completed": "完了",
+        "cancelled": "キャンセル済み"
       },
       "legendScheduled": "スケジュール済み",
       "legendCompleted": "完了",

@@ -1,6 +1,7 @@
 import { memo, useCallback, useEffect, useMemo, useState } from 'react'
 import type { TFunction } from 'i18next'
 import { useTranslation } from 'react-i18next'
+import { useSearchParams } from 'react-router-dom'
 import {
   Calendar,
   CalendarX,
@@ -73,6 +74,11 @@ function dateKey(iso: string) {
 function todayKey() {
   const d = new Date()
   return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`
+}
+
+function getDeepLinkSessionId(searchParams: URLSearchParams) {
+  const value = searchParams.get('sessionId')
+  return value && /^[1-9]\d*$/.test(value) ? value : null
 }
 
 function daysUntil(iso: string, t: TFunction<'member'>) {
@@ -637,6 +643,8 @@ function SessionDetailModal({
 
 export default function WorkoutSchedulePage() {
   const { t } = useTranslation('member')
+  const [searchParams, setSearchParams] = useSearchParams()
+  const deepLinkSessionId = getDeepLinkSessionId(searchParams)
   const [upcoming, setUpcoming] = useState<TrainingSession[]>([])
   const [past, setPast] = useState<TrainingSession[]>([])
   const [all, setAll] = useState<TrainingSession[]>([])
@@ -672,6 +680,12 @@ export default function WorkoutSchedulePage() {
   }, [loadSessions])
 
   useEffect(() => {
+    if (deepLinkSessionId && selectedSessionId !== deepLinkSessionId) {
+      setSelectedSessionId(deepLinkSessionId)
+    }
+  }, [deepLinkSessionId, selectedSessionId])
+
+  useEffect(() => {
     if (!selectedSessionId) {
       setSessionDetail(null)
       setDetailError(null)
@@ -702,6 +716,15 @@ export default function WorkoutSchedulePage() {
   const handleSelectSession = useCallback((session: TrainingSession) => {
     setSelectedSessionId(session.sessionId)
   }, [])
+
+  const handleCloseSession = useCallback(() => {
+    setSelectedSessionId(null)
+    if (!searchParams.has('sessionId')) return
+
+    const next = new URLSearchParams(searchParams)
+    next.delete('sessionId')
+    setSearchParams(next, { replace: true })
+  }, [searchParams, setSearchParams])
 
   if (loading)
     return (
@@ -735,7 +758,7 @@ export default function WorkoutSchedulePage() {
           session={sessionDetail}
           loading={detailLoading}
           error={detailError}
-          onClose={() => setSelectedSessionId(null)}
+          onClose={handleCloseSession}
         />
       )}
     </MemberPage>

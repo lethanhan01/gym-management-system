@@ -31,13 +31,15 @@ const mockPrisma = {
   },
 }
 
-const env: Record<string, unknown> = {
+const defaultEnv: Record<string, unknown> = {
   LINE_MESSAGING_ENABLED: 'true',
   LINE_CHANNEL_SECRET: 'secret',
   LINE_CHANNEL_ACCESS_TOKEN: 'token',
   LINE_LIFF_URL: 'https://liff.line.me/test-liff',
   LINE_REMINDER_MINUTES: 30,
 }
+
+const env: Record<string, unknown> = { ...defaultEnv }
 
 const mockConfig = {
   get: jest.fn((key: string) => env[key]),
@@ -52,6 +54,8 @@ describe('LineMessagingService', () => {
   let mockFetch: jest.Mock
 
   beforeEach(() => {
+    for (const key of Object.keys(env)) delete env[key]
+    Object.assign(env, defaultEnv)
     service = new LineMessagingService(mockPrisma as any, mockConfig as any, mockNotifications as any)
     mockFetch = jest.fn().mockResolvedValue({ ok: true, text: jest.fn().mockResolvedValue('') })
     global.fetch = mockFetch as any
@@ -89,6 +93,22 @@ describe('LineMessagingService', () => {
         body: expect.stringContaining('https://liff.line.me/test-liff?redirect=%2Fmember'),
       })
     )
+    expect(JSON.parse(mockFetch.mock.calls[0][1].body)).toEqual(
+      expect.objectContaining({
+        messages: [
+          expect.objectContaining({
+            text: 'Chào mừng bạn đến với RoGym. Bấm nút bên dưới để mở ứng dụng hội viên.',
+            quickReply: expect.objectContaining({
+              items: [
+                expect.objectContaining({
+                  action: expect.objectContaining({ label: 'Mở ứng dụng' }),
+                }),
+              ],
+            }),
+          }),
+        ],
+      })
+    )
   })
 
   it('unlinks the matching app user when LINE sends an unfollow event', async () => {
@@ -120,7 +140,28 @@ describe('LineMessagingService', () => {
     await expect(service.safePushTrainingSessionEvent('created', 1n)).resolves.toBe(true)
     expect(mockFetch).toHaveBeenCalledWith(
       'https://api.line.me/v2/bot/message/push',
-      expect.objectContaining({ body: expect.stringContaining('%2Fmember%2Fworkout%2Fsession%2F1') })
+      expect.objectContaining({
+        body: expect.stringContaining(
+          'redirect=%2Fmember%2Fworkout%2Fsessions%3FsessionId%3D1'
+        ),
+      })
+    )
+    const body = JSON.parse(mockFetch.mock.calls[0][1].body)
+    expect(body.messages[0].text).toContain('Bạn đã đặt lịch tập thành công.')
+    expect(body.messages[0].quickReply.items[0].action.label).toBe('Xem chi tiết')
+  })
+
+  it('uses Japanese training templates when LINE_MESSAGE_LOCALE is ja', async () => {
+    env.LINE_MESSAGE_LOCALE = 'ja'
+    mockPrisma.trainingSession.findFirst.mockResolvedValue(makeSession())
+
+    await expect(service.safePushTrainingSessionEvent('reminder', 1n)).resolves.toBe(true)
+
+    const body = JSON.parse(mockFetch.mock.calls[0][1].body)
+    expect(body.messages[0].text).toContain('トレーニング開始まであと30分です。')
+    expect(body.messages[0].quickReply.items[0].action.label).toBe('詳細を見る')
+    expect(body.messages[0].quickReply.items[0].action.uri).toContain(
+      'redirect=%2Fmember%2Fworkout%2Fsessions%3FsessionId%3D1'
     )
   })
 

@@ -398,7 +398,7 @@ const SessionsWidget = memo(function SessionsWidget({
             <div
               key={s.sessionId}
               className="flex items-center justify-between py-2.5 px-3 rounded-xl bg-white/[0.04] cursor-pointer hover:bg-white/[0.08] transition-colors"
-              onClick={() => navigate(`/member/workout/session/${s.sessionId}`)}
+              onClick={() => navigate(`/member/workout/sessions?sessionId=${s.sessionId}`)}
             >
               <div className="flex items-center gap-2.5">
                 <Calendar size={14} color={T} />

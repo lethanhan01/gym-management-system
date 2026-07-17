@@ -1,4 +1,4 @@
-import { IsEnum, IsNumber, IsOptional, IsString, validateSync } from 'class-validator'
+import { IsEnum, IsIn, IsNumber, IsOptional, IsString, validateSync } from 'class-validator'
 import { plainToInstance } from 'class-transformer'
 
 enum NodeEnv {
@@ -58,6 +58,7 @@ export class EnvironmentVariables {
   @IsOptional() @IsString() LINE_LIFF_URL?: string
   @IsOptional() @IsNumber() LINE_REMINDER_MINUTES: number = 30
   @IsOptional() @IsString() LINE_MESSAGING_ENABLED: string = 'false'
+  @IsOptional() @IsIn(['vi', 'ja']) LINE_MESSAGE_LOCALE: 'vi' | 'ja' = 'vi'
 }
 
 export function validateConfig(raw: Record<string, unknown>): EnvironmentVariables {
@@ -71,5 +72,42 @@ export function validateConfig(raw: Record<string, unknown>): EnvironmentVariabl
       .join('\n')
     throw new Error(`Invalid environment configuration:\n${detail}`)
   }
+  validateLineMessagingConfig(config)
   return config
+}
+
+function validateLineMessagingConfig(config: EnvironmentVariables) {
+  if (config.LINE_MESSAGING_ENABLED !== 'true') return
+
+  const missing = [
+    ['LINE_CHANNEL_ACCESS_TOKEN', config.LINE_CHANNEL_ACCESS_TOKEN],
+    ['LINE_CHANNEL_SECRET', config.LINE_CHANNEL_SECRET],
+    ['LINE_LIFF_URL', config.LINE_LIFF_URL],
+  ].filter(([, value]) => typeof value !== 'string' || value.trim() === '')
+
+  if (missing.length > 0) {
+    throw new Error(
+      `Invalid environment configuration:\n${missing
+        .map(([key]) => `  - ${key}: required when LINE_MESSAGING_ENABLED=true`)
+        .join('\n')}`
+    )
+  }
+
+  let url: URL
+  try {
+    url = new URL(config.LINE_LIFF_URL!)
+  } catch {
+    throw new Error('Invalid environment configuration:\n  - LINE_LIFF_URL: must be a valid URL')
+  }
+
+  if (url.hostname === 'developers.line.biz') {
+    throw new Error(
+      'Invalid environment configuration:\n  - LINE_LIFF_URL: must not be a LINE Developers Console URL'
+    )
+  }
+  if (url.protocol !== 'https:' || url.hostname !== 'liff.line.me') {
+    throw new Error(
+      'Invalid environment configuration:\n  - LINE_LIFF_URL: must use https://liff.line.me/<LIFF_ID>'
+    )
+  }
 }
