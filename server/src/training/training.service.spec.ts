@@ -406,6 +406,32 @@ describe('TrainingService', () => {
         expect.objectContaining({ action: 'training.cancel' })
       )
     })
+
+    it('notifies member and trainer with role-specific cancellation messages', async () => {
+      const session = makeSession()
+      mockPrisma.trainingSession.findFirst.mockResolvedValue(session)
+      mockPrisma.trainingSession.update.mockResolvedValue({ ...session, status: 'cancelled' })
+      const caller = makeCaller()
+
+      await service.cancelSession(1n, {} as any, caller)
+
+      expect(mockNotifications.safeNotifyManyUsers).toHaveBeenCalledWith(
+        [100n],
+        expect.objectContaining({
+          type: 'training.cancelled',
+          message: 'Lich tap voi PT Test Trainer da duoc huy.',
+        }),
+        { excludeActorUserId: caller.userId }
+      )
+      expect(mockNotifications.safeNotifyManyUsers).toHaveBeenCalledWith(
+        [200n],
+        expect.objectContaining({
+          type: 'training.cancelled',
+          message: 'Lich tap voi hoi vien Test Member da duoc huy.',
+        }),
+        { excludeActorUserId: caller.userId }
+      )
+    })
   })
 
   // -------------------------------------------------------------------------
@@ -806,6 +832,34 @@ describe('TrainingService', () => {
         expect.objectContaining({ action: 'training.update' })
       )
       expect(result.data.sessionId).toBe('1')
+    })
+
+    it('notifies member and trainer with role-specific update messages', async () => {
+      const session = makeSession({ status: 'scheduled' })
+      const updated = makeSession({ status: 'scheduled', startTime: futureTime(90), endTime: futureTime(150) })
+      mockPrisma.trainingSession.findFirst.mockResolvedValue(session)
+      mockPrisma.trainingSession.count.mockResolvedValue(0)
+      mockPrisma.trainingSession.update.mockResolvedValue(updated)
+      const caller = makeCaller()
+
+      await service.updateSession(1n, {} as any, caller)
+
+      expect(mockNotifications.safeNotifyManyUsers).toHaveBeenCalledWith(
+        [100n],
+        expect.objectContaining({
+          type: 'training.updated',
+          message: 'Lich tap voi PT Test Trainer da duoc cap nhat.',
+        }),
+        { excludeActorUserId: caller.userId }
+      )
+      expect(mockNotifications.safeNotifyManyUsers).toHaveBeenCalledWith(
+        [200n, 200n],
+        expect.objectContaining({
+          type: 'training.updated',
+          message: 'Lich tap voi hoi vien Test Member da duoc cap nhat.',
+        }),
+        { excludeActorUserId: caller.userId }
+      )
     })
 
     it('triggers checkOverlap when roomId is updated — throws ConflictException on overlap', async () => {

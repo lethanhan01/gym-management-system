@@ -32,13 +32,21 @@ function mergeNotifications(current: NotificationItem[], incoming: NotificationI
     .slice(0, 20)
 }
 
-function getEffectiveRole(role: Role | undefined, pathname: string): Role | undefined {
-  if (role === 'owner' && pathname.startsWith('/staff')) return 'staff'
-  return role
+function getEffectiveRole(roles: Role[] | undefined, pathname: string): Role | undefined {
+  if (!roles?.length) return undefined
+  if (pathname.startsWith('/owner') && roles.includes('owner')) return 'owner'
+  if (pathname.startsWith('/staff') && (roles.includes('staff') || roles.includes('owner'))) return 'staff'
+  if (pathname.startsWith('/trainer') && roles.includes('trainer')) return 'trainer'
+  if (pathname.startsWith('/member') && roles.includes('member')) return 'member'
+  if (roles.includes('owner')) return 'owner'
+  if (roles.includes('staff')) return 'staff'
+  if (roles.includes('trainer')) return 'trainer'
+  if (roles.includes('member')) return 'member'
+  return roles[0]
 }
 
-function getNotificationPath(item: NotificationItem, role: Role | undefined, pathname: string) {
-  const effectiveRole = getEffectiveRole(role, pathname)
+function getNotificationPath(item: NotificationItem, roles: Role[] | undefined, pathname: string) {
+  const effectiveRole = getEffectiveRole(roles, pathname)
 
   switch (item.resourceType) {
     case 'training_session':
@@ -61,12 +69,12 @@ function getNotificationPath(item: NotificationItem, role: Role | undefined, pat
       if (effectiveRole === 'member') return '/member/attendance'
       if (effectiveRole === 'trainer') return '/trainer/students'
       if (effectiveRole === 'staff') return '/staff/attendance'
-      if (effectiveRole === 'owner') return '/owner'
+      if (effectiveRole === 'owner') return '/owner/reports/employee-performance'
       return null
     case 'feedback':
       if (effectiveRole === 'member') return '/member/feedback'
       if (effectiveRole === 'staff') return '/staff/feedback'
-      if (effectiveRole === 'owner') return '/staff/feedback'
+      if (effectiveRole === 'owner') return '/owner/feedback'
       return null
     default:
       return null
@@ -88,7 +96,7 @@ export default function NotificationBell() {
   const user = useAuthStore((state) => state.user)
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
 
-  const role = user?.roles[0]
+  const roles = user?.roles
   const countLabel = useMemo(() => (unreadCount > 99 ? '99+' : String(unreadCount)), [unreadCount])
 
   useEffect(() => {
@@ -215,7 +223,7 @@ export default function NotificationBell() {
     }
 
     setOpen(false)
-    const path = getNotificationPath(item, role, pathname)
+    const path = getNotificationPath(item, roles, pathname)
     if (path) navigate(path)
   }
 

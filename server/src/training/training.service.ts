@@ -804,7 +804,7 @@ export class TrainingService {
       before.trainerStaffId !== after.trainerStaffId
     if (!changed) return
 
-    const payload = {
+    const memberPayload = {
       type: 'training.updated',
       title: 'Lich tap da cap nhat',
       message: `Lich tap voi PT ${after.trainer.user.fullName} da duoc cap nhat.`,
@@ -813,22 +813,39 @@ export class TrainingService {
       dedupeKey: `training:${after.sessionId.toString()}:updated:${Date.now()}`,
     }
     await this.notifications.safeNotifyManyUsers(
-      [after.member.userId, before.trainer.userId, after.trainer.userId],
-      payload,
+      [after.member.userId],
+      memberPayload,
+      { excludeActorUserId: actorUserId },
+    )
+    await this.notifications.safeNotifyManyUsers(
+      [before.trainer.userId, after.trainer.userId],
+      {
+        ...memberPayload,
+        message: `Lich tap voi hoi vien ${after.member.user.fullName} da duoc cap nhat.`,
+      },
       { excludeActorUserId: actorUserId },
     )
   }
 
   private async notifySessionCancelled(session: SessionRow, actorUserId: bigint) {
+    const memberPayload = {
+      type: 'training.cancelled',
+      title: 'Lich tap da huy',
+      message: `Lich tap voi PT ${session.trainer.user.fullName} da duoc huy.`,
+      resourceType: 'training_session',
+      resourceId: session.sessionId.toString(),
+      dedupeKey: `training:${session.sessionId.toString()}:cancelled`,
+    }
     await this.notifications.safeNotifyManyUsers(
-      [session.member.userId, session.trainer.userId],
+      [session.member.userId],
+      memberPayload,
+      { excludeActorUserId: actorUserId },
+    )
+    await this.notifications.safeNotifyManyUsers(
+      [session.trainer.userId],
       {
-        type: 'training.cancelled',
-        title: 'Lich tap da huy',
-        message: `Lich tap voi PT ${session.trainer.user.fullName} da duoc huy.`,
-        resourceType: 'training_session',
-        resourceId: session.sessionId.toString(),
-        dedupeKey: `training:${session.sessionId.toString()}:cancelled`,
+        ...memberPayload,
+        message: `Lich tap voi hoi vien ${session.member.user.fullName} da duoc huy.`,
       },
       { excludeActorUserId: actorUserId },
     )
