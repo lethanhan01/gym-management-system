@@ -79,10 +79,11 @@ export function validateConfig(raw: Record<string, unknown>): EnvironmentVariabl
 function validateLineMessagingConfig(config: EnvironmentVariables) {
   if (config.LINE_MESSAGING_ENABLED !== 'true') return
 
+  const liffUrl = config.LINE_LIFF_URL?.trim() ?? ''
   const missing = [
     ['LINE_CHANNEL_ACCESS_TOKEN', config.LINE_CHANNEL_ACCESS_TOKEN],
     ['LINE_CHANNEL_SECRET', config.LINE_CHANNEL_SECRET],
-    ['LINE_LIFF_URL', config.LINE_LIFF_URL],
+    ['LINE_LIFF_URL', liffUrl],
   ].filter(([, value]) => typeof value !== 'string' || value.trim() === '')
 
   if (missing.length > 0) {
@@ -95,7 +96,7 @@ function validateLineMessagingConfig(config: EnvironmentVariables) {
 
   let url: URL
   try {
-    url = new URL(config.LINE_LIFF_URL!)
+    url = new URL(liffUrl)
   } catch {
     throw new Error('Invalid environment configuration:\n  - LINE_LIFF_URL: must be a valid URL')
   }
@@ -105,9 +106,30 @@ function validateLineMessagingConfig(config: EnvironmentVariables) {
       'Invalid environment configuration:\n  - LINE_LIFF_URL: must not be a LINE Developers Console URL'
     )
   }
-  if (url.protocol !== 'https:' || url.hostname !== 'liff.line.me') {
+
+  const liffPathSegments = url.pathname.split('/').filter(Boolean)
+  let liffId = ''
+  try {
+    liffId = liffPathSegments[0] ? decodeURIComponent(liffPathSegments[0]).trim() : ''
+  } catch {
+    liffId = ''
+  }
+  const hasSingleLiffIdPath =
+    liffPathSegments.length === 1 && url.pathname === `/${liffPathSegments[0]}`
+  const hasConcreteLiffId = liffId !== '' && liffId !== 'LIFF_ID' && !/[<>\s]/.test(liffId)
+  const hasNoQueryOrHash = url.search === '' && url.hash === ''
+
+  if (
+    url.protocol !== 'https:' ||
+    url.hostname !== 'liff.line.me' ||
+    !hasSingleLiffIdPath ||
+    !hasConcreteLiffId ||
+    !hasNoQueryOrHash
+  ) {
     throw new Error(
-      'Invalid environment configuration:\n  - LINE_LIFF_URL: must use https://liff.line.me/<LIFF_ID>'
+      'Invalid environment configuration:\n  - LINE_LIFF_URL: must use LINE_LIFF_URL=https://liff.line.me/<LIFF_ID>'
     )
   }
+
+  config.LINE_LIFF_URL = liffUrl
 }

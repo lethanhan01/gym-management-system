@@ -30,6 +30,18 @@ describe('validateConfig', () => {
     )
   })
 
+  it('accepts the canonical LINE LIFF URL when messaging is enabled', () => {
+    const config = validateConfig({
+      ...baseEnv,
+      LINE_MESSAGING_ENABLED: 'true',
+      LINE_CHANNEL_ACCESS_TOKEN: 'token',
+      LINE_CHANNEL_SECRET: 'secret',
+      LINE_LIFF_URL: ' https://liff.line.me/test-liff ',
+    })
+
+    expect(config.LINE_LIFF_URL).toBe('https://liff.line.me/test-liff')
+  })
+
   it('rejects LINE Developers Console URLs as LINE_LIFF_URL', () => {
     expect(() =>
       validateConfig({
@@ -42,15 +54,24 @@ describe('validateConfig', () => {
     ).toThrow(/must not be a LINE Developers Console URL/)
   })
 
-  it('requires a liff.line.me LIFF URL when LINE messaging is enabled', () => {
+  it.each([
+    ['non-LIFF host', 'https://gym.example.com/liff'],
+    ['insecure LIFF URL', 'http://liff.line.me/test-liff'],
+    ['missing LIFF ID', 'https://liff.line.me/'],
+    ['placeholder LIFF ID', 'https://liff.line.me/<LIFF_ID>'],
+    ['space in LIFF ID', 'https://liff.line.me/test%20liff'],
+    ['query string', 'https://liff.line.me/test-liff?x=1'],
+    ['hash fragment', 'https://liff.line.me/test-liff#callback'],
+    ['extra path segment', 'https://liff.line.me/test-liff/callback'],
+  ])('rejects %s as LINE_LIFF_URL', (_name, LINE_LIFF_URL) => {
     expect(() =>
       validateConfig({
         ...baseEnv,
         LINE_MESSAGING_ENABLED: 'true',
         LINE_CHANNEL_ACCESS_TOKEN: 'token',
         LINE_CHANNEL_SECRET: 'secret',
-        LINE_LIFF_URL: 'https://gym.example.com/liff',
+        LINE_LIFF_URL,
       })
-    ).toThrow(/https:\/\/liff\.line\.me\/<LIFF_ID>/)
+    ).toThrow(/LINE_LIFF_URL=https:\/\/liff\.line\.me\/<LIFF_ID>/)
   })
 })
