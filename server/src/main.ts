@@ -3,6 +3,7 @@ import { ValidationPipe } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { NestFactory } from '@nestjs/core'
 import type { NestExpressApplication } from '@nestjs/platform-express'
+import express from 'express'
 import helmet from 'helmet'
 import { AppModule } from './app.module'
 import { HttpExceptionFilter } from './common/filters/http-exception.filter'
@@ -17,11 +18,15 @@ import { HttpExceptionFilter } from './common/filters/http-exception.filter'
 
 async function bootstrap(): Promise<void> {
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
+    bodyParser: false,
     bufferLogs: true,
   })
 
   const config = app.get(ConfigService)
 
+  app.use('/api/v1/line/webhook', express.raw({ type: 'application/json' }))
+  app.use(express.json())
+  app.use(express.urlencoded({ extended: true }))
   app.use(helmet())
   app.enableCors({
     origin: config.get<string>('CLIENT_URL') ?? 'http://localhost:5173',

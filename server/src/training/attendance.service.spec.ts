@@ -178,6 +178,38 @@ describe('AttendanceService', () => {
       )
       expect(result.data.attendanceId).toBe('1')
     })
+
+    it('notifies member and primary trainer with role-specific check-in messages', async () => {
+      mockPrisma.member.findFirst.mockResolvedValue(makeMember({ primaryTrainerId: 5n }))
+      mockPrisma.subscription.findFirst.mockResolvedValue(makeSubscription())
+      mockPrisma.attendanceLog.findFirst.mockResolvedValue(null)
+      mockPrisma.attendanceLog.create.mockResolvedValue(makeAttendanceRow({
+        member: {
+          memberId: 10n,
+          memberCode: 'MEM-001',
+          userId: 100n,
+          primaryTrainerId: 5n,
+          user: { fullName: 'Test Member' },
+        },
+      }))
+      mockPrisma.staff.findFirst.mockResolvedValue({ userId: 200n })
+      const caller = makeCaller()
+
+      await service.manualCheckin(makeDto() as any, caller)
+
+      expect(mockNotifications.safeNotifyUser).toHaveBeenCalledWith(
+        100n,
+        expect.objectContaining({ type: 'attendance.checkin', message: 'Ban da check-in thanh cong.' })
+      )
+      expect(mockNotifications.safeNotifyUser).toHaveBeenCalledWith(
+        200n,
+        expect.objectContaining({
+          type: 'attendance.checkin',
+          message: 'Hoc vien Test Member vua check-in.',
+          metadata: { memberName: 'Test Member' },
+        })
+      )
+    })
   })
 
   // ---------------------------------------------------------------------------

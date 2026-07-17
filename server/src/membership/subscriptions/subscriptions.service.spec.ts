@@ -233,6 +233,25 @@ describe('SubscriptionsService', () => {
         })
       )
       expect(mockPrisma.member.update).not.toHaveBeenCalled()
+      expect(mockNotifications.safeNotifyUser).toHaveBeenCalledWith(
+        100n,
+        expect.objectContaining({
+          type: 'subscription.created',
+          resourceType: 'subscription',
+          resourceId: '1',
+          metadata: { packageName: 'Basic Plan' },
+        })
+      )
+      expect(mockNotifications.safeNotifyGroups).toHaveBeenCalledWith(
+        ['owner', 'staff'],
+        expect.objectContaining({
+          type: 'subscription.created.admin',
+          resourceType: 'subscription',
+          resourceId: '1',
+          metadata: { packageName: 'Basic Plan' },
+        }),
+        { excludeActorUserId: caller.userId }
+      )
     })
 
     it('updates member.primaryTrainerId in same transaction when PT package', async () => {
@@ -315,6 +334,15 @@ describe('SubscriptionsService', () => {
 
       const newEndDate: Date = mockPrisma.subscription.update.mock.calls[0][0].data.endDate
       expect(newEndDate.getTime()).toBeGreaterThan(new Date('2024-01-31').getTime())
+      expect(mockNotifications.safeNotifyUser).toHaveBeenCalledWith(
+        100n,
+        expect.objectContaining({
+          type: 'subscription.renewed',
+          resourceType: 'subscription',
+          resourceId: '1',
+          metadata: { packageName: 'Basic Plan' },
+        })
+      )
     })
   })
 
@@ -403,6 +431,15 @@ describe('SubscriptionsService', () => {
 
       expect(result.data.status).toBe('cancelled')
       expect(result.data.subscriptionId).toBe('1')
+      expect(mockNotifications.safeNotifyUser).toHaveBeenCalledWith(
+        100n,
+        expect.objectContaining({
+          type: 'subscription.cancelled',
+          resourceType: 'subscription',
+          resourceId: '1',
+          metadata: { packageName: 'Basic Plan' },
+        })
+      )
     })
 
     it('cancels pending subscription', async () => {

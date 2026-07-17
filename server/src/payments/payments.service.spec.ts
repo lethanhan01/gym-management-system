@@ -172,6 +172,11 @@ describe('PaymentsService', () => {
           type: 'payment.success',
           resourceType: 'payment',
           resourceId: '100',
+          metadata: {
+            subscriptionId: '1',
+            subscriptionActivated: true,
+            packageName: 'Basic',
+          },
           dedupeKey: 'payment:100:success',
         })
       )
@@ -181,6 +186,11 @@ describe('PaymentsService', () => {
           type: 'payment.success.admin',
           resourceType: 'payment',
           resourceId: '100',
+          metadata: {
+            subscriptionId: '1',
+            subscriptionActivated: true,
+            packageName: 'Basic',
+          },
           dedupeKey: 'payment:100:success:admin',
         }),
         { excludeActorUserId: caller.userId }

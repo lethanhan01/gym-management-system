@@ -246,6 +246,7 @@ export default function App() {
         >
           <Route path="/owner" element={<OwnerDashboardPage />} />
           <Route path="/owner/profile" element={<OwnerProfilePage />} />
+          <Route path="/owner/feedback" element={<StaffFeedbackPage />} />
           <Route path="/owner/packages" element={<OwnerPackagesPage />} />
           <Route path="/owner/users" element={<UsersOverviewPage />} />
           <Route path="/owner/staff" element={<UsersPage />} />

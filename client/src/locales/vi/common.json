@@ -117,6 +117,117 @@
     "emptyDayMessage": "Chưa có ca làm việc trong ngày này.",
     "emptyShiftMessage": "Chưa có ca"
   },
+  "notification": {
+    "ariaLabel": "Thông báo",
+    "title": "Thông báo",
+    "unread": "{{count}} chưa đọc",
+    "allRead": "Đã đọc tất cả",
+    "markAllRead": "Đánh dấu tất cả đã đọc",
+    "loadError": "Không thể tải thông báo",
+    "loading": "Đang tải",
+    "empty": "Chưa có thông báo",
+    "toastMany": "Bạn có {{count}} thông báo mới",
+    "time": {
+      "justNow": "Vừa xong",
+      "minutesAgo": "{{count}} phút trước",
+      "hoursAgo": "{{count}} giờ trước",
+      "daysAgo": "{{count}} ngày trước"
+    },
+    "templates": {
+      "training": {
+        "created": {
+          "title": "Lịch tập mới",
+          "memberMessage": "Bạn có lịch tập với PT {{trainerName}}.",
+          "trainerMessage": "Bạn có lịch tập mới với hội viên {{memberName}}."
+        },
+        "updated": {
+          "title": "Lịch tập đã cập nhật",
+          "memberMessage": "Lịch tập với PT {{trainerName}} đã được cập nhật.",
+          "trainerMessage": "Lịch tập với hội viên {{memberName}} đã được cập nhật."
+        },
+        "cancelled": {
+          "title": "Lịch tập đã hủy",
+          "memberMessage": "Lịch tập với PT {{trainerName}} đã được hủy.",
+          "trainerMessage": "Lịch tập với hội viên {{memberName}} đã được hủy."
+        },
+        "completed": {
+          "title": "Buổi tập đã hoàn thành",
+          "memberMessage": "Buổi tập với PT {{trainerName}} đã được đánh dấu hoàn thành."
+        }
+      },
+      "attendance": {
+        "checkin": {
+          "title": "Check-in thành công",
+          "memberMessage": "Bạn đã check-in thành công.",
+          "trainerMessage": "Học viên {{memberName}} vừa check-in."
+        }
+      },
+      "payment": {
+        "success": {
+          "title": "Thanh toán thành công",
+          "pendingTitle": "Đã ghi nhận thanh toán",
+          "activatedMessage": "Thanh toán thành công, gói {{packageName}} đã được kích hoạt.",
+          "pendingMessage": "Thanh toán cho gói {{packageName}} đã được ghi nhận và đang chờ kích hoạt."
+        },
+        "failed": {
+          "title": "Thanh toán thất bại",
+          "message": "Thanh toán cho gói {{packageName}} không thành công."
+        },
+        "successAdmin": {
+          "title": "Thanh toán mới",
+          "message": "Có một giao dịch thanh toán mới."
+        },
+        "failedAdmin": {
+          "title": "Thanh toán thất bại",
+          "message": "Có một giao dịch thanh toán thất bại."
+        }
+      },
+      "subscription": {
+        "created": {
+          "title": "Đã tạo yêu cầu đăng ký gói",
+          "message": "Yêu cầu đăng ký gói {{packageName}} đã được tạo và đang chờ thanh toán."
+        },
+        "createdAdmin": {
+          "title": "Đăng ký gói mới",
+          "message": "Có một yêu cầu đăng ký gói mới đang chờ xử lý."
+        },
+        "renewed": {
+          "title": "Gia hạn gói thành công",
+          "message": "Gói {{packageName}} đã được gia hạn thành công."
+        },
+        "renewedAdmin": {
+          "title": "Gói tập được gia hạn",
+          "message": "Có một gói tập vừa được gia hạn thành công."
+        },
+        "cancelled": {
+          "title": "Gói tập đã hủy",
+          "message": "Gói {{packageName}} đã được hủy."
+        },
+        "cancelledAdmin": {
+          "title": "Gói tập đã hủy",
+          "message": "Có một gói tập vừa được hủy."
+        }
+      },
+      "feedback": {
+        "created": {
+          "title": "Phản hồi mới",
+          "message": "Có một phản hồi mới từ hội viên."
+        },
+        "assigned": {
+          "title": "Bạn được giao xử lý phản hồi",
+          "message": "Một phản hồi vừa được giao cho bạn xử lý."
+        },
+        "resolved": {
+          "title": "Phản hồi đã được xử lý",
+          "message": "Phản hồi của bạn đã được xử lý."
+        },
+        "rejected": {
+          "title": "Phản hồi đã bị từ chối",
+          "message": "Phản hồi của bạn đã bị từ chối."
+        }
+      }
+    }
+  },
   "loading": "Đang tải...",
   "noData": "Không có dữ liệu",
   "ok": "Đồng ý",

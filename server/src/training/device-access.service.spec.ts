@@ -23,7 +23,7 @@ function makeBody(overrides: object = {}) {
   }
 }
 
-function makeMember() {
+function makeMember(overrides: object = {}) {
   return {
     memberId: 10n,
     userId: 100n,
@@ -31,6 +31,7 @@ function makeMember() {
     primaryTrainerId: null,
     deletedAt: null,
     user: { fullName: 'Test Member', avatarFileId: null },
+    ...overrides,
   }
 }
 
@@ -109,6 +110,31 @@ describe('DeviceAccessService', () => {
       expect(result.success).toBe(true)
       expect(result.data.deduped).toBe(false)
       expect(result.data.attendanceLogId).toBe('1')
+    })
+
+    it('notifies member and primary trainer with role-specific check-in messages', async () => {
+      const body = makeBody()
+      mockPrisma.member.findFirst.mockResolvedValue(makeMember({ primaryTrainerId: 5n }))
+      mockPrisma.subscription.findFirst.mockResolvedValue(makeSubscription())
+      mockPrisma.attendanceLog.findFirst.mockResolvedValue(null)
+      mockPrisma.trainingSession.findFirst.mockResolvedValue(null)
+      mockPrisma.attendanceLog.create.mockResolvedValue(makeAttendanceLog())
+      mockPrisma.staff.findFirst.mockResolvedValue({ userId: 200n })
+
+      await service.deviceAccessEvent(body)
+
+      expect(mockNotifications.safeNotifyUser).toHaveBeenCalledWith(
+        100n,
+        expect.objectContaining({ type: 'attendance.checkin', message: 'Ban da check-in thanh cong.' })
+      )
+      expect(mockNotifications.safeNotifyUser).toHaveBeenCalledWith(
+        200n,
+        expect.objectContaining({
+          type: 'attendance.checkin',
+          message: 'Hoc vien Test Member vua check-in.',
+          metadata: { memberName: 'Test Member' },
+        })
+      )
     })
 
     it('updates session to in_progress when matching session found', async () => {

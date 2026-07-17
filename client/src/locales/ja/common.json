@@ -117,6 +117,117 @@
     "emptyDayMessage": "この日のシフトはありません。",
     "emptyShiftMessage": "シフトなし"
   },
+  "notification": {
+    "ariaLabel": "通知",
+    "title": "通知",
+    "unread": "未読 {{count}} 件",
+    "allRead": "すべて既読",
+    "markAllRead": "すべて既読にする",
+    "loadError": "通知を読み込めません",
+    "loading": "読み込み中",
+    "empty": "通知はありません",
+    "toastMany": "{{count}} 件の新しい通知があります",
+    "time": {
+      "justNow": "たった今",
+      "minutesAgo": "{{count}} 分前",
+      "hoursAgo": "{{count}} 時間前",
+      "daysAgo": "{{count}} 日前"
+    },
+    "templates": {
+      "training": {
+        "created": {
+          "title": "新しいトレーニング予定",
+          "memberMessage": "PT {{trainerName}} とのトレーニング予定があります。",
+          "trainerMessage": "会員 {{memberName}} との新しいトレーニング予定があります。"
+        },
+        "updated": {
+          "title": "トレーニング予定が更新されました",
+          "memberMessage": "PT {{trainerName}} とのトレーニング予定が更新されました。",
+          "trainerMessage": "会員 {{memberName}} とのトレーニング予定が更新されました。"
+        },
+        "cancelled": {
+          "title": "トレーニング予定がキャンセルされました",
+          "memberMessage": "PT {{trainerName}} とのトレーニング予定がキャンセルされました。",
+          "trainerMessage": "会員 {{memberName}} とのトレーニング予定がキャンセルされました。"
+        },
+        "completed": {
+          "title": "トレーニングが完了しました",
+          "memberMessage": "PT {{trainerName}} とのトレーニングが完了として記録されました。"
+        }
+      },
+      "attendance": {
+        "checkin": {
+          "title": "チェックイン完了",
+          "memberMessage": "チェックインが完了しました。",
+          "trainerMessage": "会員 {{memberName}} がチェックインしました。"
+        }
+      },
+      "payment": {
+        "success": {
+          "title": "支払い完了",
+          "pendingTitle": "支払いを受け付けました",
+          "activatedMessage": "支払いが完了し、プラン {{packageName}} が有効化されました。",
+          "pendingMessage": "プラン {{packageName}} の支払いを受け付け、有効化待ちです。"
+        },
+        "failed": {
+          "title": "支払い失敗",
+          "message": "プラン {{packageName}} の支払いに失敗しました。"
+        },
+        "successAdmin": {
+          "title": "新しい支払い",
+          "message": "新しい支払い取引があります。"
+        },
+        "failedAdmin": {
+          "title": "支払い失敗",
+          "message": "失敗した支払い取引があります。"
+        }
+      },
+      "subscription": {
+        "created": {
+          "title": "プラン登録リクエストを作成しました",
+          "message": "プラン {{packageName}} の登録リクエストを作成し、支払い待ちです。"
+        },
+        "createdAdmin": {
+          "title": "新しいプラン登録",
+          "message": "処理待ちの新しいプラン登録リクエストがあります。"
+        },
+        "renewed": {
+          "title": "プラン更新完了",
+          "message": "プラン {{packageName}} が正常に更新されました。"
+        },
+        "renewedAdmin": {
+          "title": "プランが更新されました",
+          "message": "プランが正常に更新されました。"
+        },
+        "cancelled": {
+          "title": "プランがキャンセルされました",
+          "message": "プラン {{packageName}} がキャンセルされました。"
+        },
+        "cancelledAdmin": {
+          "title": "プランがキャンセルされました",
+          "message": "プランがキャンセルされました。"
+        }
+      },
+      "feedback": {
+        "created": {
+          "title": "新しいフィードバック",
+          "message": "会員から新しいフィードバックがあります。"
+        },
+        "assigned": {
+          "title": "フィードバック対応が割り当てられました",
+          "message": "フィードバック対応があなたに割り当てられました。"
+        },
+        "resolved": {
+          "title": "フィードバックが対応済みになりました",
+          "message": "あなたのフィードバックは対応済みになりました。"
+        },
+        "rejected": {
+          "title": "フィードバックが却下されました",
+          "message": "あなたのフィードバックは却下されました。"
+        }
+      }
+    }
+  },
   "loading": "読み込み中...",
   "noData": "データなし",
   "ok": "OK",

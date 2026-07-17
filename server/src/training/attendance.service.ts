@@ -273,7 +273,7 @@ export class AttendanceService {
     const payload = {
       type: 'attendance.checkin',
       title: 'Check-in thanh cong',
-      message: `Hoi vien ${attendance.member.user.fullName} da check-in thanh cong.`,
+      message: 'Ban da check-in thanh cong.',
       resourceType: 'attendance_log',
       resourceId: attendance.attendanceId.toString(),
       dedupeKey: `attendance:${attendance.attendanceId.toString()}:checkin`,
@@ -288,6 +288,7 @@ export class AttendanceService {
     await this.notifications.safeNotifyUser(trainer?.userId, {
       ...payload,
       message: `Hoc vien ${attendance.member.user.fullName} vua check-in.`,
+      metadata: { memberName: attendance.member.user.fullName },
     })
   }
 

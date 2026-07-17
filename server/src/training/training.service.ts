@@ -20,6 +20,7 @@ import { ManualCheckinDto } from './dto/manual-checkin.dto'
 import { UpdateSessionDto } from './dto/update-session.dto'
 import { resolveCallerFilter } from './filters/caller-query-filter'
 import { NotificationsService } from '../notifications/notifications.service'
+import { LineMessagingService } from '../line-messaging/line-messaging.service'
 
 type Caller = {
   userId: bigint
@@ -147,6 +148,7 @@ export class TrainingService {
     private readonly attendance: AttendanceService,
     private readonly deviceAccess: DeviceAccessService,
     private readonly notifications: NotificationsService,
+    private readonly lineMessaging: LineMessagingService,
   ) {}
 
   async listSessions(dto: ListSessionsDto, caller: Caller) {
@@ -581,6 +583,7 @@ export class TrainingService {
         message: `Buoi tap voi PT ${updated.trainer.user.fullName} da duoc danh dau hoan thanh.`,
         resourceType: 'training_session',
         resourceId: updated.sessionId.toString(),
+        metadata: { trainerName: updated.trainer.user.fullName },
         dedupeKey: `training:${updated.sessionId.toString()}:completed`,
       })
     }
@@ -783,14 +786,17 @@ export class TrainingService {
       message: `Ban co lich tap voi PT ${session.trainer.user.fullName}.`,
       resourceType: 'training_session',
       resourceId: session.sessionId.toString(),
+      metadata: { trainerName: session.trainer.user.fullName },
       dedupeKey: `training:${session.sessionId.toString()}:created`,
     }
     await this.notifications.safeNotifyUser(session.member.userId, payload)
+    await this.lineMessaging.safePushTrainingSessionEvent('created', session.sessionId)
     await this.notifications.safeNotifyManyUsers(
       [session.trainer.userId],
       {
         ...payload,
         message: `Ban co lich tap moi voi hoi vien ${session.member.user.fullName}.`,
+        metadata: { memberName: session.member.user.fullName },
       },
       { excludeActorUserId: actorUserId },
     )
@@ -804,31 +810,54 @@ export class TrainingService {
       before.trainerStaffId !== after.trainerStaffId
     if (!changed) return
 
-    const payload = {
+    const memberPayload = {
       type: 'training.updated',
       title: 'Lich tap da cap nhat',
       message: `Lich tap voi PT ${after.trainer.user.fullName} da duoc cap nhat.`,
       resourceType: 'training_session',
       resourceId: after.sessionId.toString(),
+      metadata: { trainerName: after.trainer.user.fullName },
       dedupeKey: `training:${after.sessionId.toString()}:updated:${Date.now()}`,
     }
     await this.notifications.safeNotifyManyUsers(
-      [after.member.userId, before.trainer.userId, after.trainer.userId],
-      payload,
+      [after.member.userId],
+      memberPayload,
+      { excludeActorUserId: actorUserId },
+    )
+    await this.lineMessaging.safePushTrainingSessionEvent('updated', after.sessionId)
+    await this.notifications.safeNotifyManyUsers(
+      [before.trainer.userId, after.trainer.userId],
+      {
+        ...memberPayload,
+        message: `Lich tap voi hoi vien ${after.member.user.fullName} da duoc cap nhat.`,
+        metadata: { memberName: after.member.user.fullName },
+      },
       { excludeActorUserId: actorUserId },
     )
   }
 
   private async notifySessionCancelled(session: SessionRow, actorUserId: bigint) {
+    const memberPayload = {
+      type: 'training.cancelled',
+      title: 'Lich tap da huy',
+      message: `Lich tap voi PT ${session.trainer.user.fullName} da duoc huy.`,
+      resourceType: 'training_session',
+      resourceId: session.sessionId.toString(),
+      metadata: { trainerName: session.trainer.user.fullName },
+      dedupeKey: `training:${session.sessionId.toString()}:cancelled`,
+    }
     await this.notifications.safeNotifyManyUsers(
-      [session.member.userId, session.trainer.userId],
+      [session.member.userId],
+      memberPayload,
+      { excludeActorUserId: actorUserId },
+    )
+    await this.lineMessaging.safePushTrainingSessionEvent('cancelled', session.sessionId)
+    await this.notifications.safeNotifyManyUsers(
+      [session.trainer.userId],
       {
-        type: 'training.cancelled',
-        title: 'Lich tap da huy',
-        message: `Lich tap voi PT ${session.trainer.user.fullName} da duoc huy.`,
-        resourceType: 'training_session',
-        resourceId: session.sessionId.toString(),
-        dedupeKey: `training:${session.sessionId.toString()}:cancelled`,
+        ...memberPayload,
+        message: `Lich tap voi hoi vien ${session.member.user.fullName} da duoc huy.`,
+        metadata: { memberName: session.member.user.fullName },
       },
       { excludeActorUserId: actorUserId },
     )

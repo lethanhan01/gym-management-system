@@ -195,7 +195,7 @@ export class DeviceAccessService {
     const payload = {
       type: 'attendance.checkin',
       title: 'Check-in thanh cong',
-      message: `Hoi vien ${memberName} da check-in thanh cong.`,
+      message: 'Ban da check-in thanh cong.',
       resourceType: 'attendance_log',
       resourceId: attendanceId.toString(),
       dedupeKey: `attendance:${attendanceId.toString()}:checkin`,
@@ -210,6 +210,7 @@ export class DeviceAccessService {
     await this.notifications.safeNotifyUser(trainer?.userId, {
       ...payload,
       message: `Hoc vien ${memberName} vua check-in.`,
+      metadata: { memberName },
     })
   }
 }

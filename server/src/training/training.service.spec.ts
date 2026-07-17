@@ -179,6 +179,10 @@ const mockNotifications = {
   safeNotifyGroups: jest.fn(),
 }
 
+const mockLineMessaging = {
+  safePushTrainingSessionEvent: jest.fn(),
+}
+
 // ---------------------------------------------------------------------------
 // Suite
 // ---------------------------------------------------------------------------
@@ -193,6 +197,7 @@ describe('TrainingService', () => {
       mockAttendanceService as any,
       mockDeviceAccessService as any,
       mockNotifications as any,
+      mockLineMessaging as any,
     )
     jest.clearAllMocks()
   })
@@ -331,6 +336,7 @@ describe('TrainingService', () => {
           type: 'training.created',
           resourceType: 'training_session',
           resourceId: '1',
+          metadata: { trainerName: 'Test Trainer' },
           dedupeKey: 'training:1:created',
         })
       )
@@ -340,10 +346,12 @@ describe('TrainingService', () => {
           type: 'training.created',
           resourceType: 'training_session',
           resourceId: '1',
+          metadata: { memberName: 'Test Member' },
           dedupeKey: 'training:1:created',
         }),
         { excludeActorUserId: caller.userId }
       )
+      expect(mockLineMessaging.safePushTrainingSessionEvent).toHaveBeenCalledWith('created', 1n)
       expect(result.data.sessionId).toBe('1')
     })
   })
@@ -405,6 +413,35 @@ describe('TrainingService', () => {
       expect(mockAudit.log).toHaveBeenCalledWith(
         expect.objectContaining({ action: 'training.cancel' })
       )
+    })
+
+    it('notifies member and trainer with role-specific cancellation messages', async () => {
+      const session = makeSession()
+      mockPrisma.trainingSession.findFirst.mockResolvedValue(session)
+      mockPrisma.trainingSession.update.mockResolvedValue({ ...session, status: 'cancelled' })
+      const caller = makeCaller()
+
+      await service.cancelSession(1n, {} as any, caller)
+
+      expect(mockNotifications.safeNotifyManyUsers).toHaveBeenCalledWith(
+        [100n],
+        expect.objectContaining({
+          type: 'training.cancelled',
+          message: 'Lich tap voi PT Test Trainer da duoc huy.',
+          metadata: { trainerName: 'Test Trainer' },
+        }),
+        { excludeActorUserId: caller.userId }
+      )
+      expect(mockNotifications.safeNotifyManyUsers).toHaveBeenCalledWith(
+        [200n],
+        expect.objectContaining({
+          type: 'training.cancelled',
+          message: 'Lich tap voi hoi vien Test Member da duoc huy.',
+          metadata: { memberName: 'Test Member' },
+        }),
+        { excludeActorUserId: caller.userId }
+      )
+      expect(mockLineMessaging.safePushTrainingSessionEvent).toHaveBeenCalledWith('cancelled', 1n)
     })
   })
 
@@ -805,7 +842,113 @@ describe('TrainingService', () => {
       expect(mockAudit.log).toHaveBeenCalledWith(
         expect.objectContaining({ action: 'training.update' })
       )
+      expect(mockLineMessaging.safePushTrainingSessionEvent).toHaveBeenCalledWith('updated', 1n)
       expect(result.data.sessionId).toBe('1')
+    })
+
+    it('notifies member and trainer with role-specific update messages', async () => {
+      const session = makeSession({ status: 'scheduled' })
+      const updated = makeSession({ status: 'scheduled', startTime: futureTime(90), endTime: futureTime(150) })
+      mockPrisma.trainingSession.findFirst.mockResolvedValue(session)
+      mockPrisma.trainingSession.count.mockResolvedValue(0)
+      mockPrisma.trainingSession.update.mockResolvedValue(updated)
+      const caller = makeCaller()
+
+      await service.updateSession(1n, {} as any, caller)
+
+      expect(mockNotifications.safeNotifyManyUsers).toHaveBeenCalledWith(
+        [100n],
+        expect.objectContaining({
+          type: 'training.updated',
+          message: 'Lich tap voi PT Test Trainer da duoc cap nhat.',
+          metadata: { trainerName: 'Test Trainer' },
+        }),
+        { excludeActorUserId: caller.userId }
+      )
+      expect(mockNotifications.safeNotifyManyUsers).toHaveBeenCalledWith(
+        [200n, 200n],
+        expect.objectContaining({
+          type: 'training.updated',
+          message: 'Lich tap voi hoi vien Test Member da duoc cap nhat.',
+          metadata: { memberName: 'Test Member' },
+        }),
+        { excludeActorUserId: caller.userId }
+      )
+      expect(mockLineMessaging.safePushTrainingSessionEvent).toHaveBeenCalledWith('updated', 1n)
+    })
+
+    it('does not send update notifications or LINE push when the persisted row is unchanged', async () => {
+      const session = makeSession({ status: 'scheduled' })
+      mockPrisma.trainingSession.findFirst.mockResolvedValue(session)
+      mockPrisma.trainingSession.update.mockResolvedValue(session)
+      const caller = makeCaller()
+
+      const result = await service.updateSession(1n, {} as any, caller)
+
+      expect(mockPrisma.trainingSession.update).toHaveBeenCalled()
+      expect(mockAudit.log).toHaveBeenCalledWith(
+        expect.objectContaining({ action: 'training.update' })
+      )
+      expect(mockNotifications.safeNotifyManyUsers).not.toHaveBeenCalled()
+      expect(mockLineMessaging.safePushTrainingSessionEvent).not.toHaveBeenCalled()
+      expect(result.data.sessionId).toBe('1')
+    })
+
+    it.each([
+      {
+        name: 'startTime',
+        dto: { startTime: futureTime(90).toISOString() },
+        updated: () => makeSession({ status: 'scheduled', startTime: futureTime(90) }),
+        needsOverlapCheck: true,
+      },
+      {
+        name: 'endTime',
+        dto: { endTime: futureTime(150).toISOString() },
+        updated: () => makeSession({ status: 'scheduled', endTime: futureTime(150) }),
+        needsOverlapCheck: true,
+      },
+      {
+        name: 'roomId',
+        dto: { roomId: '4' },
+        updated: () =>
+          makeSession({
+            status: 'scheduled',
+            roomId: 4n,
+            room: { roomId: 4n, name: 'Room B' },
+          }),
+        needsOverlapCheck: true,
+      },
+      {
+        name: 'trainerStaffId',
+        dto: { trainerStaffId: '6' },
+        updated: () =>
+          makeSession({
+            status: 'scheduled',
+            trainerStaffId: 6n,
+            trainer: { staffId: 6n, userId: 201n, user: { fullName: 'New Trainer' } },
+          }),
+        needsOverlapCheck: false,
+      },
+    ])('sends update notifications and LINE push when $name changes', async ({ dto, updated, needsOverlapCheck }) => {
+      const session = makeSession({ status: 'scheduled' })
+      if (needsOverlapCheck) {
+        mockPrisma.trainingSession.findFirst
+          .mockResolvedValueOnce(session)
+          .mockResolvedValue(null)
+      } else {
+        mockPrisma.trainingSession.findFirst.mockResolvedValue(session)
+      }
+      mockPrisma.trainingSession.update.mockResolvedValue(updated())
+      const caller = makeCaller()
+
+      await service.updateSession(1n, dto as any, caller)
+
+      expect(mockNotifications.safeNotifyManyUsers).toHaveBeenCalledWith(
+        [100n],
+        expect.objectContaining({ type: 'training.updated' }),
+        { excludeActorUserId: caller.userId }
+      )
+      expect(mockLineMessaging.safePushTrainingSessionEvent).toHaveBeenCalledWith('updated', 1n)
     })
 
     it('triggers checkOverlap when roomId is updated — throws ConflictException on overlap', async () => {

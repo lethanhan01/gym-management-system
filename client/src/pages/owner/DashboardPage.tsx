@@ -221,7 +221,7 @@ export default function OwnerDashboardPage() {
                 openFeedbackCount > 0 ? t('dashboard.needsAttention') : t('dashboard.allHandled')
               }
               accent={openFeedbackCount > 0}
-              to="/staff/feedback"
+              to="/owner/feedback"
             />
             <OwnerStatCard
               icon={<Wrench size={20} />}
@@ -257,7 +257,7 @@ export default function OwnerDashboardPage() {
             <section className="rogym-card rogym-card--compact p-6">
               <div className="mb-5 flex items-center justify-between">
                 <h2 className="text-lg font-bold text-white">{t('dashboard.pendingFeedback')}</h2>
-                <Link className="rogym-text-link rogym-text-link--accent" to="/staff/feedback">
+                <Link className="rogym-text-link rogym-text-link--accent" to="/owner/feedback">
                   {t('dashboard.allFeedback')}
                 </Link>
               </div>

@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { Bell, CheckCheck, Loader2 } from 'lucide-react'
+import { translateNotification } from '@/lib/notification-i18n'
 import { notificationService, type NotificationItem } from '@/services/notification.service'
 import { useAuthStore, type Role } from '@/stores/authStore'
 
@@ -11,15 +13,17 @@ function toNumberId(id: string) {
   return Number.isFinite(parsed) ? parsed : 0
 }
 
-function relativeTime(value: string) {
+type Translate = (key: string, options?: Record<string, unknown>) => string
+
+function relativeTime(value: string, t: Translate) {
   const diffMs = Date.now() - new Date(value).getTime()
   const minutes = Math.max(0, Math.floor(diffMs / 60_000))
-  if (minutes < 1) return 'Vua xong'
-  if (minutes < 60) return `${minutes} phut truoc`
+  if (minutes < 1) return t('notification.time.justNow')
+  if (minutes < 60) return t('notification.time.minutesAgo', { count: minutes })
   const hours = Math.floor(minutes / 60)
-  if (hours < 24) return `${hours} gio truoc`
+  if (hours < 24) return t('notification.time.hoursAgo', { count: hours })
   const days = Math.floor(hours / 24)
-  return `${days} ngay truoc`
+  return t('notification.time.daysAgo', { count: days })
 }
 
 function mergeNotifications(current: NotificationItem[], incoming: NotificationItem[]) {
@@ -32,13 +36,21 @@ function mergeNotifications(current: NotificationItem[], incoming: NotificationI
     .slice(0, 20)
 }
 
-function getEffectiveRole(role: Role | undefined, pathname: string): Role | undefined {
-  if (role === 'owner' && pathname.startsWith('/staff')) return 'staff'
-  return role
+function getEffectiveRole(roles: Role[] | undefined, pathname: string): Role | undefined {
+  if (!roles?.length) return undefined
+  if (pathname.startsWith('/owner') && roles.includes('owner')) return 'owner'
+  if (pathname.startsWith('/staff') && (roles.includes('staff') || roles.includes('owner'))) return 'staff'
+  if (pathname.startsWith('/trainer') && roles.includes('trainer')) return 'trainer'
+  if (pathname.startsWith('/member') && roles.includes('member')) return 'member'
+  if (roles.includes('owner')) return 'owner'
+  if (roles.includes('staff')) return 'staff'
+  if (roles.includes('trainer')) return 'trainer'
+  if (roles.includes('member')) return 'member'
+  return roles[0]
 }
 
-function getNotificationPath(item: NotificationItem, role: Role | undefined, pathname: string) {
-  const effectiveRole = getEffectiveRole(role, pathname)
+function getNotificationPath(item: NotificationItem, roles: Role[] | undefined, pathname: string) {
+  const effectiveRole = getEffectiveRole(roles, pathname)
 
   switch (item.resourceType) {
     case 'training_session':
@@ -61,12 +73,12 @@ function getNotificationPath(item: NotificationItem, role: Role | undefined, pat
       if (effectiveRole === 'member') return '/member/attendance'
       if (effectiveRole === 'trainer') return '/trainer/students'
       if (effectiveRole === 'staff') return '/staff/attendance'
-      if (effectiveRole === 'owner') return '/owner'
+      if (effectiveRole === 'owner') return '/owner/reports/employee-performance'
       return null
     case 'feedback':
       if (effectiveRole === 'member') return '/member/feedback'
       if (effectiveRole === 'staff') return '/staff/feedback'
-      if (effectiveRole === 'owner') return '/staff/feedback'
+      if (effectiveRole === 'owner') return '/owner/feedback'
       return null
     default:
       return null
@@ -74,9 +86,11 @@ function getNotificationPath(item: NotificationItem, role: Role | undefined, pat
 }
 
 export default function NotificationBell() {
+  const { t } = useTranslation('common')
+  const tr = t as Translate
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [error, setError] = useState(false)
   const [notifications, setNotifications] = useState<NotificationItem[]>([])
   const [unreadCount, setUnreadCount] = useState(0)
   const [latestId, setLatestId] = useState<string | null>(null)
@@ -88,7 +102,7 @@ export default function NotificationBell() {
   const user = useAuthStore((state) => state.user)
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
 
-  const role = user?.roles[0]
+  const roles = user?.roles
   const countLabel = useMemo(() => (unreadCount > 99 ? '99+' : String(unreadCount)), [unreadCount])
 
   useEffect(() => {
@@ -111,7 +125,7 @@ export default function NotificationBell() {
 
     let cancelled = false
     setLoading(true)
-    setError(null)
+    setError(false)
 
     Promise.all([
       notificationService.list({ page: 1, pageSize: 20, status: 'all' }),
@@ -124,7 +138,7 @@ export default function NotificationBell() {
         setLatestId(list.data[0]?.notificationId ?? '0')
       })
       .catch(() => {
-        if (!cancelled) setError('Khong the tai thong bao')
+        if (!cancelled) setError(true)
       })
       .finally(() => {
         if (!cancelled) setLoading(false)
@@ -154,7 +168,10 @@ export default function NotificationBell() {
         const count = await notificationService.unreadCount()
         if (!cancelled) setUnreadCount(count)
 
-        const message = items.length === 1 ? newest.title : `Ban co ${items.length} thong bao moi`
+        const message =
+          items.length === 1
+            ? translateNotification(newest, tr).title
+            : tr('notification.toastMany', { count: items.length })
         setToast(message)
         if (toastTimerRef.current) clearTimeout(toastTimerRef.current)
         toastTimerRef.current = setTimeout(() => setToast(null), 4000)
@@ -171,7 +188,7 @@ export default function NotificationBell() {
       cancelled = true
       clearInterval(interval)
     }
-  }, [isAuthenticated, latestId, user])
+  }, [isAuthenticated, latestId, tr, user])
 
   useEffect(
     () => () => {
@@ -188,7 +205,7 @@ export default function NotificationBell() {
         const list = await notificationService.list({ page: 1, pageSize: 20, status: 'all' })
         setNotifications(list.data)
       } catch {
-        setError('Khong the tai thong bao')
+        setError(true)
       } finally {
         setLoading(false)
       }
@@ -215,7 +232,7 @@ export default function NotificationBell() {
     }
 
     setOpen(false)
-    const path = getNotificationPath(item, role, pathname)
+    const path = getNotificationPath(item, roles, pathname)
     if (path) navigate(path)
   }
 
@@ -225,7 +242,7 @@ export default function NotificationBell() {
         type="button"
         onClick={handleToggle}
         className={`rogym-btn--icon rogym-btn--elevated rogym-topbar__notification relative ${open ? 'text-[#42e09e]' : ''}`}
-        aria-label="Thong bao"
+        aria-label={tr('notification.ariaLabel')}
       >
         <Bell size={18} />
         {unreadCount > 0 && (
@@ -239,15 +256,17 @@ export default function NotificationBell() {
         <div className="absolute right-0 top-12 z-50 w-[min(360px,calc(100vw-2rem))] overflow-hidden rounded-xl border border-white/10 bg-[#101712] shadow-2xl">
           <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
             <div>
-              <div className="text-sm font-semibold text-white">Thong bao</div>
-              <div className="text-xs text-[#9fb2a7]">{unreadCount > 0 ? `${unreadCount} chua doc` : 'Da doc tat ca'}</div>
+              <div className="text-sm font-semibold text-white">{tr('notification.title')}</div>
+              <div className="text-xs text-[#9fb2a7]">
+                {unreadCount > 0 ? tr('notification.unread', { count: unreadCount }) : tr('notification.allRead')}
+              </div>
             </div>
             <button
               type="button"
               onClick={handleReadAll}
               disabled={unreadCount === 0}
               className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-[#9fb2a7] hover:bg-white/5 hover:text-white disabled:opacity-40"
-              aria-label="Danh dau tat ca da doc"
+              aria-label={tr('notification.markAllRead')}
             >
               <CheckCheck size={16} />
             </button>
@@ -257,37 +276,40 @@ export default function NotificationBell() {
             {loading && (
               <div className="flex items-center justify-center gap-2 px-4 py-8 text-sm text-[#9fb2a7]">
                 <Loader2 size={16} className="animate-spin" />
-                Dang tai
+                {tr('notification.loading')}
               </div>
             )}
 
-            {!loading && error && <div className="px-4 py-8 text-center text-sm text-red-200">{error}</div>}
+            {!loading && error && <div className="px-4 py-8 text-center text-sm text-red-200">{tr('notification.loadError')}</div>}
 
             {!loading && !error && notifications.length === 0 && (
-              <div className="px-4 py-8 text-center text-sm text-[#9fb2a7]">Chua co thong bao</div>
+              <div className="px-4 py-8 text-center text-sm text-[#9fb2a7]">{tr('notification.empty')}</div>
             )}
 
             {!loading &&
               !error &&
-              notifications.map((item) => (
-                <button
-                  key={item.notificationId}
-                  type="button"
-                  onClick={() => void handleNotificationClick(item)}
-                  className={`w-full border-b border-white/5 px-4 py-3 text-left transition last:border-b-0 hover:bg-white/5 ${
-                    item.unread ? 'bg-[#06c384]/10' : ''
-                  }`}
-                >
-                  <div className="flex items-start gap-3">
-                    <span className={`mt-1 h-2 w-2 shrink-0 rounded-full ${item.unread ? 'bg-[#42e09e]' : 'bg-white/15'}`} />
-                    <span className="min-w-0">
-                      <span className="block truncate text-sm font-semibold text-white">{item.title}</span>
-                      <span className="mt-1 block line-clamp-2 text-xs leading-5 text-[#b7c7bd]">{item.message}</span>
-                      <span className="mt-1 block text-[11px] text-[#7d9086]">{relativeTime(item.createdAt)}</span>
-                    </span>
-                  </div>
-                </button>
-              ))}
+              notifications.map((item) => {
+                const notificationText = translateNotification(item, tr)
+                return (
+                  <button
+                    key={item.notificationId}
+                    type="button"
+                    onClick={() => void handleNotificationClick(item)}
+                    className={`w-full border-b border-white/5 px-4 py-3 text-left transition last:border-b-0 hover:bg-white/5 ${
+                      item.unread ? 'bg-[#06c384]/10' : ''
+                    }`}
+                  >
+                    <div className="flex items-start gap-3">
+                      <span className={`mt-1 h-2 w-2 shrink-0 rounded-full ${item.unread ? 'bg-[#42e09e]' : 'bg-white/15'}`} />
+                      <span className="min-w-0">
+                        <span className="block truncate text-sm font-semibold text-white">{notificationText.title}</span>
+                        <span className="mt-1 block line-clamp-2 text-xs leading-5 text-[#b7c7bd]">{notificationText.message}</span>
+                        <span className="mt-1 block text-[11px] text-[#7d9086]">{relativeTime(item.createdAt, tr)}</span>
+                      </span>
+                    </div>
+                  </button>
+                )
+              })}
           </div>
         </div>
       )}

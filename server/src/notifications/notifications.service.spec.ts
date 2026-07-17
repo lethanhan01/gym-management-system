@@ -123,7 +123,7 @@ describe('NotificationsService', () => {
         message: 'Message',
         dedupeKey: 'event:1',
       })
-    ).resolves.toBeUndefined()
+    ).resolves.toBe(false)
 
     expect(mockPrisma.notification.create).toHaveBeenCalledWith(
       expect.objectContaining({

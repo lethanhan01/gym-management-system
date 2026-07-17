@@ -314,6 +314,7 @@ export default function Sidebar({
       label: tOwner('nav.sectionBusiness'),
       items: [
         { label: tOwner('nav.packages'), to: '/owner/packages', icon: <Package size={18} /> },
+        { label: tOwner('nav.feedback'), to: '/owner/feedback', icon: <MessageSquare size={18} /> },
         {
           label: tOwner('nav.reports'),
           to: '/owner/revenue',

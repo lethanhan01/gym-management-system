@@ -51,6 +51,13 @@ export class EnvironmentVariables {
 
   // LINE LIFF authentication. Required khi feature LINE login được bật.
   @IsOptional() @IsString() LINE_CHANNEL_ID?: string
+
+  // LINE Messaging API. Optional v1.0 — bật bằng LINE_MESSAGING_ENABLED=true.
+  @IsOptional() @IsString() LINE_CHANNEL_SECRET?: string
+  @IsOptional() @IsString() LINE_CHANNEL_ACCESS_TOKEN?: string
+  @IsOptional() @IsString() LINE_LIFF_URL?: string
+  @IsOptional() @IsNumber() LINE_REMINDER_MINUTES: number = 30
+  @IsOptional() @IsString() LINE_MESSAGING_ENABLED: string = 'false'
 }
 
 export function validateConfig(raw: Record<string, unknown>): EnvironmentVariables {
