@@ -288,6 +288,7 @@ export class AttendanceService {
     await this.notifications.safeNotifyUser(trainer?.userId, {
       ...payload,
       message: `Hoc vien ${attendance.member.user.fullName} vua check-in.`,
+      metadata: { memberName: attendance.member.user.fullName },
     })
   }
 

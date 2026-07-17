@@ -297,7 +297,11 @@ export class PaymentsService {
       message: memberMessage,
       resourceType: 'payment',
       resourceId: args.paymentId.toString(),
-      metadata: { subscriptionId: args.subscriptionId.toString(), subscriptionActivated: args.subscriptionActivated },
+      metadata: {
+        subscriptionId: args.subscriptionId.toString(),
+        subscriptionActivated: args.subscriptionActivated,
+        packageName: args.packageName,
+      },
       dedupeKey: `payment:${args.paymentId.toString()}:${args.status}`,
     })
     await this.notifications.safeNotifyGroups(
@@ -308,7 +312,11 @@ export class PaymentsService {
         message: isSuccess ? 'Co mot giao dich thanh toan moi.' : 'Co mot giao dich thanh toan that bai.',
         resourceType: 'payment',
         resourceId: args.paymentId.toString(),
-        metadata: { subscriptionId: args.subscriptionId.toString(), subscriptionActivated: args.subscriptionActivated },
+        metadata: {
+          subscriptionId: args.subscriptionId.toString(),
+          subscriptionActivated: args.subscriptionActivated,
+          packageName: args.packageName,
+        },
         dedupeKey: `payment:${args.paymentId.toString()}:${args.status}:admin`,
       },
       { excludeActorUserId: args.actorUserId },

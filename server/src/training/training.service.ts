@@ -581,6 +581,7 @@ export class TrainingService {
         message: `Buoi tap voi PT ${updated.trainer.user.fullName} da duoc danh dau hoan thanh.`,
         resourceType: 'training_session',
         resourceId: updated.sessionId.toString(),
+        metadata: { trainerName: updated.trainer.user.fullName },
         dedupeKey: `training:${updated.sessionId.toString()}:completed`,
       })
     }
@@ -783,6 +784,7 @@ export class TrainingService {
       message: `Ban co lich tap voi PT ${session.trainer.user.fullName}.`,
       resourceType: 'training_session',
       resourceId: session.sessionId.toString(),
+      metadata: { trainerName: session.trainer.user.fullName },
       dedupeKey: `training:${session.sessionId.toString()}:created`,
     }
     await this.notifications.safeNotifyUser(session.member.userId, payload)
@@ -791,6 +793,7 @@ export class TrainingService {
       {
         ...payload,
         message: `Ban co lich tap moi voi hoi vien ${session.member.user.fullName}.`,
+        metadata: { memberName: session.member.user.fullName },
       },
       { excludeActorUserId: actorUserId },
     )
@@ -810,6 +813,7 @@ export class TrainingService {
       message: `Lich tap voi PT ${after.trainer.user.fullName} da duoc cap nhat.`,
       resourceType: 'training_session',
       resourceId: after.sessionId.toString(),
+      metadata: { trainerName: after.trainer.user.fullName },
       dedupeKey: `training:${after.sessionId.toString()}:updated:${Date.now()}`,
     }
     await this.notifications.safeNotifyManyUsers(
@@ -822,6 +826,7 @@ export class TrainingService {
       {
         ...memberPayload,
         message: `Lich tap voi hoi vien ${after.member.user.fullName} da duoc cap nhat.`,
+        metadata: { memberName: after.member.user.fullName },
       },
       { excludeActorUserId: actorUserId },
     )
@@ -834,6 +839,7 @@ export class TrainingService {
       message: `Lich tap voi PT ${session.trainer.user.fullName} da duoc huy.`,
       resourceType: 'training_session',
       resourceId: session.sessionId.toString(),
+      metadata: { trainerName: session.trainer.user.fullName },
       dedupeKey: `training:${session.sessionId.toString()}:cancelled`,
     }
     await this.notifications.safeNotifyManyUsers(
@@ -846,6 +852,7 @@ export class TrainingService {
       {
         ...memberPayload,
         message: `Lich tap voi hoi vien ${session.member.user.fullName} da duoc huy.`,
+        metadata: { memberName: session.member.user.fullName },
       },
       { excludeActorUserId: actorUserId },
     )

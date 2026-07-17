@@ -210,6 +210,7 @@ export class DeviceAccessService {
     await this.notifications.safeNotifyUser(trainer?.userId, {
       ...payload,
       message: `Hoc vien ${memberName} vua check-in.`,
+      metadata: { memberName },
     })
   }
 }

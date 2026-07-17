@@ -331,6 +331,7 @@ describe('TrainingService', () => {
           type: 'training.created',
           resourceType: 'training_session',
           resourceId: '1',
+          metadata: { trainerName: 'Test Trainer' },
           dedupeKey: 'training:1:created',
         })
       )
@@ -340,6 +341,7 @@ describe('TrainingService', () => {
           type: 'training.created',
           resourceType: 'training_session',
           resourceId: '1',
+          metadata: { memberName: 'Test Member' },
           dedupeKey: 'training:1:created',
         }),
         { excludeActorUserId: caller.userId }
@@ -420,6 +422,7 @@ describe('TrainingService', () => {
         expect.objectContaining({
           type: 'training.cancelled',
           message: 'Lich tap voi PT Test Trainer da duoc huy.',
+          metadata: { trainerName: 'Test Trainer' },
         }),
         { excludeActorUserId: caller.userId }
       )
@@ -428,6 +431,7 @@ describe('TrainingService', () => {
         expect.objectContaining({
           type: 'training.cancelled',
           message: 'Lich tap voi hoi vien Test Member da duoc huy.',
+          metadata: { memberName: 'Test Member' },
         }),
         { excludeActorUserId: caller.userId }
       )
@@ -849,6 +853,7 @@ describe('TrainingService', () => {
         expect.objectContaining({
           type: 'training.updated',
           message: 'Lich tap voi PT Test Trainer da duoc cap nhat.',
+          metadata: { trainerName: 'Test Trainer' },
         }),
         { excludeActorUserId: caller.userId }
       )
@@ -857,6 +862,7 @@ describe('TrainingService', () => {
         expect.objectContaining({
           type: 'training.updated',
           message: 'Lich tap voi hoi vien Test Member da duoc cap nhat.',
+          metadata: { memberName: 'Test Member' },
         }),
         { excludeActorUserId: caller.userId }
       )

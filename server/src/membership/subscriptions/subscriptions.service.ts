@@ -464,6 +464,7 @@ export class SubscriptionsService {
       message: `Yeu cau dang ky goi ${subscription.package?.name ?? ''} da duoc tao va dang cho thanh toan.`,
       resourceType: 'subscription',
       resourceId: subscription.subscriptionId.toString(),
+      metadata: { packageName: subscription.package?.name ?? null },
       dedupeKey: `subscription:${subscription.subscriptionId.toString()}:created`,
     })
     await this.notifications.safeNotifyGroups(
@@ -474,6 +475,7 @@ export class SubscriptionsService {
         message: 'Co mot yeu cau dang ky goi moi dang cho xu ly.',
         resourceType: 'subscription',
         resourceId: subscription.subscriptionId.toString(),
+        metadata: { packageName: subscription.package?.name ?? null },
         dedupeKey: `subscription:${subscription.subscriptionId.toString()}:created-admin`,
       },
       { excludeActorUserId: actorUserId },
@@ -490,6 +492,7 @@ export class SubscriptionsService {
       message: `Goi ${subscription.package?.name ?? ''} da duoc gia han thanh cong.`,
       resourceType: 'subscription',
       resourceId: subscription.subscriptionId.toString(),
+      metadata: { packageName: subscription.package?.name ?? null },
       dedupeKey: `subscription:${subscription.subscriptionId.toString()}:renewed:${Date.now()}`,
     })
     await this.notifications.safeNotifyGroups(
@@ -500,6 +503,7 @@ export class SubscriptionsService {
         message: 'Co mot goi tap vua duoc gia han thanh cong.',
         resourceType: 'subscription',
         resourceId: subscription.subscriptionId.toString(),
+        metadata: { packageName: subscription.package?.name ?? null },
         dedupeKey: `subscription:${subscription.subscriptionId.toString()}:renewed-admin:${Date.now()}`,
       },
       { excludeActorUserId: actorUserId },
@@ -516,6 +520,7 @@ export class SubscriptionsService {
       message: `Goi ${subscription.package?.name ?? ''} da duoc huy.`,
       resourceType: 'subscription',
       resourceId: subscription.subscriptionId.toString(),
+      metadata: { packageName: subscription.package?.name ?? null },
       dedupeKey: `subscription:${subscription.subscriptionId.toString()}:cancelled`,
     })
     await this.notifications.safeNotifyGroups(
@@ -526,6 +531,7 @@ export class SubscriptionsService {
         message: 'Co mot goi tap vua duoc huy.',
         resourceType: 'subscription',
         resourceId: subscription.subscriptionId.toString(),
+        metadata: { packageName: subscription.package?.name ?? null },
         dedupeKey: `subscription:${subscription.subscriptionId.toString()}:cancelled-admin`,
       },
       { excludeActorUserId: actorUserId },

@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import NotificationBell from './NotificationBell'
+import i18n from '@/lib/i18n'
 import { useAuthStore } from '@/stores/authStore'
 import { notificationService, type NotificationItem } from '@/services/notification.service'
 import type { Role } from '@/stores/authStore'
@@ -79,13 +80,15 @@ function makeItem(overrides: Partial<NotificationItem>): NotificationItem {
     message: overrides.message ?? item.message,
     resourceType: overrides.resourceType ?? item.resourceType,
     resourceId: overrides.resourceId ?? item.resourceId,
+    metadata: overrides.metadata ?? item.metadata,
     unread: overrides.unread ?? item.unread,
     readAt: overrides.readAt ?? item.readAt,
   }
 }
 
 describe('NotificationBell', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
+    await i18n.changeLanguage('vi')
     vi.clearAllMocks()
     navigateMock.mockClear()
     useAuthStore.getState().clearAuth()
@@ -102,17 +105,62 @@ describe('NotificationBell', () => {
 
     expect(await screen.findByText('1')).toBeVisible()
 
-    fireEvent.click(screen.getByRole('button', { name: 'Thong bao' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Thông báo' }))
 
-    expect(await screen.findByText('Phan hoi moi')).toBeVisible()
-    expect(screen.getByText('Co mot phan hoi moi tu hoi vien.')).toBeVisible()
+    expect(await screen.findByText('Phản hồi mới')).toBeVisible()
+    expect(screen.getByText('Có một phản hồi mới từ hội viên.')).toBeVisible()
+    expect(screen.getByText('1 chưa đọc')).toBeVisible()
+    expect(screen.getByText('Vừa xong')).toBeVisible()
+  })
+
+  it('updates notification content when the language changes to Japanese', async () => {
+    const translatedItem = makeItem({
+      type: 'training.created',
+      title: 'Lich tap moi',
+      message: 'Ban co lich tap voi PT Test Trainer.',
+      resourceType: 'training_session',
+      metadata: { trainerName: 'Test Trainer' },
+    })
+    mockList(translatedItem)
+
+    renderBell('/member')
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Thông báo' }))
+    expect(await screen.findByText('Lịch tập mới')).toBeVisible()
+    expect(screen.getByText('Bạn có lịch tập với PT Test Trainer.')).toBeVisible()
+
+    await i18n.changeLanguage('ja')
+
+    expect(await screen.findByRole('button', { name: '通知' })).toBeVisible()
+    expect(screen.getByText('新しいトレーニング予定')).toBeVisible()
+    expect(screen.getByText('PT Test Trainer とのトレーニング予定があります。')).toBeVisible()
+    expect(screen.getByText('未読 1 件')).toBeVisible()
+    expect(screen.getByText('たった今')).toBeVisible()
+  })
+
+  it('falls back to API title and message when a dynamic template lacks metadata', async () => {
+    const legacyItem = makeItem({
+      type: 'subscription.created',
+      title: 'Legacy title',
+      message: 'Legacy message',
+      resourceType: 'subscription',
+      metadata: null,
+    })
+    mockList(legacyItem)
+
+    renderBell('/member')
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Thông báo' }))
+
+    expect(await screen.findByText('Legacy title')).toBeVisible()
+    expect(screen.getByText('Legacy message')).toBeVisible()
   })
 
   it('marks a clicked unread notification as read', async () => {
     renderBell()
 
-    fireEvent.click(await screen.findByRole('button', { name: 'Thong bao' }))
-    fireEvent.click(await screen.findByText('Phan hoi moi'))
+    fireEvent.click(await screen.findByRole('button', { name: 'Thông báo' }))
+    fireEvent.click(await screen.findByText('Phản hồi mới'))
 
     await waitFor(() => expect(notificationService.markRead).toHaveBeenCalledWith('10'))
   })
@@ -141,6 +189,7 @@ describe('NotificationBell', () => {
       mockAuth([role])
       const routedItem = makeItem({
         notificationId: `${resourceType}-${role}`,
+        type: 'route.test',
         title: `${resourceType} ${role}`,
         resourceType,
       })
@@ -148,7 +197,7 @@ describe('NotificationBell', () => {
 
       renderBell(initialPath)
 
-      fireEvent.click(await screen.findByRole('button', { name: 'Thong bao' }))
+      fireEvent.click(await screen.findByRole('button', { name: 'Thông báo' }))
       fireEvent.click(await screen.findByText(`${resourceType} ${role}`))
 
       await waitFor(() => expect(navigateMock).toHaveBeenCalledWith(expectedPath))
@@ -159,6 +208,7 @@ describe('NotificationBell', () => {
     mockAuth(['owner'])
     const routedItem = makeItem({
       notificationId: 'owner-staff-feedback',
+      type: 'route.test',
       title: 'Owner staff feedback',
       resourceType: 'feedback',
     })
@@ -166,7 +216,7 @@ describe('NotificationBell', () => {
 
     renderBell('/staff')
 
-    fireEvent.click(await screen.findByRole('button', { name: 'Thong bao' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Thông báo' }))
     fireEvent.click(await screen.findByText('Owner staff feedback'))
 
     await waitFor(() => expect(navigateMock).toHaveBeenCalledWith('/staff/feedback'))

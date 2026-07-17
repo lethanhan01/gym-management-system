@@ -203,7 +203,11 @@ describe('AttendanceService', () => {
       )
       expect(mockNotifications.safeNotifyUser).toHaveBeenCalledWith(
         200n,
-        expect.objectContaining({ type: 'attendance.checkin', message: 'Hoc vien Test Member vua check-in.' })
+        expect.objectContaining({
+          type: 'attendance.checkin',
+          message: 'Hoc vien Test Member vua check-in.',
+          metadata: { memberName: 'Test Member' },
+        })
       )
     })
   })
