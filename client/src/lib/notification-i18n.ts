@@ -22,6 +22,10 @@ function booleanValue(metadata: Metadata, key: string) {
   return typeof metadata[key] === 'boolean' ? metadata[key] : null
 }
 
+function numberValue(metadata: Metadata, key: string) {
+  return typeof metadata[key] === 'number' && Number.isFinite(metadata[key]) ? metadata[key] : null
+}
+
 function fallback(item: NotificationItem): NotificationText {
   return { title: item.title, message: item.message }
 }
@@ -86,6 +90,21 @@ export function translateNotification(item: NotificationItem, t: Translate): Not
       return {
         title: t('notification.templates.training.completed.title'),
         message: t('notification.templates.training.completed.memberMessage', { trainerName }),
+      }
+    }
+    case 'training.reminder': {
+      const metadata = metadataOf(item.metadata)
+      const trainerName = stringValue(metadata, 'trainerName')
+      const reminderMinutes = numberValue(metadata, 'reminderMinutes')
+      return {
+        title: t('notification.templates.training.reminder.title'),
+        message:
+          trainerName && reminderMinutes
+            ? t('notification.templates.training.reminder.memberMessage', {
+                trainerName,
+                reminderMinutes,
+              })
+            : t('notification.templates.training.reminder.genericMessage'),
       }
     }
     case 'attendance.checkin': {
