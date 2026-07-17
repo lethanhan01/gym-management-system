@@ -1,4 +1,4 @@
-import { Controller, Headers, Post, Req } from '@nestjs/common'
+import { BadRequestException, Controller, Headers, Post, Req } from '@nestjs/common'
 import { Request } from 'express'
 import { Public } from '../auth/decorators/public.decorator'
 import { LineMessagingService } from './line-messaging.service'
@@ -10,10 +10,15 @@ export class LineMessagingController {
   @Public()
   @Post('webhook')
   async webhook(@Req() req: Request, @Headers('x-line-signature') signature?: string) {
-    const rawBody = Buffer.isBuffer(req.body)
-      ? req.body
-      : Buffer.from(JSON.stringify(req.body ?? {}), 'utf8')
-    const result = await this.lineMessaging.handleWebhook(rawBody, signature)
+    if (!Buffer.isBuffer(req.body)) {
+      throw new BadRequestException({
+        success: false,
+        code: 'LINE_WEBHOOK_RAW_BODY_REQUIRED',
+        message: 'LINE webhook yeu cau raw body',
+      })
+    }
+
+    const result = await this.lineMessaging.handleWebhook(req.body, signature)
     return { success: true, ...result }
   }
 }

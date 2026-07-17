@@ -124,6 +124,13 @@ describe('LineMessagingService', () => {
     )
   })
 
+  it('returns false instead of throwing when LINE push fails unexpectedly', async () => {
+    mockPrisma.trainingSession.findFirst.mockResolvedValue(makeSession())
+    mockFetch.mockRejectedValue(new Error('network down'))
+
+    await expect(service.safePushTrainingSessionEvent('updated', 1n)).resolves.toBe(false)
+  })
+
   it('does not push duplicate reminders when notification dedupe skips the row', async () => {
     mockPrisma.trainingSession.findMany.mockResolvedValue([makeSession()])
     mockNotifications.safeNotifyUser.mockResolvedValue(false)
