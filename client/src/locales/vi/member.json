@@ -538,7 +538,8 @@
       "statusLabel": {
         "scheduled": "Đã lên lịch",
         "in_progress": "Đang diễn ra",
-        "completed": "Hoàn thành"
+        "completed": "Hoàn thành",
+        "cancelled": "Đã huỷ"
       },
       "legendScheduled": "Đã lên lịch",
       "legendCompleted": "Hoàn thành",

@@ -35,6 +35,59 @@ type LineMessage = {
 }
 
 type TrainingLineEvent = 'created' | 'updated' | 'cancelled' | 'reminder'
+type LineMessageLocale = 'vi' | 'ja'
+
+const LINE_MESSAGE_TEMPLATES: Record<
+  LineMessageLocale,
+  {
+    dateLocale: string
+    detailButton: string
+    followText: string
+    followButton: string
+    training: Record<
+      TrainingLineEvent,
+      (session: {
+        trainerName: string
+        roomName: string
+        when: string
+        reminderMinutes: number
+      }) => string
+    >
+  }
+> = {
+  vi: {
+    dateLocale: 'vi-VN',
+    detailButton: 'Xem chi tiết',
+    followText: 'Chào mừng bạn đến với RoGym. Bấm nút bên dưới để mở ứng dụng hội viên.',
+    followButton: 'Mở ứng dụng',
+    training: {
+      created: ({ trainerName, roomName, when }) =>
+        `Bạn đã đặt lịch tập thành công.\nThời gian: ${when}\nPT: ${trainerName}\nPhòng: ${roomName}`,
+      updated: ({ trainerName, roomName, when }) =>
+        `Lịch tập của bạn đã được cập nhật.\nThời gian mới: ${when}\nPT: ${trainerName}\nPhòng: ${roomName}`,
+      cancelled: ({ trainerName, when }) =>
+        `Lịch tập với PT ${trainerName} vào ${when} đã bị hủy.`,
+      reminder: ({ trainerName, roomName, when, reminderMinutes }) =>
+        `Buổi tập của bạn sẽ bắt đầu sau ${reminderMinutes} phút.\nThời gian: ${when}\nPT: ${trainerName}\nPhòng: ${roomName}`,
+    },
+  },
+  ja: {
+    dateLocale: 'ja-JP',
+    detailButton: '詳細を見る',
+    followText: 'RoGymへようこそ。下のボタンから会員アプリを開いてください。',
+    followButton: 'アプリを開く',
+    training: {
+      created: ({ trainerName, roomName, when }) =>
+        `トレーニング予約が完了しました。\n日時: ${when}\nPT: ${trainerName}\nルーム: ${roomName}`,
+      updated: ({ trainerName, roomName, when }) =>
+        `トレーニング予約が更新されました。\n新しい日時: ${when}\nPT: ${trainerName}\nルーム: ${roomName}`,
+      cancelled: ({ trainerName, when }) =>
+        `PT ${trainerName} との ${when} のトレーニング予約はキャンセルされました。`,
+      reminder: ({ trainerName, roomName, when, reminderMinutes }) =>
+        `トレーニング開始まであと${reminderMinutes}分です。\n日時: ${when}\nPT: ${trainerName}\nルーム: ${roomName}`,
+    },
+  },
+}
 
 @Injectable()
 export class LineMessagingService {
@@ -128,10 +181,11 @@ export class LineMessagingService {
     if (!lineUserId) return
 
     if (event.type === 'follow' && event.replyToken) {
+      const template = this.getMessageTemplate()
       await this.replyMessage(event.replyToken, [
         this.withLiffButton(
-          'Chao mung ban den voi RoGym. Bam nut ben duoi de mo ung dung hoi vien.',
-          'Mo ung dung',
+          template.followText,
+          template.followButton,
           '/member',
         ),
       ])
@@ -171,8 +225,8 @@ export class LineMessagingService {
           startTime: session.startTime,
           reminderMinutes: this.getReminderMinutes(),
         }),
-        kind === 'cancelled' ? 'Xem lich' : kind === 'updated' ? 'Xem chi tiet' : 'Xem lich tap',
-        `/member/workout/session/${session.sessionId.toString()}`,
+        this.getMessageTemplate().detailButton,
+        this.buildTrainingRedirect(session.sessionId),
       ),
     ])
   }
@@ -181,17 +235,9 @@ export class LineMessagingService {
     kind: TrainingLineEvent,
     session: { trainerName: string; roomName: string; startTime: Date; reminderMinutes: number },
   ) {
-    const when = this.formatDateTimeVN(session.startTime)
-    if (kind === 'created') {
-      return `Ban da dat lich tap thanh cong.\nThoi gian: ${when}\nPT: ${session.trainerName}\nPhong: ${session.roomName}`
-    }
-    if (kind === 'updated') {
-      return `Lich tap cua ban da duoc cap nhat.\nThoi gian moi: ${when}\nPT: ${session.trainerName}\nPhong: ${session.roomName}`
-    }
-    if (kind === 'cancelled') {
-      return `Lich tap voi PT ${session.trainerName} vao ${when} da bi huy.`
-    }
-    return `Buoi tap cua ban se bat dau sau ${session.reminderMinutes} phut.\nThoi gian: ${when}\nPT: ${session.trainerName}\nPhong: ${session.roomName}`
+    const template = this.getMessageTemplate()
+    const when = this.formatDateTime(session.startTime, template.dateLocale)
+    return template.training[kind]({ ...session, when })
   }
 
   private withLiffButton(text: string, label: string, redirectPath: string): LineMessage {
@@ -214,9 +260,8 @@ export class LineMessagingService {
   }
 
   private buildLiffUrl(redirectPath: string) {
-    const base =
-      this.config.get<string>('LINE_LIFF_URL') ??
-      `${this.config.get<string>('CLIENT_URL') ?? 'http://localhost:5173'}/liff`
+    const base = this.config.get<string>('LINE_LIFF_URL')
+    if (!base) throw new Error('LINE_LIFF_URL is required when LINE messaging is enabled')
     const url = new URL(base)
     url.searchParams.set('redirect', redirectPath)
     return url.toString()
@@ -278,7 +323,11 @@ export class LineMessagingService {
   }
 
   private canPushMessages() {
-    return this.isMessagingEnabled() && !!this.config.get<string>('LINE_CHANNEL_ACCESS_TOKEN')
+    return (
+      this.isMessagingEnabled() &&
+      !!this.config.get<string>('LINE_CHANNEL_ACCESS_TOKEN') &&
+      !!this.config.get<string>('LINE_LIFF_URL')
+    )
   }
 
   private getReminderMinutes() {
@@ -286,8 +335,17 @@ export class LineMessagingService {
     return Number.isFinite(value) && value > 0 ? value : 30
   }
 
-  private formatDateTimeVN(value: Date) {
-    return new Intl.DateTimeFormat('vi-VN', {
+  private buildTrainingRedirect(sessionId: bigint) {
+    return `/member/workout/sessions?sessionId=${sessionId.toString()}`
+  }
+
+  private getMessageTemplate() {
+    const locale = this.config.get<string>('LINE_MESSAGE_LOCALE')
+    return LINE_MESSAGE_TEMPLATES[locale === 'ja' ? 'ja' : 'vi']
+  }
+
+  private formatDateTime(value: Date, locale: string) {
+    return new Intl.DateTimeFormat(locale, {
       timeZone: 'Asia/Ho_Chi_Minh',
       hour: '2-digit',
       minute: '2-digit',
