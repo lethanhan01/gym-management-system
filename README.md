@@ -139,7 +139,7 @@ Mở `server/.env` và điền các giá trị sau:
 
 > **Supabase:** Dùng **Transaction pooler** (port 6543) cho `DATABASE_URL` và **Direct connection** (port 5432) cho `DIRECT_URL`. URL-encode ký tự đặc biệt trong mật khẩu nếu có.
 
-> **LINE deploy:** `VITE_LIFF_ID` ở client chỉ là LIFF ID, còn `LINE_LIFF_URL` ở server phải là public LIFF URL dạng `https://liff.line.me/<LIFF_ID>`. Không copy URL trang quản trị `https://developers.line.biz/...` vào biến này. Sau khi build server, có thể chạy `npm run config:check` để kiểm tra env trước khi `npm start`.
+> **LINE deploy:** `VITE_LIFF_ID` ở client chỉ là LIFF ID, còn `LINE_LIFF_URL` ở server dùng cho Messaging/Rich Menu phải là public LIFF URL dạng `https://liff.line.me/<LIFF_ID>`. Không copy URL trang quản trị `https://developers.line.biz/...` vào biến này. LIFF Endpoint URL trong LINE Developers phải trỏ về frontend app để callback chạy được route `/liff`; các link gửi qua LINE nên dùng `https://liff.line.me/<LIFF_ID>?redirect=%2Fmember...`. Sau khi build server, có thể chạy `npm run config:check` để kiểm tra env trước khi `npm start`.
 
 ### 6.4 Khởi động Server
 
