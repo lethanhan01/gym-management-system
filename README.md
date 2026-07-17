@@ -129,8 +129,17 @@ Mở `server/.env` và điền các giá trị sau:
 | `PORT` | Cổng server (mặc định `3000`) |
 | `DEMO_MASTER_OTP` | *(Tùy chọn)* OTP tĩnh cho demo — **không set trên production** |
 | `EXERCISEDB_API_KEY` | *(Tùy chọn)* API key RapidAPI ExerciseDB, dùng cho script fetch bài tập |
+| `LINE_CHANNEL_ID` | *(Tùy chọn)* LINE channel/LIFF ID dùng để verify LINE ID token |
+| `LINE_MESSAGING_ENABLED` | `true` khi bật LINE Messaging webhook/push/reminder; mặc định `false` |
+| `LINE_CHANNEL_SECRET` | Bắt buộc khi `LINE_MESSAGING_ENABLED=true`; lấy từ LINE Messaging API channel |
+| `LINE_CHANNEL_ACCESS_TOKEN` | Bắt buộc khi `LINE_MESSAGING_ENABLED=true`; channel access token của LINE Messaging API |
+| `LINE_LIFF_URL` | Bắt buộc khi `LINE_MESSAGING_ENABLED=true`; phải là `https://liff.line.me/<LIFF_ID>`, không phải URL `developers.line.biz` |
+| `LINE_MESSAGE_LOCALE` | Locale nội dung LINE, nhận `vi` hoặc `ja` |
+| `LINE_REMINDER_MINUTES` | Số phút gửi nhắc lịch tập qua LINE trước giờ bắt đầu, mặc định `30` |
 
 > **Supabase:** Dùng **Transaction pooler** (port 6543) cho `DATABASE_URL` và **Direct connection** (port 5432) cho `DIRECT_URL`. URL-encode ký tự đặc biệt trong mật khẩu nếu có.
+
+> **LINE deploy:** `VITE_LIFF_ID` ở client chỉ là LIFF ID, còn `LINE_LIFF_URL` ở server phải là public LIFF URL dạng `https://liff.line.me/<LIFF_ID>`. Không copy URL trang quản trị `https://developers.line.biz/...` vào biến này. Sau khi build server, có thể chạy `npm run config:check` để kiểm tra env trước khi `npm start`.
 
 ### 6.4 Khởi động Server
 

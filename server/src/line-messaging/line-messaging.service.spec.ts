@@ -93,7 +93,11 @@ describe('LineMessagingService', () => {
         body: expect.stringContaining('https://liff.line.me/test-liff?redirect=%2Fmember'),
       })
     )
-    expect(JSON.parse(mockFetch.mock.calls[0][1].body)).toEqual(
+    const replyBody = JSON.parse(mockFetch.mock.calls[0][1].body)
+    expect(replyBody.messages[0].quickReply.items[0].action.uri).toBe(
+      'https://liff.line.me/test-liff?redirect=%2Fmember'
+    )
+    expect(replyBody).toEqual(
       expect.objectContaining({
         messages: [
           expect.objectContaining({

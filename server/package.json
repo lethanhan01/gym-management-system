@@ -5,6 +5,8 @@
   "scripts": {
     "dev": "node scripts/dev-server.js",
     "build": "prisma generate && nest build",
+    "config:check": "node dist/config/check.js",
+    "prestart": "npm run config:check",
     "start": "node dist/main.js",
     "start:prod": "node dist/main.js",
     "test": "jest",
