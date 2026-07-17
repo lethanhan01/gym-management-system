@@ -138,6 +138,31 @@ describe('NotificationBell', () => {
     expect(screen.getByText('たった今')).toBeVisible()
   })
 
+  it('translates training reminder notifications instead of showing stored Vietnamese text', async () => {
+    const reminderItem = makeItem({
+      type: 'training.reminder',
+      title: 'Sap den gio tap',
+      message: 'Buoi tap voi PT Test Trainer se bat dau sau 30 phut.',
+      resourceType: 'training_session',
+      metadata: { trainerName: 'Test Trainer', reminderMinutes: 30 },
+    })
+    mockList(reminderItem)
+
+    renderBell('/member')
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Thông báo' }))
+    expect(await screen.findByText('Sắp đến giờ tập')).toBeVisible()
+    expect(screen.getByText('Buổi tập với PT Test Trainer sẽ bắt đầu sau 30 phút.')).toBeVisible()
+
+    await i18n.changeLanguage('ja')
+
+    expect(await screen.findByRole('button', { name: '通知' })).toBeVisible()
+    expect(screen.getByText('トレーニング開始間近')).toBeVisible()
+    expect(screen.getByText('PT Test Trainer とのトレーニングはあと30分で始まります。')).toBeVisible()
+    expect(screen.queryByText('Sap den gio tap')).not.toBeInTheDocument()
+    expect(screen.queryByText('Buoi tap voi PT Test Trainer se bat dau sau 30 phut.')).not.toBeInTheDocument()
+  })
+
   it('falls back to API title and message when a dynamic template lacks metadata', async () => {
     const legacyItem = makeItem({
       type: 'subscription.created',

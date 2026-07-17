@@ -153,6 +153,11 @@
         "completed": {
           "title": "Buổi tập đã hoàn thành",
           "memberMessage": "Buổi tập với PT {{trainerName}} đã được đánh dấu hoàn thành."
+        },
+        "reminder": {
+          "title": "Sắp đến giờ tập",
+          "memberMessage": "Buổi tập với PT {{trainerName}} sẽ bắt đầu sau {{reminderMinutes}} phút.",
+          "genericMessage": "Buổi tập của bạn sắp bắt đầu."
         }
       },
       "attendance": {

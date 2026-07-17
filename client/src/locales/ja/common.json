@@ -153,6 +153,11 @@
         "completed": {
           "title": "トレーニングが完了しました",
           "memberMessage": "PT {{trainerName}} とのトレーニングが完了として記録されました。"
+        },
+        "reminder": {
+          "title": "トレーニング開始間近",
+          "memberMessage": "PT {{trainerName}} とのトレーニングはあと{{reminderMinutes}}分で始まります。",
+          "genericMessage": "トレーニングがまもなく始まります。"
         }
       },
       "attendance": {
