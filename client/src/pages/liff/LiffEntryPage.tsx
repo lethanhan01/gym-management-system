@@ -4,6 +4,7 @@ import { initLiff } from '@/lib/liff'
 import { authService } from '@/services/auth.service'
 import { useAuthStore } from '@/stores/authStore'
 import { useSubscriptionStore } from '@/stores/subscriptionStore'
+import { getSafeMemberRedirect } from './liff-redirect'
 
 // DEBUG: đếm số lần run() để phát hiện StrictMode double-invoke (H-B). Bỏ sau khi xong.
 let runCount = 0
@@ -19,6 +20,9 @@ export default function LiffEntryPage() {
 
     async function run() {
       const n = ++runCount
+      const redirectPath = getSafeMemberRedirect(
+        new URLSearchParams(window.location.search).get('redirect')
+      )
       console.log(`[LIFF] run#${n} start, href=${window.location.href}`)
       try {
         const liff = await initLiff()
@@ -53,7 +57,7 @@ export default function LiffEntryPage() {
 
         setAuth(user, token)
         clearSubscription()
-        navigate('/member', { replace: true })
+        navigate(redirectPath, { replace: true })
       } catch (err) {
         console.log(`[LIFF] run#${n} CATCH:`, err)
         if (cancelled) return

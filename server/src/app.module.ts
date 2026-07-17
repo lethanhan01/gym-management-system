@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common'
 import { ConfigModule } from '@nestjs/config'
+import { ScheduleModule } from '@nestjs/schedule'
 import { OtpStoreModule } from './common/otp-store/otp-store.module'
 import { AuthModule } from './auth/auth.module'
 import { validateConfig } from './config/configuration'
@@ -17,6 +18,7 @@ import { FacilityModule } from './facility/facility.module'
 import { ReportsModule } from './reports/reports.module'
 import { PermissionCacheModule } from './common/cache/permission-cache.module'
 import { NotificationsModule } from './notifications/notifications.module'
+import { LineMessagingModule } from './line-messaging/line-messaging.module'
 
 @Module({
   imports: [
@@ -25,6 +27,7 @@ import { NotificationsModule } from './notifications/notifications.module'
       envFilePath: ['.env.local', '.env'],
       validate: (raw) => validateConfig(raw),
     }),
+    ScheduleModule.forRoot(),
     PermissionCacheModule,
     OtpStoreModule,
     PrismaModule,
@@ -41,6 +44,7 @@ import { NotificationsModule } from './notifications/notifications.module'
     FacilityModule,
     ReportsModule,
     NotificationsModule,
+    LineMessagingModule,
   ],
 })
 export class AppModule {}

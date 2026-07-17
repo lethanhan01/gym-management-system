@@ -20,6 +20,7 @@ import { ManualCheckinDto } from './dto/manual-checkin.dto'
 import { UpdateSessionDto } from './dto/update-session.dto'
 import { resolveCallerFilter } from './filters/caller-query-filter'
 import { NotificationsService } from '../notifications/notifications.service'
+import { LineMessagingService } from '../line-messaging/line-messaging.service'
 
 type Caller = {
   userId: bigint
@@ -147,6 +148,7 @@ export class TrainingService {
     private readonly attendance: AttendanceService,
     private readonly deviceAccess: DeviceAccessService,
     private readonly notifications: NotificationsService,
+    private readonly lineMessaging: LineMessagingService,
   ) {}
 
   async listSessions(dto: ListSessionsDto, caller: Caller) {
@@ -788,6 +790,7 @@ export class TrainingService {
       dedupeKey: `training:${session.sessionId.toString()}:created`,
     }
     await this.notifications.safeNotifyUser(session.member.userId, payload)
+    await this.lineMessaging.safePushTrainingSessionEvent('created', session.sessionId)
     await this.notifications.safeNotifyManyUsers(
       [session.trainer.userId],
       {
@@ -821,6 +824,7 @@ export class TrainingService {
       memberPayload,
       { excludeActorUserId: actorUserId },
     )
+    await this.lineMessaging.safePushTrainingSessionEvent('updated', after.sessionId)
     await this.notifications.safeNotifyManyUsers(
       [before.trainer.userId, after.trainer.userId],
       {
@@ -847,6 +851,7 @@ export class TrainingService {
       memberPayload,
       { excludeActorUserId: actorUserId },
     )
+    await this.lineMessaging.safePushTrainingSessionEvent('cancelled', session.sessionId)
     await this.notifications.safeNotifyManyUsers(
       [session.trainer.userId],
       {

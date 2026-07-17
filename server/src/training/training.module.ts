@@ -6,9 +6,10 @@ import { DeviceAccessService } from './device-access.service'
 import { DeviceApiKeyGuard } from './guards/device-api-key.guard'
 import { AuditService } from '../common/audit/audit.service'
 import { NotificationsModule } from '../notifications/notifications.module'
+import { LineMessagingModule } from '../line-messaging/line-messaging.module'
 
 @Module({
-  imports: [NotificationsModule],
+  imports: [NotificationsModule, LineMessagingModule],
   controllers: [TrainingController, DeviceController],
   providers: [TrainingService, AttendanceService, DeviceAccessService, DeviceApiKeyGuard, AuditService],
   exports: [TrainingService, AttendanceService, DeviceAccessService],

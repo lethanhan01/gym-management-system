@@ -179,6 +179,10 @@ const mockNotifications = {
   safeNotifyGroups: jest.fn(),
 }
 
+const mockLineMessaging = {
+  safePushTrainingSessionEvent: jest.fn(),
+}
+
 // ---------------------------------------------------------------------------
 // Suite
 // ---------------------------------------------------------------------------
@@ -193,6 +197,7 @@ describe('TrainingService', () => {
       mockAttendanceService as any,
       mockDeviceAccessService as any,
       mockNotifications as any,
+      mockLineMessaging as any,
     )
     jest.clearAllMocks()
   })
@@ -346,6 +351,7 @@ describe('TrainingService', () => {
         }),
         { excludeActorUserId: caller.userId }
       )
+      expect(mockLineMessaging.safePushTrainingSessionEvent).toHaveBeenCalledWith('created', 1n)
       expect(result.data.sessionId).toBe('1')
     })
   })
@@ -435,6 +441,7 @@ describe('TrainingService', () => {
         }),
         { excludeActorUserId: caller.userId }
       )
+      expect(mockLineMessaging.safePushTrainingSessionEvent).toHaveBeenCalledWith('cancelled', 1n)
     })
   })
 
@@ -835,6 +842,7 @@ describe('TrainingService', () => {
       expect(mockAudit.log).toHaveBeenCalledWith(
         expect.objectContaining({ action: 'training.update' })
       )
+      expect(mockLineMessaging.safePushTrainingSessionEvent).toHaveBeenCalledWith('updated', 1n)
       expect(result.data.sessionId).toBe('1')
     })
 
@@ -866,6 +874,7 @@ describe('TrainingService', () => {
         }),
         { excludeActorUserId: caller.userId }
       )
+      expect(mockLineMessaging.safePushTrainingSessionEvent).toHaveBeenCalledWith('updated', 1n)
     })
 
     it('triggers checkOverlap when roomId is updated — throws ConflictException on overlap', async () => {

@@ -94,15 +94,17 @@ export class NotificationsService {
   }
 
   async notifyUser(userId: bigint | null | undefined, payload: NotificationPayload) {
-    if (!userId) return
-    await this.createForUser(userId, payload)
+    if (!userId) return false
+    return this.createForUser(userId, payload)
   }
 
   async notifyManyUsers(userIds: Array<bigint | null | undefined>, payload: NotificationPayload, options: NotifyOptions = {}) {
     const uniqueIds = this.uniqueRecipients(userIds, options.excludeActorUserId)
+    let created = 0
     for (const userId of uniqueIds) {
-      await this.createForUser(userId, payload)
+      if (await this.createForUser(userId, payload)) created++
     }
+    return created
   }
 
   async notifyGroups(groupNames: GroupName[], payload: NotificationPayload, options: NotifyOptions = {}) {
@@ -126,11 +128,12 @@ export class NotificationsService {
 
   async safeNotifyUser(userId: bigint | null | undefined, payload: NotificationPayload) {
     try {
-      await this.notifyUser(userId, payload)
+      return await this.notifyUser(userId, payload)
     } catch (error) {
       this.logger.warn(
         `Notification create failed (${this.describePayload(payload)}, recipientUserId=${this.describeBigInt(userId)}): ${this.describeError(error)}`
       )
+      return false
     }
   }
 
@@ -169,8 +172,9 @@ export class NotificationsService {
           dedupeKey,
         },
       })
+      return true
     } catch (error) {
-      if (this.isUniqueDedupeError(error)) return
+      if (this.isUniqueDedupeError(error)) return false
       throw error
     }
   }
