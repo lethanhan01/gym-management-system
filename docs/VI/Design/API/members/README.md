@@ -10,22 +10,22 @@ Auth mặc định: JWT + `PermissionsGuard`, trừ `POST /api/v1/members/self-r
 
 | Method | URL | Auth | Permission | Mô tả |
 |---|---|---|---|---|
-| GET | `/api/v1/members/me` | JWT | Không có | Member lấy hồ sơ của chính mình |
-| PATCH | `/api/v1/members/me` | JWT | Không có | Member cập nhật hồ sơ |
-| GET | `/api/v1/members/me/trainers` | JWT | Không có | Danh sách PT khả dụng |
-| PATCH | `/api/v1/members/me/trainer` | JWT | Không có | Member tự chọn/hủy PT |
-| POST | `/api/v1/members/me/progress` | JWT | Không có | Member tự ghi chỉ số |
-| POST | `/api/v1/members` | JWT | `member.create` | Staff tạo hội viên |
+| GET | `/api/v1/members/me` | JWT | Không có | Hội viên lấy hồ sơ của chính mình |
+| PATCH | `/api/v1/members/me` | JWT | Không có | Hội viên cập nhật hồ sơ |
+| GET | `/api/v1/members/me/trainers` | JWT | Không có | Danh sách huấn luyện viên khả dụng |
+| PATCH | `/api/v1/members/me/trainer` | JWT | Không có | Hội viên tự chọn hoặc hủy huấn luyện viên |
+| POST | `/api/v1/members/me/progress` | JWT | Không có | Hội viên tự ghi chỉ số |
+| POST | `/api/v1/members` | JWT | `member.create` | Nhân viên tạo hội viên |
 | POST | `/api/v1/members/self-register` | Public | Không có | Hội viên tự đăng ký |
 | GET | `/api/v1/members` | JWT | `member.read` | Danh sách hội viên |
 | GET | `/api/v1/members/:id` | JWT | Service kiểm tra caller | Chi tiết hội viên |
 | PATCH | `/api/v1/members/:id` | JWT | Service kiểm tra caller | Cập nhật hội viên |
 | DELETE | `/api/v1/members/:id` | JWT | `member.delete` | Xóa hội viên |
-| PATCH | `/api/v1/members/:id/assign-trainer` | JWT | `member.update` | Staff gán PT cho hội viên |
+| PATCH | `/api/v1/members/:id/assign-trainer` | JWT | `member.update` | Nhân viên gán huấn luyện viên cho hội viên |
 
 ## API Details
 
-### GET `/api/v1/members/me`
+### Hội viên lấy hồ sơ của chính mình - GET `/api/v1/members/me`
 
 Request body: Không có.
 
@@ -48,7 +48,7 @@ Response body:
 
 Errors: `401 UNAUTHORIZED`, `404 NOT_FOUND`.
 
-### PATCH `/api/v1/members/me`
+### Hội viên cập nhật hồ sơ - PATCH `/api/v1/members/me`
 
 Request body:
 
@@ -78,7 +78,7 @@ Response body:
 
 Errors: `400 VALIDATION_ERROR`, `401 UNAUTHORIZED`, `404 NOT_FOUND`.
 
-### GET `/api/v1/members/me/trainers`
+### Danh sách huấn luyện viên khả dụng - GET `/api/v1/members/me/trainers`
 
 Request body: Không có.
 
@@ -100,7 +100,7 @@ Response body:
 
 Errors: `401 UNAUTHORIZED`.
 
-### PATCH `/api/v1/members/me/trainer`
+### Hội viên tự chọn hoặc hủy huấn luyện viên - PATCH `/api/v1/members/me/trainer`
 
 Request body:
 
@@ -132,7 +132,7 @@ Response body:
 
 Errors: `400 VALIDATION_ERROR`, `401 UNAUTHORIZED`, `404 NOT_FOUND`.
 
-### POST `/api/v1/members/me/progress`
+### Hội viên tự ghi chỉ số - POST `/api/v1/members/me/progress`
 
 Request body:
 
@@ -159,7 +159,7 @@ Response body:
 
 Errors: `400 VALIDATION_ERROR`, `401 UNAUTHORIZED`, `404 NOT_FOUND`.
 
-### POST `/api/v1/members`
+### Nhân viên tạo hội viên - POST `/api/v1/members`
 
 Request body:
 
@@ -193,7 +193,7 @@ Response body:
 
 Errors: `400 VALIDATION_ERROR`, `401 UNAUTHORIZED`, `403 FORBIDDEN`, `404 NOT_FOUND`, `409 DUPLICATE_VALUE`.
 
-### POST `/api/v1/members/self-register`
+### Hội viên tự đăng ký - POST `/api/v1/members/self-register`
 
 Request body:
 
@@ -224,7 +224,7 @@ Response body:
 
 Errors: `400 VALIDATION_ERROR`, `404 NOT_FOUND`, `409 DUPLICATE_VALUE`.
 
-### GET `/api/v1/members`
+### Danh sách hội viên - GET `/api/v1/members`
 
 Query: `page`, `pageSize`, `search`, `status=active|locked|pending_verification`, `subStatus=active|expired`, `trainerId`, `includeDeleted`, `sort`.
 
@@ -254,7 +254,7 @@ Response body:
 
 Errors: `400 VALIDATION_ERROR`, `401 UNAUTHORIZED`, `403 FORBIDDEN`.
 
-### GET `/api/v1/members/:id`
+### Chi tiết hội viên - GET `/api/v1/members/:id`
 
 Params: `id` number.
 
@@ -275,7 +275,7 @@ Response body:
 
 Errors: `401 UNAUTHORIZED`, `403 FORBIDDEN`, `404 NOT_FOUND`.
 
-### PATCH `/api/v1/members/:id`
+### Cập nhật hội viên - PATCH `/api/v1/members/:id`
 
 Params: `id` number.
 
@@ -304,7 +304,7 @@ Response body:
 
 Errors: `400 VALIDATION_ERROR`, `401 UNAUTHORIZED`, `403 FORBIDDEN`, `404 NOT_FOUND`.
 
-### DELETE `/api/v1/members/:id`
+### Xóa hội viên - DELETE `/api/v1/members/:id`
 
 Params: `id` number.
 
@@ -314,7 +314,7 @@ Response body: Không có body, HTTP `204`.
 
 Errors: `401 UNAUTHORIZED`, `403 FORBIDDEN`, `404 NOT_FOUND`.
 
-### PATCH `/api/v1/members/:id/assign-trainer`
+### Nhân viên gán huấn luyện viên cho hội viên - PATCH `/api/v1/members/:id/assign-trainer`
 
 Params: `id` number.
 

@@ -10,8 +10,8 @@ Auth mặc định: JWT + `PermissionsGuard`. Payment account endpoints dùng se
 
 | Method | URL | Permission | Mô tả |
 |---|---|---|---|
-| POST | `/api/v1/payments` | `payment.create` | Tạo payment |
-| GET | `/api/v1/payments` | `payment.read` | Danh sách payment |
+| POST | `/api/v1/payments` | `payment.create` | Tạo khoản thanh toán |
+| GET | `/api/v1/payments` | `payment.read` | Danh sách khoản thanh toán |
 | GET | `/api/v1/members/:memberId/payment-accounts` | Self hoặc staff/owner | Danh sách tài khoản thanh toán |
 | POST | `/api/v1/members/:memberId/payment-accounts` | Self hoặc staff/owner | Tạo tài khoản thanh toán |
 | PATCH | `/api/v1/members/:memberId/payment-accounts/:accountId` | Self hoặc staff/owner | Đặt tài khoản mặc định |
@@ -19,7 +19,7 @@ Auth mặc định: JWT + `PermissionsGuard`. Payment account endpoints dùng se
 
 ## API Details
 
-### POST `/api/v1/payments`
+### Tạo khoản thanh toán - POST `/api/v1/payments`
 
 Request body:
 
@@ -52,7 +52,7 @@ Response body:
 
 Errors: `400 VALIDATION_ERROR`, `401 UNAUTHORIZED`, `403 FORBIDDEN`, `404 NOT_FOUND`, `409 DUPLICATE_VALUE`.
 
-### GET `/api/v1/payments`
+### Danh sách khoản thanh toán - GET `/api/v1/payments`
 
 Query: `page`, `pageSize`, `memberId`, `subscriptionId`, `status=success|failed`, `method=cash|bank_card|ewallet`, `from`, `to`, `dateFrom`, `dateTo`, `sort`.
 
@@ -84,7 +84,7 @@ Response body:
 
 Errors: `400 VALIDATION_ERROR`, `401 UNAUTHORIZED`, `403 FORBIDDEN`.
 
-### GET `/api/v1/members/:memberId/payment-accounts`
+### Danh sách tài khoản thanh toán - GET `/api/v1/members/:memberId/payment-accounts`
 
 Params: `memberId` number.
 
@@ -111,7 +111,7 @@ Response body:
 
 Errors: `401 UNAUTHORIZED`, `404 NOT_FOUND`.
 
-### POST `/api/v1/members/:memberId/payment-accounts`
+### Tạo tài khoản thanh toán - POST `/api/v1/members/:memberId/payment-accounts`
 
 Params: `memberId` number.
 
@@ -146,7 +146,7 @@ Response body:
 
 Errors: `400 VALIDATION_ERROR`, `401 UNAUTHORIZED`, `404 NOT_FOUND`.
 
-### PATCH `/api/v1/members/:memberId/payment-accounts/:accountId`
+### Đặt tài khoản mặc định - PATCH `/api/v1/members/:memberId/payment-accounts/:accountId`
 
 Params: `memberId` number, `accountId` number.
 
@@ -167,7 +167,7 @@ Response body:
 
 Errors: `401 UNAUTHORIZED`, `404 NOT_FOUND`.
 
-### DELETE `/api/v1/members/:memberId/payment-accounts/:accountId`
+### Xóa tài khoản thanh toán - DELETE `/api/v1/members/:memberId/payment-accounts/:accountId`
 
 Params: `memberId` number, `accountId` number.
 

@@ -13,32 +13,32 @@ Auth mặc định: JWT + `PermissionsGuard`.
 | GET | `/api/v1/exercises` | `exercise.read` | Danh sách bài tập |
 | POST | `/api/v1/exercises` | `exercise.create` | Tạo bài tập |
 | GET | `/api/v1/exercises/external` | `exercise.read` | Tìm bài tập từ ExerciseDB |
-| POST | `/api/v1/exercises/import` | `exercise.create` | Import bài tập ngoài |
+| POST | `/api/v1/exercises/import` | `exercise.create` | Nhập bài tập ngoài |
 | PATCH | `/api/v1/exercises/:id` | `exercise.update` | Cập nhật bài tập |
 | DELETE | `/api/v1/exercises/:id` | `exercise.delete` | Xóa mềm bài tập |
-| GET | `/api/v1/workout-plans` | `workout_plan.create` | Danh sách workout plan |
-| POST | `/api/v1/workout-plans` | `workout_plan.create` | Tạo workout plan |
-| PATCH | `/api/v1/workout-plans/:id` | `workout_plan.update` | Cập nhật workout plan |
-| DELETE | `/api/v1/workout-plans/:id` | `workout_plan.delete` | Xóa mềm workout plan |
+| GET | `/api/v1/workout-plans` | `workout_plan.create` | Danh sách giáo án tập |
+| POST | `/api/v1/workout-plans` | `workout_plan.create` | Tạo giáo án tập |
+| PATCH | `/api/v1/workout-plans/:id` | `workout_plan.update` | Cập nhật giáo án tập |
+| DELETE | `/api/v1/workout-plans/:id` | `workout_plan.delete` | Xóa mềm giáo án tập |
 | POST | `/api/v1/workout-plans/:id/days` | `workout_plan.update` | Thêm ngày tập |
 | PATCH | `/api/v1/workout-plans/:id/days/:dayId` | `workout_plan.update` | Cập nhật ngày tập |
 | DELETE | `/api/v1/workout-plans/:id/days/:dayId` | `workout_plan.update` | Xóa ngày tập |
 | POST | `/api/v1/workout-plans/:id/days/:dayId/exercises` | `workout_plan.update` | Thêm bài tập vào ngày |
 | DELETE | `/api/v1/workout-plans/:id/days/:dayId/exercises/:peId` | `workout_plan.update` | Xóa bài tập khỏi ngày |
-| PATCH | `/api/v1/workout-plans/:id/days/:dayId/exercises/:peId` | `workout_plan.update` | Cập nhật bài tập trong plan |
-| GET | `/api/v1/workout-plans/members/:memberId/assignments` | Service kiểm tra caller | Assignment của member |
-| POST | `/api/v1/workout-plans/members/:memberId/assign` | Service kiểm tra caller | Gán plan cho member |
-| GET | `/api/v1/workout-plans/suggested` | JWT | Danh sách plan gợi ý |
-| GET | `/api/v1/workout-plans/:id/assignments` | `workout_plan.create` | Assignment theo plan |
-| DELETE | `/api/v1/workout-plans/assignments/:assignmentId` | Service kiểm tra caller | Hủy assignment |
-| GET | `/api/v1/workout-plans/:id` | `workout_plan.create` | Chi tiết workout plan |
-| GET | `/api/v1/workout-logs` | `workout_log.read` | Danh sách workout log |
-| POST | `/api/v1/workout-logs` | `workout_log.create` | Tạo workout log |
-| PATCH | `/api/v1/workout-logs/:id` | `workout_log.update` | Cập nhật workout log |
+| PATCH | `/api/v1/workout-plans/:id/days/:dayId/exercises/:peId` | `workout_plan.update` | Cập nhật bài tập trong giáo án |
+| GET | `/api/v1/workout-plans/members/:memberId/assignments` | Service kiểm tra caller | Danh sách giáo án đã gán cho hội viên |
+| POST | `/api/v1/workout-plans/members/:memberId/assign` | Service kiểm tra caller | Gán giáo án tập cho hội viên |
+| GET | `/api/v1/workout-plans/suggested` | JWT | Danh sách giáo án gợi ý |
+| GET | `/api/v1/workout-plans/:id/assignments` | `workout_plan.create` | Danh sách lượt gán theo giáo án |
+| DELETE | `/api/v1/workout-plans/assignments/:assignmentId` | Service kiểm tra caller | Hủy lượt gán giáo án |
+| GET | `/api/v1/workout-plans/:id` | `workout_plan.create` | Chi tiết giáo án tập |
+| GET | `/api/v1/workout-logs` | `workout_log.read` | Danh sách nhật ký tập luyện |
+| POST | `/api/v1/workout-logs` | `workout_log.create` | Tạo nhật ký tập luyện |
+| PATCH | `/api/v1/workout-logs/:id` | `workout_log.update` | Cập nhật nhật ký tập luyện |
 
 ## API Details
 
-### GET `/api/v1/exercises`
+### Danh sách bài tập - GET `/api/v1/exercises`
 
 Query: `category=strength|cardio|flexibility|balance`, `muscleGroup` string optional.
 
@@ -65,7 +65,7 @@ Response body:
 
 Errors: `401 UNAUTHORIZED`, `403 FORBIDDEN`.
 
-### POST `/api/v1/exercises`
+### Tạo bài tập - POST `/api/v1/exercises`
 
 Request body:
 
@@ -95,7 +95,7 @@ Response body:
 
 Errors: `400 VALIDATION_ERROR`, `401 UNAUTHORIZED`, `403 FORBIDDEN`, `409 DUPLICATE_VALUE`.
 
-### GET `/api/v1/exercises/external`
+### Tìm bài tập từ ExerciseDB - GET `/api/v1/exercises/external`
 
 Query: `category` string optional, `name` string optional, `limit` string optional, `offset` string optional.
 
@@ -120,7 +120,7 @@ Response body:
 
 Errors: `401 UNAUTHORIZED`, `403 FORBIDDEN`.
 
-### POST `/api/v1/exercises/import`
+### Nhập bài tập ngoài - POST `/api/v1/exercises/import`
 
 Request body:
 
@@ -150,7 +150,7 @@ Response body:
 
 Errors: `400 VALIDATION_ERROR`, `401 UNAUTHORIZED`, `403 FORBIDDEN`, `409 DUPLICATE_VALUE`.
 
-### PATCH `/api/v1/exercises/:id`
+### Cập nhật bài tập - PATCH `/api/v1/exercises/:id`
 
 Params: `id` number.
 
@@ -182,7 +182,7 @@ Response body:
 
 Errors: `400 VALIDATION_ERROR`, `401 UNAUTHORIZED`, `403 FORBIDDEN`, `404 NOT_FOUND`.
 
-### DELETE `/api/v1/exercises/:id`
+### Xóa mềm bài tập - DELETE `/api/v1/exercises/:id`
 
 Params: `id` number.
 
@@ -198,7 +198,7 @@ Response body:
 
 Errors: `401 UNAUTHORIZED`, `403 FORBIDDEN`, `404 NOT_FOUND`.
 
-### GET `/api/v1/workout-plans`
+### Danh sách giáo án tập - GET `/api/v1/workout-plans`
 
 Request body: Không có.
 
@@ -220,7 +220,7 @@ Response body:
 
 Errors: `401 UNAUTHORIZED`, `403 FORBIDDEN`.
 
-### POST `/api/v1/workout-plans`
+### Tạo giáo án tập - POST `/api/v1/workout-plans`
 
 Request body:
 
@@ -246,7 +246,7 @@ Response body:
 
 Errors: `400 VALIDATION_ERROR`, `401 UNAUTHORIZED`, `403 FORBIDDEN`.
 
-### PATCH `/api/v1/workout-plans/:id`
+### Cập nhật giáo án tập - PATCH `/api/v1/workout-plans/:id`
 
 Params: `id` number.
 
@@ -277,7 +277,7 @@ Response body:
 
 Errors: `400 VALIDATION_ERROR`, `401 UNAUTHORIZED`, `403 FORBIDDEN`, `404 NOT_FOUND`.
 
-### DELETE `/api/v1/workout-plans/:id`
+### Xóa mềm giáo án tập - DELETE `/api/v1/workout-plans/:id`
 
 Params: `id` number.
 
@@ -293,7 +293,7 @@ Response body:
 
 Errors: `401 UNAUTHORIZED`, `403 FORBIDDEN`, `404 NOT_FOUND`.
 
-### POST `/api/v1/workout-plans/:id/days`
+### Thêm ngày tập - POST `/api/v1/workout-plans/:id/days`
 
 Params: `id` number.
 
@@ -325,7 +325,7 @@ Response body:
 
 Errors: `400 VALIDATION_ERROR`, `401 UNAUTHORIZED`, `403 FORBIDDEN`, `404 NOT_FOUND`.
 
-### PATCH `/api/v1/workout-plans/:id/days/:dayId`
+### Cập nhật ngày tập - PATCH `/api/v1/workout-plans/:id/days/:dayId`
 
 Params: `id` number, `dayId` number.
 
@@ -356,7 +356,7 @@ Response body:
 
 Errors: `400 VALIDATION_ERROR`, `401 UNAUTHORIZED`, `403 FORBIDDEN`, `404 NOT_FOUND`.
 
-### DELETE `/api/v1/workout-plans/:id/days/:dayId`
+### Xóa ngày tập - DELETE `/api/v1/workout-plans/:id/days/:dayId`
 
 Params: `id` number, `dayId` number.
 
@@ -372,7 +372,7 @@ Response body:
 
 Errors: `401 UNAUTHORIZED`, `403 FORBIDDEN`, `404 NOT_FOUND`.
 
-### POST `/api/v1/workout-plans/:id/days/:dayId/exercises`
+### Thêm bài tập vào ngày - POST `/api/v1/workout-plans/:id/days/:dayId/exercises`
 
 Params: `id` number, `dayId` number.
 
@@ -407,7 +407,7 @@ Response body:
 
 Errors: `400 VALIDATION_ERROR`, `401 UNAUTHORIZED`, `403 FORBIDDEN`, `404 NOT_FOUND`.
 
-### DELETE `/api/v1/workout-plans/:id/days/:dayId/exercises/:peId`
+### Xóa bài tập khỏi ngày - DELETE `/api/v1/workout-plans/:id/days/:dayId/exercises/:peId`
 
 Params: `id` number, `dayId` number, `peId` number.
 
@@ -423,7 +423,7 @@ Response body:
 
 Errors: `401 UNAUTHORIZED`, `403 FORBIDDEN`, `404 NOT_FOUND`.
 
-### PATCH `/api/v1/workout-plans/:id/days/:dayId/exercises/:peId`
+### Cập nhật bài tập trong giáo án - PATCH `/api/v1/workout-plans/:id/days/:dayId/exercises/:peId`
 
 Params: `id` number, `dayId` number, `peId` number.
 
@@ -455,7 +455,7 @@ Response body:
 
 Errors: `400 VALIDATION_ERROR`, `401 UNAUTHORIZED`, `403 FORBIDDEN`, `404 NOT_FOUND`.
 
-### GET `/api/v1/workout-plans/members/:memberId/assignments`
+### Danh sách giáo án đã gán cho hội viên - GET `/api/v1/workout-plans/members/:memberId/assignments`
 
 Params: `memberId` number.
 
@@ -481,7 +481,7 @@ Response body:
 
 Errors: `401 UNAUTHORIZED`, `403 FORBIDDEN`, `404 NOT_FOUND`.
 
-### POST `/api/v1/workout-plans/members/:memberId/assign`
+### Gán giáo án tập cho hội viên - POST `/api/v1/workout-plans/members/:memberId/assign`
 
 Params: `memberId` number.
 
@@ -511,7 +511,7 @@ Response body:
 
 Errors: `400 VALIDATION_ERROR`, `401 UNAUTHORIZED`, `403 FORBIDDEN`, `404 NOT_FOUND`, `409 DUPLICATE_VALUE`.
 
-### GET `/api/v1/workout-plans/suggested`
+### Danh sách giáo án gợi ý - GET `/api/v1/workout-plans/suggested`
 
 Request body: Không có.
 
@@ -532,7 +532,7 @@ Response body:
 
 Errors: `401 UNAUTHORIZED`.
 
-### GET `/api/v1/workout-plans/:id/assignments`
+### Danh sách lượt gán theo giáo án - GET `/api/v1/workout-plans/:id/assignments`
 
 Params: `id` number.
 
@@ -556,7 +556,7 @@ Response body:
 
 Errors: `401 UNAUTHORIZED`, `403 FORBIDDEN`, `404 NOT_FOUND`.
 
-### DELETE `/api/v1/workout-plans/assignments/:assignmentId`
+### Hủy lượt gán giáo án - DELETE `/api/v1/workout-plans/assignments/:assignmentId`
 
 Params: `assignmentId` number.
 
@@ -572,7 +572,7 @@ Response body:
 
 Errors: `401 UNAUTHORIZED`, `403 FORBIDDEN`, `404 NOT_FOUND`.
 
-### GET `/api/v1/workout-plans/:id`
+### Chi tiết giáo án tập - GET `/api/v1/workout-plans/:id`
 
 Params: `id` number.
 
@@ -595,7 +595,7 @@ Response body:
 
 Errors: `401 UNAUTHORIZED`, `403 FORBIDDEN`, `404 NOT_FOUND`.
 
-### GET `/api/v1/workout-logs`
+### Danh sách nhật ký tập luyện - GET `/api/v1/workout-logs`
 
 Request body: Không có.
 
@@ -617,7 +617,7 @@ Response body:
 
 Errors: `401 UNAUTHORIZED`, `403 FORBIDDEN`.
 
-### POST `/api/v1/workout-logs`
+### Tạo nhật ký tập luyện - POST `/api/v1/workout-logs`
 
 Request body:
 
@@ -663,7 +663,7 @@ Response body:
 
 Errors: `400 VALIDATION_ERROR`, `401 UNAUTHORIZED`, `403 FORBIDDEN`, `404 NOT_FOUND`, `409 DUPLICATE_VALUE`.
 
-### PATCH `/api/v1/workout-logs/:id`
+### Cập nhật nhật ký tập luyện - PATCH `/api/v1/workout-logs/:id`
 
 Params: `id` number.
 

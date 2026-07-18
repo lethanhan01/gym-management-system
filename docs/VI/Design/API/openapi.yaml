@@ -49,7 +49,7 @@ paths:
   /auth/login:
     post:
       tags: [Auth]
-      summary: UC00 — Đăng nhập
+      summary: Đăng nhập
       security: []
       requestBody:
         required: true
@@ -76,7 +76,7 @@ paths:
   /auth/logout:
     post:
       tags: [Auth]
-      summary: UC01 — Đăng xuất (client-side token discard)
+      summary: Đăng xuất không lưu trạng thái
       responses:
         '200':
           description: Thành công
@@ -92,7 +92,7 @@ paths:
   /auth/me:
     get:
       tags: [Auth]
-      summary: Lấy thông tin user hiện tại
+      summary: Lấy thông tin người dùng hiện tại
       responses:
         '200':
           description: Thành công
@@ -110,7 +110,7 @@ paths:
   /auth/forgot-password:
     post:
       tags: [Auth]
-      summary: UC02 — Quên mật khẩu (gửi OTP)
+      summary: Gửi OTP đặt lại mật khẩu
       security: []
       requestBody:
         required: true
@@ -137,7 +137,7 @@ paths:
   /auth/reset-password:
     post:
       tags: [Auth]
-      summary: UC02 — Đặt lại mật khẩu bằng OTP
+      summary: Đặt lại mật khẩu bằng OTP
       security: []
       requestBody:
         required: true
@@ -164,7 +164,7 @@ paths:
   /auth/verify-email:
     post:
       tags: [Auth]
-      summary: UC13 — Xác thực email bằng OTP
+      summary: Xác thực email bằng OTP
       security: []
       requestBody:
         required: true
@@ -202,7 +202,7 @@ paths:
   /auth/resend-verify:
     post:
       tags: [Auth]
-      summary: UC13 — Gửi lại email xác thực
+      summary: Gửi lại OTP xác thực email
       security: []
       requestBody:
         required: true
@@ -226,7 +226,7 @@ paths:
   /members:
     get:
       tags: [Members]
-      summary: UC11 — List hội viên
+      summary: Danh sách hội viên
       parameters:
         - { $ref: '#/components/parameters/Page' }
         - { $ref: '#/components/parameters/PageSize' }
@@ -254,7 +254,7 @@ paths:
         '403': { $ref: '#/components/responses/Forbidden' }
     post:
       tags: [Members]
-      summary: UC03A — Staff tạo hội viên tại quầy
+      summary: Nhân viên tạo hội viên
       requestBody:
         required: true
         content:
@@ -284,7 +284,7 @@ paths:
   /members/self-register:
     post:
       tags: [Members]
-      summary: UC03B — Member tự đăng ký online
+      summary: Hội viên tự đăng ký
       security: []
       requestBody:
         required: true
@@ -327,7 +327,7 @@ paths:
         '404': { $ref: '#/components/responses/NotFound' }
     patch:
       tags: [Members]
-      summary: Cập nhật profile hội viên (Self chỉ subset field)
+      summary: Cập nhật hồ sơ hội viên
       requestBody:
         required: true
         content:
@@ -351,7 +351,7 @@ paths:
         '409': { $ref: '#/components/responses/Conflict' }
     delete:
       tags: [Members]
-      summary: Xóa hội viên (soft-delete, Owner only)
+      summary: Xóa hội viên
       responses:
         '200':
           description: Thành công
@@ -371,7 +371,7 @@ paths:
       - { $ref: '#/components/parameters/IdParam' }
     patch:
       tags: [Members]
-      summary: UC11 — Gán PT chính
+      summary: Gán huấn luyện viên chính
       requestBody:
         required: true
         content:
@@ -404,7 +404,7 @@ paths:
       - { $ref: '#/components/parameters/IdParam' }
     get:
       tags: [Members]
-      summary: UC06 — List bản ghi tiến độ
+      summary: Danh sách tiến độ hội viên
       parameters:
         - { $ref: '#/components/parameters/Page' }
         - { $ref: '#/components/parameters/PageSize' }
@@ -432,7 +432,7 @@ paths:
   /subscriptions:
     get:
       tags: [Subscriptions]
-      summary: List lượt đăng ký gói
+      summary: Danh sách lượt đăng ký gói
       parameters:
         - { name: memberId, in: query, schema: { type: string }, description: Self bắt buộc set memberId=self }
         - { name: status, in: query, schema: { $ref: '#/components/schemas/SubscriptionStatus' } }
@@ -457,7 +457,7 @@ paths:
         '403': { $ref: '#/components/responses/Forbidden' }
     post:
       tags: [Subscriptions]
-      summary: UC03A/B / UC04A — Tạo subscription mới (purchase hoặc renewal)
+      summary: Tạo lượt đăng ký gói
       requestBody:
         required: true
         content:
@@ -493,7 +493,7 @@ paths:
       - { $ref: '#/components/parameters/IdParam' }
     get:
       tags: [Subscriptions]
-      summary: Chi tiết subscription
+      summary: Chi tiết lượt đăng ký gói
       responses:
         '200':
           description: Thành công
@@ -514,7 +514,7 @@ paths:
       - { $ref: '#/components/parameters/IdParam' }
     patch:
       tags: [Subscriptions]
-      summary: UC04B — Hủy subscription (cascade activate pending nếu có)
+      summary: Hủy lượt đăng ký gói
       requestBody:
         required: false
         content:
@@ -544,7 +544,7 @@ paths:
   /payments:
     get:
       tags: [Payments]
-      summary: List payments
+      summary: Danh sách khoản thanh toán
       parameters:
         - { name: memberId, in: query, schema: { type: string }, description: Self bắt buộc set memberId=self }
         - { name: subscriptionId, in: query, schema: { type: string } }
@@ -573,7 +573,7 @@ paths:
         '403': { $ref: '#/components/responses/Forbidden' }
     post:
       tags: [Payments]
-      summary: Ghi nhận thanh toán (activate subscription nếu success + start_date <= today_vn)
+      summary: Tạo khoản thanh toán
       requestBody:
         required: true
         content:
@@ -606,7 +606,7 @@ paths:
   /permissions:
     get:
       tags: [Permissions]
-      summary: List permission catalog
+      summary: Danh sách quyền
       parameters:
         - $ref: '#/components/parameters/Page'
         - $ref: '#/components/parameters/PageSize'
@@ -631,7 +631,7 @@ paths:
   /permissions/{id}:
     get:
       tags: [Permissions]
-      summary: Detail permission
+      summary: Chi tiết quyền
       parameters:
         - $ref: '#/components/parameters/IdParam'
       responses:
@@ -652,7 +652,7 @@ paths:
   /groups:
     get:
       tags: [Groups]
-      summary: List group
+      summary: Danh sách nhóm
       parameters:
         - $ref: '#/components/parameters/Page'
         - $ref: '#/components/parameters/PageSize'
@@ -676,7 +676,7 @@ paths:
         '403': { $ref: '#/components/responses/Forbidden' }
     post:
       tags: [Groups]
-      summary: Tạo custom group
+      summary: Tạo nhóm
       requestBody:
         required: true
         content:
@@ -701,7 +701,7 @@ paths:
   /groups/{id}:
     get:
       tags: [Groups]
-      summary: Detail group + permissions
+      summary: Chi tiết nhóm và quyền
       parameters:
         - $ref: '#/components/parameters/IdParam'
       responses:
@@ -720,7 +720,7 @@ paths:
         '404': { $ref: '#/components/responses/NotFound' }
     patch:
       tags: [Groups]
-      summary: Update group name/description
+      summary: Cập nhật tên hoặc mô tả nhóm
       parameters:
         - $ref: '#/components/parameters/IdParam'
       requestBody:
@@ -746,7 +746,7 @@ paths:
         '409': { $ref: '#/components/responses/Conflict' }
     delete:
       tags: [Groups]
-      summary: Soft delete group
+      summary: Xóa mềm nhóm
       parameters:
         - $ref: '#/components/parameters/IdParam'
       responses:
@@ -763,7 +763,7 @@ paths:
   /groups/{id}/permissions:
     post:
       tags: [Groups]
-      summary: Bulk assign permission to group
+      summary: Gán nhiều quyền vào nhóm
       parameters:
         - $ref: '#/components/parameters/IdParam'
       requestBody:
@@ -802,7 +802,7 @@ paths:
   /groups/{id}/permissions/{permissionId}:
     delete:
       tags: [Groups]
-      summary: Revoke permission khỏi group
+      summary: Gỡ quyền khỏi nhóm
       parameters:
         - $ref: '#/components/parameters/IdParam'
         - { name: permissionId, in: path, required: true, schema: { type: string } }
@@ -815,7 +815,7 @@ paths:
   /users:
     get:
       tags: [Users]
-      summary: List user (admin view)
+      summary: Danh sách người dùng
       parameters:
         - $ref: '#/components/parameters/Page'
         - $ref: '#/components/parameters/PageSize'
@@ -845,7 +845,7 @@ paths:
   /users/{id}:
     get:
       tags: [Users]
-      summary: Detail user (admin hoặc Self)
+      summary: Chi tiết người dùng
       parameters:
         - $ref: '#/components/parameters/IdParam'
       responses:
@@ -864,7 +864,7 @@ paths:
         '404': { $ref: '#/components/responses/NotFound' }
     patch:
       tags: [Users]
-      summary: Update user profile/status
+      summary: Cập nhật hồ sơ hoặc trạng thái người dùng
       parameters:
         - $ref: '#/components/parameters/IdParam'
       requestBody:
@@ -890,7 +890,7 @@ paths:
         '409': { $ref: '#/components/responses/Conflict' }
     delete:
       tags: [Users]
-      summary: Soft delete user + cascade
+      summary: Xóa mềm người dùng
       parameters:
         - $ref: '#/components/parameters/IdParam'
       responses:
@@ -907,7 +907,7 @@ paths:
   /users/{id}/groups:
     get:
       tags: [Users]
-      summary: List group của user
+      summary: Danh sách nhóm của người dùng
       parameters:
         - $ref: '#/components/parameters/IdParam'
       responses:
@@ -928,7 +928,7 @@ paths:
         '404': { $ref: '#/components/responses/NotFound' }
     post:
       tags: [Users]
-      summary: Assign group cho user
+      summary: Gán nhóm cho người dùng
       parameters:
         - $ref: '#/components/parameters/IdParam'
       requestBody:
@@ -965,7 +965,7 @@ paths:
   /users/{id}/groups/{groupId}:
     delete:
       tags: [Users]
-      summary: Revoke group khỏi user
+      summary: Gỡ nhóm khỏi người dùng
       parameters:
         - $ref: '#/components/parameters/IdParam'
         - { name: groupId, in: path, required: true, schema: { type: string } }
@@ -987,7 +987,7 @@ paths:
   /packages:
     get:
       tags: [Packages]
-      summary: List package
+      summary: Danh sách gói tập
       parameters:
         - $ref: '#/components/parameters/Page'
         - $ref: '#/components/parameters/PageSize'
@@ -1017,7 +1017,7 @@ paths:
         '403': { $ref: '#/components/responses/Forbidden' }
     post:
       tags: [Packages]
-      summary: Tạo package mới
+      summary: Tạo gói tập
       requestBody:
         required: true
         content:
@@ -1042,7 +1042,7 @@ paths:
   /packages/{id}:
     get:
       tags: [Packages]
-      summary: Detail package + stats
+      summary: Chi tiết gói tập kèm thống kê
       parameters:
         - $ref: '#/components/parameters/IdParam'
       responses:
@@ -1061,7 +1061,7 @@ paths:
         '404': { $ref: '#/components/responses/NotFound' }
     patch:
       tags: [Packages]
-      summary: Update package (block durationDays/price nếu có sub active)
+      summary: Cập nhật gói tập
       parameters:
         - $ref: '#/components/parameters/IdParam'
       requestBody:
@@ -1091,7 +1091,7 @@ paths:
               schema: { $ref: '#/components/schemas/ErrorEnvelope' }
     delete:
       tags: [Packages]
-      summary: Soft delete package (block nếu có sub active)
+      summary: Xóa mềm gói tập
       parameters:
         - $ref: '#/components/parameters/IdParam'
       responses:
@@ -1108,7 +1108,7 @@ paths:
   /packages/{id}/status:
     patch:
       tags: [Packages]
-      summary: Toggle package status (active/inactive)
+      summary: Đổi trạng thái gói tập
       parameters:
         - $ref: '#/components/parameters/IdParam'
       requestBody:
@@ -1139,7 +1139,7 @@ paths:
   /rooms:
     get:
       tags: [Rooms]
-      summary: UC08 — List rooms
+      summary: Danh sách phòng
       parameters:
         - $ref: '#/components/parameters/Page'
         - $ref: '#/components/parameters/PageSize'
@@ -1164,7 +1164,7 @@ paths:
         '403': { $ref: '#/components/responses/Forbidden' }
     post:
       tags: [Rooms]
-      summary: UC08 — Create room
+      summary: Tạo phòng
       requestBody:
         required: true
         content:
@@ -1189,7 +1189,7 @@ paths:
   /rooms/{id}:
     get:
       tags: [Rooms]
-      summary: UC08 — Room detail + stats
+      summary: Chi tiết phòng kèm thống kê
       parameters:
         - $ref: '#/components/parameters/IdParam'
       responses:
@@ -1208,7 +1208,7 @@ paths:
         '404': { $ref: '#/components/responses/NotFound' }
     patch:
       tags: [Rooms]
-      summary: UC08 — Update room
+      summary: Cập nhật phòng
       parameters:
         - $ref: '#/components/parameters/IdParam'
       requestBody:
@@ -1234,7 +1234,7 @@ paths:
         '409': { $ref: '#/components/responses/Conflict' }
     delete:
       tags: [Rooms]
-      summary: UC08 — Hard delete room
+      summary: Xóa phòng
       parameters:
         - $ref: '#/components/parameters/IdParam'
       responses:
@@ -1256,7 +1256,7 @@ paths:
   /equipment:
     get:
       tags: [Equipment]
-      summary: UC09 — List equipment
+      summary: Danh sách thiết bị
       parameters:
         - $ref: '#/components/parameters/Page'
         - $ref: '#/components/parameters/PageSize'
@@ -1283,7 +1283,7 @@ paths:
         '403': { $ref: '#/components/responses/Forbidden' }
     post:
       tags: [Equipment]
-      summary: UC09 — Create equipment
+      summary: Tạo thiết bị
       requestBody:
         required: true
         content:
@@ -1308,7 +1308,7 @@ paths:
   /equipment/{id}:
     get:
       tags: [Equipment]
-      summary: UC09 — Equipment detail + open maintenance ref
+      summary: Chi tiết thiết bị kèm bảo trì đang mở
       parameters:
         - $ref: '#/components/parameters/IdParam'
       responses:
@@ -1327,7 +1327,7 @@ paths:
         '404': { $ref: '#/components/responses/NotFound' }
     patch:
       tags: [Equipment]
-      summary: UC09 — Update equipment (manual status change cũng qua đây)
+      summary: Cập nhật thiết bị
       parameters:
         - $ref: '#/components/parameters/IdParam'
       requestBody:
@@ -1357,7 +1357,7 @@ paths:
               schema: { $ref: '#/components/schemas/ErrorEnvelope' }
     delete:
       tags: [Equipment]
-      summary: UC09 — Hard delete equipment
+      summary: Xóa thiết bị
       parameters:
         - $ref: '#/components/parameters/IdParam'
         - { name: force, in: query, schema: { type: boolean, default: false }, description: 'Override EQUIPMENT_HAS_RESOLVED_MAINTENANCE (owner only)' }
@@ -1375,7 +1375,7 @@ paths:
   /equipment/{id}/maintenance-logs:
     get:
       tags: [Maintenance]
-      summary: UC09 — List maintenance logs per equipment
+      summary: Lịch sử bảo trì thiết bị
       parameters:
         - $ref: '#/components/parameters/IdParam'
         - $ref: '#/components/parameters/Page'
@@ -1402,7 +1402,7 @@ paths:
         '404': { $ref: '#/components/responses/NotFound' }
     post:
       tags: [Maintenance]
-      summary: UC09 — Report broken equipment (tạo log + equipment.status='broken')
+      summary: Báo hỏng/bảo trì thiết bị
       parameters:
         - $ref: '#/components/parameters/IdParam'
       requestBody:
@@ -1434,7 +1434,7 @@ paths:
   /maintenance-logs/{id}:
     patch:
       tags: [Maintenance]
-      summary: UC09 — State transition (technician accept / resolve / fail)
+      summary: Cập nhật trạng thái bảo trì
       parameters:
         - $ref: '#/components/parameters/IdParam'
       requestBody:

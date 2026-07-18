@@ -15,12 +15,12 @@ Auth mặc định: JWT + `PermissionsGuard`, class-level permission `report.vie
 | GET | `/api/v1/reports/renewals` | `report.view` | Báo cáo gia hạn |
 | GET | `/api/v1/reports/employee-performance` | `report.view` | Hiệu suất nhân viên |
 | GET | `/api/v1/reports/employee-performance/:staffId/detail` | `report.view` | Chi tiết hiệu suất nhân viên |
-| GET | `/api/v1/reports/staff-performance` | `report.view` | Báo cáo staff performance |
+| GET | `/api/v1/reports/staff-performance` | `report.view` | Báo cáo hiệu suất nhân viên |
 | GET | `/api/v1/reports/top-packages` | `report.view` | Gói bán chạy |
 
 ## API Details
 
-### GET `/api/v1/reports/revenue`
+### Báo cáo doanh thu - GET `/api/v1/reports/revenue`
 
 Query: `from` string required, `to` string required, `method=cash|bank_card|ewallet` optional.
 
@@ -42,7 +42,7 @@ Response body:
 
 Errors: `400 VALIDATION_ERROR`, `401 UNAUTHORIZED`, `403 FORBIDDEN`.
 
-### GET `/api/v1/reports/members`
+### Báo cáo hội viên - GET `/api/v1/reports/members`
 
 Query: `from` string required, `to` string required, `method` accepted by DTO but ignored by controller/service call.
 
@@ -64,7 +64,7 @@ Response body:
 
 Errors: `400 VALIDATION_ERROR`, `401 UNAUTHORIZED`, `403 FORBIDDEN`.
 
-### GET `/api/v1/reports/renewals`
+### Báo cáo gia hạn - GET `/api/v1/reports/renewals`
 
 Query: `from` string required, `to` string required, `method` accepted by DTO but ignored by controller/service call.
 
@@ -85,7 +85,7 @@ Response body:
 
 Errors: `400 VALIDATION_ERROR`, `401 UNAUTHORIZED`, `403 FORBIDDEN`.
 
-### GET `/api/v1/reports/employee-performance`
+### Hiệu suất nhân viên - GET `/api/v1/reports/employee-performance`
 
 Query: `from` string required, `to` string required, `method` accepted by DTO but ignored by controller/service call.
 
@@ -109,7 +109,7 @@ Response body:
 
 Errors: `400 VALIDATION_ERROR`, `401 UNAUTHORIZED`, `403 FORBIDDEN`.
 
-### GET `/api/v1/reports/employee-performance/:staffId/detail`
+### Chi tiết hiệu suất nhân viên - GET `/api/v1/reports/employee-performance/:staffId/detail`
 
 Params: `staffId` string.
 
@@ -133,7 +133,7 @@ Response body:
 
 Errors: `400 VALIDATION_ERROR`, `401 UNAUTHORIZED`, `403 FORBIDDEN`, `404 NOT_FOUND`.
 
-### GET `/api/v1/reports/staff-performance`
+### Báo cáo hiệu suất nhân viên - GET `/api/v1/reports/staff-performance`
 
 Query: `from` string required, `to` string required, `staffId` string optional, `method` accepted by inherited DTO but ignored by controller/service call.
 
@@ -156,7 +156,7 @@ Response body:
 
 Errors: `400 VALIDATION_ERROR`, `401 UNAUTHORIZED`, `403 FORBIDDEN`.
 
-### GET `/api/v1/reports/top-packages`
+### Gói bán chạy - GET `/api/v1/reports/top-packages`
 
 Query: `from` string required, `to` string required, `method` accepted by DTO but ignored by controller/service call.
 

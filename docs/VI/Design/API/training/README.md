@@ -16,17 +16,17 @@ Auth mặc định: JWT. `TrainingController` dùng `PermissionsGuard`. `DeviceC
 | PATCH | `/api/v1/training-sessions/:id` | `session.manage` | Cập nhật buổi tập |
 | POST | `/api/v1/training-sessions/:id/cancel` | `session.manage` | Hủy buổi tập |
 | POST | `/api/v1/training-sessions/:id/status` | `session.manage` | Đổi trạng thái buổi tập |
-| GET | `/api/v1/attendance-logs` | `attendance.read` | Danh sách attendance |
-| POST | `/api/v1/attendance/manual-checkin` | `attendance.checkin` | Check-in thủ công |
-| PATCH | `/api/v1/attendance-logs/:id/checkout` | `attendance.checkin` | Check-out attendance |
+| GET | `/api/v1/attendance-logs` | `attendance.read` | Danh sách bản ghi điểm danh |
+| POST | `/api/v1/attendance/manual-checkin` | `attendance.checkin` | Điểm danh thủ công |
+| PATCH | `/api/v1/attendance-logs/:id/checkout` | `attendance.checkin` | Ghi nhận rời buổi tập |
 | GET | `/api/v1/members/:id/progress` | `progress.read` | Danh sách tiến độ hội viên |
 | POST | `/api/v1/members/:id/progress` | `progress.record` | Ghi tiến độ hội viên |
 | DELETE | `/api/v1/member-progress/:id` | `progress.record` | Xóa tiến độ hội viên |
-| POST | `/api/v1/devices/access-events` | JWT + `X-Device-API-Key` | Nhận event từ thiết bị |
+| POST | `/api/v1/devices/access-events` | JWT + `X-Device-API-Key` | Nhận sự kiện từ thiết bị |
 
 ## API Details
 
-### GET `/api/v1/training-sessions`
+### Danh sách buổi tập - GET `/api/v1/training-sessions`
 
 Query: `page`, `pageSize`, `memberId`, `trainerStaffId`, `roomId`, `status=scheduled|in_progress|completed|cancelled`, `from`, `to`, `sort`.
 
@@ -59,7 +59,7 @@ Response body:
 
 Errors: `400 VALIDATION_ERROR`, `401 UNAUTHORIZED`, `403 FORBIDDEN`.
 
-### GET `/api/v1/training-sessions/:id`
+### Chi tiết buổi tập - GET `/api/v1/training-sessions/:id`
 
 Params: `id` number.
 
@@ -84,7 +84,7 @@ Response body:
 
 Errors: `401 UNAUTHORIZED`, `403 FORBIDDEN`, `404 NOT_FOUND`.
 
-### POST `/api/v1/training-sessions`
+### Tạo buổi tập - POST `/api/v1/training-sessions`
 
 Request body:
 
@@ -117,7 +117,7 @@ Response body:
 
 Errors: `400 VALIDATION_ERROR`, `401 UNAUTHORIZED`, `403 FORBIDDEN`, `404 NOT_FOUND`, `409 DUPLICATE_VALUE`.
 
-### PATCH `/api/v1/training-sessions/:id`
+### Cập nhật buổi tập - PATCH `/api/v1/training-sessions/:id`
 
 Params: `id` number.
 
@@ -149,7 +149,7 @@ Response body:
 
 Errors: `400 VALIDATION_ERROR`, `401 UNAUTHORIZED`, `403 FORBIDDEN`, `404 NOT_FOUND`.
 
-### POST `/api/v1/training-sessions/:id/cancel`
+### Hủy buổi tập - POST `/api/v1/training-sessions/:id/cancel`
 
 Params: `id` number.
 
@@ -171,7 +171,7 @@ Response body:
 
 Errors: `400 VALIDATION_ERROR`, `401 UNAUTHORIZED`, `403 FORBIDDEN`, `404 NOT_FOUND`.
 
-### POST `/api/v1/training-sessions/:id/status`
+### Đổi trạng thái buổi tập - POST `/api/v1/training-sessions/:id/status`
 
 Params: `id` number.
 
@@ -199,7 +199,7 @@ Response body:
 
 Errors: `400 VALIDATION_ERROR`, `401 UNAUTHORIZED`, `403 FORBIDDEN`, `404 NOT_FOUND`.
 
-### GET `/api/v1/attendance-logs`
+### Danh sách bản ghi điểm danh - GET `/api/v1/attendance-logs`
 
 Query: `page`, `pageSize`, `memberId`, `subscriptionId`, `sessionId`, `method=realtime|manual|qr`, `from`, `to`.
 
@@ -231,7 +231,7 @@ Response body:
 
 Errors: `400 VALIDATION_ERROR`, `401 UNAUTHORIZED`, `403 FORBIDDEN`.
 
-### POST `/api/v1/attendance/manual-checkin`
+### Điểm danh thủ công - POST `/api/v1/attendance/manual-checkin`
 
 Request body:
 
@@ -258,7 +258,7 @@ Response body:
 
 Errors: `400 VALIDATION_ERROR`, `401 UNAUTHORIZED`, `403 FORBIDDEN`, `404 NOT_FOUND`.
 
-### PATCH `/api/v1/attendance-logs/:id/checkout`
+### Ghi nhận rời buổi tập - PATCH `/api/v1/attendance-logs/:id/checkout`
 
 Params: `id` number.
 
@@ -284,7 +284,7 @@ Response body:
 
 Errors: `400 VALIDATION_ERROR`, `401 UNAUTHORIZED`, `403 FORBIDDEN`, `404 NOT_FOUND`.
 
-### GET `/api/v1/members/:id/progress`
+### Danh sách tiến độ hội viên - GET `/api/v1/members/:id/progress`
 
 Params: `id` number.
 
@@ -311,7 +311,7 @@ Response body:
 
 Errors: `401 UNAUTHORIZED`, `403 FORBIDDEN`, `404 NOT_FOUND`.
 
-### POST `/api/v1/members/:id/progress`
+### Ghi tiến độ hội viên - POST `/api/v1/members/:id/progress`
 
 Params: `id` number.
 
@@ -343,7 +343,7 @@ Response body:
 
 Errors: `400 VALIDATION_ERROR`, `401 UNAUTHORIZED`, `403 FORBIDDEN`, `404 NOT_FOUND`.
 
-### DELETE `/api/v1/member-progress/:id`
+### Xóa tiến độ hội viên - DELETE `/api/v1/member-progress/:id`
 
 Params: `id` number.
 
@@ -353,7 +353,7 @@ Response body: Không có body, HTTP `204`.
 
 Errors: `401 UNAUTHORIZED`, `403 FORBIDDEN`, `404 NOT_FOUND`.
 
-### POST `/api/v1/devices/access-events`
+### Nhận sự kiện từ thiết bị - POST `/api/v1/devices/access-events`
 
 Headers: `Authorization: Bearer <JWT>`, `X-Device-API-Key: <key>`.
 

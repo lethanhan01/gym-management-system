@@ -16,16 +16,16 @@ Auth mặc định: JWT + `PermissionsGuard`.
 | PATCH | `/api/v1/packages/:id` | `package.manage` | Cập nhật gói tập |
 | PATCH | `/api/v1/packages/:id/status` | `package.manage` | Đổi trạng thái gói tập |
 | DELETE | `/api/v1/packages/:id` | `package.manage` | Xóa gói tập |
-| POST | `/api/v1/subscriptions` | `subscription.create` | Tạo subscription |
-| GET | `/api/v1/subscriptions` | `subscription.read` | Danh sách subscription |
-| GET | `/api/v1/subscriptions/member/:memberId` | `subscription.read` | Subscription theo hội viên |
-| PATCH | `/api/v1/subscriptions/:id/cancel` | `subscription.cancel` | Hủy subscription |
-| POST | `/api/v1/subscriptions/:id/renew` | `subscription.create` | Gia hạn subscription |
-| GET | `/api/v1/subscriptions/:id` | `subscription.read` | Chi tiết subscription |
+| POST | `/api/v1/subscriptions` | `subscription.create` | Tạo lượt đăng ký gói |
+| GET | `/api/v1/subscriptions` | `subscription.read` | Danh sách lượt đăng ký gói |
+| GET | `/api/v1/subscriptions/member/:memberId` | `subscription.read` | Lượt đăng ký gói theo hội viên |
+| PATCH | `/api/v1/subscriptions/:id/cancel` | `subscription.cancel` | Hủy lượt đăng ký gói |
+| POST | `/api/v1/subscriptions/:id/renew` | `subscription.create` | Gia hạn lượt đăng ký gói |
+| GET | `/api/v1/subscriptions/:id` | `subscription.read` | Chi tiết lượt đăng ký gói |
 
 ## API Details
 
-### GET `/api/v1/packages`
+### Danh sách gói tập - GET `/api/v1/packages`
 
 Query: `page`, `pageSize`, `status=active|inactive|deleted`, `minDuration`, `maxDuration`, `minPrice`, `maxPrice`, `search`, `includeDeleted`, `sort`.
 
@@ -59,7 +59,7 @@ Response body:
 
 Errors: `400 VALIDATION_ERROR`, `401 UNAUTHORIZED`, `403 FORBIDDEN`.
 
-### GET `/api/v1/packages/:id`
+### Chi tiết gói tập - GET `/api/v1/packages/:id`
 
 Params: `id` number.
 
@@ -85,7 +85,7 @@ Response body:
 
 Errors: `401 UNAUTHORIZED`, `403 FORBIDDEN`, `404 NOT_FOUND`.
 
-### POST `/api/v1/packages`
+### Tạo gói tập - POST `/api/v1/packages`
 
 Request body:
 
@@ -116,7 +116,7 @@ Response body:
 
 Errors: `400 VALIDATION_ERROR`, `401 UNAUTHORIZED`, `403 FORBIDDEN`, `409 DUPLICATE_VALUE`.
 
-### PATCH `/api/v1/packages/:id`
+### Cập nhật gói tập - PATCH `/api/v1/packages/:id`
 
 Params: `id` number.
 
@@ -148,7 +148,7 @@ Response body:
 
 Errors: `400 VALIDATION_ERROR`, `401 UNAUTHORIZED`, `403 FORBIDDEN`, `404 NOT_FOUND`, `409 DUPLICATE_VALUE`.
 
-### PATCH `/api/v1/packages/:id/status`
+### Đổi trạng thái gói tập - PATCH `/api/v1/packages/:id/status`
 
 Params: `id` number.
 
@@ -174,7 +174,7 @@ Response body:
 
 Errors: `400 VALIDATION_ERROR`, `401 UNAUTHORIZED`, `403 FORBIDDEN`, `404 NOT_FOUND`.
 
-### DELETE `/api/v1/packages/:id`
+### Xóa gói tập - DELETE `/api/v1/packages/:id`
 
 Params: `id` number.
 
@@ -184,7 +184,7 @@ Response body: Không có body, HTTP `204`.
 
 Errors: `401 UNAUTHORIZED`, `403 FORBIDDEN`, `404 NOT_FOUND`.
 
-### POST `/api/v1/subscriptions`
+### Tạo lượt đăng ký gói - POST `/api/v1/subscriptions`
 
 Request body:
 
@@ -213,7 +213,7 @@ Response body:
 
 Errors: `400 VALIDATION_ERROR`, `401 UNAUTHORIZED`, `403 FORBIDDEN`, `404 NOT_FOUND`, `409 DUPLICATE_VALUE`.
 
-### GET `/api/v1/subscriptions`
+### Danh sách lượt đăng ký gói - GET `/api/v1/subscriptions`
 
 Query: `page`, `pageSize`, `memberId`, `packageId`, `status=pending|active|expired|cancelled`, `from`, `to`, `sort`.
 
@@ -243,7 +243,7 @@ Response body:
 
 Errors: `400 VALIDATION_ERROR`, `401 UNAUTHORIZED`, `403 FORBIDDEN`.
 
-### GET `/api/v1/subscriptions/member/:memberId`
+### Lượt đăng ký gói theo hội viên - GET `/api/v1/subscriptions/member/:memberId`
 
 Params: `memberId` number.
 
@@ -266,7 +266,7 @@ Response body:
 
 Errors: `401 UNAUTHORIZED`, `403 FORBIDDEN`, `404 NOT_FOUND`.
 
-### PATCH `/api/v1/subscriptions/:id/cancel`
+### Hủy lượt đăng ký gói - PATCH `/api/v1/subscriptions/:id/cancel`
 
 Params: `id` number.
 
@@ -290,7 +290,7 @@ Response body:
 
 Errors: `401 UNAUTHORIZED`, `403 FORBIDDEN`, `404 NOT_FOUND`.
 
-### POST `/api/v1/subscriptions/:id/renew`
+### Gia hạn lượt đăng ký gói - POST `/api/v1/subscriptions/:id/renew`
 
 Params: `id` number.
 
@@ -318,7 +318,7 @@ Response body:
 
 Errors: `400 VALIDATION_ERROR`, `401 UNAUTHORIZED`, `403 FORBIDDEN`, `404 NOT_FOUND`, `409 DUPLICATE_VALUE`.
 
-### GET `/api/v1/subscriptions/:id`
+### Chi tiết lượt đăng ký gói - GET `/api/v1/subscriptions/:id`
 
 Params: `id` number.
 

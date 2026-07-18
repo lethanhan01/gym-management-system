@@ -10,13 +10,13 @@ Auth mặc định: JWT + `PermissionsGuard`.
 
 | Method | URL | Permission | Mô tả |
 |---|---|---|---|
-| GET | `/api/v1/staff/me` | Không có | Staff lấy hồ sơ của chính mình |
+| GET | `/api/v1/staff/me` | Không có | Nhân viên lấy hồ sơ của chính mình |
 | GET | `/api/v1/staff` | `staff.read` | Danh sách nhân viên |
 | POST | `/api/v1/staff` | `staff.create` | Tạo nhân viên |
-| GET | `/api/v1/staff/trainers` | Không có | Danh sách trainer |
+| GET | `/api/v1/staff/trainers` | Không có | Danh sách huấn luyện viên |
 | GET | `/api/v1/staff/schedules/range` | `schedule.read` | Lịch làm việc theo khoảng ngày |
-| POST | `/api/v1/staff/me/attendance/check-in` | Không có | Staff check-in |
-| POST | `/api/v1/staff/me/attendance/check-out` | Không có | Staff check-out |
+| POST | `/api/v1/staff/me/attendance/check-in` | Không có | Nhân viên chấm công vào |
+| POST | `/api/v1/staff/me/attendance/check-out` | Không có | Nhân viên chấm công ra |
 | GET | `/api/v1/staff/me/attendance` | Không có | Lịch sử chấm công cá nhân |
 | GET | `/api/v1/staff/:id` | `staff.read` | Chi tiết nhân viên |
 | PATCH | `/api/v1/staff/:id` | `staff.update` | Cập nhật nhân viên |
@@ -27,7 +27,7 @@ Auth mặc định: JWT + `PermissionsGuard`.
 
 ## API Details
 
-### GET `/api/v1/staff/me`
+### Nhân viên lấy hồ sơ của chính mình - GET `/api/v1/staff/me`
 
 Request body: Không có.
 
@@ -47,7 +47,7 @@ Response body:
 
 Errors: `400 STAFF_PROFILE_MISSING`, `401 UNAUTHORIZED`, `404 NOT_FOUND`.
 
-### GET `/api/v1/staff`
+### Danh sách nhân viên - GET `/api/v1/staff`
 
 Query: `page` number default `1`, `pageSize` number default `20`, `position` string optional, `status` string optional (`deleted` chỉ owner được xem), `search` string optional, `sort` string default `staff_code:asc`.
 
@@ -77,7 +77,7 @@ Response body:
 
 Errors: `401 UNAUTHORIZED`, `403 FORBIDDEN`.
 
-### POST `/api/v1/staff`
+### Tạo nhân viên - POST `/api/v1/staff`
 
 Request body:
 
@@ -110,7 +110,7 @@ Response body:
 
 Errors: `400 VALIDATION_ERROR`, `401 UNAUTHORIZED`, `403 FORBIDDEN`, `409 DUPLICATE_VALUE`.
 
-### GET `/api/v1/staff/trainers`
+### Danh sách huấn luyện viên - GET `/api/v1/staff/trainers`
 
 Request body: Không có.
 
@@ -132,7 +132,7 @@ Response body:
 
 Errors: `401 UNAUTHORIZED`.
 
-### GET `/api/v1/staff/schedules/range`
+### Lịch làm việc theo khoảng ngày - GET `/api/v1/staff/schedules/range`
 
 Query: `from` string required, `to` string required.
 
@@ -156,7 +156,7 @@ Response body:
 
 Errors: `401 UNAUTHORIZED`, `403 FORBIDDEN`.
 
-### POST `/api/v1/staff/me/attendance/check-in`
+### Nhân viên chấm công vào - POST `/api/v1/staff/me/attendance/check-in`
 
 Request body: Không có.
 
@@ -176,7 +176,7 @@ Response body:
 
 Errors: `400 STAFF_PROFILE_MISSING`, `400 VALIDATION_ERROR`, `401 UNAUTHORIZED`.
 
-### POST `/api/v1/staff/me/attendance/check-out`
+### Nhân viên chấm công ra - POST `/api/v1/staff/me/attendance/check-out`
 
 Request body: Không có.
 
@@ -196,7 +196,7 @@ Response body:
 
 Errors: `400 STAFF_PROFILE_MISSING`, `400 VALIDATION_ERROR`, `401 UNAUTHORIZED`.
 
-### GET `/api/v1/staff/me/attendance`
+### Lịch sử chấm công cá nhân - GET `/api/v1/staff/me/attendance`
 
 Query: `from` ISO date optional, `to` ISO date optional, `pageSize` number optional.
 
@@ -220,7 +220,7 @@ Response body:
 
 Errors: `400 STAFF_PROFILE_MISSING`, `400 VALIDATION_ERROR`, `401 UNAUTHORIZED`.
 
-### GET `/api/v1/staff/:id`
+### Chi tiết nhân viên - GET `/api/v1/staff/:id`
 
 Params: `id` number.
 
@@ -242,7 +242,7 @@ Response body:
 
 Errors: `401 UNAUTHORIZED`, `403 FORBIDDEN`, `404 NOT_FOUND`.
 
-### PATCH `/api/v1/staff/:id`
+### Cập nhật nhân viên - PATCH `/api/v1/staff/:id`
 
 Params: `id` number.
 
@@ -272,7 +272,7 @@ Response body:
 
 Errors: `400 VALIDATION_ERROR`, `401 UNAUTHORIZED`, `403 FORBIDDEN`, `404 NOT_FOUND`.
 
-### DELETE `/api/v1/staff/:id`
+### Xóa nhân viên - DELETE `/api/v1/staff/:id`
 
 Params: `id` number.
 
@@ -292,7 +292,7 @@ Response body:
 
 Errors: `401 UNAUTHORIZED`, `403 FORBIDDEN`, `404 NOT_FOUND`.
 
-### GET `/api/v1/staff/:id/schedules`
+### Lịch của một nhân viên - GET `/api/v1/staff/:id/schedules`
 
 Params: `id` number.
 
@@ -316,7 +316,7 @@ Response body:
 
 Errors: `401 UNAUTHORIZED`, `403 FORBIDDEN`, `404 NOT_FOUND`.
 
-### POST `/api/v1/staff/:id/schedules`
+### Tạo lịch cho nhân viên - POST `/api/v1/staff/:id/schedules`
 
 Params: `id` number.
 
@@ -357,7 +357,7 @@ Response body:
 
 Errors: `400 VALIDATION_ERROR`, `401 UNAUTHORIZED`, `403 FORBIDDEN`, `404 NOT_FOUND`, `409 DUPLICATE_VALUE`.
 
-### DELETE `/api/v1/staff/:id/schedules/:scheduleId`
+### Xóa lịch của nhân viên - DELETE `/api/v1/staff/:id/schedules/:scheduleId`
 
 Params: `id` number, `scheduleId` number.
 

@@ -10,7 +10,7 @@ Auth mặc định: JWT + `PermissionsGuard`. `GET /api/v1/rooms/lookup` vẫn c
 
 | Method | URL | Permission | Mô tả |
 |---|---|---|---|
-| GET | `/api/v1/rooms/lookup` | Không có | Lookup phòng, pageSize tối đa 100 |
+| GET | `/api/v1/rooms/lookup` | Không có | Tra cứu phòng, pageSize tối đa 100 |
 | GET | `/api/v1/rooms` | `room.manage` | Danh sách phòng |
 | GET | `/api/v1/rooms/:id` | `room.manage` | Chi tiết phòng |
 | POST | `/api/v1/rooms` | `room.manage` | Tạo phòng |
@@ -27,7 +27,7 @@ Auth mặc định: JWT + `PermissionsGuard`. `GET /api/v1/rooms/lookup` vẫn c
 
 ## API Details
 
-### GET `/api/v1/rooms/lookup`
+### Tra cứu phòng, pageSize tối đa 100 - GET `/api/v1/rooms/lookup`
 
 Query: `page`, `pageSize`, `roomType`, `search`, `sort`.
 
@@ -58,7 +58,7 @@ Response body:
 
 Errors: `400 VALIDATION_ERROR`, `401 UNAUTHORIZED`.
 
-### GET `/api/v1/rooms`
+### Danh sách phòng - GET `/api/v1/rooms`
 
 Query: `page`, `pageSize`, `roomType`, `search`, `sort`.
 
@@ -68,7 +68,7 @@ Response body giống `GET /rooms/lookup` nhưng yêu cầu `room.manage`.
 
 Errors: `400 VALIDATION_ERROR`, `401 UNAUTHORIZED`, `403 FORBIDDEN`.
 
-### GET `/api/v1/rooms/:id`
+### Chi tiết phòng - GET `/api/v1/rooms/:id`
 
 Params: `id` number.
 
@@ -92,7 +92,7 @@ Response body:
 
 Errors: `401 UNAUTHORIZED`, `403 FORBIDDEN`, `404 NOT_FOUND`.
 
-### POST `/api/v1/rooms`
+### Tạo phòng - POST `/api/v1/rooms`
 
 Request body:
 
@@ -121,7 +121,7 @@ Response body:
 
 Errors: `400 VALIDATION_ERROR`, `401 UNAUTHORIZED`, `403 FORBIDDEN`, `409 DUPLICATE_VALUE`.
 
-### PATCH `/api/v1/rooms/:id`
+### Cập nhật phòng - PATCH `/api/v1/rooms/:id`
 
 Params: `id` number.
 
@@ -152,7 +152,7 @@ Response body:
 
 Errors: `400 VALIDATION_ERROR`, `401 UNAUTHORIZED`, `403 FORBIDDEN`, `404 NOT_FOUND`, `409 DUPLICATE_VALUE`.
 
-### DELETE `/api/v1/rooms/:id`
+### Xóa phòng - DELETE `/api/v1/rooms/:id`
 
 Params: `id` number.
 
@@ -162,7 +162,7 @@ Response body: Không có body, HTTP `204`.
 
 Errors: `401 UNAUTHORIZED`, `403 FORBIDDEN`, `404 NOT_FOUND`.
 
-### GET `/api/v1/equipment`
+### Danh sách thiết bị - GET `/api/v1/equipment`
 
 Query: `page`, `pageSize`, `roomId`, `status=active|broken|repairing|retired`, `search`, `warrantyExpiring`, `sort`.
 
@@ -193,7 +193,7 @@ Response body:
 
 Errors: `400 VALIDATION_ERROR`, `401 UNAUTHORIZED`, `403 FORBIDDEN`.
 
-### GET `/api/v1/equipment/:id`
+### Chi tiết thiết bị - GET `/api/v1/equipment/:id`
 
 Params: `id` number.
 
@@ -218,7 +218,7 @@ Response body:
 
 Errors: `401 UNAUTHORIZED`, `403 FORBIDDEN`, `404 NOT_FOUND`.
 
-### POST `/api/v1/equipment`
+### Tạo thiết bị - POST `/api/v1/equipment`
 
 Request body:
 
@@ -247,7 +247,7 @@ Response body:
 
 Errors: `400 VALIDATION_ERROR`, `401 UNAUTHORIZED`, `403 FORBIDDEN`, `404 NOT_FOUND`, `409 DUPLICATE_VALUE`.
 
-### PATCH `/api/v1/equipment/:id`
+### Cập nhật thiết bị - PATCH `/api/v1/equipment/:id`
 
 Params: `id` number.
 
@@ -279,7 +279,7 @@ Response body:
 
 Errors: `400 VALIDATION_ERROR`, `401 UNAUTHORIZED`, `403 FORBIDDEN`, `404 NOT_FOUND`.
 
-### DELETE `/api/v1/equipment/:id`
+### Xóa thiết bị - DELETE `/api/v1/equipment/:id`
 
 Params: `id` number.
 
@@ -291,7 +291,7 @@ Response body: Không có body, HTTP `204`.
 
 Errors: `401 UNAUTHORIZED`, `403 FORBIDDEN`, `404 NOT_FOUND`.
 
-### GET `/api/v1/equipment/:id/maintenance-logs`
+### Lịch sử bảo trì thiết bị - GET `/api/v1/equipment/:id/maintenance-logs`
 
 Params: `id` number.
 
@@ -323,7 +323,7 @@ Response body:
 
 Errors: `400 VALIDATION_ERROR`, `401 UNAUTHORIZED`, `403 FORBIDDEN`, `404 NOT_FOUND`.
 
-### POST `/api/v1/equipment/:id/maintenance-logs`
+### Báo hỏng/bảo trì thiết bị - POST `/api/v1/equipment/:id/maintenance-logs`
 
 Params: `id` number.
 
@@ -351,7 +351,7 @@ Response body:
 
 Errors: `400 VALIDATION_ERROR`, `401 UNAUTHORIZED`, `403 FORBIDDEN`, `404 NOT_FOUND`.
 
-### PATCH `/api/v1/maintenance-logs/:id`
+### Cập nhật trạng thái bảo trì - PATCH `/api/v1/maintenance-logs/:id`
 
 Params: `id` number.
 

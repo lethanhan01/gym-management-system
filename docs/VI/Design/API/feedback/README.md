@@ -10,16 +10,16 @@ Auth mặc định: JWT + `PermissionsGuard`.
 
 | Method | URL | Permission | Mô tả |
 |---|---|---|---|
-| GET | `/api/v1/feedback` | `feedback.read` | Danh sách feedback |
-| GET | `/api/v1/feedback/:id` | `feedback.read` | Chi tiết feedback |
-| POST | `/api/v1/feedback` | `feedback.create` | Tạo feedback |
-| PATCH | `/api/v1/feedback/:id/assign` | `feedback.handle` | Phân công xử lý feedback |
-| PATCH | `/api/v1/feedback/:id/status` | `feedback.handle` | Cập nhật trạng thái feedback |
-| DELETE | `/api/v1/feedback/:id` | `feedback.create` | Xóa mềm feedback |
+| GET | `/api/v1/feedback` | `feedback.read` | Danh sách phản hồi |
+| GET | `/api/v1/feedback/:id` | `feedback.read` | Chi tiết phản hồi |
+| POST | `/api/v1/feedback` | `feedback.create` | Tạo phản hồi |
+| PATCH | `/api/v1/feedback/:id/assign` | `feedback.handle` | Phân công xử lý phản hồi |
+| PATCH | `/api/v1/feedback/:id/status` | `feedback.handle` | Cập nhật trạng thái phản hồi |
+| DELETE | `/api/v1/feedback/:id` | `feedback.create` | Xóa mềm phản hồi |
 
 ## API Details
 
-### GET `/api/v1/feedback`
+### Danh sách phản hồi - GET `/api/v1/feedback`
 
 Query: `page`, `pageSize`, `memberId`, `feedbackType=staff|equipment|service`, `severity=low|medium|high`, `status=open|in_progress|resolved|rejected`, `handledByStaffId`, `subjectStaffId`, `subjectEquipmentId`, `overdue`, `from`, `to`, `sort`.
 
@@ -51,7 +51,7 @@ Response body:
 
 Errors: `400 VALIDATION_ERROR`, `401 UNAUTHORIZED`, `403 FORBIDDEN`.
 
-### GET `/api/v1/feedback/:id`
+### Chi tiết phản hồi - GET `/api/v1/feedback/:id`
 
 Params: `id` number.
 
@@ -75,7 +75,7 @@ Response body:
 
 Errors: `401 UNAUTHORIZED`, `403 FORBIDDEN`, `404 NOT_FOUND`.
 
-### POST `/api/v1/feedback`
+### Tạo phản hồi - POST `/api/v1/feedback`
 
 Request body:
 
@@ -106,7 +106,7 @@ Response body:
 
 Errors: `400 VALIDATION_ERROR`, `401 UNAUTHORIZED`, `403 FORBIDDEN`, `404 NOT_FOUND`.
 
-### PATCH `/api/v1/feedback/:id/assign`
+### Phân công xử lý phản hồi - PATCH `/api/v1/feedback/:id/assign`
 
 Params: `id` number.
 
@@ -133,7 +133,7 @@ Response body:
 
 Errors: `400 VALIDATION_ERROR`, `401 UNAUTHORIZED`, `403 FORBIDDEN`, `404 NOT_FOUND`.
 
-### PATCH `/api/v1/feedback/:id/status`
+### Cập nhật trạng thái phản hồi - PATCH `/api/v1/feedback/:id/status`
 
 Params: `id` number.
 
@@ -165,7 +165,7 @@ Response body:
 
 Errors: `400 VALIDATION_ERROR`, `401 UNAUTHORIZED`, `403 FORBIDDEN`, `404 NOT_FOUND`.
 
-### DELETE `/api/v1/feedback/:id`
+### Xóa mềm phản hồi - DELETE `/api/v1/feedback/:id`
 
 Params: `id` number.
 

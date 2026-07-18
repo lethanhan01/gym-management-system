@@ -8,12 +8,12 @@ Base path: không dùng `/api/v1` vì `main.ts` exclude `/` và `/health` khỏi
 
 | Method | URL | Auth | Permission | Mô tả |
 |---|---|---|---|---|
-| GET | `/` | Public | Không có | Root liveness |
-| GET | `/health` | Public | Không có | Health check kèm database |
+| GET | `/` | Public | Không có | Kiểm tra ứng dụng đang hoạt động |
+| GET | `/health` | Public | Không có | Kiểm tra sức khỏe hệ thống kèm cơ sở dữ liệu |
 
 ## API Details
 
-### GET `/`
+### Kiểm tra ứng dụng đang hoạt động - GET `/`
 
 Request body: Không có.
 
@@ -27,7 +27,7 @@ Response body:
 
 Errors: không có lỗi nghiệp vụ riêng.
 
-### GET `/health`
+### Kiểm tra sức khỏe hệ thống kèm cơ sở dữ liệu - GET `/health`
 
 Request body: Không có.
 

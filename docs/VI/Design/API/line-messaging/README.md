@@ -8,11 +8,11 @@ Base path: `/api/v1/line`
 
 | Method | URL | Auth | Permission | Mô tả |
 |---|---|---|---|---|
-| POST | `/api/v1/line/webhook` | Public | Không có | Nhận webhook từ LINE |
+| POST | `/api/v1/line/webhook` | Public | Không có | Nhận sự kiện webhook từ LINE |
 
 ## API Details
 
-### POST `/api/v1/line/webhook`
+### Nhận sự kiện webhook từ LINE - POST `/api/v1/line/webhook`
 
 Headers:
 

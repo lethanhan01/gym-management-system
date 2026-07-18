@@ -10,15 +10,15 @@ Auth mặc định: JWT + `PermissionsGuard`, class-level permission `notificati
 
 | Method | URL | Permission | Mô tả |
 |---|---|---|---|
-| GET | `/api/v1/notifications` | `notification.read` | Danh sách notification |
-| GET | `/api/v1/notifications/new` | `notification.read` | Notification mới sau một ID |
-| GET | `/api/v1/notifications/unread-count` | `notification.read` | Đếm notification chưa đọc |
-| PATCH | `/api/v1/notifications/:id/read` | `notification.read` | Đánh dấu đã đọc một notification |
+| GET | `/api/v1/notifications` | `notification.read` | Danh sách thông báo |
+| GET | `/api/v1/notifications/new` | `notification.read` | Thông báo mới sau một ID |
+| GET | `/api/v1/notifications/unread-count` | `notification.read` | Đếm thông báo chưa đọc |
+| PATCH | `/api/v1/notifications/:id/read` | `notification.read` | Đánh dấu một thông báo là đã đọc |
 | PATCH | `/api/v1/notifications/read-all` | `notification.read` | Đánh dấu tất cả đã đọc |
 
 ## API Details
 
-### GET `/api/v1/notifications`
+### Danh sách thông báo - GET `/api/v1/notifications`
 
 Query: `page` number default `1`, `pageSize` number default `20` max `50`, `status=all|unread` default `all`.
 
@@ -50,7 +50,7 @@ Response body:
 
 Errors: `400 VALIDATION_ERROR`, `401 UNAUTHORIZED`, `403 FORBIDDEN`.
 
-### GET `/api/v1/notifications/new`
+### Thông báo mới sau một ID - GET `/api/v1/notifications/new`
 
 Query: `afterId` number required min `0`, `limit` number optional default `20` max `50`.
 
@@ -74,7 +74,7 @@ Response body:
 
 Errors: `400 VALIDATION_ERROR`, `401 UNAUTHORIZED`, `403 FORBIDDEN`.
 
-### GET `/api/v1/notifications/unread-count`
+### Đếm thông báo chưa đọc - GET `/api/v1/notifications/unread-count`
 
 Request body: Không có.
 
@@ -91,7 +91,7 @@ Response body:
 
 Errors: `401 UNAUTHORIZED`, `403 FORBIDDEN`.
 
-### PATCH `/api/v1/notifications/:id/read`
+### Đánh dấu một thông báo là đã đọc - PATCH `/api/v1/notifications/:id/read`
 
 Params: `id` number.
 
@@ -111,7 +111,7 @@ Response body:
 
 Errors: `401 UNAUTHORIZED`, `403 FORBIDDEN`, `404 NOT_FOUND`.
 
-### PATCH `/api/v1/notifications/read-all`
+### Đánh dấu tất cả đã đọc - PATCH `/api/v1/notifications/read-all`
 
 Request body: Không có.
 

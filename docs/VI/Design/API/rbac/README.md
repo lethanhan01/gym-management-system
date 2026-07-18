@@ -10,26 +10,26 @@ Auth mặc định: JWT. Các controller dùng `PermissionsGuard`; phần lớn 
 
 | Method | URL | Permission | Mô tả |
 |---|---|---|---|
-| GET | `/api/v1/permissions` | `rbac.manage` | Danh sách permission |
-| GET | `/api/v1/permissions/:id` | `rbac.manage` | Chi tiết permission |
-| GET | `/api/v1/groups` | `rbac.manage` | Danh sách group |
-| GET | `/api/v1/groups/:id` | `rbac.manage` | Chi tiết group |
-| POST | `/api/v1/groups` | `rbac.manage` | Tạo group |
-| PATCH | `/api/v1/groups/:id` | `rbac.manage` | Cập nhật group |
-| DELETE | `/api/v1/groups/:id` | `rbac.manage` | Xóa group |
-| POST | `/api/v1/groups/:id/permissions` | `rbac.manage` | Gán permission vào group |
-| DELETE | `/api/v1/groups/:id/permissions/:permissionId` | `rbac.manage` | Gỡ permission khỏi group |
-| GET | `/api/v1/users` | `user.read` | Danh sách user |
-| GET | `/api/v1/users/:id` | Self hoặc `user.read` | Chi tiết user |
-| GET | `/api/v1/users/:id/groups` | Self hoặc `user.read` | Danh sách group của user |
-| POST | `/api/v1/users/:id/groups` | `rbac.manage` | Gán group cho user |
-| DELETE | `/api/v1/users/:id/groups/:groupId` | `rbac.manage` | Gỡ group khỏi user |
-| PATCH | `/api/v1/users/:id` | Self hoặc `user.update` | Cập nhật user |
-| DELETE | `/api/v1/users/:id` | `user.delete` | Xóa user |
+| GET | `/api/v1/permissions` | `rbac.manage` | Danh sách quyền |
+| GET | `/api/v1/permissions/:id` | `rbac.manage` | Chi tiết quyền |
+| GET | `/api/v1/groups` | `rbac.manage` | Danh sách nhóm |
+| GET | `/api/v1/groups/:id` | `rbac.manage` | Chi tiết nhóm |
+| POST | `/api/v1/groups` | `rbac.manage` | Tạo nhóm |
+| PATCH | `/api/v1/groups/:id` | `rbac.manage` | Cập nhật nhóm |
+| DELETE | `/api/v1/groups/:id` | `rbac.manage` | Xóa nhóm |
+| POST | `/api/v1/groups/:id/permissions` | `rbac.manage` | Gán quyền vào nhóm |
+| DELETE | `/api/v1/groups/:id/permissions/:permissionId` | `rbac.manage` | Gỡ quyền khỏi nhóm |
+| GET | `/api/v1/users` | `user.read` | Danh sách người dùng |
+| GET | `/api/v1/users/:id` | Self hoặc `user.read` | Chi tiết người dùng |
+| GET | `/api/v1/users/:id/groups` | Self hoặc `user.read` | Danh sách nhóm của người dùng |
+| POST | `/api/v1/users/:id/groups` | `rbac.manage` | Gán nhóm cho người dùng |
+| DELETE | `/api/v1/users/:id/groups/:groupId` | `rbac.manage` | Gỡ nhóm khỏi người dùng |
+| PATCH | `/api/v1/users/:id` | Self hoặc `user.update` | Cập nhật người dùng |
+| DELETE | `/api/v1/users/:id` | `user.delete` | Xóa người dùng |
 
 ## API Details
 
-### GET `/api/v1/permissions`
+### Danh sách quyền - GET `/api/v1/permissions`
 
 Query: `page` number default `1`, `pageSize` number default `20`, `resource` string optional.
 
@@ -59,7 +59,7 @@ Response body:
 
 Errors: `401 UNAUTHORIZED`, `403 FORBIDDEN`.
 
-### GET `/api/v1/permissions/:id`
+### Chi tiết quyền - GET `/api/v1/permissions/:id`
 
 Params: `id` number.
 
@@ -81,7 +81,7 @@ Response body:
 
 Errors: `401 UNAUTHORIZED`, `403 FORBIDDEN`, `404 NOT_FOUND`.
 
-### GET `/api/v1/groups`
+### Danh sách nhóm - GET `/api/v1/groups`
 
 Query: `page` number default `1`, `pageSize` number default `20`, `search` string optional, `includeDeleted` string optional (`"true"` để lấy cả group đã xóa).
 
@@ -111,7 +111,7 @@ Response body:
 
 Errors: `401 UNAUTHORIZED`, `403 FORBIDDEN`.
 
-### GET `/api/v1/groups/:id`
+### Chi tiết nhóm - GET `/api/v1/groups/:id`
 
 Params: `id` number.
 
@@ -133,7 +133,7 @@ Response body:
 
 Errors: `401 UNAUTHORIZED`, `403 FORBIDDEN`, `404 NOT_FOUND`.
 
-### POST `/api/v1/groups`
+### Tạo nhóm - POST `/api/v1/groups`
 
 Request body:
 
@@ -161,7 +161,7 @@ Response body:
 
 Errors: `400 VALIDATION_ERROR`, `401 UNAUTHORIZED`, `403 FORBIDDEN`, `409 DUPLICATE_VALUE`.
 
-### PATCH `/api/v1/groups/:id`
+### Cập nhật nhóm - PATCH `/api/v1/groups/:id`
 
 Params: `id` number.
 
@@ -189,7 +189,7 @@ Response body:
 
 Errors: `400 VALIDATION_ERROR`, `401 UNAUTHORIZED`, `403 FORBIDDEN`, `404 NOT_FOUND`, `409 DUPLICATE_VALUE`.
 
-### DELETE `/api/v1/groups/:id`
+### Xóa nhóm - DELETE `/api/v1/groups/:id`
 
 Params: `id` number.
 
@@ -199,7 +199,7 @@ Response body: Không có body, HTTP `204`.
 
 Errors: `401 UNAUTHORIZED`, `403 FORBIDDEN`, `404 NOT_FOUND`.
 
-### POST `/api/v1/groups/:id/permissions`
+### Gán quyền vào nhóm - POST `/api/v1/groups/:id/permissions`
 
 Params: `id` number.
 
@@ -225,7 +225,7 @@ Response body:
 
 Errors: `400 VALIDATION_ERROR`, `401 UNAUTHORIZED`, `403 FORBIDDEN`, `404 NOT_FOUND`.
 
-### DELETE `/api/v1/groups/:id/permissions/:permissionId`
+### Gỡ quyền khỏi nhóm - DELETE `/api/v1/groups/:id/permissions/:permissionId`
 
 Params: `id` number, `permissionId` number.
 
@@ -235,7 +235,7 @@ Response body: Không có body, HTTP `204`.
 
 Errors: `401 UNAUTHORIZED`, `403 FORBIDDEN`, `404 NOT_FOUND`.
 
-### GET `/api/v1/users`
+### Danh sách người dùng - GET `/api/v1/users`
 
 Query: `page` number default `1`, `pageSize` number default `20`, `search` string optional, `groupId` string optional, `role` string optional, `status` enum `pending_verification|active|locked` optional, `includeDeleted` boolean optional, `sort` string default `created_at:desc`.
 
@@ -267,7 +267,7 @@ Response body:
 
 Errors: `400 VALIDATION_ERROR`, `401 UNAUTHORIZED`, `403 FORBIDDEN`.
 
-### GET `/api/v1/users/:id`
+### Chi tiết người dùng - GET `/api/v1/users/:id`
 
 Params: `id` number.
 
@@ -291,7 +291,7 @@ Response body:
 
 Errors: `401 UNAUTHORIZED`, `403 FORBIDDEN`, `404 NOT_FOUND`.
 
-### GET `/api/v1/users/:id/groups`
+### Danh sách nhóm của người dùng - GET `/api/v1/users/:id/groups`
 
 Params: `id` number.
 
@@ -313,7 +313,7 @@ Response body:
 
 Errors: `401 UNAUTHORIZED`, `403 FORBIDDEN`, `404 NOT_FOUND`.
 
-### POST `/api/v1/users/:id/groups`
+### Gán nhóm cho người dùng - POST `/api/v1/users/:id/groups`
 
 Params: `id` number.
 
@@ -339,7 +339,7 @@ Response body:
 
 Errors: `400 VALIDATION_ERROR`, `401 UNAUTHORIZED`, `403 FORBIDDEN`, `404 NOT_FOUND`, `409 DUPLICATE_VALUE`.
 
-### DELETE `/api/v1/users/:id/groups/:groupId`
+### Gỡ nhóm khỏi người dùng - DELETE `/api/v1/users/:id/groups/:groupId`
 
 Params: `id` number, `groupId` number.
 
@@ -349,7 +349,7 @@ Response body: Không có body, HTTP `204`.
 
 Errors: `401 UNAUTHORIZED`, `403 FORBIDDEN`, `404 NOT_FOUND`.
 
-### PATCH `/api/v1/users/:id`
+### Cập nhật người dùng - PATCH `/api/v1/users/:id`
 
 Params: `id` number.
 
@@ -381,7 +381,7 @@ Response body:
 
 Errors: `400 VALIDATION_ERROR`, `401 UNAUTHORIZED`, `403 FORBIDDEN`, `404 NOT_FOUND`.
 
-### DELETE `/api/v1/users/:id`
+### Xóa người dùng - DELETE `/api/v1/users/:id`
 
 Params: `id` number.
 

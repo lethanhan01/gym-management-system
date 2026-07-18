@@ -11,20 +11,20 @@ Auth mặc định: cần `Authorization: Bearer <JWT>`, trừ endpoint có ghi 
 | Method | URL | Auth | Permission | Mô tả |
 |---|---|---|---|---|
 | POST | `/api/v1/auth/login` | Public | Không có | Đăng nhập |
-| POST | `/api/v1/auth/logout` | JWT | Không có | Đăng xuất stateless |
-| GET | `/api/v1/auth/me` | JWT | Không có | Lấy user hiện tại |
+| POST | `/api/v1/auth/logout` | JWT | Không có | Đăng xuất không lưu trạng thái |
+| GET | `/api/v1/auth/me` | JWT | Không có | Lấy thông tin người dùng hiện tại |
 | POST | `/api/v1/auth/forgot-password` | Public | Không có | Gửi OTP đặt lại mật khẩu |
 | POST | `/api/v1/auth/reset-password` | Public | Không có | Đặt lại mật khẩu bằng OTP |
 | POST | `/api/v1/auth/verify-email` | Public | Không có | Xác thực email bằng OTP |
 | POST | `/api/v1/auth/resend-verify` | Public | Không có | Gửi lại OTP xác thực email |
-| POST | `/api/v1/auth/line-login` | Public | Không có | Đăng nhập bằng LINE ID token |
+| POST | `/api/v1/auth/line-login` | Public | Không có | Đăng nhập bằng mã định danh LINE |
 | POST | `/api/v1/auth/line-link` | JWT | Không có | Liên kết LINE với tài khoản hiện tại |
 | DELETE | `/api/v1/auth/line-link` | JWT | Không có | Hủy liên kết LINE |
 | POST | `/api/v1/auth/change-password` | JWT | Không có | Đổi mật khẩu |
 
 ## API Details
 
-### POST `/api/v1/auth/login`
+### Đăng nhập - POST `/api/v1/auth/login`
 
 Request body:
 
@@ -54,7 +54,7 @@ Response body:
 
 Errors: `400 VALIDATION_ERROR`, `401 UNAUTHORIZED`, `403 EMAIL_NOT_VERIFIED`.
 
-### POST `/api/v1/auth/logout`
+### Đăng xuất không lưu trạng thái - POST `/api/v1/auth/logout`
 
 Request body: Không có.
 
@@ -69,7 +69,7 @@ Response body:
 
 Errors: `401 UNAUTHORIZED`.
 
-### GET `/api/v1/auth/me`
+### Lấy thông tin người dùng hiện tại - GET `/api/v1/auth/me`
 
 Request body: Không có.
 
@@ -94,7 +94,7 @@ Response body:
 
 Errors: `401 UNAUTHORIZED`, `404 NOT_FOUND`.
 
-### POST `/api/v1/auth/forgot-password`
+### Gửi OTP đặt lại mật khẩu - POST `/api/v1/auth/forgot-password`
 
 Request body:
 
@@ -115,7 +115,7 @@ Response body:
 
 Errors: `400 VALIDATION_ERROR`, `429 RATE_LIMIT_EXCEEDED`.
 
-### POST `/api/v1/auth/reset-password`
+### Đặt lại mật khẩu bằng OTP - POST `/api/v1/auth/reset-password`
 
 Request body:
 
@@ -138,7 +138,7 @@ Response body:
 
 Errors: `400 VALIDATION_ERROR`, `400 OTP_INVALID`, `400 OTP_EXPIRED`.
 
-### POST `/api/v1/auth/verify-email`
+### Xác thực email bằng OTP - POST `/api/v1/auth/verify-email`
 
 Request body:
 
@@ -160,7 +160,7 @@ Response body:
 
 Errors: `400 VALIDATION_ERROR`, `400 OTP_INVALID`, `400 OTP_EXPIRED`, `409 EMAIL_ALREADY_VERIFIED`.
 
-### POST `/api/v1/auth/resend-verify`
+### Gửi lại OTP xác thực email - POST `/api/v1/auth/resend-verify`
 
 Request body:
 
@@ -181,7 +181,7 @@ Response body:
 
 Errors: `400 VALIDATION_ERROR`, `429 RATE_LIMIT_EXCEEDED`.
 
-### POST `/api/v1/auth/line-login`
+### Đăng nhập bằng mã định danh LINE - POST `/api/v1/auth/line-login`
 
 Request body:
 
@@ -209,7 +209,7 @@ Response body:
 
 Errors: `400 VALIDATION_ERROR`, `401 UNAUTHORIZED`.
 
-### POST `/api/v1/auth/line-link`
+### Liên kết LINE với tài khoản hiện tại - POST `/api/v1/auth/line-link`
 
 Request body:
 
@@ -232,7 +232,7 @@ Response body:
 
 Errors: `400 VALIDATION_ERROR`, `401 UNAUTHORIZED`, `409 DUPLICATE_VALUE`.
 
-### DELETE `/api/v1/auth/line-link`
+### Hủy liên kết LINE - DELETE `/api/v1/auth/line-link`
 
 Request body: Không có.
 
@@ -247,7 +247,7 @@ Response body:
 
 Errors: `401 UNAUTHORIZED`.
 
-### POST `/api/v1/auth/change-password`
+### Đổi mật khẩu - POST `/api/v1/auth/change-password`
 
 Request body:
 
