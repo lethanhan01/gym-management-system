@@ -607,6 +607,7 @@
       "buttonHideDetail": "Ẩn chi tiết",
       "buttonShowDetail": "Xem chi tiết ngày tập",
       "buttonStart": "Bắt đầu",
+      "buttonStartDay": "Bắt đầu {{name}}",
       "completedTitle": "Buổi tập hoàn tất!",
       "completedDesc": "Kết quả đã được ghi nhận vào lịch sử tập luyện.",
       "buttonGoToPlan": "Về kế hoạch",
@@ -617,8 +618,8 @@
       "emptyTitle": "Bạn chưa có kế hoạch tập",
       "emptyDescription": "Tạo kế hoạch cá nhân để bắt đầu tập luyện.",
       "buttonCreatePlan": "Tạo plan",
-      "placeholderTitle": "Vui lòng chọn 1 buổi tập trong plan của bạn để bắt đầu",
-      "placeholderHint": "Nhấn \"Bắt đầu\" ở buổi tập bên trái.",
+      "placeholderTitle": "Chọn một ngày tập trong kế hoạch của bạn để bắt đầu",
+      "placeholderHint": "Mở chi tiết kế hoạch, rồi nhấn biểu tượng bắt đầu ở ngày muốn tập.",
       "errorLoad": "Không thể tải kế hoạch tập.",
       "errorSave": "Không thể lưu buổi tập. Vui lòng thử lại.",
       "unitSeconds": "giây"

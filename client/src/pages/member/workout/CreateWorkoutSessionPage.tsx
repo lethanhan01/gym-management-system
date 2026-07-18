@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import {
@@ -41,7 +41,7 @@ function makeDefaultSets(ex: WorkoutPlanExercise): SetState[] {
   }))
 }
 
-// ── Left card: Plan list ───────────────────────────────────────────────────────
+// ── Plan card list ─────────────────────────────────────────────────────────────
 
 function PlanCardItem({
   assignment,
@@ -128,18 +128,20 @@ function PlanCardItem({
             .map((day) => (
               <div
                 key={day.planDayId}
-                className="flex items-center justify-between px-5 py-3 rogym-sx-6720cca7"
+                className="flex items-center justify-between gap-3 px-5 py-3 rogym-sx-6720cca7"
               >
-                <div>
-                  <p className="text-sm font-medium text-white">{day.name}</p>
+                <div className="min-w-0 flex-1">
+                  <p className="break-words text-sm font-medium text-white">{day.name}</p>
                   <p className="text-xs rogym-sx-5e5c39ab">{day.exercises?.length ?? 0} {t('workout.createSession.unitExercises')}</p>
                 </div>
                 <button
                   type="button"
-                  className="rogym-btn rogym-btn--primary px-3 py-1.5 text-xs"
+                  className="rogym-btn rogym-btn--primary rogym-btn--icon shrink-0"
                   onClick={() => onStartDay(day, assignment)}
+                  aria-label={t('workout.createSession.buttonStartDay', { name: day.name })}
+                  title={t('workout.createSession.buttonStartDay', { name: day.name })}
                 >
-                  <Play size={12} /> {t('workout.createSession.buttonStart')}
+                  <Play size={16} />
                 </button>
               </div>
             ))}
@@ -149,7 +151,7 @@ function PlanCardItem({
   )
 }
 
-// ── Right card: Session view ───────────────────────────────────────────────────
+// ── Session view ────────────────────────────────────────────────────────────────
 
 function SessionView({
   day,
@@ -314,6 +316,7 @@ export default function CreateWorkoutSessionPage() {
   const navigate = useNavigate()
   const { user } = useAuthStore()
   const memberId = user?.memberId ? String(user.memberId) : undefined
+  const sessionPanelRef = useRef<HTMLDivElement | null>(null)
 
   const [assignments, setAssignments] = useState<WorkoutAssignmentSummary[]>([])
   const [fullPlans, setFullPlans] = useState<Map<string, WorkoutPlan>>(new Map())
@@ -379,6 +382,12 @@ export default function CreateWorkoutSessionPage() {
     } else {
       setSets([])
     }
+
+    if (window.matchMedia('(max-width: 1023px)').matches) {
+      window.requestAnimationFrame(() => {
+        sessionPanelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      })
+    }
   }
 
   function updateSet(
@@ -434,7 +443,7 @@ export default function CreateWorkoutSessionPage() {
         description={t('workout.createSession.description')}
       />
       <div className="grid gap-5 lg:grid-cols-2">
-        {/* Left: plan list */}
+        {/* Plan list */}
         <div className="space-y-4">
           {loading ? (
             <MemberSkeleton rows={5} />
@@ -466,8 +475,8 @@ export default function CreateWorkoutSessionPage() {
           )}
         </div>
 
-        {/* Right: session or placeholder */}
-        <div>
+        {/* Session or placeholder */}
+        <div ref={sessionPanelRef} className="scroll-mt-4">
           {!selectedDay ? (
             <div className="flex min-h-[300px] flex-col items-center justify-center gap-3 rounded-[20px] p-6 text-center rogym-sx-25952519">
               <Dumbbell size={36} className="rogym-sx-ed519d00" />

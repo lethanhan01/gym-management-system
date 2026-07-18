@@ -607,6 +607,7 @@
       "buttonHideDetail": "詳細を非表示",
       "buttonShowDetail": "トレーニング日の詳細を見る",
       "buttonStart": "開始",
+      "buttonStartDay": "{{name}} を開始",
       "completedTitle": "セッション完了！",
       "completedDesc": "結果がトレーニング履歴に記録されました。",
       "buttonGoToPlan": "プランへ戻る",
@@ -617,8 +618,8 @@
       "emptyTitle": "トレーニングプランがありません",
       "emptyDescription": "個人プランを作成してトレーニングを始めましょう。",
       "buttonCreatePlan": "プランを作成",
-      "placeholderTitle": "左のプランからセッションを選択してください",
-      "placeholderHint": "セッションの「開始」ボタンをクリックしてください。",
+      "placeholderTitle": "プラン内のトレーニング日を選択してください",
+      "placeholderHint": "プランの詳細を開き、始めたい日の開始アイコンをタップしてください。",
       "errorLoad": "トレーニングプランを読み込めません。",
       "errorSave": "セッションを保存できません。再試行してください。",
       "unitSeconds": "秒"
