@@ -1,3 +1,5 @@
+# Deprecated: file OpenAPI này chưa bao phủ đủ 144 endpoint hiện tại.
+# Nguồn sự thật API là Markdown theo folder module trong docs/VI/Design/API/.
 openapi: 3.0.3
 info:
   title: Gym Management System API
