@@ -86,7 +86,7 @@ export class SubscriptionsService {
         deletedAt: null,
         OR: [
           { status: SubscriptionStatus.pending },
-          { status: SubscriptionStatus.active, endDate: { gte: todayVN() } },
+          { status: SubscriptionStatus.active, endDate: { gt: todayVN() } },
         ],
       },
     })
@@ -427,7 +427,7 @@ export class SubscriptionsService {
         memberId,
         trainerId: staffId,
         status: SubscriptionStatus.active,
-        endDate: { gte: todayVN() },
+        endDate: { gt: todayVN() },
         deletedAt: null,
       },
     })
@@ -570,7 +570,7 @@ export class SubscriptionsService {
   }) {
     const today = todayVN()
     const effectiveStatus =
-      sub.status === 'active' && sub.endDate < today ? 'expired' : sub.status
+      sub.status === 'active' && sub.endDate <= today ? 'expired' : sub.status
     const daysLeft =
       effectiveStatus === 'active'
         ? Math.max(0, Math.ceil((sub.endDate.getTime() - today.getTime()) / 86400000))

@@ -51,7 +51,11 @@ describe('SubscriptionScheduleService', () => {
 
       expect(mockPrisma.subscription.updateMany).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: expect.objectContaining({ status: 'active', deletedAt: null }),
+          where: expect.objectContaining({
+            status: 'active',
+            endDate: { lte: expect.any(Date) },
+            deletedAt: null,
+          }),
           data: { status: 'expired' },
         })
       )
@@ -71,6 +75,16 @@ describe('SubscriptionScheduleService', () => {
         expect.objectContaining({
           where: { memberId: { in: [10n, 20n] } },
           data: { primaryTrainerId: null },
+        })
+      )
+      expect(mockPrisma.subscription.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            status: 'active',
+            endDate: { lte: expect.any(Date) },
+            trainerId: { not: null },
+            deletedAt: null,
+          }),
         })
       )
     })
