@@ -478,7 +478,7 @@
       "noPtPlans": "Liên hệ PT để được giao kế hoạch phù hợp với mục tiêu của bạn.",
       "noPersonalPlans": "Chưa có kế hoạch tự xây dựng.",
       "buttonCreateNow": "Tạo ngay",
-      "sourceTrainer": "PT giao",
+      "sourceTrainer": "PT",
       "sourcePersonal": "Cá nhân",
       "unitDays": "ngày",
       "unitExercises": "bài tập",
@@ -507,6 +507,7 @@
       "errorDelete": "Không thể xóa kế hoạch.",
       "unitSeconds": "giây",
       "buttonDayDetail": "Chi tiết",
+      "buttonDayDetailAria": "Xem chi tiết {{name}}",
       "exerciseFallback": "Bài tập"
     },
     "history": {
@@ -599,7 +600,7 @@
       "title": "Tạo buổi tập",
       "eyebrow": "Tập luyện",
       "description": "Chọn một buổi tập từ kế hoạch của bạn để bắt đầu.",
-      "sourceTrainer": "PT giao",
+      "sourceTrainer": "PT",
       "sourcePersonal": "Cá nhân",
       "unitDays": "ngày",
       "unitExercises": "bài tập",

@@ -478,7 +478,7 @@
       "noPtPlans": "PTに連絡して目標に合ったプランを作成してもらいましょう。",
       "noPersonalPlans": "自作プランがありません。",
       "buttonCreateNow": "今すぐ作成",
-      "sourceTrainer": "PT割り当て",
+      "sourceTrainer": "PT",
       "sourcePersonal": "個人",
       "unitDays": "日",
       "unitExercises": "エクササイズ",
@@ -507,6 +507,7 @@
       "errorDelete": "プランを削除できません。",
       "unitSeconds": "秒",
       "buttonDayDetail": "詳細",
+      "buttonDayDetailAria": "{{name}} の詳細を見る",
       "exerciseFallback": "エクササイズ"
     },
     "history": {
@@ -599,7 +600,7 @@
       "title": "セッションを作成",
       "eyebrow": "トレーニング",
       "description": "プランからセッションを選んでトレーニングを開始しましょう。",
-      "sourceTrainer": "PT割り当て",
+      "sourceTrainer": "PT",
       "sourcePersonal": "個人",
       "unitDays": "日",
       "unitExercises": "エクササイズ",
