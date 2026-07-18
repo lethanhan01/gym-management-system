@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { render, waitFor } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import DashboardLayout from './DashboardLayout'
 import { useAuthStore } from '@/stores/authStore'
@@ -33,12 +33,15 @@ vi.mock('@/services/auth.service', async () => {
 const mockedGetByMember = vi.mocked(subscriptionService.getByMember)
 const mockedMe = vi.mocked(authService.me)
 
-function renderLayout() {
+function renderLayout(initialEntry = '/member') {
   return render(
-    <MemoryRouter initialEntries={['/member']}>
+    <MemoryRouter initialEntries={[initialEntry]}>
       <Routes>
         <Route path="/member" element={<DashboardLayout />}>
           <Route index element={<div>Member page</div>} />
+          <Route path="profile" element={<div>Profile page</div>} />
+          <Route path="subscription/setup" element={<div>Setup page</div>} />
+          <Route path="subscription/buy/payment" element={<div>Payment page</div>} />
         </Route>
       </Routes>
     </MemoryRouter>
@@ -89,6 +92,51 @@ describe('DashboardLayout subscription orchestration', () => {
       expect(useSubscriptionStore.getState().errorCode).toBe('missing_member_profile')
     })
     expect(mockedMe).toHaveBeenCalledTimes(1)
+    expect(mockedGetByMember).not.toHaveBeenCalled()
+  })
+
+  it('forces an expired member from regular member pages to subscription setup', async () => {
+    useAuthStore.getState().setAuth(
+      {
+        userId: '1',
+        email: 'member@example.com',
+        fullName: 'Member',
+        roles: ['member'],
+        memberId: '10',
+      },
+      'token'
+    )
+    mockedGetByMember.mockResolvedValue([
+      makeSubscription({ status: 'expired', endDate: '2026-06-30' }),
+    ])
+
+    renderLayout('/member/profile')
+
+    await waitFor(() => expect(screen.getByText('Setup page')).toBeVisible())
+    expect(screen.queryByText('Profile page')).not.toBeInTheDocument()
+  })
+
+  it('keeps subscription setup accessible for an expired member', () => {
+    useAuthStore.getState().setAuth(
+      {
+        userId: '1',
+        email: 'member@example.com',
+        fullName: 'Member',
+        roles: ['member'],
+        memberId: '10',
+      },
+      'token'
+    )
+    useSubscriptionStore.setState({
+      status: 'success',
+      hasActiveSub: false,
+      errorCode: null,
+      checkedMemberId: '10',
+    })
+
+    renderLayout('/member/subscription/setup')
+
+    expect(screen.getByText('Setup page')).toBeVisible()
     expect(mockedGetByMember).not.toHaveBeenCalled()
   })
 })

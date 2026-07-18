@@ -25,18 +25,36 @@ export default function SubscriptionSetupPage() {
   const [retryCount, setRetryCount] = useState(0)
   const navigate = useNavigate()
   const { user } = useAuthStore()
+  const subscriptionStatus = useSubscriptionStore((state) => state.status)
+  const hasActiveSub = useSubscriptionStore((state) => state.hasActiveSub)
+  const checkedMemberId = useSubscriptionStore((state) => state.checkedMemberId)
   const setResolvedStatus = useSubscriptionStore((state) => state.setResolvedStatus)
 
   useEffect(() => {
-    if (!user?.memberId) {
+    const memberId = user?.memberId ? String(user.memberId) : null
+    if (!memberId) {
       setCheckingSubscription(false)
       return
     }
+
+    setCheckingSubscription(true)
+
+    if (subscriptionStatus === 'success' && checkedMemberId === memberId) {
+      if (hasActiveSub === true) {
+        navigate('/member', { replace: true })
+        return
+      }
+      setCheckingSubscription(false)
+      return
+    }
+
+    let cancelled = false
     subscriptionService
-      .getByMember(user.memberId)
+      .getByMember(memberId)
       .then((subscriptions) => {
+        if (cancelled) return
         const hasCurrentSubscription = hasActiveSubscription(subscriptions)
-        setResolvedStatus(hasCurrentSubscription, user.memberId ?? undefined)
+        setResolvedStatus(hasCurrentSubscription, memberId)
         if (hasCurrentSubscription) {
           navigate('/member', { replace: true })
           return
@@ -56,19 +74,53 @@ export default function SubscriptionSetupPage() {
           })
         }
       })
-      .catch(() => {})
-      .finally(() => setCheckingSubscription(false))
+      .catch(() => {
+        // Stay on setup and allow package selection/retry UI to render.
+      })
+      .finally(() => {
+        if (!cancelled) setCheckingSubscription(false)
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [
+    checkedMemberId,
+    hasActiveSub,
+    navigate,
+    retryCount,
+    setResolvedStatus,
+    subscriptionStatus,
+    user?.memberId,
+  ])
+
+  useEffect(() => {
+    let cancelled = false
+    setLoading(true)
+    setLoadError(false)
+
     packageService
       .list({ status: 'active' })
       .then(({ data }) => {
+        if (cancelled) return
         setPackages(data)
         setLoadError(false)
         const defaultPackage = data[2] ?? data[data.length - 1]
         if (defaultPackage) setSelectedId(defaultPackage.packageId)
       })
-      .catch(() => { setPackages([]); setLoadError(true) })
-      .finally(() => setLoading(false))
-  }, [navigate, retryCount, setResolvedStatus, user?.memberId])
+      .catch(() => {
+        if (cancelled) return
+        setPackages([])
+        setLoadError(true)
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false)
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [retryCount])
 
   const selectedPackage = packages.find((item) => item.packageId === selectedId) ?? null
   const startDate = new Date()

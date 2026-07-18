@@ -5,6 +5,8 @@ export { InvalidSubscriptionResponseError } from '@/lib/subscriptionResponse'
 
 export interface SubscriptionRequestOptions {
   timeout?: number
+  accessToken?: string
+  suppressAuthRedirect?: boolean
 }
 
 export interface Subscription {
@@ -35,9 +37,19 @@ const subscriptionService = {
     memberId: string,
     options: SubscriptionRequestOptions = {}
   ): Promise<Subscription[]> => {
+    const config = {
+      ...(options.timeout !== undefined ? { timeout: options.timeout } : {}),
+      ...(options.suppressAuthRedirect !== undefined
+        ? { suppressAuthRedirect: options.suppressAuthRedirect }
+        : {}),
+      ...(options.accessToken
+        ? { headers: { Authorization: `Bearer ${options.accessToken}` } }
+        : {}),
+    }
+
     const res = await api.get<{ success: boolean; data: Subscription[] }>(
       `/subscriptions/member/${memberId}`,
-      { timeout: options.timeout }
+      config
     )
     return parseSubscriptionListResponse(res.data)
   },

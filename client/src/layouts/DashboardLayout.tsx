@@ -1,5 +1,5 @@
 import { Suspense, useEffect, useRef, useState } from 'react'
-import { Outlet, useNavigate } from 'react-router-dom'
+import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { Menu } from 'lucide-react'
 import Sidebar from '@/components/shared/Sidebar'
 import Topbar from '@/components/shared/Topbar'
@@ -13,6 +13,17 @@ import {
 import { authService } from '@/services/auth.service'
 import { useSubscriptionExpiry } from '@/hooks/useSubscriptionExpiry'
 
+const MEMBER_SUBSCRIPTION_SETUP_PATH = '/member/subscription/setup'
+const EXPIRED_MEMBER_ALLOWED_PATHS = new Set([
+  MEMBER_SUBSCRIPTION_SETUP_PATH,
+  '/member/subscription/buy',
+  '/member/subscription/buy/payment',
+])
+
+function canExpiredMemberAccess(pathname: string): boolean {
+  return EXPIRED_MEMBER_ALLOWED_PATHS.has(pathname)
+}
+
 export default function DashboardLayout() {
   const user = useAuthStore((state) => state.user)
   const setUser = useAuthStore((state) => state.setUser)
@@ -23,6 +34,7 @@ export default function DashboardLayout() {
   const setSubscriptionError = useSubscriptionStore((state) => state.setError)
   const [showExpiryToast, setShowExpiryToast] = useState(false)
   const navigate = useNavigate()
+  const location = useLocation()
   const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const refreshedUserIdRef = useRef<string | null>(null)
 
@@ -74,12 +86,19 @@ export default function DashboardLayout() {
     user?.userId,
   ])
 
+  useEffect(() => {
+    if (!isMember || subscriptionStatus !== 'success' || hasActiveSub !== false) return
+    if (canExpiredMemberAccess(location.pathname)) return
+
+    navigate(MEMBER_SUBSCRIPTION_SETUP_PATH, { replace: true })
+  }, [hasActiveSub, isMember, location.pathname, navigate, subscriptionStatus])
+
   useSubscriptionExpiry(() => {
     if (!isMember) return
     setShowExpiryToast(true)
     toastTimerRef.current = setTimeout(() => {
       setShowExpiryToast(false)
-      navigate('/member/subscription/setup', { replace: true })
+      navigate(MEMBER_SUBSCRIPTION_SETUP_PATH, { replace: true })
     }, 3000)
   })
 
@@ -125,7 +144,7 @@ export default function DashboardLayout() {
             <Menu size={20} />
           </button>
         )}
-        <main className="flex-1 overflow-auto px-6 pt-20 pb-24 md:p-6 md:pb-6">
+        <main className="flex-1 overflow-auto px-6 pt-20 pb-24 md:px-6 md:pt-20 md:pb-6">
           {showExpiryToast && (
             <div className="fixed top-5 right-5 z-50 px-5 py-3 rounded-2xl bg-red-900/90 text-red-200 text-sm font-medium shadow-xl border border-red-700/40">
               Gói tập đã hết hạn. Đang chuyển về trang đăng ký...
