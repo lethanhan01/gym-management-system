@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { render, screen, waitFor } from '@testing-library/react'
+import { act, render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import DashboardLayout from './DashboardLayout'
 import { useAuthStore } from '@/stores/authStore'
@@ -10,7 +10,12 @@ import { makeSubscription } from '@/test/subscriptionFactory'
 
 vi.mock('@/components/shared/Sidebar', () => ({ default: () => <div>Sidebar</div> }))
 vi.mock('@/components/shared/Topbar', () => ({ default: () => <div>Topbar</div> }))
-vi.mock('@/hooks/useSubscriptionExpiry', () => ({ useSubscriptionExpiry: vi.fn() }))
+const subscriptionExpiryCallbacks = vi.hoisted(() => [] as Array<() => void>)
+vi.mock('@/hooks/useSubscriptionExpiry', () => ({
+  useSubscriptionExpiry: vi.fn((callback: () => void) => {
+    subscriptionExpiryCallbacks.push(callback)
+  }),
+}))
 vi.mock('@/services/subscription.service', async () => {
   const actual = await vi.importActual<typeof import('@/services/subscription.service')>(
     '@/services/subscription.service'
@@ -51,6 +56,7 @@ function renderLayout(initialEntry = '/member') {
 describe('DashboardLayout subscription orchestration', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    subscriptionExpiryCallbacks.length = 0
     useSubscriptionStore.getState().clear()
     useAuthStore.getState().clearAuth()
   })
@@ -138,5 +144,34 @@ describe('DashboardLayout subscription orchestration', () => {
 
     expect(screen.getByText('Setup page')).toBeVisible()
     expect(mockedGetByMember).not.toHaveBeenCalled()
+  })
+
+  it('renders subscription expiry with the shared notification toast', () => {
+    useAuthStore.getState().setAuth(
+      {
+        userId: '1',
+        email: 'member@example.com',
+        fullName: 'Member',
+        roles: ['member'],
+        memberId: '10',
+      },
+      'token'
+    )
+    useSubscriptionStore.setState({
+      status: 'success',
+      hasActiveSub: true,
+      errorCode: null,
+      checkedMemberId: '10',
+    })
+
+    renderLayout()
+
+    act(() => {
+      subscriptionExpiryCallbacks[0]?.()
+    })
+
+    const toast = screen.getByRole('alert')
+    expect(toast).toHaveClass('rogym-notification-toast')
+    expect(toast).toHaveTextContent('Gói tập đã hết hạn. Đang chuyển về trang đăng ký...')
   })
 })

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useLocation } from 'react-router-dom'
 import {
@@ -24,6 +24,7 @@ import paymentService, { type Payment } from '@/services/payment.service'
 import { useAuthStore } from '@/stores/authStore'
 import { useSubscriptionStore } from '@/stores/subscriptionStore'
 import { MemberPage, MemberPageHeader, MemberSkeleton } from '@/components/MemberUI'
+import { NotificationToast } from '@/components/shared/NotificationUI'
 import { getPaymentMethodLabel } from '@/components/payment/payment-method-data'
 import { formatVnd } from '@/lib/currency'
 import { formatDate } from '@/lib/date'
@@ -65,6 +66,7 @@ export default function CurrentPackagePage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [toast, setToast] = useState<string | null>(null)
+  const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [cancelTarget, setCancelTarget] = useState<Subscription | null>(null)
   const [cancelling, setCancelling] = useState(false)
   const [cancelError, setCancelError] = useState<string | null>(null)
@@ -84,10 +86,18 @@ export default function CurrentPackagePage() {
   useEffect(() => {
     if (location.state?.justActivated) {
       setToast(t('subscription.current.toastActivated'))
-      setTimeout(() => setToast(null), 4000)
+      if (toastTimerRef.current) clearTimeout(toastTimerRef.current)
+      toastTimerRef.current = setTimeout(() => setToast(null), 4000)
       window.history.replaceState({}, '')
     }
   }, [location.state?.justActivated, t])
+
+  useEffect(
+    () => () => {
+      if (toastTimerRef.current) clearTimeout(toastTimerRef.current)
+    },
+    []
+  )
 
   useEffect(() => {
     if (!user?.memberId) return
@@ -137,7 +147,8 @@ export default function CurrentPackagePage() {
       setCancelTarget(null)
       setResolvedStatus(false, user.memberId)
       setToast(t('subscription.current.toastCancelled'))
-      setTimeout(() => {
+      if (toastTimerRef.current) clearTimeout(toastTimerRef.current)
+      toastTimerRef.current = setTimeout(() => {
         setToast(null)
         navigate('/member/subscription/setup', { replace: true })
       }, 1500)
@@ -188,9 +199,7 @@ export default function CurrentPackagePage() {
     <MemberPage>
       {/* Toast */}
       {toast && (
-        <div className="fixed top-5 right-5 z-50 px-5 py-3 rounded-2xl rogym-sx-572c9565">
-          {toast}
-        </div>
+        <NotificationToast tone="success" message={toast} />
       )}
 
       {/* Cancel dialog */}

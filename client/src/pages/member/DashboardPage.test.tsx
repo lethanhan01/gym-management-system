@@ -1,5 +1,5 @@
 import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest'
-import { render, waitFor } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import MemberDashboardPage from './DashboardPage'
 import { useAuthStore } from '@/stores/authStore'
@@ -84,6 +84,17 @@ function renderDashboard() {
   )
 }
 
+function renderDashboardWithPaymentSuccess() {
+  return render(
+    <MemoryRouter initialEntries={[{ pathname: '/member', state: { paymentSuccess: true } }]}>
+      <Routes>
+        <Route path="/member" element={<MemberDashboardPage />} />
+        <Route path="/login" element={<div>Login page</div>} />
+      </Routes>
+    </MemoryRouter>
+  )
+}
+
 describe('MemberDashboardPage subscription access sync', () => {
   beforeEach(() => {
     vi.useFakeTimers({ toFake: ['Date'] })
@@ -141,13 +152,13 @@ describe('MemberDashboardPage subscription access sync', () => {
     vi.useRealTimers()
   })
 
-  it('keeps the access store active through the subscription end date', async () => {
+  it('keeps the access store active before the subscription end date', async () => {
     mockedGetByMember.mockResolvedValue([
       makeSubscription({
         status: 'active',
         startDate: '2026-06-18',
-        endDate: '2026-07-18',
-        daysLeft: 0,
+        endDate: '2026-07-19',
+        daysLeft: 1,
       }),
     ])
 
@@ -157,5 +168,22 @@ describe('MemberDashboardPage subscription access sync', () => {
       expect(useSubscriptionStore.getState().hasActiveSub).toBe(true)
     })
     expect(useSubscriptionStore.getState().checkedMemberId).toBe('10')
+  })
+
+  it('renders payment success through the shared notification toast', async () => {
+    mockedGetByMember.mockResolvedValue([
+      makeSubscription({
+        status: 'active',
+        startDate: '2026-06-18',
+        endDate: '2026-07-19',
+        daysLeft: 1,
+      }),
+    ])
+
+    renderDashboardWithPaymentSuccess()
+
+    const toast = await screen.findByRole('status')
+    expect(toast).toHaveClass('rogym-notification-toast')
+    expect(toast).toHaveTextContent('Thanh toán thành công')
   })
 })

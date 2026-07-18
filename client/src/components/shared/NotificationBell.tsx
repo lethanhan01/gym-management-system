@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Bell, CheckCheck, Loader2 } from 'lucide-react'
+import { NotificationPanel, NotificationToast } from '@/components/shared/NotificationUI'
 import { translateNotification } from '@/lib/notification-i18n'
 import { notificationService, type NotificationItem } from '@/services/notification.service'
 import { useAuthStore, type Role } from '@/stores/authStore'
@@ -97,6 +98,7 @@ export default function NotificationBell() {
   const [toast, setToast] = useState<string | null>(null)
   const rootRef = useRef<HTMLDivElement>(null)
   const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const panelTitleId = useId()
   const navigate = useNavigate()
   const { pathname } = useLocation()
   const user = useAuthStore((state) => state.user)
@@ -253,11 +255,11 @@ export default function NotificationBell() {
       </button>
 
       {open && (
-        <div className="absolute right-0 top-12 z-50 w-[min(360px,calc(100vw-2rem))] overflow-hidden rounded-xl border border-white/10 bg-[#101712] shadow-2xl">
-          <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
-            <div>
-              <div className="text-sm font-semibold text-white">{tr('notification.title')}</div>
-              <div className="text-xs text-[#9fb2a7]">
+        <NotificationPanel titleId={panelTitleId}>
+          <div className="rogym-notification-panel__header">
+            <div className="rogym-notification-panel__header-copy">
+              <div id={panelTitleId} className="rogym-notification-panel__title">{tr('notification.title')}</div>
+              <div className="rogym-notification-panel__meta">
                 {unreadCount > 0 ? tr('notification.unread', { count: unreadCount }) : tr('notification.allRead')}
               </div>
             </div>
@@ -265,25 +267,25 @@ export default function NotificationBell() {
               type="button"
               onClick={handleReadAll}
               disabled={unreadCount === 0}
-              className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-[#9fb2a7] hover:bg-white/5 hover:text-white disabled:opacity-40"
+              className="rogym-notification-panel__mark-all"
               aria-label={tr('notification.markAllRead')}
             >
               <CheckCheck size={16} />
             </button>
           </div>
 
-          <div className="max-h-[420px] overflow-y-auto py-1">
+          <div className="rogym-notification-panel__list">
             {loading && (
-              <div className="flex items-center justify-center gap-2 px-4 py-8 text-sm text-[#9fb2a7]">
+              <div className="rogym-notification-panel__state">
                 <Loader2 size={16} className="animate-spin" />
                 {tr('notification.loading')}
               </div>
             )}
 
-            {!loading && error && <div className="px-4 py-8 text-center text-sm text-red-200">{tr('notification.loadError')}</div>}
+            {!loading && error && <div className="rogym-notification-panel__state is-error">{tr('notification.loadError')}</div>}
 
             {!loading && !error && notifications.length === 0 && (
-              <div className="px-4 py-8 text-center text-sm text-[#9fb2a7]">{tr('notification.empty')}</div>
+              <div className="rogym-notification-panel__state">{tr('notification.empty')}</div>
             )}
 
             {!loading &&
@@ -295,30 +297,24 @@ export default function NotificationBell() {
                     key={item.notificationId}
                     type="button"
                     onClick={() => void handleNotificationClick(item)}
-                    className={`w-full border-b border-white/5 px-4 py-3 text-left transition last:border-b-0 hover:bg-white/5 ${
-                      item.unread ? 'bg-[#06c384]/10' : ''
-                    }`}
+                    className={`rogym-notification-panel__item ${item.unread ? 'is-unread' : ''}`}
                   >
-                    <div className="flex items-start gap-3">
-                      <span className={`mt-1 h-2 w-2 shrink-0 rounded-full ${item.unread ? 'bg-[#42e09e]' : 'bg-white/15'}`} />
-                      <span className="min-w-0">
-                        <span className="block truncate text-sm font-semibold text-white">{notificationText.title}</span>
-                        <span className="mt-1 block line-clamp-2 text-xs leading-5 text-[#b7c7bd]">{notificationText.message}</span>
-                        <span className="mt-1 block text-[11px] text-[#7d9086]">{relativeTime(item.createdAt, tr)}</span>
+                    <div className="rogym-notification-panel__item-layout">
+                      <span className={`rogym-notification-panel__dot ${item.unread ? 'is-unread' : ''}`} />
+                      <span className="rogym-notification-panel__item-copy">
+                        <span className="rogym-notification-panel__item-title">{notificationText.title}</span>
+                        <span className="rogym-notification-panel__item-message">{notificationText.message}</span>
+                        <span className="rogym-notification-panel__item-time">{relativeTime(item.createdAt, tr)}</span>
                       </span>
                     </div>
                   </button>
                 )
               })}
           </div>
-        </div>
+        </NotificationPanel>
       )}
 
-      {toast && (
-        <div className="fixed right-5 top-20 z-50 max-w-xs rounded-xl border border-[#42e09e]/30 bg-[#102015] px-4 py-3 text-sm font-medium text-[#d9ffe9] shadow-xl">
-          {toast}
-        </div>
-      )}
+      {toast && <NotificationToast tone="info" message={toast} />}
     </div>
   )
 }

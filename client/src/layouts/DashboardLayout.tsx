@@ -4,6 +4,7 @@ import { Menu } from 'lucide-react'
 import Sidebar from '@/components/shared/Sidebar'
 import Topbar from '@/components/shared/Topbar'
 import BottomNav from '@/components/shared/BottomNav'
+import { NotificationToast } from '@/components/shared/NotificationUI'
 import { PageLoader } from '@/components/shared/Spinner'
 import { useAuthStore } from '@/stores/authStore'
 import {
@@ -96,6 +97,7 @@ export default function DashboardLayout() {
   useSubscriptionExpiry(() => {
     if (!isMember) return
     setShowExpiryToast(true)
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current)
     toastTimerRef.current = setTimeout(() => {
       setShowExpiryToast(false)
       navigate(MEMBER_SUBSCRIPTION_SETUP_PATH, { replace: true })
@@ -146,9 +148,10 @@ export default function DashboardLayout() {
         )}
         <main className="flex-1 overflow-auto px-6 pt-20 pb-24 md:px-6 md:pt-20 md:pb-6">
           {showExpiryToast && (
-            <div className="fixed top-5 right-5 z-50 px-5 py-3 rounded-2xl bg-red-900/90 text-red-200 text-sm font-medium shadow-xl border border-red-700/40">
-              Gói tập đã hết hạn. Đang chuyển về trang đăng ký...
-            </div>
+            <NotificationToast
+              tone="error"
+              message="Gói tập đã hết hạn. Đang chuyển về trang đăng ký..."
+            />
           )}
           <Suspense fallback={<PageLoader />}>
             <Outlet />
