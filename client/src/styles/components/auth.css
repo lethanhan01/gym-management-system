@@ -89,12 +89,17 @@
   }
 
   .rogym-auth-field__input {
+    display: block;
+    min-height: 44px;
     padding-right: 14px;
     padding-left: 14px;
     border: 1px solid rgba(255, 255, 255, 0.1);
+    appearance: none;
+    -webkit-appearance: none;
     background: rgba(255, 255, 255, 0.06);
     color: #fff;
     font-family: var(--rogym-font-body);
+    line-height: 1.25rem;
   }
 
   /* Hide native browser password reveal icon (Edge/IE/Chrome) */
@@ -102,8 +107,7 @@
   .rogym-auth-field__input::-ms-clear {
     display: none;
   }
-  .rogym-auth-field__input::-webkit-credentials-auto-fill-button,
-  .rogym-auth-field__input::-webkit-textfield-decoration-container {
+  .rogym-auth-field__input::-webkit-credentials-auto-fill-button {
     display: none !important;
   }
 
@@ -118,6 +122,42 @@
   .rogym-auth-field__input:focus {
     border-color: var(--rogym-teal);
     background: rgba(66, 224, 158, 0.05);
+  }
+
+  .rogym-auth-field__input:-webkit-autofill,
+  .rogym-auth-field__input:-webkit-autofill:hover,
+  .rogym-auth-field__input:-webkit-autofill:focus {
+    border-color: rgba(66, 224, 158, 0.32);
+    -webkit-text-fill-color: #fff;
+    box-shadow: 0 0 0 1000px rgba(255, 255, 255, 0.06) inset;
+    caret-color: #fff;
+    transition: background-color 9999s ease-in-out 0s;
+  }
+
+  .rogym-auth-date-field .rogym-input {
+    min-height: 44px;
+    border-color: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.06);
+    color: #fff;
+    font-family: var(--rogym-font-body);
+    line-height: 1.25rem;
+    transition:
+      border-color 200ms ease,
+      background-color 200ms ease,
+      box-shadow 200ms ease;
+  }
+
+  .rogym-auth-date-field .rogym-input:focus {
+    border-color: var(--rogym-teal);
+    background: rgba(66, 224, 158, 0.05);
+    box-shadow: none;
+  }
+
+  @media (max-width: 767px) {
+    .rogym-auth-field__input,
+    .rogym-auth-date-field .rogym-input {
+      font-size: 16px;
+    }
   }
 
   .rogym-auth-shell__content {

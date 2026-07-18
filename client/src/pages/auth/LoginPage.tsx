@@ -2,6 +2,7 @@ import { useState } from 'react'
 import axios from 'axios'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { Lock, Mail } from 'lucide-react'
 import { authService } from '@/services/auth.service'
 import subscriptionService from '@/services/subscription.service'
 import { hasActiveSubscription } from '@/lib/subscription'
@@ -10,7 +11,7 @@ import {
   classifySubscriptionCheckError,
   useSubscriptionStore,
 } from '@/stores/subscriptionStore'
-import { AuthShell, BtnPrimary, TextLink, MutedLink, Field, ErrorMsg } from './_authui'
+import { AuthShell, BtnPrimary, TextLink, MutedLink, Field, PasswordField, ErrorMsg } from './_authui'
 
 const roleRouteMap: Record<string, string> = {
   member: '/member',
@@ -133,16 +134,21 @@ export default function LoginPage() {
             <Field
               label={t('login.email')}
               type="email"
+              name="email"
+              autoComplete="email"
               placeholder="ten@email.com"
               value={email}
               onChange={setEmail}
+              icon={Mail}
             />
-            <Field
+            <PasswordField
               label={t('login.password')}
-              type="password"
+              name="current-password"
+              autoComplete="current-password"
               placeholder="••••••••"
               value={pass}
               onChange={setPass}
+              icon={Lock}
             />
           </div>
 
