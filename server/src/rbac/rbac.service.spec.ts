@@ -230,11 +230,12 @@ describe('RbacService', () => {
       await expect(service.assignPermissions(1n, ['1'], 1n)).rejects.toThrow(NotFoundException)
     })
 
-    it('creates only permissions not already assigned and calls permCache.delete', async () => {
+    it('creates only permissions not already assigned and invalidates member user caches', async () => {
       mockPrisma.group.findFirst.mockResolvedValue(makeGroup())
       // perm 1 already exists, perm 2 is new
       mockPrisma.groupPermission.findMany.mockResolvedValue([{ permissionId: 1n }])
       mockPrisma.groupPermission.createMany.mockResolvedValue({ count: 1 })
+      mockPrisma.userGroup.findMany.mockResolvedValue([{ userId: 50n }, { userId: 51n }])
       mockPrisma.permission.findMany.mockResolvedValue([
         { permissionId: 1n, code: 'perm.read' },
         { permissionId: 2n, code: 'perm.write' },
@@ -247,9 +248,29 @@ describe('RbacService', () => {
           data: [{ groupId: 1n, permissionId: 2n }],
         })
       )
-      expect(mockPermCache.delete).toHaveBeenCalledWith('1')
+      expect(mockPrisma.userGroup.findMany).toHaveBeenCalledWith({
+        where: { groupId: 1n },
+        select: { userId: true },
+      })
+      expect(mockPermCache.delete).toHaveBeenCalledWith('50')
+      expect(mockPermCache.delete).toHaveBeenCalledWith('51')
+      expect(mockPermCache.delete).not.toHaveBeenCalledWith('1')
       expect(result.data.added).toContain('perm.write')
       expect(result.data.skipped).toContain('perm.read')
+    })
+
+    it('does not invalidate cache when every permission is already assigned', async () => {
+      mockPrisma.group.findFirst.mockResolvedValue(makeGroup())
+      mockPrisma.groupPermission.findMany.mockResolvedValue([{ permissionId: 1n }])
+      mockPrisma.permission.findMany.mockResolvedValue([{ permissionId: 1n, code: 'perm.read' }])
+
+      const result = await service.assignPermissions(1n, ['1'], 1n)
+
+      expect(mockPrisma.groupPermission.createMany).not.toHaveBeenCalled()
+      expect(mockPrisma.userGroup.findMany).not.toHaveBeenCalled()
+      expect(mockPermCache.delete).not.toHaveBeenCalled()
+      expect(result.data.added).toEqual([])
+      expect(result.data.skipped).toEqual(['perm.read'])
     })
   })
 
@@ -264,9 +285,10 @@ describe('RbacService', () => {
       await expect(service.revokePermission(1n, 1n, 1n)).rejects.toThrow(NotFoundException)
     })
 
-    it('deletes the assignment and calls permCache.delete on happy path', async () => {
+    it('deletes the assignment and invalidates member user caches on happy path', async () => {
       mockPrisma.groupPermission.findUnique.mockResolvedValue({ groupId: 1n, permissionId: 1n })
       mockPrisma.groupPermission.delete.mockResolvedValue({})
+      mockPrisma.userGroup.findMany.mockResolvedValue([{ userId: 50n }, { userId: 51n }])
 
       await service.revokePermission(1n, 1n, 99n)
 
@@ -275,7 +297,13 @@ describe('RbacService', () => {
           where: { groupId_permissionId: { groupId: 1n, permissionId: 1n } },
         })
       )
-      expect(mockPermCache.delete).toHaveBeenCalledWith('1')
+      expect(mockPrisma.userGroup.findMany).toHaveBeenCalledWith({
+        where: { groupId: 1n },
+        select: { userId: true },
+      })
+      expect(mockPermCache.delete).toHaveBeenCalledWith('50')
+      expect(mockPermCache.delete).toHaveBeenCalledWith('51')
+      expect(mockPermCache.delete).not.toHaveBeenCalledWith('1')
     })
   })
 
