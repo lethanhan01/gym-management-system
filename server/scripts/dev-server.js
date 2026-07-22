@@ -12,6 +12,7 @@ dotenv.config({ path: path.join(serverRoot, '.env') })
 dotenv.config({ path: path.join(serverRoot, '.env.local'), override: true })
 
 const port = Number(process.env.PORT ?? 3000)
+const swaggerUrl = `http://localhost:${port}/api/v1/docs`
 if (!Number.isInteger(port) || port < 1 || port > 65535) {
   console.error(`[dev] PORT khong hop le: ${process.env.PORT}`)
   process.exit(1)
@@ -83,6 +84,43 @@ function stopChild(child) {
   child.kill('SIGTERM')
 }
 
+function openBrowser(url) {
+  if (process.platform === 'win32') {
+    const browser = spawn('cmd', ['/c', 'start', '', url], {
+      detached: true,
+      stdio: 'ignore',
+      windowsHide: true,
+    })
+    browser.unref()
+    return
+  }
+
+  const command = process.platform === 'darwin' ? 'open' : 'xdg-open'
+  const browser = spawn(command, [url], { detached: true, stdio: 'ignore' })
+  browser.unref()
+}
+
+const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
+
+async function openSwaggerWhenReady(isStopping) {
+  const deadline = Date.now() + 60_000
+  while (!isStopping() && Date.now() < deadline) {
+    try {
+      const response = await fetch(swaggerUrl, { signal: AbortSignal.timeout(2_000) })
+      if (response.ok) {
+        openBrowser(swaggerUrl)
+        console.log(`[dev] Da mo Swagger UI: ${swaggerUrl}`)
+        return
+      }
+    } catch {
+      // Nest is still compiling or starting; retry shortly.
+    }
+    await delay(500)
+  }
+
+  if (!isStopping()) console.warn(`[dev] Swagger UI chua san sang tai ${swaggerUrl}`)
+}
+
 async function main() {
   const existingLock = readLock()
   if (existingLock && isProcessAlive(existingLock.pid)) {
@@ -133,6 +171,8 @@ async function main() {
   })
 
   let stopping = false
+  void openSwaggerWhenReady(() => stopping || child.exitCode !== null)
+
   const shutdown = () => {
     if (stopping) return
     stopping = true
