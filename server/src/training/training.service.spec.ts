@@ -166,6 +166,8 @@ const mockAudit = {
 const mockAttendanceService = {
   listAttendance: jest.fn(),
   manualCheckin: jest.fn(),
+  generateQrToken: jest.fn(),
+  qrCheckin: jest.fn(),
   checkout: jest.fn(),
 }
 
@@ -1014,6 +1016,30 @@ describe('TrainingService', () => {
       const result = await service.manualCheckin(dto, caller)
 
       expect(mockAttendanceService.manualCheckin).toHaveBeenCalledWith(dto, caller)
+      expect(result).toBe(expected)
+    })
+  })
+
+  describe('QR check-in delegation', () => {
+    it('delegates QR token generation to attendanceService', () => {
+      const expected = { token: 'v1.2026-07-22.sig' }
+      mockAttendanceService.generateQrToken.mockReturnValue(expected)
+
+      const result = service.generateQrToken()
+
+      expect(mockAttendanceService.generateQrToken).toHaveBeenCalled()
+      expect(result).toBe(expected)
+    })
+
+    it('delegates qrCheckin to attendanceService and returns its result', async () => {
+      const expected = { data: { attendanceId: '2' } }
+      mockAttendanceService.qrCheckin.mockResolvedValue(expected)
+      const caller = makeCaller({ roles: ['member'], memberId: 10n })
+      const dto = { token: 'v1.2026-07-22.sig' } as any
+
+      const result = await service.qrCheckin(dto, caller)
+
+      expect(mockAttendanceService.qrCheckin).toHaveBeenCalledWith(dto, caller)
       expect(result).toBe(expected)
     })
   })

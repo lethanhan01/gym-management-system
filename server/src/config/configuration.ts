@@ -37,6 +37,11 @@ export class EnvironmentVariables {
   @IsString()
   JWT_SECRET!: string
 
+  // Daily HMAC secret for member QR check-in. Falls back to JWT_SECRET when empty.
+  @IsOptional()
+  @IsString()
+  QR_CHECKIN_SECRET?: string
+
   @IsOptional()
   @IsString()
   JWT_EXPIRES_IN: string = '7d'

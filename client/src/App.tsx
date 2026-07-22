@@ -58,6 +58,7 @@ const CreateWorkoutSessionPage = lazy(
   () => import('./pages/member/workout/CreateWorkoutSessionPage')
 )
 const MemberAttendancePage = lazy(() => import('./pages/member/attendance/AttendancePage'))
+const MemberCheckInPage = lazy(() => import('./pages/member/check-in/CheckInPage'))
 const ProgressPage = lazy(() => import('./pages/member/progress/ProgressPage'))
 const MyFeedbackPage = lazy(() => import('./pages/member/feedback/MyFeedbackPage'))
 const SendFeedbackPage = lazy(() => import('./pages/member/feedback/SendFeedbackPage'))
@@ -181,6 +182,7 @@ export default function App() {
             <Route path="/member/workout/session/:id" element={<WorkoutSessionPage />} />
             <Route path="/member/workout/sessions" element={<WorkoutSchedulePage />} />
             <Route path="/member/workout/create-session" element={<CreateWorkoutSessionPage />} />
+            <Route path="/member/check-in" element={<MemberCheckInPage />} />
             <Route path="/member/attendance" element={<MemberAttendancePage />} />
             <Route path="/member/progress" element={<ProgressPage />} />
             <Route path="/member/feedback" element={<MyFeedbackPage />} />

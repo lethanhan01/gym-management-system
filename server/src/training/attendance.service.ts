@@ -5,13 +5,17 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common'
+import { ConfigService } from '@nestjs/config'
 import { AttendanceMethod, Prisma } from '@prisma/client'
+import { createHmac, timingSafeEqual } from 'crypto'
 import { AuditService } from '../common/audit/audit.service'
 import { PrismaService } from '../prisma/prisma.service'
 import { CheckoutDto } from './dto/checkout.dto'
 import { ListAttendanceLogsDto } from './dto/list-attendance.dto'
 import { ManualCheckinDto } from './dto/manual-checkin.dto'
+import { QrCheckinDto } from './dto/qr-checkin.dto'
 import { NotificationsService } from '../notifications/notifications.service'
+import { LineMessagingService } from '../line-messaging/line-messaging.service'
 
 type Caller = {
   userId: bigint
@@ -36,12 +40,23 @@ function todayVN(): Date {
   return new Date(s)
 }
 
+function currentDateVN(): string {
+  return new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' })
+}
+
+function expiresAtEndOfVNDate(date: string): Date {
+  const [year, month, day] = date.split('-').map(Number)
+  return new Date(Date.UTC(year, month - 1, day + 1, -7, 0, 0, -1))
+}
+
 @Injectable()
 export class AttendanceService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly audit: AuditService,
     private readonly notifications: NotificationsService,
+    private readonly config: ConfigService,
+    private readonly lineMessaging: LineMessagingService,
   ) {}
 
   async listAttendance(dto: ListAttendanceLogsDto, caller: Caller) {
@@ -171,6 +186,99 @@ export class AttendanceService {
     })
 
     await this.notifyAttendanceCheckin(attendance)
+    await this.lineMessaging.safePushAttendanceCheckin(attendance.attendanceId)
+
+    return { data: this.serializeAttendance(attendance) }
+  }
+
+  generateQrToken() {
+    const validDate = currentDateVN()
+    const signature = this.signQrTokenDate(validDate)
+    return {
+      token: `v1.${validDate}.${signature}`,
+      payload: { version: 'v1', date: validDate },
+      validDate,
+      expiresAt: expiresAtEndOfVNDate(validDate).toISOString(),
+    }
+  }
+
+  async qrCheckin(dto: QrCheckinDto, caller: Caller) {
+    this.assertQrToken(dto.token)
+
+    const memberId = caller.memberId ?? (await this.resolveCallerMemberId(caller))
+    if (!memberId) {
+      throw new ForbiddenException({
+        success: false,
+        code: 'MEMBER_PROFILE_NOT_FOUND',
+        message: 'Khong tim thay member profile',
+      })
+    }
+
+    const member = await this.prisma.member.findFirst({
+      where: { memberId, deletedAt: null },
+      include: { user: { select: { fullName: true } } },
+    })
+    if (!member) {
+      throw new ForbiddenException({
+        success: false,
+        code: 'MEMBER_PROFILE_NOT_FOUND',
+        message: 'Khong tim thay member profile',
+      })
+    }
+
+    const today = todayVN()
+    const sub = await this.prisma.subscription.findFirst({
+      where: {
+        memberId: member.memberId,
+        status: 'active',
+        deletedAt: null,
+        startDate: { lte: today },
+        endDate: { gte: today },
+      },
+    })
+    if (!sub) {
+      throw new ForbiddenException({
+        success: false,
+        code: 'MEMBER_NO_ACTIVE_SUBSCRIPTION',
+        message: 'Member khong co subscription active',
+      })
+    }
+
+    const occurredAt = new Date()
+    const openAttendance = await this.prisma.attendanceLog.findFirst({
+      where: { memberId: member.memberId, endTime: null },
+    })
+    if (openAttendance) {
+      await this.prisma.attendanceLog.update({
+        where: { attendanceId: openAttendance.attendanceId },
+        data: { endTime: occurredAt },
+      })
+    }
+
+    const attendance = await this.prisma.attendanceLog.create({
+      data: {
+        memberId: member.memberId,
+        subscriptionId: sub.subscriptionId,
+        startTime: occurredAt,
+        method: AttendanceMethod.qr,
+      },
+      include: {
+        member: {
+          select: { memberId: true, memberCode: true, userId: true, primaryTrainerId: true, user: { select: { fullName: true } } },
+        },
+        subscription: { select: { subscriptionId: true, endDate: true } },
+      },
+    })
+
+    await this.audit.log({
+      actorUserId: caller.userId,
+      action: 'attendance.qr-checkin',
+      resourceType: 'attendance_log',
+      resourceId: attendance.attendanceId.toString(),
+    })
+
+    await this.notifyAttendanceCheckin(attendance)
+    await this.lineMessaging.safePushAttendanceCheckin(attendance.attendanceId)
 
     return { data: this.serializeAttendance(attendance) }
   }
@@ -301,5 +409,50 @@ export class AttendanceService {
       select: { memberId: true },
     })
     return member?.memberId ?? null
+  }
+
+  private assertQrToken(token: string) {
+    const parts = token.split('.')
+    if (parts.length !== 3 || parts[0] !== 'v1' || !/^\d{4}-\d{2}-\d{2}$/.test(parts[1])) {
+      throw new BadRequestException({
+        success: false,
+        code: 'QR_TOKEN_INVALID',
+        message: 'QR token khong hop le',
+      })
+    }
+
+    const [, date, signature] = parts
+    const today = currentDateVN()
+    if (date !== today) {
+      throw new BadRequestException({
+        success: false,
+        code: date < today ? 'QR_TOKEN_EXPIRED' : 'QR_TOKEN_INVALID',
+        message: 'QR token khong con hieu luc',
+      })
+    }
+
+    const expected = this.signQrTokenDate(date)
+    const actualBuffer = Buffer.from(signature)
+    const expectedBuffer = Buffer.from(expected)
+    if (
+      actualBuffer.length !== expectedBuffer.length ||
+      !timingSafeEqual(actualBuffer, expectedBuffer)
+    ) {
+      throw new BadRequestException({
+        success: false,
+        code: 'QR_TOKEN_INVALID',
+        message: 'QR token khong hop le',
+      })
+    }
+  }
+
+  private signQrTokenDate(date: string) {
+    const secret = this.config.get<string>('QR_CHECKIN_SECRET') || this.config.get<string>('JWT_SECRET')
+    if (!secret) {
+      throw new Error('QR_CHECKIN_SECRET or JWT_SECRET is required')
+    }
+    return createHmac('sha256', secret)
+      .update(`qr-checkin:v1:${date}`)
+      .digest('base64url')
   }
 }

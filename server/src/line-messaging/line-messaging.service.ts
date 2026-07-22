@@ -44,6 +44,7 @@ const LINE_MESSAGE_TEMPLATES: Record<
     detailButton: string
     followText: string
     followButton: string
+    attendanceCheckin: string
     training: Record<
       TrainingLineEvent,
       (session: {
@@ -60,6 +61,7 @@ const LINE_MESSAGE_TEMPLATES: Record<
     detailButton: 'Xem chi tiết',
     followText: 'Chào mừng bạn đến với RoGym. Bấm nút bên dưới để mở ứng dụng hội viên.',
     followButton: 'Mở ứng dụng',
+    attendanceCheckin: 'Bạn đã check-in thành công tại RoGym.',
     training: {
       created: ({ trainerName, roomName, when }) =>
         `Bạn đã đặt lịch tập thành công.\nThời gian: ${when}\nPT: ${trainerName}\nPhòng: ${roomName}`,
@@ -76,6 +78,7 @@ const LINE_MESSAGE_TEMPLATES: Record<
     detailButton: '詳細を見る',
     followText: 'RoGymへようこそ。下のボタンから会員アプリを開いてください。',
     followButton: 'アプリを開く',
+    attendanceCheckin: 'RoGymでのチェックインが完了しました。',
     training: {
       created: ({ trainerName, roomName, when }) =>
         `トレーニング予約が完了しました。\n日時: ${when}\nPT: ${trainerName}\nルーム: ${roomName}`,
@@ -126,6 +129,17 @@ export class LineMessagingService {
     } catch (error) {
       this.logger.warn(
         `LINE training ${kind} push failed (sessionId=${sessionId.toString()}): ${this.describeError(error)}`
+      )
+      return false
+    }
+  }
+
+  async safePushAttendanceCheckin(attendanceId: bigint) {
+    try {
+      return await this.pushAttendanceCheckin(attendanceId)
+    } catch (error) {
+      this.logger.warn(
+        `LINE attendance check-in push failed (attendanceId=${attendanceId.toString()}): ${this.describeError(error)}`
       )
       return false
     }
@@ -227,6 +241,26 @@ export class LineMessagingService {
         }),
         this.getMessageTemplate().detailButton,
         this.buildTrainingRedirect(session.sessionId),
+      ),
+    ])
+  }
+
+  private async pushAttendanceCheckin(attendanceId: bigint) {
+    if (!this.canPushMessages()) return false
+
+    const attendance = await this.prisma.attendanceLog.findFirst({
+      where: { attendanceId },
+      include: {
+        member: { select: { user: { select: { lineId: true } } } },
+      },
+    })
+    if (!attendance?.member.user.lineId) return false
+
+    return this.pushMessage(attendance.member.user.lineId, [
+      this.withLiffButton(
+        this.getMessageTemplate().attendanceCheckin,
+        this.getMessageTemplate().detailButton,
+        '/member/attendance',
       ),
     ])
   }

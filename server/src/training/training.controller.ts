@@ -18,7 +18,7 @@ import { CurrentUser } from '../auth/decorators/current-user.decorator'
 import { AuthenticatedUser } from '../auth/types/jwt-payload.interface'
 import { TrainingService } from './training.service'
 import { DeviceApiKeyGuard } from './guards/device-api-key.guard'
-import { ListSessionsDto, CreateSessionDto, UpdateSessionDto, UpdateSessionStatusDto, CancelSessionDto, ListAttendanceLogsDto, ManualCheckinDto, CheckoutDto, CreateProgressDto } from './dto'
+import { ListSessionsDto, CreateSessionDto, UpdateSessionDto, UpdateSessionStatusDto, CancelSessionDto, ListAttendanceLogsDto, ManualCheckinDto, QrCheckinDto, CheckoutDto, CreateProgressDto } from './dto'
 
 @Controller()
 @UseGuards(PermissionsGuard)
@@ -85,6 +85,20 @@ export class TrainingController {
   @RequirePermission('attendance.checkin')
   async manualCheckin(@Body() dto: ManualCheckinDto, @CurrentUser() user: AuthenticatedUser) {
     const result = await this.training.manualCheckin(dto, { userId: user.userId, roles: user.roles, staffId: user.staffId })
+    return { success: true, ...result }
+  }
+
+  @Get('attendance/qr-token')
+  @RequirePermission('attendance.checkin')
+  async getQrToken() {
+    return { success: true, data: this.training.generateQrToken() }
+  }
+
+  @Post('attendance/qr-checkin')
+  @HttpCode(HttpStatus.CREATED)
+  @RequirePermission('attendance.self-checkin')
+  async qrCheckin(@Body() dto: QrCheckinDto, @CurrentUser() user: AuthenticatedUser) {
+    const result = await this.training.qrCheckin(dto, { userId: user.userId, roles: user.roles, memberId: user.memberId })
     return { success: true, ...result }
   }
 

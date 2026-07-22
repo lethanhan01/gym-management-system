@@ -17,6 +17,7 @@ import { CreateSessionDto } from './dto/create-session.dto'
 import { ListAttendanceLogsDto } from './dto/list-attendance.dto'
 import { ListSessionsDto } from './dto/list-sessions.dto'
 import { ManualCheckinDto } from './dto/manual-checkin.dto'
+import { QrCheckinDto } from './dto/qr-checkin.dto'
 import { UpdateSessionDto } from './dto/update-session.dto'
 import { resolveCallerFilter } from './filters/caller-query-filter'
 import { NotificationsService } from '../notifications/notifications.service'
@@ -597,6 +598,14 @@ export class TrainingService {
 
   async manualCheckin(dto: ManualCheckinDto, caller: Caller) {
     return this.attendance.manualCheckin(dto, caller)
+  }
+
+  generateQrToken() {
+    return this.attendance.generateQrToken()
+  }
+
+  async qrCheckin(dto: QrCheckinDto, caller: Caller) {
+    return this.attendance.qrCheckin(dto, caller)
   }
 
   async checkout(id: bigint, dto: CheckoutDto, caller: Caller) {

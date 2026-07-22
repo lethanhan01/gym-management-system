@@ -39,6 +39,7 @@ function useBottomNavItems(): BottomNavItem[] {
       ...(hasActiveSub === true
         ? [{ to: '/member/subscription/current', icon: <Package size={22} />, label: tCommon('nav.subscription') }]
         : [{ to: '/member/subscription/setup', icon: <Package size={22} />, label: tCommon('nav.subscription') }]),
+      { to: '/member/check-in', icon: <CheckSquare size={22} />, label: tCommon('nav.checkIn') },
       { to: '/member/profile', icon: <User size={22} />, label: tCommon('nav.profile') },
     ],
     trainer: [
