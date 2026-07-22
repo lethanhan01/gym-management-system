@@ -170,8 +170,10 @@ export default function CheckInPage() {
               <StaffErrorState message={qrError} onRetry={loadQrToken} />
             ) : qrToken ? (
               <div className="space-y-4">
-                <div className="rounded-2xl bg-white p-4">
-                  <QRCodeCanvas value={qrToken.token} size={256} className="h-auto w-full" />
+                <div className="flex justify-center">
+                  <div className="inline-flex rounded-2xl bg-white p-4">
+                    <QRCodeCanvas value={qrToken.token} size={256} className="block h-[256px] w-[256px]" />
+                  </div>
                 </div>
                 <div className="grid grid-cols-2 gap-3 text-sm">
                   <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3">
