@@ -128,8 +128,8 @@ export default function CheckInPage() {
               playsInline
               aria-label={t('qrCheckIn.cameraLabel')}
             />
-            <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-              <div className="h-56 w-56 rounded-[28px] border-2 border-[#42e09e] shadow-[0_0_0_999px_rgba(0,0,0,0.35)]" />
+            <div className="pointer-events-none absolute inset-0 grid place-items-center">
+              <div className="aspect-square w-[min(72vw,224px)] max-w-[calc(100%-48px)] rounded-[28px] border-2 border-[#42e09e] shadow-[0_0_0_999px_rgba(0,0,0,0.35)]" />
             </div>
             <div className="absolute left-4 top-4 rounded-full border border-white/10 bg-black/60 px-3 py-1 text-xs font-semibold text-white">
               {scanState === 'starting'
