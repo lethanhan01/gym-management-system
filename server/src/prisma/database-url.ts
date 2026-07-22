@@ -17,6 +17,7 @@ export function getRuntimeDatabaseUrl(value = process.env.DATABASE_URL): string 
       url.port = '6543'
     }
 
+    url.searchParams.set('sslmode', 'require')
     url.searchParams.set('pgbouncer', 'true')
     url.searchParams.set('pool_timeout', '20')
     url.searchParams.set('connect_timeout', '20')
