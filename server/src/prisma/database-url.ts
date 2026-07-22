@@ -1,8 +1,10 @@
-// connection_limit=1 phù hợp serverless (nhiều instance song song). NestJS là
-// persistent server — cần pool đủ để xử lý concurrent requests. Mỗi request
-// có thể gọi Promise.all([findMany(), count()]) nên cần ít nhất 2 connections
-// đồng thời; 5 là mức an toàn cho Supabase free tier (max 60 direct connections).
-const MIN_POOL_SIZE = 5
+// Prisma co pool o phia ung dung, Supavisor co pool o phia database. Mot Nest
+// process khong nen tu y mo qua nhieu client connections den transaction pooler.
+// Tuy nhien mot Nest process xu ly request dong thoi va cac endpoint phan trang
+// thuong can them mot truy van count. Mot pool nho vua phai tranh de hang doi
+// Prisma bi can sau khi Supavisor reset mot ket noi.
+// Deployment van co the ghi de connection_limit trong DATABASE_URL.
+const DEFAULT_POOL_SIZE = 5
 
 export function getRuntimeDatabaseUrl(value = process.env.DATABASE_URL): string | undefined {
   if (!value) return undefined
@@ -22,9 +24,9 @@ export function getRuntimeDatabaseUrl(value = process.env.DATABASE_URL): string 
     url.searchParams.set('pool_timeout', '20')
     url.searchParams.set('connect_timeout', '20')
 
-    const currentLimit = parseInt(url.searchParams.get('connection_limit') ?? '0', 10)
-    if (currentLimit < MIN_POOL_SIZE) {
-      url.searchParams.set('connection_limit', String(MIN_POOL_SIZE))
+    const currentLimit = parseInt(url.searchParams.get('connection_limit') ?? '', 10)
+    if (!Number.isInteger(currentLimit) || currentLimit < 1) {
+      url.searchParams.set('connection_limit', String(DEFAULT_POOL_SIZE))
     }
 
     return url.toString()
