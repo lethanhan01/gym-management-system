@@ -1,9 +1,8 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import {
   CheckCircle2,
-  Circle,
   ChevronDown,
   ChevronUp,
   Clock,
@@ -41,7 +40,7 @@ function makeDefaultSets(ex: WorkoutPlanExercise): SetState[] {
   }))
 }
 
-// ── Left card: Plan list ───────────────────────────────────────────────────────
+// ── Plan card list ─────────────────────────────────────────────────────────────
 
 function PlanCardItem({
   assignment,
@@ -77,7 +76,7 @@ function PlanCardItem({
       <div className="p-5">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-2">
+            <div className="flex flex-col items-start gap-2">
               <span
                 className={`rogym-plan-source rounded-lg px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
                   isPT ? 'is-trainer-plan' : ''
@@ -128,18 +127,20 @@ function PlanCardItem({
             .map((day) => (
               <div
                 key={day.planDayId}
-                className="flex items-center justify-between px-5 py-3 rogym-sx-6720cca7"
+                className="flex items-center justify-between gap-3 px-5 py-3 rogym-sx-6720cca7"
               >
-                <div>
-                  <p className="text-sm font-medium text-white">{day.name}</p>
+                <div className="min-w-0 flex-1">
+                  <p className="break-words text-sm font-medium text-white">{day.name}</p>
                   <p className="text-xs rogym-sx-5e5c39ab">{day.exercises?.length ?? 0} {t('workout.createSession.unitExercises')}</p>
                 </div>
                 <button
                   type="button"
-                  className="rogym-btn rogym-btn--primary px-3 py-1.5 text-xs"
+                  className="rogym-btn rogym-btn--primary rogym-btn--icon shrink-0"
                   onClick={() => onStartDay(day, assignment)}
+                  aria-label={t('workout.createSession.buttonStartDay', { name: day.name })}
+                  title={t('workout.createSession.buttonStartDay', { name: day.name })}
                 >
-                  <Play size={12} /> {t('workout.createSession.buttonStart')}
+                  <Play size={16} />
                 </button>
               </div>
             ))}
@@ -149,7 +150,7 @@ function PlanCardItem({
   )
 }
 
-// ── Right card: Session view ───────────────────────────────────────────────────
+// ── Session view ────────────────────────────────────────────────────────────────
 
 function SessionView({
   day,
@@ -173,9 +174,9 @@ function SessionView({
   const sortedExercises = day.exercises
     ? [...day.exercises].sort((a, b) => a.orderIndex - b.orderIndex)
     : []
-  const completedCount = sets.flat().filter((s) => s.completed).length
   const totalSets = sets.flat().length
-  const anyCompleted = completedCount > 0
+  const completedCount = totalSets
+  const canFinish = totalSets > 0
 
   if (done) {
     return (
@@ -213,13 +214,14 @@ function SessionView({
       <div className="space-y-3 px-5 pb-4">
         {sortedExercises.map((ex, exIdx) => {
           const isCardio = ex.exercise?.category === 'cardio'
+          const exerciseSets = sets[exIdx] ?? []
           return (
             <div key={ex.planExerciseId} className="rogym-sx-46079668">
               <div className="flex items-center gap-3 px-4 py-3 rogym-sx-dd0d9e7c">
                 <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-xs font-bold rogym-sx-252b3c13">
                   {exIdx + 1}
                 </div>
-                <div>
+                <div className="min-w-0 flex-1">
                   <p className="text-sm font-semibold text-white">{ex.exercise?.name ?? t('workout.session.defaultExerciseName')}</p>
                   <p className="text-xs rogym-sx-5e5c39ab">
                     {ex.targetSets} sets ·{' '}
@@ -231,17 +233,16 @@ function SessionView({
                 </div>
               </div>
               <div className="p-4">
-                <div className="rogym-workout-set-grid mb-2 grid text-xs font-medium uppercase">
+                <div className="mb-2 grid grid-cols-[40px_1fr_1fr] gap-2 text-xs font-medium uppercase rogym-sx-5e5c39ab">
                   <span>Set</span>
                   <span>{isCardio ? t('workout.createSession.unitSeconds') : 'Reps'}</span>
                   <span>Kg</span>
-                  <span />
                 </div>
                 <div className="space-y-2">
-                  {(sets[exIdx] ?? []).map((s, setIdx) => (
+                  {exerciseSets.map((s, setIdx) => (
                     <div
                       key={setIdx}
-                      className={`rogym-workout-set-grid grid items-center gap-2 ${s.completed ? 'is-completed' : ''}`}
+                      className="grid grid-cols-[40px_1fr_1fr] items-center gap-2"
                     >
                       <span className="rogym-workout-set-index text-sm font-medium">{setIdx + 1}</span>
                       <input
@@ -270,13 +271,6 @@ function SessionView({
                         }
                         placeholder="kg"
                       />
-                      <button
-                        type="button"
-                        onClick={() => onUpdateSet(exIdx, setIdx, 'completed', !s.completed)}
-                        className="rogym-workout-set-toggle"
-                      >
-                        {s.completed ? <CheckCircle2 size={22} /> : <Circle size={22} />}
-                      </button>
                     </div>
                   ))}
                 </div>
@@ -297,7 +291,7 @@ function SessionView({
         <button
           type="button"
           className="rogym-btn rogym-btn--primary"
-          disabled={!anyCompleted || submitting}
+          disabled={!canFinish || submitting}
           onClick={onFinish}
         >
           {submitting ? t('workout.createSession.buttonSaving') : t('workout.createSession.buttonFinish')}
@@ -314,6 +308,7 @@ export default function CreateWorkoutSessionPage() {
   const navigate = useNavigate()
   const { user } = useAuthStore()
   const memberId = user?.memberId ? String(user.memberId) : undefined
+  const sessionPanelRef = useRef<HTMLDivElement | null>(null)
 
   const [assignments, setAssignments] = useState<WorkoutAssignmentSummary[]>([])
   const [fullPlans, setFullPlans] = useState<Map<string, WorkoutPlan>>(new Map())
@@ -379,6 +374,12 @@ export default function CreateWorkoutSessionPage() {
     } else {
       setSets([])
     }
+
+    if (window.matchMedia('(max-width: 1023px)').matches) {
+      window.requestAnimationFrame(() => {
+        sessionPanelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      })
+    }
   }
 
   function updateSet(
@@ -389,6 +390,14 @@ export default function CreateWorkoutSessionPage() {
   ) {
     setSets((prev) => {
       const next = prev.map((s) => [...s])
+      if (field === 'actualReps' && setIdx === 0 && typeof value === 'string') {
+        next[exIdx] = next[exIdx].map((s) => ({ ...s, actualReps: value }))
+        return next
+      }
+      if (field === 'actualWeightKg' && setIdx === 0 && typeof value === 'string') {
+        next[exIdx] = next[exIdx].map((s) => ({ ...s, actualWeightKg: value }))
+        return next
+      }
       next[exIdx][setIdx] = { ...next[exIdx][setIdx], [field]: value }
       return next
     })
@@ -408,7 +417,7 @@ export default function CreateWorkoutSessionPage() {
         actualReps: s.actualReps ? Number(s.actualReps) : undefined,
         actualWeightKg: s.actualWeightKg ? Number(s.actualWeightKg) : undefined,
         actualDurationSec: s.actualDurationSec ? Number(s.actualDurationSec) : undefined,
-        completed: s.completed,
+        completed: true,
       }))
     )
     try {
@@ -434,7 +443,7 @@ export default function CreateWorkoutSessionPage() {
         description={t('workout.createSession.description')}
       />
       <div className="grid gap-5 lg:grid-cols-2">
-        {/* Left: plan list */}
+        {/* Plan list */}
         <div className="space-y-4">
           {loading ? (
             <MemberSkeleton rows={5} />
@@ -466,8 +475,8 @@ export default function CreateWorkoutSessionPage() {
           )}
         </div>
 
-        {/* Right: session or placeholder */}
-        <div>
+        {/* Session or placeholder */}
+        <div ref={sessionPanelRef} className="scroll-mt-4">
           {!selectedDay ? (
             <div className="flex min-h-[300px] flex-col items-center justify-center gap-3 rounded-[20px] p-6 text-center rogym-sx-25952519">
               <Dumbbell size={36} className="rogym-sx-ed519d00" />

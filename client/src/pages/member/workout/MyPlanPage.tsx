@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   Archive,
-  CheckCircle,
   ChevronDown,
   ChevronUp,
   Clock,
@@ -38,14 +37,12 @@ function PlanCard({
   canEdit,
   isPT,
   onDelete,
-  onUnassignSelf,
 }: {
   assignment: WorkoutAssignmentSummary
   plan: WorkoutPlan | null
   canEdit: boolean
   isPT: boolean
   onDelete: () => void
-  onUnassignSelf?: () => void
 }) {
   const navigate = useNavigate()
   const { t } = useTranslation('member')
@@ -54,8 +51,6 @@ function PlanCard({
   const [deleting, setDeleting] = useState(false)
   const [deleteError, setDeleteError] = useState<string | null>(null)
   const [detailDay, setDetailDay] = useState<WorkoutPlanDay | null>(null)
-  const [doneConfirm, setDoneConfirm] = useState(false)
-  const [doneLoading, setDoneLoading] = useState(false)
 
   const totalDays = plan?.days?.length ?? assignment.plan?.days?.length ?? 0
   const totalExercises = plan?.days?.reduce((s, d) => s + (d.exercises?.length ?? 0), 0) ?? 0
@@ -88,23 +83,12 @@ function PlanCard({
     }
   }
 
-  async function handleDonePt() {
-    setDoneLoading(true)
-    try {
-      await workoutService.unassignMember(assignment.assignmentId)
-      setDoneConfirm(false)
-      onUnassignSelf?.()
-    } catch {
-      setDoneLoading(false)
-    }
-  }
-
   return (
     <div className={`rogym-plan-card rogym-card rogym-card--md ${isPT ? 'is-trainer-plan' : ''}`}>
       <div className="p-5">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-2">
+            <div className="flex flex-col items-start gap-2">
               <span
                 className={`rogym-plan-source rounded-lg px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
                   isPT ? 'is-trainer-plan' : ''
@@ -191,42 +175,6 @@ function PlanCard({
         )}
         {deleteError && <p className="mt-2 text-xs text-red-300">{deleteError}</p>}
 
-        {/* "Đã tập xong" for PT plans */}
-        {isPT && onUnassignSelf && (
-          <div className="mt-3">
-            {doneConfirm ? (
-              <div className="flex items-center gap-2 rounded-xl border border-amber-400/30 bg-amber-400/10 px-3 py-2">
-                <span className="flex-1 text-xs text-amber-200">
-                  Xác nhận đã hoàn thành kế hoạch PT này?
-                </span>
-                <button
-                  type="button"
-                  className="rogym-btn rogym-btn--primary px-3 py-1 text-xs"
-                  disabled={doneLoading}
-                  onClick={() => void handleDonePt()}
-                >
-                  {doneLoading ? 'Đang xử lý...' : 'Xác nhận'}
-                </button>
-                <button
-                  type="button"
-                  className="rogym-btn rogym-btn--outline-white px-3 py-1 text-xs"
-                  onClick={() => setDoneConfirm(false)}
-                >
-                  Hủy
-                </button>
-              </div>
-            ) : (
-              <button
-                type="button"
-                className="rogym-text-link rogym-text-link--accent flex items-center gap-1 text-xs"
-                onClick={() => setDoneConfirm(true)}
-              >
-                <CheckCircle size={13} /> {t('workout.myPlan.buttonDoneTraining')}
-              </button>
-            )}
-          </div>
-        )}
-
         <button
           type="button"
           className="rogym-text-link rogym-text-link--accent mt-3 flex items-center gap-1 text-xs"
@@ -244,18 +192,20 @@ function PlanCard({
             .map((day) => (
               <div
                 key={day.planDayId}
-                className="flex items-center justify-between px-5 py-3 rogym-sx-6720cca7"
+                className="flex items-center justify-between gap-3 px-5 py-3 rogym-sx-6720cca7"
               >
-                <div>
-                  <p className="text-sm font-medium text-white">{day.name}</p>
+                <div className="min-w-0 flex-1">
+                  <p className="break-words text-sm font-medium text-white">{day.name}</p>
                   <p className="text-xs rogym-sx-5e5c39ab">{t('workout.myPlan.exerciseCount', { count: day.exercises?.length ?? 0 })}</p>
                 </div>
                 <button
                   type="button"
-                  className="rogym-btn rogym-btn--outline-white px-3 py-1.5 text-xs"
+                  className="rogym-btn rogym-btn--icon rogym-btn--outline-white shrink-0"
                   onClick={() => setDetailDay(day)}
+                  aria-label={t('workout.myPlan.buttonDayDetailAria', { name: day.name })}
+                  title={t('workout.myPlan.buttonDayDetailAria', { name: day.name })}
                 >
-                  {t('workout.myPlan.buttonDayDetail')}
+                  <Eye size={16} />
                 </button>
               </div>
             ))}
@@ -681,7 +631,6 @@ export default function MyPlanPage() {
                     canEdit={false}
                     isPT={true}
                     onDelete={load}
-                    onUnassignSelf={load}
                   />
                 ))}
               </div>

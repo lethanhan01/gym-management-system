@@ -1,4 +1,4 @@
-import { memo, useCallback, useEffect, useMemo, useState, type ElementType } from 'react'
+import { memo, useCallback, useEffect, useMemo, useRef, useState, type ElementType } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import {
@@ -25,6 +25,8 @@ import { memberService, type MemberProgress, type MemberProfile } from '@/servic
 import { feedbackService, type Feedback } from '@/services/feedback.service'
 import api from '@/services/api'
 import { MemberPage, MemberPageHeader } from '@/components/MemberUI'
+import { NotificationToast } from '@/components/shared/NotificationUI'
+import { hasActiveSubscription, isSubscriptionActive } from '@/lib/subscription'
 
 const T = '#42e09e'
 
@@ -568,6 +570,7 @@ export default function MemberDashboardPage() {
   const [errorFeedbacks, setErrorFeedbacks] = useState(false)
 
   const [paymentSuccessToast, setPaymentSuccessToast] = useState(false)
+  const paymentToastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const todayDescription = useMemo(() => todayFull(i18n.language), [i18n.language])
   const handleChooseTrainer = useCallback(() => navigate('/member/choose-trainer'), [navigate])
   const handleRemoveTrainer = useCallback(async () => {
@@ -578,9 +581,17 @@ export default function MemberDashboardPage() {
   useEffect(() => {
     if ((location.state as { paymentSuccess?: boolean } | null)?.paymentSuccess) {
       setPaymentSuccessToast(true)
-      setTimeout(() => setPaymentSuccessToast(false), 4000)
+      if (paymentToastTimerRef.current) clearTimeout(paymentToastTimerRef.current)
+      paymentToastTimerRef.current = setTimeout(() => setPaymentSuccessToast(false), 4000)
     }
   }, [location.state])
+
+  useEffect(
+    () => () => {
+      if (paymentToastTimerRef.current) clearTimeout(paymentToastTimerRef.current)
+    },
+    []
+  )
 
   useEffect(() => {
     const memberId = user?.memberId
@@ -601,23 +612,15 @@ export default function MemberDashboardPage() {
       memberService.getProfile(memberId),
     ]).then(
       async ([subsR, sessionsR, progressR, attendanceR, workoutR, feedbackR, profileR]) => {
-        const now = new Date()
         let activePackageId: string | undefined
 
         /* Subscription */
         if (subsR.status === 'fulfilled') {
           const subs = subsR.value
-          const validActive = subs.find(
-            (s) =>
-              s.status === 'active' && new Date(s.startDate) <= now && new Date(s.endDate) >= now
-          )
+          const validActive = subs.find((s) => isSubscriptionActive(s))
           const active = validActive ?? subs.find((s) => s.status === 'active') ?? subs[0] ?? null
           setSubscription(active)
-          // Gate truy cập theo đúng định nghĩa dùng chung toàn app (status active + chưa hết hạn).
-          // KHÔNG ràng buộc startDate <= now: gói mua trong ngày có startDate = 00:00 UTC,
-          // khi giờ UTC hiện tại vẫn là hôm trước sẽ bị coi là "chưa bắt đầu" → lệch với
-          // SubscriptionSetupPage/DashboardLayout và gây vòng lặp redirect /member ⇄ /setup.
-          setResolvedStatus(subs.some((s) => s.status === 'active' && new Date(s.endDate) >= now))
+          setResolvedStatus(hasActiveSubscription(subs), memberId)
           activePackageId = active?.packageId ?? undefined
         } else {
           const err = subsR.reason
@@ -674,12 +677,7 @@ export default function MemberDashboardPage() {
           const p = profileR.value
           setProfile(p)
           const activeSub =
-            p.subscriptions?.find(
-              (s) =>
-                s.status === 'active' &&
-                new Date(s.startDate) <= now &&
-                new Date(s.endDate) >= now
-            ) ??
+            p.subscriptions?.find((s) => isSubscriptionActive(s)) ??
             p.subscriptions?.find((s) => s.status === 'active') ??
             p.subscriptions?.[0]
           if (activeSub !== undefined) {
@@ -716,9 +714,11 @@ export default function MemberDashboardPage() {
     <MemberPage>
       {/* Toast */}
       {paymentSuccessToast && (
-        <div className="fixed top-5 right-5 z-50 px-5 py-3 rounded-2xl flex items-center gap-2 shadow-lg rogym-sx-46b298d7">
-          <CalendarCheck size={18} /> {t('dashboard.paymentSuccess')}
-        </div>
+        <NotificationToast
+          tone="success"
+          message={t('dashboard.paymentSuccess')}
+          icon={<CalendarCheck size={18} />}
+        />
       )}
 
       <MemberPageHeader

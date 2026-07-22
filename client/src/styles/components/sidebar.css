@@ -306,8 +306,39 @@
       justify-content: center;
     }
 
+    .rogym-bottom-nav--member .rogym-bottom-nav__item--center {
+      position: relative;
+      min-height: 64px;
+      padding-top: 6px;
+      padding-bottom: 6px;
+      gap: 0;
+      justify-content: flex-end;
+      z-index: 1;
+    }
+
+    .rogym-bottom-nav--member .rogym-bottom-nav__item--center svg {
+      position: absolute;
+      top: -30px;
+      left: 50%;
+      width: 68px;
+      height: 68px;
+      padding: 18px;
+      transform: translateX(-50%);
+      border-radius: 50%;
+      border: 1px solid rgba(66, 224, 158, 0.28);
+      background: #050807;
+      color: var(--rogym-text-primary);
+      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.35);
+    }
+
     .rogym-bottom-nav__item.is-active {
       color: var(--rogym-teal);
+    }
+
+    .rogym-bottom-nav--member .rogym-bottom-nav__item--center.is-active svg {
+      border-color: var(--rogym-teal);
+      color: var(--rogym-teal);
+      box-shadow: 0 12px 28px rgba(6, 195, 132, 0.22);
     }
 
     .rogym-bottom-nav__label {

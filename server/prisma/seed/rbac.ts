@@ -103,6 +103,11 @@ const PERMISSIONS = [
     description: 'Ghi nhan check-in / check-out (UC05 fallback)',
   },
   {
+    code: 'attendance.self-checkin',
+    name: 'Hoi vien tu check-in',
+    description: 'Hoi vien tu check-in bang QR trong ung dung',
+  },
+  {
     code: 'progress.read',
     name: 'Xem tien do tap',
     description: 'Xem chi so tien do hoi vien (UC06)',
@@ -263,6 +268,7 @@ const ROLE_PERMISSIONS: Record<(typeof GROUPS)[number]['name'], string[]> = {
     'payment.create',
     'session.read',
     'attendance.read',
+    'attendance.self-checkin',
     'progress.read',
     'feedback.read',
     'feedback.create',

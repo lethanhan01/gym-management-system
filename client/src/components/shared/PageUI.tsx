@@ -83,13 +83,13 @@ export function PageErrorState({
   const { t } = useTranslation('common')
   const effectiveRetryLabel = retryLabel ?? t('button.retry')
   return (
-    <div className="rogym-card rogym-card--compact flex items-center gap-4 border-red-400/20 p-5">
+    <div className="rogym-card rogym-card--compact flex flex-col items-start gap-4 border-red-400/20 p-5 sm:flex-row sm:items-center">
       <AlertCircle className="shrink-0 text-red-300" size={22} />
-      <div className="flex-1 text-sm text-red-200">{message}</div>
+      <div className="min-w-0 flex-1 text-sm text-red-200">{message}</div>
       {onRetry && (
         <button
           type="button"
-          className="rogym-btn rogym-btn--outline-white px-4 py-2 text-xs"
+          className="rogym-btn rogym-btn--outline-white w-full px-4 py-2 text-xs sm:w-auto"
           onClick={onRetry}
         >
           {effectiveRetryLabel}

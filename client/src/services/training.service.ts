@@ -72,6 +72,13 @@ export interface AttendanceLog {
   method: 'realtime' | 'manual' | 'qr'
 }
 
+export interface QrTokenResponse {
+  token: string
+  payload: { version: 'v1'; date: string }
+  validDate: string
+  expiresAt: string
+}
+
 export interface TrainingSessionDetail extends TrainingSession {
   attendanceLogs: AttendanceLog[]
 }
@@ -216,6 +223,21 @@ export const trainingService = {
     const res = await api.post<{ success: boolean; data: AttendanceLog }>(
       '/attendance/manual-checkin',
       data
+    )
+    return res.data.data
+  },
+
+  getQrToken: async (): Promise<QrTokenResponse> => {
+    const res = await api.get<{ success: boolean; data: QrTokenResponse }>(
+      '/attendance/qr-token'
+    )
+    return res.data.data
+  },
+
+  qrCheckin: async (token: string): Promise<AttendanceLog> => {
+    const res = await api.post<{ success: boolean; data: AttendanceLog }>(
+      '/attendance/qr-checkin',
+      { token }
     )
     return res.data.data
   },

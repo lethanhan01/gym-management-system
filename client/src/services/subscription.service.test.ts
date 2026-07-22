@@ -28,6 +28,25 @@ describe('subscriptionService.getByMember', () => {
     expect(mockedGet).toHaveBeenCalledWith('/subscriptions/member/10', { timeout: 30_000 })
   })
 
+  it('forwards bootstrap auth options without relying on the stored token', async () => {
+    const subscriptions = [makeSubscription()]
+    mockedGet.mockResolvedValue({ data: { success: true, data: subscriptions } })
+
+    await expect(
+      subscriptionService.getByMember('10', {
+        accessToken: 'fresh-token',
+        timeout: 30_000,
+        suppressAuthRedirect: true,
+      })
+    ).resolves.toEqual(subscriptions)
+
+    expect(mockedGet).toHaveBeenCalledWith('/subscriptions/member/10', {
+      timeout: 30_000,
+      suppressAuthRedirect: true,
+      headers: { Authorization: 'Bearer fresh-token' },
+    })
+  })
+
   it.each([
     '<!doctype html><html></html>',
     { success: true },

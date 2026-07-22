@@ -1,0 +1,325 @@
+:root {
+  --rogym-bottom-nav-height: 64px;
+}
+
+@layer components {
+  .rogym-notification-panel {
+    position: absolute;
+    z-index: 50;
+    top: 3rem;
+    right: 0;
+    display: flex;
+    width: min(360px, calc(100vw - 2rem));
+    max-height: 420px;
+    flex-direction: column;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    background: #101712;
+    box-shadow: 0 24px 70px rgba(0, 0, 0, 0.46);
+  }
+
+  .rogym-notification-panel__header {
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    background: #101712;
+    padding: 0.75rem 1rem;
+  }
+
+  .rogym-notification-panel__header-copy {
+    min-width: 0;
+  }
+
+  .rogym-notification-panel__title {
+    color: #fff;
+    font-size: 0.875rem;
+    font-weight: 600;
+  }
+
+  .rogym-notification-panel__meta {
+    color: #9fb2a7;
+    font-size: 0.75rem;
+  }
+
+  .rogym-notification-panel__mark-all {
+    display: inline-flex;
+    width: 2rem;
+    height: 2rem;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: #9fb2a7;
+    cursor: pointer;
+  }
+
+  .rogym-notification-panel__mark-all:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: #fff;
+  }
+
+  .rogym-notification-panel__mark-all:disabled {
+    cursor: not-allowed;
+    opacity: 0.4;
+  }
+
+  .rogym-notification-panel__list {
+    max-height: 420px;
+    overflow-y: auto;
+    padding-block: 0.25rem;
+  }
+
+  .rogym-notification-panel__state {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 2rem 1rem;
+    color: #9fb2a7;
+    font-size: 0.875rem;
+    text-align: center;
+  }
+
+  .rogym-notification-panel__state.is-error {
+    color: #fecaca;
+  }
+
+  .rogym-notification-panel__item {
+    display: block;
+    width: 100%;
+    min-height: 56px;
+    border: 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    background: transparent;
+    color: inherit;
+    padding: 0.75rem 1rem;
+    text-align: left;
+    cursor: pointer;
+    transition: background-color 150ms ease;
+  }
+
+  .rogym-notification-panel__item:last-child {
+    border-bottom: 0;
+  }
+
+  .rogym-notification-panel__item:hover {
+    background: rgba(255, 255, 255, 0.05);
+  }
+
+  .rogym-notification-panel__item.is-unread {
+    background: rgba(6, 195, 132, 0.1);
+  }
+
+  .rogym-notification-panel__item-layout {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  .rogym-notification-panel__dot {
+    width: 0.5rem;
+    height: 0.5rem;
+    flex-shrink: 0;
+    margin-top: 0.25rem;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.15);
+  }
+
+  .rogym-notification-panel__dot.is-unread {
+    background: #42e09e;
+  }
+
+  .rogym-notification-panel__item-copy {
+    min-width: 0;
+  }
+
+  .rogym-notification-panel__item-title {
+    display: block;
+    overflow: hidden;
+    color: #fff;
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .rogym-notification-panel__item-message {
+    display: -webkit-box;
+    margin-top: 0.25rem;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    color: #b7c7bd;
+    font-size: 0.75rem;
+    line-height: 1.25rem;
+  }
+
+  .rogym-notification-panel__item-time {
+    display: block;
+    margin-top: 0.25rem;
+    color: #7d9086;
+    font-size: 0.6875rem;
+  }
+
+  .rogym-notification-toast {
+    position: fixed;
+    z-index: 60;
+    top: 5rem;
+    right: 1.25rem;
+    display: flex;
+    max-width: 20rem;
+    align-items: center;
+    gap: 0.625rem;
+    border: 1px solid color-mix(in srgb, var(--rogym-tone) 34%, transparent);
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--rogym-tone) 15%, #101712);
+    color: #f5fff9;
+    padding: 0.75rem 1rem;
+    box-shadow: 0 16px 46px rgba(0, 0, 0, 0.42);
+    font-size: 0.875rem;
+    font-weight: 600;
+  }
+
+  .rogym-notification-toast__icon,
+  .rogym-notification-toast__close {
+    display: inline-flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .rogym-notification-toast__message {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .rogym-notification-toast__action {
+    flex-shrink: 0;
+  }
+
+  .rogym-notification-toast__close {
+    width: 1.75rem;
+    height: 1.75rem;
+    margin-right: -0.375rem;
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+    color: currentColor;
+    cursor: pointer;
+    opacity: 0.72;
+  }
+
+  .rogym-notification-toast__close:hover {
+    background: rgba(255, 255, 255, 0.08);
+    opacity: 1;
+  }
+
+  .rogym-notification-alert {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    border: 1px solid color-mix(in srgb, var(--rogym-tone) 30%, transparent);
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--rogym-tone) 10%, transparent);
+    color: color-mix(in srgb, var(--rogym-tone) 72%, white);
+    padding: 0.75rem 1rem;
+    font-size: 0.875rem;
+  }
+
+  .rogym-notification-alert__content {
+    min-width: 0;
+  }
+
+  .rogym-notification-alert__title {
+    margin-bottom: 0.125rem;
+    color: #fff;
+    font-weight: 700;
+  }
+
+  .rogym-notification-alert__message {
+    overflow-wrap: anywhere;
+  }
+
+  .rogym-notification-alert__action {
+    flex-shrink: 0;
+  }
+
+  .rogym-notification-toast[data-tone='success'],
+  .rogym-notification-alert[data-tone='success'] {
+    --rogym-tone: #42e09e;
+  }
+
+  .rogym-notification-toast[data-tone='error'],
+  .rogym-notification-alert[data-tone='error'] {
+    --rogym-tone: #ef4444;
+  }
+
+  .rogym-notification-toast[data-tone='warning'],
+  .rogym-notification-alert[data-tone='warning'] {
+    --rogym-tone: #f59e0b;
+  }
+
+  .rogym-notification-toast[data-tone='info'],
+  .rogym-notification-alert[data-tone='info'] {
+    --rogym-tone: #3b82f6;
+  }
+
+  @media (max-width: 767px) {
+    .rogym-notification-panel {
+      position: fixed;
+      inset-inline: 12px;
+      top: 64px;
+      right: 12px;
+      bottom: calc(var(--rogym-bottom-nav-height) + env(safe-area-inset-bottom, 0px) + 12px);
+      width: auto;
+      max-height: none;
+    }
+
+    .rogym-notification-panel__header {
+      position: sticky;
+      z-index: 1;
+      top: 0;
+    }
+
+    .rogym-notification-panel__list {
+      max-height: none;
+      flex: 1;
+      overscroll-behavior: contain;
+    }
+
+    .rogym-notification-panel__item-title {
+      overflow: visible;
+      text-overflow: clip;
+      white-space: normal;
+      overflow-wrap: anywhere;
+    }
+
+    .rogym-notification-panel__item-message {
+      overflow-wrap: anywhere;
+    }
+
+    .rogym-notification-toast {
+      top: auto;
+      right: 12px;
+      bottom: calc(var(--rogym-bottom-nav-height) + env(safe-area-inset-bottom, 0px) + 12px);
+      left: 12px;
+      max-width: none;
+    }
+
+    .rogym-notification-alert {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .rogym-notification-alert__action {
+      width: 100%;
+    }
+  }
+}

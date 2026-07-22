@@ -228,7 +228,15 @@ export default function Sidebar({
               { label: tMember('nav.workoutHistory'), to: '/member/workout/history' },
             ],
           },
-          { label: tMember('nav.checkIn'), to: '/member/attendance', icon: <CheckSquare size={18} /> },
+          {
+            label: tMember('nav.checkIn'),
+            to: '/member/check-in',
+            icon: <CheckSquare size={18} />,
+            children: [
+              { label: tMember('nav.scanQr'), to: '/member/check-in' },
+              { label: tMember('nav.attendanceHistory'), to: '/member/attendance' },
+            ],
+          },
           { label: tMember('nav.progress'), to: '/member/progress', icon: <TrendingUp size={18} /> },
           {
             label: tMember('nav.feedback'),

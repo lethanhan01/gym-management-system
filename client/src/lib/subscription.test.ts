@@ -13,8 +13,9 @@ describe('subscription access date rules', () => {
     expect(gymDateKey(now)).toBe('2026-06-21')
   })
 
-  it('keeps an active subscription valid through its end date', () => {
-    expect(isSubscriptionActive({ status: 'active', endDate: '2026-06-21' }, now)).toBe(true)
+  it('expires an active subscription on its end date', () => {
+    expect(isSubscriptionActive({ status: 'active', endDate: '2026-06-22' }, now)).toBe(true)
+    expect(isSubscriptionActive({ status: 'active', endDate: '2026-06-21' }, now)).toBe(false)
     expect(isSubscriptionActive({ status: 'active', endDate: '2026-06-20' }, now)).toBe(false)
   })
 
@@ -30,7 +31,7 @@ describe('subscription access date rules', () => {
       hasActiveSubscription(
         [
           { status: 'expired', endDate: '2026-06-30' },
-          { status: 'active', endDate: '2026-06-21T00:00:00.000Z' },
+          { status: 'active', endDate: '2026-06-22T00:00:00.000Z' },
         ],
         now
       )

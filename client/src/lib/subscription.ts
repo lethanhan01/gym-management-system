@@ -37,7 +37,7 @@ export function isSubscriptionActive(
 ): boolean {
   if (subscription.status !== 'active') return false
   const endDate = subscriptionEndDateKey(subscription.endDate)
-  return endDate !== null && endDate >= gymDateKey(now)
+  return endDate !== null && endDate > gymDateKey(now)
 }
 
 export function hasActiveSubscription(

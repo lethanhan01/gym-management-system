@@ -122,12 +122,16 @@ export function PasswordField({
   value,
   onChange,
   icon: Icon,
+  autoComplete,
+  name,
 }: {
   label: string
   placeholder?: string
   value: string
   onChange: (v: string) => void
   icon?: LucideIcon
+  autoComplete?: string
+  name?: string
 }) {
   const [show, setShow] = useState(false)
   return (
@@ -138,6 +142,8 @@ export function PasswordField({
       value={value}
       onChange={onChange}
       icon={Icon}
+      autoComplete={autoComplete}
+      name={name}
       right={
         <button type="button" onClick={() => setShow((s) => !s)} className="rogym-sx-4baf3f03">
           {show ? <EyeOff size={15} strokeWidth={2} /> : <Eye size={15} strokeWidth={2} />}

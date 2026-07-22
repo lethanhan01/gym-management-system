@@ -15,6 +15,8 @@ const mockPrisma = {
 
 const mockAudit = { log: jest.fn() }
 const mockNotifications = { safeNotifyUser: jest.fn() }
+const mockConfig = { get: jest.fn((key: string) => (key === 'JWT_SECRET' ? 'test-jwt-secret' : undefined)) }
+const mockLineMessaging = { safePushAttendanceCheckin: jest.fn() }
 
 function makeCaller(overrides: object = {}): any {
   return { userId: 1n, roles: ['owner'], staffId: undefined, memberId: undefined, ...overrides }
@@ -56,9 +58,20 @@ describe('AttendanceService', () => {
   let service: AttendanceService
 
   beforeEach(() => {
-    service = new AttendanceService(mockPrisma as any, mockAudit as any, mockNotifications as any)
+    service = new AttendanceService(
+      mockPrisma as any,
+      mockAudit as any,
+      mockNotifications as any,
+      mockConfig as any,
+      mockLineMessaging as any,
+    )
     jest.clearAllMocks()
     mockAudit.log.mockResolvedValue(undefined)
+    mockLineMessaging.safePushAttendanceCheckin.mockResolvedValue(false)
+  })
+
+  afterEach(() => {
+    jest.useRealTimers()
   })
 
   // ---------------------------------------------------------------------------
@@ -209,6 +222,115 @@ describe('AttendanceService', () => {
           metadata: { memberName: 'Test Member' },
         })
       )
+    })
+
+    it('pushes a safe LINE attendance message after manual check-in', async () => {
+      mockPrisma.member.findFirst.mockResolvedValue(makeMember())
+      mockPrisma.subscription.findFirst.mockResolvedValue(makeSubscription())
+      mockPrisma.attendanceLog.findFirst.mockResolvedValue(null)
+      mockPrisma.attendanceLog.create.mockResolvedValue(makeAttendanceRow({ attendanceId: 9n }))
+      const caller = makeCaller()
+
+      await service.manualCheckin(makeDto() as any, caller)
+
+      expect(mockLineMessaging.safePushAttendanceCheckin).toHaveBeenCalledWith(9n)
+    })
+  })
+
+  // ---------------------------------------------------------------------------
+  // QR token and qrCheckin
+  // ---------------------------------------------------------------------------
+
+  describe('QR check-in', () => {
+    beforeEach(() => {
+      jest.useFakeTimers().setSystemTime(new Date('2026-07-21T18:00:00.000Z'))
+    })
+
+    it('generates a VN daily QR token and verifies it during qrCheckin', async () => {
+      const token = service.generateQrToken()
+      expect(token.validDate).toBe('2026-07-22')
+      expect(token.payload).toEqual({ version: 'v1', date: '2026-07-22' })
+      expect(token.expiresAt).toBe('2026-07-22T16:59:59.999Z')
+
+      mockPrisma.member.findFirst.mockResolvedValue(makeMember())
+      mockPrisma.subscription.findFirst.mockResolvedValue(makeSubscription())
+      mockPrisma.attendanceLog.findFirst.mockResolvedValue(null)
+      mockPrisma.attendanceLog.create.mockResolvedValue(
+        makeAttendanceRow({ attendanceId: 3n, method: 'qr' })
+      )
+      const caller = makeCaller({ roles: ['member'], memberId: 10n })
+
+      const result = await service.qrCheckin({ token: token.token } as any, caller)
+
+      expect(mockPrisma.attendanceLog.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ memberId: 10n, method: 'qr' }),
+        })
+      )
+      expect(mockAudit.log).toHaveBeenCalledWith(
+        expect.objectContaining({ action: 'attendance.qr-checkin' })
+      )
+      expect(result.data.method).toBe('qr')
+    })
+
+    it('rejects expired, future, malformed, and bad-signature tokens', async () => {
+      const current = service.generateQrToken().token
+      const badSignature = current.replace(/\.[^.]+$/, '.bad')
+
+      await expect(service.qrCheckin({ token: 'v1.2026-07-21.bad' } as any, makeCaller({ roles: ['member'], memberId: 10n }))).rejects.toMatchObject({
+        response: expect.objectContaining({ code: 'QR_TOKEN_EXPIRED' }),
+      })
+      await expect(service.qrCheckin({ token: 'v1.2026-07-23.bad' } as any, makeCaller({ roles: ['member'], memberId: 10n }))).rejects.toMatchObject({
+        response: expect.objectContaining({ code: 'QR_TOKEN_INVALID' }),
+      })
+      await expect(service.qrCheckin({ token: 'not-a-token' } as any, makeCaller({ roles: ['member'], memberId: 10n }))).rejects.toMatchObject({
+        response: expect.objectContaining({ code: 'QR_TOKEN_INVALID' }),
+      })
+      await expect(service.qrCheckin({ token: badSignature } as any, makeCaller({ roles: ['member'], memberId: 10n }))).rejects.toMatchObject({
+        response: expect.objectContaining({ code: 'QR_TOKEN_INVALID' }),
+      })
+    })
+
+    it('resolves member from caller user, auto-closes open attendance, and LINE failure does not fail', async () => {
+      const token = service.generateQrToken()
+      mockPrisma.member.findFirst
+        .mockResolvedValueOnce({ memberId: 10n })
+        .mockResolvedValueOnce(makeMember())
+      mockPrisma.subscription.findFirst.mockResolvedValue(makeSubscription())
+      mockPrisma.attendanceLog.findFirst.mockResolvedValue({ attendanceId: 1n, endTime: null })
+      mockPrisma.attendanceLog.update.mockResolvedValue({})
+      mockPrisma.attendanceLog.create.mockResolvedValue(
+        makeAttendanceRow({ attendanceId: 4n, method: 'qr' })
+      )
+      mockLineMessaging.safePushAttendanceCheckin.mockResolvedValue(false)
+      const caller = makeCaller({ roles: ['member'], memberId: undefined })
+
+      const result = await service.qrCheckin({ token: token.token } as any, caller)
+
+      expect(mockPrisma.member.findFirst).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { userId: 1n, deletedAt: null } })
+      )
+      expect(mockPrisma.attendanceLog.update).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { attendanceId: 1n } })
+      )
+      expect(mockLineMessaging.safePushAttendanceCheckin).toHaveBeenCalledWith(4n)
+      expect(result.data.attendanceId).toBe('4')
+    })
+
+    it('throws when member profile or active subscription is missing', async () => {
+      const token = service.generateQrToken()
+      const caller = makeCaller({ roles: ['member'], memberId: 10n })
+
+      mockPrisma.member.findFirst.mockResolvedValue(null)
+      await expect(service.qrCheckin({ token: token.token } as any, caller)).rejects.toMatchObject({
+        response: expect.objectContaining({ code: 'MEMBER_PROFILE_NOT_FOUND' }),
+      })
+
+      mockPrisma.member.findFirst.mockResolvedValue(makeMember())
+      mockPrisma.subscription.findFirst.mockResolvedValue(null)
+      await expect(service.qrCheckin({ token: token.token } as any, caller)).rejects.toMatchObject({
+        response: expect.objectContaining({ code: 'MEMBER_NO_ACTIVE_SUBSCRIPTION' }),
+      })
     })
   })
 

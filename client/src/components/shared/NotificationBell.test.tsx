@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import NotificationBell from './NotificationBell'
@@ -107,10 +107,51 @@ describe('NotificationBell', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Thông báo' }))
 
+    expect(screen.getByRole('region', { name: 'Thông báo' })).toHaveClass('rogym-notification-panel')
     expect(await screen.findByText('Phản hồi mới')).toBeVisible()
     expect(screen.getByText('Có một phản hồi mới từ hội viên.')).toBeVisible()
     expect(screen.getByText('1 chưa đọc')).toBeVisible()
     expect(screen.getByText('Vừa xong')).toBeVisible()
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  it('marks all notifications as read from the panel action', async () => {
+    renderBell()
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Thông báo' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Đánh dấu tất cả đã đọc' }))
+
+    await waitFor(() => expect(notificationService.markAllRead).toHaveBeenCalledTimes(1))
+    expect(screen.getByText('Đã đọc tất cả')).toBeVisible()
+  })
+
+  it('renders realtime notifications through the shared toast surface', async () => {
+    const realtimeItem = makeItem({
+      notificationId: '11',
+      type: 'custom.notice',
+      title: 'Realtime notice',
+      message: 'New notification body',
+    })
+    const setIntervalSpy = vi.spyOn(globalThis, 'setInterval').mockImplementation((handler) => {
+      if (typeof handler === 'function') void handler()
+      return 1 as unknown as ReturnType<typeof setInterval>
+    })
+    const clearIntervalSpy = vi.spyOn(globalThis, 'clearInterval').mockImplementation(() => undefined)
+    vi.mocked(notificationService.listNew).mockResolvedValueOnce([realtimeItem])
+    vi.mocked(notificationService.unreadCount).mockResolvedValue(2)
+
+    renderBell()
+
+    const toast = await screen.findByRole('status')
+    expect(toast).toHaveClass('rogym-notification-toast')
+    expect(toast).toHaveTextContent('Realtime notice')
+    expect(screen.getByText('2')).toBeVisible()
+
+    setIntervalSpy.mockRestore()
+    clearIntervalSpy.mockRestore()
   })
 
   it('updates notification content when the language changes to Japanese', async () => {

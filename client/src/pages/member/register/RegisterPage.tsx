@@ -122,6 +122,7 @@ export default function RegisterPage() {
             onChange={setDob}
             aria-label={t('register.dob')}
             placeholder={t('register.dob')}
+            className="rogym-auth-date-field"
           />
         </div>
         <Field
@@ -139,12 +140,16 @@ export default function RegisterPage() {
           value={pass}
           onChange={setPass}
           icon={Lock}
+          name="new-password"
+          autoComplete="new-password"
         />
         <PasswordField
           label={t('register.confirmPassword')}
           value={confirm}
           onChange={setConfirm}
           icon={Lock}
+          name="confirm-password"
+          autoComplete="new-password"
         />
 
         {error && <ErrorMsg message={error} />}
