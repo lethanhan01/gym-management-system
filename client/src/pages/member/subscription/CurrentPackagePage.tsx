@@ -136,7 +136,7 @@ export default function CurrentPackagePage() {
         }
       })
       .finally(() => setLoading(false))
-  }, [user?.memberId, navigate, clearAuth, setResolvedStatus])
+  }, [user?.memberId, navigate, clearAuth, setResolvedStatus, t])
 
   async function handleCancel() {
     if (!cancelTarget || !user?.memberId) return

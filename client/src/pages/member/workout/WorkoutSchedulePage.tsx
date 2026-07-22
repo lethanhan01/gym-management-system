@@ -677,7 +677,7 @@ export default function WorkoutSchedulePage() {
       })
       .catch((err) => setError(getApiError(err, t('workout.schedule.errorLoad'))))
       .finally(() => setLoading(false))
-  }, [])
+  }, [t])
 
   useEffect(() => {
     loadSessions()
@@ -715,7 +715,7 @@ export default function WorkoutSchedulePage() {
     return () => {
       active = false
     }
-  }, [selectedSessionId])
+  }, [selectedSessionId, t])
 
   const handleSelectSession = useCallback((session: TrainingSession) => {
     setSelectedSessionId(session.sessionId)

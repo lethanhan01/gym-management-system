@@ -92,7 +92,7 @@ export default function WorkoutSessionPage() {
     } finally {
       setLoading(false)
     }
-  }, [memberId, planDayId, requestedAssignmentId])
+  }, [memberId, planDayId, requestedAssignmentId, t])
 
   useEffect(() => {
     void load()

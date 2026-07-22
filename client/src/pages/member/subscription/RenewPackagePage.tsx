@@ -39,7 +39,7 @@ export default function RenewPackagePage() {
         }
       })
       .finally(() => setLoading(false))
-  }, [clearAuth, navigate, user?.memberId])
+  }, [clearAuth, navigate, t, user?.memberId])
 
   function continueToPayment() {
     if (!activeSub?.package) return

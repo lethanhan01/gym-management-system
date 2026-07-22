@@ -38,7 +38,7 @@ export default function MemberExercisesPage() {
     } finally {
       setLoading(false)
     }
-  }, [category])
+  }, [category, t])
 
   useEffect(() => {
     void load()

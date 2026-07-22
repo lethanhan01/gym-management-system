@@ -44,7 +44,7 @@ export default function RegisterPage() {
       setError(tVal('dob.required'))
       return
     }
-    const normalizedPhone = phone.replace(/[.\s()\-]/g, '')
+    const normalizedPhone = phone.replace(/[.\s()-]/g, '')
     if (!/^(?:0\d{9}|\+84\d{9})$/.test(normalizedPhone)) {
       setError(tVal('phone.invalid'))
       return

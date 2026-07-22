@@ -109,7 +109,7 @@ function Step1({
       setError(t('members.register.passwordMismatch'))
       return
     }
-    const phone = data.phone.replace(/[.\s()\-]/g, '')
+    const phone = data.phone.replace(/[.\s()-]/g, '')
     if (!/^(?:0\d{9}|\+84\d{9})$/.test(phone)) {
       setError('Số điện thoại không hợp lệ')
       return

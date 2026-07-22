@@ -142,12 +142,15 @@ export default function ProgressPage() {
   const { t } = useTranslation('member')
   const memberId = useAuthStore((state) => state.user?.memberId)
 
-  const RANGES = [
-    { label: '1T', days: 30 },
-    { label: '3T', days: 90 },
-    { label: '6T', days: 180 },
-    { label: t('progress.rangeAll'), days: null as number | null },
-  ]
+  const RANGES = useMemo(
+    () => [
+      { label: '1T', days: 30 },
+      { label: '3T', days: 90 },
+      { label: '6T', days: 180 },
+      { label: t('progress.rangeAll'), days: null as number | null },
+    ],
+    [t]
+  )
   const [data, setData] = useState<MemberProgress[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -168,7 +171,7 @@ export default function ProgressPage() {
     } finally {
       setLoading(false)
     }
-  }, [memberId])
+  }, [memberId, t])
 
   useEffect(() => {
     void loadProgress()
@@ -180,7 +183,7 @@ export default function ProgressPage() {
     const cutoff = new Date()
     cutoff.setDate(cutoff.getDate() - days)
     return data.filter((d) => new Date(d.recordedAt) >= cutoff)
-  }, [data, rangeIdx])
+  }, [RANGES, data, rangeIdx])
 
   function handleFormSuccess() {
     setShowForm(false)
