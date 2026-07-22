@@ -30,12 +30,14 @@ model AttendanceLog {
   sessionId      BigInt?          @map("session_id")
   startTime      DateTime         @map("start_time") @db.Timestamp(6)
   endTime        DateTime?        @map("end_time") @db.Timestamp(6)
+  qrCheckinDate  DateTime?        @map("qr_checkin_date") @db.Date
   method         AttendanceMethod
   member         Member           @relation(fields: [memberId], references: [memberId])
   session        TrainingSession? @relation(fields: [sessionId], references: [sessionId])
   subscription   Subscription     @relation(fields: [subscriptionId], references: [subscriptionId])
 
   @@index([memberId, startTime(sort: Desc)])
+  @@unique([memberId, qrCheckinDate])
   @@index([subscriptionId])
   @@index([sessionId])
   @@map("attendance_logs")

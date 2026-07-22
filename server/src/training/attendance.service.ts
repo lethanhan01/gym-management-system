@@ -227,6 +227,14 @@ export class AttendanceService {
     }
 
     const today = todayVN()
+    const qrCheckinToday = await this.prisma.attendanceLog.findFirst({
+      where: { memberId: member.memberId, qrCheckinDate: today },
+      select: { attendanceId: true },
+    })
+    if (qrCheckinToday) {
+      throw this.qrCheckinAlreadyToday()
+    }
+
     const sub = await this.prisma.subscription.findFirst({
       where: {
         memberId: member.memberId,
@@ -255,20 +263,29 @@ export class AttendanceService {
       })
     }
 
-    const attendance = await this.prisma.attendanceLog.create({
-      data: {
-        memberId: member.memberId,
-        subscriptionId: sub.subscriptionId,
-        startTime: occurredAt,
-        method: AttendanceMethod.qr,
-      },
-      include: {
-        member: {
-          select: { memberId: true, memberCode: true, userId: true, primaryTrainerId: true, user: { select: { fullName: true } } },
+    let attendance: AttendanceRow
+    try {
+      attendance = await this.prisma.attendanceLog.create({
+        data: {
+          memberId: member.memberId,
+          subscriptionId: sub.subscriptionId,
+          startTime: occurredAt,
+          qrCheckinDate: today,
+          method: AttendanceMethod.qr,
         },
-        subscription: { select: { subscriptionId: true, endDate: true } },
-      },
-    })
+        include: {
+          member: {
+            select: { memberId: true, memberCode: true, userId: true, primaryTrainerId: true, user: { select: { fullName: true } } },
+          },
+          subscription: { select: { subscriptionId: true, endDate: true } },
+        },
+      })
+    } catch (error) {
+      if ((error as { code?: string }).code === 'P2002') {
+        throw this.qrCheckinAlreadyToday()
+      }
+      throw error
+    }
 
     await this.audit.log({
       actorUserId: caller.userId,
@@ -409,6 +426,14 @@ export class AttendanceService {
       select: { memberId: true },
     })
     return member?.memberId ?? null
+  }
+
+  private qrCheckinAlreadyToday() {
+    return new ConflictException({
+      success: false,
+      code: 'QR_CHECKIN_ALREADY_TODAY',
+      message: 'Member da check-in QR hom nay',
+    })
   }
 
   private assertQrToken(token: string) {

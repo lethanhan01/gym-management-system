@@ -385,6 +385,7 @@
     "errorCamera": "Không thể mở camera. Vui lòng cấp quyền camera hoặc nhập token thủ công.",
     "errorExpired": "QR đã hết hạn. Vui lòng quét mã QR hôm nay.",
     "errorInvalid": "QR không hợp lệ. Vui lòng quét lại mã tại quầy.",
+    "errorAlreadyCheckedIn": "Bạn đã check-in hôm nay.",
     "errorNoSub": "Bạn chưa có gói tập đang hoạt động.",
     "errorDefault": "Không thể check-in bằng QR. Vui lòng thử lại."
   },

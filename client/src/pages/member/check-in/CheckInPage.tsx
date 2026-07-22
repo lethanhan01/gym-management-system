@@ -60,6 +60,8 @@ export default function CheckInPage() {
             ? t('qrCheckIn.errorExpired')
             : code === 'QR_TOKEN_INVALID'
               ? t('qrCheckIn.errorInvalid')
+              : code === 'QR_CHECKIN_ALREADY_TODAY'
+                ? t('qrCheckIn.errorAlreadyCheckedIn')
               : code === 'MEMBER_NO_ACTIVE_SUBSCRIPTION'
                 ? t('qrCheckIn.errorNoSub')
                 : getApiError(err, t('qrCheckIn.errorDefault'))
