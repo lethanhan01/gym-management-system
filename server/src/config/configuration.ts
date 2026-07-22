@@ -1,4 +1,4 @@
-import { IsEnum, IsIn, IsNumber, IsOptional, IsString, validateSync } from 'class-validator'
+import { IsEmail, IsEnum, IsIn, IsNumber, IsOptional, IsString, Max, Min, validateSync } from 'class-validator'
 import { plainToInstance } from 'class-transformer'
 
 enum NodeEnv {
@@ -47,9 +47,11 @@ export class EnvironmentVariables {
   JWT_EXPIRES_IN: string = '7d'
 
   @IsOptional() @IsString() SMTP_HOST?: string
-  @IsOptional() @IsNumber() SMTP_PORT?: number
+  @IsOptional() @IsNumber() @Min(1) @Max(65535) SMTP_PORT?: number
   @IsOptional() @IsString() SMTP_USER?: string
   @IsOptional() @IsString() SMTP_PASS?: string
+  @IsOptional() @IsEmail() SMTP_FROM?: string
+  @IsOptional() @IsString() DEMO_MASTER_OTP?: string
 
   // UC05B device authentication. Optional v1.0 — required khi enable real-time check-in.
   @IsOptional() @IsString() DEVICE_API_KEY?: string
@@ -78,7 +80,31 @@ export function validateConfig(raw: Record<string, unknown>): EnvironmentVariabl
     throw new Error(`Invalid environment configuration:\n${detail}`)
   }
   validateLineMessagingConfig(config)
+  validateSmtpConfig(config)
   return config
+}
+
+function validateSmtpConfig(config: EnvironmentVariables) {
+  const smtp = [
+    ['SMTP_HOST', config.SMTP_HOST],
+    ['SMTP_PORT', config.SMTP_PORT],
+    ['SMTP_USER', config.SMTP_USER],
+    ['SMTP_PASS', config.SMTP_PASS],
+    ['SMTP_FROM', config.SMTP_FROM],
+  ] as const
+  const configured = smtp.some(([, value]) => value !== undefined && String(value).trim() !== '')
+  const missing = smtp.filter(([, value]) => value === undefined || String(value).trim() === '')
+  if (configured && missing.length > 0) {
+    throw new Error(`Invalid environment configuration:\n${missing.map(([key]) => `  - ${key}: required when SMTP is configured`).join('\n')}`)
+  }
+  if (config.NODE_ENV === NodeEnv.Production) {
+    if (missing.length > 0) {
+      throw new Error(`Invalid environment configuration:\n${missing.map(([key]) => `  - ${key}: required in production`).join('\n')}`)
+    }
+    if (config.DEMO_MASTER_OTP?.trim()) {
+      throw new Error('Invalid environment configuration:\n  - DEMO_MASTER_OTP: must be empty in production')
+    }
+  }
 }
 
 function validateLineMessagingConfig(config: EnvironmentVariables) {

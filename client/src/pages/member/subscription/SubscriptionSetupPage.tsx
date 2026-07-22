@@ -125,7 +125,7 @@ export default function SubscriptionSetupPage() {
   const selectedPackage = packages.find((item) => item.packageId === selectedId) ?? null
   const startDate = new Date()
   const endDate = selectedPackage
-    ? new Date(startDate.getTime() + Number(selectedPackage.durationDays) * 86_400_000)
+    ? new Date(startDate.getTime() + (Number(selectedPackage.durationDays) - 1) * 86_400_000)
     : null
 
   async function handleContinue() {

@@ -44,11 +44,24 @@ export default function RegisterPage() {
       setError(tVal('dob.required'))
       return
     }
+    const normalizedPhone = phone.replace(/[.\s()\-]/g, '')
+    if (!/^(?:0\d{9}|\+84\d{9})$/.test(normalizedPhone)) {
+      setError(tVal('phone.invalid'))
+      return
+    }
+    const birth = new Date(`${dob}T00:00:00`)
+    const today = new Date()
+    let age = today.getFullYear() - birth.getFullYear()
+    if (today.getMonth() < birth.getMonth() || (today.getMonth() === birth.getMonth() && today.getDate() < birth.getDate())) age--
+    if (Number.isNaN(birth.getTime()) || age < 14 || age > 120) {
+      setError(tVal('dob.required'))
+      return
+    }
     setError('')
     setLoading(true)
     try {
-      const result = await authService.register(name, phone, email, pass, dob, address || undefined)
-      navigate('/member/verify-email', { state: { email, password: pass, devOtp: result.devOtp } })
+      await authService.register(name.trim(), phone, email.trim(), pass, dob, address.trim() || undefined)
+      navigate('/member/verify-email', { state: { email: email.trim().toLowerCase() } })
     } catch (err) {
       const e = err as { response?: { status?: number; data?: { message?: string } } }
       const status = e?.response?.status

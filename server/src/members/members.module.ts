@@ -4,8 +4,10 @@ import { MemberProgressService } from './member-progress.service'
 import { MembersService } from './members.service'
 import { TrainerAssignmentService } from './trainer-assignment.service'
 import { AuditService } from '../common/audit/audit.service'
+import { AuthModule } from '../auth/auth.module'
 
 @Module({
+  imports: [AuthModule],
   controllers: [MembersController],
   providers: [MembersService, TrainerAssignmentService, MemberProgressService, AuditService],
   exports: [MembersService, TrainerAssignmentService, MemberProgressService],

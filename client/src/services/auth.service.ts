@@ -88,10 +88,10 @@ export const authService = {
     password: string,
     dateOfBirth: string,
     address?: string
-  ): Promise<{ userId: string; email: string; message: string; devOtp?: string }> => {
+  ): Promise<{ userId: string; email: string; message: string }> => {
     const res = await api.post<{
       success: boolean
-      data: { userId: string; email: string; message: string; devOtp?: string }
+      data: { userId: string; email: string; message: string }
     }>('/members/self-register', { fullName, phone, email, password, dateOfBirth, address })
     return res.data.data
   },
@@ -104,8 +104,8 @@ export const authService = {
     return res.data.data
   },
 
-  resendVerification: async (email: string): Promise<{ message: string; devOtp?: string }> => {
-    const res = await api.post<{ success: boolean; message: string; devOtp?: string }>(
+  resendVerification: async (email: string): Promise<{ message: string }> => {
+    const res = await api.post<{ success: boolean; message: string }>(
       '/auth/resend-verify',
       { email },
     )

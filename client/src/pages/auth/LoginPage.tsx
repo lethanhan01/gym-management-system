@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import axios from 'axios'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Lock, Mail } from 'lucide-react'
 import { authService } from '@/services/auth.service'
@@ -21,7 +21,8 @@ const roleRouteMap: Record<string, string> = {
 }
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('')
+  const location = useLocation()
+  const [email, setEmail] = useState(() => new URLSearchParams(location.search).get('email') ?? '')
   const [pass, setPass] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -95,10 +96,15 @@ export default function LoginPage() {
       }
     } catch (err) {
       console.error('[LoginPage] login error:', err)
+      const response = (err as { response?: { status?: number; data?: { code?: string } } })?.response
+      if (response?.status === 403 && response.data?.code === 'EMAIL_NOT_VERIFIED') {
+        navigate('/member/verify-email', { state: { email: email.trim().toLowerCase() } })
+        return
+      }
       // Chỉ hiển thị "invalid credentials" khi lỗi 401 từ server
       // Các lỗi khác (subscription, navigation...) không nên hiển thị thông báo này
       const isAuthError =
-        (err as { response?: { status?: number } })?.response?.status === 401 ||
+        response?.status === 401 ||
         (err instanceof Error && err.message?.toLowerCase().includes('unauthorized'))
       if (isAuthError) {
         setError(t('login.invalidCredentials'))

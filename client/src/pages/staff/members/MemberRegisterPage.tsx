@@ -109,6 +109,19 @@ function Step1({
       setError(t('members.register.passwordMismatch'))
       return
     }
+    const phone = data.phone.replace(/[.\s()\-]/g, '')
+    if (!/^(?:0\d{9}|\+84\d{9})$/.test(phone)) {
+      setError('Số điện thoại không hợp lệ')
+      return
+    }
+    const birth = new Date(`${data.dateOfBirth}T00:00:00`)
+    const today = new Date()
+    let age = today.getFullYear() - birth.getFullYear()
+    if (today.getMonth() < birth.getMonth() || (today.getMonth() === birth.getMonth() && today.getDate() < birth.getDate())) age--
+    if (!data.dateOfBirth || Number.isNaN(birth.getTime()) || age < 14 || age > 120) {
+      setError('Ngày sinh phải tương ứng tuổi từ 14 đến 120')
+      return
+    }
     setError(null)
     onNext()
   }
@@ -150,6 +163,7 @@ function Step1({
               value={data.phone}
               onChange={(e) => set('phone', e.target.value)}
               placeholder="0901 234 567"
+              required
             />
           </label>
 
@@ -159,6 +173,7 @@ function Step1({
               value={data.dateOfBirth}
               onChange={(v) => set('dateOfBirth', v)}
               max={new Date().toISOString().split('T')[0]}
+              required
               aria-label={t('members.register.dateOfBirth')}
             />
           </label>

@@ -10,6 +10,7 @@ import bcrypt from 'bcryptjs'
 import { Prisma, UserStatus } from '@prisma/client'
 import { AuthenticatedUser } from '../auth/types/jwt-payload.interface'
 import { AuditService } from '../common/audit/audit.service'
+import { normalizeEmail } from '../common/normalization'
 import { PrismaService } from '../prisma/prisma.service'
 import { CreateStaffDto } from './dto/create-staff.dto'
 import { UpdateStaffDto } from './dto/update-staff.dto'
@@ -66,7 +67,8 @@ export class StaffService {
     const result = await this.prisma.$transaction(async (tx) => {
       const user = await tx.user.create({
         data: {
-          email: dto.email,
+          email: normalizeEmail(dto.email),
+          emailNormalized: normalizeEmail(dto.email),
           fullName: dto.fullName,
           phone: dto.phone ?? null,
           passwordHash: defaultPasswordHash,

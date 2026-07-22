@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common'
 import { User } from '@prisma/client'
 import { PrismaService } from '../prisma/prisma.service'
+import { normalizeEmail } from '../common/normalization'
 
 export type Role = 'owner' | 'staff' | 'trainer' | 'member'
 
@@ -22,8 +23,9 @@ export class UsersService {
 
   /** Tim user theo email kem danh sach role (de issue JWT). Khong tra user da xoa. */
   async findByEmailWithRoles(email: string): Promise<UserWithRoles | null> {
+    const normalized = normalizeEmail(email)
     const row = await this.prisma.user.findFirst({
-      where: { email, deletedAt: null },
+      where: { deletedAt: null, OR: [{ emailNormalized: normalized }, { email: normalized }] },
       include: {
         groups: { include: { group: true } },
       },

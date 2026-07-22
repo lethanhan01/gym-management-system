@@ -1,5 +1,5 @@
 import bcrypt from 'bcryptjs'
-import { UnauthorizedException } from '@nestjs/common'
+import { ForbiddenException, UnauthorizedException } from '@nestjs/common'
 import { AuthService } from './auth.service'
 
 jest.mock('bcryptjs', () => ({
@@ -181,25 +181,15 @@ describe('AuthService', () => {
       expect(err.message).toBe('Tài khoản đã bị khoá')
     })
 
-    it('activates account and returns token when status is pending_verification (first login)', async () => {
+    it('rejects pending_verification without updating account or issuing a token', async () => {
       mockUsersService.findByEmailWithRoles.mockResolvedValue({
         ...baseUser,
         status: 'pending_verification',
       })
       ;(bcrypt.compare as jest.Mock).mockResolvedValue(true)
-      mockPrisma.user.update.mockResolvedValue({})
-      mockPrisma.staff.findFirst.mockResolvedValue(null)
-      mockPrisma.member.findFirst.mockResolvedValue(null)
-
-      const result = await service.login('user@gym.local', 'Password123!')
-
-      expect(mockPrisma.user.update).toHaveBeenCalledWith(
-        expect.objectContaining({
-          where: { userId: baseUser.userId },
-          data: expect.objectContaining({ status: 'active' }),
-        })
-      )
-      expect(result).toHaveProperty('accessToken')
+      await expect(service.login('user@gym.local', 'Password123!')).rejects.toBeInstanceOf(ForbiddenException)
+      expect(mockPrisma.user.update).not.toHaveBeenCalled()
+      expect(mockJwtService.signAsync).not.toHaveBeenCalled()
     })
 
     it('validates password BEFORE checking status (locked account with wrong password shows generic error)', async () => {

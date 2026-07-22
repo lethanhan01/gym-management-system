@@ -66,7 +66,7 @@ export class PaymentsService {
         memberId: sub.memberId,
         subscriptionId: { not: sub.subscriptionId },
         status: SubscriptionStatus.active,
-        endDate: { gt: today },
+        endDate: { gte: today },
         deletedAt: null,
       },
     })

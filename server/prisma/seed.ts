@@ -277,6 +277,7 @@ async function seedUsers(groupMap: Map<string, bigint>): Promise<void> {
     const userRow = await prisma.user.upsert({
       where: { email: u.email },
       update: {
+        emailNormalized: u.email.trim().toLowerCase(),
         phone: u.phone,
         fullName: u.fullName,
         status: u.status,
@@ -284,6 +285,7 @@ async function seedUsers(groupMap: Map<string, bigint>): Promise<void> {
       },
       create: {
         email: u.email,
+        emailNormalized: u.email.trim().toLowerCase(),
         phone: u.phone,
         fullName: u.fullName,
         status: u.status,

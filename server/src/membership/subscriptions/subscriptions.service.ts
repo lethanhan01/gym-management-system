@@ -86,7 +86,7 @@ export class SubscriptionsService {
         deletedAt: null,
         OR: [
           { status: SubscriptionStatus.pending },
-          { status: SubscriptionStatus.active, endDate: { gt: todayVN() } },
+          { status: SubscriptionStatus.active, endDate: { gte: todayVN() } },
         ],
       },
     })
@@ -125,7 +125,7 @@ export class SubscriptionsService {
     }
 
     const today = todayVN()
-    const endDate = addDays(today, pkg.durationDays)
+    const endDate = addDays(today, pkg.durationDays - 1)
 
     const subscription = await this.prisma.$transaction(async (tx) => {
       const sub = await tx.subscription.create({
@@ -427,7 +427,7 @@ export class SubscriptionsService {
         memberId,
         trainerId: staffId,
         status: SubscriptionStatus.active,
-        endDate: { gt: todayVN() },
+        endDate: { gte: todayVN() },
         deletedAt: null,
       },
     })
@@ -570,10 +570,10 @@ export class SubscriptionsService {
   }) {
     const today = todayVN()
     const effectiveStatus =
-      sub.status === 'active' && sub.endDate <= today ? 'expired' : sub.status
+      sub.status === 'active' && sub.endDate < today ? 'expired' : sub.status
     const daysLeft =
       effectiveStatus === 'active'
-        ? Math.max(0, Math.ceil((sub.endDate.getTime() - today.getTime()) / 86400000))
+        ? Math.max(0, Math.ceil((sub.endDate.getTime() - today.getTime()) / 86400000) + 1)
         : null
 
     return {
