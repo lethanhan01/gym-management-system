@@ -55,7 +55,7 @@ export default function ExercisesPage() {
     } finally {
       setLoading(false)
     }
-  }, [category, muscleGroup, t])
+  }, [category, t])
 
   useEffect(() => {
     void load()

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { ChevronLeft, ChevronRight, Trash2 } from 'lucide-react'
@@ -109,7 +109,7 @@ export default function MyFeedbackPage() {
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [deletingSet, setDeletingSet] = useState<Set<string>>(new Set())
 
-  function load() {
+  const load = useCallback(() => {
     setFetchError(null)
     setLoading(true)
     feedbackService.list({ sort: 'created_at:desc', pageSize: 50 })
@@ -120,12 +120,12 @@ export default function MyFeedbackPage() {
         }
       })
       .finally(() => setLoading(false))
-  }
+  }, [t])
 
   useEffect(() => {
     if (!user?.memberId) return
     load()
-  }, [user?.memberId])
+  }, [load, user?.memberId])
 
   async function handleDelete(feedbackId: string) {
     setDeletingSet(prev => new Set(prev).add(feedbackId))

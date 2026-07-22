@@ -48,7 +48,7 @@ export default function MemberProfilePage() {
       .then((data) => setProfile(data))
       .catch((err) => setError(getApiError(err, t('profile.errorLoad'))))
       .finally(() => setLoading(false))
-  }, [user?.memberId])
+  }, [t, user?.memberId])
 
   useEffect(() => {
     authService.me()

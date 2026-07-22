@@ -128,7 +128,7 @@ export default function WorkoutHistoryPage() {
     } finally {
       setLoading(false)
     }
-  }, [memberId])
+  }, [memberId, t])
 
   useEffect(() => {
     void load()

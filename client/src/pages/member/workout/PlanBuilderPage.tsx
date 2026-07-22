@@ -238,7 +238,7 @@ export default function MemberPlanBuilderPage() {
     loadPlan(editPlanId)
       .catch((err) => setError(getApiError(err, t('workout.planBuilder.errorLoadEdit'))))
       .finally(() => setLoadingPlan(false))
-  }, [editPlanId, loadPlan])
+  }, [editPlanId, loadPlan, t])
 
   useEffect(() => {
     if (phase !== 'build') return
@@ -248,7 +248,7 @@ export default function MemberPlanBuilderPage() {
       .then(setExercises)
       .catch(() => setError(t('workout.planBuilder.errorLoadExercises')))
       .finally(() => setLoadingExercises(false))
-  }, [phase])
+  }, [phase, t])
 
   useEffect(() => {
     // Suggested plans only matter in the create flow (name phase)
@@ -277,7 +277,7 @@ export default function MemberPlanBuilderPage() {
       .catch(() => {
         /* silent */
       })
-  }, [memberId])
+  }, [memberId, t])
 
   const applySuggestedPlan = useCallback(
     async (suggested: WorkoutPlan) => {
@@ -301,7 +301,7 @@ export default function MemberPlanBuilderPage() {
         setSubmitting(false)
       }
     },
-    [memberId, navigate, startDate]
+    [memberId, navigate, startDate, t]
   )
 
   const handleUseSuggestedPlan = useCallback(
@@ -316,7 +316,7 @@ export default function MemberPlanBuilderPage() {
         void applySuggestedPlan(suggested)
       }
     },
-    [applySuggestedPlan, existingSelfPlan, hasActivePtPlan]
+    [applySuggestedPlan, existingSelfPlan, hasActivePtPlan, t]
   )
 
   function handleMutationError(err: unknown, fallback: string) {

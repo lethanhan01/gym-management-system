@@ -131,7 +131,7 @@ function makeTx() {
       update: jest.fn(),
     },
     group: {
-      findUnique: jest.fn().mockResolvedValue(null),
+      findUnique: jest.fn().mockResolvedValue({ groupId: 1n, name: 'member' }),
     },
     userGroup: {
       create: jest.fn(),
@@ -186,8 +186,12 @@ const mockAudit = {
   log: jest.fn(),
 }
 
-const mockOtpStore = {
-  set: jest.fn(),
+const mockOtp = {
+  issue: jest.fn(),
+}
+
+const mockMailer = {
+  sendOtp: jest.fn(),
 }
 
 const mockTrainerAssignmentService = {
@@ -212,7 +216,8 @@ describe('MembersService', () => {
     service = new MembersService(
       mockPrisma as any,
       mockAudit as any,
-      mockOtpStore as any,
+      mockOtp as any,
+      mockMailer as any,
       mockTrainerAssignmentService as any,
       mockMemberProgressService as any,
     )
@@ -299,9 +304,10 @@ describe('MembersService', () => {
       phone: '0922222222',
       fullName: 'Self Register',
       password: 'Password123!',
+      dateOfBirth: '1990-05-15',
     }
 
-    it('happy path without packageId: creates pending_verification user, calls otpStore.set, audit.log', async () => {
+    it('happy path without packageId: creates pending_verification user, issues OTP and audit.log', async () => {
       mockPrisma.user.findFirst.mockResolvedValue(null)
 
       const createdUser = makeUser({ userId: 200n, status: 'pending_verification' })
@@ -309,15 +315,12 @@ describe('MembersService', () => {
 
       tx.user.create.mockResolvedValue(createdUser)
       tx.member.create.mockResolvedValue(createdMember)
+      mockOtp.issue.mockResolvedValue('123456')
+      mockMailer.sendOtp.mockResolvedValue(undefined)
 
       const result = await service.selfRegister(baseDto as any)
 
-      expect(mockOtpStore.set).toHaveBeenCalledWith(
-        200n,
-        'email_verify',
-        expect.any(String),
-        expect.any(Number)
-      )
+      expect(mockOtp.issue).toHaveBeenCalledWith(200n, 'email_verify')
       expect(mockAudit.log).toHaveBeenCalledWith(
         expect.objectContaining({ action: 'member.create' })
       )
@@ -343,6 +346,8 @@ describe('MembersService', () => {
       tx.user.create.mockResolvedValue(createdUser)
       tx.member.create.mockResolvedValue(createdMember)
       tx.subscription.create.mockResolvedValue(createdSubscription)
+      mockOtp.issue.mockResolvedValue('123456')
+      mockMailer.sendOtp.mockResolvedValue(undefined)
 
       const result = await service.selfRegister({ ...baseDto, packageId: '2' } as any)
 

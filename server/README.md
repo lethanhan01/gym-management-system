@@ -134,7 +134,8 @@ Tham khảo [`.env.example`](./.env.example).
 | `NODE_ENV` | – | `development` / `production` / `test` |
 | `PORT` | – | Mặc định `3000` |
 | `CLIENT_URL` | – | Origin CORS (VD: `http://localhost:5173`) |
-| `SMTP_*` | – | Tuỳ chọn (forgot password sau này) |
+| `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM` | bắt buộc ở production | SMTP gửi OTP; nếu đặt một biến thì phải đặt đủ cả năm |
+| `DEMO_MASTER_OTP` | – | Chỉ development/test; production sẽ từ chối khởi động khi biến này có giá trị |
 
 \* `DIRECT_URL` được khai báo trong [`prisma/schema.prisma`](./prisma/schema.prisma): thiếu biến này sẽ lỗi khi `npx prisma generate` / `npm run prisma:*` nếu schema vẫn dùng `directUrl`.
 
@@ -142,7 +143,9 @@ Tham khảo [`.env.example`](./.env.example).
 
 ## 7. Database
 
-**Schema source-of-truth:** [`prisma/schema.prisma`](./prisma/schema.prisma) — apply lên DB qua `npm run prisma:push` (`prisma db push`). **Design reference:** [`docs/Design/Database.md`](../docs/Design/Database.md) (ERD + rationale + DDL minh hoạ, không phải để chạy). Project KHÔNG dùng `prisma migrate` (xem section Supabase bên dưới).
+**Schema source-of-truth:** [`prisma/schema/`](./prisma/schema/) — apply lên DB qua `npm run prisma:push` (`prisma db push`). **Design reference:** [`docs/Design/Database.md`](../docs/Design/Database.md) (ERD + rationale + DDL minh hoạ, không phải để chạy). Project KHÔNG dùng `prisma migrate` (xem section Supabase bên dưới).
+
+Sau khi thêm `emailNormalized`, chạy `npm run email:backfill` trước để phát hiện email trùng sau lowercase/trim. Chỉ chạy `npm run email:backfill -- --apply` khi preflight không báo collision; sau đó mới siết ràng buộc non-null ở một đợt schema tiếp theo.
 
 `PrismaService` **không** gọi `$connect()` lúc bootstrap — ứng dụng vẫn chạy được khi DB tạm lỗi; `/health` báo `db: down`, Prisma kết nối khi có truy vấn đầu tiên.
 

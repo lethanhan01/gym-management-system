@@ -43,14 +43,20 @@ describe('UsersService', () => {
       expect(await service.findByEmailWithRoles('nobody@gym.local')).toBeNull()
     })
 
-    it('queries with email AND deletedAt: null to exclude soft-deleted users', async () => {
+    it('queries normalized or legacy email AND deletedAt: null to exclude soft-deleted users', async () => {
       mockPrisma.user.findFirst.mockResolvedValue(null)
 
       await service.findByEmailWithRoles('test@example.com')
 
       expect(mockPrisma.user.findFirst).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: expect.objectContaining({ email: 'test@example.com', deletedAt: null }),
+          where: expect.objectContaining({
+            deletedAt: null,
+            OR: [
+              { emailNormalized: 'test@example.com' },
+              { email: 'test@example.com' },
+            ],
+          }),
         })
       )
     })

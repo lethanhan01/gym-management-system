@@ -34,7 +34,7 @@ export default function AddProgressPage() {
       .then(setStudent)
       .catch((err) => setError(getApiError(err, t('students.addProgress.error.loadFailed'))))
       .finally(() => setLoading(false))
-  }, [id])
+  }, [id, t])
 
   const bmi = useMemo(() => {
     const weightValue = Number(weight)

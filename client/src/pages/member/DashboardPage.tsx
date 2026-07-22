@@ -599,10 +599,12 @@ export default function MemberDashboardPage() {
       navigate('/login', { replace: true })
       return
     }
+    const now = new Date()
+    const nowIso = now.toISOString()
 
     Promise.allSettled([
       subscriptionService.getByMember(memberId),
-      trainingService.getSessions({ status: 'scheduled', pageSize: 3 }),
+      trainingService.getSessions({ status: 'scheduled', from: nowIso, pageSize: 3, sort: 'start_time:asc' }),
       memberService.getProgress(memberId, { limit: 1 }),
       trainingService.getAttendance({ memberId, month: todayYYYYMM() }),
       api.get(`/workout-plans/members/${memberId}/assignments`, {
@@ -634,7 +636,11 @@ export default function MemberDashboardPage() {
 
         /* Upcoming sessions */
         if (sessionsR.status === 'fulfilled') {
-          setSessions(sessionsR.value.data)
+          setSessions(
+            sessionsR.value.data
+              .filter((session) => new Date(session.startTime).getTime() > now.getTime())
+              .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime())
+          )
         } else {
           setErrorSessions(true)
         }

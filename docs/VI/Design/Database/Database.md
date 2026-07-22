@@ -561,6 +561,7 @@ Attribute table phía dưới chỉ liệt kê các thuộc tính NGHIỆP VỤ 
 | `session_id` | `BIGINT` | FK → `training_sessions.session_id` (nullable) | Phiên tập tương ứng nếu có lịch hẹn PT; `NULL` khi hội viên tập tự do. |
 | `start_time` | `TIMESTAMP` |  | Thời điểm check-in. |
 | `end_time` | `TIMESTAMP` |  | Thời điểm check-out (có thể trống). |
+| `qr_checkin_date` | `DATE` | UK cùng `member_id` (nullable) | Ngày Việt Nam của lượt tự check-in QR; chỉ log `qr` có giá trị, bảo đảm mỗi hội viên tối đa một lượt QR mỗi ngày. |
 | `method` | `attendance_method` |  | Cách ghi nhận: `realtime`, `manual`, `qr`. |
 
 ##### `MEMBER_PROGRESS` (`member_progress`)
@@ -1206,7 +1207,9 @@ CREATE TABLE attendance_logs (
     session_id BIGINT,
     start_time TIMESTAMP NOT NULL,
     end_time TIMESTAMP,
+    qr_checkin_date DATE,
     method attendance_method NOT NULL,
+    CONSTRAINT uq_attendance_member_qr_checkin_date UNIQUE (member_id, qr_checkin_date),
     CONSTRAINT fk_attendance_member
         FOREIGN KEY (member_id) REFERENCES members(member_id),
     CONSTRAINT fk_attendance_subscription

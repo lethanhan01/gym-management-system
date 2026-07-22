@@ -87,8 +87,9 @@ export class StaffAttendanceService {
   }
 
   private serializeAttendanceLog(r: { logId: bigint; staffId: bigint; checkIn: Date; checkOut: Date | null }) {
-    const durationMinutes =
-      r.checkOut ? Math.floor((r.checkOut.getTime() - r.checkIn.getTime()) / 60000) : null
+    const durationMinutes = r.checkOut
+      ? Math.max(0, Math.floor((r.checkOut.getTime() - r.checkIn.getTime()) / 60000))
+      : null
     return {
       logId: r.logId.toString(),
       staffId: r.staffId.toString(),

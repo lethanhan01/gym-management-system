@@ -20,12 +20,12 @@ export class SubscriptionScheduleService {
 
     // Tìm PT subscriptions sắp expire để reset trainer cho member
     const ptSubsToExpire = await this.prisma.subscription.findMany({
-      where: { status: 'active', endDate: { lte: today }, deletedAt: null, trainerId: { not: null } },
+      where: { status: 'active', endDate: { lt: today }, deletedAt: null, trainerId: { not: null } },
       select: { memberId: true },
     })
 
     const { count } = await this.prisma.subscription.updateMany({
-      where: { status: 'active', endDate: { lte: today }, deletedAt: null },
+      where: { status: 'active', endDate: { lt: today }, deletedAt: null },
       data: { status: 'expired' },
     })
 

@@ -136,7 +136,7 @@ export default function SubscriptionCheckoutPage({ mode }: { mode: 'buy' | 'rene
   if (!state) return null
 
   const startDate = new Date()
-  const endDate = new Date(startDate.getTime() + Number(state.durationDays) * 86400000)
+  const endDate = new Date(startDate.getTime() + (Number(state.durationDays) - 1) * 86400000)
   const fmtDate = (d: Date) =>
     d.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' })
 

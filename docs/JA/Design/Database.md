@@ -513,6 +513,7 @@ erDiagram
 | `session_id` | `BIGINT` | FK → `training_sessions.session_id` (nullable) | PT 予約がある場合の対応セッション。フリートレーニング時は `NULL`。 |
 | `start_time` | `TIMESTAMP` |  | Check-in 時刻。 |
 | `end_time` | `TIMESTAMP` |  | Check-out 時刻 (空でも良い)。 |
+| `qr_checkin_date` | `DATE` | `member_id` と UK (nullable) | QR セルフ check-in のベトナム日付。`qr` ログだけが値を持ち、会員ごとに 1 日 1 回に制限する。 |
 | `method` | `attendance_method` |  | 記録方法: `realtime`、`manual`、`qr`。 |
 
 ##### `MEMBER_PROGRESS` (`member_progress`)
@@ -1016,7 +1017,9 @@ CREATE TABLE attendance_logs (
     session_id BIGINT,
     start_time TIMESTAMP NOT NULL,
     end_time TIMESTAMP,
+    qr_checkin_date DATE,
     method attendance_method NOT NULL,
+    CONSTRAINT uq_attendance_member_qr_checkin_date UNIQUE (member_id, qr_checkin_date),
     CONSTRAINT fk_attendance_member
         FOREIGN KEY (member_id) REFERENCES members(member_id),
     CONSTRAINT fk_attendance_subscription
@@ -1139,4 +1142,3 @@ ALTER TABLE members
     ADD CONSTRAINT fk_members_primary_trainer
     FOREIGN KEY (primary_trainer_id) REFERENCES staff(staff_id) ON DELETE SET NULL;
 ```
-

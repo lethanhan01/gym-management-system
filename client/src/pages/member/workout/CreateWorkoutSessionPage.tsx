@@ -354,7 +354,7 @@ export default function CreateWorkoutSessionPage() {
     } finally {
       setLoading(false)
     }
-  }, [memberId])
+  }, [memberId, t])
 
   useEffect(() => {
     void load()

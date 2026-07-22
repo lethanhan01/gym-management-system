@@ -299,6 +299,7 @@ export async function seedUsers(groupMap: Map<string, bigint>): Promise<void> {
     const userRow = await prisma.user.upsert({
       where: { email: u.email },
       update: {
+        emailNormalized: u.email.trim().toLowerCase(),
         phone: u.phone,
         fullName: u.fullName,
         status: u.status,
@@ -307,6 +308,7 @@ export async function seedUsers(groupMap: Map<string, bigint>): Promise<void> {
       },
       create: {
         email: u.email,
+        emailNormalized: u.email.trim().toLowerCase(),
         phone: u.phone,
         fullName: u.fullName,
         status: u.status,
@@ -382,8 +384,8 @@ export async function seedNewUsersStaffMembers(
   }
 
   function statusFor(globalIdx: number): UserStatus {
-    if (globalIdx >= 95) return UserStatus.locked
-    if (globalIdx >= 85) return UserStatus.pending_verification
+    if (globalIdx === 95) return UserStatus.locked
+    if (globalIdx === 85) return UserStatus.pending_verification
     return UserStatus.active
   }
 
@@ -405,9 +407,10 @@ export async function seedNewUsersStaffMembers(
 
     const userRow = await prisma.user.upsert({
       where: { email },
-      update: {},
+      update: { emailNormalized: email.trim().toLowerCase() },
       create: {
         email,
+        emailNormalized: email.trim().toLowerCase(),
         phone,
         fullName,
         status,
@@ -442,9 +445,10 @@ export async function seedNewUsersStaffMembers(
 
     const userRow = await prisma.user.upsert({
       where: { email },
-      update: {},
+      update: { emailNormalized: email.trim().toLowerCase() },
       create: {
         email,
+        emailNormalized: email.trim().toLowerCase(),
         phone,
         fullName,
         status,
@@ -487,9 +491,10 @@ export async function seedNewUsersStaffMembers(
 
     const userRow = await prisma.user.upsert({
       where: { email },
-      update: {},
+      update: { emailNormalized: email.trim().toLowerCase() },
       create: {
         email,
+        emailNormalized: email.trim().toLowerCase(),
         phone,
         fullName,
         status,

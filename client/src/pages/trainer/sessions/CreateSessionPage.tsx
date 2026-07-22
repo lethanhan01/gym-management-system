@@ -113,7 +113,7 @@ export default function CreateSessionPage() {
     return () => {
       active = false
     }
-  }, [id])
+  }, [id, t])
 
   useEffect(() => {
     if (editing || !memberId) {
@@ -151,7 +151,7 @@ export default function CreateSessionPage() {
     return () => {
       active = false
     }
-  }, [editing, memberId])
+  }, [editing, memberId, t])
 
   const endTime = useMemo(() => {
     if (!startTime || duration <= 0) return ''

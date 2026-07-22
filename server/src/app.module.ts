@@ -1,7 +1,6 @@
 import { Module } from '@nestjs/common'
 import { ConfigModule } from '@nestjs/config'
 import { ScheduleModule } from '@nestjs/schedule'
-import { OtpStoreModule } from './common/otp-store/otp-store.module'
 import { AuthModule } from './auth/auth.module'
 import { validateConfig } from './config/configuration'
 import { HealthModule } from './health/health.module'
@@ -29,7 +28,6 @@ import { LineMessagingModule } from './line-messaging/line-messaging.module'
     }),
     ScheduleModule.forRoot(),
     PermissionCacheModule,
-    OtpStoreModule,
     PrismaModule,
     AuthModule,
     HealthModule,

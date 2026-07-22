@@ -17,13 +17,13 @@ import { JwtAuthGuard } from './guards/jwt-auth.guard'
 import { RolesGuard } from './guards/roles.guard'
 import { JwtStrategy } from './strategies/jwt.strategy'
 import { AuditService } from '../common/audit/audit.service'
-import { RateLimitService } from '../common/rate-limit/rate-limit.service'
-import { OtpStoreService } from '../common/otp-store/otp-store.service'
 import { UsersService } from './users.service'
 import { PrismaService } from '../prisma/prisma.service'
 import { PasswordResetService } from './password-reset.service'
 import { EmailVerificationService } from './email-verification.service'
 import { LineOAuthService } from './line-oauth.service'
+import { OtpService } from './otp.service'
+import { MailerService } from './mailer.service'
 
 jest.mock('bcryptjs', () => ({
   compare: jest.fn(),
@@ -89,11 +89,11 @@ describe('Auth E2E', () => {
       providers: [
         AuthService,
         AuditService,
-        RateLimitService,
-        OtpStoreService,
         PasswordResetService,
         EmailVerificationService,
         LineOAuthService,
+        { provide: OtpService, useValue: { issue: jest.fn(), verify: jest.fn(), clear: jest.fn() } },
+        { provide: MailerService, useValue: { sendOtp: jest.fn() } },
         JwtStrategy,
         { provide: APP_GUARD, useClass: JwtAuthGuard },
         { provide: APP_GUARD, useClass: RolesGuard },

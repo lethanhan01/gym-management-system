@@ -82,6 +82,14 @@ export class LineOAuthService {
       })
     }
 
+    if (user.status === UserStatus.pending_verification) {
+      throw new ForbiddenException({
+        success: false,
+        code: 'EMAIL_NOT_VERIFIED',
+        message: 'Vui lòng xác thực email trước khi đăng nhập',
+      })
+    }
+
     // 6. Issue JWT, including profile ids so Self-owned endpoints can enforce access.
     const [staff, memberRecord] = await Promise.all([
       this.prisma.staff.findFirst({ where: { userId: user.userId, deletedAt: null } }),
@@ -207,6 +215,7 @@ export class LineOAuthService {
         const user = await tx.user.create({
           data: {
             email,
+            emailNormalized: email.trim().toLowerCase(),
             fullName: profile.name,
             passwordHash: null,
             lineId: profile.sub,
@@ -216,9 +225,8 @@ export class LineOAuthService {
         })
         await tx.member.create({ data: { userId: user.userId, memberCode } })
         const memberGroup = await tx.group.findUnique({ where: { name: 'member' } })
-        if (memberGroup) {
-          await tx.userGroup.create({ data: { userId: user.userId, groupId: memberGroup.groupId } })
-        }
+        if (!memberGroup) throw new InternalServerErrorException('Thiếu cấu hình group member')
+        await tx.userGroup.create({ data: { userId: user.userId, groupId: memberGroup.groupId } })
         return { ...user, roles: ['member' as const] }
       })
     } catch (err) {

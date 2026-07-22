@@ -68,6 +68,7 @@ export function DatePickerInput({
   min,
   max,
   'aria-label': ariaLabel,
+  required = false,
   className,
 }: DatePickerInputProps) {
   const { t, i18n } = useTranslation('common')
@@ -149,6 +150,7 @@ export function DatePickerInput({
           <input
             type="text"
             disabled={disabled}
+            required={required}
             aria-label={ariaLabel}
             value={displayText}
             onChange={handleTextChange}

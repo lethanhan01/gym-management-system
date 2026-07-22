@@ -378,7 +378,7 @@ export default function AttendancePage() {
       .then((res) => setCalLogs(res.data))
       .catch((err) => setCalError(getApiError(err, t('attendance.errorCalendar'))))
       .finally(() => setCalLoading(false))
-  }, [memberId, calMonth])
+  }, [memberId, calMonth, t])
 
   useEffect(() => {
     loadCalLogs()
@@ -401,7 +401,7 @@ export default function AttendancePage() {
       })
       .catch((err) => setListError(getApiError(err, t('attendance.errorList'))))
       .finally(() => setListLoading(false))
-  }, [memberId, from, to])
+  }, [memberId, from, t, to])
 
   useEffect(() => {
     loadListLogs()

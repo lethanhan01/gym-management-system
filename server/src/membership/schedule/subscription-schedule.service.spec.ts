@@ -53,7 +53,7 @@ describe('SubscriptionScheduleService', () => {
         expect.objectContaining({
           where: expect.objectContaining({
             status: 'active',
-            endDate: { lte: expect.any(Date) },
+            endDate: { lt: expect.any(Date) },
             deletedAt: null,
           }),
           data: { status: 'expired' },
@@ -81,7 +81,7 @@ describe('SubscriptionScheduleService', () => {
         expect.objectContaining({
           where: expect.objectContaining({
             status: 'active',
-            endDate: { lte: expect.any(Date) },
+            endDate: { lt: expect.any(Date) },
             trainerId: { not: null },
             deletedAt: null,
           }),

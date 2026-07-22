@@ -53,7 +53,7 @@ const SUB_STATUS_MAP: Record<string, { label: string; tone: string }> = {
 
 function getRealStatus(s: Subscription): string {
   const endDate = subscriptionEndDateKey(s.endDate)
-  if ((s.status === 'active' || s.status === 'expired') && endDate && endDate <= gymDateKey())
+  if ((s.status === 'active' || s.status === 'expired') && endDate && endDate < gymDateKey())
     return 'ended'
   return s.status
 }
@@ -136,7 +136,7 @@ export default function CurrentPackagePage() {
         }
       })
       .finally(() => setLoading(false))
-  }, [user?.memberId, navigate, clearAuth, setResolvedStatus])
+  }, [user?.memberId, navigate, clearAuth, setResolvedStatus, t])
 
   async function handleCancel() {
     if (!cancelTarget || !user?.memberId) return

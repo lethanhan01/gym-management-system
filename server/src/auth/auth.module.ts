@@ -5,13 +5,14 @@ import { JwtModule } from '@nestjs/jwt'
 import { PassportModule } from '@nestjs/passport'
 import { PrismaModule } from '../prisma/prisma.module'
 import { AuditService } from '../common/audit/audit.service'
-import { RateLimitService } from '../common/rate-limit/rate-limit.service'
 import { UsersService } from './users.service'
 import { AuthController } from './auth.controller'
 import { AuthService } from './auth.service'
 import { PasswordResetService } from './password-reset.service'
 import { EmailVerificationService } from './email-verification.service'
 import { LineOAuthService } from './line-oauth.service'
+import { OtpService } from './otp.service'
+import { MailerService } from './mailer.service'
 import { JwtAuthGuard } from './guards/jwt-auth.guard'
 import { RolesGuard } from './guards/roles.guard'
 import { JwtStrategy } from './strategies/jwt.strategy'
@@ -38,12 +39,15 @@ import { JwtStrategy } from './strategies/jwt.strategy'
     PasswordResetService,
     EmailVerificationService,
     LineOAuthService,
+    OtpService,
+    MailerService,
     AuditService,
-    RateLimitService,
     JwtStrategy,
     // JwtAuthGuard + RolesGuard global — moi endpoint mac dinh can JWT (tru @Public())
     { provide: APP_GUARD, useClass: JwtAuthGuard },
     { provide: APP_GUARD, useClass: RolesGuard },
   ],
+  // Shared authentication utilities consumed by feature modules.
+  exports: [OtpService, MailerService],
 })
 export class AuthModule {}

@@ -1,4 +1,3 @@
-import { randomInt } from 'crypto'
 import {
   BadRequestException,
   ConflictException,
@@ -6,12 +5,12 @@ import {
   Injectable,
   InternalServerErrorException,
   NotFoundException,
+  ServiceUnavailableException,
 } from '@nestjs/common'
-import { Member, PaymentStatus, Prisma, SubscriptionStatus, UserStatus } from '@prisma/client'
+import { Member, OtpPurpose, PaymentStatus, Prisma, SubscriptionStatus, UserStatus } from '@prisma/client'
 import bcrypt from 'bcryptjs'
 import { AuthenticatedUser } from '../auth/types/jwt-payload.interface'
 import { AuditService } from '../common/audit/audit.service'
-import { OtpStoreService } from '../common/otp-store/otp-store.service'
 import { PrismaService } from '../prisma/prisma.service'
 import { CreateMemberDto } from './dto/create-member.dto'
 import { SelfRegisterDto } from './dto/self-register.dto'
@@ -19,8 +18,9 @@ import { ListMembersDto, SubscriptionStatusFilter } from './dto/list-members.dto
 import { UpdateMemberDto } from './dto/update-member.dto'
 import { MemberProgressService } from './member-progress.service'
 import { TrainerAssignmentService } from './trainer-assignment.service'
-
-const OTP_TTL_MS = 10 * 60 * 1000
+import { OtpService } from '../auth/otp.service'
+import { MailerService } from '../auth/mailer.service'
+import { assertVietnameseDateOfBirth } from '../common/registration-validation'
 
 function todayVN(): Date {
   const s = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' })
@@ -49,13 +49,15 @@ export class MembersService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly audit: AuditService,
-    private readonly otpStore: OtpStoreService,
+    private readonly otp: OtpService,
+    private readonly mailer: MailerService,
     private readonly trainerAssignment: TrainerAssignmentService,
     private readonly memberProgress: MemberProgressService,
   ) {}
 
   /** UC03A: staff creates a member, active subscription, and successful payment at the counter. */
   async createMember(dto: CreateMemberDto, actorUserId: bigint) {
+    assertVietnameseDateOfBirth(dto.dateOfBirth)
     const pkg = await this.prisma.package.findFirst({
       where: { packageId: BigInt(dto.packageId), status: 'active', deletedAt: null },
     })
@@ -75,9 +77,12 @@ export class MembersService {
     const endDate = addDays(today, pkg.durationDays - 1)
 
     const result = await this.prisma.$transaction(async (tx) => {
+      const memberGroup = await tx.group.findUnique({ where: { name: 'member' } })
+      if (!memberGroup) throw new InternalServerErrorException('Thiếu cấu hình group member')
       const user = await tx.user.create({
         data: {
           email: dto.email,
+          emailNormalized: dto.email,
           passwordHash,
           fullName: dto.fullName,
           phone: dto.phone,
@@ -95,10 +100,7 @@ export class MembersService {
         },
       })
 
-      const memberGroup = await tx.group.findUnique({ where: { name: 'member' } })
-      if (memberGroup) {
-        await tx.userGroup.create({ data: { userId: user.userId, groupId: memberGroup.groupId } })
-      }
+      await tx.userGroup.create({ data: { userId: user.userId, groupId: memberGroup.groupId } })
 
       const subscription = await tx.subscription.create({
         data: {
@@ -144,6 +146,7 @@ export class MembersService {
 
   /** UC03B: public online self-registration, optionally with a pending subscription. */
   async selfRegister(dto: SelfRegisterDto) {
+    assertVietnameseDateOfBirth(dto.dateOfBirth)
     await this.assertUniqueUserFields(dto.email, dto.phone)
 
     const pkg = dto.packageId
@@ -161,14 +164,15 @@ export class MembersService {
 
     const memberCode = await this.generateMemberCode()
     const passwordHash = await bcrypt.hash(dto.password, 12)
-    const otpRaw = randomInt(100000, 1000000).toString()
-    const otpHash = await bcrypt.hash(otpRaw, 10)
     const today = todayVN()
 
     const result = await this.prisma.$transaction(async (tx) => {
+      const memberGroup = await tx.group.findUnique({ where: { name: 'member' } })
+      if (!memberGroup) throw new InternalServerErrorException('Thiếu cấu hình group member')
       const user = await tx.user.create({
         data: {
           email: dto.email,
+          emailNormalized: dto.email,
           passwordHash,
           fullName: dto.fullName,
           phone: dto.phone,
@@ -185,10 +189,7 @@ export class MembersService {
         },
       })
 
-      const memberGroup = await tx.group.findUnique({ where: { name: 'member' } })
-      if (memberGroup) {
-        await tx.userGroup.create({ data: { userId: user.userId, groupId: memberGroup.groupId } })
-      }
+      await tx.userGroup.create({ data: { userId: user.userId, groupId: memberGroup.groupId } })
 
       const subscription = pkg
         ? await tx.subscription.create({
@@ -206,14 +207,28 @@ export class MembersService {
       return { user, member, subscription }
     })
 
-    this.otpStore.set(result.user.userId, 'email_verify', otpHash, OTP_TTL_MS)
-
-    // TODO: send OTP by email when SMTP is configured.
-    // eslint-disable-next-line no-console
-    console.log(`[DEV] OTP email_verify for ${dto.email}: ${otpRaw}`)
-
-    const devOtp = process.env.NODE_ENV !== 'production' ? otpRaw : undefined
-
+    const otp = await this.otp.issue(result.user.userId, OtpPurpose.email_verify)
+    if (!otp) {
+      await this.rollbackSelfRegistration(result.user.userId, result.member.memberId, result.subscription?.subscriptionId)
+      throw new InternalServerErrorException('Không thể khởi tạo OTP xác thực')
+    }
+    try {
+      await this.mailer.sendOtp(result.user.email, OtpPurpose.email_verify, otp)
+    } catch {
+      await this.audit.log({
+        actorUserId: null,
+        action: 'member.create',
+        resourceType: 'member',
+        resourceId: result.member.memberId.toString(),
+        afterData: { memberCode, selfRegister: true, delivery_failed: true } as unknown as Record<string, unknown>,
+      })
+      await this.rollbackSelfRegistration(result.user.userId, result.member.memberId, result.subscription?.subscriptionId)
+      throw new ServiceUnavailableException({
+        success: false,
+        code: 'OTP_DELIVERY_FAILED',
+        message: 'Không thể gửi mã xác thực. Vui lòng đăng ký lại.',
+      })
+    }
     this.audit.log({
       actorUserId: null,
       action: 'member.create',
@@ -242,7 +257,6 @@ export class MembersService {
       data: {
         ...this.serializeMember(result.member, result.user),
         message: 'Registration created. Please verify email.',
-        ...(devOtp && { devOtp }),
         subscription: result.subscription
           ? {
               subscriptionId: result.subscription.subscriptionId.toString(),
@@ -502,7 +516,7 @@ export class MembersService {
   }
 
   private async assertUniqueUserFields(email: string, phone?: string | null) {
-    const OR: Prisma.UserWhereInput[] = [{ email }]
+    const OR: Prisma.UserWhereInput[] = [{ emailNormalized: email }, { email }]
     if (phone) OR.push({ phone })
     const existing = await this.prisma.user.findFirst({ where: { deletedAt: null, OR } })
     if (existing) {
@@ -512,6 +526,17 @@ export class MembersService {
         message: 'Email hoac phone da duoc su dung',
       })
     }
+  }
+
+  private async rollbackSelfRegistration(userId: bigint, memberId: bigint, subscriptionId?: bigint) {
+    await this.prisma.$transaction(async (tx) => {
+      if (subscriptionId) await tx.subscription.deleteMany({ where: { subscriptionId } })
+      await tx.otpCode.deleteMany({ where: { userId } })
+      await tx.otpRequestThrottle.deleteMany({ where: { userId } })
+      await tx.userGroup.deleteMany({ where: { userId } })
+      await tx.member.deleteMany({ where: { memberId } })
+      await tx.user.deleteMany({ where: { userId } })
+    })
   }
 
   private async generateMemberCode(): Promise<string> {

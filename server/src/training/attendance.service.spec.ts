@@ -186,6 +186,7 @@ describe('AttendanceService', () => {
       const result = await service.manualCheckin(makeDto() as any, caller)
 
       expect(mockPrisma.attendanceLog.create).toHaveBeenCalled()
+      expect(mockPrisma.attendanceLog.create.mock.calls[0][0].data).not.toHaveProperty('qrCheckinDate')
       expect(mockAudit.log).toHaveBeenCalledWith(
         expect.objectContaining({ action: 'attendance.manual-checkin' })
       )
@@ -264,7 +265,11 @@ describe('AttendanceService', () => {
 
       expect(mockPrisma.attendanceLog.create).toHaveBeenCalledWith(
         expect.objectContaining({
-          data: expect.objectContaining({ memberId: 10n, method: 'qr' }),
+          data: expect.objectContaining({
+            memberId: 10n,
+            method: 'qr',
+            qrCheckinDate: new Date('2026-07-22'),
+          }),
         })
       )
       expect(mockAudit.log).toHaveBeenCalledWith(
@@ -297,7 +302,9 @@ describe('AttendanceService', () => {
         .mockResolvedValueOnce({ memberId: 10n })
         .mockResolvedValueOnce(makeMember())
       mockPrisma.subscription.findFirst.mockResolvedValue(makeSubscription())
-      mockPrisma.attendanceLog.findFirst.mockResolvedValue({ attendanceId: 1n, endTime: null })
+      mockPrisma.attendanceLog.findFirst
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce({ attendanceId: 1n, endTime: null })
       mockPrisma.attendanceLog.update.mockResolvedValue({})
       mockPrisma.attendanceLog.create.mockResolvedValue(
         makeAttendanceRow({ attendanceId: 4n, method: 'qr' })
@@ -315,6 +322,59 @@ describe('AttendanceService', () => {
       )
       expect(mockLineMessaging.safePushAttendanceCheckin).toHaveBeenCalledWith(4n)
       expect(result.data.attendanceId).toBe('4')
+    })
+
+    it('rejects a second QR check-in on the same VN date without changing attendance or sending notifications', async () => {
+      const token = service.generateQrToken()
+      mockPrisma.member.findFirst.mockResolvedValue(makeMember())
+      mockPrisma.attendanceLog.findFirst.mockResolvedValue({ attendanceId: 3n })
+
+      await expect(service.qrCheckin({ token: token.token } as any, makeCaller({ roles: ['member'], memberId: 10n }))).rejects.toMatchObject({
+        response: expect.objectContaining({ code: 'QR_CHECKIN_ALREADY_TODAY' }),
+      })
+
+      expect(mockPrisma.subscription.findFirst).not.toHaveBeenCalled()
+      expect(mockPrisma.attendanceLog.update).not.toHaveBeenCalled()
+      expect(mockPrisma.attendanceLog.create).not.toHaveBeenCalled()
+      expect(mockAudit.log).not.toHaveBeenCalled()
+      expect(mockNotifications.safeNotifyUser).not.toHaveBeenCalled()
+      expect(mockLineMessaging.safePushAttendanceCheckin).not.toHaveBeenCalled()
+    })
+
+    it('maps a concurrent unique-constraint conflict to the duplicate QR check-in error', async () => {
+      const token = service.generateQrToken()
+      mockPrisma.member.findFirst.mockResolvedValue(makeMember())
+      mockPrisma.subscription.findFirst.mockResolvedValue(makeSubscription())
+      mockPrisma.attendanceLog.findFirst.mockResolvedValue(null)
+      mockPrisma.attendanceLog.create.mockRejectedValue({ code: 'P2002' })
+
+      await expect(service.qrCheckin({ token: token.token } as any, makeCaller({ roles: ['member'], memberId: 10n }))).rejects.toMatchObject({
+        response: expect.objectContaining({ code: 'QR_CHECKIN_ALREADY_TODAY' }),
+      })
+
+      expect(mockAudit.log).not.toHaveBeenCalled()
+      expect(mockNotifications.safeNotifyUser).not.toHaveBeenCalled()
+      expect(mockLineMessaging.safePushAttendanceCheckin).not.toHaveBeenCalled()
+    })
+
+    it('uses the new Vietnam calendar date after midnight for QR uniqueness', async () => {
+      mockPrisma.member.findFirst.mockResolvedValue(makeMember())
+      mockPrisma.subscription.findFirst.mockResolvedValue(makeSubscription())
+      mockPrisma.attendanceLog.findFirst.mockResolvedValue(null)
+      mockPrisma.attendanceLog.create
+        .mockResolvedValueOnce(makeAttendanceRow({ attendanceId: 5n, method: 'qr' }))
+        .mockResolvedValueOnce(makeAttendanceRow({ attendanceId: 6n, method: 'qr' }))
+      const caller = makeCaller({ roles: ['member'], memberId: 10n })
+
+      const firstToken = service.generateQrToken()
+      await service.qrCheckin({ token: firstToken.token } as any, caller)
+
+      jest.setSystemTime(new Date('2026-07-22T17:00:00.000Z'))
+      const secondToken = service.generateQrToken()
+      await service.qrCheckin({ token: secondToken.token } as any, caller)
+
+      expect(mockPrisma.attendanceLog.create.mock.calls[0][0].data.qrCheckinDate).toEqual(new Date('2026-07-22'))
+      expect(mockPrisma.attendanceLog.create.mock.calls[1][0].data.qrCheckinDate).toEqual(new Date('2026-07-23'))
     })
 
     it('throws when member profile or active subscription is missing', async () => {

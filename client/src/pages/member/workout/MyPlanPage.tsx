@@ -507,7 +507,7 @@ export default function MyPlanPage() {
     } finally {
       setLoading(false)
     }
-  }, [memberId])
+  }, [memberId, t])
 
   useEffect(() => {
     void load()

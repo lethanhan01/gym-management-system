@@ -45,7 +45,7 @@ export default function ProgressListPage() {
     } finally {
       setLoading(false)
     }
-  }, [id])
+  }, [id, t])
 
   useEffect(() => {
     void load()

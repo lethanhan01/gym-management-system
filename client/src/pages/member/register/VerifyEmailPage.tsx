@@ -4,7 +4,6 @@ import { Mail } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { AuthShell, BtnPrimary, TextLink, ErrorMsg } from "@/pages/auth/_authui";
 import { authService } from "@/services/auth.service";
-import { useAuthStore } from "@/stores/authStore";
 
 const OTP_LENGTH = 6;
 const RESEND_SECONDS = 60;
@@ -104,15 +103,11 @@ function ResendBtn({ onResend }: { onResend: () => void }) {
 export default function VerifyEmailPage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const state = location.state as { email?: string; password?: string; devOtp?: string } | null;
+  const state = location.state as { email?: string } | null;
   const email = state?.email ?? "";
-  const password = state?.password ?? "";
-  const { setAuth } = useAuthStore();
   const { t } = useTranslation("auth");
 
-  const [digits, setDigits] = useState<string[]>(
-    state?.devOtp ? state.devOtp.split("") : Array(OTP_LENGTH).fill(""),
-  );
+  const [digits, setDigits] = useState<string[]>(Array(OTP_LENGTH).fill(""));
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -126,11 +121,7 @@ export default function VerifyEmailPage() {
     setLoading(true);
     try {
       await authService.verifyEmail(email, otp);
-      if (password) {
-        const { user, token } = await authService.login(email, password);
-        setAuth(user, token);
-      }
-      navigate("/member/register-success", { state: { email } });
+      navigate(`/login?email=${encodeURIComponent(email)}`, { replace: true });
     } catch (err) {
       const e = err as { response?: { status?: number } };
       const status = e?.response?.status;
@@ -151,8 +142,7 @@ export default function VerifyEmailPage() {
 
   async function handleResend() {
     try {
-      const result = await authService.resendVerification(email);
-      if (result.devOtp) setDigits(result.devOtp.split(""));
+      await authService.resendVerification(email);
     } catch {
       // silent — ResendBtn đã reset countdown, không cần báo lỗi
     }
