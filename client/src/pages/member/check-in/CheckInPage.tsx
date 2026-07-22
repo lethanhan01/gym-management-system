@@ -1,7 +1,7 @@
-import { FormEvent, useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { BrowserQRCodeReader, type IScannerControls } from '@zxing/browser'
-import { Camera, CheckCircle2, History, Keyboard, RefreshCcw, ScanLine } from 'lucide-react'
+import { CheckCircle2, History, RefreshCcw } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { getApiError, getApiErrorCode } from '@/lib/api-error'
 import { formatTime } from '@/lib/date'
@@ -18,7 +18,6 @@ export default function CheckInPage() {
   const submittedRef = useRef(false)
   const checkingRef = useRef(false)
   const [scanState, setScanState] = useState<ScanState>('idle')
-  const [tokenInput, setTokenInput] = useState('')
   const [checking, setChecking] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [lastLog, setLastLog] = useState<AttendanceLog | null>(null)
@@ -45,7 +44,6 @@ export default function CheckInPage() {
       try {
         const log = await trainingService.qrCheckin(normalized)
         setLastLog(log)
-        setTokenInput('')
       } catch (err) {
         const code = getApiErrorCode(err)
         const message =
@@ -97,11 +95,6 @@ export default function CheckInPage() {
       controlsRef.current = null
     }
   }, [startScanner])
-
-  function handleManualSubmit(event: FormEvent) {
-    event.preventDefault()
-    void submitToken(tokenInput)
-  }
 
   function handleScanAgain() {
     submittedRef.current = false
@@ -174,35 +167,6 @@ export default function CheckInPage() {
           )}
 
           {error && <MemberErrorState message={error} onRetry={handleScanAgain} />}
-
-          <section className="rogym-card rogym-card--compact p-6">
-            <h2 className="mb-4 flex items-center gap-2 text-base font-bold text-white">
-              <Keyboard size={18} />
-              {t('qrCheckIn.manualTitle')}
-            </h2>
-            <form className="space-y-4" onSubmit={handleManualSubmit}>
-              <label className="block space-y-2">
-                <span className="rogym-field-label">{t('qrCheckIn.tokenLabel')}</span>
-                <div className="relative">
-                  <ScanLine
-                    className="absolute left-3 top-1/2 -translate-y-1/2 rogym-text-dim"
-                    size={17}
-                  />
-                  <input
-                    className="rogym-input pl-10"
-                    value={tokenInput}
-                    onChange={(event) => setTokenInput(event.target.value)}
-                    placeholder={t('qrCheckIn.tokenPlaceholder')}
-                    autoComplete="off"
-                  />
-                </div>
-              </label>
-              <Button type="submit" loading={checking} disabled={!tokenInput.trim()}>
-                <Camera size={16} />
-                {t('qrCheckIn.submit')}
-              </Button>
-            </form>
-          </section>
         </div>
       </div>
     </MemberPage>
