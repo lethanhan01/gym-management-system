@@ -308,17 +308,20 @@
 
     .rogym-bottom-nav--member .rogym-bottom-nav__item--center {
       position: relative;
-      min-height: 64px;
-      padding-top: 6px;
-      padding-bottom: 6px;
-      gap: 0;
-      justify-content: flex-end;
       z-index: 1;
+    }
+
+    /* Giữ chỗ đúng bằng icon thường để label Check-in thẳng hàng với các mục khác. */
+    .rogym-bottom-nav--member .rogym-bottom-nav__item--center::before {
+      content: '';
+      width: 22px;
+      height: 22px;
+      flex: 0 0 22px;
     }
 
     .rogym-bottom-nav--member .rogym-bottom-nav__item--center svg {
       position: absolute;
-      top: -30px;
+      top: -40px;
       left: 50%;
       width: 68px;
       height: 68px;
