@@ -6,7 +6,7 @@ import { useAuthStore } from '@/stores/authStore'
 import { useSubscriptionStore } from '@/stores/subscriptionStore'
 import subscriptionService from '@/services/subscription.service'
 import packageService from '@/services/package.service'
-import { trainingService } from '@/services/training.service'
+import { trainingService, type TrainingSession } from '@/services/training.service'
 import { memberService } from '@/services/member.service'
 import { feedbackService } from '@/services/feedback.service'
 import api from '@/services/api'
@@ -93,6 +93,25 @@ function renderDashboardWithPaymentSuccess() {
       </Routes>
     </MemoryRouter>
   )
+}
+
+function createSession(sessionId: string, startTime: string, trainerName: string): TrainingSession {
+  return {
+    sessionId,
+    memberId: '10',
+    memberName: 'Member',
+    trainerStaffId: '20',
+    trainerName,
+    roomId: '30',
+    roomName: 'Room A',
+    assignmentId: null,
+    planDayId: null,
+    workoutPlan: null,
+    planDay: null,
+    startTime,
+    endTime: startTime,
+    status: 'scheduled',
+  }
 }
 
 describe('MemberDashboardPage subscription access sync', () => {
@@ -185,5 +204,30 @@ describe('MemberDashboardPage subscription access sync', () => {
     const toast = await screen.findByRole('status')
     expect(toast).toHaveClass('rogym-notification-toast')
     expect(toast).toHaveTextContent('Thanh toán thành công')
+  })
+
+  it('shows only sessions after the current time in the upcoming widget', async () => {
+    mockedGetByMember.mockResolvedValue([])
+    mockedGetSessions.mockResolvedValue({
+      data: [
+        createSession('1', '2026-07-18T07:00:00.000Z', 'Past Trainer'),
+        createSession('2', '2026-07-18T08:00:00.000Z', 'Current Trainer'),
+        createSession('3', '2026-07-18T09:00:00.000Z', 'Upcoming Trainer'),
+      ],
+      total: 3,
+    })
+
+    renderDashboard()
+
+    await screen.findByText('Upcoming Trainer', { exact: false })
+
+    expect(mockedGetSessions).toHaveBeenCalledWith({
+      status: 'scheduled',
+      from: '2026-07-18T08:00:00.000Z',
+      pageSize: 3,
+      sort: 'start_time:asc',
+    })
+    expect(screen.queryByText('Past Trainer', { exact: false })).not.toBeInTheDocument()
+    expect(screen.queryByText('Current Trainer', { exact: false })).not.toBeInTheDocument()
   })
 })

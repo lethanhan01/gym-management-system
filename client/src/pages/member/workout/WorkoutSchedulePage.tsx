@@ -658,6 +658,7 @@ export default function WorkoutSchedulePage() {
   const loadSessions = useCallback(() => {
     setLoading(true)
     setError(null)
+    const now = new Date()
     Promise.all([
       trainingService.getSessions({ status: 'scheduled', pageSize: 50, sort: 'start_time:asc' }),
       trainingService.getSessions({ status: 'in_progress', pageSize: 20, sort: 'start_time:asc' }),
@@ -667,7 +668,10 @@ export default function WorkoutSchedulePage() {
         const activeSessions = [...inProgressRes.data, ...scheduledRes.data].sort(
           (a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
         )
-        setUpcoming(activeSessions)
+        const upcomingSessions = activeSessions
+          .filter((session) => new Date(session.startTime).getTime() > now.getTime())
+          .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime())
+        setUpcoming(upcomingSessions)
         setPast(doneRes.data)
         setAll([...activeSessions, ...doneRes.data])
       })
