@@ -7,6 +7,7 @@ import express from 'express'
 import helmet from 'helmet'
 import { AppModule } from './app.module'
 import { HttpExceptionFilter } from './common/filters/http-exception.filter'
+import { setupSwagger } from './common/swagger/swagger'
 
 /**
  * Cho phep JSON.stringify(BigInt) hoat dong (BigInt khong serialize mac dinh).
@@ -43,6 +44,7 @@ async function bootstrap(): Promise<void> {
   )
   app.useGlobalFilters(new HttpExceptionFilter())
   app.setGlobalPrefix('api/v1', { exclude: ['health', '/'] })
+  setupSwagger(app)
 
   const port = config.get<number>('PORT') ?? 3000
   await app.listen(port)

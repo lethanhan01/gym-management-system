@@ -13,6 +13,7 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common'
+import { ApiBody, ApiOperation } from '@nestjs/swagger'
 import { PermissionsGuard } from '../common/guards/permissions.guard'
 import { RequirePermission } from '../common/decorators/require-permission.decorator'
 import { CurrentUser } from '../auth/decorators/current-user.decorator'
@@ -56,6 +57,13 @@ export class MembersController {
 
   /** Member tự gán / hủy PT của mình */
   @Patch('me/trainer')
+  @ApiOperation({ summary: 'Tự gán hoặc hủy huấn luyện viên của hội viên' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: { trainerId: { type: 'integer', nullable: true, example: 12 } },
+    },
+  })
   async selfAssignTrainer(
     @Body() dto: { trainerId?: number | null },
     @CurrentUser() user: AuthenticatedUser

@@ -11,6 +11,7 @@ import { VerifyEmailDto } from './dto/verify-email.dto'
 import { ResendVerifyDto } from './dto/resend-verify.dto'
 import { LineLoginDto } from './dto/line-login.dto'
 import { AuthenticatedUser } from './types/jwt-payload.interface'
+import { ApiBody, ApiOperation } from '@nestjs/swagger'
 
 @Controller('auth')
 export class AuthController {
@@ -156,6 +157,17 @@ export class AuthController {
 
   @Post('change-password')
   @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Đổi mật khẩu của tài khoản đang đăng nhập' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      required: ['currentPassword', 'newPassword'],
+      properties: {
+        currentPassword: { type: 'string', format: 'password', writeOnly: true },
+        newPassword: { type: 'string', format: 'password', writeOnly: true, minLength: 8 },
+      },
+    },
+  })
   async changePassword(
     @Body() dto: { currentPassword: string; newPassword: string },
     @CurrentUser() user: AuthenticatedUser,

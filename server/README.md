@@ -222,6 +222,19 @@ Nếu TCP thành công nhưng `/health` vẫn trả `db: down`, chạy một tru
 
 Prefix **`/api/v1`** cho các controller Nest (health được exclude khỏi prefix).
 
+### Swagger / OpenAPI
+
+Khi server đang chạy, tài liệu API tương tác luôn có tại:
+
+- Swagger UI: `http://localhost:3000/api/v1/docs`
+- OpenAPI JSON: `http://localhost:3000/api/v1/docs/openapi.json`
+- OpenAPI YAML: `http://localhost:3000/api/v1/docs/openapi.yaml`
+
+Để thử endpoint cần đăng nhập, gọi `POST /api/v1/auth/login`, sao chép `accessToken`,
+rồi chọn nút **Authorize** trong Swagger UI và dán token. Swagger sẽ gửi header
+`Authorization: Bearer <accessToken>`. Endpoint `POST /api/v1/devices/access-events`
+dùng header `x-device-api-key` thay cho JWT.
+
 ### Health
 
 | Method | Path | Auth |
