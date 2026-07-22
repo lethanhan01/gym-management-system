@@ -228,7 +228,7 @@ export class RbacService {
       await this.prisma.groupPermission.createMany({
         data: toAdd.map((permissionId) => ({ groupId, permissionId })),
       })
-      await this.permCache.delete(groupId.toString())
+      await this.invalidatePermissionCacheForGroup(groupId)
     }
 
     const permMap = await this.prisma.permission.findMany({ where: { permissionId: { in: bigintIds } } })
@@ -252,7 +252,7 @@ export class RbacService {
     await this.prisma.groupPermission.delete({
       where: { groupId_permissionId: { groupId, permissionId } },
     })
-    await this.permCache.delete(groupId.toString())
+    await this.invalidatePermissionCacheForGroup(groupId)
     this.audit.log({ actorUserId, action: 'group.revoke-permission', resourceType: 'group', resourceId: groupId.toString(), afterData: { permissionId: permissionId.toString() } })
   }
 
@@ -478,6 +478,14 @@ export class RbacService {
     const unknown = codes.filter((c) => !found.has(c))
     if (unknown.length > 0) throw new BadRequestException({ success: false, code: 'VALIDATION_ERROR', message: 'Validation failed', details: unknown.map((c) => `unknown permission: ${c}`) })
     return rows.map((r) => r.permissionId)
+  }
+
+  private async invalidatePermissionCacheForGroup(groupId: bigint): Promise<void> {
+    const users = await this.prisma.userGroup.findMany({
+      where: { groupId },
+      select: { userId: true },
+    })
+    await Promise.all(users.map((user) => this.permCache.delete(user.userId.toString())))
   }
 
   private serializePermission(p: { permissionId: bigint; code: string; name: string; description: string | null }) {

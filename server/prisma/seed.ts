@@ -56,6 +56,7 @@ const PERMISSIONS = [
   { code: 'session.manage',      name: 'Quan ly lich tap',      description: 'Tao / sua / huy lich tap (UC05)' },
   { code: 'attendance.read',     name: 'Xem cham cong',         description: 'Xem nhat ky check-in / ghi nhan tu dong' },
   { code: 'attendance.checkin',  name: 'Check-in hoi vien',     description: 'Ghi nhan check-in / check-out (UC05 fallback)' },
+  { code: 'attendance.self-checkin', name: 'Hoi vien tu check-in', description: 'Hoi vien tu check-in bang QR trong ung dung' },
   { code: 'progress.read',       name: 'Xem tien do tap',       description: 'Xem chi so tien do hoi vien (UC06)' },
   { code: 'progress.record',     name: 'Ghi nhan tien do',      description: 'Ghi chi so BMI / can nang / muc tieu (UC06)' },
   // Phan hoi & thong bao (UC07, 2.4.5)
@@ -133,7 +134,7 @@ const ROLE_PERMISSIONS: Record<(typeof GROUPS)[number]['name'], string[]> = {
     'subscription.read', 'subscription.create',
     'payment.read', 'payment.create',
     'session.read',
-    'attendance.read',
+    'attendance.read', 'attendance.self-checkin',
     'progress.read',
     'feedback.create',
     'notification.read',
