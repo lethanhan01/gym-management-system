@@ -8,6 +8,7 @@ import {
 } from '@nestjs/common'
 import { Prisma } from '@prisma/client'
 import { Request, Response } from 'express'
+import { databaseErrorCode, isTransientDatabaseError } from '../../prisma/database-errors'
 
 interface ErrorBody {
   success: false
@@ -36,15 +37,20 @@ export class HttpExceptionFilter implements ExceptionFilter {
 
     const { status, body } = this.mapException(exception)
 
-    if (status >= 500) {
-      this.logger.error(
-        `[${request.method} ${request.url}] ${body.code}: ${body.message}`,
-        exception instanceof Error ? exception.stack : undefined
-      )
-    } else {
-      this.logger.warn(`[${request.method} ${request.url}] ${status} ${body.code}: ${body.message}`)
-    }
+    const logData = JSON.stringify({
+      event: status === HttpStatus.SERVICE_UNAVAILABLE ? 'db_unavailable' : 'http_exception',
+      method: request.method,
+      route: request.route?.path ?? request.path,
+      status,
+      code: body.code,
+      prismaCode: databaseErrorCode(exception),
+    })
+    if (status >= 500) this.logger.error(logData)
+    else this.logger.warn(logData)
 
+    if (status === HttpStatus.SERVICE_UNAVAILABLE && body.code === 'DATABASE_UNAVAILABLE') {
+      response.setHeader('Retry-After', '1')
+    }
     response.status(status).json(body)
   }
 
@@ -111,6 +117,17 @@ export class HttpExceptionFilter implements ExceptionFilter {
       }
     }
 
+    if (isTransientDatabaseError(exception)) {
+      return {
+        status: HttpStatus.SERVICE_UNAVAILABLE,
+        body: {
+          success: false,
+          code: 'DATABASE_UNAVAILABLE',
+          message: 'Database tam thoi khong kha dung, vui long thu lai sau',
+        },
+      }
+    }
+
     return {
       status: HttpStatus.INTERNAL_SERVER_ERROR,
       body: {
@@ -139,6 +156,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
       case 'P1002':
       case 'P1008':
       case 'P1017':
+      case 'P2024':
         return {
           status: HttpStatus.SERVICE_UNAVAILABLE,
           body: {

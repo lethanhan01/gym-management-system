@@ -4,6 +4,7 @@ import {
 } from '@nestjs/common'
 import { PermissionsGuard } from '../common/guards/permissions.guard'
 import { RequirePermission } from '../common/decorators/require-permission.decorator'
+import { DatabaseRetryable } from '../common/decorators/database-retryable.decorator'
 import { CurrentUser } from '../auth/decorators/current-user.decorator'
 import { AuthenticatedUser } from '../auth/types/jwt-payload.interface'
 import { PaymentsService } from './payments.service'
@@ -25,6 +26,7 @@ export class PaymentsController {
   }
 
   @Get()
+  @DatabaseRetryable()
   @RequirePermission('payment.read')
   async list(@Query() query: ListPaymentsDto, @CurrentUser() user: AuthenticatedUser) {
     const result = await this.payments.listPayments(query, user)
@@ -38,6 +40,7 @@ export class PaymentAccountsController {
   constructor(private readonly payments: PaymentsService) {}
 
   @Get('members/:memberId/payment-accounts')
+  @DatabaseRetryable()
   async list(
     @Param('memberId', ParseIntPipe) memberId: number,
     @CurrentUser() user: AuthenticatedUser,

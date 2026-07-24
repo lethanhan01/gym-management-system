@@ -1,38 +1,53 @@
 import { validateConfig } from './configuration'
 
-const baseEnv = {
-  DATABASE_URL: 'postgresql://user:pass@localhost:5432/gym',
+const lineConfigBaseEnv = {
+  DATABASE_URL:
+    'postgresql://postgres.ref:secret@aws-1-ap-southeast-1.pooler.supabase.com:5432/postgres?sslmode=require&connection_limit=5&application_name=gym-api',
   JWT_SECRET: 'test-secret',
 }
 
-describe('validateConfig', () => {
+describe('validateConfig LINE messaging', () => {
   it('defaults LINE_MESSAGE_LOCALE to vi', () => {
-    const config = validateConfig(baseEnv)
+    const config = validateConfig({
+      ...lineConfigBaseEnv,
+      DB_CONNECTION_MODE: 'supavisor-session',
+      DATABASE_URL:
+        'postgresql://postgres.ref:secret@aws-1-ap-southeast-1.pooler.supabase.com:5432/postgres?sslmode=require&connection_limit=5&application_name=gym-api',
+    })
 
     expect(config.LINE_MESSAGE_LOCALE).toBe('vi')
   })
 
   it('accepts Japanese LINE message locale', () => {
-    const config = validateConfig({ ...baseEnv, LINE_MESSAGE_LOCALE: 'ja' })
+    const config = validateConfig({
+      ...lineConfigBaseEnv,
+      DB_CONNECTION_MODE: 'supavisor-session',
+      DATABASE_URL:
+        'postgresql://postgres.ref:secret@aws-1-ap-southeast-1.pooler.supabase.com:5432/postgres?sslmode=require&connection_limit=5&application_name=gym-api',
+      LINE_MESSAGE_LOCALE: 'ja',
+    })
 
     expect(config.LINE_MESSAGE_LOCALE).toBe('ja')
   })
 
   it('rejects unsupported LINE message locales', () => {
-    expect(() => validateConfig({ ...baseEnv, LINE_MESSAGE_LOCALE: 'en' })).toThrow(
-      /LINE_MESSAGE_LOCALE/
+    expect(() => validateConfig({ ...lineConfigBaseEnv, LINE_MESSAGE_LOCALE: 'en' })).toThrow(
+      /LINE_MESSAGE_LOCALE/,
     )
   })
 
   it('requires LINE messaging credentials and LIFF URL when messaging is enabled', () => {
-    expect(() => validateConfig({ ...baseEnv, LINE_MESSAGING_ENABLED: 'true' })).toThrow(
-      /LINE_CHANNEL_ACCESS_TOKEN[\s\S]*LINE_CHANNEL_SECRET[\s\S]*LINE_LIFF_URL/
+    expect(() => validateConfig({ ...lineConfigBaseEnv, LINE_MESSAGING_ENABLED: 'true' })).toThrow(
+      /LINE_CHANNEL_ACCESS_TOKEN[\s\S]*LINE_CHANNEL_SECRET[\s\S]*LINE_LIFF_URL/,
     )
   })
 
   it('accepts the canonical LINE LIFF URL when messaging is enabled', () => {
     const config = validateConfig({
-      ...baseEnv,
+      ...lineConfigBaseEnv,
+      DB_CONNECTION_MODE: 'supavisor-session',
+      DATABASE_URL:
+        'postgresql://postgres.ref:secret@aws-1-ap-southeast-1.pooler.supabase.com:5432/postgres?sslmode=require&connection_limit=5&application_name=gym-api',
       LINE_MESSAGING_ENABLED: 'true',
       LINE_CHANNEL_ACCESS_TOKEN: 'token',
       LINE_CHANNEL_SECRET: 'secret',
@@ -45,12 +60,12 @@ describe('validateConfig', () => {
   it('rejects LINE Developers Console URLs as LINE_LIFF_URL', () => {
     expect(() =>
       validateConfig({
-        ...baseEnv,
+        ...lineConfigBaseEnv,
         LINE_MESSAGING_ENABLED: 'true',
         LINE_CHANNEL_ACCESS_TOKEN: 'token',
         LINE_CHANNEL_SECRET: 'secret',
         LINE_LIFF_URL: 'https://developers.line.biz/console/channel/1/liff/1-test',
-      })
+      }),
     ).toThrow(/must not be a LINE Developers Console URL/)
   })
 
@@ -66,12 +81,51 @@ describe('validateConfig', () => {
   ])('rejects %s as LINE_LIFF_URL', (_name, LINE_LIFF_URL) => {
     expect(() =>
       validateConfig({
-        ...baseEnv,
+        ...lineConfigBaseEnv,
         LINE_MESSAGING_ENABLED: 'true',
         LINE_CHANNEL_ACCESS_TOKEN: 'token',
         LINE_CHANNEL_SECRET: 'secret',
         LINE_LIFF_URL,
-      })
+      }),
     ).toThrow(/LINE_LIFF_URL=https:\/\/liff\.line\.me\/<LIFF_ID>/)
+  })
+})
+
+const validUrl =
+  'postgresql://postgres.ref:secret@aws-1-ap-southeast-1.pooler.supabase.com:5432/postgres?sslmode=require&connection_limit=5&application_name=gym-api'
+
+describe('validateConfig database connection', () => {
+  const base = () => ({
+    NODE_ENV: 'development',
+    JWT_SECRET: 'test-secret',
+    DATABASE_URL: validUrl,
+  })
+
+  it('uses Supavisor session mode by default outside production', () => {
+    expect(validateConfig(base()).DB_CONNECTION_MODE).toBe('supavisor-session')
+  })
+
+  it('accepts a valid direct persistent URL', () => {
+    const config = validateConfig({
+      ...base(),
+      DB_CONNECTION_MODE: 'direct',
+      DATABASE_URL:
+        'postgresql://postgres:secret@db.project-ref.supabase.co:5432/postgres?sslmode=require&connection_limit=5&application_name=gym-api',
+    })
+
+    expect(config.DB_CONNECTION_MODE).toBe('direct')
+  })
+
+  it('rejects transaction pooler URLs and pgbouncer mode', () => {
+    expect(() =>
+      validateConfig({
+        ...base(),
+        DATABASE_URL: validUrl.replace(':5432', ':6543').replace('application_name', 'pgbouncer=true&application_name'),
+      }),
+    ).toThrow('port 5432')
+  })
+
+  it('requires an explicit mode in production', () => {
+    expect(() => validateConfig({ ...base(), NODE_ENV: 'production' })).toThrow('DB_CONNECTION_MODE')
   })
 })

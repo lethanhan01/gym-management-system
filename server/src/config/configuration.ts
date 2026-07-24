@@ -7,6 +7,8 @@ enum NodeEnv {
   Test = 'test',
 }
 
+type DatabaseConnectionMode = 'direct' | 'supavisor-session'
+
 /**
  * Schema validate cho process.env. Validate o thoi diem boot, fail-fast neu thieu bien.
  */
@@ -25,6 +27,10 @@ export class EnvironmentVariables {
 
   @IsString()
   DATABASE_URL!: string
+
+  @IsOptional()
+  @IsIn(['direct', 'supavisor-session'])
+  DB_CONNECTION_MODE?: DatabaseConnectionMode
 
   /**
    * Dung trong schema.prisma (directUrl): migrate drift / tac vu can ket noi truc tiep toi Postgres,
@@ -79,9 +85,65 @@ export function validateConfig(raw: Record<string, unknown>): EnvironmentVariabl
       .join('\n')
     throw new Error(`Invalid environment configuration:\n${detail}`)
   }
+  validateDatabaseConnectionConfig(config, raw)
   validateLineMessagingConfig(config)
   validateSmtpConfig(config)
   return config
+}
+
+function validateDatabaseConnectionConfig(
+  config: EnvironmentVariables,
+  raw: Record<string, unknown>,
+) {
+  const requestedMode = config.DB_CONNECTION_MODE?.trim() as DatabaseConnectionMode | undefined
+  if (config.NODE_ENV === NodeEnv.Production && !requestedMode) {
+    throw new Error(
+      'Invalid environment configuration:\n  - DB_CONNECTION_MODE: required in production (direct or supavisor-session)',
+    )
+  }
+
+  // Development retains a safe IPv4-compatible default while production must
+  // declare its topology explicitly.
+  const mode = requestedMode ?? 'supavisor-session'
+  config.DB_CONNECTION_MODE = mode
+
+  let url: URL
+  try {
+    url = new URL(config.DATABASE_URL)
+  } catch {
+    throw new Error('Invalid environment configuration:\n  - DATABASE_URL: must be a valid URL')
+  }
+
+  if (!['postgres:', 'postgresql:'].includes(url.protocol)) {
+    throw new Error('Invalid environment configuration:\n  - DATABASE_URL: must use postgres or postgresql')
+  }
+  if (url.port !== '5432') {
+    throw new Error('Invalid environment configuration:\n  - DATABASE_URL: persistent connections must use port 5432')
+  }
+  if (url.searchParams.get('sslmode') !== 'require') {
+    throw new Error('Invalid environment configuration:\n  - DATABASE_URL: sslmode=require is required')
+  }
+  if (url.searchParams.get('connection_limit') !== '5') {
+    throw new Error('Invalid environment configuration:\n  - DATABASE_URL: connection_limit=5 is required')
+  }
+  if (url.searchParams.get('pgbouncer') === 'true') {
+    throw new Error('Invalid environment configuration:\n  - DATABASE_URL: pgbouncer=true is not allowed for persistent connections')
+  }
+  if (!url.searchParams.get('application_name')?.trim()) {
+    throw new Error('Invalid environment configuration:\n  - DATABASE_URL: application_name is required')
+  }
+
+  const isDirect = /^db\.[a-z0-9-]+\.supabase\.co$/i.test(url.hostname)
+  const isSessionPooler = url.hostname.endsWith('.pooler.supabase.com')
+  if ((mode === 'direct' && !isDirect) || (mode === 'supavisor-session' && !isSessionPooler)) {
+    throw new Error(
+      `Invalid environment configuration:\n  - DATABASE_URL: does not match DB_CONNECTION_MODE=${mode}`,
+    )
+  }
+
+  // `raw` is deliberately accepted so validation remains tied to boot-time
+  // environment values instead of mutating the database URL at runtime.
+  void raw
 }
 
 function validateSmtpConfig(config: EnvironmentVariables) {

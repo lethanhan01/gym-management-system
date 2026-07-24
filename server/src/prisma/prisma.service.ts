@@ -1,6 +1,6 @@
 import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common'
-import { Prisma, PrismaClient } from '@prisma/client'
-import { getRuntimeDatabaseUrl } from './database-url'
+import { PrismaClient } from '@prisma/client'
+import { databaseErrorCode } from './database-errors'
 
 /**
  * Khong goi $connect trong constructor de server van bind duoc port
@@ -11,31 +11,36 @@ import { getRuntimeDatabaseUrl } from './database-url'
  * P1000 (sai credentials) -> fail fast, exit process.
  * P1001/P1002 (network/timeout) -> log warning, tiep tuc (transient).
  */
-// Khoang cach keepalive: 4 phut ngan Supabase Transaction pooler dong ket noi idle.
-// Supabase client_idle_timeout mac dinh ~600s; ping moi 240s dam bao connection song.
-const KEEPALIVE_INTERVAL_MS = 4 * 60 * 1000
+export type DatabaseHealth = {
+  status: 'healthy' | 'degraded'
+  lastSuccessAt: string | null
+  lastFailureAt: string | null
+  lastErrorCode: string | null
+}
 
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(PrismaService.name)
-  private keepaliveTimer?: ReturnType<typeof setInterval>
+  private reconnectPromise?: Promise<boolean>
+  private health: DatabaseHealth = {
+    status: 'degraded',
+    lastSuccessAt: null,
+    lastFailureAt: null,
+    lastErrorCode: null,
+  }
 
   constructor() {
     super({
-      datasourceUrl: getRuntimeDatabaseUrl(),
       log: process.env.NODE_ENV === 'production' ? ['error'] : ['warn', 'error'],
     })
   }
 
   async onModuleInit(): Promise<void> {
-    try {
-      await this.$queryRaw`SELECT 1`
-      this.logger.log('Database connection verified')
-    } catch (err) {
+    const isHealthy = await this.probe('startup')
+    if (!isHealthy) {
+      const err = this.health.lastErrorCode
       const isAuthFailure =
-        (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P1000') ||
-        (err instanceof Prisma.PrismaClientInitializationError &&
-          err.message.includes('Authentication failed'))
+        err === 'P1000'
 
       if (isAuthFailure) {
         this.logger.error(
@@ -44,26 +49,85 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
         process.exit(1)
       }
 
-      // P1001/P1002/P1008 va cac loi transient khac: log warning, van cho server chay
-      const code = err instanceof Prisma.PrismaClientKnownRequestError ? err.code : 'UNKNOWN'
-      this.logger.warn(
-        `Database probe failed (${code}): server will continue but DB may be unavailable`
-      )
     }
-
-    this.keepaliveTimer = setInterval(async () => {
-      try {
-        await this.$queryRaw`SELECT 1`
-      } catch {
-        // loi transient se bi bat o query thuc — khong log de tranh noise
-      }
-    }, KEEPALIVE_INTERVAL_MS)
   }
 
   async onModuleDestroy(): Promise<void> {
-    if (this.keepaliveTimer) {
-      clearInterval(this.keepaliveTimer)
-    }
     await this.$disconnect()
+  }
+
+  getHealth(): DatabaseHealth {
+    return { ...this.health }
+  }
+
+  async probe(source = 'health'): Promise<boolean> {
+    try {
+      await this.$queryRaw`SELECT 1`
+      this.recordSuccess(source)
+      return true
+    } catch (error) {
+      this.recordFailure(source, error)
+      return false
+    }
+  }
+
+  async recoverConnection(): Promise<boolean> {
+    if (!this.reconnectPromise) {
+      this.reconnectPromise = this.reconnect().finally(() => {
+        this.reconnectPromise = undefined
+      })
+    }
+    return this.reconnectPromise
+  }
+
+  logRetry(method: string, route: string, attempt: number, reconnectMs: number): void {
+    this.logEvent('db_retry', { method, route, attempt, reconnectMs })
+  }
+
+  private async reconnect(): Promise<boolean> {
+    const startedAt = Date.now()
+    this.logEvent('db_reconnect', { phase: 'started' })
+    try {
+      await this.$disconnect()
+      await this.$connect()
+      const healthy = await this.probe('reconnect')
+      this.logEvent('db_reconnect', { phase: healthy ? 'succeeded' : 'failed', durationMs: Date.now() - startedAt })
+      return healthy
+    } catch (error) {
+      this.recordFailure('reconnect', error)
+      this.logEvent('db_reconnect', {
+        phase: 'failed',
+        durationMs: Date.now() - startedAt,
+        code: databaseErrorCode(error) ?? 'UNKNOWN',
+      })
+      return false
+    }
+  }
+
+  private recordSuccess(source: string): void {
+    const changed = this.health.status !== 'healthy'
+    this.health = {
+      status: 'healthy',
+      lastSuccessAt: new Date().toISOString(),
+      lastFailureAt: this.health.lastFailureAt,
+      lastErrorCode: null,
+    }
+    if (changed || source === 'startup') this.logEvent('db_probe', { source, status: 'healthy' })
+  }
+
+  private recordFailure(source: string, error: unknown): void {
+    const code = databaseErrorCode(error) ?? 'UNKNOWN'
+    const changed = this.health.status !== 'degraded'
+    this.health = {
+      status: 'degraded',
+      lastSuccessAt: this.health.lastSuccessAt,
+      lastFailureAt: new Date().toISOString(),
+      lastErrorCode: code,
+    }
+    if (changed || source === 'startup') this.logEvent('db_probe', { source, status: 'degraded', code })
+  }
+
+  private logEvent(event: string, data: Record<string, unknown>): void {
+    this.logger.log(JSON.stringify({ event, connectionMode: process.env.DB_CONNECTION_MODE, ...data }))
   }
 }

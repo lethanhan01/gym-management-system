@@ -321,11 +321,11 @@
 
     .rogym-bottom-nav--member .rogym-bottom-nav__item--center svg {
       position: absolute;
-      top: -40px;
+      top: -32px;
       left: 50%;
-      width: 68px;
-      height: 68px;
-      padding: 18px;
+      width: 60px;
+      height: 60px;
+      padding: 16px;
       transform: translateX(-50%);
       border-radius: 50%;
       border: 1px solid rgba(66, 224, 158, 0.28);

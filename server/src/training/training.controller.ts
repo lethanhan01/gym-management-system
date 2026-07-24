@@ -15,6 +15,7 @@ import {
 import { ApiBody, ApiOperation, ApiQuery, ApiSecurity } from '@nestjs/swagger'
 import { PermissionsGuard } from '../common/guards/permissions.guard'
 import { RequirePermission } from '../common/decorators/require-permission.decorator'
+import { DatabaseRetryable } from '../common/decorators/database-retryable.decorator'
 import { CurrentUser } from '../auth/decorators/current-user.decorator'
 import { AuthenticatedUser } from '../auth/types/jwt-payload.interface'
 import { TrainingService } from './training.service'
@@ -28,6 +29,7 @@ export class TrainingController {
 
   // ---- Training Sessions ----
   @Get('training-sessions')
+  @DatabaseRetryable()
   @RequirePermission('session.read')
   async listSessions(@Query() query: ListSessionsDto,@CurrentUser() user: AuthenticatedUser) {
     const result = await this.training.listSessions(query , { userId: user.userId, roles: user.roles, staffId: user.staffId, memberId: user.memberId })
@@ -35,6 +37,7 @@ export class TrainingController {
   }
 
   @Get('training-sessions/:id')
+  @DatabaseRetryable()
   @RequirePermission('session.read')
   async getSession(@Param('id', ParseIntPipe) id: number, @CurrentUser() user: AuthenticatedUser) {
     const result = await this.training.getSession(BigInt(id), { userId: user.userId, roles: user.roles, staffId: user.staffId, memberId: user.memberId })
@@ -75,6 +78,7 @@ export class TrainingController {
   // ---- Attendance ----
 
   @Get('attendance-logs')
+  @DatabaseRetryable()
   @RequirePermission('attendance.read')
   async listAttendance(@Query() query: ListAttendanceLogsDto, @CurrentUser() user: AuthenticatedUser) {
     const result = await this.training.listAttendance(query, { userId: user.userId, roles: user.roles, staffId: user.staffId, memberId: user.memberId })
@@ -113,6 +117,7 @@ export class TrainingController {
   // ---- Progress ----
 
   @Get('members/:id/progress')
+  @DatabaseRetryable()
   @RequirePermission('progress.read')
   @ApiOperation({ summary: 'Lấy lịch sử chỉ số tiến trình của hội viên' })
   @ApiQuery({ name: 'from', required: false, description: 'Mốc thời gian bắt đầu (ISO 8601).' })

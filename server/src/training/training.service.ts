@@ -200,16 +200,14 @@ export class TrainingService {
       [sortKey]: sortDir === 'desc' ? 'desc' : 'asc',
     } as Prisma.TrainingSessionOrderByWithRelationInput
 
-    const [data, total] = await Promise.all([
-      this.prisma.trainingSession.findMany({
+    const data = await this.prisma.trainingSession.findMany({
         where,
         skip: (page - 1) * pageSize,
         take: pageSize,
         orderBy,
         include: SESSION_SUMMARY_INCLUDE,
-      }),
-      this.prisma.trainingSession.count({ where }),
-    ])
+      })
+    const total = await this.prisma.trainingSession.count({ where })
 
     return {
       data: data.map((s) => this.serializeSession(s)),

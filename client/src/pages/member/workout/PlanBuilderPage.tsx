@@ -789,7 +789,7 @@ export default function MemberPlanBuilderPage() {
       )}
 
       {/* Floating action bar — clears the desktop sidebar and mobile bottom navigation. */}
-      <div className="fixed bottom-[calc(var(--rogym-bottom-nav-height)+env(safe-area-inset-bottom,0px))] left-0 right-0 z-[45] px-4 py-3 rogym-sx-e122cbce md:bottom-0 md:left-20 md:z-auto md:px-6 md:py-4">
+      <div className="fixed bottom-[calc(var(--rogym-bottom-nav-height)+var(--rogym-bottom-nav-center-action-clearance)+env(safe-area-inset-bottom,0px))] left-0 right-0 z-[45] px-4 py-3 rogym-sx-e122cbce md:bottom-0 md:left-20 md:z-auto md:px-6 md:py-4">
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between md:gap-4">
           <p className="w-full text-sm rogym-sx-d88f932f md:w-auto">
             {t('workout.planBuilder.floatingBar.summary', { days: plan?.days?.length ?? 0, exercises: exerciseCount })}
@@ -864,7 +864,7 @@ export default function MemberPlanBuilderPage() {
       </div>
 
       {/* Mobile reserves room for the tallest action-bar state above the bottom navigation. */}
-      <div className="h-[calc(var(--rogym-bottom-nav-height)+env(safe-area-inset-bottom,0px)+18rem)] md:h-20" />
+      <div className="h-[calc(var(--rogym-bottom-nav-height)+var(--rogym-bottom-nav-center-action-clearance)+env(safe-area-inset-bottom,0px)+18rem)] md:h-20" />
     </MemberPage>
   )
 }
