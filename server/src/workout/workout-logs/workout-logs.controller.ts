@@ -12,6 +12,7 @@ import {
 } from '@nestjs/common'
 import { PermissionsGuard } from '../../common/guards/permissions.guard'
 import { RequirePermission } from '../../common/decorators/require-permission.decorator'
+import { DatabaseRetryable } from '../../common/decorators/database-retryable.decorator'
 import { CurrentUser } from '../../auth/decorators/current-user.decorator'
 import { AuthenticatedUser } from '../../auth/types/jwt-payload.interface'
 import { WorkoutLogsService } from './workout-logs.service'
@@ -19,6 +20,7 @@ import { CreateWorkoutLogDto } from './dto/create-workout-log.dto'
 import { UpdateWorkoutLogDto } from './dto/update-workout-log.dto'
 
 @Controller('workout-logs')
+@DatabaseRetryable()
 @UseGuards(PermissionsGuard)
 export class WorkoutLogsController {
   constructor(private readonly logs: WorkoutLogsService) {}

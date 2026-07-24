@@ -61,12 +61,13 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
   }
 
   async probe(source = 'health'): Promise<boolean> {
+    const startedAt = Date.now()
     try {
       await this.$queryRaw`SELECT 1`
-      this.recordSuccess(source)
+      this.recordSuccess(source, Date.now() - startedAt)
       return true
     } catch (error) {
-      this.recordFailure(source, error)
+      this.recordFailure(source, error, Date.now() - startedAt)
       return false
     }
   }
@@ -94,7 +95,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
       this.logEvent('db_reconnect', { phase: healthy ? 'succeeded' : 'failed', durationMs: Date.now() - startedAt })
       return healthy
     } catch (error) {
-      this.recordFailure('reconnect', error)
+      this.recordFailure('reconnect', error, Date.now() - startedAt)
       this.logEvent('db_reconnect', {
         phase: 'failed',
         durationMs: Date.now() - startedAt,
@@ -104,7 +105,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
     }
   }
 
-  private recordSuccess(source: string): void {
+  private recordSuccess(source: string, durationMs: number): void {
     const changed = this.health.status !== 'healthy'
     this.health = {
       status: 'healthy',
@@ -112,10 +113,12 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
       lastFailureAt: this.health.lastFailureAt,
       lastErrorCode: null,
     }
-    if (changed || source === 'startup') this.logEvent('db_probe', { source, status: 'healthy' })
+    if (changed || source === 'startup') {
+      this.logEvent('db_probe', { source, status: 'healthy', durationMs })
+    }
   }
 
-  private recordFailure(source: string, error: unknown): void {
+  private recordFailure(source: string, error: unknown, durationMs: number): void {
     const code = databaseErrorCode(error) ?? 'UNKNOWN'
     const changed = this.health.status !== 'degraded'
     this.health = {
@@ -124,7 +127,9 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
       lastFailureAt: new Date().toISOString(),
       lastErrorCode: code,
     }
-    if (changed || source === 'startup') this.logEvent('db_probe', { source, status: 'degraded', code })
+    if (changed || source === 'startup') {
+      this.logEvent('db_probe', { source, status: 'degraded', code, durationMs })
+    }
   }
 
   private logEvent(event: string, data: Record<string, unknown>): void {

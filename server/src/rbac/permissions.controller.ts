@@ -1,9 +1,11 @@
 import { Controller, Get, Param, ParseIntPipe, Query, UseGuards } from '@nestjs/common'
 import { PermissionsGuard } from '../common/guards/permissions.guard'
 import { RequirePermission } from '../common/decorators/require-permission.decorator'
+import { DatabaseRetryable } from '../common/decorators/database-retryable.decorator'
 import { RbacService } from './rbac.service'
 
 @Controller('permissions')
+@DatabaseRetryable()
 @UseGuards(PermissionsGuard)
 export class PermissionsController {
   constructor(private readonly rbac: RbacService) {}

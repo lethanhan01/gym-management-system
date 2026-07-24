@@ -14,6 +14,7 @@ import {
 } from '@nestjs/common'
 import { PermissionsGuard } from '../../common/guards/permissions.guard'
 import { RequirePermission } from '../../common/decorators/require-permission.decorator'
+import { DatabaseRetryable } from '../../common/decorators/database-retryable.decorator'
 import { CurrentUser } from '../../auth/decorators/current-user.decorator'
 import { AuthenticatedUser } from '../../auth/types/jwt-payload.interface'
 import { WorkoutPlansService } from './workout-plans.service'
@@ -26,6 +27,7 @@ import { AssignPlanDto } from './dto/assign-plan.dto'
 import { UpdatePlanExerciseDto } from './dto/update-plan-exercise.dto'
 
 @Controller('workout-plans')
+@DatabaseRetryable()
 @UseGuards(PermissionsGuard)
 export class WorkoutPlansController {
   constructor(private readonly plans: WorkoutPlansService) {}

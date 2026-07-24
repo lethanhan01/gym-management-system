@@ -12,8 +12,10 @@ import { ResendVerifyDto } from './dto/resend-verify.dto'
 import { LineLoginDto } from './dto/line-login.dto'
 import { AuthenticatedUser } from './types/jwt-payload.interface'
 import { ApiBody, ApiOperation } from '@nestjs/swagger'
+import { DatabaseRetryable } from '../common/decorators/database-retryable.decorator'
 
 @Controller('auth')
+@DatabaseRetryable()
 export class AuthController {
   constructor(
     private readonly authService: AuthService,

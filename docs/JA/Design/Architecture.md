@@ -970,12 +970,12 @@ v1.0 用の簡略 format。完全な ADR (Michael Nygard's template) では Cont
 - **Decision**: Application 層で Prisma `$transaction` 内に cascade を実装。Parent → child マッピングは Database.md「Cascade Soft Delete Convention」に記述。
 - **Consequences**: Code 側でマッピングを保守する必要あり。Transaction が漏れると不整合になる。Database.md にパターンの参照がある。
 
-### ADR-014: `prisma:reset` = `db push --force-reset` + seed
+### ADR-014: destructive database commands are removed
 
-- **Status**: Accepted | **Date**: 2026-05-16
-- **Context**: Phase 4 で `prisma migrate` workflow を廃止。Dev は「reset to clean state」コマンドが必要。
-- **Decision**: `npm run prisma:reset` で `prisma db push --force-reset --accept-data-loss && prisma db seed` を実行。旧 `prisma migrate reset` と意味的に同等。
-- **Consequences**: Destructive — dev 専用。Production では絶対に実行禁止。`server/README.md` に warning 記載済。
+- **Status**: Superseded | **Date**: 2026-07-24
+- **Context**: Reset and sample-data scripts can erase production records when pointed at the wrong database.
+- **Decision**: The repository provides no seed or reset command. Schema changes require a backup or clone, review, and the database-safety CI check.
+- **Consequences**: Development fixtures must be created in isolated local test setup; production recovery uses Supabase backup/PITR.
 
 ---
 

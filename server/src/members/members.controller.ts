@@ -16,6 +16,7 @@ import {
 import { ApiBody, ApiOperation } from '@nestjs/swagger'
 import { PermissionsGuard } from '../common/guards/permissions.guard'
 import { RequirePermission } from '../common/decorators/require-permission.decorator'
+import { DatabaseRetryable } from '../common/decorators/database-retryable.decorator'
 import { CurrentUser } from '../auth/decorators/current-user.decorator'
 import { AuthenticatedUser } from '../auth/types/jwt-payload.interface'
 import { Public } from '../auth/decorators/public.decorator'
@@ -28,6 +29,7 @@ import { AssignTrainerDto } from './dto/assign-trainer.dto'
 import { SelfProgressDto } from './dto/self-progress.dto'
 
 @Controller('members')
+@DatabaseRetryable()
 @UseGuards(PermissionsGuard)
 export class MembersController {
   constructor(private readonly members: MembersService) {}

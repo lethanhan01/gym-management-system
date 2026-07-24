@@ -14,6 +14,7 @@ import {
 } from '@nestjs/common'
 import { PermissionsGuard } from '../common/guards/permissions.guard'
 import { RequirePermission } from '../common/decorators/require-permission.decorator'
+import { DatabaseRetryable } from '../common/decorators/database-retryable.decorator'
 import { CurrentUser } from '../auth/decorators/current-user.decorator'
 import { AuthenticatedUser } from '../auth/types/jwt-payload.interface'
 import { RbacService } from './rbac.service'
@@ -22,6 +23,7 @@ import { UpdateGroupDto } from './dto/update-group.dto'
 import { AssignPermissionsDto } from './dto/assign-permissions.dto'
 
 @Controller('groups')
+@DatabaseRetryable()
 @UseGuards(PermissionsGuard)
 @RequirePermission('rbac.manage')
 export class GroupsController {

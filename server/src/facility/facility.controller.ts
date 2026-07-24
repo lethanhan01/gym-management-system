@@ -15,6 +15,7 @@ import {
 import { CurrentUser } from '../auth/decorators/current-user.decorator'
 import { AuthenticatedUser } from '../auth/types/jwt-payload.interface'
 import { RequirePermission } from '../common/decorators/require-permission.decorator'
+import { DatabaseRetryable } from '../common/decorators/database-retryable.decorator'
 import { PermissionsGuard } from '../common/guards/permissions.guard'
 import { CreateEquipmentDto } from './dto/create-equipment.dto'
 import { CreateMaintenanceLogDto } from './dto/create-maintenance-log.dto'
@@ -28,6 +29,7 @@ import { UpdateRoomDto } from './dto/update-room.dto'
 import { FacilityService } from './facility.service'
 
 @Controller()
+@DatabaseRetryable()
 @UseGuards(PermissionsGuard)
 export class FacilityController {
   constructor(private readonly facility: FacilityService) {}

@@ -1,10 +1,12 @@
 import { Controller, Get, Param, Query, UseGuards } from '@nestjs/common'
 import { RequirePermission } from '../common/decorators/require-permission.decorator'
+import { DatabaseRetryable } from '../common/decorators/database-retryable.decorator'
 import { PermissionsGuard } from '../common/guards/permissions.guard'
 import { ReportRangeDto, StaffPerformanceQueryDto } from './dto/report-range.dto'
 import { ReportsService } from './reports.service'
 
 @Controller('reports')
+@DatabaseRetryable()
 @UseGuards(PermissionsGuard)
 @RequirePermission('report.view')
 export class ReportsController {

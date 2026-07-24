@@ -71,10 +71,10 @@ Source: `seed.ts:100-138` ROLE_PERMISSIONS map.
 
 V1.0 workflow:
 
-1. Edit `seed.ts` PERMISSIONS array + role mapping.
-2. Bump Module 2 doc `permission count` + Catalog table.
-3. `npm run prisma:seed` (DB upsert).
-4. Audit log không track (seed-time event, không phải runtime).
+1. Review permission catalog and role mapping as a schema/application change.
+2. Update Module 2 documentation and the catalog table.
+3. Apply the reviewed change only after creating a backup or clone; production has no seed command.
+4. Record the change through the normal audited administration flow when available.
 
 V1.1+ defer: API endpoint `POST /permissions` cho Owner thêm custom permission runtime — cần `audit.create` action code mới.
 

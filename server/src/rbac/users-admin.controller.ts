@@ -15,6 +15,7 @@ import {
 } from '@nestjs/common'
 import { PermissionsGuard } from '../common/guards/permissions.guard'
 import { RequirePermission } from '../common/decorators/require-permission.decorator'
+import { DatabaseRetryable } from '../common/decorators/database-retryable.decorator'
 import { CurrentUser } from '../auth/decorators/current-user.decorator'
 import { AuthenticatedUser } from '../auth/types/jwt-payload.interface'
 import { PrismaService } from '../prisma/prisma.service'
@@ -24,6 +25,7 @@ import { AssignGroupDto } from './dto/assign-group.dto'
 import { ListUsersDto } from './dto/list-users.dto'
 
 @Controller('users')
+@DatabaseRetryable()
 @UseGuards(PermissionsGuard)
 export class UsersAdminController {
   constructor(

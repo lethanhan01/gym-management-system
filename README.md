@@ -121,8 +121,8 @@ Mở `server/.env` và điền các giá trị sau:
 
 | Biến | Mô tả |
 |---|---|
-| `DATABASE_URL` | Connection string PostgreSQL (Transaction Pooler — port **6543** nếu dùng Supabase) |
-| `DIRECT_URL` | Direct connection string (dùng cho Prisma migrate — port 5432) |
+| `DATABASE_URL` | Connection string runtime PostgreSQL (Supavisor Session Pooler — port **5432** nếu dùng Supabase) |
+| `DIRECT_URL` | Direct connection string (dùng cho Prisma DDL — port 5432) |
 | `JWT_SECRET` | Chuỗi bí mật dài, ngẫu nhiên (tối thiểu 32 ký tự) |
 | `JWT_EXPIRES_IN` | Thời gian hết hạn token, ví dụ `7d` |
 | `CLIENT_URL` | URL frontend, ví dụ `http://localhost:5173` |
@@ -137,7 +137,7 @@ Mở `server/.env` và điền các giá trị sau:
 | `LINE_MESSAGE_LOCALE` | Locale nội dung LINE, nhận `vi` hoặc `ja` |
 | `LINE_REMINDER_MINUTES` | Số phút gửi nhắc lịch tập qua LINE trước giờ bắt đầu, mặc định `30` |
 
-> **Supabase:** Dùng **Transaction pooler** (port 6543) cho `DATABASE_URL` và **Direct connection** (port 5432) cho `DIRECT_URL`. URL-encode ký tự đặc biệt trong mật khẩu nếu có.
+> **Supabase:** Dùng **Session pooler** (port 5432) cho `DATABASE_URL`, cùng `DB_CONNECTION_MODE=supavisor-session`, `sslmode=require` và `connection_limit=5`; không thêm `pgbouncer=true`. Dùng **Direct connection** (port 5432) hoặc Session pooler làm `DIRECT_URL` cho Prisma DDL. URL-encode ký tự đặc biệt trong mật khẩu nếu có.
 
 > **LINE deploy:** `VITE_LIFF_ID` ở client chỉ là LIFF ID, còn `LINE_LIFF_URL` ở server dùng cho Messaging/Rich Menu phải là public LIFF URL dạng `https://liff.line.me/<LIFF_ID>`. Không copy URL trang quản trị `https://developers.line.biz/...` vào biến này. LIFF Endpoint URL trong LINE Developers phải trỏ về frontend app để callback chạy được route `/liff`; các link gửi qua LINE nên dùng `https://liff.line.me/<LIFF_ID>?redirect=%2Fmember...`. Sau khi build server, có thể chạy `npm run config:check` để kiểm tra env trước khi `npm start`.
 
@@ -146,8 +146,7 @@ Mở `server/.env` và điền các giá trị sau:
 ```bash
 # Trong thư mục server/
 npm install
-npm run db:migrate        # Chạy Prisma migration, tạo schema DB
-npm run db:seed           # Tạo dữ liệu mẫu và tài khoản mặc định
+npm run prisma:push       # Đồng bộ schema Prisma lên database
 npm run dev               # Dev server: http://localhost:3000
 ```
 
@@ -197,8 +196,8 @@ npm run dev               # http://localhost:5173
 | `npm start` | Chạy bản build (`node dist/index.js`) |
 | `npm run lint` | ESLint cho `src/` |
 | `npm run format` | Prettier format `src/` |
-| `npm run db:migrate` | Áp dụng Prisma migration |
-| `npm run db:seed` | Tạo dữ liệu mẫu và tài khoản mặc định |
+| `npm run prisma:push` | Đồng bộ schema Prisma lên database |
+| `npm run db:safety:check` | Chặn entrypoint database destructive trong CI |
 
 ---
 
