@@ -373,7 +373,7 @@ function SavedPlanCard({
                 </>
               ) : (
                 <>
-                  <Pencil size={13} /> {t('workout.myPlan.buttonEdit')}
+                  <Pencil size={13} />
                 </>
               )}
             </button>

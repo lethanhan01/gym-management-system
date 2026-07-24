@@ -788,21 +788,21 @@ export default function MemberPlanBuilderPage() {
         </div>
       )}
 
-      {/* Floating activate bar — left-20 (80px) clears the collapsed sidebar rail */}
-      <div className="fixed bottom-0 left-20 right-0 px-6 py-4 rogym-sx-e122cbce">
-        <div className="flex items-center justify-between gap-4">
-          <p className="text-sm rogym-sx-d88f932f">
+      {/* Floating action bar — clears the desktop sidebar and mobile bottom navigation. */}
+      <div className="fixed bottom-[calc(var(--rogym-bottom-nav-height)+env(safe-area-inset-bottom,0px))] left-0 right-0 z-[45] px-4 py-3 rogym-sx-e122cbce md:bottom-0 md:left-20 md:z-auto md:px-6 md:py-4">
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between md:gap-4">
+          <p className="w-full text-sm rogym-sx-d88f932f md:w-auto">
             {t('workout.planBuilder.floatingBar.summary', { days: plan?.days?.length ?? 0, exercises: exerciseCount })}
             {!canActivate && (
               <span className="rogym-sx-5e5c39ab"> — {t('workout.planBuilder.floatingBar.validationError')}</span>
             )}
           </p>
-          <div className="flex items-center gap-2">
+          <div className="flex w-full flex-col gap-2 md:w-auto md:flex-row md:items-center">
             {/* Read-only plan: no activate/archive actions */}
             {readonly ? (
               <button
                 type="button"
-                className="rogym-btn rogym-btn--outline-white px-4"
+                className="rogym-btn rogym-btn--outline-white w-full justify-center px-4 md:w-auto"
                 onClick={() => navigate('/member/workout/plan')}
               >
                 <ArrowLeft size={15} /> {t('workout.planBuilder.buttonBack')}
@@ -810,15 +810,15 @@ export default function MemberPlanBuilderPage() {
             ) : activateConfirm ? (
               <>
                 {existingSelfPlan ? (
-                  <span className="text-xs text-amber-200">
+                  <span className="break-words text-xs text-amber-200">
                     {t('workout.planBuilder.confirmActivateReplace', { name: existingSelfPlan.name })}
                   </span>
                 ) : (
-                  <span className="text-xs rogym-sx-5e5c39ab">{t('workout.planBuilder.confirmActivate')}</span>
+                  <span className="break-words text-xs rogym-sx-5e5c39ab">{t('workout.planBuilder.confirmActivate')}</span>
                 )}
                 <button
                   type="button"
-                  className="rogym-btn rogym-btn--primary px-4"
+                  className="rogym-btn rogym-btn--primary w-full justify-center px-4 md:w-auto"
                   disabled={submitting}
                   onClick={() => void activate()}
                 >
@@ -826,7 +826,7 @@ export default function MemberPlanBuilderPage() {
                 </button>
                 <button
                   type="button"
-                  className="rogym-btn rogym-btn--outline-white px-4"
+                  className="rogym-btn rogym-btn--outline-white w-full justify-center px-4 md:w-auto"
                   onClick={() => setActivateConfirm(false)}
                 >
                   {t('workout.planBuilder.floatingBar.buttonCancel')}
@@ -836,7 +836,7 @@ export default function MemberPlanBuilderPage() {
               <>
                 <button
                   type="button"
-                  className="rogym-btn rogym-btn--outline-white px-4"
+                  className="rogym-btn rogym-btn--outline-white w-full justify-center px-4 md:w-auto"
                   disabled={submitting}
                   onClick={saveToList}
                 >
@@ -845,7 +845,7 @@ export default function MemberPlanBuilderPage() {
                 {!hasActivePtPlan && (
                   <button
                     type="button"
-                    className="rogym-btn rogym-btn--primary px-6"
+                    className="rogym-btn rogym-btn--primary w-full justify-center px-6 md:w-auto"
                     disabled={!canActivate || submitting}
                     onClick={() => setActivateConfirm(true)}
                   >
@@ -863,8 +863,8 @@ export default function MemberPlanBuilderPage() {
         )}
       </div>
 
-      {/* Bottom padding for floating bar */}
-      <div className="h-20" />
+      {/* Mobile reserves room for the tallest action-bar state above the bottom navigation. */}
+      <div className="h-[calc(var(--rogym-bottom-nav-height)+env(safe-area-inset-bottom,0px)+18rem)] md:h-20" />
     </MemberPage>
   )
 }
