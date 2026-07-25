@@ -20,3 +20,12 @@ export function isTransientDatabaseError(error: unknown): boolean {
     message,
   )
 }
+
+/**
+ * A full Prisma pool cannot be repaired by disconnecting the shared client:
+ * that would interrupt healthy in-flight work and amplify the outage.
+ */
+export function isConnectionPoolTimeout(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : String(error)
+  return /timed out fetching a new connection from the connection pool|connection pool timeout/i.test(message)
+}

@@ -3,7 +3,7 @@ import { Reflector } from '@nestjs/core'
 import { Request } from 'express'
 import { Observable, defer, from, mergeMap, timer, catchError } from 'rxjs'
 import { DATABASE_RETRYABLE_KEY } from '../decorators/database-retryable.decorator'
-import { isTransientDatabaseError } from '../../prisma/database-errors'
+import { isConnectionPoolTimeout, isTransientDatabaseError } from '../../prisma/database-errors'
 import { PrismaService } from '../../prisma/prisma.service'
 
 @Injectable()
@@ -27,6 +27,10 @@ export class DatabaseRetryInterceptor implements NestInterceptor {
     return execute().pipe(
       catchError((error: unknown) => {
         if (!isTransientDatabaseError(error)) throw error
+
+        // Pool exhaustion is load/backpressure, not a broken socket. Disconnecting
+        // the singleton Prisma client here would abort unrelated in-flight queries.
+        if (isConnectionPoolTimeout(error)) throw error
 
         const jitterMs = 100 + Math.floor(Math.random() * 151)
         const startedAt = Date.now()

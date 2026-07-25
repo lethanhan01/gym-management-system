@@ -92,8 +92,7 @@ export class AuthService {
       throw new UnauthorizedException('Tài khoản đã bị khoá')
     }
 
-    // Tài khoản nhân sự được tạo bởi owner có mật khẩu mặc định, status pending_verification.
-    // Lần đăng nhập đầu tiên thành công → kích hoạt tài khoản thay vì block.
+    // Tai khoan pending_verification chi duoc kich hoat qua verify-email.
     if (user.status === UserStatus.pending_verification) {
       await this.audit.log({
         actorUserId: user.userId,
