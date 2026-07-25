@@ -2,7 +2,7 @@
 
 Nguồn: `server/src/workout/exercises`, `server/src/workout/workout-plans`, `server/src/workout/workout-logs`.
 
-Base paths: `/api/v1/exercises`, `/api/v1/workout-plans`, `/api/v1/workout-logs`
+Base paths: `/api/v1/exercises`, `/api/v1/exercise-catalog`, `/api/v1/workout-plans`, `/api/v1/workout-logs`
 
 Auth mặc định: JWT + `PermissionsGuard`.
 
@@ -12,10 +12,10 @@ Auth mặc định: JWT + `PermissionsGuard`.
 |---|---|---|---|
 | GET | `/api/v1/exercises` | `exercise.read` | Danh sách bài tập |
 | POST | `/api/v1/exercises` | `exercise.create` | Tạo bài tập |
-| GET | `/api/v1/exercises/external` | `exercise.read` | Tìm bài tập từ ExerciseDB |
-| POST | `/api/v1/exercises/import` | `exercise.create` | Nhập bài tập ngoài |
 | PATCH | `/api/v1/exercises/:id` | `exercise.update` | Cập nhật bài tập |
 | DELETE | `/api/v1/exercises/:id` | `exercise.delete` | Xóa mềm bài tập |
+| POST | `/api/v1/exercise-catalog/sync` | `exercise.sync` | Nạp snapshot ExerciseDB khi sync được bật |
+| GET | `/api/v1/exercise-catalog/sync-runs` | `exercise.sync` | Danh sách lượt nạp catalog |
 | GET | `/api/v1/workout-plans` | `workout_plan.create` | Danh sách giáo án tập |
 | POST | `/api/v1/workout-plans` | `workout_plan.create` | Tạo giáo án tập |
 | PATCH | `/api/v1/workout-plans/:id` | `workout_plan.update` | Cập nhật giáo án tập |
@@ -95,60 +95,27 @@ Response body:
 
 Errors: `400 VALIDATION_ERROR`, `401 UNAUTHORIZED`, `403 FORBIDDEN`, `409 DUPLICATE_VALUE`.
 
-### Tìm bài tập từ ExerciseDB - GET `/api/v1/exercises/external`
+### Nạp snapshot ExerciseDB - POST `/api/v1/exercise-catalog/sync`
 
-Query: `category` string optional, `name` string optional, `limit` string optional, `offset` string optional.
+Không có request body. Cần quyền `exercise.sync`; endpoint trả lỗi `503` khi `EXERCISEDB_SYNC_ENABLED=false` hoặc key không được cấu hình. Đây là thao tác quản trị có chủ đích, không phải API frontend.
 
-Request body: Không có.
-
-Response body:
-
-```json
-{
-  "success": true,
-  "data": [
-    {
-      "name": "Push Up",
-      "category": "strength",
-      "muscleGroup": "chest",
-      "equipmentNeeded": "body weight",
-      "imageUrl": "https://example.com/push-up.gif"
-    }
-  ]
-}
-```
-
-Errors: `401 UNAUTHORIZED`, `403 FORBIDDEN`.
-
-### Nhập bài tập ngoài - POST `/api/v1/exercises/import`
-
-Request body:
-
-```json
-{
-  "name": "Push Up",
-  "category": "strength",
-  "muscleGroup": "chest",
-  "equipmentNeeded": "body weight",
-  "description": "Hít đất",
-  "imageUrl": "https://example.com/push-up.gif"
-}
-```
+Với lượt nạp đầy đủ bằng RapidAPI free tier, dùng one-shot CLI thay vì endpoint: chạy `exercise:catalog:preflight -- --manifest <path>` trước, kiểm quota RapidAPI còn tối thiểu `2 * manifest.requestCount + 20`, sau đó đặt `EXERCISEDB_PAGE_SIZE=10`, `EXERCISEDB_UPSERT_BATCH_SIZE=100`, `EXERCISEDB_RETRY_LIMIT=0`, `EXERCISEDB_MIN_EXPECTED_COUNT=manifest.count` và chạy `exercise:catalog:sync -- --manifest <path>`. Preflight không khởi tạo Nest/Prisma và manifest không chứa API key. CLI từ chối manifest khác snapshot provider, page size/minimum/retry không đúng; scheduler bị ép tắt.
 
 Response body:
 
 ```json
 {
   "success": true,
-  "data": {
-    "exerciseId": "2",
-    "name": "Push Up",
-    "category": "strength"
-  }
+  "started": true,
+  "run": { "syncRunId": "1", "status": "succeeded", "fetchedCount": 1300 }
 }
 ```
 
-Errors: `400 VALIDATION_ERROR`, `401 UNAUTHORIZED`, `403 FORBIDDEN`, `409 DUPLICATE_VALUE`.
+### Lịch sử nạp catalog - GET `/api/v1/exercise-catalog/sync-runs`
+
+Query: `limit` number optional (tối đa 100). Cần quyền `exercise.sync`.
+
+`imageUrl` của catalog ExerciseDB là URL ảnh do provider cung cấp; metadata catalog nằm trong database nhưng ảnh vẫn được tải từ host ngoài.
 
 ### Cập nhật bài tập - PATCH `/api/v1/exercises/:id`
 

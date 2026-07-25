@@ -16,7 +16,10 @@ export interface Exercise {
   createdByStaffId: string | null
   createdAt: string
   deletedAt: string | null
+  source?: 'legacy' | 'manual' | 'exercisedb'
 }
+
+export interface ExerciseCatalogPage { data: Exercise[]; meta: { page: number; pageSize: number; total: number; totalPages: number } }
 
 export interface WorkoutPlanExercise {
   planExerciseId: string
@@ -202,9 +205,13 @@ const workoutService = {
   async getExercises(params?: {
     category?: ExerciseCategory
     muscleGroup?: string
-  }): Promise<Exercise[]> {
-    const res = await api.get<{ success: boolean; data: Exercise[] }>('/exercises', { params })
-    return res.data.data
+    equipment?: string
+    q?: string
+    page?: number
+    pageSize?: number
+  }): Promise<ExerciseCatalogPage> {
+    const res = await api.get<{ success: boolean } & ExerciseCatalogPage>('/exercises', { params })
+    return { data: res.data.data, meta: res.data.meta }
   },
 
   async createExercise(dto: CreateExerciseDto): Promise<Exercise> {

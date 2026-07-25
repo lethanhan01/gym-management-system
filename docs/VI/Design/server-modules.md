@@ -195,10 +195,10 @@ Controller nằm trong `payments/payments.controller.ts`, không phải module r
 |--------|------|-----------|-------|
 | GET | `/exercises` | `exercise.read` | Thư viện bài tập |
 | POST | `/exercises` | `exercise.create` | Tạo bài tập |
-| GET | `/exercises/external` | `exercise.read` | Tìm kiếm DB bài tập ngoài |
-| POST | `/exercises/import` | `exercise.create` | Import từ DB ngoài |
 | PATCH | `/exercises/:id` | `exercise.update` | Cập nhật bài tập |
 | DELETE | `/exercises/:id` | `exercise.delete` | Xoá bài tập (soft) |
+| POST | `/exercise-catalog/sync` | `exercise.sync` | Nạp snapshot ExerciseDB khi sync được bật |
+| GET | `/exercise-catalog/sync-runs` | `exercise.sync` | Xem các lượt nạp catalog |
 
 ### Workout — Plans (`/api/v1/workout-plans`)
 

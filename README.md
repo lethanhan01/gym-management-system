@@ -128,7 +128,10 @@ Mở `server/.env` và điền các giá trị sau:
 | `CLIENT_URL` | URL frontend, ví dụ `http://localhost:5173` |
 | `PORT` | Cổng server (mặc định `3000`) |
 | `DEMO_MASTER_OTP` | *(Tùy chọn)* OTP tĩnh cho demo — **không set trên production** |
-| `EXERCISEDB_API_KEY` | *(Tùy chọn)* API key RapidAPI ExerciseDB, dùng cho script fetch bài tập |
+| `EXERCISEDB_API_KEY` | *(Tùy chọn)* API key RapidAPI ExerciseDB; chỉ cần khi chủ động nạp snapshot catalog |
+| `EXERCISEDB_SYNC_ENABLED` | Đặt `true` tạm thời khi chạy `cd server; npm run exercise:catalog:sync`; mặc định `false` |
+| `EXERCISEDB_SCHEDULER_ENABLED` | Bật cron sync định kỳ; giữ `false` cho nạp một lần |
+| `EXERCISEDB_MIN_EXPECTED_COUNT` | Ngưỡng record tối thiểu để chặn payload ExerciseDB bị cắt ngắn; chốt từ staging trước production |
 | `LINE_CHANNEL_ID` | *(Tùy chọn)* LINE channel/LIFF ID dùng để verify LINE ID token |
 | `LINE_MESSAGING_ENABLED` | `true` khi bật LINE Messaging webhook/push/reminder; mặc định `false` |
 | `LINE_CHANNEL_SECRET` | Bắt buộc khi `LINE_MESSAGING_ENABLED=true`; lấy từ LINE Messaging API channel |
@@ -138,6 +141,10 @@ Mở `server/.env` và điền các giá trị sau:
 | `LINE_REMINDER_MINUTES` | Số phút gửi nhắc lịch tập qua LINE trước giờ bắt đầu, mặc định `30` |
 
 > **Supabase:** Dùng **Session pooler** (port 5432) cho `DATABASE_URL`, cùng `DB_CONNECTION_MODE=supavisor-session`, `sslmode=require` và `connection_limit=5`; không thêm `pgbouncer=true`. Dùng **Direct connection** (port 5432) hoặc Session pooler làm `DIRECT_URL` cho Prisma DDL. URL-encode ký tự đặc biệt trong mật khẩu nếu có.
+
+### Nạp snapshot ExerciseDB một lần
+
+Thực hiện ở staging trước, chốt `EXERCISEDB_MIN_EXPECTED_COUNT` từ lượt staging thành công, tạo backup database production, rồi inject key qua secret runtime (không commit vào `.env`). Trong thư mục `server/`, đặt `EXERCISEDB_SYNC_ENABLED=true`, giữ `EXERCISEDB_SCHEDULER_ENABLED=false` và chạy `npm run exercise:catalog:sync` hai lần. Lượt hai phải có `insertedCount=0`, `updatedCount=0`, `hiddenCount=0` nếu provider không đổi. Sau nghiệm thu, đặt cả hai cờ thành `false`, gỡ API key và restart backend. Ảnh ExerciseDB vẫn tải từ URL của provider.
 
 > **LINE deploy:** `VITE_LIFF_ID` ở client chỉ là LIFF ID, còn `LINE_LIFF_URL` ở server dùng cho Messaging/Rich Menu phải là public LIFF URL dạng `https://liff.line.me/<LIFF_ID>`. Không copy URL trang quản trị `https://developers.line.biz/...` vào biến này. LIFF Endpoint URL trong LINE Developers phải trỏ về frontend app để callback chạy được route `/liff`; các link gửi qua LINE nên dùng `https://liff.line.me/<LIFF_ID>?redirect=%2Fmember...`. Sau khi build server, có thể chạy `npm run config:check` để kiểm tra env trước khi `npm start`.
 

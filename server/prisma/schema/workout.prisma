@@ -2,19 +2,58 @@ model Exercise {
   exerciseId       BigInt                @id @default(autoincrement()) @map("exercise_id")
   name             String                @db.VarChar(100)
   category         ExerciseCategory
-  muscleGroup      String?               @map("muscle_group") @db.VarChar(100)
+  muscleGroup      String?               @map("muscle_group") @db.Text
   equipmentNeeded  String?               @map("equipment_needed") @db.VarChar(100)
   description      String?
   createdByStaffId BigInt?               @map("created_by_staff_id")
   deletedAt        DateTime?             @map("deleted_at") @db.Timestamp(6)
   createdAt        DateTime              @default(now()) @map("created_at") @db.Timestamp(6)
   imageUrl         String?               @map("image_url") @db.VarChar(1000)
+  source           ExerciseSource        @default(legacy)
+  externalId       String?               @map("external_id") @db.VarChar(191)
+  contentHash      String?               @map("content_hash") @db.VarChar(64)
+  lastSeenSyncRunId BigInt?              @map("last_seen_sync_run_id")
+  catalogVisible   Boolean               @default(false) @map("catalog_visible")
+  lastSyncedAt     DateTime?             @map("last_synced_at") @db.Timestamp(6)
+  descriptionOverride String?            @map("description_override")
+  imageUrlOverride String?               @map("image_url_override") @db.VarChar(1000)
   createdByStaff   Staff?                @relation(fields: [createdByStaffId], references: [staffId])
   planExercises    WorkoutPlanExercise[]
 
   @@index([category])
   @@index([muscleGroup])
+  @@unique([source, externalId])
+  @@index([catalogVisible, category, name])
+  @@index([catalogVisible, muscleGroup])
+  @@index([catalogVisible, equipmentNeeded])
   @@map("exercises")
+}
+
+model ExerciseCatalogSyncRun {
+  syncRunId       BigInt                 @id @default(autoincrement()) @map("sync_run_id")
+  status          ExerciseSyncRunStatus
+  executionToken  String                 @map("execution_token") @db.VarChar(64)
+  startedAt       DateTime               @default(now()) @map("started_at") @db.Timestamp(6)
+  completedAt     DateTime?              @map("completed_at") @db.Timestamp(6)
+  fetchedCount    Int                    @default(0) @map("fetched_count")
+  insertedCount   Int                    @default(0) @map("inserted_count")
+  updatedCount    Int                    @default(0) @map("updated_count")
+  unchangedCount  Int                    @default(0) @map("unchanged_count")
+  hiddenCount     Int                    @default(0) @map("hidden_count")
+  fallbackMappedCount Int                @default(0) @map("fallback_mapped_count")
+  errorMessage    String?                @map("error_message")
+
+  @@index([status, startedAt(sort: Desc)])
+  @@map("exercise_catalog_sync_runs")
+}
+
+model ExerciseCatalogSyncLock {
+  lockName        String                 @id @map("lock_name") @db.VarChar(64)
+  executionToken  String?                @map("execution_token") @db.VarChar(64)
+  leaseExpiresAt  DateTime?              @map("lease_expires_at") @db.Timestamp(6)
+  updatedAt       DateTime               @updatedAt @map("updated_at") @db.Timestamp(6)
+
+  @@map("exercise_catalog_sync_locks")
 }
 
 model WorkoutPlan {
@@ -138,6 +177,23 @@ enum ExerciseCategory {
   balance
 
   @@map("exercise_category")
+}
+
+enum ExerciseSource {
+  legacy
+  manual
+  exercisedb
+
+  @@map("exercise_source")
+}
+
+enum ExerciseSyncRunStatus {
+  running
+  succeeded
+  failed
+  skipped
+
+  @@map("exercise_sync_run_status")
 }
 
 enum WorkoutPlanStatus {

@@ -45,17 +45,18 @@ export default function ExercisesPage() {
     setLoading(true)
     setError(null)
     try {
-      setExercises(
-        await workoutService.getExercises({
+      const result = await workoutService.getExercises({
           category: category ? (category as ExerciseCategory) : undefined,
+          q: search || undefined,
+          pageSize: 100,
         })
-      )
+      setExercises(result.data)
     } catch (err) {
       setError(getApiError(err, t('exercises.error.loadFailed')))
     } finally {
       setLoading(false)
     }
-  }, [category, t])
+  }, [category, search, t])
 
   useEffect(() => {
     void load()

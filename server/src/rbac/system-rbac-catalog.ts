@@ -64,6 +64,7 @@ export const SYSTEM_PERMISSIONS: readonly SystemPermissionDefinition[] = [
   { code: 'exercise.create', name: 'Tạo bài tập', description: 'Tạo hoặc import bài tập' },
   { code: 'exercise.update', name: 'Cập nhật bài tập', description: 'Cập nhật bài tập' },
   { code: 'exercise.delete', name: 'Xóa bài tập', description: 'Xóa bài tập' },
+  { code: 'exercise.sync', name: 'Đồng bộ catalog bài tập', description: 'Chạy và xem đồng bộ ExerciseDB' },
   { code: 'workout_plan.create', name: 'Tạo giáo án', description: 'Tạo giáo án tập luyện' },
   { code: 'workout_plan.update', name: 'Cập nhật giáo án', description: 'Cập nhật giáo án tập luyện' },
   { code: 'workout_plan.delete', name: 'Xóa giáo án', description: 'Xóa giáo án tập luyện' },

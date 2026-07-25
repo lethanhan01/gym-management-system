@@ -244,8 +244,8 @@ export default function MemberPlanBuilderPage() {
     if (phase !== 'build') return
     setLoadingExercises(true)
     workoutService
-      .getExercises()
-      .then(setExercises)
+      .getExercises({ pageSize: 100 })
+      .then((result) => setExercises(result.data))
       .catch(() => setError(t('workout.planBuilder.errorLoadExercises')))
       .finally(() => setLoadingExercises(false))
   }, [phase, t])

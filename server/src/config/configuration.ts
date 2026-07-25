@@ -1,4 +1,4 @@
-import { IsEmail, IsEnum, IsIn, IsNumber, IsOptional, IsString, Max, Min, validateSync } from 'class-validator'
+import { IsBooleanString, IsEmail, IsEnum, IsIn, IsNumber, IsOptional, IsString, Max, Min, validateSync } from 'class-validator'
 import { plainToInstance } from 'class-transformer'
 
 enum NodeEnv {
@@ -72,6 +72,17 @@ export class EnvironmentVariables {
   @IsOptional() @IsNumber() LINE_REMINDER_MINUTES: number = 30
   @IsOptional() @IsString() LINE_MESSAGING_ENABLED: string = 'false'
   @IsOptional() @IsIn(['vi', 'ja']) LINE_MESSAGE_LOCALE: 'vi' | 'ja' = 'vi'
+
+  @IsOptional() @IsString() EXERCISEDB_API_KEY?: string
+  @IsOptional() @IsBooleanString() EXERCISEDB_SYNC_ENABLED: string = 'false'
+  @IsOptional() @IsBooleanString() EXERCISEDB_SCHEDULER_ENABLED: string = 'false'
+  @IsOptional() @IsString() EXERCISEDB_SYNC_CRON: string = '0 3 * * 0'
+  @IsOptional() @IsNumber() @Min(1000) EXERCISEDB_TIMEOUT_MS: number = 15000
+  @IsOptional() @IsNumber() @Min(1) @Max(100) EXERCISEDB_PAGE_SIZE: number = 50
+  @IsOptional() @IsNumber() @Min(1) @Max(500) EXERCISEDB_UPSERT_BATCH_SIZE: number = 50
+  @IsOptional() @IsNumber() @Min(1) @Max(100000) EXERCISEDB_MIN_EXPECTED_COUNT: number = 1
+  @IsOptional() @IsNumber() @Min(0) @Max(10) EXERCISEDB_RETRY_LIMIT: number = 3
+  @IsOptional() @IsNumber() @Min(15) @Max(3600) EXERCISEDB_LOCK_LEASE_SECONDS: number = 300
 }
 
 export function validateConfig(raw: Record<string, unknown>): EnvironmentVariables {
@@ -88,7 +99,23 @@ export function validateConfig(raw: Record<string, unknown>): EnvironmentVariabl
   validateDatabaseConnectionConfig(config, raw)
   validateLineMessagingConfig(config)
   validateSmtpConfig(config)
+  validateExerciseDbConfig(config)
   return config
+}
+
+function validateExerciseDbConfig(config: EnvironmentVariables) {
+  const syncEnabled = config.EXERCISEDB_SYNC_ENABLED === 'true'
+  const schedulerEnabled = config.EXERCISEDB_SCHEDULER_ENABLED === 'true'
+  if (schedulerEnabled && !syncEnabled) {
+    throw new Error('Invalid environment configuration:\n  - EXERCISEDB_SCHEDULER_ENABLED: requires EXERCISEDB_SYNC_ENABLED=true')
+  }
+  if (!syncEnabled) return
+  if (!config.EXERCISEDB_API_KEY?.trim()) {
+    throw new Error('Invalid environment configuration:\n  - EXERCISEDB_API_KEY: required when EXERCISEDB_SYNC_ENABLED=true')
+  }
+  if (schedulerEnabled && config.EXERCISEDB_SYNC_CRON.trim().split(/\s+/).length !== 5) {
+    throw new Error('Invalid environment configuration:\n  - EXERCISEDB_SYNC_CRON: must be a five-part cron expression')
+  }
 }
 
 function validateDatabaseConnectionConfig(

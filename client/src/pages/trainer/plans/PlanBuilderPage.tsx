@@ -76,11 +76,11 @@ export default function TrainerPlanBuilderPage() {
     try {
       const [planData, exerciseData] = await Promise.all([
         workoutService.getPlan(id),
-        workoutService.getExercises(),
+        workoutService.getExercises({ pageSize: 100 }),
       ])
       setPlan(planData)
       if (planData.status === 'archived') setWriteBlocked(true)
-      setExercises(exerciseData)
+      setExercises(exerciseData.data)
     } catch (err) {
       setError(getApiError(err, t('plans.builder.error.loadFailed')))
     } finally {

@@ -129,3 +129,19 @@ describe('validateConfig database connection', () => {
     expect(() => validateConfig({ ...base(), NODE_ENV: 'production' })).toThrow('DB_CONNECTION_MODE')
   })
 })
+
+describe('validateConfig ExerciseDB sync', () => {
+  it('requires a RapidAPI key only when the sync is enabled', () => {
+    expect(() => validateConfig({ ...lineConfigBaseEnv, EXERCISEDB_SYNC_ENABLED: 'true' })).toThrow('EXERCISEDB_API_KEY')
+    expect(validateConfig(lineConfigBaseEnv).EXERCISEDB_SYNC_ENABLED).toBe('false')
+  })
+
+  it('accepts a configured RapidAPI sync without provider URL overrides', () => {
+    expect(validateConfig({ ...lineConfigBaseEnv, EXERCISEDB_SYNC_ENABLED: 'true', EXERCISEDB_API_KEY: 'rapid-key' }).EXERCISEDB_API_KEY).toBe('rapid-key')
+  })
+
+  it('keeps the ExerciseDB scheduler disabled unless explicitly enabled', () => {
+    expect(validateConfig(lineConfigBaseEnv).EXERCISEDB_SCHEDULER_ENABLED).toBe('false')
+    expect(() => validateConfig({ ...lineConfigBaseEnv, EXERCISEDB_SCHEDULER_ENABLED: 'true' })).toThrow('requires EXERCISEDB_SYNC_ENABLED')
+  })
+})

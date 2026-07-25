@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Dumbbell, Search, SlidersHorizontal, X } from 'lucide-react'
@@ -12,7 +12,7 @@ import {
 import workoutService, { type Exercise, type ExerciseCategory } from '@/services/workout.service'
 import { getApiError } from '@/lib/api-error'
 import { ExerciseCard, ExerciseCategoryFilterPopover } from '@/components/workout/ExerciseUI'
-import { filterExercises, getExerciseCategoryLabel } from '@/components/workout/exercise-data'
+import { getExerciseCategoryLabel } from '@/components/workout/exercise-data'
 
 export default function MemberExercisesPage() {
   const { t } = useTranslation('member')
@@ -32,19 +32,20 @@ export default function MemberExercisesPage() {
     setLoading(true)
     setError(null)
     try {
-      setExercises(await workoutService.getExercises({ category: category || undefined }))
+      const result = await workoutService.getExercises({ category: category || undefined, q: search || undefined, pageSize: 100 })
+      setExercises(result.data)
     } catch (err) {
       setError(getApiError(err, t('workout.exercises.errorLoad')))
     } finally {
       setLoading(false)
     }
-  }, [category, t])
+  }, [category, search, t])
 
   useEffect(() => {
     void load()
   }, [load])
 
-  const filtered = useMemo(() => filterExercises(exercises, search, '', true), [exercises, search])
+  const filtered = exercises
 
   const activeCount = category ? 1 : 0
 

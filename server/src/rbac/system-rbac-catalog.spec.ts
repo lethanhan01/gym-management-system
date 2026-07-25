@@ -27,13 +27,13 @@ function requiredPermissionCodes(): string[] {
 }
 
 describe('system RBAC catalog', () => {
-  it('contains 50 unique permissions and covers every decorated controller permission', () => {
+  it('contains 51 unique permissions and covers every decorated controller permission', () => {
     const catalogCodes = SYSTEM_PERMISSIONS.map((permission) => permission.code)
     const decoratedCodes = requiredPermissionCodes()
 
-    expect(catalogCodes).toHaveLength(50)
-    expect(new Set(catalogCodes).size).toBe(50)
-    expect(decoratedCodes).toHaveLength(47)
+    expect(catalogCodes).toHaveLength(51)
+    expect(new Set(catalogCodes).size).toBe(51)
+    expect(decoratedCodes).toHaveLength(48)
     expect(decoratedCodes.every((code) => catalogCodes.includes(code))).toBe(true)
   })
 
@@ -50,6 +50,7 @@ describe('system RBAC catalog', () => {
 
   it('grants the intended new and sensitive permissions', () => {
     expect(SYSTEM_ROLE_PERMISSIONS.owner).toEqual(SYSTEM_PERMISSIONS.map((permission) => permission.code))
+    expect(SYSTEM_ROLE_PERMISSIONS.owner).toContain('exercise.sync')
     expect(SYSTEM_ROLE_PERMISSIONS.staff).toEqual(expect.arrayContaining(['subscription.cancel', 'staff.update']))
     expect(SYSTEM_ROLE_PERMISSIONS.trainer).toEqual(expect.arrayContaining([
       'staff.update', 'exercise.create', 'exercise.update', 'exercise.delete', 'workout_plan.create',

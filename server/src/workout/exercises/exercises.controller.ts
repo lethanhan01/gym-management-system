@@ -20,7 +20,6 @@ import { AuthenticatedUser } from '../../auth/types/jwt-payload.interface'
 import { ExercisesService } from './exercises.service'
 import { CreateExerciseDto } from './dto/create-exercise.dto'
 import { UpdateExerciseDto } from './dto/update-exercise.dto'
-import { ImportExerciseDto } from './dto/import-exercise.dto'
 
 @Controller('exercises')
 @DatabaseRetryable()
@@ -30,9 +29,9 @@ export class ExercisesController {
 
   @Get()
   @RequirePermission('exercise.read')
-  async list(@Query('category') category?: string, @Query('muscleGroup') muscleGroup?: string) {
-    const data = await this.exercises.findAll({ category, muscleGroup })
-    return { success: true, data }
+  async list(@Query() query: { q?: string; category?: string; muscleGroup?: string; equipment?: string; page?: string; pageSize?: string }) {
+    const result = await this.exercises.findAll({ ...query, page: query.page ? Number(query.page) : undefined, pageSize: query.pageSize ? Number(query.pageSize) : undefined })
+    return { success: true, ...result }
   }
 
   @Post()
@@ -43,28 +42,10 @@ export class ExercisesController {
     return { success: true, data }
   }
 
-  @Get('external')
-  @RequirePermission('exercise.read')
-  async listExternal(
-    @Query('category') category?: string,
-    @Query('name') name?: string,
-    @Query('limit') limit?: string,
-    @Query('offset') offset?: string
-  ) {
-    const data = await this.exercises.findFromExerciseDb({
-      category,
-      name,
-      limit: limit ? parseInt(limit, 10) : undefined,
-      offset: offset ? parseInt(offset, 10) : undefined,
-    })
-    return { success: true, data }
-  }
-
-  @Post('import')
-  @HttpCode(HttpStatus.OK)
-  @RequirePermission('exercise.create')
-  async importExternal(@Body() dto: ImportExerciseDto) {
-    const data = await this.exercises.importFromExerciseDb(dto)
+  @Delete(':id/overrides')
+  @RequirePermission('exercise.update')
+  async clearOverrides(@Param('id', ParseIntPipe) id: number, @CurrentUser() user: AuthenticatedUser) {
+    const data = await this.exercises.clearOverrides(BigInt(id), user)
     return { success: true, data }
   }
 
