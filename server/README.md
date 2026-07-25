@@ -29,7 +29,7 @@ Phiên bản Node có thể khoá tại [`.nvmrc`](./.nvmrc).
 server/
 ├── prisma/
 │   ├── schema.prisma          # 20 model + 14 enum (khớp Database.md, source-of-truth)
-│   └── seed.ts                # Seed RBAC + user/staff/member mẫu
+│   └── sync-rbac.ts           # Đồng bộ catalog và mapping RBAC hệ thống
 ├── src/
 │   ├── main.ts                # Bootstrap: helmet, CORS, ValidationPipe, prefix api/v1
 │   ├── app.module.ts
@@ -67,6 +67,7 @@ cp .env.example .env          # chỉnh DATABASE_URL, DIRECT_URL, JWT_SECRET, ..
 npm install
 npm run prisma:push           # sync schema.prisma → DB (tạo bảng/enum nếu chưa có)
 npm run prisma:generate       # regenerate Prisma Client sau khi đổi schema
+npm run prisma:sync:rbac      # tạo/cập nhật RBAC system catalog + mapping
 npm run dev                   # http://localhost:3000 — Nest watch mode
 ```
 
@@ -114,6 +115,7 @@ npm run start:prod            # node dist/main.js
 | `npm run format` | Prettier |
 | `npm run prisma:push` | `prisma db push` — sync schema.prisma → DB (idempotent) |
 | `npm run prisma:generate` | `prisma generate` — regenerate Prisma Client |
+| `npm run prisma:sync:rbac` | Đồng bộ 50 permission và mapping `owner`/`staff`/`trainer`/`member`; chỉ cleanup `notification.send` khi không có custom group tham chiếu |
 | `npm run prisma:studio` | Prisma Studio |
 | `npm run db:safety:check` | Chặn entrypoint database destructive trong CI |
 
@@ -147,7 +149,7 @@ Sau khi thêm `emailNormalized`, chạy `npm run email:backfill` trước để 
 
 `PrismaService` **không** gọi `$connect()` lúc bootstrap — ứng dụng vẫn chạy được khi DB tạm lỗi; `/health` báo `db: down`, Prisma kết nối khi có truy vấn đầu tiên.
 
-Production không có lệnh seed hoặc reset dữ liệu. Trước mọi schema change, tạo backup/clone, review SQL của `prisma db push`, rồi chạy `npm run db:safety:check`.
+Production không có lệnh seed hoặc reset dữ liệu. Khi khởi tạo DB mới hoặc deploy thay đổi RBAC, tạo backup/clone trước, rồi chạy theo thứ tự `npm run prisma:push`, `npm run prisma:sync:rbac`, và restart toàn bộ backend replica. Script RBAC chỉ xóa permission deprecated `notification.send` khi nó không còn được custom group sử dụng; nếu phát hiện custom assignment, toàn bộ transaction dừng an toàn. Script không thể xóa permission cache in-memory trong các process đang chạy, nên không dựa vào TTL cache để rollout. Trước mọi schema change, review SQL của `prisma db push` và chạy `npm run db:safety:check`.
 
 ### Supabase (PostgreSQL)
 

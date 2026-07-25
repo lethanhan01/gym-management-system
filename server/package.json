@@ -17,6 +17,7 @@
     "prisma:generate": "dotenv -e .env -e .env.local -- prisma generate",
     "prisma:push": "dotenv -e .env -e .env.local -- prisma db push",
     "email:backfill": "dotenv -e .env -e .env.local -- ts-node scripts/backfill-email-normalized.ts",
+    "prisma:sync:rbac": "dotenv -e .env -e .env.local -- ts-node prisma/sync-rbac.ts",
     "prisma:sync:attendance-self-checkin": "dotenv -e .env -e .env.local -- ts-node prisma/sync-attendance-self-checkin.ts",
     "prisma:smoke": "dotenv -e .env -e .env.local -- ts-node --transpile-only scripts/prisma-runtime-smoke.ts",
     "prisma:sync:trainer-minh": "dotenv -e .env -e .env.local -- ts-node prisma/sync-trainer-minh.ts",

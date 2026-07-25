@@ -132,16 +132,22 @@ export class ReportsService {
         if (!current || sub.endDate > current) maxEndByMember.set(key, sub.endDate)
       }
 
+      const memberIds = Array.from(maxEndByMember.keys()).map((id) => BigInt(id))
+
+      const futureSubscriptions = await this.prisma.subscription.findMany({
+        where: {
+          memberId: { in: memberIds },
+        },
+        select: { memberId: true, startDate: true },
+      })
+
       let renewed = 0
-      for (const [memberId, maxEndDate] of maxEndByMember) {
-        const next = await this.prisma.subscription.findFirst({
-          where: {
-            memberId: BigInt(memberId),
-            startDate: { gt: maxEndDate },
-          },
-          select: { subscriptionId: true },
-        })
-        if (next) renewed += 1
+      for (const [memberIdStr, maxEndDate] of maxEndByMember) {
+        const memberId = BigInt(memberIdStr)
+        const hasRenewed = futureSubscriptions.some(
+          (sub) => sub.memberId === memberId && sub.startDate > maxEndDate
+        )
+        if (hasRenewed) renewed += 1
       }
 
       const eligible = maxEndByMember.size
