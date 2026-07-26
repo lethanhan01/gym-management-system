@@ -580,7 +580,6 @@ import { PackagePicker, PackagePickerSkeleton } from '@/components/PackagePicker
     endDateLabel="Ngày hết hạn"
     onContinue={handleContinue}
     currentPackageId={currentPkg?.packageId}
-    fallbackPackage={fallbackPkg}
   />
 )}
 ```
@@ -597,7 +596,6 @@ Props:
 | `endDateLabel` | `string` | Label cho endDate |
 | `onContinue` | `() => void` | Callback khi nhấn tiếp tục |
 | `currentPackageId?` | `string` | Đánh dấu gói đang dùng |
-| `fallbackPackage?` | `Package \| null` | Gói fallback khi không tìm thấy selectedId |
 
 Dùng `PackagePickerSkeleton` làm loading state, không tự tạo skeleton khác.
 

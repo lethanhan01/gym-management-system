@@ -1,76 +1,127 @@
-import { useEffect, useRef, useState } from 'react'
-import { ArrowRight, Calendar, Check, CheckCircle2, UserCheck, UserX } from 'lucide-react'
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { ArrowLeft, ArrowRight, Calendar, Check, CheckCircle2, Expand, UserCheck, UserX, X } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import type { Package } from '@/services/package.service'
 import { formatVnd } from '@/lib/currency'
 import { parsePackageBenefits } from '@/lib/package'
 import { formatDate } from '@/lib/date'
+import strengthImage from '@/assets/package-gallery/package-strength.jpg'
+import cardioImage from '@/assets/package-gallery/package-cardio.jpg'
+import trainingImage from '@/assets/package-gallery/package-training.jpg'
+import recoveryImage from '@/assets/package-gallery/package-recovery.jpg'
 
-const ITEM_HEIGHT = 84
+const PACKAGE_IMAGES = [strengthImage, cardioImage, trainingImage, recoveryImage]
+const CLOSE_DURATION_MS = 180
 
-function useCenteredPackagePicker(
-  packages: Package[],
-  selectedId: string,
-  onSelect: (packageId: string) => void,
-) {
-  const scrollRef = useRef<HTMLDivElement>(null)
-  const initialScroll = useRef(false)
-  const isJumping = useRef(false)
-  const [centerDisplayIndex, setCenterDisplayIndex] = useState(0)
+type CarouselScrollBehavior = 'auto' | 'smooth'
+
+type GalleryImage = {
+  src: string
+  alt: string
+}
+
+function PackageImageLightbox({
+  images,
+  activeIndex,
+  onClose,
+  onPrevious,
+  onNext,
+}: {
+  images: GalleryImage[]
+  activeIndex: number | null
+  onClose: () => void
+  onPrevious: () => void
+  onNext: () => void
+}) {
+  const dialogRef = useRef<HTMLDialogElement>(null)
+  const [isClosing, setIsClosing] = useState(false)
 
   useEffect(() => {
-    initialScroll.current = false
-  }, [packages])
+    const dialog = dialogRef.current
+    if (activeIndex === null || !dialog || dialog.open) return
+    dialog.showModal()
+  }, [activeIndex])
 
-  useEffect(() => {
-    if (!packages.length || !scrollRef.current || initialScroll.current) return
-    const selectedIndex = packages.findIndex((item) => item.packageId === selectedId)
-    const startIndex = packages.length + Math.max(selectedIndex, 0)
-    scrollRef.current.scrollTop = startIndex * ITEM_HEIGHT
-    setCenterDisplayIndex(startIndex)
-    initialScroll.current = true
-  }, [packages, selectedId])
-
-  function selectAt(displayIndex: number, smooth = false) {
-    const item = packages[((displayIndex % packages.length) + packages.length) % packages.length]
-    if (item) onSelect(item.packageId)
-    setCenterDisplayIndex(displayIndex)
-    if (smooth) {
-      scrollRef.current?.scrollTo({
-        top: displayIndex * ITEM_HEIGHT,
-        behavior: 'smooth',
-      })
+  function finishClose() {
+    const dialog = dialogRef.current
+    if (dialog?.open) {
+      dialog.close()
+      return
     }
+    setIsClosing(false)
+    onClose()
   }
 
-  function handleScroll() {
-    if (!scrollRef.current || isJumping.current || !packages.length) return
-    const scrollTop = scrollRef.current.scrollTop
-    const displayIndex = Math.round(scrollTop / ITEM_HEIGHT)
-    selectAt(displayIndex)
-
-    if (displayIndex < packages.length) {
-      isJumping.current = true
-      scrollRef.current.scrollTop = scrollTop + packages.length * ITEM_HEIGHT
-      requestAnimationFrame(() => {
-        isJumping.current = false
-      })
-    } else if (displayIndex >= packages.length * 2) {
-      isJumping.current = true
-      scrollRef.current.scrollTop = scrollTop - packages.length * ITEM_HEIGHT
-      requestAnimationFrame(() => {
-        isJumping.current = false
-      })
-    }
+  function requestClose() {
+    if (activeIndex === null || isClosing) return
+    setIsClosing(true)
+    window.setTimeout(finishClose, CLOSE_DURATION_MS)
   }
 
-  return { centerDisplayIndex, handleScroll, scrollRef, selectAt }
+  function handleNativeClose() {
+    if (!isClosing) onClose()
+    setIsClosing(false)
+  }
+
+  const image = activeIndex === null ? null : images[activeIndex]
+  const displayedIndex = activeIndex ?? 0
+  const { t } = useTranslation('member')
+
+  return (
+    <dialog
+      ref={dialogRef}
+      aria-modal="true"
+      aria-label={t('packagePicker.lightbox.dialogLabel')}
+      className={`rogym-package-lightbox ${isClosing ? 'is-closing' : ''}`}
+      onCancel={(event) => {
+        event.preventDefault()
+        requestClose()
+      }}
+      onClose={handleNativeClose}
+      onClick={(event) => {
+        if (event.target === event.currentTarget) requestClose()
+      }}
+    >
+      {image && (
+        <div className="rogym-package-lightbox__content">
+          <button
+            type="button"
+            className="rogym-package-lightbox__close"
+            aria-label={t('packagePicker.lightbox.close')}
+            onClick={requestClose}
+          >
+            <X size={20} />
+          </button>
+          <button
+            type="button"
+            className="rogym-package-lightbox__nav is-previous"
+            aria-label={t('packagePicker.lightbox.previous')}
+            onClick={onPrevious}
+          >
+            <ArrowLeft size={22} />
+          </button>
+          <img key={activeIndex} src={image.src} alt={image.alt} className="rogym-package-lightbox__image" />
+          <button
+            type="button"
+            className="rogym-package-lightbox__nav is-next"
+            aria-label={t('packagePicker.lightbox.next')}
+            onClick={onNext}
+          >
+            <ArrowRight size={22} />
+          </button>
+          <p className="rogym-package-lightbox__counter">
+            {t('packagePicker.lightbox.counter', { current: displayedIndex + 1, total: images.length })}
+          </p>
+        </div>
+      )}
+    </dialog>
+  )
 }
 
 export function PackagePickerSkeleton() {
   return (
-    <div className="grid gap-5 rogym-sx-44a5f107" >
-      {[0, 1].map((item) => (
+    <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+      {[0, 1, 2, 3].map((item) => (
         <div
           key={item}
           className="rogym-package-picker-skeleton animate-pulse rounded-2xl bg-[rgba(15,28,22,0.6)]"
@@ -84,7 +135,6 @@ export function PackagePicker({
   packages,
   selectedId,
   onSelect,
-  fallbackPackage,
   currentPackageId,
   startDate,
   endDate,
@@ -94,7 +144,6 @@ export function PackagePicker({
   packages: Package[]
   selectedId: string
   onSelect: (packageId: string) => void
-  fallbackPackage?: Package | null
   currentPackageId?: string
   startDate: Date
   endDate: Date | null
@@ -102,188 +151,202 @@ export function PackagePicker({
   onContinue: () => void
 }) {
   const { t } = useTranslation('member')
-  const [detailsVisible, setDetailsVisible] = useState(false)
-  const selectedPackage =
-    packages.find((item) => item.packageId === selectedId) ?? fallbackPackage ?? null
-  const displayItems = packages.length ? [...packages, ...packages, ...packages] : []
+  const [activeImageIndex, setActiveImageIndex] = useState<number | null>(null)
+  const galleryRef = useRef<HTMLDivElement>(null)
+  const cardRefs = useRef(new Map<string, HTMLElement>())
+  const hasInitialSelectionRef = useRef(false)
+  const previousSelectedIdRef = useRef<string | null>(null)
+  const pendingCardSelectionRef = useRef<string | null>(null)
+  const selectedPackage = packages.find((item) => item.packageId === selectedId) ?? null
+  const galleryImages = packages.map((item, index) => ({
+    src: PACKAGE_IMAGES[index % PACKAGE_IMAGES.length],
+    alt: t('packagePicker.imageAlt', { name: item.name }),
+  }))
   const benefits = parsePackageBenefits(selectedPackage?.benefits ?? null)
-  const { centerDisplayIndex, handleScroll, scrollRef, selectAt } =
-    useCenteredPackagePicker(packages, selectedId, onSelect)
+
+  function moveLightbox(direction: -1 | 1) {
+    setActiveImageIndex((index) => {
+      if (index === null || galleryImages.length === 0) return null
+      return (index + direction + galleryImages.length) % galleryImages.length
+    })
+  }
+
+  const centerPackage = useCallback((packageId: string, behavior: CarouselScrollBehavior) => {
+    const gallery = galleryRef.current
+    const card = cardRefs.current.get(packageId)
+    if (!gallery || !card || gallery.scrollWidth <= gallery.clientWidth + 1) return
+
+    const maxScrollLeft = gallery.scrollWidth - gallery.clientWidth
+    const targetScrollLeft = card.offsetLeft - (gallery.clientWidth - card.offsetWidth) / 2
+    gallery.scrollTo({
+      left: Math.min(Math.max(targetScrollLeft, 0), maxScrollLeft),
+      behavior,
+    })
+  }, [])
+
+  function selectedCardBehavior(): CarouselScrollBehavior {
+    return window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'
+  }
+
+  function handlePackageSelect(packageId: string) {
+    centerPackage(packageId, selectedCardBehavior())
+    if (packageId !== selectedId) pendingCardSelectionRef.current = packageId
+    onSelect(packageId)
+  }
+
+  useLayoutEffect(() => {
+    if (!selectedId || !cardRefs.current.has(selectedId)) return
+
+    if (!hasInitialSelectionRef.current) {
+      const isCardInitiatedSelection = pendingCardSelectionRef.current === selectedId
+      centerPackage(selectedId, isCardInitiatedSelection ? selectedCardBehavior() : 'auto')
+      pendingCardSelectionRef.current = null
+      hasInitialSelectionRef.current = true
+      previousSelectedIdRef.current = selectedId
+      return
+    }
+
+    if (previousSelectedIdRef.current !== selectedId) {
+      if (pendingCardSelectionRef.current !== selectedId) {
+        centerPackage(selectedId, selectedCardBehavior())
+      }
+      pendingCardSelectionRef.current = null
+      previousSelectedIdRef.current = selectedId
+    }
+  }, [centerPackage, packages, selectedId])
 
   useEffect(() => {
-    if (!selectedId) return
-    setDetailsVisible(false)
-    const timeout = window.setTimeout(() => setDetailsVisible(true), 20)
-    return () => window.clearTimeout(timeout)
-  }, [selectedId])
+    const gallery = galleryRef.current
+    if (!gallery) return
+
+    let wasOverflowing = gallery.scrollWidth > gallery.clientWidth + 1
+    const recenterWhenCarouselAppears = () => {
+      const isOverflowing = gallery.scrollWidth > gallery.clientWidth + 1
+      if (isOverflowing && !wasOverflowing && selectedId) centerPackage(selectedId, 'auto')
+      wasOverflowing = isOverflowing
+    }
+
+    const observer = typeof ResizeObserver === 'undefined'
+      ? null
+      : new ResizeObserver(recenterWhenCarouselAppears)
+    observer?.observe(gallery)
+    window.addEventListener('resize', recenterWhenCarouselAppears)
+
+    return () => {
+      observer?.disconnect()
+      window.removeEventListener('resize', recenterWhenCarouselAppears)
+    }
+  }, [centerPackage, selectedId])
 
   return (
-    <div className="rogym-package-picker flex flex-col gap-4">
-      {/* mobile: stack dọc (scroller trên, chi tiết dưới); md+: side-by-side */}
-      <div className="flex flex-col md:flex-row min-h-0 flex-1 gap-5">
-        {/* min-h-[280px] đảm bảo scroll hoạt động khi parent là flex-col trên mobile */}
-        <div className="rogym-card rogym-card--compact relative flex-1 min-h-[280px] overflow-hidden">
-          {packages.length ? (
-            <>
-              <div
-                ref={scrollRef}
-                onScroll={handleScroll}
-                className="[&::-webkit-scrollbar]:hidden rogym-sx-369a0f0c"
-                
-              >
-                <div className="rogym-package-picker__spacer" />
-                {displayItems.map((item, displayIndex) => {
-                  const distance = Math.abs(displayIndex - centerDisplayIndex)
-                  const isSelected = distance === 0
-                  const isCurrent = item.packageId === currentPackageId
-                  const distanceClass = `distance-${Math.min(distance, 2)}`
-
-                  return (
-                    <div
-                      key={`${displayIndex}-${item.packageId}`}
-                      onClick={() => selectAt(displayIndex, true)}
-                      className={`rogym-package-picker__item ${distanceClass} ${
-                        isSelected ? 'is-selected' : ''
-                      }`}
-                    >
-                      <div className="rogym-package-picker__radio flex h-5 w-5 shrink-0 items-center justify-center rounded-full">
-                        {isSelected && <Check size={11} className="rogym-text-green" />}
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <div className="mb-1 flex items-center gap-2">
-                          <span className="rogym-package-picker__name truncate text-white">
-                            {item.name}
-                          </span>
-                          {isCurrent && (
-                            <span className="shrink-0 rounded-full bg-[rgba(66,224,158,0.12)] px-2 py-0.5 text-[10px] rogym-text-accent">
-                              {t('packagePicker.currentBadge')}
-                            </span>
-                          )}
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span className="flex items-center gap-1 text-xs rogym-text-secondary">
-                            <Calendar size={11} />
-                            {t('packagePicker.days', { count: item.durationDays })}
-                          </span>
-                          {item.includesPt ? (
-                            <span className="flex items-center gap-1 rounded-full bg-[rgba(66,224,158,0.15)] px-1.5 py-0.5 text-[10px] font-medium text-[var(--rogym-accent)]">
-                              <UserCheck size={9} /> {t('packagePicker.withPt')}
-                            </span>
-                          ) : (
-                            <span className="flex items-center gap-1 rounded-full bg-white/5 px-1.5 py-0.5 text-[10px] font-medium rogym-text-dim">
-                              <UserX size={9} /> {t('packagePicker.selfTrain')}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                      <span className="rogym-package-picker__price shrink-0">
-                        {formatVnd(item.price)}
-                      </span>
-                    </div>
-                  )
-                })}
-                <div className="rogym-package-picker__spacer" />
-              </div>
-              <div
-                className="rogym-package-picker__fade is-top pointer-events-none absolute inset-x-0 top-0 z-[2]"
-              />
-              <div
-                className="rogym-package-picker__fade is-bottom pointer-events-none absolute inset-x-0 bottom-0 z-[2]"
-              />
-              <div
-                className="pointer-events-none absolute inset-x-0 top-1/2 z-[1] border-y border-[rgba(6,195,132,0.18)] rogym-sx-f40d0e9c"
-                
-              />
-            </>
-          ) : (
-            <div className="flex h-full items-center justify-center text-sm rogym-text-secondary">
-              {t('packagePicker.noPackage')}
-            </div>
-          )}
-        </div>
-
+    <div className="rogym-package-picker space-y-5">
+      <div className="rogym-package-carousel">
         <div
-          className={`rogym-package-picker__details rogym-card rogym-card--compact flex w-full md:w-[300px] md:shrink-0 flex-col p-6 ${
-            detailsVisible ? 'is-visible' : ''
-          }`}
+          ref={galleryRef}
+          className="rogym-package-gallery"
+          role="list"
+          aria-label={t('packagePicker.galleryLabel')}
+          tabIndex={0}
         >
-          {selectedPackage ? (
-            <>
-              <div className="mb-4 border-b border-white/5 pb-4">
-                <p className="mb-1 text-xs rogym-text-secondary">{t('packagePicker.selectedLabel')}</p>
-                <p className="text-base font-bold text-white">{selectedPackage.name}</p>
-                <div className="mt-1.5 flex items-center gap-3 flex-wrap">
-                  <span className="flex items-center gap-1 text-xs rogym-text-secondary">
-                    <Calendar size={10} /> {t('packagePicker.days', { count: selectedPackage.durationDays })}
-                  </span>
-                  {selectedPackage.includesPt ? (
-                    <span className="flex items-center gap-1 rounded-full bg-[rgba(66,224,158,0.15)] px-2 py-0.5 text-xs font-medium text-[var(--rogym-accent)]">
-                      <UserCheck size={11} /> {t('packagePicker.withPt')}
-                    </span>
-                  ) : (
-                    <span className="flex items-center gap-1 rounded-full bg-white/5 px-2 py-0.5 text-xs font-medium rogym-text-dim">
-                      <UserX size={11} /> {t('packagePicker.selfTrain')}
-                    </span>
-                  )}
-                  <span
-                    className="text-base rogym-text-green rogym-sx-d63063a8"
+          {packages.map((item, index) => {
+          const isSelected = item.packageId === selectedId
+          const isCurrent = item.packageId === currentPackageId
+          const image = galleryImages[index]
 
-                  >
-                    {formatVnd(selectedPackage.price)}
+          return (
+            <article
+              key={item.packageId}
+              ref={(node) => {
+                if (node) cardRefs.current.set(item.packageId, node)
+                else cardRefs.current.delete(item.packageId)
+              }}
+              className={`rogym-package-gallery__card ${isSelected ? 'is-selected' : ''}`}
+              role="listitem"
+            >
+              <button
+                type="button"
+                className="rogym-package-gallery__image-button"
+                aria-label={t('packagePicker.viewImage', { name: item.name })}
+                onClick={() => setActiveImageIndex(index)}
+              >
+                <img src={image.src} alt={image.alt} className="rogym-package-gallery__image" />
+                <span className="rogym-package-gallery__expand" aria-hidden="true"><Expand size={16} /></span>
+              </button>
+              <button
+                type="button"
+                className="rogym-package-gallery__select"
+                aria-pressed={isSelected}
+                onClick={() => handlePackageSelect(item.packageId)}
+              >
+                <span className="rogym-package-gallery__heading">
+                  <span className="min-w-0">
+                    <span className="rogym-package-gallery__name">{item.name}</span>
+                    <span className="rogym-package-gallery__meta">
+                      <Calendar size={12} /> {t('packagePicker.days', { count: item.durationDays })}
+                    </span>
                   </span>
-                </div>
-              </div>
-              <div className="min-h-0 flex-1 overflow-y-auto">
-                <p className="mb-3 text-xs font-semibold uppercase tracking-widest rogym-text-secondary">
-                  {t('packagePicker.benefits')}
-                </p>
-                {benefits.length ? (
-                  <ul className="flex flex-col gap-2.5">
-                    {benefits.map((benefit) => (
-                      <li key={benefit} className="flex items-start gap-2.5 text-sm text-white/80">
-                        <CheckCircle2
-                          size={14}
-                          className="mt-0.5 shrink-0 rogym-text-green"
-                        />
-                        <span>{benefit}</span>
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p className="text-sm rogym-text-dim">
-                    {t('packagePicker.noBenefits')}
-                  </p>
-                )}
-              </div>
-              <div className="mt-4 flex flex-col gap-3 border-t border-white/5 pt-4">
-                <div className="flex flex-col gap-1.5 text-xs rogym-text-secondary">
-                  <div className="flex justify-between">
-                    <span>{t('packagePicker.start')}</span>
-                    <span className="text-white">{formatDate(startDate)}</span>
-                  </div>
-                  {endDate && (
-                    <div className="flex justify-between">
-                      <span>{endDateLabel}</span>
-                      <span className="text-white">{formatDate(endDate)}</span>
-                    </div>
+                  <span className="rogym-package-gallery__price">{formatVnd(item.price)}</span>
+                </span>
+                <span className="rogym-package-gallery__badges">
+                  {item.includesPt ? (
+                    <span className="rogym-package-gallery__badge is-pt"><UserCheck size={11} /> {t('packagePicker.withPt')}</span>
+                  ) : (
+                    <span className="rogym-package-gallery__badge"><UserX size={11} /> {t('packagePicker.selfTrain')}</span>
                   )}
-                </div>
-                <button
-                  type="button"
-                  onClick={onContinue}
-                  className="rogym-btn rogym-btn--primary w-full justify-center"
-                >
-                  {t('packagePicker.continue')} <ArrowRight size={15} />
-                </button>
-              </div>
-            </>
-          ) : (
-            <div className="flex flex-1 items-center justify-center">
-              <p className="text-center text-sm rogym-text-dim">{t('packagePicker.scrollToSelect')}</p>
-            </div>
-          )}
+                  {isCurrent && <span className="rogym-package-gallery__badge is-current">{t('packagePicker.currentBadge')}</span>}
+                  {isSelected && <span className="rogym-package-gallery__selected"><Check size={13} /> {t('packagePicker.selected')}</span>}
+                </span>
+              </button>
+            </article>
+          )
+          })}
         </div>
       </div>
+
+      <div className="rogym-package-picker__details rogym-card rogym-card--compact p-5 sm:p-6">
+        {selectedPackage ? (
+          <>
+            <div className="mb-4 border-b border-white/5 pb-4">
+              <p className="mb-1 text-xs rogym-text-secondary">{t('packagePicker.selectedLabel')}</p>
+              <p className="text-base font-bold text-white">{selectedPackage.name}</p>
+              <div className="mt-1.5 flex flex-wrap items-center gap-3">
+                <span className="flex items-center gap-1 text-xs rogym-text-secondary"><Calendar size={10} /> {t('packagePicker.days', { count: selectedPackage.durationDays })}</span>
+                <span className="text-base rogym-text-green rogym-sx-d63063a8">{formatVnd(selectedPackage.price)}</span>
+              </div>
+            </div>
+            <div>
+              <p className="mb-3 text-xs font-semibold uppercase tracking-widest rogym-text-secondary">{t('packagePicker.benefits')}</p>
+              {benefits.length ? (
+                <ul className="grid gap-2.5 md:grid-cols-2">
+                  {benefits.map((benefit) => (
+                    <li key={benefit} className="flex items-start gap-2.5 text-sm text-white/80">
+                      <CheckCircle2 size={14} className="mt-0.5 shrink-0 rogym-text-green" />
+                      <span>{benefit}</span>
+                    </li>
+                  ))}
+                </ul>
+              ) : <p className="text-sm rogym-text-dim">{t('packagePicker.noBenefits')}</p>}
+            </div>
+            <div className="mt-5 flex flex-col gap-4 border-t border-white/5 pt-4 sm:flex-row sm:items-end sm:justify-between">
+              <div className="flex flex-col gap-1.5 text-xs rogym-text-secondary">
+                <div className="flex justify-between gap-8"><span>{t('packagePicker.start')}</span><span className="text-white">{formatDate(startDate)}</span></div>
+                {endDate && <div className="flex justify-between gap-8"><span>{endDateLabel}</span><span className="text-white">{formatDate(endDate)}</span></div>}
+              </div>
+              <button type="button" onClick={onContinue} className="rogym-btn rogym-btn--primary justify-center sm:min-w-48">
+                {t('packagePicker.continue')} <ArrowRight size={15} />
+              </button>
+            </div>
+          </>
+        ) : <p className="py-8 text-center text-sm rogym-text-dim">{t('packagePicker.scrollToSelect')}</p>}
+      </div>
+
+      <PackageImageLightbox
+        images={galleryImages}
+        activeIndex={activeImageIndex}
+        onClose={() => setActiveImageIndex(null)}
+        onPrevious={() => moveLightbox(-1)}
+        onNext={() => moveLightbox(1)}
+      />
     </div>
   )
 }

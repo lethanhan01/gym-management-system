@@ -25,7 +25,7 @@ export default function Topbar() {
     : '?';
 
   const hasActiveSub = useSubscriptionStore(s => s.hasActiveSub);
-  const showSubCta = role === 'member' && hasActiveSub === false;
+  const showSubCta = role === 'member' && hasActiveSub === false && pathname !== '/member/subscription/setup';
 
   useEffect(() => {
     function handleClick(e: MouseEvent) {

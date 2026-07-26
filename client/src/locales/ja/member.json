@@ -290,7 +290,7 @@
       "backToPackages": "← プランを選び直す",
       "buttonContinue": "お支払いへ進む",
       "mainTitle": "あなたに合ったプランを選択",
-      "mainSubtitle": "スクロールしてプランをもっと見る。",
+      "mainSubtitle": "自分に合うプランを選び、トレーニングスペースを確認しましょう。",
       "errorNetwork": "サーバーに接続できません。再試行してください。",
       "buttonRetry": "再試行",
       "emptyPackages": "現在利用可能なプランがありません。ジムにお問い合わせください。",
@@ -793,6 +793,17 @@
     "noBenefits": "特典情報がありません。",
     "start": "開始",
     "continue": "続ける",
-    "scrollToSelect": "スクロールしてプランを選択"
+    "scrollToSelect": "プランを選択して詳細を確認",
+    "galleryLabel": "プランギャラリー",
+    "imageAlt": "{{name}} プランのトレーニングスペース",
+    "viewImage": "{{name}} プランのトレーニングスペースを見る",
+    "selected": "選択済み",
+    "lightbox": {
+      "dialogLabel": "トレーニングスペースの画像を見る",
+      "close": "画像を閉じる",
+      "previous": "前の画像",
+      "next": "次の画像",
+      "counter": "{{total}} 枚中 {{current}} 枚目"
+    }
   }
 }
