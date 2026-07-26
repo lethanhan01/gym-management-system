@@ -107,7 +107,7 @@
 
   .rogym-select__content {
     z-index: 100;
-    min-width: var(--radix-select-trigger-width);
+    width: var(--radix-select-trigger-width);
     max-height: var(--radix-select-content-available-height);
     overflow: hidden;
     border: 1px solid var(--rogym-border-teal-hover);
@@ -137,6 +137,13 @@
     outline: none;
     cursor: pointer;
     user-select: none;
+  }
+
+  .rogym-select__item > span:first-child {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .rogym-select__item[data-highlighted] {
