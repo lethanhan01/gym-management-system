@@ -34,7 +34,7 @@ import workoutService, {
   type WorkoutPlanDay,
 } from '@/services/workout.service'
 import { useAuthStore } from '@/stores/authStore'
-import { ExerciseFilterPopover } from '@/components/workout/ExerciseUI'
+import { ExerciseFilterDropdown } from '@/components/workout/ExerciseUI'
 import { filterExercises } from '@/components/workout/exercise-data'
 import { ExerciseTargetFields } from '@/components/workout/PlanBuilderUI'
 
@@ -960,28 +960,19 @@ function AddExerciseForm({
               placeholder={t('workout.planBuilder.addExercise.searchPlaceholder')}
             />
           </div>
-          <button
-            type="button"
-            onClick={() => {
-              setDraftBodyPartId(bodyPartId)
-              setDraftTargetMuscleId(targetMuscleId)
-              setDraftEquipmentId(equipmentId)
-              setFilterOpen(true)
-            }}
-            className={`rogym-filter-trigger flex shrink-0 items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-semibold transition-colors ${
-              activeFilterCount > 0 ? 'is-active' : ''
-            }`}
-          >
-            <SlidersHorizontal size={13} />
-            {t('workout.planBuilder.addExercise.buttonFilter')}
-            {activeFilterCount > 0 && (
-              <span className="flex h-4 w-4 items-center justify-center rounded-full text-[10px] font-bold rogym-sx-fc269f1b">
-                {activeFilterCount}
-              </span>
-            )}
-          </button>
-          <ExerciseFilterPopover
+          <ExerciseFilterDropdown
             open={filterOpen}
+            onOpenChange={(open) => {
+              if (open) {
+                setDraftBodyPartId(bodyPartId)
+                setDraftTargetMuscleId(targetMuscleId)
+                setDraftEquipmentId(equipmentId)
+                setFilterOpen(true)
+              } else {
+                setFilterOpen(false)
+              }
+            }}
+            activeCount={activeFilterCount}
             bodyPartId={draftBodyPartId}
             targetMuscleId={draftTargetMuscleId}
             equipmentId={draftEquipmentId}
@@ -1000,7 +991,6 @@ function AddExerciseForm({
               setExerciseId('')
               setFilterOpen(false)
             }}
-            onClose={() => setFilterOpen(false)}
           />
         </div>
         <div className="max-h-44 overflow-y-auto rounded-xl rogym-sx-9ff6a44e">

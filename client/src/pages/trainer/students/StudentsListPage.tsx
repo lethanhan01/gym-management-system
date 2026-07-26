@@ -13,6 +13,7 @@ import {
   TrainerSkeleton,
   TrainerStatusBadge,
 } from '@/components/TrainerUI'
+import { FilterDropdown } from '@/components/FilterDropdown'
 
 export default function StudentsListPage() {
   const { t } = useTranslation('trainer')
@@ -20,6 +21,9 @@ export default function StudentsListPage() {
   const page = Number(searchParams.get('page') ?? 1)
   const status = searchParams.get('status') ?? ''
   const [search, setSearch] = useState(searchParams.get('search') ?? '')
+  const [filterOpen, setFilterOpen] = useState(false)
+  const [draftStatus, setDraftStatus] = useState<string>('')
+
   const { data, total, totalPages, loading, error, reload } = useTrainerStudents({
     page,
     pageSize: 12,
@@ -49,8 +53,8 @@ export default function StudentsListPage() {
         description={t('students.list.description', { total })}
       />
 
-      <div className="rogym-card rogym-card--compact grid gap-3 p-4 md:grid-cols-[1fr_220px_auto]">
-        <div className="relative">
+      <div className="rogym-card rogym-card--compact flex items-center gap-3 p-4">
+        <div className="relative min-w-0 flex-1">
           <Search
             className="absolute left-3 top-1/2 -translate-y-1/2 rogym-text-dim"
             size={17}
@@ -63,15 +67,36 @@ export default function StudentsListPage() {
             placeholder={t('students.list.searchPlaceholder')}
           />
         </div>
-        <TrainerSelect
-          value={status}
-          onValueChange={(value) => updateParam('status', value)}
+        <FilterDropdown
+          open={filterOpen}
+          onOpenChange={(open) => {
+            if (open) {
+              setDraftStatus(status)
+              setFilterOpen(true)
+            } else {
+              setFilterOpen(false)
+            }
+          }}
+          activeCount={status ? 1 : 0}
+          onApply={() => {
+            updateParam('status', draftStatus)
+            setFilterOpen(false)
+          }}
+          title={t('students.list.filterTitle', 'Bộ lọc')}
         >
-          <option value="">{t('students.list.allStatuses')}</option>
-          <option value="active">{t('students.list.statusActive')}</option>
-          <option value="pending_verification">{t('students.list.statusPending')}</option>
-          <option value="locked">{t('students.list.statusLocked')}</option>
-        </TrainerSelect>
+          <div>
+            <p className="rogym-field-label mb-2">{t('students.list.colStatus')}</p>
+            <TrainerSelect
+              value={draftStatus}
+              onValueChange={setDraftStatus}
+            >
+              <option value="">{t('students.list.allStatuses')}</option>
+              <option value="active">{t('students.list.statusActive')}</option>
+              <option value="pending_verification">{t('students.list.statusPending')}</option>
+              <option value="locked">{t('students.list.statusLocked')}</option>
+            </TrainerSelect>
+          </div>
+        </FilterDropdown>
         <button type="button" className="rogym-btn rogym-btn--primary" onClick={applySearch}>
           {t('students.list.searchButton')}
         </button>

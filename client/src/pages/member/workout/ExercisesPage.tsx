@@ -16,7 +16,7 @@ import workoutService, {
   type ExerciseEquipment,
 } from '@/services/workout.service'
 import { getApiError } from '@/lib/api-error'
-import { ExerciseCard, ExerciseFilterPopover } from '@/components/workout/ExerciseUI'
+import { ExerciseCard, ExerciseFilterDropdown } from '@/components/workout/ExerciseUI'
 import { filterExercises } from '@/components/workout/exercise-data'
 
 export default function MemberExercisesPage() {
@@ -142,40 +142,26 @@ export default function MemberExercisesPage() {
         </div>
 
         {/* Filter button + popup */}
-        <div className="relative shrink-0">
-          <button
-            type="button"
-            onClick={openPopup}
-            className={`rogym-filter-trigger flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-semibold transition-colors ${
-              activeCount > 0 ? 'is-active' : ''
-            }`}
-          >
-            <SlidersHorizontal size={13} />
-            {t('workout.exercises.buttonFilter')}
-            {activeCount > 0 && (
-              <span className="flex h-4 w-4 items-center justify-center rounded-full text-[10px] font-bold rogym-sx-fc269f1b">
-                {activeCount}
-              </span>
-            )}
-          </button>
-
-          <ExerciseFilterPopover
-            open={showPopup}
-            bodyPartId={draftBodyPartId}
-            targetMuscleId={draftTargetMuscleId}
-            equipmentId={draftEquipmentId}
-            bodyParts={bodyParts}
-            muscles={muscles}
-            equipments={equipments}
-            onChange={(fields) => {
-              if ('bodyPartId' in fields) setDraftBodyPartId(fields.bodyPartId)
-              if ('targetMuscleId' in fields) setDraftTargetMuscleId(fields.targetMuscleId)
-              if ('equipmentId' in fields) setDraftEquipmentId(fields.equipmentId)
-            }}
-            onApply={applyFilter}
-            onClose={() => setShowPopup(false)}
-          />
-        </div>
+        <ExerciseFilterDropdown
+          open={showPopup}
+          onOpenChange={(open) => {
+            if (open) openPopup()
+            else setShowPopup(false)
+          }}
+          activeCount={activeCount}
+          bodyPartId={draftBodyPartId}
+          targetMuscleId={draftTargetMuscleId}
+          equipmentId={draftEquipmentId}
+          bodyParts={bodyParts}
+          muscles={muscles}
+          equipments={equipments}
+          onChange={(fields) => {
+            if ('bodyPartId' in fields) setDraftBodyPartId(fields.bodyPartId)
+            if ('targetMuscleId' in fields) setDraftTargetMuscleId(fields.targetMuscleId)
+            if ('equipmentId' in fields) setDraftEquipmentId(fields.equipmentId)
+          }}
+          onApply={applyFilter}
+        />
       </div>
 
       {error && <MemberErrorState message={error} onRetry={load} />}

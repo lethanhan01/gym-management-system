@@ -14,6 +14,7 @@ import {
   UserMinus,
   Zap,
 } from 'lucide-react'
+import { FilterDropdown } from '@/components/FilterDropdown'
 import { DatePickerInput } from '@/components/DatePickerInput'
 import { useTrainerPlans } from '@/hooks/useTrainerPlans'
 import { useTrainerStudents } from '@/hooks/useTrainerStudents'
@@ -44,7 +45,9 @@ export default function WorkoutPlansPage() {
   const { data, loading, error, reload } = useTrainerPlans()
   const { data: students } = useTrainerStudents({ pageSize: 100 })
   const [search, setSearch] = useState('')
-  const [status, setStatus] = useState('')
+  const [status, setStatus] = useState<string>('')
+  const [filterOpen, setFilterOpen] = useState(false)
+  const [draftStatus, setDraftStatus] = useState<string>('')
   const [createOpen, setCreateOpen] = useState(false)
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
@@ -193,6 +196,8 @@ export default function WorkoutPlansPage() {
     }
   }
 
+  const activeCount = status ? 1 : 0
+
   return (
     <TrainerPage>
       <TrainerPageHeader
@@ -209,8 +214,8 @@ export default function WorkoutPlansPage() {
           </button>
         }
       />
-      <div className="rogym-card rogym-card--compact grid gap-3 p-4 md:grid-cols-[1fr_240px]">
-        <div className="relative">
+      <div className="rogym-card rogym-card--compact flex items-center gap-3 p-4">
+        <div className="relative min-w-0 flex-1">
           <Search
             className="absolute left-3 top-1/2 -translate-y-1/2 rogym-text-dim"
             size={17}
@@ -222,11 +227,32 @@ export default function WorkoutPlansPage() {
             placeholder={t('plans.workout.searchPlaceholder')}
           />
         </div>
-        <TrainerSelect value={status} onValueChange={setStatus}>
-          <option value="">{t('plans.workout.allStatuses')}</option>
-          <option value="active">{t('plans.workout.statusActive')}</option>
-          <option value="archived">{t('plans.workout.statusArchived')}</option>
-        </TrainerSelect>
+        <FilterDropdown
+          open={filterOpen}
+          onOpenChange={(open) => {
+            if (open) {
+              setDraftStatus(status)
+              setFilterOpen(true)
+            } else {
+              setFilterOpen(false)
+            }
+          }}
+          activeCount={activeCount}
+          onApply={() => {
+            setStatus(draftStatus)
+            setFilterOpen(false)
+          }}
+          title={t('plans.workout.filterTitle', 'Bộ lọc')}
+        >
+          <div>
+            <p className="rogym-field-label mb-2">{t('plans.workout.fieldStatus', 'Trạng thái')}</p>
+            <TrainerSelect value={draftStatus} onValueChange={setDraftStatus}>
+              <option value="">{t('plans.workout.allStatuses')}</option>
+              <option value="active">{t('plans.workout.statusActive')}</option>
+              <option value="archived">{t('plans.workout.statusArchived')}</option>
+            </TrainerSelect>
+          </div>
+        </FilterDropdown>
       </div>
       {(error || actionError) && (
         <TrainerErrorState message={actionError ?? error!} onRetry={error ? reload : undefined} />

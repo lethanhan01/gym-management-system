@@ -7,6 +7,8 @@ import type {
   ExerciseMuscle,
   ExerciseEquipment,
 } from '@/services/workout.service'
+import { Select } from '@/components/Select'
+import { FilterDropdown } from '@/components/FilterDropdown'
 import { cn } from '@/lib/utils'
 
 export function ExerciseCard({
@@ -78,8 +80,10 @@ export function ExerciseCard({
   )
 }
 
-export function ExerciseFilterPopover({
+export function ExerciseFilterDropdown({
   open,
+  onOpenChange,
+  activeCount,
   bodyPartId,
   targetMuscleId,
   equipmentId,
@@ -88,9 +92,10 @@ export function ExerciseFilterPopover({
   equipments,
   onChange,
   onApply,
-  onClose,
 }: {
   open: boolean
+  onOpenChange: (open: boolean) => void
+  activeCount?: number
   bodyPartId?: number
   targetMuscleId?: number
   equipmentId?: number
@@ -99,78 +104,57 @@ export function ExerciseFilterPopover({
   equipments: ExerciseEquipment[]
   onChange: (fields: { bodyPartId?: number; targetMuscleId?: number; equipmentId?: number }) => void
   onApply: () => void
-  onClose: () => void
 }) {
   const { t } = useTranslation('member')
-  const { t: tc } = useTranslation('common')
-  if (!open) return null
   return (
-    <>
-      <div className="fixed inset-0 z-10" onClick={onClose} />
-      <div className="absolute right-0 top-full z-20 mt-2 min-w-[260px] rounded-[20px] border border-[rgba(6,195,132,0.25)] bg-[#0a1f17] p-5 shadow-[0_12px_40px_rgba(0,0,0,0.6)]">
-        <p className="mb-4 text-sm font-bold text-white">{t('workout.exercises.filterTitle')}</p>
-        
-        <div className="space-y-4 mb-5">
-          <div>
-            <p className="rogym-field-label mb-2">{t('workout.exercises.fieldBodyPart', 'Body Part')}</p>
-            <select
-              className="rogym-input py-2 text-sm"
-              value={bodyPartId || ''}
-              onChange={(e) => onChange({ bodyPartId: e.target.value ? Number(e.target.value) : undefined })}
-            >
-              <option value="">{t('workout.categories.all', 'All')}</option>
-              {bodyParts.map((item) => (
-                <option key={item.bodyPartId} value={item.bodyPartId}>{item.name}</option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <p className="rogym-field-label mb-2">{t('workout.exercises.fieldTargetMuscle', 'Target Muscle')}</p>
-            <select
-              className="rogym-input py-2 text-sm"
-              value={targetMuscleId || ''}
-              onChange={(e) => onChange({ targetMuscleId: e.target.value ? Number(e.target.value) : undefined })}
-            >
-              <option value="">{t('workout.categories.all', 'All')}</option>
-              {muscles.map((item) => (
-                <option key={item.muscleId} value={item.muscleId}>{item.name}</option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <p className="rogym-field-label mb-2">{t('workout.exercises.fieldEquipment', 'Equipment')}</p>
-            <select
-              className="rogym-input py-2 text-sm"
-              value={equipmentId || ''}
-              onChange={(e) => onChange({ equipmentId: e.target.value ? Number(e.target.value) : undefined })}
-            >
-              <option value="">{t('workout.categories.all', 'All')}</option>
-              {equipments.map((item) => (
-                <option key={item.equipmentId} value={item.equipmentId}>{item.name}</option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        <div className="flex justify-end gap-2">
-          <button
-            type="button"
-            className="rogym-btn rogym-btn--outline-white px-4"
-            onClick={onClose}
-          >
-            {tc('button.cancel')}
-          </button>
-          <button
-            type="button"
-            className="rogym-btn rogym-btn--primary px-4"
-            onClick={onApply}
-          >
-            {tc('button.save')}
-          </button>
-        </div>
+    <FilterDropdown
+      open={open}
+      onOpenChange={onOpenChange}
+      activeCount={activeCount}
+      title={t('workout.exercises.filterTitle')}
+      onApply={onApply}
+    >
+      <div>
+        <p className="rogym-field-label mb-2">{t('workout.exercises.fieldBodyPart', 'Body Part')}</p>
+        <Select
+          className="w-full"
+          value={bodyPartId ? String(bodyPartId) : ''}
+          onValueChange={(val) => onChange({ bodyPartId: val ? Number(val) : undefined })}
+        >
+          <option value="">{t('workout.categories.all', 'All')}</option>
+          {bodyParts.map((item) => (
+            <option key={item.bodyPartId} value={item.bodyPartId}>{item.name}</option>
+          ))}
+        </Select>
       </div>
-    </>
+
+      <div>
+        <p className="rogym-field-label mb-2">{t('workout.exercises.fieldTargetMuscle', 'Target Muscle')}</p>
+        <Select
+          className="w-full"
+          value={targetMuscleId ? String(targetMuscleId) : ''}
+          onValueChange={(val) => onChange({ targetMuscleId: val ? Number(val) : undefined })}
+        >
+          <option value="">{t('workout.categories.all', 'All')}</option>
+          {muscles.map((item) => (
+            <option key={item.muscleId} value={item.muscleId}>{item.name}</option>
+          ))}
+        </Select>
+      </div>
+
+      <div>
+        <p className="rogym-field-label mb-2">{t('workout.exercises.fieldEquipment', 'Equipment')}</p>
+        <Select
+          className="w-full"
+          value={equipmentId ? String(equipmentId) : ''}
+          onValueChange={(val) => onChange({ equipmentId: val ? Number(val) : undefined })}
+        >
+          <option value="">{t('workout.categories.all', 'All')}</option>
+          {equipments.map((item) => (
+            <option key={item.equipmentId} value={item.equipmentId}>{item.name}</option>
+          ))}
+        </Select>
+      </div>
+    </FilterDropdown>
   )
 }
