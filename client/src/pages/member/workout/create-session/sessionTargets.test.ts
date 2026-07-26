@@ -4,10 +4,9 @@ import type {
   WorkoutPlanDay,
 } from '@/services/workout.service'
 import {
-  applySessionTargets,
   getSessionConfigKey,
-  makeDefaultSets,
-  makeSessionDayTargets,
+  makeSessionDayConfig,
+  makeSessionExerciseConfig,
 } from './sessionTargets'
 
 const day: WorkoutPlanDay = {
@@ -46,35 +45,30 @@ const assignment: WorkoutAssignmentSummary = {
 }
 
 describe('sessionTargets', () => {
-  it('creates defaults and keys overrides by assignment plus plan day', () => {
+  it('creates a per-set default draft and keys it by assignment plus plan day', () => {
     expect(getSessionConfigKey(day, assignment)).toBe('50:10')
-    expect(makeSessionDayTargets(day)).toEqual({
+    expect(makeSessionDayConfig(day)).toEqual({
       100: {
-        targetSets: 3,
-        targetReps: 10,
-        targetDurationSec: null,
-        targetWeightKg: '20',
+        sets: [
+          { actualReps: '10', actualDurationSec: '', actualWeightKg: '20' },
+          { actualReps: '10', actualDurationSec: '', actualWeightKg: '20' },
+          { actualReps: '10', actualDurationSec: '', actualWeightKg: '20' },
+        ],
         restSeconds: 60,
       },
     })
   })
 
-  it('applies overrides without mutating the original workout day', () => {
-    const configuredDay = applySessionTargets(day, {
+  it('uses a saved per-set draft without mutating the original workout day', () => {
+    const config = makeSessionDayConfig(day, {
       100: {
-        targetSets: 4,
-        targetReps: 12,
-        targetDurationSec: null,
-        targetWeightKg: '25',
+        sets: [{ actualReps: '12', actualDurationSec: '', actualWeightKg: '25' }],
         restSeconds: 45,
       },
     })
 
-    expect(configuredDay).not.toBe(day)
-    expect(configuredDay.exercises?.[0]).toMatchObject({
-      targetSets: 4,
-      targetReps: 12,
-      targetWeightKg: '25',
+    expect(config[100]).toMatchObject({
+      sets: [{ actualReps: '12', actualWeightKg: '25' }],
       restSeconds: 45,
     })
     expect(day.exercises?.[0]).toMatchObject({
@@ -83,6 +77,6 @@ describe('sessionTargets', () => {
       targetWeightKg: '20',
       restSeconds: 60,
     })
-    expect(makeDefaultSets(configuredDay.exercises![0])).toHaveLength(4)
+    expect(makeSessionExerciseConfig(day.exercises![0]).sets).toHaveLength(3)
   })
 })

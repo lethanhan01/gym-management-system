@@ -3,31 +3,20 @@ import type {
   WorkoutPlanDay,
 } from '@/services/workout.service'
 
-export interface SetState {
+export interface SessionSetConfig {
   actualReps: string
   actualWeightKg: string
   actualDurationSec: string
-  completed: boolean
 }
 
-export interface SessionExerciseTargets {
-  targetSets: number
-  targetReps: number | null
-  targetDurationSec: number | null
-  targetWeightKg: string
+export interface SessionExerciseConfig {
+  sets: SessionSetConfig[]
   restSeconds: number
 }
 
-export type SessionDayTargets = Record<string, SessionExerciseTargets>
+export type SessionDayConfig = Record<string, SessionExerciseConfig>
 
 export type SessionConfigTarget = {
   day: WorkoutPlanDay
   assignment: WorkoutAssignmentSummary
 }
-
-export type UpdateSet = (
-  exerciseIndex: number,
-  setIndex: number,
-  field: keyof SetState,
-  value: string | boolean,
-) => void

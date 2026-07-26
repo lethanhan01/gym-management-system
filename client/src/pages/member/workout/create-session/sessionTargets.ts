@@ -3,62 +3,36 @@ import type {
   WorkoutPlanDay,
   WorkoutPlanExercise,
 } from '@/services/workout.service'
-import type { SessionDayTargets, SessionExerciseTargets, SetState } from './types'
+import type { SessionDayConfig, SessionExerciseConfig, SessionSetConfig } from './types'
 
 export function getSessionConfigKey(day: WorkoutPlanDay, assignment: WorkoutAssignmentSummary) {
   return `${assignment.assignmentId}:${day.planDayId}`
 }
 
-export function makeSessionExerciseTargets(exercise: WorkoutPlanExercise): SessionExerciseTargets {
+export function makeSessionSetConfig(exercise: WorkoutPlanExercise): SessionSetConfig {
   return {
-    targetSets: exercise.targetSets,
-    targetReps: exercise.targetReps,
-    targetDurationSec: exercise.targetDurationSec,
-    targetWeightKg: exercise.targetWeightKg ? String(Number(exercise.targetWeightKg)) : '',
+    actualReps: exercise.targetReps ? String(exercise.targetReps) : '',
+    actualWeightKg: exercise.targetWeightKg ? String(Number(exercise.targetWeightKg)) : '',
+    actualDurationSec: exercise.targetDurationSec ? String(exercise.targetDurationSec) : '',
+  }
+}
+
+export function makeSessionExerciseConfig(exercise: WorkoutPlanExercise): SessionExerciseConfig {
+  return {
+    sets: Array.from({ length: Math.max(1, exercise.targetSets) }, () => makeSessionSetConfig(exercise)),
     restSeconds: exercise.restSeconds ?? 60,
   }
 }
 
-export function makeSessionDayTargets(
+export function makeSessionDayConfig(
   day: WorkoutPlanDay,
-  overrides?: SessionDayTargets,
-): SessionDayTargets {
-  return (day.exercises ?? []).reduce<SessionDayTargets>((targets, exercise) => {
-    targets[exercise.planExerciseId] = overrides?.[exercise.planExerciseId]
-      ?? makeSessionExerciseTargets(exercise)
-    return targets
+  draft?: SessionDayConfig,
+): SessionDayConfig {
+  return (day.exercises ?? []).reduce<SessionDayConfig>((config, exercise) => {
+    const saved = draft?.[exercise.planExerciseId]
+    config[exercise.planExerciseId] = saved && saved.sets.length > 0
+      ? saved
+      : makeSessionExerciseConfig(exercise)
+    return config
   }, {})
-}
-
-export function applySessionTargets(
-  day: WorkoutPlanDay,
-  overrides?: SessionDayTargets,
-): WorkoutPlanDay {
-  if (!day.exercises || !overrides) return day
-
-  return {
-    ...day,
-    exercises: day.exercises.map((exercise) => {
-      const targets = overrides[exercise.planExerciseId]
-      if (!targets) return exercise
-
-      return {
-        ...exercise,
-        targetSets: targets.targetSets,
-        targetReps: targets.targetReps,
-        targetDurationSec: targets.targetDurationSec,
-        targetWeightKg: targets.targetWeightKg || null,
-        restSeconds: targets.restSeconds,
-      }
-    }),
-  }
-}
-
-export function makeDefaultSets(exercise: WorkoutPlanExercise): SetState[] {
-  return Array.from({ length: exercise.targetSets }, () => ({
-    actualReps: exercise.targetReps ? String(exercise.targetReps) : '',
-    actualWeightKg: exercise.targetWeightKg ? String(Number(exercise.targetWeightKg)) : '',
-    actualDurationSec: exercise.targetDurationSec ? String(exercise.targetDurationSec) : '',
-    completed: false,
-  }))
 }
