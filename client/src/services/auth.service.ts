@@ -43,16 +43,21 @@ export const authService = {
     await api.post('/auth/change-password', { currentPassword, newPassword })
   },
 
-  forgotPassword: async (email: string): Promise<{ message: string; devOtp?: string }> => {
-    const res = await api.post<{ success: boolean; message: string; devOtp?: string }>(
+  forgotPassword: async (email: string): Promise<{ message: string }> => {
+    const res = await api.post<{ success: boolean; message: string }>(
       '/auth/forgot-password',
       { email },
     )
     return res.data
   },
 
-  resetPassword: async (email: string, otp: string, newPassword: string) => {
-    const res = await api.post('/auth/reset-password', { email, otp, newPassword })
+  verifyResetOtp: async (email: string, otp: string): Promise<{ message: string }> => {
+    const res = await api.post<{ success: boolean; message: string }>('/auth/verify-reset-otp', { email, otp })
+    return res.data
+  },
+
+  resetPassword: async (newPassword: string) => {
+    const res = await api.post('/auth/reset-password', { newPassword })
     return res.data
   },
 

@@ -162,13 +162,12 @@ export class AuthService {
   // UC02 — Dat lai mat khau bang OTP
   // ---------------------------------------------------------------------------
 
-  async resetPassword(
-    email: string,
-    otp: string,
-    newPassword: string,
-    ctx: RequestContext = {},
-  ): Promise<void> {
-    return this.passwordReset.resetPassword(email, otp, newPassword, ctx)
+  async verifyResetOtp(email: string, otp: string, ctx: RequestContext = {}): Promise<string> {
+    return this.passwordReset.verifyResetOtp(email, otp, ctx)
+  }
+
+  async resetPassword(grantToken: string | undefined, newPassword: string, ctx: RequestContext = {}): Promise<void> {
+    return this.passwordReset.resetPassword(grantToken, newPassword, ctx)
   }
 
   // ---------------------------------------------------------------------------

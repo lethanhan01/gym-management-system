@@ -6,6 +6,7 @@ const mockAuthService = {
   login: jest.fn(),
   logout: jest.fn(),
   forgotPassword: jest.fn(),
+  verifyResetOtp: jest.fn(),
   resetPassword: jest.fn(),
   verifyEmail: jest.fn(),
   resendVerify: jest.fn(),
@@ -206,12 +207,12 @@ describe('AuthController', () => {
       )
     })
 
-    it('spreads devOtp from service result when present', async () => {
-      mockAuthService.forgotPassword.mockResolvedValue({ message: 'sent', devOtp: '654321' })
+    it('does not expose OTP data from the service result', async () => {
+      mockAuthService.forgotPassword.mockResolvedValue({ message: 'sent' })
 
       const result = await controller.forgotPassword({ email: 'u@e.com' } as any, makeReq())
 
-      expect((result as any).devOtp).toBe('654321')
+      expect(result).toEqual({ success: true, message: 'sent' })
     })
   })
 
@@ -222,19 +223,21 @@ describe('AuthController', () => {
   describe('resetPassword', () => {
     it('delegates to authService.resetPassword and returns success message', async () => {
       mockAuthService.resetPassword.mockResolvedValue(undefined)
+      const res = { clearCookie: jest.fn() }
 
       const result = await controller.resetPassword(
-        { email: 'u@e.com', otp: '123456', newPassword: 'NewPass1!' } as any,
-        makeReq()
+        { newPassword: 'NewPass1!' } as any,
+        makeReq({ headers: { cookie: 'password_reset_grant=grant-token' } }),
+        res as any,
       )
 
       expect(result).toEqual({ success: true, message: 'Đặt lại mật khẩu thành công' })
       expect(mockAuthService.resetPassword).toHaveBeenCalledWith(
-        'u@e.com',
-        '123456',
+        'grant-token',
         'NewPass1!',
         expect.any(Object)
       )
+      expect(res.clearCookie).toHaveBeenCalled()
     })
   })
 

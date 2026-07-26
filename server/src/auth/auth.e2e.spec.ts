@@ -34,6 +34,7 @@ const TEST_SECRET = 'e2e-test-secret-32-chars-minimum!'
 
 const mockPrisma = {
   user: { update: jest.fn(), findUnique: jest.fn(), findFirst: jest.fn() },
+  passwordResetGrant: { deleteMany: jest.fn(), upsert: jest.fn(), findUnique: jest.fn() },
   staff: { findFirst: jest.fn() },
   member: { findFirst: jest.fn(), count: jest.fn() },
   auditLog: { create: jest.fn() },

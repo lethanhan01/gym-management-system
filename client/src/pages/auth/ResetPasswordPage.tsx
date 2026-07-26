@@ -1,96 +1,34 @@
-import { useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
-import { Mail, Lock, KeyRound } from "lucide-react";
+import { useEffect, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
+import { Mail } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { authService } from "@/services/auth.service";
-import {
-  AuthShell, BtnPrimary, TextLink,
-  Field, PasswordField, ErrorMsg,
-} from "./_authui";
+import { AuthShell, BtnPrimary, ErrorMsg } from "./_authui";
+import { OtpInput, OTP_LENGTH, ResendOtpButton } from "./OtpInput";
 
 export default function ResetPasswordPage() {
-  const location = useLocation();
-  const navState = location.state as { devOtp?: string } | null;
-  const [email, setEmail] = useState("");
-  const [otp, setOtp] = useState(navState?.devOtp ?? "");
-  const [newPass, setNewPass] = useState("");
-  const [confirm, setConfirm] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [done, setDone] = useState(false);
-  const navigate = useNavigate();
-  const { t } = useTranslation("auth");
-  const { t: tVal } = useTranslation("validation");
+  const location = useLocation(); const navigate = useNavigate(); const { t } = useTranslation("auth");
+  const email = (location.state as { email?: string } | null)?.email ?? "";
+  const [digits, setDigits] = useState<string[]>(Array(OTP_LENGTH).fill(""));
+  const [loading, setLoading] = useState(false); const [error, setError] = useState("");
+  const otp = digits.join(""); const isFull = otp.length === OTP_LENGTH;
+  useEffect(() => { if (!email) navigate("/forgot-password", { replace: true }); }, [email, navigate]);
+  if (!email) return null;
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (newPass !== confirm) {
-      setError(tVal("password.mismatch"));
-      return;
-    }
-    setError("");
-    setLoading(true);
-    try {
-      await authService.resetPassword(email, otp, newPass);
-      setDone(true);
-    } catch {
-      setError(t("resetPassword.invalidOtp"));
-    } finally {
-      setLoading(false);
-    }
+  async function handleSubmit(event: React.FormEvent) {
+    event.preventDefault(); if (!isFull) return;
+    setError(""); setLoading(true);
+    try { await authService.verifyResetOtp(email, otp); navigate("/reset-password/new-password", { replace: true }); }
+    catch { setError(t("resetPassword.invalidOtp")); setDigits(Array(OTP_LENGTH).fill("")); }
+    finally { setLoading(false); }
   }
+  async function handleResend() { try { await authService.forgotPassword(email); setDigits(Array(OTP_LENGTH).fill("")); } catch { setError(t("resetPassword.resendFailed")); } }
 
-  if (done) {
-    return (
-      <AuthShell>
-        <div className="flex flex-col gap-5 items-center text-center">
-          <div className="w-16 h-16 rounded-2xl flex items-center justify-center rogym-sx-b1711891" >
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
-              <path d="M20 6L9 17l-5-5" stroke="#06c384" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </div>
-          <div>
-            <h1 className="rogym-sx-28816d54">
-              {t("resetPassword.successTitle")}
-            </h1>
-            <p className="rogym-sx-2a7c513c">
-              {t("resetPassword.successBody")}
-            </p>
-          </div>
-          <BtnPrimary onClick={() => navigate("/login")}>{t("resetPassword.loginNow")}</BtnPrimary>
-        </div>
-      </AuthShell>
-    );
-  }
-
-  return (
-    <AuthShell>
-      <form onSubmit={handleSubmit} className="flex flex-col gap-5">
-        <div className="text-center mb-1">
-          <h1 className="rogym-sx-4d6285f7">
-            {t("resetPassword.title")}
-          </h1>
-          <p className="rogym-sx-0a664e64">
-            {t("resetPassword.subtitle")}
-          </p>
-        </div>
-
-        <Field label={t("resetPassword.otp")} placeholder={t("resetPassword.otpPlaceholder")} value={otp} onChange={setOtp} icon={KeyRound} />
-        <Field label="Email" type="email" placeholder="ten@email.com" value={email} onChange={setEmail} icon={Mail} />
-        <PasswordField label={t("resetPassword.newPassword")} placeholder={t("resetPassword.newPasswordPlaceholder")} value={newPass} onChange={setNewPass} icon={Lock} />
-        <PasswordField label={t("resetPassword.confirmPassword")} value={confirm} onChange={setConfirm} icon={Lock} />
-
-        {error && <ErrorMsg message={error} />}
-
-        <BtnPrimary type="submit" disabled={loading}>
-          {loading ? t("resetPassword.submitting") : t("resetPassword.submit")}
-        </BtnPrimary>
-
-        <p className="text-center rogym-sx-0668b2bf" >
-          {t("resetPassword.noCode")}{" "}
-          <TextLink to="/forgot-password">{t("resetPassword.resendLink")}</TextLink>
-        </p>
-      </form>
-    </AuthShell>
-  );
+  return <AuthShell backTo="/forgot-password" backLabel={t("resetPassword.backLabel")}><form onSubmit={handleSubmit} className="flex flex-col gap-6">
+    <div className="flex flex-col items-center text-center gap-3"><div className="w-14 h-14 rounded-2xl flex items-center justify-center rogym-sx-cd8c4f95"><Mail size={24} className="rogym-text-accent" strokeWidth={1.5} /></div><div><h1 className="rogym-sx-4d6285f7">{t("resetPassword.title")}</h1><p className="rogym-sx-a29e4e5b">{t("resetPassword.subtitle")}</p><p className="rogym-verify-email">{email}</p></div></div>
+    <OtpInput value={digits} onChange={setDigits} />
+    {error && <ErrorMsg message={error} />}
+    <BtnPrimary type="submit" disabled={!isFull || loading}>{loading ? t("resetPassword.verifying") : t("resetPassword.verifyOtp")}</BtnPrimary>
+    <div className="flex items-center justify-center gap-1.5"><span className="rogym-sx-a3c9452a">{t("resetPassword.noCode")} </span><ResendOtpButton onResend={handleResend} /></div>
+  </form></AuthShell>;
 }

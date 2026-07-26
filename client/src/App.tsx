@@ -15,6 +15,7 @@ const DashboardLayout = lazy(() => import('./layouts/DashboardLayout'))
 const LoginPage = lazy(() => import('./pages/auth/LoginPage'))
 const ForgotPasswordPage = lazy(() => import('./pages/auth/ForgotPasswordPage'))
 const ResetPasswordPage = lazy(() => import('./pages/auth/ResetPasswordPage'))
+const NewPasswordPage = lazy(() => import('./pages/auth/NewPasswordPage'))
 
 // Home
 const HomePage = lazy(() => import('./pages/home/HomePage'))
@@ -140,6 +141,7 @@ export default function App() {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/reset-password" element={<ResetPasswordPage />} />
+          <Route path="/reset-password/new-password" element={<NewPasswordPage />} />
         </Route>
 
         {/* Member — public registration flow */}
