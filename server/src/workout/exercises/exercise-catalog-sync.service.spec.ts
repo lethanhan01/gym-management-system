@@ -2,14 +2,20 @@ import { externalIdHash } from './exercise-catalog-manifest'
 import { ExerciseCatalogSyncService } from './exercise-catalog-sync.service'
 
 const item = {
-  externalId: 'push-up', name: 'Push up', category: 'strength' as const,
-  muscleGroup: 'chest', equipmentNeeded: 'body weight', description: 'Push.',
-  imageUrl: 'https://cdn.example/push-up.gif', contentHash: 'a'.repeat(64), fallbackMapped: false,
+  externalId: 'push-up', name: 'Push up',
+  bodyPart: 'chest', targetMuscle: 'pectorals', secondaryMuscles: ['triceps'],
+  equipmentName: 'body weight', description: 'Push.',
+  instructions: ['Lower body', 'Push up'],
+  imageUrl: null, contentHash: 'a'.repeat(64),
 }
 
 function setup({ min = 1, transaction, client: suppliedClient }: { min?: number; transaction?: jest.Mock; client?: any } = {}) {
   const tx: any = {
     exercise: { findMany: jest.fn().mockResolvedValue([]), updateMany: jest.fn().mockResolvedValue({ count: 0 }) },
+    exerciseBodyPart: { upsert: jest.fn().mockResolvedValue({ bodyPartId: 1 }) },
+    exerciseMuscle: { upsert: jest.fn().mockResolvedValue({ muscleId: 1 }) },
+    exerciseEquipment: { upsert: jest.fn().mockResolvedValue({ equipmentId: 1 }) },
+    exerciseSecondaryMuscle: { deleteMany: jest.fn().mockResolvedValue({ count: 0 }), createMany: jest.fn().mockResolvedValue({ count: 1 }) },
     exerciseCatalogSyncRun: { update: jest.fn().mockResolvedValue({ syncRunId: 1n, status: 'succeeded' }) },
     $executeRaw: jest.fn(),
   }
@@ -42,8 +48,8 @@ describe('ExerciseCatalogSyncService', () => {
     expect(prisma.$transaction).toHaveBeenCalledWith(expect.any(Function), { timeout: 270000 })
     expect(tx.$executeRaw).toHaveBeenCalledTimes(1)
     const query = tx.$executeRaw.mock.calls[0][0].strings.join('')
-    expect(query).toContain('::"exercise_category"')
-    expect(query).toContain('::"exercise_source"')
+    expect(query).toContain('"exercise_source"')
+    expect(query).not.toContain('"exercise_category"')
     expect(tx.exerciseCatalogSyncRun.update).toHaveBeenCalledWith(expect.objectContaining({ data: expect.objectContaining({ status: 'succeeded', insertedCount: 1 }) }))
   })
 
@@ -58,7 +64,7 @@ describe('ExerciseCatalogSyncService', () => {
 
   it('refuses a manifest mismatch before starting a transaction or transitioning legacy exercises', async () => {
     const { service, prisma } = setup()
-    const manifest = { version: 1 as const, pageSize: 10 as const, count: 1, externalIdHash: 'b'.repeat(64), requestCount: 1, firstExternalId: 'push-up', lastExternalId: 'push-up', fallbackMappedCount: 0, generatedAt: new Date().toISOString() }
+    const manifest = { version: 1 as const, pageSize: 10 as const, count: 1, externalIdHash: 'b'.repeat(64), requestCount: 1, firstExternalId: 'push-up', lastExternalId: 'push-up', generatedAt: new Date().toISOString() }
 
     await expect(service.run({ manifest })).rejects.toThrow('external ID set differs')
 
@@ -67,7 +73,7 @@ describe('ExerciseCatalogSyncService', () => {
 
   it('accepts a matching manifest and keeps legacy transition inside the commit transaction', async () => {
     const { service, prisma, tx } = setup()
-    const manifest = { version: 1 as const, pageSize: 10 as const, count: 1, externalIdHash: externalIdHash([item]), requestCount: 1, firstExternalId: 'push-up', lastExternalId: 'push-up', fallbackMappedCount: 0, generatedAt: new Date().toISOString() }
+    const manifest = { version: 1 as const, pageSize: 10 as const, count: 1, externalIdHash: externalIdHash([item]), requestCount: 1, firstExternalId: 'push-up', lastExternalId: 'push-up', generatedAt: new Date().toISOString() }
 
     await service.onModuleInit()
     await expect(service.run({ manifest })).resolves.toMatchObject({ started: true })
@@ -88,7 +94,7 @@ describe('ExerciseCatalogSyncService', () => {
 
   it('counts matching existing rows as unchanged while still issuing one batch upsert', async () => {
     const { service, tx } = setup()
-    tx.exercise.findMany.mockResolvedValue([{ externalId: 'push-up', contentHash: item.contentHash }])
+    tx.exercise.findMany.mockResolvedValue([{ externalId: 'push-up', contentHash: item.contentHash, exerciseId: 1n }])
 
     await service.run()
 

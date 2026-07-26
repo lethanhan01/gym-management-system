@@ -1,32 +1,69 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common'
-import { ExerciseCategory, ExerciseSource } from '@prisma/client'
+import { ExerciseSource } from '@prisma/client'
 import { AuthenticatedUser } from '../../auth/types/jwt-payload.interface'
 import { AuditService } from '../../common/audit/audit.service'
 import { PrismaService } from '../../prisma/prisma.service'
 import { CreateExerciseDto } from './dto/create-exercise.dto'
 import { UpdateExerciseDto } from './dto/update-exercise.dto'
 
-type CatalogFilters = { q?: string; category?: string; muscleGroup?: string; equipment?: string; page?: number; pageSize?: number }
+type CatalogFilters = {
+  q?: string
+  bodyPartId?: number
+  targetMuscleId?: number
+  equipmentId?: number
+  page?: number
+  pageSize?: number
+}
+
+const EXERCISE_INCLUDE = {
+  bodyPart: true,
+  targetMuscle: true,
+  equipment: true,
+  secondaryMuscles: { include: { muscle: true } },
+} as const
 
 @Injectable()
 export class ExercisesService {
   constructor(private readonly prisma: PrismaService, private readonly audit: AuditService) {}
 
   async findAll(filters: CatalogFilters) {
-    const page = Math.max(1, filters.page ?? 1); const pageSize = Math.min(100, Math.max(1, filters.pageSize ?? 24))
+    const page = Math.max(1, filters.page ?? 1)
+    const pageSize = Math.min(100, Math.max(1, filters.pageSize ?? 24))
     const where = {
-      deletedAt: null, catalogVisible: true, source: { in: [ExerciseSource.manual, ExerciseSource.exercisedb] },
-      ...(filters.category && { category: filters.category as ExerciseCategory }),
-      ...(filters.muscleGroup && { muscleGroup: { contains: filters.muscleGroup, mode: 'insensitive' as const } }),
-      ...(filters.equipment && { equipmentNeeded: { contains: filters.equipment, mode: 'insensitive' as const } }),
-      ...(filters.q && { OR: [{ name: { contains: filters.q, mode: 'insensitive' as const } }, { muscleGroup: { contains: filters.q, mode: 'insensitive' as const } }, { equipmentNeeded: { contains: filters.q, mode: 'insensitive' as const } }] }),
+      deletedAt: null,
+      catalogVisible: true,
+      source: { in: [ExerciseSource.manual, ExerciseSource.exercisedb] },
+      ...(filters.bodyPartId && { bodyPartId: filters.bodyPartId }),
+      ...(filters.targetMuscleId && { targetMuscleId: filters.targetMuscleId }),
+      ...(filters.equipmentId && { equipmentId: filters.equipmentId }),
+      ...(filters.q && {
+        name: { contains: filters.q, mode: 'insensitive' as const },
+      }),
     }
-    const [rows, total] = await this.prisma.$transaction([this.prisma.exercise.findMany({ where, skip: (page - 1) * pageSize, take: pageSize, orderBy: [{ name: 'asc' }, { exerciseId: 'asc' }] }), this.prisma.exercise.count({ where })])
+    const [rows, total] = await this.prisma.$transaction([
+      this.prisma.exercise.findMany({ where, include: EXERCISE_INCLUDE, skip: (page - 1) * pageSize, take: pageSize, orderBy: [{ name: 'asc' }, { exerciseId: 'asc' }] }),
+      this.prisma.exercise.count({ where }),
+    ])
     return { data: rows.map((row) => this.present(row)), meta: { page, pageSize, total, totalPages: Math.ceil(total / pageSize) } }
   }
 
+  async findBodyParts() {
+    return this.prisma.exerciseBodyPart.findMany({ orderBy: { name: 'asc' } })
+  }
+
+  async findEquipments() {
+    return this.prisma.exerciseEquipment.findMany({ orderBy: { name: 'asc' } })
+  }
+
+  async findMuscles() {
+    return this.prisma.exerciseMuscle.findMany({ orderBy: { name: 'asc' } })
+  }
+
   async create(dto: CreateExerciseDto, user: AuthenticatedUser) {
-    const exercise = await this.prisma.exercise.create({ data: { ...dto, source: ExerciseSource.manual, catalogVisible: true, createdByStaffId: user.staffId ?? null } })
+    const exercise = await this.prisma.exercise.create({
+      data: { ...dto, source: ExerciseSource.manual, catalogVisible: true, createdByStaffId: user.staffId ?? null },
+      include: EXERCISE_INCLUDE,
+    })
     await this.audit.log({ actorUserId: user.userId, action: 'exercise.create', resourceType: 'exercise', resourceId: exercise.exerciseId.toString(), afterData: { name: exercise.name, source: exercise.source } })
     return this.present(exercise)
   }
@@ -37,11 +74,11 @@ export class ExercisesService {
     if (before.source === ExerciseSource.exercisedb) {
       const invalid = Object.keys(dto).filter((key) => !['description', 'imageUrl'].includes(key))
       if (invalid.length) throw new BadRequestException('ExerciseDB exercises only allow description and image URL overrides')
-      const exercise = await this.prisma.exercise.update({ where: { exerciseId: id }, data: { descriptionOverride: dto.description, imageUrlOverride: dto.imageUrl } })
+      const exercise = await this.prisma.exercise.update({ where: { exerciseId: id }, data: { descriptionOverride: dto.description, imageUrlOverride: dto.imageUrl }, include: EXERCISE_INCLUDE })
       await this.audit.log({ actorUserId: user.userId, action: 'exercise.override', resourceType: 'exercise', resourceId: id.toString(), afterData: { fields: Object.keys(dto) } })
       return this.present(exercise)
     }
-    const exercise = await this.prisma.exercise.update({ where: { exerciseId: id }, data: dto })
+    const exercise = await this.prisma.exercise.update({ where: { exerciseId: id }, data: dto, include: EXERCISE_INCLUDE })
     await this.audit.log({ actorUserId: user.userId, action: 'exercise.update', resourceType: 'exercise', resourceId: id.toString(), afterData: { name: exercise.name } })
     return this.present(exercise)
   }
@@ -49,7 +86,7 @@ export class ExercisesService {
   async clearOverrides(id: bigint, user: AuthenticatedUser) {
     const exercise = await this.findOneOrThrow(id)
     if (exercise.source !== ExerciseSource.exercisedb) throw new BadRequestException('Only ExerciseDB exercises have overrides')
-    const updated = await this.prisma.exercise.update({ where: { exerciseId: id }, data: { descriptionOverride: null, imageUrlOverride: null } })
+    const updated = await this.prisma.exercise.update({ where: { exerciseId: id }, data: { descriptionOverride: null, imageUrlOverride: null }, include: EXERCISE_INCLUDE })
     await this.audit.log({ actorUserId: user.userId, action: 'exercise.clear_override', resourceType: 'exercise', resourceId: id.toString() })
     return this.present(updated)
   }
@@ -63,6 +100,13 @@ export class ExercisesService {
     await this.audit.log({ actorUserId: user.userId, action: 'exercise.delete', resourceType: 'exercise', resourceId: id.toString() })
   }
 
-  private async findOneOrThrow(id: bigint) { const ex = await this.prisma.exercise.findFirst({ where: { exerciseId: id, deletedAt: null } }); if (!ex) throw new NotFoundException(`Exercise ${id} khong ton tai`); return ex }
-  private present<T extends { description: string | null; imageUrl: string | null; descriptionOverride: string | null; imageUrlOverride: string | null }>(exercise: T) { return { ...exercise, description: exercise.descriptionOverride ?? exercise.description, imageUrl: exercise.imageUrlOverride ?? exercise.imageUrl } }
+  private async findOneOrThrow(id: bigint) {
+    const ex = await this.prisma.exercise.findFirst({ where: { exerciseId: id, deletedAt: null } })
+    if (!ex) throw new NotFoundException(`Exercise ${id} khong ton tai`)
+    return ex
+  }
+
+  private present<T extends { description: string | null; imageUrl: string | null; descriptionOverride: string | null; imageUrlOverride: string | null }>(exercise: T) {
+    return { ...exercise, description: exercise.descriptionOverride ?? exercise.description, imageUrl: exercise.imageUrlOverride ?? exercise.imageUrl }
+  }
 }

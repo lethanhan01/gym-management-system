@@ -11,7 +11,7 @@ export interface ExerciseCatalogManifest {
   requestCount: number
   firstExternalId: string | null
   lastExternalId: string | null
-  fallbackMappedCount: number
+
   generatedAt: string
 }
 

@@ -9,13 +9,14 @@ const RESPONSE_PREVIEW_LIMIT = 512
 export interface NormalizedExerciseDbExercise {
   externalId: string
   name: string
-  category: 'strength' | 'cardio' | 'flexibility' | 'balance'
-  muscleGroup: string | null
-  equipmentNeeded: string | null
+  bodyPart: string | null
+  targetMuscle: string | null
+  secondaryMuscles: string[]
+  equipmentName: string | null
   description: string | null
+  instructions: string[]
   imageUrl: string | null
   contentHash: string
-  fallbackMapped: boolean
 }
 
 @Injectable()
@@ -106,44 +107,53 @@ function clean(value: unknown): string | null {
   const result = value.replace(/\s+/g, ' ').trim()
   return result || null
 }
+
 function list(value: unknown): string[] {
   return Array.isArray(value) ? value.map(clean).filter((x): x is string => !!x) : []
 }
+
 function normalize(item: Record<string, unknown>): NormalizedExerciseDbExercise {
   const externalId = clean(item.id)
   const name = clean(item.name)
   if (!externalId || !name) throw new Error('ExerciseDB exercise is missing id or name')
-  const providerCategory = clean(item.category)?.toLowerCase() ?? null
-  const mapped = mapCategory(providerCategory)
-  const category = mapped.category
-  const muscles = [clean(item.target), ...list(item.secondaryMuscles), clean(item.bodyPart)].filter((x): x is string => !!x)
+
+  const bodyPart = clean(item.bodyPart)
+  const targetMuscle = clean(item.target)
+  const secondaryMuscles = list(item.secondaryMuscles)
+  const equipmentName = clean(item.equipment)
   const instructions = list(item.instructions)
-  // ExerciseDB v2 API no longer provides a gifUrl / image field.
-  // imageUrl is preserved in the schema for manual exercises and future provider updates.
+  // Use gifUrl if provided (some API versions may still include it)
+  const imageUrl = clean(item.gifUrl)
+
+  const description = clean(item.description) ?? (instructions.slice(0, 3).join(' ') || null)
+
   const persisted = {
-    externalId, name, category, muscleGroup: muscles.length ? [...new Set(muscles)].join(', ') : null,
-    equipmentNeeded: clean(item.equipment),
-    description: clean(item.description) ?? (instructions.slice(0, 3).join(' ') || null),
-    imageUrl: null as string | null,
+    externalId,
+    name,
+    bodyPart,
+    targetMuscle,
+    secondaryMuscles,
+    equipmentName,
+    description,
+    instructions,
+    imageUrl,
   }
   assertColumnLengths(persisted)
-  return { ...persisted, category, fallbackMapped: mapped.fallbackMapped, contentHash: createHash('sha256').update(JSON.stringify(persisted)).digest('hex') }
+  return {
+    ...persisted,
+    contentHash: createHash('sha256').update(JSON.stringify(persisted)).digest('hex'),
+  }
 }
 
-function assertColumnLengths(item: Pick<NormalizedExerciseDbExercise, 'externalId' | 'name' | 'muscleGroup' | 'equipmentNeeded' | 'imageUrl'>) {
-  // imageUrl is always null for exercisedb source (API v2 dropped gifUrl); skip its check.
+function assertColumnLengths(item: Pick<NormalizedExerciseDbExercise, 'externalId' | 'name' | 'bodyPart' | 'targetMuscle' | 'equipmentName' | 'imageUrl'>) {
   const limits: Array<[string, string | null, number]> = [
-    ['id', item.externalId, 191], ['name', item.name, 100], ['equipment', item.equipmentNeeded, 100],
+    ['id', item.externalId, 191],
+    ['name', item.name, 100],
+    ['bodyPart', item.bodyPart, 100],
+    ['target', item.targetMuscle, 100],
+    ['equipment', item.equipmentName, 100],
   ]
   for (const [field, value, limit] of limits) {
     if (value && Array.from(value).length > limit) throw new Error(`ExerciseDB exercise ${item.externalId} has ${field} longer than ${limit} characters`)
   }
-}
-
-function mapCategory(value: string | null): Pick<NormalizedExerciseDbExercise, 'category' | 'fallbackMapped'> {
-  if (value === 'cardio') return { category: 'cardio', fallbackMapped: false }
-  if (value === 'flexibility' || value === 'stretch' || value === 'stretching' || value === 'yoga' || value === 'mobility') return { category: 'flexibility', fallbackMapped: false }
-  if (value === 'balance') return { category: 'balance', fallbackMapped: false }
-  if (value === 'strength') return { category: 'strength', fallbackMapped: false }
-  return { category: 'strength', fallbackMapped: true }
 }

@@ -8,9 +8,9 @@ function clientWith(values: Record<string, unknown>) {
 
 function exercise(overrides: Record<string, unknown> = {}) {
   return {
-    id: '0001', name: 'Push-up', bodyPart: 'chest', target: 'pectorals', secondaryMuscles: ['triceps', 'pectorals'],
+    id: '0001', name: 'Push-up', bodyPart: 'chest', target: 'pectorals', secondaryMuscles: ['triceps', 'deltoids'],
     equipment: 'body weight', instructions: ['Lower body', 'Push up'],
-    description: 'A push-up.', category: 'strength', ...overrides,
+    description: 'A push-up.', gifUrl: null, ...overrides,
   }
 }
 
@@ -29,8 +29,12 @@ describe('ExerciseDbV2Client', () => {
     const page = await client.allExercises().next()
 
     expect(page.value).toEqual([expect.objectContaining({
-      externalId: '0001', muscleGroup: 'pectorals, triceps, chest', equipmentNeeded: 'body weight',
-      imageUrl: null, category: 'strength', fallbackMapped: false,
+      externalId: '0001',
+      bodyPart: 'chest',
+      targetMuscle: 'pectorals',
+      secondaryMuscles: ['triceps', 'deltoids'],
+      equipmentName: 'body weight',
+      imageUrl: null,
     })])
     expect(fetchMock).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -43,15 +47,65 @@ describe('ExerciseDbV2Client', () => {
     )
   })
 
-  it('normalizes RapidAPI fields, falls back from instructions, and keeps hashes canonical', async () => {
-    fetchMock.mockResolvedValue(new Response(JSON.stringify([exercise({ category: 'mobility', description: '  ', instructions: [' One ', 'Two', 'Three', 'Four'] })]), { status: 200 }))
+  it('keeps fields separate and does not merge into muscleGroup string', async () => {
+    fetchMock.mockResolvedValue(new Response(JSON.stringify([exercise()]), { status: 200 }))
     const client = clientWith({ EXERCISEDB_SYNC_ENABLED: 'true', EXERCISEDB_API_KEY: apiKey, EXERCISEDB_PAGE_SIZE: 2 })
 
     const first = (await client.allExercises().next()).value![0]
-    fetchMock.mockResolvedValue(new Response(JSON.stringify([exercise({ category: 'mobility', description: '  ', instructions: [' One ', 'Two', 'Three', 'Four'] })]), { status: 200 }))
+
+    expect(first.bodyPart).toBe('chest')
+    expect(first.targetMuscle).toBe('pectorals')
+    expect(first.secondaryMuscles).toEqual(['triceps', 'deltoids'])
+    expect(first.equipmentName).toBe('body weight')
+  })
+
+  it('captures gifUrl into imageUrl when present', async () => {
+    fetchMock.mockResolvedValue(new Response(JSON.stringify([exercise({ gifUrl: 'https://example.com/pushup.gif' })]), { status: 200 }))
+    const client = clientWith({ EXERCISEDB_SYNC_ENABLED: 'true', EXERCISEDB_API_KEY: apiKey, EXERCISEDB_PAGE_SIZE: 2 })
+
+    const first = (await client.allExercises().next()).value![0]
+
+    expect(first.imageUrl).toBe('https://example.com/pushup.gif')
+  })
+
+  it('sets imageUrl to null when gifUrl is absent', async () => {
+    fetchMock.mockResolvedValue(new Response(JSON.stringify([exercise({ gifUrl: null })]), { status: 200 }))
+    const client = clientWith({ EXERCISEDB_SYNC_ENABLED: 'true', EXERCISEDB_API_KEY: apiKey, EXERCISEDB_PAGE_SIZE: 2 })
+
+    const first = (await client.allExercises().next()).value![0]
+
+    expect(first.imageUrl).toBeNull()
+  })
+
+  it('stores instructions as array and uses description field', async () => {
+    fetchMock.mockResolvedValue(new Response(JSON.stringify([exercise({ description: 'A push-up.', instructions: ['Step 1', 'Step 2', 'Step 3'] })]), { status: 200 }))
+    const client = clientWith({ EXERCISEDB_SYNC_ENABLED: 'true', EXERCISEDB_API_KEY: apiKey, EXERCISEDB_PAGE_SIZE: 2 })
+
+    const first = (await client.allExercises().next()).value![0]
+
+    expect(first.instructions).toEqual(['Step 1', 'Step 2', 'Step 3'])
+    expect(first.description).toBe('A push-up.')
+  })
+
+  it('falls back description to first 3 instructions when description is blank', async () => {
+    fetchMock.mockResolvedValue(new Response(JSON.stringify([exercise({ description: '  ', instructions: [' One ', 'Two', 'Three', 'Four'] })]), { status: 200 }))
+    const client = clientWith({ EXERCISEDB_SYNC_ENABLED: 'true', EXERCISEDB_API_KEY: apiKey, EXERCISEDB_PAGE_SIZE: 2 })
+
+    const first = (await client.allExercises().next()).value![0]
+
+    expect(first.description).toBe('One Two Three')
+    expect(first.instructions).toEqual(['One', 'Two', 'Three', 'Four'])
+  })
+
+  it('keeps hashes canonical across two identical fetches', async () => {
+    const ex = exercise({ description: '  ', instructions: [' One ', 'Two', 'Three', 'Four'] })
+    fetchMock.mockResolvedValue(new Response(JSON.stringify([ex]), { status: 200 }))
+    const client = clientWith({ EXERCISEDB_SYNC_ENABLED: 'true', EXERCISEDB_API_KEY: apiKey, EXERCISEDB_PAGE_SIZE: 2 })
+
+    const first = (await client.allExercises().next()).value![0]
+    fetchMock.mockResolvedValue(new Response(JSON.stringify([ex]), { status: 200 }))
     const second = (await client.allExercises().next()).value![0]
 
-    expect(first).toMatchObject({ category: 'flexibility', description: 'One Two Three', fallbackMapped: false })
     expect(first.contentHash).toBe(second.contentHash)
   })
 
@@ -99,25 +153,12 @@ describe('ExerciseDbV2Client', () => {
     await expect(client.allExercises().next()).rejects.toThrow('name longer than 100')
   })
 
-  it('accepts normalized muscle metadata longer than the manual API limit', async () => {
-    const muscleGroup = Array.from({ length: 30 }, (_, index) => `secondary-muscle-${index}`).join(', ')
-    fetchMock.mockResolvedValue(new Response(JSON.stringify([exercise({
-      target: muscleGroup,
-      secondaryMuscles: [],
-      bodyPart: null,
-    })]), { status: 200 }))
-    const client = clientWith({ EXERCISEDB_SYNC_ENABLED: 'true', EXERCISEDB_API_KEY: apiKey, EXERCISEDB_PAGE_SIZE: 10 })
-
-    const page = await client.allExercises().next()
-
-    expect(page.value?.[0].muscleGroup).toBe(muscleGroup)
-    expect(muscleGroup.length).toBeGreaterThan(100)
-  })
-
   it.each([
     ['id', { id: 'x'.repeat(192) }, 'id longer than 191'],
     ['name', { name: 'x'.repeat(101) }, 'name longer than 100'],
     ['equipment', { equipment: 'x'.repeat(101) }, 'equipment longer than 100'],
+    ['bodyPart', { bodyPart: 'x'.repeat(101) }, 'bodyPart longer than 100'],
+    ['target', { target: 'x'.repeat(101) }, 'target longer than 100'],
   ])('rejects a provider %s value beyond its database column limit', async (_field, override, message) => {
     fetchMock.mockResolvedValue(new Response(JSON.stringify([exercise(override)]), { status: 200 }))
     const client = clientWith({ EXERCISEDB_SYNC_ENABLED: 'true', EXERCISEDB_API_KEY: apiKey, EXERCISEDB_PAGE_SIZE: 10 })

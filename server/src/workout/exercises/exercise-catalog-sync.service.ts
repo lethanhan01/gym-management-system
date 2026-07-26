@@ -26,13 +26,12 @@ export class ExerciseCatalogSyncService implements OnModuleInit {
     if (!claimed.count) return { started: false }
     const run = await this.prisma.exerciseCatalogSyncRun.create({ data: { status: ExerciseSyncRunStatus.running, executionToken: token } })
     try {
-      const counters = { fetchedCount: 0, insertedCount: 0, updatedCount: 0, unchangedCount: 0, fallbackMappedCount: 0 }
+      const counters = { fetchedCount: 0, insertedCount: 0, updatedCount: 0, unchangedCount: 0 }
       const items: NormalizedExerciseDbExercise[] = []
       for await (const page of this.client.allExercises()) {
         for (const item of page) {
           items.push(item)
           counters.fetchedCount++
-          if (item.fallbackMapped) counters.fallbackMappedCount++
         }
         await this.renew(token)
       }
@@ -70,12 +69,15 @@ export class ExerciseCatalogSyncService implements OnModuleInit {
   }
 
   async recentRuns(limit = 20) { return this.prisma.exerciseCatalogSyncRun.findMany({ take: Math.min(limit, 100), orderBy: { startedAt: 'desc' } }) }
+
   private async transitionLegacyExercises(tx: Prisma.TransactionClient) {
     // Idempotent compatibility transition; IDs/FKs are deliberately untouched.
     await tx.exercise.updateMany({ where: { source: ExerciseSource.legacy, createdByStaffId: { not: null } }, data: { source: ExerciseSource.manual, catalogVisible: true } })
     await tx.exercise.updateMany({ where: { source: ExerciseSource.legacy }, data: { catalogVisible: false } })
   }
+
   private leaseExpiry() { return new Date(Date.now() + (this.config.get<number>('EXERCISEDB_LOCK_LEASE_SECONDS') ?? 300) * 1000) }
+
   private async renew(token: string) {
     const renewed = await this.prisma.exerciseCatalogSyncLock.updateMany({
       where: { lockName: LOCK, executionToken: token, leaseExpiresAt: { gt: new Date() } },
@@ -83,36 +85,112 @@ export class ExerciseCatalogSyncService implements OnModuleInit {
     })
     if (!renewed.count) throw new Error('Exercise catalog sync lease was lost')
   }
-  private async assertLease(token: string) { const owned = await this.prisma.exerciseCatalogSyncLock.count({ where: { lockName: LOCK, executionToken: token, leaseExpiresAt: { gt: new Date() } } }); if (!owned) throw new Error('Exercise catalog sync lease was lost') }
+
+  private async assertLease(token: string) {
+    const owned = await this.prisma.exerciseCatalogSyncLock.count({ where: { lockName: LOCK, executionToken: token, leaseExpiresAt: { gt: new Date() } } })
+    if (!owned) throw new Error('Exercise catalog sync lease was lost')
+  }
+
   private async upsertBatch(tx: Prisma.TransactionClient, items: NormalizedExerciseDbExercise[], runId: bigint, counters: Record<string, number>) {
+    // Step 1: Collect all unique lookup values from this batch
+    const bodyParts = [...new Set(items.map(i => i.bodyPart).filter((x): x is string => !!x))]
+    const muscles = [...new Set([
+      ...items.map(i => i.targetMuscle).filter((x): x is string => !!x),
+      ...items.flatMap(i => i.secondaryMuscles),
+    ])]
+    const equipmentNames = [...new Set(items.map(i => i.equipmentName).filter((x): x is string => !!x))]
+
+    // Step 2: Upsert lookup tables and build ID maps
+    const bodyPartMap = new Map<string, number>()
+    for (const name of bodyParts) {
+      const record = await tx.exerciseBodyPart.upsert({ where: { name }, create: { name }, update: {} })
+      bodyPartMap.set(name, record.bodyPartId)
+    }
+
+    const muscleMap = new Map<string, number>()
+    for (const name of muscles) {
+      const record = await tx.exerciseMuscle.upsert({ where: { name }, create: { name }, update: {} })
+      muscleMap.set(name, record.muscleId)
+    }
+
+    const equipmentMap = new Map<string, number>()
+    for (const name of equipmentNames) {
+      const record = await tx.exerciseEquipment.upsert({ where: { name }, create: { name }, update: {} })
+      equipmentMap.set(name, record.equipmentId)
+    }
+
+    // Step 3: Check existing exercises for change detection
     const existing = await tx.exercise.findMany({
       where: { source: ExerciseSource.exercisedb, externalId: { in: items.map((item) => item.externalId) } },
-      select: { externalId: true, contentHash: true },
+      select: { externalId: true, contentHash: true, exerciseId: true },
     })
-    const hashes = new Map(existing.map((item: { externalId: string | null; contentHash: string | null }) => [item.externalId, item.contentHash]))
+    const existingMap = new Map(existing.map((item) => [item.externalId, { hash: item.contentHash, exerciseId: item.exerciseId }]))
+
     for (const item of items) {
-      const hash = hashes.get(item.externalId)
-      if (!hashes.has(item.externalId)) counters.insertedCount++
-      else if (hash === item.contentHash) counters.unchangedCount++
+      if (!existingMap.has(item.externalId)) counters.insertedCount++
+      else if (existingMap.get(item.externalId)!.hash === item.contentHash) counters.unchangedCount++
       else counters.updatedCount++
     }
 
+    // Step 4: Upsert exercises with FK IDs
     const now = new Date()
+    const instructionsJson = (instructions: string[]) => instructions.length ? JSON.stringify(instructions) : null
+
     const rows = items.map((item) => Prisma.sql`(
-      ${item.name}, ${item.category}::"exercise_category", ${item.muscleGroup}, ${item.equipmentNeeded}, ${item.description},
-      ${item.imageUrl}, ${ExerciseSource.exercisedb}::"exercise_source", ${item.externalId}, ${item.contentHash}, ${runId}, ${now}, true
+      ${item.name}, ${bodyPartMap.get(item.bodyPart!) ?? null}, ${muscleMap.get(item.targetMuscle!) ?? null},
+      ${equipmentMap.get(item.equipmentName!) ?? null}, ${item.description}, ${instructionsJson(item.instructions)},
+      ${item.imageUrl}, ${ExerciseSource.exercisedb}::\"exercise_source\", ${item.externalId}, ${item.contentHash},
+      ${runId}, ${now}, true
     )`)
+
     await tx.$executeRaw(Prisma.sql`
       INSERT INTO "exercises" (
-        "name", "category", "muscle_group", "equipment_needed", "description", "image_url", "source",
-        "external_id", "content_hash", "last_seen_sync_run_id", "last_synced_at", "catalog_visible"
+        "name", "body_part_id", "target_muscle_id",
+        "equipment_id", "description", "instructions",
+        "image_url", "source", "external_id", "content_hash",
+        "last_seen_sync_run_id", "last_synced_at", "catalog_visible"
       ) VALUES ${Prisma.join(rows)}
       ON CONFLICT ("source", "external_id") DO UPDATE SET
-        "name" = EXCLUDED."name", "category" = EXCLUDED."category", "muscle_group" = EXCLUDED."muscle_group",
-        "equipment_needed" = EXCLUDED."equipment_needed", "description" = EXCLUDED."description",
-        "image_url" = EXCLUDED."image_url", "content_hash" = EXCLUDED."content_hash",
-        "last_seen_sync_run_id" = EXCLUDED."last_seen_sync_run_id", "last_synced_at" = EXCLUDED."last_synced_at",
+        "name" = EXCLUDED."name",
+        "body_part_id" = EXCLUDED."body_part_id",
+        "target_muscle_id" = EXCLUDED."target_muscle_id",
+        "equipment_id" = EXCLUDED."equipment_id",
+        "description" = EXCLUDED."description",
+        "instructions" = EXCLUDED."instructions",
+        "image_url" = EXCLUDED."image_url",
+        "content_hash" = EXCLUDED."content_hash",
+        "last_seen_sync_run_id" = EXCLUDED."last_seen_sync_run_id",
+        "last_synced_at" = EXCLUDED."last_synced_at",
         "catalog_visible" = true
     `)
+
+    // Step 5: Upsert secondary muscles junction table
+    // Fetch exerciseIds of the just-upserted exercises
+    const upserted = await tx.exercise.findMany({
+      where: { source: ExerciseSource.exercisedb, externalId: { in: items.map(i => i.externalId) } },
+      select: { exerciseId: true, externalId: true },
+    })
+    const exerciseIdByExternalId = new Map(upserted.map(e => [e.externalId, e.exerciseId]))
+
+    for (const item of items) {
+      const exerciseId = exerciseIdByExternalId.get(item.externalId)
+      if (!exerciseId) continue
+
+      // Delete stale secondary muscles for this exercise
+      await tx.exerciseSecondaryMuscle.deleteMany({ where: { exerciseId } })
+
+      // Insert current secondary muscles
+      if (item.secondaryMuscles.length > 0) {
+        const secondaryRows = item.secondaryMuscles
+          .map(name => muscleMap.get(name))
+          .filter((id): id is number => id !== undefined)
+        if (secondaryRows.length > 0) {
+          await tx.exerciseSecondaryMuscle.createMany({
+            data: secondaryRows.map(muscleId => ({ exerciseId, muscleId })),
+            skipDuplicates: true,
+          })
+        }
+      }
+    }
   }
 }

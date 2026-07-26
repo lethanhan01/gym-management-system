@@ -27,10 +27,38 @@ import { UpdateExerciseDto } from './dto/update-exercise.dto'
 export class ExercisesController {
   constructor(private readonly exercises: ExercisesService) {}
 
+  @Get('body-parts')
+  @RequirePermission('exercise.read')
+  async listBodyParts() {
+    const data = await this.exercises.findBodyParts()
+    return { success: true, data }
+  }
+
+  @Get('equipments')
+  @RequirePermission('exercise.read')
+  async listEquipments() {
+    const data = await this.exercises.findEquipments()
+    return { success: true, data }
+  }
+
+  @Get('muscles')
+  @RequirePermission('exercise.read')
+  async listMuscles() {
+    const data = await this.exercises.findMuscles()
+    return { success: true, data }
+  }
+
   @Get()
   @RequirePermission('exercise.read')
-  async list(@Query() query: { q?: string; category?: string; muscleGroup?: string; equipment?: string; page?: string; pageSize?: string }) {
-    const result = await this.exercises.findAll({ ...query, page: query.page ? Number(query.page) : undefined, pageSize: query.pageSize ? Number(query.pageSize) : undefined })
+  async list(@Query() query: { q?: string; bodyPartId?: string; targetMuscleId?: string; equipmentId?: string; page?: string; pageSize?: string }) {
+    const result = await this.exercises.findAll({
+      ...query,
+      bodyPartId: query.bodyPartId ? Number(query.bodyPartId) : undefined,
+      targetMuscleId: query.targetMuscleId ? Number(query.targetMuscleId) : undefined,
+      equipmentId: query.equipmentId ? Number(query.equipmentId) : undefined,
+      page: query.page ? Number(query.page) : undefined,
+      pageSize: query.pageSize ? Number(query.pageSize) : undefined,
+    })
     return { success: true, ...result }
   }
 

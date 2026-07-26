@@ -3,12 +3,10 @@ import { ExerciseDbV2Client, NormalizedExerciseDbExercise } from './exercise-db-
 
 export async function preflightExerciseCatalog(client: ExerciseDbV2Client): Promise<ExerciseCatalogManifest> {
   const items: NormalizedExerciseDbExercise[] = []
-  let fallbackMappedCount = 0
   let requestCount = 0
 
   for await (const page of client.allExercises({ pageSize: EXERCISEDB_PAGE_SIZE, strictPagination: true, onRequest: () => requestCount++ })) {
     items.push(...page)
-    fallbackMappedCount += page.filter((item) => item.fallbackMapped).length
   }
 
   assertUniqueExternalIds(items)
@@ -21,7 +19,6 @@ export async function preflightExerciseCatalog(client: ExerciseDbV2Client): Prom
     requestCount,
     firstExternalId: items[0]?.externalId ?? null,
     lastExternalId: items.at(-1)?.externalId ?? null,
-    fallbackMappedCount,
     generatedAt: new Date().toISOString(),
   }
 }
