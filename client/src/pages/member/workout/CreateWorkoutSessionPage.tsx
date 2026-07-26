@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { Fragment, useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import {
@@ -7,6 +7,7 @@ import {
   ChevronUp,
   Clock,
   Dumbbell,
+  Pencil,
   Play,
 } from 'lucide-react'
 import {
@@ -16,6 +17,8 @@ import {
   MemberPageHeader,
   MemberSkeleton,
 } from '@/components/MemberUI'
+import { ExerciseTargetFields } from '@/components/workout/PlanBuilderUI'
+import { Modal } from '@/components/ui/Modal'
 import workoutService, {
   type WorkoutAssignmentSummary,
   type WorkoutPlan,
@@ -29,6 +32,64 @@ interface SetState {
   actualWeightKg: string
   actualDurationSec: string
   completed: boolean
+}
+
+interface SessionExerciseTargets {
+  targetSets: number
+  targetReps: number | null
+  targetDurationSec: number | null
+  targetWeightKg: string
+  restSeconds: number
+}
+
+type SessionDayTargets = Record<string, SessionExerciseTargets>
+
+type SessionConfigTarget = {
+  day: WorkoutPlanDay
+  assignment: WorkoutAssignmentSummary
+}
+
+function getSessionConfigKey(day: WorkoutPlanDay, assignment: WorkoutAssignmentSummary) {
+  return `${assignment.assignmentId}:${day.planDayId}`
+}
+
+function makeSessionExerciseTargets(exercise: WorkoutPlanExercise): SessionExerciseTargets {
+  return {
+    targetSets: exercise.targetSets,
+    targetReps: exercise.targetReps,
+    targetDurationSec: exercise.targetDurationSec,
+    targetWeightKg: exercise.targetWeightKg ? String(Number(exercise.targetWeightKg)) : '',
+    restSeconds: exercise.restSeconds ?? 60,
+  }
+}
+
+function makeSessionDayTargets(day: WorkoutPlanDay, overrides?: SessionDayTargets): SessionDayTargets {
+  return (day.exercises ?? []).reduce<SessionDayTargets>((targets, exercise) => {
+    targets[exercise.planExerciseId] = overrides?.[exercise.planExerciseId]
+      ?? makeSessionExerciseTargets(exercise)
+    return targets
+  }, {})
+}
+
+function applySessionTargets(day: WorkoutPlanDay, overrides?: SessionDayTargets): WorkoutPlanDay {
+  if (!day.exercises || !overrides) return day
+
+  return {
+    ...day,
+    exercises: day.exercises.map((exercise) => {
+      const targets = overrides[exercise.planExerciseId]
+      if (!targets) return exercise
+
+      return {
+        ...exercise,
+        targetSets: targets.targetSets,
+        targetReps: targets.targetReps,
+        targetDurationSec: targets.targetDurationSec,
+        targetWeightKg: targets.targetWeightKg || null,
+        restSeconds: targets.restSeconds,
+      }
+    }),
+  }
 }
 
 function makeDefaultSets(ex: WorkoutPlanExercise): SetState[] {
@@ -46,10 +107,12 @@ function PlanCardItem({
   assignment,
   plan,
   onStartDay,
+  onEditDay,
 }: {
   assignment: WorkoutAssignmentSummary
   plan: WorkoutPlan | null
   onStartDay: (day: WorkoutPlanDay, assignment: WorkoutAssignmentSummary) => void
+  onEditDay: (day: WorkoutPlanDay, assignment: WorkoutAssignmentSummary) => void
 }) {
   const { t } = useTranslation('member')
   const [expanded, setExpanded] = useState(false)
@@ -133,19 +196,131 @@ function PlanCardItem({
                   <p className="break-words text-sm font-medium text-white">{day.name}</p>
                   <p className="text-xs rogym-sx-5e5c39ab">{day.exercises?.length ?? 0} {t('workout.createSession.unitExercises')}</p>
                 </div>
-                <button
-                  type="button"
-                  className="rogym-btn rogym-btn--primary rogym-btn--icon shrink-0"
-                  onClick={() => onStartDay(day, assignment)}
-                  aria-label={t('workout.createSession.buttonStartDay', { name: day.name })}
-                  title={t('workout.createSession.buttonStartDay', { name: day.name })}
-                >
-                  <Play size={16} />
-                </button>
+                <div className="flex shrink-0 items-center gap-2">
+                  <button
+                    type="button"
+                    className="rogym-btn rogym-btn--elevated rogym-btn--icon"
+                    onClick={() => onEditDay(day, assignment)}
+                    aria-label={t('workout.createSession.buttonEditDay', { name: day.name })}
+                    title={t('workout.createSession.buttonEditDay', { name: day.name })}
+                  >
+                    <Pencil size={16} />
+                  </button>
+                  <button
+                    type="button"
+                    className="rogym-btn rogym-btn--primary rogym-btn--icon"
+                    onClick={() => onStartDay(day, assignment)}
+                    aria-label={t('workout.createSession.buttonStartDay', { name: day.name })}
+                    title={t('workout.createSession.buttonStartDay', { name: day.name })}
+                  >
+                    <Play size={16} />
+                  </button>
+                </div>
               </div>
             ))}
         </div>
       )}
+    </div>
+  )
+}
+
+function SessionConfigModal({
+  day,
+  initialTargets,
+  onClose,
+  onSave,
+}: {
+  day: WorkoutPlanDay
+  initialTargets?: SessionDayTargets
+  onClose: () => void
+  onSave: (targets: SessionDayTargets) => void
+}) {
+  const { t } = useTranslation('member')
+  const [targets, setTargets] = useState(() => makeSessionDayTargets(day, initialTargets))
+  const exercises = day.exercises ? [...day.exercises].sort((a, b) => a.orderIndex - b.orderIndex) : []
+
+  function updateTargets(
+    planExerciseId: string,
+    field: keyof SessionExerciseTargets,
+    value: number | string,
+  ) {
+    setTargets((previous) => ({
+      ...previous,
+      [planExerciseId]: { ...previous[planExerciseId], [field]: value },
+    }))
+  }
+
+  return (
+    <Modal
+      open
+      size="xl"
+      title={t('workout.createSession.editModalTitle', { name: day.name })}
+      onClose={onClose}
+      footer={
+        <>
+          <button type="button" className="rogym-btn rogym-btn--outline-white" onClick={onClose}>
+            {t('workout.createSession.buttonCancelEdit')}
+          </button>
+          <button type="button" className="rogym-btn rogym-btn--primary" onClick={() => onSave(targets)}>
+            {t('workout.createSession.buttonSaveEdit')}
+          </button>
+        </>
+      }
+    >
+      <p className="mb-5 text-sm rogym-sx-d88f932f">{t('workout.createSession.editModalDescription')}</p>
+      <div className="space-y-5">
+        {exercises.map((exercise) => {
+          const currentTargets = targets[exercise.planExerciseId]
+          const isCardio = exercise.exercise?.bodyPart?.name?.toLowerCase() === 'cardio'
+          if (!currentTargets) return null
+
+          return (
+            <section key={exercise.planExerciseId} className="rounded-xl border border-white/10 p-4">
+              <h3 className="mb-4 text-sm font-semibold text-white">
+                {exercise.exercise?.name ?? t('workout.session.defaultExerciseName')}
+              </h3>
+              <ExerciseTargetFields
+                isCardio={isCardio}
+                gridClassName="grid gap-3 md:grid-cols-3"
+                compact
+                restOutsideGrid
+                weightPlaceholder="0"
+                values={{
+                  sets: currentTargets.targetSets,
+                  reps: currentTargets.targetReps ?? 1,
+                  duration: currentTargets.targetDurationSec ?? 1,
+                  weight: currentTargets.targetWeightKg,
+                  restSeconds: currentTargets.restSeconds,
+                }}
+                onChange={{
+                  sets: (value) => updateTargets(exercise.planExerciseId, 'targetSets', value),
+                  reps: (value) => updateTargets(exercise.planExerciseId, 'targetReps', value),
+                  duration: (value) => updateTargets(exercise.planExerciseId, 'targetDurationSec', value),
+                  weight: (value) => updateTargets(exercise.planExerciseId, 'targetWeightKg', value),
+                  restSeconds: (value) => updateTargets(exercise.planExerciseId, 'restSeconds', value),
+                }}
+              />
+            </section>
+          )
+        })}
+      </div>
+    </Modal>
+  )
+}
+
+function RestBreak({ seconds }: { seconds: number }) {
+  const { t } = useTranslation('member')
+  const label = t('workout.createSession.restBreak', { seconds })
+
+  return (
+    <div className="my-3 rounded-lg bg-white/[0.04] px-3 py-2" aria-label={label}>
+      <div className="mb-1.5 flex items-center justify-between text-xs rogym-sx-5e5c39ab">
+        <span>{label}</span>
+        <Clock size={13} aria-hidden="true" />
+      </div>
+      <div className="h-1.5 overflow-hidden rounded-full bg-white/10" role="progressbar" aria-label={label}>
+        <div className="h-full w-2/3 rounded-full bg-[var(--rogym-primary)] animate-pulse" />
+      </div>
     </div>
   )
 }
@@ -239,40 +414,47 @@ function SessionView({
                   <span>Kg</span>
                 </div>
                 <div className="space-y-2">
-                  {exerciseSets.map((s, setIdx) => (
-                    <div
-                      key={setIdx}
-                      className="grid grid-cols-[40px_1fr_1fr] items-center gap-2"
-                    >
-                      <span className="rogym-workout-set-index text-sm font-medium">{setIdx + 1}</span>
-                      <input
-                        type="number"
-                        className="rogym-input py-1.5 text-sm"
-                        min={0}
-                        value={isCardio ? s.actualDurationSec : s.actualReps}
-                        onChange={(e) =>
-                          onUpdateSet(
-                            exIdx,
-                            setIdx,
-                            isCardio ? 'actualDurationSec' : 'actualReps',
-                            e.target.value
-                          )
-                        }
-                        placeholder={isCardio ? t('workout.createSession.unitSeconds') : 'reps'}
-                      />
-                      <input
-                        type="number"
-                        className="rogym-input py-1.5 text-sm"
-                        min={0}
-                        step={0.25}
-                        value={s.actualWeightKg}
-                        onChange={(e) =>
-                          onUpdateSet(exIdx, setIdx, 'actualWeightKg', e.target.value)
-                        }
-                        placeholder="kg"
-                      />
-                    </div>
-                  ))}
+                  {exerciseSets.map((s, setIdx) => {
+                    const hasFollowingSet = setIdx < exerciseSets.length - 1
+                    const hasFollowingExercise = exIdx < sortedExercises.length - 1
+
+                    return (
+                      <Fragment key={setIdx}>
+                        <div className="grid grid-cols-[40px_1fr_1fr] items-center gap-2">
+                          <span className="rogym-workout-set-index text-sm font-medium">{setIdx + 1}</span>
+                          <input
+                            type="number"
+                            className="rogym-input py-1.5 text-sm"
+                            min={0}
+                            value={isCardio ? s.actualDurationSec : s.actualReps}
+                            onChange={(e) =>
+                              onUpdateSet(
+                                exIdx,
+                                setIdx,
+                                isCardio ? 'actualDurationSec' : 'actualReps',
+                                e.target.value
+                              )
+                            }
+                            placeholder={isCardio ? t('workout.createSession.unitSeconds') : 'reps'}
+                          />
+                          <input
+                            type="number"
+                            className="rogym-input py-1.5 text-sm"
+                            min={0}
+                            step={0.25}
+                            value={s.actualWeightKg}
+                            onChange={(e) =>
+                              onUpdateSet(exIdx, setIdx, 'actualWeightKg', e.target.value)
+                            }
+                            placeholder="kg"
+                          />
+                        </div>
+                        {(hasFollowingSet || hasFollowingExercise) && (
+                          <RestBreak seconds={ex.restSeconds ?? 60} />
+                        )}
+                      </Fragment>
+                    )
+                  })}
                 </div>
               </div>
             </div>
@@ -318,6 +500,8 @@ export default function CreateWorkoutSessionPage() {
   const [selectedDay, setSelectedDay] = useState<WorkoutPlanDay | null>(null)
   const [selectedAssignment, setSelectedAssignment] =
     useState<WorkoutAssignmentSummary | null>(null)
+  const [sessionTargetOverrides, setSessionTargetOverrides] = useState<Record<string, SessionDayTargets>>({})
+  const [configTarget, setConfigTarget] = useState<SessionConfigTarget | null>(null)
   const [sets, setSets] = useState<SetState[][]>([])
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
@@ -361,13 +545,17 @@ export default function CreateWorkoutSessionPage() {
   }, [load])
 
   function handleStartDay(day: WorkoutPlanDay, assignment: WorkoutAssignmentSummary) {
-    setSelectedDay(day)
+    const configuredDay = applySessionTargets(
+      day,
+      sessionTargetOverrides[getSessionConfigKey(day, assignment)],
+    )
+    setSelectedDay(configuredDay)
     setSelectedAssignment(assignment)
     setDone(false)
     setSubmitError(null)
-    if (day.exercises) {
+    if (configuredDay.exercises) {
       setSets(
-        [...day.exercises]
+        [...configuredDay.exercises]
           .sort((a, b) => a.orderIndex - b.orderIndex)
           .map(makeDefaultSets)
       )
@@ -380,6 +568,13 @@ export default function CreateWorkoutSessionPage() {
         sessionPanelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
       })
     }
+  }
+
+  function handleSaveSessionTargets(targets: SessionDayTargets) {
+    if (!configTarget) return
+    const key = getSessionConfigKey(configTarget.day, configTarget.assignment)
+    setSessionTargetOverrides((previous) => ({ ...previous, [key]: targets }))
+    setConfigTarget(null)
   }
 
   function updateSet(
@@ -470,6 +665,7 @@ export default function CreateWorkoutSessionPage() {
                 assignment={a}
                 plan={fullPlans.get(a.planId) ?? null}
                 onStartDay={handleStartDay}
+                onEditDay={(day, assignment) => setConfigTarget({ day, assignment })}
               />
             ))
           )}
@@ -500,6 +696,17 @@ export default function CreateWorkoutSessionPage() {
           )}
         </div>
       </div>
+      {configTarget && (
+        <SessionConfigModal
+          key={getSessionConfigKey(configTarget.day, configTarget.assignment)}
+          day={configTarget.day}
+          initialTargets={sessionTargetOverrides[
+            getSessionConfigKey(configTarget.day, configTarget.assignment)
+          ]}
+          onClose={() => setConfigTarget(null)}
+          onSave={handleSaveSessionTargets}
+        />
+      )}
     </MemberPage>
   )
 }
