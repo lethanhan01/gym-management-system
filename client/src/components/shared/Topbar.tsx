@@ -60,7 +60,7 @@ export default function Topbar() {
       {showSubCta && (
         <button
           onClick={() => navigate('/member/subscription/setup')}
-          className="rogym-btn--primary rogym-sx-ca063821"
+          className="rogym-topbar__subscription-cta rogym-btn--primary rogym-sx-ca063821"
         >
           <ShoppingBag size={13} /> {tMember('subscription.setup.title')}
         </button>

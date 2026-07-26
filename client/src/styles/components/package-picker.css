@@ -33,8 +33,12 @@
     border-radius: 16px;
     background: var(--rogym-bg-card);
     transition: border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
-    scroll-snap-align: start;
+    scroll-snap-align: center;
     scroll-snap-stop: always;
+  }
+
+  .rogym-package-gallery__card.is-carousel-clone {
+    pointer-events: none;
   }
 
   .rogym-package-gallery__card.is-selected {
@@ -265,6 +269,7 @@
       scroll-snap-type: none;
     }
     .rogym-package-gallery__card { flex-basis: auto; }
+    .rogym-package-gallery__card.is-carousel-clone { display: none; }
     .rogym-package-gallery__select { padding: 14px; }
   }
 

@@ -12,6 +12,7 @@ import recoveryImage from '@/assets/package-gallery/package-recovery.jpg'
 
 const PACKAGE_IMAGES = [strengthImage, cardioImage, trainingImage, recoveryImage]
 const CLOSE_DURATION_MS = 180
+const CAROUSEL_SETTLE_DELAY_MS = 150
 
 type CarouselScrollBehavior = 'auto' | 'smooth'
 
@@ -156,13 +157,21 @@ export function PackagePicker({
   const cardRefs = useRef(new Map<string, HTMLElement>())
   const hasInitialSelectionRef = useRef(false)
   const previousSelectedIdRef = useRef<string | null>(null)
-  const pendingCardSelectionRef = useRef<string | null>(null)
+  const pendingSelectionRef = useRef<string | null>(null)
+  const scrollSettleTimeoutRef = useRef<number | null>(null)
   const selectedPackage = packages.find((item) => item.packageId === selectedId) ?? null
   const galleryImages = packages.map((item, index) => ({
     src: PACKAGE_IMAGES[index % PACKAGE_IMAGES.length],
     alt: t('packagePicker.imageAlt', { name: item.name }),
   }))
   const benefits = parsePackageBenefits(selectedPackage?.benefits ?? null)
+  const galleryEntries = packages.length > 1
+    ? [
+        { item: packages[packages.length - 1], index: packages.length - 1, clonePosition: 'leading' as const },
+        ...packages.map((item, index) => ({ item, index, clonePosition: undefined })),
+        { item: packages[0], index: 0, clonePosition: 'trailing' as const },
+      ]
+    : packages.map((item, index) => ({ item, index, clonePosition: undefined }))
 
   function moveLightbox(direction: -1 | 1) {
     setActiveImageIndex((index) => {
@@ -190,27 +199,57 @@ export function PackagePicker({
 
   function handlePackageSelect(packageId: string) {
     centerPackage(packageId, selectedCardBehavior())
-    if (packageId !== selectedId) pendingCardSelectionRef.current = packageId
+    if (packageId !== selectedId) pendingSelectionRef.current = packageId
     onSelect(packageId)
+  }
+
+  const settleCarousel = useCallback(() => {
+    const gallery = galleryRef.current
+    if (!gallery || packages.length < 2 || gallery.scrollWidth <= gallery.clientWidth + 1) return
+
+    const viewportCenter = gallery.scrollLeft + gallery.clientWidth / 2
+    const centeredCard = Array.from(gallery.querySelectorAll<HTMLElement>('[data-package-id]'))
+      .reduce<HTMLElement | null>((closest, card) => {
+        if (!closest) return card
+        const cardDistance = Math.abs(card.offsetLeft + card.offsetWidth / 2 - viewportCenter)
+        const closestDistance = Math.abs(closest.offsetLeft + closest.offsetWidth / 2 - viewportCenter)
+        return cardDistance < closestDistance ? card : closest
+      }, null)
+    const packageId = centeredCard?.dataset.packageId
+    if (!packageId) return
+
+    if (centeredCard.dataset.carouselClone) centerPackage(packageId, 'auto')
+    if (packageId !== selectedId) {
+      pendingSelectionRef.current = packageId
+      onSelect(packageId)
+    }
+  }, [centerPackage, onSelect, packages.length, selectedId])
+
+  function handleGalleryScroll() {
+    if (scrollSettleTimeoutRef.current !== null) window.clearTimeout(scrollSettleTimeoutRef.current)
+    scrollSettleTimeoutRef.current = window.setTimeout(() => {
+      scrollSettleTimeoutRef.current = null
+      settleCarousel()
+    }, CAROUSEL_SETTLE_DELAY_MS)
   }
 
   useLayoutEffect(() => {
     if (!selectedId || !cardRefs.current.has(selectedId)) return
 
     if (!hasInitialSelectionRef.current) {
-      const isCardInitiatedSelection = pendingCardSelectionRef.current === selectedId
-      centerPackage(selectedId, isCardInitiatedSelection ? selectedCardBehavior() : 'auto')
-      pendingCardSelectionRef.current = null
+      const isInteractionInitiatedSelection = pendingSelectionRef.current === selectedId
+      centerPackage(selectedId, isInteractionInitiatedSelection ? selectedCardBehavior() : 'auto')
+      pendingSelectionRef.current = null
       hasInitialSelectionRef.current = true
       previousSelectedIdRef.current = selectedId
       return
     }
 
     if (previousSelectedIdRef.current !== selectedId) {
-      if (pendingCardSelectionRef.current !== selectedId) {
+      if (pendingSelectionRef.current !== selectedId) {
         centerPackage(selectedId, selectedCardBehavior())
       }
-      pendingCardSelectionRef.current = null
+      pendingSelectionRef.current = null
       previousSelectedIdRef.current = selectedId
     }
   }, [centerPackage, packages, selectedId])
@@ -238,6 +277,10 @@ export function PackagePicker({
     }
   }, [centerPackage, selectedId])
 
+  useEffect(() => () => {
+    if (scrollSettleTimeoutRef.current !== null) window.clearTimeout(scrollSettleTimeoutRef.current)
+  }, [])
+
   return (
     <div className="rogym-package-picker space-y-5">
       <div className="rogym-package-carousel">
@@ -247,56 +290,70 @@ export function PackagePicker({
           role="list"
           aria-label={t('packagePicker.galleryLabel')}
           tabIndex={0}
+          onScroll={handleGalleryScroll}
         >
-          {packages.map((item, index) => {
+          {galleryEntries.map(({ item, index, clonePosition }) => {
+          const isClone = Boolean(clonePosition)
           const isSelected = item.packageId === selectedId
           const isCurrent = item.packageId === currentPackageId
           const image = galleryImages[index]
 
           return (
             <article
-              key={item.packageId}
-              ref={(node) => {
+              key={clonePosition ? `${clonePosition}-${item.packageId}` : item.packageId}
+              ref={isClone ? undefined : (node) => {
                 if (node) cardRefs.current.set(item.packageId, node)
                 else cardRefs.current.delete(item.packageId)
               }}
-              className={`rogym-package-gallery__card ${isSelected ? 'is-selected' : ''}`}
+              className={`rogym-package-gallery__card ${isSelected ? 'is-selected' : ''} ${isClone ? 'is-carousel-clone' : ''}`}
               role="listitem"
+              aria-hidden={isClone || undefined}
+              data-package-id={item.packageId}
+              data-carousel-clone={clonePosition}
             >
-              <button
-                type="button"
-                className="rogym-package-gallery__image-button"
-                aria-label={t('packagePicker.viewImage', { name: item.name })}
-                onClick={() => setActiveImageIndex(index)}
-              >
-                <img src={image.src} alt={image.alt} className="rogym-package-gallery__image" />
-                <span className="rogym-package-gallery__expand" aria-hidden="true"><Expand size={16} /></span>
-              </button>
-              <button
-                type="button"
-                className="rogym-package-gallery__select"
-                aria-pressed={isSelected}
-                onClick={() => handlePackageSelect(item.packageId)}
-              >
-                <span className="rogym-package-gallery__heading">
-                  <span className="min-w-0">
-                    <span className="rogym-package-gallery__name">{item.name}</span>
-                    <span className="rogym-package-gallery__meta">
-                      <Calendar size={12} /> {t('packagePicker.days', { count: item.durationDays })}
+              {isClone ? (
+                <>
+                  <div className="rogym-package-gallery__image-button">
+                    <img src={image.src} alt="" className="rogym-package-gallery__image" />
+                    <span className="rogym-package-gallery__expand"><Expand size={16} /></span>
+                  </div>
+                  <div className="rogym-package-gallery__select">
+                    <span className="rogym-package-gallery__heading">
+                      <span className="min-w-0">
+                        <span className="rogym-package-gallery__name">{item.name}</span>
+                        <span className="rogym-package-gallery__meta"><Calendar size={12} /> {t('packagePicker.days', { count: item.durationDays })}</span>
+                      </span>
+                      <span className="rogym-package-gallery__price">{formatVnd(item.price)}</span>
                     </span>
-                  </span>
-                  <span className="rogym-package-gallery__price">{formatVnd(item.price)}</span>
-                </span>
-                <span className="rogym-package-gallery__badges">
-                  {item.includesPt ? (
-                    <span className="rogym-package-gallery__badge is-pt"><UserCheck size={11} /> {t('packagePicker.withPt')}</span>
-                  ) : (
-                    <span className="rogym-package-gallery__badge"><UserX size={11} /> {t('packagePicker.selfTrain')}</span>
-                  )}
-                  {isCurrent && <span className="rogym-package-gallery__badge is-current">{t('packagePicker.currentBadge')}</span>}
-                  {isSelected && <span className="rogym-package-gallery__selected"><Check size={13} /> {t('packagePicker.selected')}</span>}
-                </span>
-              </button>
+                    <span className="rogym-package-gallery__badges">
+                      {item.includesPt ? <span className="rogym-package-gallery__badge is-pt"><UserCheck size={11} /> {t('packagePicker.withPt')}</span> : <span className="rogym-package-gallery__badge"><UserX size={11} /> {t('packagePicker.selfTrain')}</span>}
+                      {isCurrent && <span className="rogym-package-gallery__badge is-current">{t('packagePicker.currentBadge')}</span>}
+                      {isSelected && <span className="rogym-package-gallery__selected"><Check size={13} /> {t('packagePicker.selected')}</span>}
+                    </span>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <button type="button" className="rogym-package-gallery__image-button" aria-label={t('packagePicker.viewImage', { name: item.name })} onClick={() => setActiveImageIndex(index)}>
+                    <img src={image.src} alt={image.alt} className="rogym-package-gallery__image" />
+                    <span className="rogym-package-gallery__expand" aria-hidden="true"><Expand size={16} /></span>
+                  </button>
+                  <button type="button" className="rogym-package-gallery__select" aria-pressed={isSelected} onClick={() => handlePackageSelect(item.packageId)}>
+                    <span className="rogym-package-gallery__heading">
+                      <span className="min-w-0">
+                        <span className="rogym-package-gallery__name">{item.name}</span>
+                        <span className="rogym-package-gallery__meta"><Calendar size={12} /> {t('packagePicker.days', { count: item.durationDays })}</span>
+                      </span>
+                      <span className="rogym-package-gallery__price">{formatVnd(item.price)}</span>
+                    </span>
+                    <span className="rogym-package-gallery__badges">
+                      {item.includesPt ? <span className="rogym-package-gallery__badge is-pt"><UserCheck size={11} /> {t('packagePicker.withPt')}</span> : <span className="rogym-package-gallery__badge"><UserX size={11} /> {t('packagePicker.selfTrain')}</span>}
+                      {isCurrent && <span className="rogym-package-gallery__badge is-current">{t('packagePicker.currentBadge')}</span>}
+                      {isSelected && <span className="rogym-package-gallery__selected"><Check size={13} /> {t('packagePicker.selected')}</span>}
+                    </span>
+                  </button>
+                </>
+              )}
             </article>
           )
           })}

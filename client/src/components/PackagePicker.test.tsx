@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
-import { fireEvent, render, screen, within } from '@testing-library/react'
+import { act, fireEvent, render, screen, within } from '@testing-library/react'
 import { PackagePicker } from './PackagePicker'
 import type { Package } from '@/services/package.service'
 
@@ -40,12 +40,13 @@ const packages: Package[] = [
 type PickerProps = {
   selectedId: string
   onSelect?: (packageId: string) => void
+  packageList?: Package[]
 }
 
-function picker({ selectedId, onSelect = vi.fn() }: PickerProps) {
+function picker({ selectedId, onSelect = vi.fn(), packageList = packages }: PickerProps) {
   return (
     <PackagePicker
-      packages={packages}
+      packages={packageList}
       selectedId={selectedId}
       onSelect={onSelect}
       startDate={new Date('2026-01-01')}
@@ -56,9 +57,29 @@ function picker({ selectedId, onSelect = vi.fn() }: PickerProps) {
   )
 }
 
+function ControlledPicker({
+  initialSelectedId,
+  onSelect,
+  packageList = packages,
+}: {
+  initialSelectedId: string
+  onSelect: (packageId: string) => void
+  packageList?: Package[]
+}) {
+  const [selectedId, setSelectedId] = useState(initialSelectedId)
+  return picker({
+    selectedId,
+    packageList,
+    onSelect: (packageId) => {
+      onSelect(packageId)
+      setSelectedId(packageId)
+    },
+  })
+}
+
 function mockGalleryGeometry({
   clientWidth = 280,
-  scrollWidth = 772,
+  scrollWidth = 1260,
   cardWidth = 220,
 }: {
   clientWidth?: number
@@ -72,6 +93,7 @@ function mockGalleryGeometry({
   Object.defineProperties(gallery, {
     clientWidth: { configurable: true, value: clientWidth },
     scrollWidth: { configurable: true, value: scrollWidth },
+    scrollLeft: { configurable: true, value: 0, writable: true },
     scrollTo: { configurable: true, value: scrollTo },
   })
   cards.forEach((card, index) => {
@@ -89,42 +111,81 @@ function getSelectButton(name: string) {
     .find((button) => button.getAttribute('aria-pressed') !== null)!
 }
 
+function settleScroll(gallery: HTMLElement) {
+  fireEvent.scroll(gallery)
+  act(() => vi.advanceTimersByTime(150))
+}
+
 describe('PackagePicker gallery', () => {
-  it('centers the initial selected card without animation after packages become selectable', () => {
+  it('centers the initial selected real card without animation after packages become selectable', () => {
     const { rerender } = render(picker({ selectedId: '' }))
     const { scrollTo } = mockGalleryGeometry()
 
     rerender(picker({ selectedId: '2' }))
 
-    expect(scrollTo).toHaveBeenCalledWith({ left: 246, behavior: 'auto' })
+    expect(scrollTo).toHaveBeenCalledWith({ left: 490, behavior: 'auto' })
   })
 
-  it('selects, centers, and shows the details for another package', () => {
+  it('renders inaccessible, non-interactive boundary clones only when multiple packages exist', () => {
+    render(picker({ selectedId: '1' }))
+    const gallery = screen.getByRole('list', { name: 'Thư viện gói tập' })
+    const clones = gallery.querySelectorAll<HTMLElement>('[data-carousel-clone]')
+
+    expect(clones).toHaveLength(2)
+    clones.forEach((clone) => {
+      expect(clone).toHaveAttribute('aria-hidden', 'true')
+      expect(clone.querySelectorAll('button')).toHaveLength(0)
+    })
+
+    const onePackage = render(picker({ selectedId: '1', packageList: packages.slice(0, 1) }))
+    expect(onePackage.container.querySelectorAll('[data-carousel-clone]')).toHaveLength(0)
+  })
+
+  it('selects, centers, and shows the details for another package when its button is pressed', () => {
     const onSelect = vi.fn()
-
-    function ControlledPicker() {
-      const [selectedId, setSelectedId] = useState('1')
-      return picker({
-        selectedId,
-        onSelect: (packageId) => {
-          onSelect(packageId)
-          setSelectedId(packageId)
-        },
-      })
-    }
-
-    render(<ControlledPicker />)
+    render(<ControlledPicker initialSelectedId="1" onSelect={onSelect} />)
     const { scrollTo } = mockGalleryGeometry()
     fireEvent.click(getSelectButton('Cardio'))
 
     expect(onSelect).toHaveBeenCalledWith('2')
-    expect(scrollTo).toHaveBeenCalledWith({ left: 246, behavior: 'smooth' })
+    expect(scrollTo).toHaveBeenCalledWith({ left: 490, behavior: 'smooth' })
     expect(getSelectButton('Cardio')).toHaveAttribute('aria-pressed', 'true')
     expect(within(document.querySelector('.rogym-package-picker__details')!).getByText('Cardio')).toBeInTheDocument()
+  })
 
-    scrollTo.mockClear()
-    fireEvent.click(getSelectButton('Cardio'))
-    expect(scrollTo).toHaveBeenCalledWith({ left: 246, behavior: 'smooth' })
+  it('updates the selected package after the centered real card settles', () => {
+    vi.useFakeTimers()
+    const onSelect = vi.fn()
+    render(<ControlledPicker initialSelectedId="1" onSelect={onSelect} />)
+    const { gallery } = mockGalleryGeometry()
+    gallery.scrollLeft = 490
+
+    settleScroll(gallery)
+
+    expect(onSelect).toHaveBeenCalledWith('2')
+    expect(getSelectButton('Cardio')).toHaveAttribute('aria-pressed', 'true')
+    expect(within(document.querySelector('.rogym-package-picker__details')!).getByText('Cardio')).toBeInTheDocument()
+  })
+
+  it('loops from a boundary clone back to its real card without selecting twice', () => {
+    vi.useFakeTimers()
+    const onSelect = vi.fn()
+    render(<ControlledPicker initialSelectedId="3" onSelect={onSelect} />)
+    const { gallery, scrollTo } = mockGalleryGeometry()
+
+    gallery.scrollLeft = 978
+    settleScroll(gallery)
+    expect(scrollTo).toHaveBeenCalledWith({ left: 246, behavior: 'auto' })
+    expect(onSelect).toHaveBeenCalledWith('1')
+
+    gallery.scrollLeft = 246
+    settleScroll(gallery)
+    expect(onSelect).toHaveBeenCalledTimes(1)
+
+    gallery.scrollLeft = 2
+    settleScroll(gallery)
+    expect(scrollTo).toHaveBeenCalledWith({ left: 734, behavior: 'auto' })
+    expect(onSelect).toHaveBeenLastCalledWith('3')
   })
 
   it('uses instant scrolling for reduced motion and skips non-overflowing galleries', () => {
@@ -135,21 +196,21 @@ describe('PackagePicker gallery', () => {
     rerender(picker({ selectedId: '1' }))
     scrollTo.mockClear()
     rerender(picker({ selectedId: '2' }))
-    expect(scrollTo).toHaveBeenCalledWith({ left: 246, behavior: 'auto' })
+    expect(scrollTo).toHaveBeenCalledWith({ left: 490, behavior: 'auto' })
 
     unmount()
     const nonOverflowing = render(picker({ selectedId: '' }))
     const staticGallery = mockGalleryGeometry({ clientWidth: 280, scrollWidth: 280 })
     nonOverflowing.rerender(picker({ selectedId: '1' }))
+    fireEvent.scroll(staticGallery.gallery)
     expect(staticGallery.scrollTo).not.toHaveBeenCalled()
   })
 
-  it('does not change selection when the gallery is scrolled or a thumbnail opens the lightbox', () => {
+  it('opens a thumbnail in the lightbox without changing the selection', () => {
     const onSelect = vi.fn()
     render(picker({ selectedId: '1', onSelect }))
-    const { gallery } = mockGalleryGeometry()
+    mockGalleryGeometry()
 
-    fireEvent.scroll(gallery)
     fireEvent.click(screen.getByRole('button', { name: /không gian tập luyện.*Cardio/i }))
 
     expect(screen.getByRole('dialog')).toHaveAttribute('open')
