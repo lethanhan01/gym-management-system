@@ -44,6 +44,9 @@ const mockedGetByMember = vi.mocked(subscriptionService.getByMember)
 const mockedCancel = vi.mocked(subscriptionService.cancel)
 const mockedListByMember = vi.mocked(paymentService.listByMember)
 const mockedGetPackage = vi.mocked(packageService.get)
+const toastMock = vi.hoisted(() => ({ error: vi.fn(), success: vi.fn() }))
+
+vi.mock('@/lib/toast', () => ({ toast: toastMock }))
 
 function renderCurrentPackageWithActivatedState() {
   return render(
@@ -95,15 +98,15 @@ describe('CurrentPackagePage notification toasts', () => {
     })
   })
 
-  it('renders the just-activated message with the shared toast surface', async () => {
+  it('notifies the member when their subscription is activated', async () => {
     renderCurrentPackageWithActivatedState()
 
-    const toast = await screen.findByRole('status')
-    expect(toast).toHaveClass('rogym-notification-toast')
-    expect(toast).toHaveTextContent('Gói tập đã được kích hoạt thành công!')
+    await waitFor(() => {
+      expect(toastMock.success).toHaveBeenCalledWith('Gói tập đã được kích hoạt thành công!')
+    })
   })
 
-  it('renders the cancel success message with the shared toast surface', async () => {
+  it('notifies the member when their subscription is cancelled', async () => {
     useAuthStore.getState().setAuth(
       {
         userId: '1',
@@ -121,8 +124,6 @@ describe('CurrentPackagePage notification toasts', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Xác nhận hủy' }))
 
     await waitFor(() => expect(mockedCancel).toHaveBeenCalledWith('1'))
-    const toast = await screen.findByRole('status')
-    expect(toast).toHaveClass('rogym-notification-toast')
-    expect(toast).toHaveTextContent('Đã hủy gói tập thành công.')
+    expect(toastMock.success).toHaveBeenCalledWith('Đã hủy gói tập thành công.')
   })
 })

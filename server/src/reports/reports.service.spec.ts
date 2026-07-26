@@ -13,12 +13,12 @@ const TO = '2024-01-31'
 const mockPrisma = {
   payment: { findMany: jest.fn() },
   member: { findMany: jest.fn() },
-  subscription: { findMany: jest.fn(), findFirst: jest.fn(), groupBy: jest.fn() },
+  subscription: { findMany: jest.fn(), groupBy: jest.fn() },
   package: { findMany: jest.fn() },
   staff: { findMany: jest.fn(), findFirst: jest.fn() },
   staffSchedule: { findMany: jest.fn() },
   staffAttendanceLog: { findMany: jest.fn() },
-  trainingSession: { count: jest.fn() },
+  trainingSession: { groupBy: jest.fn() },
   feedback: { findMany: jest.fn() },
 }
 
@@ -30,8 +30,8 @@ describe('ReportsService', () => {
   let service: ReportsService
 
   beforeEach(() => {
+    jest.resetAllMocks()
     service = new ReportsService(mockPrisma as any)
-    jest.clearAllMocks()
   })
 
   // -------------------------------------------------------------------------
@@ -137,10 +137,9 @@ describe('ReportsService', () => {
 
   describe('renewals', () => {
     it('returns renewalRate=1 when all eligible members renewed', async () => {
-      mockPrisma.subscription.findMany.mockResolvedValue([
-        { memberId: 1n, endDate: new Date('2024-01-31') },
-      ])
-      mockPrisma.subscription.findFirst.mockResolvedValue({ subscriptionId: 2n })
+      mockPrisma.subscription.findMany
+        .mockResolvedValueOnce([{ memberId: 1n, endDate: new Date('2024-01-31') }])
+        .mockResolvedValueOnce([{ memberId: 1n, startDate: new Date('2024-02-01') }])
 
       const result = await service.renewals(FROM, TO)
 
@@ -150,10 +149,9 @@ describe('ReportsService', () => {
     })
 
     it('returns renewalRate=0 when no member renewed', async () => {
-      mockPrisma.subscription.findMany.mockResolvedValue([
-        { memberId: 1n, endDate: new Date('2024-01-31') },
-      ])
-      mockPrisma.subscription.findFirst.mockResolvedValue(null)
+      mockPrisma.subscription.findMany
+        .mockResolvedValueOnce([{ memberId: 1n, endDate: new Date('2024-01-31') }])
+        .mockResolvedValueOnce([])
 
       const result = await service.renewals(FROM, TO)
 
@@ -162,7 +160,7 @@ describe('ReportsService', () => {
     })
 
     it('returns renewalRate=null when no eligible subscriptions', async () => {
-      mockPrisma.subscription.findMany.mockResolvedValue([])
+      mockPrisma.subscription.findMany.mockResolvedValueOnce([])
 
       const result = await service.renewals(FROM, TO)
 
@@ -189,7 +187,7 @@ describe('ReportsService', () => {
       mockPrisma.staff.findMany.mockResolvedValue([
         { staffId: 1n, staffCode: 'ST-001', user: { fullName: 'Trainer A' } },
       ])
-      mockPrisma.trainingSession.count.mockResolvedValue(0)
+      mockPrisma.trainingSession.groupBy.mockResolvedValue([])
       mockPrisma.feedback.findMany.mockResolvedValue([])
 
       await expect(service.staffPerformance(FROM, TO, '1')).resolves.not.toThrow()
@@ -200,7 +198,10 @@ describe('ReportsService', () => {
         { staffId: 1n, staffCode: 'ST-001', user: { fullName: 'Trainer A' } },
         { staffId: 2n, staffCode: 'ST-002', user: { fullName: 'Trainer B' } },
       ])
-      mockPrisma.trainingSession.count.mockResolvedValueOnce(5).mockResolvedValueOnce(10)
+      mockPrisma.trainingSession.groupBy.mockResolvedValue([
+        { trainerStaffId: 1n, _count: { _all: 5 } },
+        { trainerStaffId: 2n, _count: { _all: 10 } },
+      ])
       mockPrisma.feedback.findMany.mockResolvedValue([])
 
       const result = await service.staffPerformance(FROM, TO)
@@ -213,7 +214,7 @@ describe('ReportsService', () => {
       mockPrisma.staff.findMany.mockResolvedValue([
         { staffId: 1n, staffCode: 'ST-001', user: { fullName: 'Trainer A' } },
       ])
-      mockPrisma.trainingSession.count.mockResolvedValue(3)
+      mockPrisma.trainingSession.groupBy.mockResolvedValue([{ trainerStaffId: 1n, _count: { _all: 3 } }])
       mockPrisma.feedback.findMany.mockResolvedValue([])
 
       const result = await service.staffPerformance(FROM, TO)
@@ -225,9 +226,12 @@ describe('ReportsService', () => {
       mockPrisma.staff.findMany.mockResolvedValue([
         { staffId: 1n, staffCode: 'ST-001', user: { fullName: 'Trainer A' } },
       ])
-      mockPrisma.trainingSession.count.mockResolvedValue(0)
+      mockPrisma.trainingSession.groupBy.mockResolvedValue([])
       // (3 + 1) / 2 = 2
-      mockPrisma.feedback.findMany.mockResolvedValue([{ severity: 'high' }, { severity: 'low' }])
+      mockPrisma.feedback.findMany.mockResolvedValue([
+        { subjectStaffId: 1n, severity: 'high' },
+        { subjectStaffId: 1n, severity: 'low' },
+      ])
 
       const result = await service.staffPerformance(FROM, TO)
 
@@ -261,20 +265,18 @@ describe('ReportsService', () => {
           user: { fullName: 'Employee A' },
         },
       ])
-      mockPrisma.staffSchedule.findMany
-        .mockResolvedValueOnce([])
-        .mockResolvedValueOnce([{ shift: 'morning' }])
-      mockPrisma.staffAttendanceLog.findMany
-        .mockResolvedValueOnce([])
-        .mockResolvedValueOnce([
-          {
-            checkIn: new Date('2024-01-10T07:00:00+07:00'),
-            checkOut: new Date('2024-01-10T12:00:00+07:00'),
-          },
-        ])
-      mockPrisma.feedback.findMany
-        .mockResolvedValueOnce([])
-        .mockResolvedValueOnce([{ severity: 'high' }, { severity: 'medium' }])
+      mockPrisma.staffSchedule.findMany.mockResolvedValue([{ staffId: 1n, shift: 'morning' }])
+      mockPrisma.staffAttendanceLog.findMany.mockResolvedValue([
+        {
+          staffId: 1n,
+          checkIn: new Date('2024-01-10T07:00:00+07:00'),
+          checkOut: new Date('2024-01-10T12:00:00+07:00'),
+        },
+      ])
+      mockPrisma.feedback.findMany.mockResolvedValue([
+        { subjectStaffId: 1n, severity: 'high' },
+        { subjectStaffId: 1n, severity: 'medium' },
+      ])
 
       const result = await service.employeePerformance(FROM, TO)
 

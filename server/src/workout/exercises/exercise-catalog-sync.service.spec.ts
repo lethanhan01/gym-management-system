@@ -1,4 +1,5 @@
 import { externalIdHash } from './exercise-catalog-manifest'
+import { ExerciseDbV2Client } from './exercise-db-v2.client'
 import { ExerciseCatalogSyncService } from './exercise-catalog-sync.service'
 
 const item = {
@@ -9,8 +10,29 @@ const item = {
   imageUrl: null, contentHash: 'a'.repeat(64),
 }
 
-function setup({ min = 1, transaction, client: suppliedClient }: { min?: number; transaction?: jest.Mock; client?: any } = {}) {
-  const tx: any = {
+type TransactionMock = {
+  exercise: { findMany: jest.Mock; updateMany: jest.Mock }
+  exerciseBodyPart: { upsert: jest.Mock }
+  exerciseMuscle: { upsert: jest.Mock }
+  exerciseEquipment: { upsert: jest.Mock }
+  exerciseSecondaryMuscle: { deleteMany: jest.Mock; createMany: jest.Mock }
+  exerciseCatalogSyncRun: { update: jest.Mock }
+  $executeRaw: jest.Mock
+}
+
+type PrismaMock = {
+  exerciseCatalogSyncLock: { upsert: jest.Mock; updateMany: jest.Mock; count: jest.Mock; update: jest.Mock }
+  exerciseCatalogSyncRun: { create: jest.Mock; update: jest.Mock }
+  exercise: { updateMany: jest.Mock }
+  $transaction: jest.Mock
+}
+
+function exerciseClient(pages: AsyncGenerator<typeof item[]>): ExerciseDbV2Client {
+  return { isEnabled: () => true, allExercises: () => pages } as unknown as ExerciseDbV2Client
+}
+
+function setup({ min = 1, transaction, client: suppliedClient }: { min?: number; transaction?: jest.Mock; client?: ExerciseDbV2Client } = {}) {
+  const tx: TransactionMock = {
     exercise: { findMany: jest.fn().mockResolvedValue([]), updateMany: jest.fn().mockResolvedValue({ count: 0 }) },
     exerciseBodyPart: { upsert: jest.fn().mockResolvedValue({ bodyPartId: 1 }) },
     exerciseMuscle: { upsert: jest.fn().mockResolvedValue({ muscleId: 1 }) },
@@ -19,15 +41,25 @@ function setup({ min = 1, transaction, client: suppliedClient }: { min?: number;
     exerciseCatalogSyncRun: { update: jest.fn().mockResolvedValue({ syncRunId: 1n, status: 'succeeded' }) },
     $executeRaw: jest.fn(),
   }
-  const prisma: any = {
+  const prisma: PrismaMock = {
     exerciseCatalogSyncLock: { upsert: jest.fn(), updateMany: jest.fn().mockResolvedValue({ count: 1 }), count: jest.fn().mockResolvedValue(1), update: jest.fn() },
     exerciseCatalogSyncRun: { create: jest.fn().mockResolvedValue({ syncRunId: 1n }), update: jest.fn() },
     exercise: { updateMany: jest.fn() },
     $transaction: transaction ?? jest.fn(async (callback: (client: unknown) => unknown) => callback(tx)),
   }
-  const client: any = suppliedClient ?? { isEnabled: () => true, async *allExercises() { yield [item] } }
+  const client = suppliedClient ?? exerciseClient((async function* () { yield [item] })())
   const config = { get: jest.fn((key: string) => ({ EXERCISEDB_LOCK_LEASE_SECONDS: 300, EXERCISEDB_MIN_EXPECTED_COUNT: min, EXERCISEDB_UPSERT_BATCH_SIZE: 1 }[key])) }
-  return { prisma, tx, client, config, service: new ExerciseCatalogSyncService(prisma, client, config as any) }
+  return {
+    prisma,
+    tx,
+    client,
+    config,
+    service: new ExerciseCatalogSyncService(
+      prisma as unknown as ConstructorParameters<typeof ExerciseCatalogSyncService>[0],
+      client,
+      config as unknown as ConstructorParameters<typeof ExerciseCatalogSyncService>[2],
+    ),
+  }
 }
 
 describe('ExerciseCatalogSyncService', () => {
@@ -83,7 +115,10 @@ describe('ExerciseCatalogSyncService', () => {
   })
 
   it('does not transition legacy exercises when provider fetch fails', async () => {
-    const client = { isEnabled: () => true, async *allExercises() { throw new Error('provider unavailable') } }
+    const client = exerciseClient((async function* () {
+      await Promise.reject(new Error('provider unavailable'))
+      yield [item]
+    })())
     const { service, prisma } = setup({ client })
 
     await expect(service.run()).rejects.toThrow('provider unavailable')

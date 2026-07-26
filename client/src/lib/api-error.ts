@@ -13,7 +13,7 @@ export function getApiError(error: unknown, fallback?: string): string {
   }
   const payload = error.response?.data
   if (payload?.code && i18n.exists(`error.api.${payload.code}`, { ns: 'common' })) {
-    return i18n.t(`error.api.${payload.code}` as any, { ns: 'common' })
+    return i18n.t(`error.api.${payload.code}`, payload.code, { ns: 'common' })
   }
   
   if (fallback) return fallback
