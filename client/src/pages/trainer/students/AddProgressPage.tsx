@@ -14,7 +14,7 @@ import {
   TrainerPageHeader,
   TrainerSkeleton,
 } from '@/components/TrainerUI'
-import { toast } from 'sonner'
+import { toast } from '@/lib/toast'
 
 export default function AddProgressPage() {
   const { t } = useTranslation('trainer')

@@ -4,7 +4,7 @@ import { Menu } from 'lucide-react'
 import Sidebar from '@/components/shared/Sidebar'
 import Topbar from '@/components/shared/Topbar'
 import BottomNav from '@/components/shared/BottomNav'
-import { NotificationToast } from '@/components/shared/NotificationUI'
+import { toast } from '@/lib/toast'
 import { PageLoader } from '@/components/shared/Spinner'
 import { Button } from '@/components/ui/Button'
 import { useAuthStore } from '@/stores/authStore'
@@ -34,7 +34,6 @@ export default function DashboardLayout() {
   const checkedMemberId = useSubscriptionStore((state) => state.checkedMemberId)
   const checkSubscription = useSubscriptionStore((state) => state.check)
   const setSubscriptionError = useSubscriptionStore((state) => state.setError)
-  const [showExpiryToast, setShowExpiryToast] = useState(false)
   const navigate = useNavigate()
   const location = useLocation()
   const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -97,10 +96,9 @@ export default function DashboardLayout() {
 
   useSubscriptionExpiry(() => {
     if (!isMember) return
-    setShowExpiryToast(true)
+    toast.error('Gói tập đã hết hạn. Đang chuyển về trang đăng ký...')
     if (toastTimerRef.current) clearTimeout(toastTimerRef.current)
     toastTimerRef.current = setTimeout(() => {
-      setShowExpiryToast(false)
       navigate(MEMBER_SUBSCRIPTION_SETUP_PATH, { replace: true })
     }, 3000)
   })
@@ -149,12 +147,6 @@ export default function DashboardLayout() {
           </Button>
         )}
         <main className="flex-1 overflow-auto px-6 pt-20 pb-24 md:px-6 md:pt-20 md:pb-6">
-          {showExpiryToast && (
-            <NotificationToast
-              tone="error"
-              message="Gói tập đã hết hạn. Đang chuyển về trang đăng ký..."
-            />
-          )}
           <Suspense fallback={<PageLoader />}>
             <Outlet />
           </Suspense>

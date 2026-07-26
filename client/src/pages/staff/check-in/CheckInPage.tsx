@@ -14,7 +14,7 @@ import {
   StaffStatusBadge,
   SubmitButton,
 } from '@/components/StaffUI'
-import { toast } from 'sonner'
+import { toast } from '@/lib/toast'
 
 export default function CheckInPage() {
   const { t } = useTranslation('staff')

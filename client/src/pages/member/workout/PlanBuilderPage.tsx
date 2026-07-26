@@ -23,7 +23,7 @@ import {
   MemberPageHeader,
   MemberSkeleton,
 } from '@/components/MemberUI'
-import { toast } from 'sonner'
+import { toast } from '@/lib/toast'
 import { getApiError, getApiErrorCode } from '@/lib/api-error'
 import workoutService, {
   type Exercise,

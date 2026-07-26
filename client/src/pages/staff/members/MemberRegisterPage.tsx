@@ -12,7 +12,7 @@ import {
   StaffSkeleton,
   StaffErrorState,
 } from '@/components/StaffUI'
-import { toast } from 'sonner'
+import { toast } from '@/lib/toast'
 
 type PaymentMethod = 'cash' | 'bank_card' | 'ewallet'
 

@@ -34,7 +34,7 @@ import {
   isSubscriptionActive,
   subscriptionEndDateKey,
 } from '@/lib/subscription'
-import { toast } from 'sonner'
+import { toast } from '@/lib/toast'
 
 function Badge({ label, tone = 'muted' }: { label: string; tone?: string }) {
   return (

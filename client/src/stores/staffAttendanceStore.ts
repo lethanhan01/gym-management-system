@@ -2,7 +2,7 @@ import { create } from 'zustand'
 import staffAttendanceService, { type StaffAttendanceLog } from '@/services/staffAttendance.service'
 import { getApiError, getApiErrorCode } from '@/lib/api-error'
 import { todayInput, startOfLocalDayIso, endOfLocalDayIso } from '@/lib/date'
-import { toast } from 'sonner'
+import { toast } from '@/lib/toast'
 
 interface StaffAttendanceState {
   openLog: StaffAttendanceLog | null

@@ -17,7 +17,7 @@ import {
   TrainerStatusBadge,
 } from '@/components/TrainerUI'
 import { PageLoader } from '@/components/shared/Spinner'
-import { toast } from 'sonner'
+import { toast } from '@/lib/toast'
 
 const LOCAL_DAY_FORMATTER = new Intl.DateTimeFormat('en-CA', {
   timeZone: 'Asia/Ho_Chi_Minh',

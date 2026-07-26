@@ -13,7 +13,7 @@ import {
   TrainerPageHeader,
   TrainerSkeleton,
 } from '@/components/TrainerUI'
-import { toast } from 'sonner'
+import { toast } from '@/lib/toast'
 import { ProfileInfoRow } from '@/components/profile/ProfileInfoRow'
 import { ProfilePasswordField } from '@/components/profile/ProfilePasswordField'
 export default function TrainerProfilePage() {

@@ -21,7 +21,7 @@ import {
   StaffStatusBadge,
   SubmitButton,
 } from '@/components/StaffUI'
-import { toast } from 'sonner'
+import { toast } from '@/lib/toast'
 import { cn } from '@/lib/utils'
 
 function equipmentStatusTone(status: string) {

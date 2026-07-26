@@ -13,7 +13,7 @@ import {
   StaffErrorState,
   SubmitButton,
 } from '@/components/StaffUI'
-import { toast } from 'sonner'
+import { toast } from '@/lib/toast'
 import { ProfileInfoRow } from '@/components/profile/ProfileInfoRow'
 import { ProfilePasswordField } from '@/components/profile/ProfilePasswordField'
 

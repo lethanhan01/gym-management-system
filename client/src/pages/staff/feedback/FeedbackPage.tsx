@@ -16,7 +16,7 @@ import {
   StaffStatusBadge,
   SubmitButton,
 } from '@/components/StaffUI'
-import { toast } from 'sonner'
+import { toast } from '@/lib/toast'
 
 export default function StaffFeedbackPage() {
   const { t } = useTranslation('staff')

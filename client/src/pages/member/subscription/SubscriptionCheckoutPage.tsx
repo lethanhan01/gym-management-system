@@ -25,7 +25,7 @@ import {
 } from '@/components/payment/payment-method-data'
 import { PaymentMethodIcon } from '@/components/payment/payment-methods'
 import { Button } from '@/components/ui/Button'
-import { toast } from 'sonner'
+import { toast } from '@/lib/toast'
 
 interface PayState {
   packageId: string

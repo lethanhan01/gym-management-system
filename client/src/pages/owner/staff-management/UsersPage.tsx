@@ -22,7 +22,7 @@ import {
   OwnerBadge,
   OwnerSelect,
 } from '@/components/OwnerUI'
-import { toast } from 'sonner'
+import { toast } from '@/lib/toast'
 
 const PAGE_SIZE = 20
 

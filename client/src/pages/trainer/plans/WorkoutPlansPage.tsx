@@ -37,7 +37,7 @@ import {
   TrainerSkeleton,
   TrainerStatusBadge,
 } from '@/components/TrainerUI'
-import { toast } from 'sonner'
+import { toast } from '@/lib/toast'
 
 type PlanAction = { type: 'archive' | 'delete'; plan: WorkoutPlan } | null
 

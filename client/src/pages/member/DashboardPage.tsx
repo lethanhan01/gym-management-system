@@ -29,7 +29,7 @@ import { MemberPage, MemberPageHeader } from '@/components/MemberUI'
 import { NotificationToast } from '@/components/shared/NotificationUI'
 import { hasActiveSubscription, isSubscriptionActive } from '@/lib/subscription'
 import { getApiError } from '@/lib/api-error'
-import { toast } from 'sonner'
+import { toast } from '@/lib/toast'
 
 const T = '#42e09e'
 

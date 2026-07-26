@@ -22,7 +22,7 @@ import {
   OwnerBadge,
   OwnerSelect,
 } from '@/components/OwnerUI'
-import { toast } from 'sonner'
+import { toast } from '@/lib/toast'
 
 export default function UserDetailPage() {
   const { t } = useTranslation('owner')

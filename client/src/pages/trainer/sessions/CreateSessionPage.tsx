@@ -22,7 +22,7 @@ import {
   TrainerSelect,
   TrainerSkeleton,
 } from '@/components/TrainerUI'
-import { toast } from 'sonner'
+import { toast } from '@/lib/toast'
 import { DateTimePickerInput } from '@/components/DateTimePickerInput'
 
 type PlanDayOption = Pick<

@@ -13,7 +13,7 @@ import {
   StaffSkeleton,
   SubmitButton,
 } from '@/components/StaffUI'
-import { toast } from 'sonner'
+import { toast } from '@/lib/toast'
 
 export default function FacilityPage() {
   const { t } = useTranslation('staff')
