@@ -603,6 +603,7 @@
       "trainerManages": "トレーナーがセッションの開始と終了を管理します。",
       "dayWeek": "{{day}}日目 · 第{{week}}週",
       "buttonClose": "閉じる",
+      "buttonStart": "開始",
       "unitSeconds": "秒",
       "errorLoad": "スケジュールを読み込めません。"
     },
@@ -660,6 +661,8 @@
       "buttonCreatePlan": "プランを作成",
       "placeholderTitle": "プラン内のトレーニング日を選択してください",
       "placeholderHint": "プランの詳細を開き、始めたい日の開始アイコンをタップしてください。",
+      "noLinkedPlan": "このセッションにはワークアウトプランが関連付けられていません。手動でトレーニング日を選択してください。",
+      "linkedPlanUnavailable": "この予定のトレーニング日を自動で開けませんでした。手動でトレーニング日を選択してください。",
       "errorLoad": "トレーニングプランを読み込めません。",
       "errorSave": "セッションを保存できません。再試行してください。",
       "unitSeconds": "秒"

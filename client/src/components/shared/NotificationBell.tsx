@@ -57,7 +57,12 @@ function getNotificationPath(item: NotificationItem, roles: Role[] | undefined, 
   switch (item.resourceType) {
     case 'training_session':
       if (effectiveRole === 'trainer') return '/trainer/sessions'
-      if (effectiveRole === 'member') return '/member/workout/sessions'
+      if (effectiveRole === 'member') {
+        const sessionId = item.resourceId
+        return sessionId && /^[1-9]\d*$/.test(sessionId)
+          ? `/member/workout/sessions?sessionId=${sessionId}`
+          : '/member/workout/sessions'
+      }
       if (effectiveRole === 'staff') return '/staff/schedules'
       if (effectiveRole === 'owner') return '/owner/staff/schedules'
       return null

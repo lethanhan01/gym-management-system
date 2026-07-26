@@ -7,6 +7,7 @@ import workoutService, {
   type WorkoutAssignmentSummary,
   type WorkoutPlan,
 } from '@/services/workout.service'
+import { trainingService, type TrainingSessionDetail } from '@/services/training.service'
 import CreateWorkoutSessionPage from './CreateWorkoutSessionPage'
 
 vi.mock('@/services/workout.service', async () => {
@@ -23,6 +24,12 @@ vi.mock('@/services/workout.service', async () => {
     },
   }
 })
+
+vi.mock('@/services/training.service', () => ({
+  trainingService: {
+    getSession: vi.fn(),
+  },
+}))
 
 const trainerAssignment: WorkoutAssignmentSummary = {
   assignmentId: '101',
@@ -138,12 +145,41 @@ const personalPlan: WorkoutPlan = {
   }],
 }
 
-function renderPage() {
+function renderPage(path = '/member/workout/create-session') {
   return render(
-    <MemoryRouter>
+    <MemoryRouter initialEntries={[path]}>
       <CreateWorkoutSessionPage />
     </MemoryRouter>
   )
+}
+
+function makeSessionDetail(overrides: Partial<TrainingSessionDetail> = {}): TrainingSessionDetail {
+  return {
+    sessionId: '555',
+    memberId: '10',
+    memberName: 'Member',
+    trainerStaffId: '20',
+    trainerName: 'Trainer A',
+    roomId: '30',
+    roomName: 'Room A',
+    assignmentId: '101',
+    planDayId: '11',
+    workoutPlan: { planId: '1', name: 'Plan PT', description: null, status: 'active' },
+    planDay: {
+      planDayId: '11',
+      planId: '1',
+      dayNumber: 1,
+      weekNumber: 1,
+      dayOfWeek: 1,
+      name: '全身A',
+      notes: null,
+    },
+    startTime: '2026-07-27T10:00:00.000Z',
+    endTime: '2026-07-27T11:00:00.000Z',
+    status: 'scheduled',
+    attendanceLogs: [],
+    ...overrides,
+  }
 }
 
 describe('CreateWorkoutSessionPage session configuration', () => {
@@ -165,6 +201,7 @@ describe('CreateWorkoutSessionPage session configuration', () => {
     vi.mocked(workoutService.getPlan).mockImplementation(async (planId) =>
       planId === '1' ? trainerPlan : personalPlan
     )
+    vi.mocked(trainingService.getSession).mockResolvedValue(makeSessionDetail())
   })
 
   it('shows edit controls for PT and personal plans, then applies saved targets only to the started session', async () => {
@@ -202,5 +239,25 @@ describe('CreateWorkoutSessionPage session configuration', () => {
 
     expect(await screen.findByLabelText('Thời gian tập mỗi set (giây)')).toHaveValue(90)
     expect(screen.queryByLabelText('Số reps')).not.toBeInTheDocument()
+  })
+
+  it('preselects the linked plan day from a training session deep link', async () => {
+    renderPage('/member/workout/create-session?sessionId=555')
+
+    expect(await screen.findAllByPlaceholderText('reps')).toHaveLength(3)
+    expect(trainingService.getSession).toHaveBeenCalledWith('555')
+  })
+
+  it('falls back to manual day selection when the session has no linked workout plan', async () => {
+    vi.mocked(trainingService.getSession).mockResolvedValue(
+      makeSessionDetail({ assignmentId: null, planDayId: null, workoutPlan: null, planDay: null }),
+    )
+
+    renderPage('/member/workout/create-session?sessionId=555')
+
+    expect(await screen.findByRole('status')).toHaveTextContent(
+      'Buổi tập này chưa có workout plan liên kết',
+    )
+    expect(screen.queryByPlaceholderText('reps')).not.toBeInTheDocument()
   })
 })

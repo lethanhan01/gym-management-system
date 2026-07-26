@@ -1,10 +1,11 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import workoutService, {
   type WorkoutAssignmentSummary,
   type WorkoutPlan,
   type WorkoutPlanDay,
 } from '@/services/workout.service'
+import { trainingService } from '@/services/training.service'
 import { useAuthStore } from '@/stores/authStore'
 import {
   applySessionTargets,
@@ -18,7 +19,11 @@ import type {
   UpdateSet,
 } from './types'
 
-export function useCreateWorkoutSession() {
+function getDeepLinkSessionId(value: string | null) {
+  return value && /^[1-9]\d*$/.test(value) ? value : null
+}
+
+export function useCreateWorkoutSession(sessionIdValue?: string | null) {
   const { t } = useTranslation('member')
   const user = useAuthStore((state) => state.user)
   const memberId = user?.memberId ? String(user.memberId) : undefined
@@ -35,6 +40,29 @@ export function useCreateWorkoutSession() {
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [done, setDone] = useState(false)
+  const [preselectionNotice, setPreselectionNotice] = useState<string | null>(null)
+  const sessionId = getDeepLinkSessionId(sessionIdValue ?? null)
+  const sessionTargetOverridesRef = useRef(sessionTargetOverrides)
+  sessionTargetOverridesRef.current = sessionTargetOverrides
+
+  const startDay = useCallback(
+    (day: WorkoutPlanDay, assignment: WorkoutAssignmentSummary) => {
+      const configuredDay = applySessionTargets(
+        day,
+        sessionTargetOverridesRef.current[getSessionConfigKey(day, assignment)],
+      )
+      setSelectedDay(configuredDay)
+      setSelectedAssignment(assignment)
+      setDone(false)
+      setSubmitError(null)
+      setSets(
+        configuredDay.exercises
+          ? [...configuredDay.exercises].sort((a, b) => a.orderIndex - b.orderIndex).map(makeDefaultSets)
+          : [],
+      )
+    },
+    [],
+  )
 
   const load = useCallback(async () => {
     if (!memberId) {
@@ -44,6 +72,7 @@ export function useCreateWorkoutSession() {
 
     setLoading(true)
     setError(null)
+    setPreselectionNotice(null)
     try {
       const all = await workoutService.getAssignments(memberId)
       const active = all.filter((assignment) => assignment.status === 'active')
@@ -63,32 +92,39 @@ export function useCreateWorkoutSession() {
         if (pair) planMap.set(pair[0], pair[1])
       }
       setFullPlans(planMap)
+
+      if (sessionId) {
+        try {
+          const session = await trainingService.getSession(sessionId)
+          if (!session.assignmentId || !session.planDayId) {
+            setPreselectionNotice(t('workout.createSession.noLinkedPlan'))
+          } else {
+            const assignment = active.find((item) => item.assignmentId === session.assignmentId)
+            const day = assignment
+              ? planMap.get(assignment.planId)?.days?.find(
+                  (item) => item.planDayId === session.planDayId,
+                )
+              : undefined
+            if (assignment && day) {
+              startDay(day, assignment)
+            } else {
+              setPreselectionNotice(t('workout.createSession.linkedPlanUnavailable'))
+            }
+          }
+        } catch {
+          setPreselectionNotice(t('workout.createSession.linkedPlanUnavailable'))
+        }
+      }
     } catch {
       setError(t('workout.createSession.errorLoad'))
     } finally {
       setLoading(false)
     }
-  }, [memberId, t])
+  }, [memberId, sessionId, startDay, t])
 
   useEffect(() => {
     void load()
   }, [load])
-
-  function startDay(day: WorkoutPlanDay, assignment: WorkoutAssignmentSummary) {
-    const configuredDay = applySessionTargets(
-      day,
-      sessionTargetOverrides[getSessionConfigKey(day, assignment)],
-    )
-    setSelectedDay(configuredDay)
-    setSelectedAssignment(assignment)
-    setDone(false)
-    setSubmitError(null)
-    setSets(
-      configuredDay.exercises
-        ? [...configuredDay.exercises].sort((a, b) => a.orderIndex - b.orderIndex).map(makeDefaultSets)
-        : [],
-    )
-  }
 
   function openSessionConfig(day: WorkoutPlanDay, assignment: WorkoutAssignmentSummary) {
     setConfigTarget({ day, assignment })
@@ -165,6 +201,7 @@ export function useCreateWorkoutSession() {
     submitting,
     submitError,
     done,
+    preselectionNotice,
     configTarget,
     configInitialTargets: configTarget
       ? sessionTargetOverrides[getSessionConfigKey(configTarget.day, configTarget.assignment)]

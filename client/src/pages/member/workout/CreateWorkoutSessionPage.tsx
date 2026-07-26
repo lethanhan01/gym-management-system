@@ -1,5 +1,5 @@
 import { useRef } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Dumbbell } from 'lucide-react'
 import { MemberPage, MemberPageHeader } from '@/components/MemberUI'
@@ -12,6 +12,7 @@ import { WorkoutPlanList } from './create-session/WorkoutPlanList'
 export default function CreateWorkoutSessionPage() {
   const { t } = useTranslation('member')
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const sessionPanelRef = useRef<HTMLDivElement | null>(null)
   const {
     assignments,
@@ -23,6 +24,7 @@ export default function CreateWorkoutSessionPage() {
     submitting,
     submitError,
     done,
+    preselectionNotice,
     configTarget,
     configInitialTargets,
     load,
@@ -32,7 +34,7 @@ export default function CreateWorkoutSessionPage() {
     saveSessionTargets,
     updateSet,
     finishSession,
-  } = useCreateWorkoutSession()
+  } = useCreateWorkoutSession(searchParams.get('sessionId'))
 
   function handleStartDay(...args: Parameters<typeof startDay>) {
     startDay(...args)
@@ -50,6 +52,11 @@ export default function CreateWorkoutSessionPage() {
         title={t('workout.createSession.title')}
         description={t('workout.createSession.description')}
       />
+      {preselectionNotice && (
+        <div className="mb-5 rounded-xl p-4 text-sm rogym-sx-a15e2a7c" role="status">
+          {preselectionNotice}
+        </div>
+      )}
       <div className="grid gap-5 lg:grid-cols-2">
         <div className="space-y-4">
           <WorkoutPlanList

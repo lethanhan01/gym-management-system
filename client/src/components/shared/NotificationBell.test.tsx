@@ -217,7 +217,7 @@ describe('NotificationBell', () => {
   })
 
   it.each([
-    ['member', 'training_session', '/member/workout/sessions', '/member'],
+    ['member', 'training_session', '/member/workout/sessions?sessionId=5', '/member'],
     ['trainer', 'training_session', '/trainer/sessions', '/trainer'],
     ['staff', 'training_session', '/staff/schedules', '/staff'],
     ['owner', 'training_session', '/owner/staff/schedules', '/owner'],

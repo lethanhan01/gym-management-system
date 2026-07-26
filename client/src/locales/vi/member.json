@@ -603,6 +603,7 @@
       "trainerManages": "Huấn luyện viên sẽ là người bắt đầu và kết thúc buổi tập này.",
       "dayWeek": "Ngày {{day}} · Tuần {{week}}",
       "buttonClose": "Đóng",
+      "buttonStart": "Bắt đầu",
       "unitSeconds": "giây",
       "errorLoad": "Không thể tải lịch tập."
     },
@@ -666,6 +667,8 @@
       "buttonCreatePlan": "Tạo plan",
       "placeholderTitle": "Chọn một ngày tập trong kế hoạch của bạn để bắt đầu",
       "placeholderHint": "Mở chi tiết kế hoạch, rồi nhấn biểu tượng bắt đầu ở ngày muốn tập.",
+      "noLinkedPlan": "Buổi tập này chưa có workout plan liên kết. Hãy chọn ngày tập thủ công.",
+      "linkedPlanUnavailable": "Không thể mở sẵn ngày tập của lịch này. Hãy chọn ngày tập thủ công.",
       "errorLoad": "Không thể tải kế hoạch tập.",
       "errorSave": "Không thể lưu buổi tập. Vui lòng thử lại.",
       "unitSeconds": "giây"

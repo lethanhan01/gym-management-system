@@ -161,6 +161,11 @@
           "title": "Sắp đến giờ tập",
           "memberMessage": "Buổi tập với PT {{trainerName}} sẽ bắt đầu sau {{reminderMinutes}} phút.",
           "genericMessage": "Buổi tập của bạn sắp bắt đầu."
+        },
+        "starting": {
+          "title": "Đến giờ tập",
+          "memberMessage": "Buổi tập với PT {{trainerName}} bắt đầu ngay bây giờ.",
+          "genericMessage": "Buổi tập của bạn bắt đầu ngay bây giờ."
         }
       },
       "attendance": {
