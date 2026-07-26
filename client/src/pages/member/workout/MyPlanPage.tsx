@@ -241,7 +241,7 @@ function PlanCard({
               {[...(detailDay.exercises ?? [])]
                 .sort((a, b) => a.orderIndex - b.orderIndex)
                 .map((ex, i) => {
-                  const isCardio = ex.exercise?.category === 'cardio'
+                  const isCardio = ex.exercise?.bodyPart?.name?.toLowerCase() === 'cardio'
                   return (
                     <div
                       key={ex.planExerciseId}
@@ -432,7 +432,7 @@ function SavedPlanCard({
                 {[...(day.exercises ?? [])]
                   .sort((a, b) => a.orderIndex - b.orderIndex)
                   .map((ex, i) => {
-                    const isCardio = ex.exercise?.category === 'cardio'
+                    const isCardio = ex.exercise?.bodyPart?.name?.toLowerCase() === 'cardio'
                     return (
                       <div key={ex.planExerciseId} className="mt-1 flex items-center gap-2 py-1">
                         <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md text-[10px] font-bold rogym-sx-252b3c13">

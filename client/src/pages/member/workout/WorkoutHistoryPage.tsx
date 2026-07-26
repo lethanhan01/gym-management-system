@@ -56,7 +56,7 @@ function MiniProgressBar({ done, total }: { done: number; total: number }) {
 
 function SetComparison({ set }: { set: WorkoutLogSet }) {
   const ex = set.planExercise
-  const isCardio = ex?.exercise?.category === 'cardio'
+  const isCardio = ex?.exercise?.bodyPart?.name?.toLowerCase() === 'cardio'
   const targetVal = isCardio
     ? ex?.targetDurationSec != null
       ? `${ex.targetDurationSec} giây`

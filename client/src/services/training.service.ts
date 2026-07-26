@@ -49,9 +49,9 @@ export interface TrainingSessionPlanExercise {
   exercise: {
     exerciseId: string
     name: string
-    category: 'strength' | 'cardio' | 'flexibility' | 'balance'
-    muscleGroup: string | null
-    equipmentNeeded: string | null
+    bodyPart: { name: string } | null
+    targetMuscle: { name: string } | null
+    equipment: { name: string } | null
     description: string | null
     imageUrl: string | null
     createdByStaffId: string | null

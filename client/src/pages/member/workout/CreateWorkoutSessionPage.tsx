@@ -213,7 +213,7 @@ function SessionView({
 
       <div className="space-y-3 px-5 pb-4">
         {sortedExercises.map((ex, exIdx) => {
-          const isCardio = ex.exercise?.category === 'cardio'
+          const isCardio = ex.exercise?.bodyPart?.name?.toLowerCase() === 'cardio'
           const exerciseSets = sets[exIdx] ?? []
           return (
             <div key={ex.planExerciseId} className="rogym-sx-46079668">

@@ -9,53 +9,103 @@ import {
   MemberPageHeader,
   MemberSkeleton,
 } from '@/components/MemberUI'
-import workoutService, { type Exercise, type ExerciseCategory } from '@/services/workout.service'
+import workoutService, {
+  type Exercise,
+  type ExerciseBodyPart,
+  type ExerciseMuscle,
+  type ExerciseEquipment,
+} from '@/services/workout.service'
 import { getApiError } from '@/lib/api-error'
-import { ExerciseCard, ExerciseCategoryFilterPopover } from '@/components/workout/ExerciseUI'
-import { getExerciseCategoryLabel } from '@/components/workout/exercise-data'
+import { ExerciseCard, ExerciseFilterPopover } from '@/components/workout/ExerciseUI'
+import { filterExercises } from '@/components/workout/exercise-data'
 
 export default function MemberExercisesPage() {
   const { t } = useTranslation('member')
   const navigate = useNavigate()
+
   const [exercises, setExercises] = useState<Exercise[]>([])
+  const [bodyParts, setBodyParts] = useState<ExerciseBodyPart[]>([])
+  const [muscles, setMuscles] = useState<ExerciseMuscle[]>([])
+  const [equipments, setEquipments] = useState<ExerciseEquipment[]>([])
+
   const [search, setSearch] = useState('')
-  const [category, setCategory] = useState<ExerciseCategory | ''>('')
+  const [bodyPartId, setBodyPartId] = useState<number | undefined>()
+  const [targetMuscleId, setTargetMuscleId] = useState<number | undefined>()
+  const [equipmentId, setEquipmentId] = useState<number | undefined>()
+
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [detail, setDetail] = useState<Exercise | null>(null)
 
   // Filter popup
   const [showPopup, setShowPopup] = useState(false)
-  const [draftCategory, setDraftCategory] = useState<ExerciseCategory | ''>('')
+  const [draftBodyPartId, setDraftBodyPartId] = useState<number | undefined>()
+  const [draftTargetMuscleId, setDraftTargetMuscleId] = useState<number | undefined>()
+  const [draftEquipmentId, setDraftEquipmentId] = useState<number | undefined>()
+
+  const loadLookups = useCallback(async () => {
+    try {
+      const [bp, mu, eq] = await Promise.all([
+        workoutService.getBodyParts(),
+        workoutService.getMuscles(),
+        workoutService.getEquipments(),
+      ])
+      setBodyParts(bp)
+      setMuscles(mu)
+      setEquipments(eq)
+    } catch (err) {
+      console.error('Failed to load lookups', err)
+    }
+  }, [])
 
   const load = useCallback(async () => {
     setLoading(true)
     setError(null)
     try {
-      const result = await workoutService.getExercises({ category: category || undefined, q: search || undefined, pageSize: 100 })
+      const result = await workoutService.getExercises({
+        bodyPartId,
+        targetMuscleId,
+        equipmentId,
+        q: search || undefined,
+        pageSize: 100,
+      })
       setExercises(result.data)
     } catch (err) {
       setError(getApiError(err, t('workout.exercises.errorLoad')))
     } finally {
       setLoading(false)
     }
-  }, [category, search, t])
+  }, [bodyPartId, targetMuscleId, equipmentId, search, t])
+
+  useEffect(() => {
+    void loadLookups()
+  }, [loadLookups])
 
   useEffect(() => {
     void load()
   }, [load])
 
-  const filtered = exercises
+  const filtered = filterExercises(
+    exercises,
+    search,
+    bodyPartId,
+    targetMuscleId,
+    equipmentId
+  )
 
-  const activeCount = category ? 1 : 0
+  const activeCount = [bodyPartId, targetMuscleId, equipmentId].filter((v) => v !== undefined).length
 
   function openPopup() {
-    setDraftCategory(category)
+    setDraftBodyPartId(bodyPartId)
+    setDraftTargetMuscleId(targetMuscleId)
+    setDraftEquipmentId(equipmentId)
     setShowPopup(true)
   }
 
   function applyFilter() {
-    setCategory(draftCategory)
+    setBodyPartId(draftBodyPartId)
+    setTargetMuscleId(draftTargetMuscleId)
+    setEquipmentId(draftEquipmentId)
     setShowPopup(false)
   }
 
@@ -109,10 +159,19 @@ export default function MemberExercisesPage() {
             )}
           </button>
 
-          <ExerciseCategoryFilterPopover
+          <ExerciseFilterPopover
             open={showPopup}
-            value={draftCategory}
-            onChange={setDraftCategory}
+            bodyPartId={draftBodyPartId}
+            targetMuscleId={draftTargetMuscleId}
+            equipmentId={draftEquipmentId}
+            bodyParts={bodyParts}
+            muscles={muscles}
+            equipments={equipments}
+            onChange={(fields) => {
+              if ('bodyPartId' in fields) setDraftBodyPartId(fields.bodyPartId)
+              if ('targetMuscleId' in fields) setDraftTargetMuscleId(fields.targetMuscleId)
+              if ('equipmentId' in fields) setDraftEquipmentId(fields.equipmentId)
+            }}
             onApply={applyFilter}
             onClose={() => setShowPopup(false)}
           />
@@ -165,7 +224,7 @@ export default function MemberExercisesPage() {
                 <div>
                   <h2 className="text-xl font-bold text-white">{detail.name}</h2>
                   <p className="mt-1 text-xs uppercase tracking-wider rogym-sx-f27dac31">
-                    {getExerciseCategoryLabel(detail.category)}
+                    {detail.targetMuscle?.name ?? '—'}
                   </p>
                 </div>
                 <button
@@ -182,15 +241,15 @@ export default function MemberExercisesPage() {
               )}
               <div className="mt-5 grid grid-cols-2 gap-4">
                 <div className="rounded-xl p-3 rogym-sx-a38688f0">
-                  <p className="text-xs rogym-sx-5e5c39ab">{t('workout.exercises.fieldMuscleGroup')}</p>
+                  <p className="text-xs rogym-sx-5e5c39ab">{t('workout.exercises.fieldBodyPart', 'Body Part')}</p>
                   <p className="mt-1 text-sm font-semibold text-white">
-                    {detail.muscleGroup ?? '—'}
+                    {detail.bodyPart?.name ?? '—'}
                   </p>
                 </div>
                 <div className="rounded-xl p-3 rogym-sx-a38688f0">
-                  <p className="text-xs rogym-sx-5e5c39ab">{t('workout.exercises.fieldEquipment')}</p>
+                  <p className="text-xs rogym-sx-5e5c39ab">{t('workout.exercises.fieldEquipment', 'Equipment')}</p>
                   <p className="mt-1 text-sm font-semibold text-white">
-                    {detail.equipmentNeeded ?? t('workout.exercises.equipmentNone')}
+                    {detail.equipment?.name ?? t('workout.exercises.equipmentNone')}
                   </p>
                 </div>
               </div>

@@ -234,7 +234,7 @@ export default function TrainerPlanBuilderPage() {
         exerciseId: Number(selectedExercise.exerciseId),
         orderIndex: nextIndex,
         targetSets,
-        targetReps: selectedExercise.category === 'cardio' ? undefined : targetReps,
+        targetReps: selectedExercise.bodyPart?.name?.toLowerCase() === 'cardio' ? undefined : targetReps,
         targetDurationSec: targetDuration,
         targetWeightKg: targetWeight ? Number(targetWeight) : undefined,
         restSeconds,
@@ -262,7 +262,7 @@ export default function TrainerPlanBuilderPage() {
         {
           targetSets,
           targetReps:
-            editingPlanExercise.exercise.exercise?.category === 'cardio' ? undefined : targetReps,
+            editingPlanExercise.exercise.exercise?.bodyPart?.name?.toLowerCase() === 'cardio' ? undefined : targetReps,
           targetDurationSec: targetDuration,
           targetWeightKg: targetWeight ? Number(targetWeight) : 0,
           restSeconds,
@@ -554,7 +554,7 @@ export default function TrainerPlanBuilderPage() {
               <option value="">{t('plans.builder.exerciseModal.selectFromLib')}</option>
               {exercises.map((exercise) => (
                 <option key={exercise.exerciseId} value={exercise.exerciseId}>
-                  {exercise.name} - {exercise.category}
+                  {exercise.name} - {exercise.targetMuscle?.name ?? '—'}
                 </option>
               ))}
             </TrainerSelect>
@@ -572,15 +572,15 @@ export default function TrainerPlanBuilderPage() {
               <div className="text-sm rogym-text-secondary">
                 <div className="font-semibold text-white">{selectedExercise.name}</div>
                 <div className="mt-1">
-                  {selectedExercise.muscleGroup ?? t('plans.builder.dayCard.bodyPart')} ·{' '}
-                  {selectedExercise.equipmentNeeded ?? t('plans.builder.dayCard.noEquipment')}
+                  {selectedExercise.targetMuscle?.name ?? t('plans.builder.dayCard.bodyPart')} ·{' '}
+                  {selectedExercise.equipment?.name ?? t('plans.builder.dayCard.noEquipment')}
                 </div>
                 <p className="mt-2 line-clamp-3">{selectedExercise.description}</p>
               </div>
             </div>
           )}
           <ExerciseTargetFields
-            category={selectedExercise?.category}
+            isCardio={selectedExercise?.bodyPart?.name?.toLowerCase() === 'cardio'}
             durationMode="always"
             values={{
               sets: targetSets,
@@ -635,7 +635,7 @@ export default function TrainerPlanBuilderPage() {
       >
         <form id="edit-plan-exercise-form" className="space-y-4" onSubmit={updateExerciseTarget}>
           <ExerciseTargetFields
-            category={editingPlanExercise?.exercise.exercise?.category}
+            isCardio={editingPlanExercise?.exercise.exercise?.bodyPart?.name?.toLowerCase() === 'cardio'}
             durationMode="always"
             values={{
               sets: targetSets,
@@ -867,8 +867,8 @@ const PlanDayCard = memo(function PlanDayCard({
                   : ''}
               </div>
               <div className="mt-1 text-xs rogym-text-secondary">
-                {item.exercise?.muscleGroup ?? t('plans.builder.dayCard.bodyPart')} ·{' '}
-                {item.exercise?.equipmentNeeded ?? t('plans.builder.dayCard.noEquipment')}
+                {item.exercise?.targetMuscle?.name ?? t('plans.builder.dayCard.bodyPart')} ·{' '}
+                {item.exercise?.equipment?.name ?? t('plans.builder.dayCard.noEquipment')}
               </div>
               {item.notes && <div className="mt-2 text-xs rogym-text-secondary">{item.notes}</div>}
             </div>

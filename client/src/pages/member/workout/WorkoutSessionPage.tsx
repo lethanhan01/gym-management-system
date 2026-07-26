@@ -211,7 +211,7 @@ export default function WorkoutSessionPage() {
       ) : (
         <div className="space-y-4 pb-28">
           {sortedExercises.map((ex, exIdx) => {
-            const isCardio = ex.exercise?.category === 'cardio'
+            const isCardio = ex.exercise?.bodyPart?.name?.toLowerCase() === 'cardio'
             return (
               <div
                 key={ex.planExerciseId}

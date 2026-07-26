@@ -599,7 +599,7 @@ function SessionDetailModal({
                     .slice()
                     .sort((a, b) => a.orderIndex - b.orderIndex)
                     .map((item, index) => {
-                      const isCardio = item.exercise?.category === 'cardio'
+                      const isCardio = item.exercise?.bodyPart?.name.toLowerCase() === 'cardio'
                       return (
                         <div
                           key={item.planExerciseId}

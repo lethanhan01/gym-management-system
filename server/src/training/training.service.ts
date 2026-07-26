@@ -72,9 +72,9 @@ interface SessionRow {
       exercise?: {
         exerciseId: bigint
         name: string
-        category: string
-        muscleGroup: string | null
-        equipmentNeeded: string | null
+        bodyPart: { name: string } | null
+        targetMuscle: { name: string } | null
+        equipment: { name: string } | null
         description: string | null
         imageUrl: string | null
         createdByStaffId: bigint | null
@@ -127,7 +127,7 @@ const SESSION_DETAIL_INCLUDE = {
     include: {
       exercises: {
         orderBy: { orderIndex: 'asc' },
-        include: { exercise: true },
+        include: { exercise: { include: { bodyPart: true, targetMuscle: true, equipment: true } } },
       },
     },
   },
@@ -1112,9 +1112,9 @@ export class TrainingService {
                   ? {
                       exerciseId: exercise.exercise.exerciseId.toString(),
                       name: exercise.exercise.name,
-                      category: exercise.exercise.category,
-                      muscleGroup: exercise.exercise.muscleGroup,
-                      equipmentNeeded: exercise.exercise.equipmentNeeded,
+                      bodyPart: exercise.exercise.bodyPart ? { name: exercise.exercise.bodyPart.name } : null,
+                      targetMuscle: exercise.exercise.targetMuscle ? { name: exercise.exercise.targetMuscle.name } : null,
+                      equipment: exercise.exercise.equipment ? { name: exercise.exercise.equipment.name } : null,
                       description: exercise.exercise.description,
                       imageUrl: exercise.exercise.imageUrl,
                       createdByStaffId: exercise.exercise.createdByStaffId?.toString() ?? null,

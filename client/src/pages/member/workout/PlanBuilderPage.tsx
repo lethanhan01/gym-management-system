@@ -27,12 +27,15 @@ import {
 import { getApiError, getApiErrorCode } from '@/lib/api-error'
 import workoutService, {
   type Exercise,
+  type ExerciseBodyPart,
+  type ExerciseMuscle,
+  type ExerciseEquipment,
   type WorkoutPlan,
   type WorkoutPlanDay,
 } from '@/services/workout.service'
 import { useAuthStore } from '@/stores/authStore'
-import { ExerciseCategoryFilterPopover } from '@/components/workout/ExerciseUI'
-import { filterExercises, type ExerciseCategoryFilter } from '@/components/workout/exercise-data'
+import { ExerciseFilterPopover } from '@/components/workout/ExerciseUI'
+import { filterExercises } from '@/components/workout/exercise-data'
 import { ExerciseTargetFields } from '@/components/workout/PlanBuilderUI'
 
 function formatSec(seconds: number | null | undefined) {
@@ -149,9 +152,9 @@ const SuggestedPlanCard = memo(function SuggestedPlanCard({
                         {ex.restSeconds ? ` · nghỉ ${ex.restSeconds}s` : ''}
                       </span>
                     </div>
-                    {ex.exercise?.muscleGroup && (
+                    {ex.exercise?.targetMuscle && (
                       <span className="shrink-0 text-xs rogym-sx-ed519d00">
-                        {ex.exercise.muscleGroup}
+                        {ex.exercise.targetMuscle.name}
                       </span>
                     )}
                   </div>
@@ -386,8 +389,8 @@ export default function MemberPlanBuilderPage() {
         exerciseId: Number(selectedExercise.exerciseId),
         orderIndex: nextIdx,
         targetSets: targets.sets,
-        targetReps: selectedExercise.category === 'cardio' ? undefined : targets.reps,
-        targetDurationSec: selectedExercise.category === 'cardio' ? targets.duration : undefined,
+        targetReps: selectedExercise.bodyPart?.name?.toLowerCase() === 'cardio' ? undefined : targets.reps,
+        targetDurationSec: selectedExercise.bodyPart?.name?.toLowerCase() === 'cardio' ? targets.duration : undefined,
         targetWeightKg: targets.weight ? Number(targets.weight) : undefined,
         restSeconds: targets.restSeconds,
       })
@@ -897,20 +900,41 @@ function AddExerciseForm({
   const [duration, setDuration] = useState(60)
   const [weight, setWeight] = useState('')
   const [restSeconds, setRestSeconds] = useState(60)
-  const [category, setCategory] = useState<ExerciseCategoryFilter>('')
   const [search, setSearch] = useState('')
+  const [bodyPartId, setBodyPartId] = useState<number | undefined>()
+  const [targetMuscleId, setTargetMuscleId] = useState<number | undefined>()
+  const [equipmentId, setEquipmentId] = useState<number | undefined>()
   const [filterOpen, setFilterOpen] = useState(false)
-  const [draftCategory, setDraftCategory] = useState<ExerciseCategoryFilter>('')
+  
+  const [draftBodyPartId, setDraftBodyPartId] = useState<number | undefined>()
+  const [draftTargetMuscleId, setDraftTargetMuscleId] = useState<number | undefined>()
+  const [draftEquipmentId, setDraftEquipmentId] = useState<number | undefined>()
+
+  const [bodyParts, setBodyParts] = useState<ExerciseBodyPart[]>([])
+  const [muscles, setMuscles] = useState<ExerciseMuscle[]>([])
+  const [equipments, setEquipments] = useState<ExerciseEquipment[]>([])
+
+  useEffect(() => {
+    void Promise.all([
+      workoutService.getBodyParts(),
+      workoutService.getMuscles(),
+      workoutService.getEquipments(),
+    ]).then(([bp, mu, eq]) => {
+      setBodyParts(bp)
+      setMuscles(mu)
+      setEquipments(eq)
+    })
+  }, [])
 
   const selectedExercise = useMemo(
     () => exercises.find((exercise) => exercise.exerciseId === exerciseId) ?? null,
     [exerciseId, exercises]
   )
   const filteredExercises = useMemo(
-    () => filterExercises(exercises, search, category),
-    [category, exercises, search]
+    () => filterExercises(exercises, search, bodyPartId, targetMuscleId, equipmentId),
+    [bodyPartId, targetMuscleId, equipmentId, exercises, search]
   )
-  const activeFilterCount = category ? 1 : 0
+  const activeFilterCount = [bodyPartId, targetMuscleId, equipmentId].filter((v) => v !== undefined).length
 
   return (
     <form
@@ -939,7 +963,9 @@ function AddExerciseForm({
           <button
             type="button"
             onClick={() => {
-              setDraftCategory(category)
+              setDraftBodyPartId(bodyPartId)
+              setDraftTargetMuscleId(targetMuscleId)
+              setDraftEquipmentId(equipmentId)
               setFilterOpen(true)
             }}
             className={`rogym-filter-trigger flex shrink-0 items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-semibold transition-colors ${
@@ -954,12 +980,23 @@ function AddExerciseForm({
               </span>
             )}
           </button>
-          <ExerciseCategoryFilterPopover
+          <ExerciseFilterPopover
             open={filterOpen}
-            value={draftCategory}
-            onChange={setDraftCategory}
+            bodyPartId={draftBodyPartId}
+            targetMuscleId={draftTargetMuscleId}
+            equipmentId={draftEquipmentId}
+            bodyParts={bodyParts}
+            muscles={muscles}
+            equipments={equipments}
+            onChange={(fields) => {
+              if ('bodyPartId' in fields) setDraftBodyPartId(fields.bodyPartId)
+              if ('targetMuscleId' in fields) setDraftTargetMuscleId(fields.targetMuscleId)
+              if ('equipmentId' in fields) setDraftEquipmentId(fields.equipmentId)
+            }}
             onApply={() => {
-              setCategory(draftCategory)
+              setBodyPartId(draftBodyPartId)
+              setTargetMuscleId(draftTargetMuscleId)
+              setEquipmentId(draftEquipmentId)
               setExerciseId('')
               setFilterOpen(false)
             }}
@@ -980,8 +1017,8 @@ function AddExerciseForm({
                 }`}
               >
                 <span className="flex-1 font-medium">{exercise.name}</span>
-                {exercise.muscleGroup && (
-                  <span className="shrink-0 text-xs rogym-sx-5e5c39ab">{exercise.muscleGroup}</span>
+                {exercise.targetMuscle && (
+                  <span className="shrink-0 text-xs rogym-sx-5e5c39ab">{exercise.targetMuscle.name}</span>
                 )}
               </button>
             ))
@@ -997,7 +1034,7 @@ function AddExerciseForm({
         )}
       </div>
       <ExerciseTargetFields
-        category={selectedExercise?.category}
+        isCardio={selectedExercise?.bodyPart?.name?.toLowerCase() === 'cardio'}
         gridClassName="grid gap-3 md:grid-cols-3"
         compact
         restOutsideGrid

@@ -1,5 +1,4 @@
 import { useTranslation } from 'react-i18next'
-import type { ExerciseCategory } from '@/services/workout.service'
 import { cn } from '@/lib/utils'
 
 export type ExerciseTargetValues = {
@@ -47,7 +46,7 @@ export function NumberField({
 }
 
 export function ExerciseTargetFields({
-  category,
+  isCardio = false,
   values,
   onChange,
   durationMode = 'cardio-only',
@@ -56,7 +55,7 @@ export function ExerciseTargetFields({
   restOutsideGrid = false,
   weightPlaceholder,
 }: {
-  category?: ExerciseCategory | null
+  isCardio?: boolean
   values: ExerciseTargetValues
   onChange: ExerciseTargetChangeHandlers
   durationMode?: 'cardio-only' | 'always'
@@ -67,8 +66,8 @@ export function ExerciseTargetFields({
 }) {
   const { t } = useTranslation('member')
   const fieldClassName = compact ? 'space-y-1.5' : undefined
-  const showReps = category !== 'cardio'
-  const showDuration = durationMode === 'always' || category === 'cardio'
+  const showReps = !isCardio
+  const showDuration = durationMode === 'always' || isCardio
   const restField = (
     <NumberField
       label={t('workout.planBuilder.fieldRest')}
