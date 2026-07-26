@@ -1,5 +1,6 @@
 import { memo, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
+import { ButtonLink } from '@/components/ui/Button'
 import { useTranslation } from 'react-i18next'
 import {
   Dumbbell,
@@ -28,10 +29,7 @@ import HomeNavbar from '@/components/home/HomeNavbar'
 const T = '#42e09e'
 const GD = '#00492f'
 
-type ButtonProps = {
-  children: ReactNode
-  to?: string
-}
+
 
 type TrainingCardProps = {
   img: string
@@ -68,46 +66,6 @@ const SOCIAL_LINKS: [LucideIcon, string][] = [
 
 const FOOTER_PROGRAM_LINKS = ['Powerlifting', 'HIIT Training', 'Yoga', 'Boxing', 'Strength']
 
-/* ── Shared CTA buttons ── */
-const BtnPrimary = memo(function BtnPrimary({ children, to }: ButtonProps) {
-  const className = 'rogym-btn rogym-btn--primary rogym-btn--hero'
-  if (to) {
-    return (
-      <Link to={to} className={className}>
-        <span>{children}</span>
-      </Link>
-    )
-  }
-  return (
-    <button type="button" className={className}>
-      <span>{children}</span>
-    </button>
-  )
-})
-
-const BtnOutline = memo(function BtnOutline({
-  children,
-  dark = false,
-  to,
-}: {
-  children: ReactNode
-  dark?: boolean
-  to?: string
-}) {
-  const className = `rogym-btn rogym-btn--hero ${dark ? 'rogym-btn--outline-green-light' : 'rogym-btn--outline-white'}`
-  if (to) {
-    return (
-      <Link to={to} className={className}>
-        <span>{children}</span>
-      </Link>
-    )
-  }
-  return (
-    <button type="button" className={className}>
-      <span>{children}</span>
-    </button>
-  )
-})
 
 /* ── Hero ── */
 const HeroSection = memo(function HeroSection() {
@@ -149,8 +107,8 @@ const HeroSection = memo(function HeroSection() {
             {t('hero.body')}
           </p>
           <div className="flex flex-wrap gap-4">
-            <BtnPrimary to="/login">{t('hero.ctaStart')}</BtnPrimary>
-            <BtnOutline to="/programs">{t('hero.ctaLearnMore')}</BtnOutline>
+            <ButtonLink to="/login" variant="primary" size="hero">{t('hero.ctaStart')}</ButtonLink>
+            <ButtonLink to="/programs" variant="outline-white" size="hero">{t('hero.ctaLearnMore')}</ButtonLink>
           </div>
           <div className="mt-14 flex gap-10 flex-wrap">
             {HERO_STATS_NUMBERS.map((n, i) => (
@@ -366,9 +324,9 @@ const CoachSection = memo(function CoachSection() {
           ))}
         </div>
         <div className="flex justify-center mt-16">
-          <BtnOutline dark to="/trainers">
-            {t('trainers.viewAll')}
-          </BtnOutline>
+          <ButtonLink variant="outline-green-light" size="hero" to="/trainers">
+            {t('trainers.cta')}
+          </ButtonLink>
         </div>
       </div>
     </section>
@@ -502,8 +460,8 @@ const CTABanner = memo(function CTABanner() {
           {t('cta.body')}
         </p>
         <div className="flex items-center justify-center gap-4 flex-wrap">
-          <BtnPrimary to="/login">{t('cta.ctaFree')}</BtnPrimary>
-          <BtnOutline to="/contact">{t('cta.ctaContact')}</BtnOutline>
+          <ButtonLink variant="primary" size="hero" to="/login">{t('cta.ctaFree')}</ButtonLink>
+          <ButtonLink variant="outline-white" size="hero" to="/contact">{t('cta.ctaContact')}</ButtonLink>
         </div>
       </div>
     </section>

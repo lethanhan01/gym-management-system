@@ -6,6 +6,7 @@ import subscriptionService, { type Subscription } from '@/services/subscription.
 import paymentService, { type Payment } from '@/services/payment.service'
 import { useAuthStore } from '@/stores/authStore'
 import { MemberPage, MemberPageHeader, MemberSkeleton } from '@/components/MemberUI'
+import { Button } from '@/components/ui/Button'
 import { getPaymentMethodLabel } from '@/components/payment/payment-method-data'
 import { formatVnd } from '@/lib/currency'
 import { formatDate } from '@/lib/date'
@@ -189,9 +190,9 @@ export default function PackageHistoryPage() {
         title={t('subscription.history.title')}
         description={t('subscription.history.description')}
         actions={
-          <button onClick={() => navigate('/member/subscription/current')} className="rogym-btn rogym-btn--outline-white">
+          <Button onClick={() => navigate('/member/subscription/current')} variant="outline-white">
             {t('subscription.history.backToCurrent')}
-          </button>
+          </Button>
         }
       />
 

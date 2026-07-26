@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
+import { useSearchParams } from 'react-router-dom'
+import { Button, ButtonLink } from '@/components/ui/Button'
 import { Search, TrendingUp, UserRound } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useTrainerStudents } from '@/hooks/useTrainerStudents'
@@ -97,9 +98,9 @@ export default function StudentsListPage() {
             </TrainerSelect>
           </div>
         </FilterDropdown>
-        <button type="button" className="rogym-btn rogym-btn--primary" onClick={applySearch}>
+        <Button variant="primary" onClick={applySearch}>
           {t('students.list.searchButton')}
-        </button>
+        </Button>
       </div>
 
       {loading ? (
@@ -149,18 +150,18 @@ export default function StudentsListPage() {
                     </td>
                     <td className="px-5 py-4">
                       <div className="flex justify-end gap-3">
-                        <Link
-                          className="rogym-text-link rogym-text-link--accent"
+                        <ButtonLink
+                          variant="text-accent"
                           to={`/trainer/students/${student.memberId}`}
                         >
                           {t('students.list.actionDetail')}
-                        </Link>
-                        <Link
-                          className="rogym-text-link"
+                        </ButtonLink>
+                        <ButtonLink
+                          variant="text"
                           to={`/trainer/students/${student.memberId}/progress`}
                         >
                           {t('students.list.actionProgress')}
-                        </Link>
+                        </ButtonLink>
                       </div>
                     </td>
                   </tr>
@@ -192,18 +193,20 @@ export default function StudentsListPage() {
                   {student.activeSubscription?.packageName ?? t('students.list.noPackageActive')}
                 </div>
                 <div className="mt-4 flex gap-3">
-                  <Link
-                    className="rogym-btn rogym-btn--outline-white flex-1"
+                  <ButtonLink
+                    variant="outline-white"
+                    className="flex-1"
                     to={`/trainer/students/${student.memberId}`}
                   >
                     {t('students.list.actionDetail')}
-                  </Link>
-                  <Link
-                    className="rogym-btn rogym-btn--primary flex-1"
+                  </ButtonLink>
+                  <ButtonLink
+                    variant="primary"
+                    className="flex-1"
                     to={`/trainer/students/${student.memberId}/progress`}
                   >
                     <TrendingUp size={15} /> {t('students.list.progressLink')}
-                  </Link>
+                  </ButtonLink>
                 </div>
               </div>
             ))}
@@ -213,25 +216,23 @@ export default function StudentsListPage() {
 
       {totalPages > 1 && (
         <div className="flex items-center justify-center gap-3">
-          <button
-            type="button"
-            className="rogym-btn rogym-btn--outline-white"
+          <Button
+            variant="outline-white"
             disabled={page <= 1}
             onClick={() => updateParam('page', String(page - 1))}
           >
             {t('students.list.prevPage')}
-          </button>
+          </Button>
           <span className="text-sm rogym-text-secondary">
             {t('students.list.page', { current: page, total: totalPages })}
           </span>
-          <button
-            type="button"
-            className="rogym-btn rogym-btn--outline-white"
+          <Button
+            variant="outline-white"
             disabled={page >= totalPages}
             onClick={() => updateParam('page', String(page + 1))}
           >
             {t('students.list.nextPage')}
-          </button>
+          </Button>
         </div>
       )}
     </TrainerPage>

@@ -1,5 +1,6 @@
 import { FormEvent, useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
+import { ButtonLink } from '@/components/ui/Button'
 import { ArrowLeft, Calculator } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { DatePickerInput } from '@/components/DatePickerInput'
@@ -87,12 +88,12 @@ export default function AddProgressPage() {
             : t('students.addProgress.title')
         }
         actions={
-          <Link
-            className="rogym-text-link rogym-text-link--muted"
+          <ButtonLink
+            variant="text-muted"
             to={`/trainer/students/${id}?tab=progress`}
           >
             <ArrowLeft size={15} /> {t('students.addProgress.back')}
-          </Link>
+          </ButtonLink>
         }
       />
       {loading ? (
@@ -168,12 +169,12 @@ export default function AddProgressPage() {
             />
           </label>
           <div className="flex justify-end gap-3">
-            <Link
-              className="rogym-btn rogym-btn--outline-white"
+            <ButtonLink
+              variant="outline-white"
               to={`/trainer/students/${id}?tab=progress`}
             >
               {t('students.addProgress.cancel')}
-            </Link>
+            </ButtonLink>
             <SubmitButton loading={saving}>{t('students.addProgress.submit')}</SubmitButton>
           </div>
         </form>

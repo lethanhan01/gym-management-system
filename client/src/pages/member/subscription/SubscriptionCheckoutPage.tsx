@@ -24,6 +24,7 @@ import {
   type PaymentMethodOption,
 } from '@/components/payment/payment-method-data'
 import { PaymentMethodIcon } from '@/components/payment/payment-methods'
+import { Button } from '@/components/ui/Button'
 
 interface PayState {
   packageId: string
@@ -242,12 +243,13 @@ export default function SubscriptionCheckoutPage({ mode }: { mode: 'buy' | 'rene
 
   return (
     <div className="rogym-sx-13d95242">
-      <button
+      <Button
+        variant="text-accent"
         onClick={() => navigate(-1)}
-        className="rogym-text-link rogym-text-link--accent rogym-sx-dd54bdbf"
+        className="rogym-sx-dd54bdbf"
       >
         <ArrowLeft size={14} /> {t('subscription.checkout.backLink')}
-      </button>
+      </Button>
 
       <h1 className="text-2xl font-bold text-white mb-1">
         {mode === 'renew' ? t('subscription.checkout.titleRenew') : t('subscription.checkout.title')}
@@ -347,10 +349,12 @@ export default function SubscriptionCheckoutPage({ mode }: { mode: 'buy' | 'rene
 
           {error && <p className="rogym-sx-fff6a280">{error}</p>}
 
-          <button
+          <Button
+            variant="primary"
+            size="wide"
             onClick={handleConfirm}
             disabled={submitting}
-            className="rogym-btn rogym-btn--primary rogym-btn--wide mt-auto"
+            className="mt-auto"
           >
             {submitting
               ? t('subscription.checkout.buttonProcessing')
@@ -360,7 +364,7 @@ export default function SubscriptionCheckoutPage({ mode }: { mode: 'buy' | 'rene
                     : 'subscription.checkout.buttonConfirmPay',
                   { price: formatVnd(state.price) }
                 )}
-          </button>
+          </Button>
         </div>
 
         {/* Card right: saved accounts */}

@@ -216,6 +216,16 @@
     }
   }
 
+  .rogym-btn--mobile-full {
+    width: 100%;
+  }
+
+  @media (min-width: 640px) {
+    .rogym-btn--mobile-full {
+      width: auto;
+    }
+  }
+
   .rogym-btn--icon {
     width: 2.75rem;   /* was 2.5rem (40px) — WCAG 2.1 AA touch target */
     min-width: 2.75rem;

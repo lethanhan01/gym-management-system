@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { useParams } from 'react-router-dom'
+import { Button, ButtonLink } from '@/components/ui/Button'
 import { ArrowLeft, Plus, Trash2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { getApiError } from '@/lib/api-error'
@@ -81,15 +82,15 @@ export default function ProgressListPage() {
         }
         actions={
           <>
-            <Link
-              className="rogym-text-link rogym-text-link--muted"
+            <ButtonLink
+              variant="text-muted"
               to={`/trainer/students/${id}?tab=progress`}
             >
               <ArrowLeft size={15} /> {t('students.progressList.backToDetail')}
-            </Link>
-            <Link className="rogym-btn rogym-btn--primary" to={`/trainer/students/${id}/progress`}>
+            </ButtonLink>
+            <ButtonLink variant="primary" to={`/trainer/students/${id}/progress`}>
               <Plus size={16} /> {t('students.progressList.addNew')}
-            </Link>
+            </ButtonLink>
           </>
         }
       />
@@ -101,9 +102,9 @@ export default function ProgressListPage() {
         <TrainerEmptyState
           title={t('students.progressList.noData')}
           action={
-            <Link className="rogym-btn rogym-btn--primary" to={`/trainer/students/${id}/progress`}>
+            <ButtonLink variant="primary" to={`/trainer/students/${id}/progress`}>
               {t('students.progressList.addFirst')}
-            </Link>
+            </ButtonLink>
           }
         />
       ) : (
@@ -141,13 +142,13 @@ export default function ProgressListPage() {
                     </td>
                     <td className="px-5 py-4 text-right">
                       {canDelete(item) && (
-                        <button
-                          type="button"
-                          className="rogym-text-link text-red-300"
+                        <Button
+                          variant="text"
+                          className="text-red-300"
                           onClick={() => setDeleting(item)}
                         >
                           {t('students.progressList.delete')}
-                        </button>
+                        </Button>
                       )}
                     </td>
                   </tr>
@@ -167,14 +168,13 @@ export default function ProgressListPage() {
                     </div>
                   </div>
                   {canDelete(item) && (
-                    <button
-                      type="button"
-                      className="rogym-btn rogym-btn--icon rogym-btn--elevated"
+                    <Button
+                      variant="icon"
                       onClick={() => setDeleting(item)}
                       aria-label={t('students.progressList.deleteModal.ariaDelete')}
                     >
                       <Trash2 size={15} />
-                    </button>
+                    </Button>
                   )}
                 </div>
                 <div className="mt-4 text-sm text-white">
@@ -194,23 +194,23 @@ export default function ProgressListPage() {
         onClose={() => setDeleting(null)}
         footer={
           <>
-            <button
-              type="button"
-              className="rogym-btn rogym-btn--outline-white"
+            <Button
+              variant="outline-white"
+              mobileFull
               onClick={() => setDeleting(null)}
             >
               {t('students.progressList.deleteModal.cancel')}
-            </button>
-            <button
-              type="button"
-              className="rogym-btn rogym-btn--danger"
+            </Button>
+            <Button
+              variant="danger"
+              mobileFull
               disabled={submitting}
               onClick={deleteProgress}
             >
               {submitting
                 ? t('students.progressList.deleteModal.submitting')
                 : t('students.progressList.deleteModal.submit')}
-            </button>
+            </Button>
           </>
         }
       >

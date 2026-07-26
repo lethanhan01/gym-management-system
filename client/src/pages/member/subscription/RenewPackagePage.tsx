@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import subscriptionService, { type Subscription } from '@/services/subscription.service'
 import { useAuthStore } from '@/stores/authStore'
 import { MemberPage, MemberPageHeader, MemberSkeleton } from '@/components/MemberUI'
+import { Button } from '@/components/ui/Button'
 import { formatDate } from '@/lib/date'
 
 function addDays(date: Date, days: number): Date {
@@ -68,13 +69,12 @@ export default function RenewPackagePage() {
         title={t('subscription.renew.title')}
         description={t('subscription.renew.description')}
         actions={
-          <button
-            type="button"
+          <Button
             onClick={() => navigate('/member/subscription/current')}
-            className="rogym-btn rogym-btn--outline-white"
+            variant="outline-white"
           >
             {t('subscription.renew.backToCurrent')}
-          </button>
+          </Button>
         }
       />
       {loading ? (
@@ -110,13 +110,13 @@ export default function RenewPackagePage() {
               })}
             </p>
           </div>
-          <button
-            type="button"
+          <Button
             onClick={continueToPayment}
-            className="rogym-btn rogym-btn--primary w-full"
+            variant="primary"
+            className="w-full"
           >
             {t('subscription.renew.buttonPay')}
-          </button>
+          </Button>
         </div>
       ) : null}
     </MemberPage>

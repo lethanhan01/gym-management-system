@@ -11,6 +11,7 @@ import { trainingService, type MemberProgress } from '@/services/training.servic
 import { memberService } from '@/services/member.service'
 import { useAuthStore } from '@/stores/authStore'
 import { getApiError } from '@/lib/api-error'
+import { Button } from '@/components/ui/Button'
 
 import { PageLoader } from '@/components/shared/Spinner'
 
@@ -130,9 +131,9 @@ function SelfReportForm({ onSuccess, t }: { onSuccess: () => void; t: TFunction<
 
         {error && <p className="text-xs text-red-400">{error}</p>}
 
-        <button type="submit" disabled={submitting} className="btn-primary self-start">
+        <Button type="submit" disabled={submitting} variant="primary" className="self-start">
           {submitting ? t('progress.form.buttonSaving') : t('progress.form.buttonSave')}
-        </button>
+        </Button>
       </form>
     </div>
   )
@@ -208,9 +209,9 @@ export default function ProgressPage() {
           title={t('progress.pageTitle')}
           description={t('progress.description')}
         />
-        <button onClick={() => setShowForm((v) => !v)} className="btn-primary shrink-0 mt-1">
+        <Button variant="primary" onClick={() => setShowForm((v) => !v)} className="shrink-0 mt-1">
           {showForm ? t('progress.buttonClose') : t('progress.buttonRecord')}
-        </button>
+        </Button>
       </div>
 
       {showForm && <SelfReportForm onSuccess={handleFormSuccess} t={t} />}
@@ -229,7 +230,7 @@ export default function ProgressPage() {
               <p className="text-xs font-semibold uppercase tracking-wider rogym-sx-6e4f9432">
                 {t('progress.statCurrentWeight')}
               </p>
-              <p className="mt-2 text-3xl font-bold text-white">
+              <p className="mt-2 text-2xl sm:text-3xl font-bold text-white">
                 {latest.weight != null ? `${latest.weight} kg` : '—'}
               </p>
               <p className="mt-1 text-xs rogym-sx-d88f932f">{t('progress.recordedAt', { date: fmtDate(latest.recordedAt) })}</p>
@@ -239,7 +240,7 @@ export default function ProgressPage() {
                 {t('progress.statCurrentBmi')}
               </p>
               <p
-                className="rogym-tone-text mt-2 text-3xl font-bold"
+                className="rogym-tone-text mt-2 text-2xl sm:text-3xl font-bold"
                 data-tone={latest.bmi != null ? bmiTone(latest.bmi) : 'default'}
               >
                 {latest.bmi != null ? latest.bmi.toFixed(1) : '—'}

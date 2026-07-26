@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { Button, ButtonLink } from '@/components/ui/Button'
 import { useTranslation } from 'react-i18next'
 import { CalendarPlus, ChevronLeft, ChevronRight, MapPin } from 'lucide-react'
 import { SessionDetailModal } from '@/components/trainer/SessionDetailModal'
@@ -145,9 +146,9 @@ export default function TrainerSessionsPage() {
         title={t('sessions.calendar.title')}
         description={t('sessions.calendar.description')}
         actions={
-          <Link className="rogym-btn rogym-btn--primary" to="/trainer/sessions/create">
+          <ButtonLink variant="primary" to="/trainer/sessions/create">
             <CalendarPlus size={16} /> {t('sessions.calendar.createSession')}
-          </Link>
+          </ButtonLink>
         }
       />
 
@@ -155,29 +156,27 @@ export default function TrainerSessionsPage() {
       <div className="rogym-card rogym-card--compact flex flex-col gap-2 p-4">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-2">
-            <button
-              type="button"
-              className="rogym-btn rogym-btn--icon rogym-btn--elevated"
+            <Button
+              variant="icon"
               onClick={() => moveCalendar(-1)}
               aria-label={t('sessions.calendar.prevPeriod')}
             >
               <ChevronLeft size={18} />
-            </button>
-            <button
-              type="button"
-              className="rogym-btn rogym-btn--outline-white text-sm px-3 py-1.5"
+            </Button>
+            <Button
+              variant="outline-white"
+              className="px-3 py-1.5 text-sm"
               onClick={() => setAnchor(new Date())}
             >
               {t('sessions.calendar.today')}
-            </button>
-            <button
-              type="button"
-              className="rogym-btn rogym-btn--icon rogym-btn--elevated"
+            </Button>
+            <Button
+              variant="icon"
               onClick={() => moveCalendar(1)}
               aria-label={t('sessions.calendar.nextPeriod')}
             >
               <ChevronRight size={18} />
-            </button>
+            </Button>
           </div>
           <div className="flex rounded-full bg-white/10 p-0.5 self-start sm:self-auto">
             <button
@@ -366,13 +365,12 @@ export default function TrainerSessionsPage() {
                         <TrainerStatusBadge status={session.status} />
                       </td>
                       <td className="px-5 py-4 text-right">
-                        <button
-                          type="button"
-                          className="rogym-text-link rogym-text-link--accent"
+                        <Button
+                          variant="text-accent"
                           onClick={() => setOpenedId(session.sessionId)}
                         >
                           {t('sessions.calendar.list.detail')}
-                        </button>
+                        </Button>
                       </td>
                     </tr>
                   ))}
@@ -408,27 +406,27 @@ export default function TrainerSessionsPage() {
 
         {listTotalPages > 1 && (
           <div className="flex items-center justify-center gap-3">
-            <button
-              type="button"
-              className="rogym-btn rogym-btn--icon rogym-btn--outline-white"
+            <Button
+              variant="outline-white"
+              className="px-2"
               disabled={listPage <= 1}
               onClick={() => setListPage((p) => p - 1)}
               aria-label={t('sessions.calendar.list.prevPage')}
             >
               <ChevronLeft size={18} />
-            </button>
+            </Button>
             <span className="text-sm rogym-text-secondary">
               {t('sessions.calendar.list.page', { current: listPage, total: listTotalPages })}
             </span>
-            <button
-              type="button"
-              className="rogym-btn rogym-btn--icon rogym-btn--outline-white"
+            <Button
+              variant="outline-white"
+              className="px-2"
               disabled={listPage >= listTotalPages}
               onClick={() => setListPage((p) => p + 1)}
               aria-label={t('sessions.calendar.list.nextPage')}
             >
               <ChevronRight size={18} />
-            </button>
+            </Button>
           </div>
         )}
       </section>

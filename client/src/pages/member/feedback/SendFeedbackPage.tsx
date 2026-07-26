@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
+import { Button, ButtonLink } from '@/components/ui/Button'
 import { CheckCircle2, Users, Wrench, Star } from 'lucide-react'
 import { MemberPage, MemberPageHeader } from '@/components/MemberUI'
 import { feedbackService } from '@/services/feedback.service'
@@ -60,9 +61,9 @@ export default function SendFeedbackPage() {
         title={t('feedback.send.title')}
         description={t('feedback.send.description')}
         actions={
-          <Link to="/member/feedback" className="rogym-btn rogym-btn--outline-white">
+          <ButtonLink variant="outline-white" to="/member/feedback">
             {t('feedback.send.backLink')}
-          </Link>
+          </ButtonLink>
         }
       />
 
@@ -83,18 +84,20 @@ export default function SendFeedbackPage() {
               {t('feedback.send.successDesc')}
             </p>
             <div className="mt-8 flex flex-wrap gap-3 justify-center">
-              <Link
+              <ButtonLink
+                variant="primary"
                 to="/member/feedback"
-                className="rogym-btn rogym-btn--primary px-6 py-2.5 text-sm"
+                className="px-6 py-2.5 text-sm"
               >
                 {t('feedback.send.buttonViewMy')}
-              </Link>
-              <button
+              </ButtonLink>
+              <Button
+                variant="outline-white"
                 onClick={() => { setSuccess(false); setContent(''); setFeedbackType('service'); setSeverity('medium') }}
-                className="rogym-btn rogym-btn--outline-white px-6 py-2.5 text-sm"
+                className="px-6 py-2.5 text-sm"
               >
                 {t('feedback.send.buttonSendAnother')}
-              </button>
+              </Button>
             </div>
           </div>
         ) : (
@@ -161,13 +164,15 @@ export default function SendFeedbackPage() {
                 <p className="mb-4 text-sm rogym-sx-00644777" >{error}</p>
               )}
 
-              <button
+              <Button
+                variant="primary"
+                size="wide"
                 type="submit"
                 disabled={submitting}
-                className="rogym-btn rogym-btn--primary rogym-btn--wide w-full"
+                className="w-full"
               >
                 {submitting ? t('feedback.send.buttonSubmitting') : t('feedback.send.buttonSubmit')}
-              </button>
+              </Button>
             </div>
           </form>
         )}

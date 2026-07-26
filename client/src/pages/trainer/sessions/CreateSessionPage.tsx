@@ -1,5 +1,6 @@
 import { FormEvent, useEffect, useMemo, useState } from 'react'
-import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { ButtonLink } from '@/components/ui/Button'
 import { ArrowLeft, Clock3 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { getApiError } from '@/lib/api-error'
@@ -228,12 +229,12 @@ export default function CreateSessionPage() {
         title={editing ? t('sessions.create.titleEdit') : t('sessions.create.title')}
         description={t('sessions.create.description')}
         actions={
-          <Link
-            className="rogym-btn rogym-btn--outline-white"
+          <ButtonLink
+            variant="outline-white"
             to={id ? `/trainer/sessions/${id}` : '/trainer/sessions'}
           >
             <ArrowLeft size={16} /> {t('sessions.create.back')}
-          </Link>
+          </ButtonLink>
         }
       />
       {error && <TrainerErrorState message={error} />}
@@ -363,12 +364,12 @@ export default function CreateSessionPage() {
           {endTime ? toDateTimeLocalInput(endTime).replace('T', ' ') : t('sessions.create.endUnknown')}
         </div>
         <div className="flex justify-end gap-3 border-t border-white/5 pt-5">
-          <Link
-            className="rogym-btn rogym-btn--outline-white"
+          <ButtonLink
+            variant="outline-white"
             to={id ? `/trainer/sessions/${id}` : '/trainer/sessions'}
           >
             {t('sessions.create.cancel')}
-          </Link>
+          </ButtonLink>
           <SubmitButton
             loading={submitting}
             disabled={

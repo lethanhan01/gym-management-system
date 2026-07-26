@@ -8,6 +8,7 @@ import { useSubscriptionStore } from '@/stores/subscriptionStore'
 import trainerService, { type Trainer } from '@/services/trainer.service'
 import { useAuthStore } from '@/stores/authStore'
 import { MemberPage, MemberPageHeader } from '@/components/MemberUI'
+import { Button } from '@/components/ui/Button'
 import { PackagePicker, PackagePickerSkeleton } from '@/components/PackagePicker'
 
 
@@ -168,13 +169,12 @@ export default function SubscriptionSetupPage() {
           title={t('subscription.setup.trainerTitle')}
           description={t('subscription.setup.trainerDescription', { name: selectedPackage?.name ?? '' })}
           actions={
-            <button
-              type="button"
+            <Button
               onClick={() => setStep('pick-package')}
-              className="rogym-btn rogym-btn--outline-white"
+              variant="outline-white"
             >
               {t('subscription.setup.backToPackages')}
-            </button>
+            </Button>
           }
         />
         {trainersLoading ? (
@@ -198,14 +198,14 @@ export default function SubscriptionSetupPage() {
                 <p className="mt-0.5 text-xs capitalize rogym-text-secondary">{t.position}</p>
               </button>
             ))}
-            <button
-              type="button"
+            <Button
               onClick={() => selectedTrainerId && proceedToPayment(selectedTrainerId)}
               disabled={!selectedTrainerId}
-              className="rogym-btn rogym-btn--primary mt-2 w-full disabled:opacity-40"
+              variant="primary"
+              className="mt-2 w-full disabled:opacity-40"
             >
               {t('subscription.setup.buttonContinue')}
-            </button>
+            </Button>
           </div>
         )}
       </MemberPage>
@@ -227,13 +227,12 @@ export default function SubscriptionSetupPage() {
       ) : loadError ? (
         <div className="rogym-card rogym-card--compact flex flex-col items-center justify-center gap-4 py-16 text-center">
           <p className="text-sm text-red-300">{t('subscription.setup.errorNetwork')}</p>
-          <button
-            type="button"
-            className="rogym-btn rogym-btn--outline-white"
+          <Button
+            variant="outline-white"
             onClick={() => { setLoading(true); setLoadError(false); setCheckingSubscription(true); setRetryCount(c => c + 1) }}
           >
             {t('subscription.setup.buttonRetry')}
-          </button>
+          </Button>
         </div>
       ) : packages.length === 0 ? (
         <div className="rogym-card rogym-card--compact flex items-center justify-center py-16 text-sm rogym-text-secondary">

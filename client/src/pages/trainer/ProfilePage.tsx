@@ -1,5 +1,6 @@
 import { FormEvent, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { Button } from '@/components/ui/Button'
 import { useTranslation } from 'react-i18next'
 import { KeyRound, LoaderCircle, LogOut, Save, UserRound } from 'lucide-react'
 import { getApiError } from '@/lib/api-error'
@@ -177,17 +178,17 @@ export default function TrainerProfilePage() {
             <div className="mt-auto pt-6 flex gap-3">
               {isEditing ? (
                 <>
-                  <button
-                    type="button"
-                    className="rogym-btn rogym-btn--outline-white flex-1"
+                  <Button
+                    variant="outline-white"
+                    className="flex-1"
                     onClick={cancelEdit}
                     disabled={profileSaving}
                   >
                     {t('profile.actions.cancel')}
-                  </button>
-                  <button
-                    type="button"
-                    className="rogym-btn rogym-btn--primary flex-1"
+                  </Button>
+                  <Button
+                    variant="primary"
+                    className="flex-1"
                     onClick={handleSaveProfile}
                     disabled={profileSaving}
                   >
@@ -197,24 +198,24 @@ export default function TrainerProfilePage() {
                       <Save size={16} />
                     )}{' '}
                     {t('profile.actions.save')}
-                  </button>
+                  </Button>
                 </>
               ) : (
                 <>
-                  <button
-                    type="button"
-                    className="rogym-btn rogym-btn--outline-white flex-1"
+                  <Button
+                    variant="outline-white"
+                    className="flex-1"
                     onClick={startEdit}
                   >
                     {t('profile.actions.edit')}
-                  </button>
-                  <button
-                    type="button"
-                    className="rogym-btn rogym-btn--danger flex-1"
+                  </Button>
+                  <Button
+                    variant="danger"
+                    className="flex-1"
                     onClick={logout}
                   >
                     <LogOut size={16} /> {t('profile.actions.logout')}
-                  </button>
+                  </Button>
                 </>
               )}
             </div>

@@ -1,6 +1,7 @@
 import { FormEvent, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
+import { Button } from '@/components/ui/Button'
 import { KeyRound, LoaderCircle, LogOut, Save, UserRound } from 'lucide-react'
 import { getApiError } from '@/lib/api-error'
 import { initLiff } from '@/lib/liff'
@@ -225,17 +226,19 @@ export default function MemberProfilePage() {
             <div className="mt-auto pt-6 flex gap-3">
               {isEditing ? (
                 <>
-                  <button
+                  <Button
+                    variant="outline-white"
                     type="button"
-                    className="rogym-btn rogym-btn--outline-white flex-1"
+                    className="flex-1"
                     onClick={cancelEdit}
                     disabled={profileSaving}
                   >
                     {t('profile.buttonCancel')}
-                  </button>
-                  <button
+                  </Button>
+                  <Button
+                    variant="primary"
                     type="button"
-                    className="rogym-btn rogym-btn--primary flex-1"
+                    className="flex-1"
                     onClick={handleSaveProfile}
                     disabled={profileSaving}
                   >
@@ -245,24 +248,26 @@ export default function MemberProfilePage() {
                       <Save size={16} />
                     )}{' '}
                     {t('profile.buttonSave')}
-                  </button>
+                  </Button>
                 </>
               ) : (
                 <>
-                  <button
+                  <Button
+                    variant="outline-white"
                     type="button"
-                    className="rogym-btn rogym-btn--outline-white flex-1"
+                    className="flex-1"
                     onClick={startEdit}
                   >
                     {t('profile.buttonEdit')}
-                  </button>
-                  <button
+                  </Button>
+                  <Button
+                    variant="danger"
                     type="button"
-                    className="rogym-btn rogym-btn--danger flex-1"
+                    className="flex-1"
                     onClick={logout}
                   >
                     <LogOut size={16} /> {t('profile.buttonLogout')}
-                  </button>
+                  </Button>
                 </>
               )}
             </div>
@@ -327,23 +332,25 @@ export default function MemberProfilePage() {
                 {lineLinked ? 'Đã liên kết với LINE' : 'Chưa liên kết với LINE'}
               </span>
               {lineLinked ? (
-                <button
+                <Button
+                  variant="outline-white"
                   type="button"
                   onClick={handleUnlinkLine}
                   disabled={lineLinking}
-                  className="rogym-btn rogym-btn--outline-white text-sm disabled:opacity-50"
+                  className="text-sm disabled:opacity-50"
                 >
                   {lineLinking ? 'Đang xử lý...' : 'Hủy liên kết'}
-                </button>
+                </Button>
               ) : (
-                <button
+                <Button
+                  variant="primary"
                   type="button"
                   onClick={handleLinkLine}
                   disabled={lineLinking}
-                  className="rogym-btn rogym-btn--primary text-sm disabled:opacity-50"
+                  className="text-sm disabled:opacity-50"
                 >
                   {lineLinking ? 'Đang xử lý...' : 'Liên kết với LINE'}
-                </button>
+                </Button>
               )}
             </div>
           </section>

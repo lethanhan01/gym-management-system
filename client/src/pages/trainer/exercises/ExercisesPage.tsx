@@ -1,4 +1,5 @@
 import { FormEvent, useCallback, useEffect, useState, useMemo } from 'react'
+import { Button } from '@/components/ui/Button'
 import { useTranslation } from 'react-i18next'
 import { Pencil, Plus, Search, X } from 'lucide-react'
 import { getApiError } from '@/lib/api-error'
@@ -164,9 +165,9 @@ export default function ExercisesPage() {
         title={t('exercises.title')}
         description={t('exercises.description')}
         actions={
-          <button type="button" className="rogym-btn rogym-btn--primary" onClick={openCreate}>
+          <Button variant="primary" onClick={openCreate}>
             <Plus size={16} /> {t('exercises.addButton')}
-          </button>
+          </Button>
         }
       />
       <div className="rogym-card rogym-card--compact flex items-center gap-3 p-4">
@@ -231,14 +232,13 @@ export default function ExercisesPage() {
               imageAspect="aspect-[6/5]"
               action={
                 /^\d+$/.test(exercise.exerciseId) ? (
-                  <button
-                    type="button"
-                    className="rogym-btn rogym-btn--icon rogym-btn--elevated"
+                  <Button
+                    variant="icon"
                     onClick={() => openEdit(exercise)}
                     aria-label={t('exercises.editAriaLabel', { name: exercise.name })}
                   >
                     <Pencil size={15} />
-                  </button>
+                  </Button>
                 ) : undefined
               }
             />
@@ -251,13 +251,12 @@ export default function ExercisesPage() {
         onClose={() => setModalOpen(false)}
         footer={
           <>
-            <button
-              type="button"
-              className="rogym-btn rogym-btn--outline-white"
+            <Button
+              variant="outline-white"
               onClick={() => setModalOpen(false)}
             >
               {t('exercises.modal.cancel')}
-            </button>
+            </Button>
             <SubmitButton form="exercise-form" loading={submitting} disabled={!name.trim()}>
               {t('exercises.modal.submit')}
             </SubmitButton>
@@ -344,26 +343,26 @@ export default function ExercisesPage() {
                     }}
                     placeholder={`Step ${idx + 1}`}
                   />
-                  <button
-                    type="button"
-                    className="rogym-btn rogym-btn--icon rogym-btn--outline-white shrink-0"
+                  <Button
+                    variant="outline-white"
+                    className="px-2 shrink-0"
                     onClick={() => {
                       const newInst = instructions.filter((_, i) => i !== idx)
                       setInstructions(newInst)
                     }}
                   >
                     <X size={15} />
-                  </button>
+                  </Button>
                 </div>
               ))}
             </div>
-            <button
-              type="button"
-              className="rogym-btn rogym-btn--outline-white mt-2 w-full justify-center text-xs"
+            <Button
+              variant="outline-white"
+              className="mt-2 w-full justify-center text-xs"
               onClick={() => setInstructions([...instructions, ''])}
             >
               <Plus size={14} /> Add Step
-            </button>
+            </Button>
           </div>
           <label className="block space-y-2">
             <span className="rogym-field-label">{t('exercises.modal.fieldImageUrl')}</span>

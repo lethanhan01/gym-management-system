@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
+import { Button } from '@/components/ui/Button'
 import { ArrowLeft } from 'lucide-react'
 import { memberService, type TrainerSummary } from '@/services/member.service'
 import { MemberPage, MemberPageHeader, MemberSkeleton, MemberEmptyState } from '@/components/MemberUI'
@@ -41,13 +42,14 @@ export default function ChooseTrainerPage() {
         title={t('chooseTrainer.title')}
         description={t('chooseTrainer.description')}
         actions={
-          <button
-            className="rogym-btn rogym-btn--outline-white flex items-center gap-1.5 text-sm"
+          <Button
+            variant="outline-white"
+            className="flex items-center gap-1.5 text-sm"
             onClick={() => navigate('/member')}
           >
             <ArrowLeft size={14} />
             {t('chooseTrainer.buttonBack')}
-          </button>
+          </Button>
         }
       />
 
@@ -101,13 +103,14 @@ export default function ChooseTrainerPage() {
           )}
 
           <div className="flex justify-end pt-2">
-            <button
-              className="rogym-btn rogym-btn--primary px-8"
+            <Button
+              variant="primary"
+              className="px-8"
               disabled={!selected || submitting}
               onClick={handleConfirm}
             >
               {submitting ? t('chooseTrainer.buttonProcessing') : t('chooseTrainer.buttonChoose')}
-            </button>
+            </Button>
           </div>
         </div>
       )}
