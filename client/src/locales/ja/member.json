@@ -662,6 +662,7 @@
        "buttonCancelEdit": "キャンセル",
        "buttonSaveEdit": "設定を保存",
        "buttonBackToDays": "トレーニング日を選択に戻る",
+       "restBreak": "休憩 {{seconds}} 秒",
        "completedTitle": "セッション完了！",
       "completedDesc": "結果がトレーニング履歴に記録されました。",
       "buttonGoToPlan": "プランへ戻る",
