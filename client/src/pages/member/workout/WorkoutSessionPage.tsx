@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { CheckCircle2, Circle, ArrowLeft } from 'lucide-react'
+import { CheckCircle2, Circle, ArrowLeft, Info, X } from 'lucide-react'
 import {
   MemberErrorState,
   MemberPage,
@@ -13,6 +13,7 @@ import workoutService, {
   type WorkoutPlan,
   type WorkoutPlanDay,
   type WorkoutPlanExercise,
+  type Exercise,
 } from '@/services/workout.service'
 import { useAuthStore } from '@/stores/authStore'
 
@@ -50,6 +51,7 @@ export default function WorkoutSessionPage() {
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const [done, setDone] = useState(false)
+  const [infoModalExercise, setInfoModalExercise] = useState<Exercise | null>(null)
 
   // sets[exerciseIdx][setIdx]
   const [sets, setSets] = useState<SetState[][]>([])
@@ -225,7 +227,7 @@ export default function WorkoutSessionPage() {
                   >
                     {exIdx + 1}
                   </div>
-                  <div>
+                  <div className="flex-1">
                     <p className="font-semibold text-white">{ex.exercise?.name ?? t('workout.session.defaultExerciseName')}</p>
                     <p className="text-xs rogym-sx-5e5c39ab" >
                       Target: {ex.targetSets} sets ·{' '}
@@ -235,6 +237,16 @@ export default function WorkoutSessionPage() {
                       {ex.targetWeightKg ? ` · ${Number(ex.targetWeightKg)} kg` : ''}
                     </p>
                   </div>
+                  {ex.exercise && ex.exercise.instructions && ex.exercise.instructions.length > 0 && (
+                    <button
+                      type="button"
+                      className="flex h-8 w-8 items-center justify-center rounded-full text-white/70 hover:bg-white/10 hover:text-white transition-colors"
+                      onClick={() => setInfoModalExercise(ex.exercise!)}
+                      aria-label="View instructions"
+                    >
+                      <Info size={20} />
+                    </button>
+                  )}
                 </div>
 
                 {/* Sets */}
@@ -327,6 +339,47 @@ export default function WorkoutSessionPage() {
           >
             {submitting ? t('workout.session.buttonSaving') : t('workout.session.buttonFinish')}
           </button>
+        </div>
+      )}
+      {/* Info Modal */}
+      {infoModalExercise && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 rogym-sx-8578aed4"
+          onClick={() => setInfoModalExercise(null)}
+        >
+          <div
+            className="relative w-full max-w-md overflow-hidden rounded-[24px] bg-[#0a1f17] border border-[rgba(6,195,132,0.25)] p-6 shadow-[0_12px_40px_rgba(0,0,0,0.6)]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start justify-between gap-3 mb-4">
+              <h2 className="text-xl font-bold text-white">{infoModalExercise.name}</h2>
+              <button
+                type="button"
+                className="rogym-btn rogym-btn--icon rogym-btn--elevated shrink-0"
+                onClick={() => setInfoModalExercise(null)}
+              >
+                <X size={16} />
+              </button>
+            </div>
+            
+            <div className="max-h-72 overflow-y-auto pr-2">
+              <ol className="list-decimal space-y-2 pl-5 text-sm leading-6 rogym-text-secondary">
+                {infoModalExercise.instructions?.map((step, idx) => (
+                  <li key={idx} className="pl-1">{step}</li>
+                ))}
+              </ol>
+            </div>
+
+            <div className="mt-6 flex justify-end">
+              <button
+                type="button"
+                className="rogym-btn rogym-btn--primary px-6"
+                onClick={() => setInfoModalExercise(null)}
+              >
+                {t('workout.exercises.buttonClose', 'Close')}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </MemberPage>

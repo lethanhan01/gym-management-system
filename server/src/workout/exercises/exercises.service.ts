@@ -61,7 +61,13 @@ export class ExercisesService {
 
   async create(dto: CreateExerciseDto, user: AuthenticatedUser) {
     const exercise = await this.prisma.exercise.create({
-      data: { ...dto, source: ExerciseSource.manual, catalogVisible: true, createdByStaffId: user.staffId ?? null },
+      data: { 
+        ...dto, 
+        instructions: dto.instructions && dto.instructions.length ? JSON.stringify(dto.instructions) : null,
+        source: ExerciseSource.manual, 
+        catalogVisible: true, 
+        createdByStaffId: user.staffId ?? null 
+      },
       include: EXERCISE_INCLUDE,
     })
     await this.audit.log({ actorUserId: user.userId, action: 'exercise.create', resourceType: 'exercise', resourceId: exercise.exerciseId.toString(), afterData: { name: exercise.name, source: exercise.source } })
@@ -78,7 +84,14 @@ export class ExercisesService {
       await this.audit.log({ actorUserId: user.userId, action: 'exercise.override', resourceType: 'exercise', resourceId: id.toString(), afterData: { fields: Object.keys(dto) } })
       return this.present(exercise)
     }
-    const exercise = await this.prisma.exercise.update({ where: { exerciseId: id }, data: dto, include: EXERCISE_INCLUDE })
+    const exercise = await this.prisma.exercise.update({ 
+      where: { exerciseId: id }, 
+      data: {
+        ...dto,
+        instructions: dto.instructions !== undefined ? (dto.instructions.length ? JSON.stringify(dto.instructions) : null) : undefined
+      }, 
+      include: EXERCISE_INCLUDE 
+    })
     await this.audit.log({ actorUserId: user.userId, action: 'exercise.update', resourceType: 'exercise', resourceId: id.toString(), afterData: { name: exercise.name } })
     return this.present(exercise)
   }
@@ -106,7 +119,26 @@ export class ExercisesService {
     return ex
   }
 
-  private present<T extends { description: string | null; imageUrl: string | null; descriptionOverride: string | null; imageUrlOverride: string | null }>(exercise: T) {
-    return { ...exercise, description: exercise.descriptionOverride ?? exercise.description, imageUrl: exercise.imageUrlOverride ?? exercise.imageUrl }
+  private present<T extends { description: string | null; imageUrl: string | null; descriptionOverride: string | null; imageUrlOverride: string | null; instructions: string | null }>(exercise: T) {
+    let parsedInstructions: string[] | null = null;
+    if (typeof exercise.instructions === 'string') {
+      try {
+        parsedInstructions = JSON.parse(exercise.instructions);
+        if (!Array.isArray(parsedInstructions)) {
+          parsedInstructions = [exercise.instructions];
+        }
+      } catch {
+        parsedInstructions = [exercise.instructions];
+      }
+    } else if (Array.isArray(exercise.instructions)) {
+      parsedInstructions = exercise.instructions;
+    }
+
+    return { 
+      ...exercise, 
+      description: exercise.descriptionOverride ?? exercise.description, 
+      imageUrl: exercise.imageUrlOverride ?? exercise.imageUrl,
+      instructions: parsedInstructions
+    }
   }
 }

@@ -239,6 +239,16 @@ export default function MemberExercisesPage() {
               {detail.description && (
                 <p className="mt-4 text-sm leading-7 rogym-sx-d88f932f">{detail.description}</p>
               )}
+              {detail.instructions && detail.instructions.length > 0 && (
+                <div className="mt-4 max-h-48 overflow-y-auto pr-2">
+                  <p className="mb-2 text-sm font-semibold text-white">{t('workout.exercises.fieldInstructions', 'Instructions')}</p>
+                  <ol className="list-decimal space-y-1.5 pl-5 text-sm leading-6 rogym-text-secondary">
+                    {detail.instructions.map((step, idx) => (
+                      <li key={idx} className="pl-1">{step}</li>
+                    ))}
+                  </ol>
+                </div>
+              )}
               <div className="mt-5 grid grid-cols-2 gap-4">
                 <div className="rounded-xl p-3 rogym-sx-a38688f0">
                   <p className="text-xs rogym-sx-5e5c39ab">{t('workout.exercises.fieldBodyPart', 'Body Part')}</p>

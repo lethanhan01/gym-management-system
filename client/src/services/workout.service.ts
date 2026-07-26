@@ -147,6 +147,7 @@ export interface CreateExerciseDto {
   targetMuscleId?: number
   equipmentId?: number
   description?: string
+  instructions?: string[]
   imageUrl?: string
 }
 
@@ -156,6 +157,7 @@ export interface UpdateExerciseDto {
   targetMuscleId?: number
   equipmentId?: number
   description?: string
+  instructions?: string[]
   imageUrl?: string
 }
 

@@ -1,4 +1,4 @@
-import { IsInt, IsOptional, IsPositive, IsString, MaxLength, MinLength } from 'class-validator'
+import { IsArray, IsInt, IsOptional, IsPositive, IsString, MaxLength, MinLength } from 'class-validator'
 
 export class UpdateExerciseDto {
   @IsOptional()
@@ -30,4 +30,9 @@ export class UpdateExerciseDto {
   @IsString()
   @MaxLength(1000)
   imageUrl?: string
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  instructions?: string[]
 }

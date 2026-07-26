@@ -53,9 +53,16 @@ export function ExerciseCard({
           </div>
           {action}
         </div>
-        <p className="mt-4 flex-1 text-sm leading-6 rogym-text-secondary">
-          {exercise.description ?? t('workout.exercises.noDescription')}
-        </p>
+        <div className="mt-4 flex-1">
+          <p className="text-sm leading-6 rogym-text-secondary">
+            {exercise.description ?? t('workout.exercises.noDescription')}
+          </p>
+          {exercise.instructions && exercise.instructions.length > 0 && (
+            <p className="mt-2 text-sm leading-5 rogym-text-dim line-clamp-2">
+              {exercise.instructions.join(' ')}
+            </p>
+          )}
+        </div>
         <div className="mt-5 grid grid-cols-2 gap-3 border-t border-white/5 pt-4 text-xs">
           <div>
             <span className="rogym-text-dim">{t('workout.exercises.fieldBodyPart', 'Body Part')}</span>

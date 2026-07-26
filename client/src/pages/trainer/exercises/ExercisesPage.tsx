@@ -47,6 +47,7 @@ export default function ExercisesPage() {
   const [formTargetMuscleId, setFormTargetMuscleId] = useState<number | ''>('')
   const [formEquipmentId, setFormEquipmentId] = useState<number | ''>('')
   const [description, setDescription] = useState('')
+  const [instructionsInput, setInstructionsInput] = useState('')
   const [imageUrl, setImageUrl] = useState('')
 
   const loadLookups = useCallback(async () => {
@@ -106,6 +107,7 @@ export default function ExercisesPage() {
     setFormTargetMuscleId('')
     setFormEquipmentId('')
     setDescription('')
+    setInstructionsInput('')
     setImageUrl('')
     setModalOpen(true)
   }
@@ -117,6 +119,7 @@ export default function ExercisesPage() {
     setFormTargetMuscleId(exercise.targetMuscleId ?? '')
     setFormEquipmentId(exercise.equipmentId ?? '')
     setDescription(exercise.description ?? '')
+    setInstructionsInput(exercise.instructions ? exercise.instructions.join('\n') : '')
     setImageUrl(exercise.imageUrl ?? '')
     setModalOpen(true)
   }
@@ -131,6 +134,7 @@ export default function ExercisesPage() {
       targetMuscleId: formTargetMuscleId !== '' ? formTargetMuscleId : undefined,
       equipmentId: formEquipmentId !== '' ? formEquipmentId : undefined,
       description: description.trim() || undefined,
+      instructions: instructionsInput.trim() ? instructionsInput.split('\n').map(s => s.trim()).filter(s => s) : undefined,
       imageUrl: imageUrl.trim() || undefined,
     }
     try {
@@ -308,6 +312,15 @@ export default function ExercisesPage() {
               className="rogym-input min-h-28"
               value={description}
               onChange={(event) => setDescription(event.target.value)}
+            />
+          </label>
+          <label className="block space-y-2">
+            <span className="rogym-field-label">{tm('workout.exercises.fieldInstructions', 'Instructions (one per line)')}</span>
+            <textarea
+              className="rogym-input min-h-32"
+              value={instructionsInput}
+              onChange={(event) => setInstructionsInput(event.target.value)}
+              placeholder="1. Lên xà...&#10;2. Xuống xà..."
             />
           </label>
           <label className="block space-y-2">
