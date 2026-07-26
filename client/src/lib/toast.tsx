@@ -24,6 +24,8 @@ type ToastOptions = ExternalToast & {
 }
 
 function customToast(message: React.ReactNode, tone: NotificationTone, options?: ToastOptions) {
+  const className = ['rogym-sonner-toast', options?.className].filter(Boolean).join(' ')
+
   return sonnerToast.custom(
     (t) => (
       <NotificationToast
@@ -54,7 +56,7 @@ function customToast(message: React.ReactNode, tone: NotificationTone, options?:
         }}
       />
     ),
-    options
+    { ...options, className }
   )
 }
 

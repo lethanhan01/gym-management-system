@@ -1,4 +1,4 @@
-import { memo, useCallback, useEffect, useMemo, useRef, useState, type ElementType } from 'react'
+import { memo, useCallback, useEffect, useMemo, useState, type ElementType } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { Button } from '@/components/ui/Button'
 import { useTranslation } from 'react-i18next'
@@ -12,7 +12,6 @@ import {
   AlertCircle,
   ClipboardList,
   MessageSquareOff,
-  CalendarCheck,
   User,
   Phone,
   Mail,
@@ -26,7 +25,6 @@ import { memberService, type MemberProgress, type MemberProfile } from '@/servic
 import { feedbackService, type Feedback } from '@/services/feedback.service'
 import api from '@/services/api'
 import { MemberPage, MemberPageHeader } from '@/components/MemberUI'
-import { NotificationToast } from '@/components/shared/NotificationUI'
 import { hasActiveSubscription, isSubscriptionActive } from '@/lib/subscription'
 import { getApiError } from '@/lib/api-error'
 import { toast } from '@/lib/toast'
@@ -581,8 +579,6 @@ export default function MemberDashboardPage() {
   const [errorPlan, setErrorPlan] = useState(false)
   const [errorFeedbacks, setErrorFeedbacks] = useState(false)
 
-  const [paymentSuccessToast, setPaymentSuccessToast] = useState(false)
-  const paymentToastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const todayDescription = useMemo(() => todayFull(i18n.language), [i18n.language])
   const handleChooseTrainer = useCallback(() => navigate('/member/choose-trainer'), [navigate])
   const handleRemoveTrainer = useCallback(async () => {
@@ -597,18 +593,9 @@ export default function MemberDashboardPage() {
 
   useEffect(() => {
     if ((location.state as { paymentSuccess?: boolean } | null)?.paymentSuccess) {
-      setPaymentSuccessToast(true)
-      if (paymentToastTimerRef.current) clearTimeout(paymentToastTimerRef.current)
-      paymentToastTimerRef.current = setTimeout(() => setPaymentSuccessToast(false), 4000)
+      toast.success(t('dashboard.paymentSuccess'))
     }
   }, [location.state])
-
-  useEffect(
-    () => () => {
-      if (paymentToastTimerRef.current) clearTimeout(paymentToastTimerRef.current)
-    },
-    []
-  )
 
   useEffect(() => {
     const memberId = user?.memberId
@@ -735,15 +722,6 @@ export default function MemberDashboardPage() {
 
   return (
     <MemberPage>
-      {/* Toast */}
-      {paymentSuccessToast && (
-        <NotificationToast
-          tone="success"
-          message={t('dashboard.paymentSuccess')}
-          icon={<CalendarCheck size={18} />}
-        />
-      )}
-
       <MemberPageHeader
         eyebrow="Member workspace"
         title={t('dashboard.greeting', { name: user?.fullName ?? t('dashboard.greetingFallback') })}

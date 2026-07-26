@@ -229,7 +229,7 @@
     "detailTitle": "Chi tiết phản hồi",
     "close": "Đóng",
     "update": "Cập nhật",
-    "saveFailed": "Không thể cập nhật phản hồi.",
+    "saveFailed": "Không thể cập nhật phản hồi. Vui lòng điền nội dung phản hồi",
     "sentAt": "Gửi lúc {{date}}",
     "handledAt": "Xử lý lúc {{date}}",
     "responseLabel": "Phản hồi: {{text}}",

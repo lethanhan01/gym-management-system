@@ -12,6 +12,8 @@ import { feedbackService } from '@/services/feedback.service'
 import api from '@/services/api'
 import { makeSubscription } from '@/test/subscriptionFactory'
 
+const toastSuccessMock = vi.hoisted(() => vi.fn())
+
 vi.mock('@/components/MemberUI', () => ({
   MemberPage: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
   MemberPageHeader: ({ title }: { title: React.ReactNode }) => <header>{title}</header>,
@@ -61,6 +63,13 @@ vi.mock('@/services/feedback.service', () => ({
 vi.mock('@/services/api', () => ({
   default: {
     get: vi.fn(),
+  },
+}))
+
+vi.mock('@/lib/toast', () => ({
+  toast: {
+    success: toastSuccessMock,
+    error: vi.fn(),
   },
 }))
 
@@ -189,7 +198,7 @@ describe('MemberDashboardPage subscription access sync', () => {
     expect(useSubscriptionStore.getState().checkedMemberId).toBe('10')
   })
 
-  it('renders payment success through the shared notification toast', async () => {
+  it('sends payment success through the shared toast API', async () => {
     mockedGetByMember.mockResolvedValue([
       makeSubscription({
         status: 'active',
@@ -201,9 +210,9 @@ describe('MemberDashboardPage subscription access sync', () => {
 
     renderDashboardWithPaymentSuccess()
 
-    const toast = await screen.findByRole('status')
-    expect(toast).toHaveClass('rogym-notification-toast')
-    expect(toast).toHaveTextContent('Thanh toán thành công')
+    await waitFor(() =>
+      expect(toastSuccessMock).toHaveBeenCalledWith('Thanh toán thành công! Gói tập đã được kích hoạt.')
+    )
   })
 
   it('shows only sessions after the current time in the upcoming widget', async () => {

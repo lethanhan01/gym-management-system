@@ -2,8 +2,9 @@ import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Bell, CheckCheck, Loader2 } from 'lucide-react'
-import { NotificationPanel, NotificationToast } from '@/components/shared/NotificationUI'
+import { NotificationPanel } from '@/components/shared/NotificationUI'
 import { translateNotification } from '@/lib/notification-i18n'
+import { toast } from '@/lib/toast'
 import { notificationService, type NotificationItem } from '@/services/notification.service'
 import { useAuthStore, type Role } from '@/stores/authStore'
 
@@ -86,6 +87,10 @@ function getNotificationPath(item: NotificationItem, roles: Role[] | undefined, 
   }
 }
 
+export function showRealtimeNotificationToast(message: string) {
+  toast.info(message)
+}
+
 export default function NotificationBell() {
   const { t } = useTranslation('common')
   const tr = t as Translate
@@ -95,9 +100,7 @@ export default function NotificationBell() {
   const [notifications, setNotifications] = useState<NotificationItem[]>([])
   const [unreadCount, setUnreadCount] = useState(0)
   const [latestId, setLatestId] = useState<string | null>(null)
-  const [toast, setToast] = useState<string | null>(null)
   const rootRef = useRef<HTMLDivElement>(null)
-  const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const panelTitleId = useId()
   const navigate = useNavigate()
   const { pathname } = useLocation()
@@ -165,18 +168,15 @@ export default function NotificationBell() {
 
         const sorted = [...items].sort((a, b) => toNumberId(a.notificationId) - toNumberId(b.notificationId))
         const newest = sorted[sorted.length - 1]
-        setLatestId(newest.notificationId)
-        setNotifications((current) => mergeNotifications(current, sorted))
-        const count = await notificationService.unreadCount()
-        if (!cancelled) setUnreadCount(count)
-
         const message =
           items.length === 1
             ? translateNotification(newest, tr).title
             : tr('notification.toastMany', { count: items.length })
-        setToast(message)
-        if (toastTimerRef.current) clearTimeout(toastTimerRef.current)
-        toastTimerRef.current = setTimeout(() => setToast(null), 4000)
+        showRealtimeNotificationToast(message)
+        setLatestId(newest.notificationId)
+        setNotifications((current) => mergeNotifications(current, sorted))
+        const count = await notificationService.unreadCount()
+        if (!cancelled) setUnreadCount(count)
       } catch {
         // Polling should stay quiet; the popover shows the last loaded state.
       }
@@ -191,13 +191,6 @@ export default function NotificationBell() {
       clearInterval(interval)
     }
   }, [isAuthenticated, latestId, tr, user])
-
-  useEffect(
-    () => () => {
-      if (toastTimerRef.current) clearTimeout(toastTimerRef.current)
-    },
-    []
-  )
 
   async function handleToggle() {
     setOpen((value) => !value)
@@ -313,8 +306,6 @@ export default function NotificationBell() {
           </div>
         </NotificationPanel>
       )}
-
-      {toast && <NotificationToast tone="info" message={toast} />}
     </div>
   )
 }
