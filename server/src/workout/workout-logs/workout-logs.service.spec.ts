@@ -61,6 +61,7 @@ const mockPrisma = {
   workoutPlanDay: { findFirst: jest.fn() },
   workoutPlanExercise: { findMany: jest.fn() },
   workoutLog: {
+    findFirst: jest.fn(),
     findMany: jest.fn(),
     findUnique: jest.fn(),
     update: jest.fn(),
@@ -158,6 +159,20 @@ describe('WorkoutLogsService', () => {
         expect.objectContaining({ action: 'workout_log.create' }),
       )
       expect(result).toBeDefined()
+    })
+
+    it('returns the existing log for a repeated client completion key without creating or auditing again', async () => {
+      const existing = makeLog({ clientCompletionKey: '30b7b192-0f02-4c86-a596-171bebb327ec' })
+      mockPrisma.workoutLog.findFirst.mockResolvedValue(existing)
+
+      const result = await service.create({
+        ...baseDto,
+        clientCompletionKey: '30b7b192-0f02-4c86-a596-171bebb327ec',
+      } as any, makeUser() as any)
+
+      expect(result).toBe(existing)
+      expect(mockPrisma.$transaction).not.toHaveBeenCalled()
+      expect(mockAudit.log).not.toHaveBeenCalled()
     })
 
     it('happy path with sets: calls workoutLogSet.createMany', async () => {

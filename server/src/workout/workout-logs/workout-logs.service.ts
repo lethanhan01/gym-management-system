@@ -23,6 +23,20 @@ export class WorkoutLogsService {
       throw new ForbiddenException('Khong tim thay member profile')
     }
 
+    if (dto.clientCompletionKey) {
+      const existing = await this.prisma.workoutLog.findFirst({
+        where: { memberId: member.memberId, clientCompletionKey: dto.clientCompletionKey },
+        include: {
+          planDay: true,
+          sets: {
+            include: { planExercise: { include: { exercise: true } } },
+            orderBy: { setNumber: 'asc' },
+          },
+        },
+      })
+      if (existing) return existing
+    }
+
     const assignment = await this.prisma.memberWorkoutPlan.findFirst({
       where: {
         assignmentId: BigInt(dto.assignmentId),
@@ -75,12 +89,16 @@ export class WorkoutLogsService {
       }
     }
 
-    const result = await this.prisma.$transaction(async (tx) => {
+    let created = true
+    let result
+    try {
+      result = await this.prisma.$transaction(async (tx) => {
       const log = await tx.workoutLog.create({
         data: {
           memberId: member.memberId,
           assignmentId: BigInt(dto.assignmentId),
           planDayId: BigInt(dto.planDayId),
+          clientCompletionKey: dto.clientCompletionKey ?? null,
           loggedAt: new Date(dto.loggedAt),
           durationMin: dto.durationMin ?? null,
           notes: dto.notes ?? null,
@@ -115,13 +133,29 @@ export class WorkoutLogsService {
           },
         },
       })
-    })
+      })
+    } catch (caught) {
+      if (!dto.clientCompletionKey || !this.isCompletionKeyConflict(caught)) throw caught
+      const existing = await this.prisma.workoutLog.findFirst({
+        where: { memberId: member.memberId, clientCompletionKey: dto.clientCompletionKey },
+        include: {
+          planDay: true,
+          sets: {
+            include: { planExercise: { include: { exercise: true } } },
+            orderBy: { setNumber: 'asc' },
+          },
+        },
+      })
+      if (!existing) throw caught
+      created = false
+      result = existing
+    }
 
     if (!result) {
       throw new NotFoundException('Workout log khong ton tai')
     }
 
-    await this.audit.log({
+    if (created) await this.audit.log({
       actorUserId: user.userId,
       action: 'workout_log.create',
       resourceType: 'workout_log',
@@ -219,5 +253,10 @@ export class WorkoutLogsService {
       select: { memberId: true },
     })
     return member ?? null
+  }
+
+  private isCompletionKeyConflict(error: unknown) {
+    return typeof error === 'object' && error !== null
+      && 'code' in error && (error as { code?: unknown }).code === 'P2002'
   }
 }

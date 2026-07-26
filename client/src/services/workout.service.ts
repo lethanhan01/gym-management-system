@@ -134,6 +134,7 @@ export interface WorkoutLog {
   memberId: string
   assignmentId: string
   planDayId: string
+  clientCompletionKey?: string | null
   loggedAt: string
   durationMin: number | null
   notes: string | null
@@ -217,6 +218,7 @@ export interface CreateWorkoutLogDto {
   assignmentId: number
   planDayId: number
   loggedAt: string
+  clientCompletionKey?: string
   durationMin?: number
   notes?: string
   sets: LogSetDto[]

@@ -7,6 +7,7 @@ import {
   IsNumber,
   IsOptional,
   IsString,
+  IsUUID,
   ValidateNested,
 } from 'class-validator'
 
@@ -50,6 +51,10 @@ export class CreateWorkoutLogDto {
 
   @IsDateString()
   loggedAt: string
+
+  @IsOptional()
+  @IsUUID()
+  clientCompletionKey?: string
 
   @IsOptional()
   @Type(() => Number)

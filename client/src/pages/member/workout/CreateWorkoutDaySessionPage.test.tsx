@@ -57,7 +57,7 @@ describe('CreateWorkoutDaySessionPage', () => {
     vi.mocked(trainingService.getSession).mockResolvedValue(session)
   })
 
-  it('renders configured sets read-only, logs them, and clears the draft', async () => {
+  it('renders configured sets read-only, starts the timer, and pauses it before leaving', async () => {
     const day = plan.days![0]
     saveSessionDraft('10', day, assignment, '555', {
       111: {
@@ -77,17 +77,14 @@ describe('CreateWorkoutDaySessionPage', () => {
     expect(screen.queryAllByRole('spinbutton')).toHaveLength(0)
     expect(screen.getByLabelText('Nghỉ 45 giây')).toBeVisible()
 
-    fireEvent.click(screen.getByRole('button', { name: 'Kết thúc buổi tập' }))
-    expect(await screen.findByText('Buổi tập hoàn tất!')).toBeVisible()
-    expect(workoutService.createLog).toHaveBeenCalledWith(expect.objectContaining({
-      assignmentId: 101,
-      planDayId: 11,
-      sets: [
-        expect.objectContaining({ setNumber: 1, actualReps: 12, actualWeightKg: 25, completed: true }),
-        expect.objectContaining({ setNumber: 2, actualReps: 10, actualWeightKg: 22.5, completed: true }),
-      ],
-    }))
-    expect(window.sessionStorage.getItem(storageKey)).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: 'Bắt đầu buổi tập' }))
+    expect(await screen.findByRole('button', { name: 'Dừng buổi tập' })).toBeVisible()
+    expect(screen.getByText('02:45')).toBeVisible()
+    fireEvent.click(screen.getByRole('button', { name: 'Quay lại chọn ngày tập' }))
+    expect(screen.getByText('Dừng buổi tập?')).toBeVisible()
+    fireEvent.click(screen.getByRole('button', { name: 'Dừng và rời đi' }))
+    expect(workoutService.createLog).not.toHaveBeenCalled()
+    expect(window.sessionStorage.getItem(storageKey)).not.toBeNull()
   })
 
   it('rejects an invalid assignment/day query without creating a log', async () => {

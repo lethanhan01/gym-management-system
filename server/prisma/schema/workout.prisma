@@ -184,6 +184,7 @@ model WorkoutLog {
   memberId     BigInt            @map("member_id")
   assignmentId BigInt            @map("assignment_id")
   planDayId    BigInt            @map("plan_day_id")
+  clientCompletionKey String?    @unique @map("client_completion_key") @db.Uuid
   loggedAt     DateTime          @map("logged_at") @db.Timestamp(6)
   durationMin  Int?              @map("duration_min")
   notes        String?
