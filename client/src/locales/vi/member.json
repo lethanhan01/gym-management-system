@@ -36,7 +36,13 @@
       "chooseTrainer": "Chọn huấn luyện viên",
       "changeTrainer": "Đổi PT",
       "cancelTrainer": "Hủy PT này",
-      "trainerIncluded": "PT đã chọn đi kèm gói"
+      "trainerIncluded": "PT đã chọn đi kèm gói",
+      "success": {
+        "removedTrainer": "Đã hủy PT thành công"
+      },
+      "error": {
+        "removeTrainerFailed": "Hủy PT thất bại"
+      }
     },
     "subscription": {
       "sectionTitle": "Gói tập",
@@ -327,7 +333,13 @@
       "defaultBadge": "Mặc định",
       "buttonDeleteAccount": "Xoá tài khoản",
       "errorRenewNotFound": "Không tìm thấy gói tập để gia hạn.",
-      "errorGeneric": "Có lỗi xảy ra. Vui lòng thử lại."
+      "errorGeneric": "Có lỗi xảy ra. Vui lòng thử lại.",
+      "success": {
+        "deletedAccount": "Đã xóa tài khoản thanh toán"
+      },
+      "error": {
+        "deleteAccount": "Xóa tài khoản thất bại"
+      }
     },
     "payment": {
       "headerTitle": "Chọn gói tập của bạn",

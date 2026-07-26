@@ -71,7 +71,10 @@
     "network": "Không thể kết nối. Kiểm tra mạng và thử lại.",
     "unknown": "Đã xảy ra lỗi. Vui lòng thử lại.",
     "notFound": "Không tìm thấy dữ liệu.",
-    "loadFailed": "Không thể tải dữ liệu."
+    "loadFailed": "Không thể tải dữ liệu.",
+    "api": {
+      "EMAIL_IN_USE": "Email này đã được sử dụng"
+    }
   },
   "date": {
     "notAvailable": "Chưa có",

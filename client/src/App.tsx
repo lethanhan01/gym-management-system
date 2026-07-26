@@ -122,7 +122,7 @@ export default function App() {
 
   return (
     <Suspense fallback={<FullScreenLoader />}>
-      <Toaster richColors closeButton position="bottom-right" />
+      <Toaster richColors closeButton position="top-right" />
       <Analytics />
       <Routes>
         {/* Public */}

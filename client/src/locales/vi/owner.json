@@ -433,9 +433,12 @@
       "terminateFailed": "Xóa thất bại.",
       "validation": {
         "nameRequired": "Vui lòng điền đầy đủ thông tin.",
-        "emailRequired": "Email không được trống.",
+        "emailRequired": "Email là bắt buộc",
         "positionRequired": "Vị trí không được trống."
-      }
+      },
+      "createSuccess": "Thêm nhân viên thành công",
+      "updateSuccess": "Cập nhật thông tin thành công",
+      "terminateSuccess": "Xóa nhân viên thành công"
     },
     "schedule": {
       "title": "Lịch phân công",

@@ -12,6 +12,12 @@ export function getApiError(error: unknown, fallback?: string): string {
     return error instanceof Error ? error.message : defaultFallback
   }
   const payload = error.response?.data
+  if (payload?.code && i18n.exists(`error.api.${payload.code}`, { ns: 'common' })) {
+    return i18n.t(`error.api.${payload.code}`, { ns: 'common' })
+  }
+  
+  if (fallback) return fallback
+
   const message = payload?.message
   if (Array.isArray(message)) return message.join(', ')
   if (message) return message

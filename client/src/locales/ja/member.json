@@ -36,7 +36,13 @@
       "chooseTrainer": "トレーナーを選択",
       "changeTrainer": "PTを変更",
       "cancelTrainer": "このPTをキャンセル",
-      "trainerIncluded": "選択済みのPT（プランに含む）"
+      "trainerIncluded": "選択済みのPT（プランに含む）",
+      "success": {
+        "removedTrainer": "パーソナルトレーナーの解約に成功しました"
+      },
+      "error": {
+        "removeTrainerFailed": "パーソナルトレーナーの解約に失敗しました"
+      }
     },
     "subscription": {
       "sectionTitle": "プラン",
@@ -327,7 +333,13 @@
       "defaultBadge": "デフォルト",
       "buttonDeleteAccount": "アカウントを削除",
       "errorRenewNotFound": "更新するプランが見つかりません。",
-      "errorGeneric": "エラーが発生しました。再試行してください。"
+      "errorGeneric": "エラーが発生しました。再試行してください。",
+      "success": {
+        "deletedAccount": "支払いアカウントを削除しました"
+      },
+      "error": {
+        "deleteAccount": "アカウントの削除に失敗しました"
+      }
     },
     "payment": {
       "headerTitle": "プランを選択",

@@ -65,7 +65,8 @@
     "edit": "Chỉnh sửa",
     "save": "Lưu",
     "cancel": "Hủy",
-    "logout": "Đăng xuất"
+    "logout": "Đăng xuất",
+    "saveSuccess": "Cập nhật thành công"
   },
   "schedule": {
     "title": "Lịch làm việc",
@@ -169,7 +170,12 @@
     "statusActive": "Đang hoạt động",
     "statusRepairing": "Đang sửa chữa",
     "statusBroken": "Hỏng",
-    "statusRetired": "Ngừng sử dụng"
+    "statusRetired": "Ngừng sử dụng",
+    "reportSuccess": "Báo cáo sự cố thành công",
+    "repairStarted": "Đã bắt đầu sửa chữa",
+    "repairFinished": "Đã hoàn tất sửa chữa",
+    "retireSuccess": "Đã thanh lý thiết bị",
+    "actionFailed": "Thao tác thất bại"
   },
   "facility": {
     "title": "Quản lý phòng tập",
@@ -195,7 +201,9 @@
     "capacityLabel": "Sức chứa (người)",
     "description": "Mô tả",
     "descriptionPlaceholder": "Mô tả ngắn về phòng tập...",
-    "saveFailed": "Không thể lưu phòng tập."
+    "saveFailed": "Không thể lưu phòng tập.",
+    "updateSuccess": "Cập nhật phòng tập thành công",
+    "createSuccess": "Thêm phòng tập thành công"
   },
   "feedback": {
     "title": "Phản hồi hội viên",
@@ -236,7 +244,8 @@
     "typeAll": "Mọi loại",
     "severityHigh": "Cao",
     "severityMedium": "Trung bình",
-    "severityLow": "Thấp"
+    "severityLow": "Thấp",
+    "updateSuccess": "Cập nhật thành công"
   },
   "members": {
     "list": {
@@ -338,7 +347,9 @@
       "submitFailed": "Không thể đăng ký hội viên. Vui lòng thử lại.",
       "cash": "Tiền mặt",
       "bankCard": "Thẻ ngân hàng",
-      "ewallet": "Ví điện tử"
+      "ewallet": "Ví điện tử",
+      "success": "Đăng ký hội viên thành công",
+      "retry": "Thử lại"
     }
   },
   "renewal": {
@@ -433,5 +444,8 @@
     "cash": "Tiền mặt",
     "bankCard": "Thẻ ngân hàng",
     "ewallet": "Ví điện tử"
+  },
+  "common": {
+    "retry": "Thử lại"
   }
 }
