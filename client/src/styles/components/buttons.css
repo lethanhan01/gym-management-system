@@ -193,6 +193,14 @@
     text-transform: none;
   }
 
+  /* Compact actions keep a 44px touch target while fitting short labels in narrow grids. */
+  .rogym-btn--compact {
+    min-height: 44px;
+    gap: 0.375rem;
+    padding-inline: 0.75rem;
+    font-size: 0.8125rem;
+  }
+
   .rogym-btn--nav.rogym-btn--primary {
     color: var(--rogym-text-primary);
   }

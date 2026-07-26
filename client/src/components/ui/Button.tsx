@@ -19,6 +19,7 @@ export type ButtonVariant =
 
 export type ButtonSize =
   | 'default'
+  | 'compact'
   | 'wide'
   | 'hero'
   | 'nav'
@@ -57,6 +58,7 @@ export function getButtonClasses({
     variant === 'dark' && 'rogym-btn--dark',
     variant === 'elevated' && 'rogym-btn--elevated',
     variant === 'icon' && 'rogym-btn--icon rogym-btn--elevated',
+    size === 'compact' && 'rogym-btn--compact',
     size === 'wide' && 'rogym-btn--wide',
     size === 'hero' && 'rogym-btn--hero',
     size === 'nav' && 'rogym-btn--nav',
