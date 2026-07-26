@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
 import { Button, ButtonLink } from '@/components/ui/Button'
 import { useTranslation } from 'react-i18next'
 import { CalendarPlus, ChevronLeft, ChevronRight, MapPin } from 'lucide-react'

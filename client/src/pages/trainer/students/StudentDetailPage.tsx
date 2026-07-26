@@ -1,6 +1,6 @@
 import { FormEvent, lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react'
 import { SessionDetailModal } from '@/components/trainer/SessionDetailModal'
-import { Link, useParams, useSearchParams } from 'react-router-dom'
+import { useParams, useSearchParams } from 'react-router-dom'
 import { Button, ButtonLink } from '@/components/ui/Button'
 import { ArrowLeft, CalendarPlus, ClipboardList, Plus, TrendingUp } from 'lucide-react'
 import { useTranslation } from 'react-i18next'

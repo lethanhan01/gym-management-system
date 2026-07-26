@@ -28,6 +28,8 @@ import api from '@/services/api'
 import { MemberPage, MemberPageHeader } from '@/components/MemberUI'
 import { NotificationToast } from '@/components/shared/NotificationUI'
 import { hasActiveSubscription, isSubscriptionActive } from '@/lib/subscription'
+import { getApiError } from '@/lib/api-error'
+import { toast } from 'sonner'
 
 const T = '#42e09e'
 
@@ -584,9 +586,14 @@ export default function MemberDashboardPage() {
   const todayDescription = useMemo(() => todayFull(i18n.language), [i18n.language])
   const handleChooseTrainer = useCallback(() => navigate('/member/choose-trainer'), [navigate])
   const handleRemoveTrainer = useCallback(async () => {
-    await memberService.selfAssignTrainer(null)
-    if (user?.memberId) memberService.getProfile(user.memberId).then(setProfile)
-  }, [user?.memberId])
+    try {
+      await memberService.selfAssignTrainer(null)
+      if (user?.memberId) memberService.getProfile(user.memberId).then(setProfile)
+      toast.success(t('dashboard.pt.success.removedTrainer', { defaultValue: 'Đã hủy PT thành công' }))
+    } catch (err) {
+      toast.error(getApiError(err, t('dashboard.pt.error.removeTrainerFailed', { defaultValue: 'Hủy PT thất bại' })))
+    }
+  }, [user?.memberId, t])
 
   useEffect(() => {
     if ((location.state as { paymentSuccess?: boolean } | null)?.paymentSuccess) {

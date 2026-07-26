@@ -6,6 +6,7 @@ import { Analytics } from '@vercel/analytics/react'
 import ProtectedRoute from './components/shared/ProtectedRoute'
 import SubscriptionRequired from './components/shared/SubscriptionRequired'
 import AuthLayout from './layouts/AuthLayout'
+import { Toaster } from 'sonner'
 import { FullScreenLoader } from './components/shared/Spinner'
 
 const DashboardLayout = lazy(() => import('./layouts/DashboardLayout'))
@@ -121,6 +122,7 @@ export default function App() {
 
   return (
     <Suspense fallback={<FullScreenLoader />}>
+      <Toaster richColors closeButton position="bottom-right" />
       <Analytics />
       <Routes>
         {/* Public */}

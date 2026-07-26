@@ -11,11 +11,11 @@ import { memberService, type MemberProfile } from '@/services/member.service'
 import { useAuthStore } from '@/stores/authStore'
 import {
   SubmitButton,
-  TrainerErrorState,
   TrainerPage,
   TrainerPageHeader,
   TrainerSkeleton,
 } from '@/components/TrainerUI'
+import { toast } from 'sonner'
 import { ProfileInfoRow } from '@/components/profile/ProfileInfoRow'
 import { ProfilePasswordField } from '@/components/profile/ProfilePasswordField'
 
@@ -26,19 +26,16 @@ export default function MemberProfilePage() {
   const clearAuth = useAuthStore(state => state.clearAuth)
   const [profile, setProfile] = useState<MemberProfile | null>(null)
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
 
   const [isEditing, setIsEditing] = useState(false)
   const [editPhone, setEditPhone] = useState('')
   const [editAddress, setEditAddress] = useState('')
   const [profileSaving, setProfileSaving] = useState(false)
-  const [profileSaveError, setProfileSaveError] = useState<string | null>(null)
 
   const [currentPassword, setCurrentPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [saving, setSaving] = useState(false)
-  const [success, setSuccess] = useState('')
 
   const [lineLinked, setLineLinked] = useState(false)
   const [lineLinking, setLineLinking] = useState(false)
@@ -48,7 +45,7 @@ export default function MemberProfilePage() {
     memberService
       .getProfile(user?.memberId ?? '')
       .then((data) => setProfile(data))
-      .catch((err) => setError(getApiError(err, t('profile.errorLoad'))))
+      .catch(() => {})
       .finally(() => setLoading(false))
   }, [t, user?.memberId])
 
@@ -61,18 +58,15 @@ export default function MemberProfilePage() {
   function startEdit() {
     setEditPhone(profile?.phone ?? '')
     setEditAddress(profile?.address ?? '')
-    setProfileSaveError(null)
     setIsEditing(true)
   }
 
   function cancelEdit() {
     setIsEditing(false)
-    setProfileSaveError(null)
   }
 
   async function handleSaveProfile() {
     setProfileSaving(true)
-    setProfileSaveError(null)
     try {
       const updated = await memberService.updateProfile(user?.memberId ?? '', {
         phone: editPhone.trim() || undefined,
@@ -81,7 +75,7 @@ export default function MemberProfilePage() {
       setProfile(updated)
       setIsEditing(false)
     } catch (err) {
-      setProfileSaveError(getApiError(err, t('profile.errorSave')))
+      toast.error(getApiError(err, t('profile.errorSave')))
     } finally {
       setProfileSaving(false)
     }
@@ -90,7 +84,7 @@ export default function MemberProfilePage() {
   async function changePassword(event: FormEvent) {
     event.preventDefault()
     if (newPassword.length < 8 || newPassword !== confirmPassword) {
-      setError(
+      toast.error(
         newPassword !== confirmPassword
           ? t('profile.errorPasswordMismatch')
           : t('profile.errorPasswordTooShort')
@@ -98,16 +92,14 @@ export default function MemberProfilePage() {
       return
     }
     setSaving(true)
-    setError(null)
-    setSuccess('')
     try {
       await authService.changePassword(currentPassword, newPassword)
       setCurrentPassword('')
       setNewPassword('')
       setConfirmPassword('')
-      setSuccess(t('profile.successPasswordChange'))
+      toast.success(t('profile.successPasswordChange'))
     } catch (err) {
-      setError(getApiError(err, t('profile.errorPasswordChange')))
+      toast.error(getApiError(err, t('profile.errorPasswordChange')))
     } finally {
       setSaving(false)
     }
@@ -169,12 +161,6 @@ export default function MemberProfilePage() {
               </div>
               <h2 className="rogym-eyebrow">{t('profile.sectionInfo')}</h2>
             </div>
-
-            {profileSaveError && (
-              <div className="mb-3 rounded-xl border border-red-400/20 bg-red-400/8 px-4 py-3 text-sm text-red-200">
-                {profileSaveError}
-              </div>
-            )}
 
             <ProfileInfoRow label={t('profile.fieldName')} value={profile?.fullName ?? user?.fullName ?? '--'} />
             <ProfileInfoRow
@@ -280,12 +266,6 @@ export default function MemberProfilePage() {
               </div>
               <h2 className="rogym-eyebrow">{t('profile.sectionPassword')}</h2>
             </div>
-            {error && <TrainerErrorState message={error} />}
-            {success && (
-              <div className="mb-4 rounded-xl border border-green-400/20 bg-green-400/10 p-3 text-sm text-green-200">
-                {success}
-              </div>
-            )}
             <form className="flex flex-col flex-1" onSubmit={changePassword}>
               <div className="space-y-4">
                 <ProfilePasswordField

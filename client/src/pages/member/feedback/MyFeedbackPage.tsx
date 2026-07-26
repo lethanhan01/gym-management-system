@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link } from 'react-router-dom'
 import { Button, ButtonLink } from '@/components/ui/Button'
 import { ChevronLeft, ChevronRight, Trash2 } from 'lucide-react'
 import { MemberPage, MemberPageHeader, MemberSkeleton, MemberEmptyState, MemberErrorState } from '@/components/MemberUI'

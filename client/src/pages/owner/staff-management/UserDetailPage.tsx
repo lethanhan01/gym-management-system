@@ -22,6 +22,7 @@ import {
   OwnerBadge,
   OwnerSelect,
 } from '@/components/OwnerUI'
+import { toast } from 'sonner'
 
 export default function UserDetailPage() {
   const { t } = useTranslation('owner')
@@ -62,7 +63,7 @@ export default function UserDetailPage() {
     position: 'staff',
   })
   const [saving, setSaving] = useState(false)
-  const [saveError, setSaveError] = useState<string | null>(null)
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({})
 
   const [deleting, setDeleting] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
@@ -100,15 +101,19 @@ export default function UserDetailPage() {
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault()
-    if (!form.email || !form.fullName) {
-      setSaveError(t('staffManagement.detail.validation.nameRequired'))
-      return
-    }
+    
+    const errors: Record<string, string> = {}
+    if (!form.fullName) errors.fullName = t('staffManagement.detail.validation.nameRequired')
+    if (!form.email) errors.email = t('staffManagement.detail.validation.emailRequired', { defaultValue: 'Email là bắt buộc' })
+    
+    setFormErrors(errors)
+    if (Object.keys(errors).length > 0) return
+
     setSaving(true)
-    setSaveError(null)
     try {
       if (isNew) {
         const created = await staffService.create(form)
+        toast.success(t('staffManagement.detail.createSuccess', { defaultValue: 'Thêm nhân viên thành công' }))
         navigate(`/owner/staff/${created.staffId}`, { replace: true })
       } else {
         const updated = await staffService.update(id!, {
@@ -117,9 +122,12 @@ export default function UserDetailPage() {
           position: form.position,
         })
         setStaff(updated)
+        toast.success(t('staffManagement.detail.updateSuccess', { defaultValue: 'Cập nhật thông tin thành công' }))
       }
     } catch (err) {
-      setSaveError(getApiError(err, t('staffManagement.detail.saveFailed')))
+      toast.error(getApiError(err, t('staffManagement.detail.saveFailed')), {
+        action: { label: tCommon('button.retry', { defaultValue: 'Thử lại' }), onClick: () => handleSave(e) },
+      })
     } finally {
       setSaving(false)
     }
@@ -129,9 +137,12 @@ export default function UserDetailPage() {
     setDeleting(true)
     try {
       await staffService.delete(id!)
+      toast.success(t('staffManagement.detail.terminateSuccess', { defaultValue: 'Xóa nhân viên thành công' }))
       navigate('/owner/staff', { replace: true })
     } catch (err) {
-      setError(getApiError(err, t('staffManagement.detail.terminateFailed')))
+      toast.error(getApiError(err, t('staffManagement.detail.terminateFailed')), {
+        action: { label: tCommon('button.retry', { defaultValue: 'Thử lại' }), onClick: handleDelete },
+      })
       setDeleting(false)
       setShowDeleteConfirm(false)
     }
@@ -182,12 +193,6 @@ export default function UserDetailPage() {
                 : t('staffManagement.detail.editInfoTitle')}
             </h2>
 
-            {saveError && (
-              <div className="rounded-xl border border-red-400/20 bg-red-400/8 px-4 py-3 text-sm text-red-200">
-                {saveError}
-              </div>
-            )}
-
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
                 <label className="rogym-field-label mb-1.5 block">
@@ -201,6 +206,7 @@ export default function UserDetailPage() {
                   placeholder={t('staffManagement.detail.form.namePlaceholder')}
                   required
                 />
+                {formErrors.fullName && <p className="mt-1 text-xs text-red-400">{formErrors.fullName}</p>}
               </div>
               <div>
                 <label className="rogym-field-label mb-1.5 block">
@@ -215,6 +221,7 @@ export default function UserDetailPage() {
                   required
                   disabled={!isNew}
                 />
+                {formErrors.email && <p className="mt-1 text-xs text-red-400">{formErrors.email}</p>}
               </div>
               <div>
                 <label className="rogym-field-label mb-1.5 block">

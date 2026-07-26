@@ -22,6 +22,7 @@ import {
   TrainerSelect,
   TrainerSkeleton,
 } from '@/components/TrainerUI'
+import { toast } from 'sonner'
 import { DateTimePickerInput } from '@/components/DateTimePickerInput'
 
 type PlanDayOption = Pick<
@@ -209,7 +210,9 @@ export default function CreateSessionPage() {
       }
       navigate('/trainer/sessions')
     } catch (err) {
-      setError(getApiError(err, t('sessions.create.error.saveFailed')))
+      toast.error(getApiError(err, t('sessions.create.error.saveFailed')), {
+        action: { label: t('button.retry', { defaultValue: 'Thử lại' }), onClick: handleSubmit },
+      })
     } finally {
       setSubmitting(false)
     }

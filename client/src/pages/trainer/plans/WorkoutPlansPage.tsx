@@ -37,6 +37,7 @@ import {
   TrainerSkeleton,
   TrainerStatusBadge,
 } from '@/components/TrainerUI'
+import { toast } from 'sonner'
 
 type PlanAction = { type: 'archive' | 'delete'; plan: WorkoutPlan } | null
 
@@ -58,7 +59,6 @@ export default function WorkoutPlansPage() {
   const [assignNotes, setAssignNotes] = useState('')
   const [action, setAction] = useState<PlanAction>(null)
   const [submitting, setSubmitting] = useState(false)
-  const [actionError, setActionError] = useState<string | null>(null)
   const [expandedPlan, setExpandedPlan] = useState<string | null>(null)
   const [planAssignments, setPlanAssignments] = useState<Record<string, PlanAssignment[]>>({})
   const [loadingExpand, setLoadingExpand] = useState<string | null>(null)
@@ -77,16 +77,18 @@ export default function WorkoutPlansPage() {
   async function createPlan(event: FormEvent) {
     event.preventDefault()
     setSubmitting(true)
-    setActionError(null)
     try {
       const plan = await workoutService.createPlan({
         name: name.trim(),
         description: description.trim() || undefined,
       })
+      toast.success(t('plans.workout.success.created', { defaultValue: 'Tạo giáo án thành công' }))
       setCreateOpen(false)
       navigate(`/trainer/plans/${plan.planId}/builder`)
     } catch (err) {
-      setActionError(getApiError(err, t('plans.workout.error.createFailed')))
+      toast.error(getApiError(err, t('plans.workout.error.createFailed')), {
+        action: { label: t('common.retry', { defaultValue: 'Thử lại' }), onClick: () => createPlan(event) },
+      })
     } finally {
       setSubmitting(false)
     }
@@ -96,32 +98,35 @@ export default function WorkoutPlansPage() {
     const exerciseCount =
       plan.days?.reduce((sum, day) => sum + (day.exercises?.length ?? 0), 0) ?? 0
     if (!plan.days?.length || exerciseCount === 0) {
-      setActionError(t('plans.workout.error.activateEmpty'))
+      toast.error(t('plans.workout.error.activateEmpty'))
       return
     }
-    setActionError(null)
     try {
       await workoutService.updatePlan(plan.planId, { status: 'active' })
+      toast.success(t('plans.workout.success.activated', { defaultValue: 'Giáo án đã được kích hoạt' }))
       await reload()
     } catch (err) {
-      setActionError(getApiError(err, t('plans.workout.error.activateFailed')))
+      toast.error(getApiError(err, t('plans.workout.error.activateFailed')))
     }
   }
 
   async function confirmAction() {
     if (!action) return
     setSubmitting(true)
-    setActionError(null)
     try {
       if (action.type === 'archive') {
         await workoutService.updatePlan(action.plan.planId, { status: 'archived' })
       } else {
         await workoutService.deletePlan(action.plan.planId)
       }
+      toast.success(action.type === 'archive' 
+        ? t('plans.workout.success.archived', { defaultValue: 'Đã lưu trữ giáo án' })
+        : t('plans.workout.success.deleted', { defaultValue: 'Đã xóa giáo án' })
+      )
       setAction(null)
       await reload()
     } catch (err) {
-      setActionError(
+      toast.error(
         getApiError(
           err,
           action.type === 'archive'
@@ -138,16 +143,16 @@ export default function WorkoutPlansPage() {
     event.preventDefault()
     if (!assignPlan || !memberId) return
     setSubmitting(true)
-    setActionError(null)
     try {
       await workoutService.assignPlan(memberId, {
         planId: Number(assignPlan.planId),
         startDate,
         notes: assignNotes.trim() || undefined,
       })
+      toast.success(t('plans.workout.success.assigned', { defaultValue: 'Giao giáo án thành công' }))
       navigate(`/trainer/students/${memberId}?tab=workout`)
     } catch (err) {
-      setActionError(
+      toast.error(
         getApiError(err, t('plans.workout.error.assignFailed'))
       )
     } finally {
@@ -170,7 +175,7 @@ export default function WorkoutPlansPage() {
       setPlanAssignments((prev) => ({ ...prev, [planId]: fetched }))
       setExpandedPlan(planId)
     } catch (err) {
-      setActionError(getApiError(err, t('plans.workout.error.loadStudentsFailed')))
+      toast.error(getApiError(err, t('plans.workout.error.loadStudentsFailed')))
     } finally {
       setLoadingExpand(null)
     }
@@ -179,7 +184,6 @@ export default function WorkoutPlansPage() {
   async function confirmUnassign() {
     if (!unassignTarget) return
     setConfirmingUnassign(true)
-    setActionError(null)
     try {
       await workoutService.unassignMember(unassignTarget.assignmentId)
       const planId = unassignTarget.planId
@@ -189,9 +193,10 @@ export default function WorkoutPlansPage() {
           (a) => a.assignmentId !== unassignTarget.assignmentId
         ),
       }))
+      toast.success(t('plans.workout.success.unassigned', { defaultValue: 'Đã hủy giao giáo án' }))
       setUnassignTarget(null)
     } catch (err) {
-      setActionError(getApiError(err, t('plans.workout.error.unassignFailed')))
+      toast.error(getApiError(err, t('plans.workout.error.unassignFailed')))
     } finally {
       setConfirmingUnassign(false)
     }
@@ -254,8 +259,8 @@ export default function WorkoutPlansPage() {
           </div>
         </FilterDropdown>
       </div>
-      {(error || actionError) && (
-        <TrainerErrorState message={actionError ?? error!} onRetry={error ? reload : undefined} />
+      {error && (
+        <TrainerErrorState message={error} onRetry={reload} />
       )}
       {loading ? (
         <TrainerSkeleton rows={5} />

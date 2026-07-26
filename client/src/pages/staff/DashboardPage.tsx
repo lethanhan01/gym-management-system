@@ -37,14 +37,12 @@ const StaffAttendanceWidget = memo(function StaffAttendanceWidget({
   openLog,
   todayLogs,
   actionLoading,
-  actionError,
   onCheckIn,
   onCheckOut,
 }: {
   openLog: StaffAttendanceLog | null
   todayLogs: StaffAttendanceLog[]
   actionLoading: boolean
-  actionError: string | null
   onCheckIn: () => void
   onCheckOut: () => void
 }) {
@@ -124,10 +122,6 @@ const StaffAttendanceWidget = memo(function StaffAttendanceWidget({
             })}
           </span>
         </div>
-      )}
-
-      {actionError && (
-        <p className="rounded-xl bg-red-500/10 px-3 py-2 text-xs text-red-400">{actionError}</p>
       )}
 
       <div className="grid grid-cols-2 gap-2 mt-auto">
@@ -216,7 +210,6 @@ export default function StaffDashboardPage() {
   const openLog = useStaffAttendanceStore((s) => s.openLog)
   const todayStaffLogs = useStaffAttendanceStore((s) => s.todayLogs)
   const attendanceActionLoading = useStaffAttendanceStore((s) => s.actionLoading)
-  const attendanceActionError = useStaffAttendanceStore((s) => s.actionError)
   const loadAttendance = useStaffAttendanceStore((s) => s.load)
   const handleCheckIn = useStaffAttendanceStore((s) => s.checkIn)
   const handleCheckOut = useStaffAttendanceStore((s) => s.checkOut)
@@ -286,7 +279,6 @@ export default function StaffDashboardPage() {
               openLog={openLog}
               todayLogs={todayStaffLogs}
               actionLoading={attendanceActionLoading}
-              actionError={attendanceActionError}
               onCheckIn={handleCheckIn}
               onCheckOut={handleCheckOut}
             />

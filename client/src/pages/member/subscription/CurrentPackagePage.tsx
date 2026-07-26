@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useLocation } from 'react-router-dom'
 import {
@@ -25,7 +25,6 @@ import { useAuthStore } from '@/stores/authStore'
 import { useSubscriptionStore } from '@/stores/subscriptionStore'
 import { MemberPage, MemberPageHeader, MemberSkeleton } from '@/components/MemberUI'
 import { Button } from '@/components/ui/Button'
-import { NotificationToast } from '@/components/shared/NotificationUI'
 import { getPaymentMethodLabel } from '@/components/payment/payment-method-data'
 import { formatVnd } from '@/lib/currency'
 import { formatDate } from '@/lib/date'
@@ -35,6 +34,7 @@ import {
   isSubscriptionActive,
   subscriptionEndDateKey,
 } from '@/lib/subscription'
+import { toast } from 'sonner'
 
 function Badge({ label, tone = 'muted' }: { label: string; tone?: string }) {
   return (
@@ -66,11 +66,8 @@ export default function CurrentPackagePage() {
   const [payments, setPayments] = useState<Payment[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [toast, setToast] = useState<string | null>(null)
-  const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [cancelTarget, setCancelTarget] = useState<Subscription | null>(null)
   const [cancelling, setCancelling] = useState(false)
-  const [cancelError, setCancelError] = useState<string | null>(null)
 
   const [pkgModalOpen, setPkgModalOpen] = useState(false)
   const [allPkgs, setAllPkgs] = useState<Package[]>([])
@@ -87,19 +84,10 @@ export default function CurrentPackagePage() {
 
   useEffect(() => {
     if (location.state?.justActivated) {
-      setToast(t('subscription.current.toastActivated'))
-      if (toastTimerRef.current) clearTimeout(toastTimerRef.current)
-      toastTimerRef.current = setTimeout(() => setToast(null), 4000)
+      toast.success(t('subscription.current.toastActivated'))
       window.history.replaceState({}, '')
     }
   }, [location.state?.justActivated, t])
-
-  useEffect(
-    () => () => {
-      if (toastTimerRef.current) clearTimeout(toastTimerRef.current)
-    },
-    []
-  )
 
   useEffect(() => {
     if (!user?.memberId) return
@@ -143,24 +131,19 @@ export default function CurrentPackagePage() {
   async function handleCancel() {
     if (!cancelTarget || !user?.memberId) return
     setCancelling(true)
-    setCancelError(null)
     try {
       await subscriptionService.cancel(cancelTarget.subscriptionId)
       setCancelTarget(null)
       setResolvedStatus(false, user.memberId)
-      setToast(t('subscription.current.toastCancelled'))
-      if (toastTimerRef.current) clearTimeout(toastTimerRef.current)
-      toastTimerRef.current = setTimeout(() => {
-        setToast(null)
-        navigate('/member/subscription/setup', { replace: true })
-      }, 1500)
+      toast.success(t('subscription.current.toastCancelled'))
+      navigate('/member/subscription/setup', { replace: true })
     } catch (err) {
       const e = err as { response?: { status?: number; data?: { message?: string } } }
       if (e?.response?.status === 401) {
         clearAuth()
         navigate('/login')
       } else {
-        setCancelError(e?.response?.data?.message || 'Có lỗi xảy ra. Vui lòng thử lại.')
+        toast.error(e?.response?.data?.message || 'Có lỗi xảy ra. Vui lòng thử lại.')
       }
     } finally {
       setCancelling(false)
@@ -199,11 +182,6 @@ export default function CurrentPackagePage() {
 
   return (
     <MemberPage>
-      {/* Toast */}
-      {toast && (
-        <NotificationToast tone="success" message={toast} />
-      )}
-
       {/* Cancel dialog */}
       {cancelTarget && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 rogym-sx-49121f22">
@@ -222,12 +200,10 @@ export default function CurrentPackagePage() {
                 ? t('subscription.current.cancelDialog.bodyPending')
                 : t('subscription.current.cancelDialog.bodyActive')}
             </p>
-            {cancelError && <p className="text-red-300 text-sm mb-3">{cancelError}</p>}
             <div className="flex gap-3">
               <Button
                 onClick={() => {
                   setCancelTarget(null)
-                  setCancelError(null)
                 }}
                 className="flex-1"
                 variant="outline-white"

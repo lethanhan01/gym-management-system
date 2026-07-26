@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { Button, ButtonLink } from '@/components/ui/Button'
 import { useTranslation } from 'react-i18next'
 import { Archive, ArrowLeft, Lock, Pencil, Plus, Trash2, Zap } from 'lucide-react'
+import { toast } from 'sonner'
 import { getApiError, getApiErrorCode, isApiConflict } from '@/lib/api-error'
 import workoutService, {
   type Exercise,
@@ -117,17 +118,27 @@ export default function TrainerPlanBuilderPage() {
       }))
   }, [plan?.days])
 
-  function handleMutationError(err: unknown, fallback: string) {
+  function handleMutationError(err: unknown, fallback: string, retryAction?: () => void) {
     const message = getApiError(err, fallback)
     if (
       getApiErrorCode(err) === 'PLAN_WRITE_BLOCKED' ||
       (isApiConflict(err) && message.toLocaleLowerCase('vi').includes('workout log'))
     ) {
       setWriteBlocked(true)
-      setError(t('plans.builder.error.readonly'))
+      toast.error(t('plans.builder.error.readonly'))
       return
     }
-    setError(message)
+    
+    if (retryAction) {
+      toast.error(message, {
+        action: {
+          label: t('button.retry', { defaultValue: 'Thử lại' }),
+          onClick: retryAction,
+        },
+      })
+    } else {
+      toast.error(message)
+    }
   }
 
   async function saveMetadata(name: string, description: string) {
@@ -140,7 +151,7 @@ export default function TrainerPlanBuilderPage() {
       })
       await load()
     } catch (err) {
-      handleMutationError(err, t('plans.builder.error.saveMetaFailed'))
+      handleMutationError(err, t('plans.builder.error.saveMetaFailed'), () => saveMetadata(name, description))
     } finally {
       setSubmitting(false)
     }
@@ -185,7 +196,7 @@ export default function TrainerPlanBuilderPage() {
       setDayOpen(false)
       await load()
     } catch (err) {
-      handleMutationError(err, t('plans.builder.error.saveDayFailed'))
+      handleMutationError(err, t('plans.builder.error.saveDayFailed'), () => saveDay(event))
     } finally {
       setSubmitting(false)
     }
@@ -244,7 +255,7 @@ export default function TrainerPlanBuilderPage() {
       setExerciseDay(null)
       await load()
     } catch (err) {
-      handleMutationError(err, t('plans.builder.error.addExerciseFailed'))
+      handleMutationError(err, t('plans.builder.error.addExerciseFailed'), () => addExercise(event))
     } finally {
       setSubmitting(false)
     }
@@ -296,17 +307,38 @@ export default function TrainerPlanBuilderPage() {
       setDeleteTarget(null)
       await load()
     } catch (err) {
-      handleMutationError(err, t('plans.builder.error.deleteFailed'))
+      handleMutationError(err, t('plans.builder.error.deleteFailed'), confirmDelete)
     } finally {
       setSubmitting(false)
     }
   }
 
   async function changeStatus(status: 'active' | 'archived') {
-    if (status === 'active' && (!plan?.days?.length || exerciseCount === 0)) {
-      setError(t('plans.builder.error.activateEmpty'))
-      return
+    if (status === 'active') {
+      if (!plan?.days?.length || exerciseCount === 0) {
+        toast.error(t('plans.builder.error.activateEmpty'))
+        return
+      }
+      
+      const emptyDay = plan.days.find((day) => !day.exercises?.length)
+      if (emptyDay) {
+        toast.error(t('plans.builder.error.activateEmptyDay', { day: emptyDay.name }))
+        return
+      }
+
+      const hasIncompleteExercise = plan.days.some((day) =>
+        day.exercises?.some(
+          (exercise) =>
+            (exercise.targetReps == null && exercise.targetDurationSec == null) ||
+            exercise.restSeconds == null
+        )
+      )
+      if (hasIncompleteExercise) {
+        toast.error(t('plans.builder.error.activateIncompleteExercise'))
+        return
+      }
     }
+    
     setSubmitting(true)
     setError(null)
     try {
@@ -317,7 +349,8 @@ export default function TrainerPlanBuilderPage() {
         err,
         status === 'active'
           ? t('plans.builder.error.activateFailed')
-          : t('plans.builder.error.archiveFailed')
+          : t('plans.builder.error.archiveFailed'),
+        () => changeStatus(status)
       )
     } finally {
       setSubmitting(false)
@@ -392,8 +425,6 @@ export default function TrainerPlanBuilderPage() {
           <Lock size={18} /> {t('plans.builder.readonlyBanner')}
         </div>
       )}
-      {error && <TrainerErrorState message={error} onRetry={load} />}
-
       <PlanMetadataForm
         name={plan.name}
         description={plan.description ?? ''}

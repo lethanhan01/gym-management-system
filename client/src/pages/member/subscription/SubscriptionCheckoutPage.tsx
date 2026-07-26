@@ -25,6 +25,7 @@ import {
 } from '@/components/payment/payment-method-data'
 import { PaymentMethodIcon } from '@/components/payment/payment-methods'
 import { Button } from '@/components/ui/Button'
+import { toast } from 'sonner'
 
 interface PayState {
   packageId: string
@@ -98,7 +99,6 @@ export default function SubscriptionCheckoutPage({ mode }: { mode: 'buy' | 'rene
   const [txRef, setTxRef] = useState('')
   const [saveAccount, setSaveAccount] = useState(false)
   const [submitting, setSubmitting] = useState(false)
-  const [error, setError] = useState<string | null>(null)
 
   const [accounts, setAccounts] = useState<PaymentAccount[]>([])
   const [accountsLoading, setAccountsLoading] = useState(true)
@@ -154,15 +154,19 @@ export default function SubscriptionCheckoutPage({ mode }: { mode: 'buy' | 'rene
 
   async function handleDeleteAccount(accountId: number) {
     if (!user?.memberId) return
-    await paymentAccountService.remove(user.memberId, accountId)
-    setAccounts((prev) => prev.filter((a) => a.accountId !== accountId))
+    try {
+      await paymentAccountService.remove(user.memberId, accountId)
+      setAccounts((prev) => prev.filter((a) => a.accountId !== accountId))
+      toast.success(t('subscription.checkout.success.deletedAccount', { defaultValue: 'Đã xóa tài khoản thanh toán' }))
+    } catch (err) {
+      toast.error(t('subscription.checkout.error.deleteAccount', { defaultValue: 'Xóa tài khoản thất bại' }))
+    }
   }
 
   async function handleConfirm() {
     if (!user?.memberId) return
     const memberId = user.memberId
     setSubmitting(true)
-    setError(null)
     try {
       const saveAccountIfNeeded = async () => {
         if (saveAccount && method !== 'cash') {
@@ -180,7 +184,7 @@ export default function SubscriptionCheckoutPage({ mode }: { mode: 'buy' | 'rene
       // Không gọi paymentService.create riêng — backend không nhận payment cho sub đang active.
       if (mode === 'renew') {
         if (!state?.subscriptionId) {
-          setError(t('subscription.checkout.errorRenewNotFound'))
+          toast.error(t('subscription.checkout.errorRenewNotFound'))
           return
         }
         await subscriptionService.renew(state.subscriptionId, {
@@ -234,7 +238,7 @@ export default function SubscriptionCheckoutPage({ mode }: { mode: 'buy' | 'rene
       if (mode === 'renew' && e?.response?.status === 401) {
         navigate('/login')
       } else {
-        setError(e?.response?.data?.message || t('subscription.checkout.errorGeneric'))
+        toast.error(e?.response?.data?.message || t('subscription.checkout.errorGeneric'))
       }
     } finally {
       setSubmitting(false)
@@ -346,8 +350,6 @@ export default function SubscriptionCheckoutPage({ mode }: { mode: 'buy' | 'rene
               <span className="rogym-sx-c2ff5e7f">{t('subscription.checkout.checkboxSave')}</span>
             </label>
           )}
-
-          {error && <p className="rogym-sx-fff6a280">{error}</p>}
 
           <Button
             variant="primary"

@@ -473,6 +473,8 @@
         "deleteFailed": "Không thể xóa vì dữ liệu lịch sử đang được bảo vệ.",
         "activateFailed": "Không thể kích hoạt kế hoạch.",
         "activateEmpty": "Kế hoạch cần ít nhất một ngày và một bài tập trước khi kích hoạt.",
+        "activateEmptyDay": "Buổi tập '{{day}}' chưa có bài tập nào. Vui lòng thêm bài tập hoặc xóa buổi tập này.",
+        "activateIncompleteExercise": "Một số bài tập chưa được cài đặt target hoặc thời gian nghỉ.",
         "archiveFailed": "Không thể lưu trữ kế hoạch khi còn assignment active."
       }
     }

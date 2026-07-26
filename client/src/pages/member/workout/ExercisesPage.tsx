@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { Dumbbell, Search, SlidersHorizontal, X } from 'lucide-react'
+import { Dumbbell, Search, X } from 'lucide-react'
 import {
   MemberEmptyState,
   MemberErrorState,

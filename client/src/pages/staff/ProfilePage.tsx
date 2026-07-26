@@ -7,12 +7,13 @@ import { authService } from '@/services/auth.service'
 import { staffService, type StaffProfile } from '@/services/staff.service'
 import { useAuthStore } from '@/stores/authStore'
 import {
-  StaffErrorState,
   StaffPage,
   StaffPageHeader,
   StaffSkeleton,
+  StaffErrorState,
   SubmitButton,
 } from '@/components/StaffUI'
+import { toast } from 'sonner'
 import { ProfileInfoRow } from '@/components/profile/ProfileInfoRow'
 import { ProfilePasswordField } from '@/components/profile/ProfilePasswordField'
 
@@ -31,13 +32,12 @@ export default function StaffProfilePage() {
   const [editFullName, setEditFullName] = useState('')
   const [editPhone, setEditPhone] = useState('')
   const [profileSaving, setProfileSaving] = useState(false)
-  const [profileSaveError, setProfileSaveError] = useState<string | null>(null)
+  const [nameError, setNameError] = useState<string | null>(null)
 
   const [currentPassword, setCurrentPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [saving, setSaving] = useState(false)
-  const [success, setSuccess] = useState('')
 
   useEffect(() => {
     staffService
@@ -50,23 +50,22 @@ export default function StaffProfilePage() {
   function startEdit() {
     setEditFullName(profile?.fullName ?? '')
     setEditPhone(profile?.phone ?? '')
-    setProfileSaveError(null)
     setIsEditing(true)
   }
 
   function cancelEdit() {
     setIsEditing(false)
-    setProfileSaveError(null)
+    setNameError(null)
   }
 
   async function handleSaveProfile() {
     const nameTrimmed = editFullName.trim()
+    setNameError(null)
     if (!nameTrimmed) {
-      setProfileSaveError(t('profile.fullNameRequired'))
+      setNameError(t('profile.fullNameRequired'))
       return
     }
     setProfileSaving(true)
-    setProfileSaveError(null)
     try {
       const updated = await staffService.update(profile!.staffId, {
         fullName: nameTrimmed,
@@ -77,8 +76,9 @@ export default function StaffProfilePage() {
         setAuth({ ...user, fullName: updated.fullName }, token)
       }
       setIsEditing(false)
+      toast.success(t('profile.saveSuccess', { defaultValue: 'Cập nhật thành công' }))
     } catch (err) {
-      setProfileSaveError(getApiError(err, t('profile.saveFailed')))
+      toast.error(getApiError(err, t('profile.saveFailed')))
     } finally {
       setProfileSaving(false)
     }
@@ -87,24 +87,22 @@ export default function StaffProfilePage() {
   async function changePassword(event: FormEvent) {
     event.preventDefault()
     if (newPassword.length < 8) {
-      setError(t('profile.passwordMinLength'))
+      toast.error(t('profile.passwordMinLength'))
       return
     }
     if (newPassword !== confirmPassword) {
-      setError(t('profile.passwordMismatch'))
+      toast.error(t('profile.passwordMismatch'))
       return
     }
     setSaving(true)
-    setError(null)
-    setSuccess('')
     try {
       await authService.changePassword(currentPassword, newPassword)
       setCurrentPassword('')
       setNewPassword('')
       setConfirmPassword('')
-      setSuccess(t('profile.changePasswordSuccess'))
+      toast.success(t('profile.changePasswordSuccess'))
     } catch (err) {
-      setError(getApiError(err, t('profile.changePasswordFailed')))
+      toast.error(getApiError(err, t('profile.changePasswordFailed')))
     } finally {
       setSaving(false)
     }
@@ -124,6 +122,8 @@ export default function StaffProfilePage() {
       />
       {loading ? (
         <StaffSkeleton rows={5} />
+      ) : error ? (
+        <StaffErrorState message={error} />
       ) : (
         <div className="grid gap-5 xl:grid-cols-2">
           <section className="rogym-card rogym-card--compact p-6 flex flex-col">
@@ -133,12 +133,6 @@ export default function StaffProfilePage() {
               </div>
               <h2 className="rogym-eyebrow">{t('profile.personalInfo')}</h2>
             </div>
-
-            {profileSaveError && (
-              <div className="mb-3 rounded-xl border border-red-400/20 bg-red-400/8 px-4 py-3 text-sm text-red-200">
-                {profileSaveError}
-              </div>
-            )}
 
             {isEditing ? (
               <div className="border-b border-white/5 py-3">
@@ -150,6 +144,7 @@ export default function StaffProfilePage() {
                   onChange={(e) => setEditFullName(e.target.value)}
                   required
                 />
+                {nameError && <p className="mt-1 text-xs text-red-400">{nameError}</p>}
               </div>
             ) : (
               <ProfileInfoRow label={t('profile.fullName')} value={profile?.fullName ?? user?.fullName ?? '--'} />
@@ -228,12 +223,6 @@ export default function StaffProfilePage() {
               </div>
               <h2 className="rogym-eyebrow">{t('profile.changePassword')}</h2>
             </div>
-            {error && <StaffErrorState message={error} />}
-            {success && (
-              <div className="mb-4 rounded-xl border border-green-400/20 bg-green-400/10 p-3 text-sm text-green-200">
-                {success}
-              </div>
-            )}
             <form className="flex flex-col flex-1" onSubmit={changePassword}>
               <div className="space-y-4">
                 <ProfilePasswordField

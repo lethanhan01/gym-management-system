@@ -251,13 +251,11 @@ function AttendanceCalendarView({
 function CheckInCard({
   openLog,
   loading,
-  error,
   onCheckIn,
   onCheckOut,
 }: {
   openLog: StaffAttendanceLog | null
   loading: boolean
-  error: string | null
   onCheckIn: () => void
   onCheckOut: () => void
 }) {
@@ -307,10 +305,6 @@ function CheckInCard({
             )}
           </div>
 
-          {error && (
-            <p className="rounded-xl bg-red-500/10 px-4 py-2 text-sm text-red-400">{error}</p>
-          )}
-
           <button
             type="button"
             onClick={onCheckOut}
@@ -333,10 +327,6 @@ function CheckInCard({
               <span className="text-sm">{t('attendance.notCheckedIn')}</span>
             </div>
           </div>
-
-          {error && (
-            <p className="rounded-xl bg-red-500/10 px-4 py-2 text-sm text-red-400">{error}</p>
-          )}
 
           <button
             type="button"
@@ -365,7 +355,6 @@ export default function StaffAttendancePage() {
   // Trạng thái chấm vào/ra + timer dùng chung với Dashboard.
   const openLog = useStaffAttendanceStore((s) => s.openLog)
   const actionLoading = useStaffAttendanceStore((s) => s.actionLoading)
-  const actionError = useStaffAttendanceStore((s) => s.actionError)
   const loadAttendance = useStaffAttendanceStore((s) => s.load)
   const storeCheckIn = useStaffAttendanceStore((s) => s.checkIn)
   const storeCheckOut = useStaffAttendanceStore((s) => s.checkOut)
@@ -434,7 +423,6 @@ export default function StaffAttendancePage() {
         <CheckInCard
           openLog={openLog}
           loading={actionLoading}
-          error={actionError}
           onCheckIn={handleCheckIn}
           onCheckOut={handleCheckOut}
         />

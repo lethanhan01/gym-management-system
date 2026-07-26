@@ -16,6 +16,7 @@ import {
   StaffStatusBadge,
   SubmitButton,
 } from '@/components/StaffUI'
+import { toast } from 'sonner'
 
 export default function StaffFeedbackPage() {
   const { t } = useTranslation('staff')
@@ -54,7 +55,6 @@ export default function StaffFeedbackPage() {
   const [nextStatus, setNextStatus] = useState('')
   const [response, setResponse] = useState('')
   const [saving, setSaving] = useState(false)
-  const [saveError, setSaveError] = useState<string | null>(null)
 
   const load = useCallback(() => {
     setLoading(true)
@@ -90,30 +90,30 @@ export default function StaffFeedbackPage() {
     setSelected(fb)
     setNextStatus(NEXT_STATUS_OPTIONS[fb.status]?.[0]?.value ?? '')
     setResponse(fb.response ?? '')
-    setSaveError(null)
   }
 
   function closeDetail() {
     setSelected(null)
     setNextStatus('')
     setResponse('')
-    setSaveError(null)
   }
 
   async function handleUpdate(event: FormEvent) {
     event.preventDefault()
     if (!selected || !nextStatus) return
     setSaving(true)
-    setSaveError(null)
     try {
       await feedbackService.updateStatus(selected.feedbackId, {
         status: nextStatus,
         resolutionNote: response.trim() || undefined,
       })
+      toast.success(t('feedback.updateSuccess', { defaultValue: 'Cập nhật thành công' }))
       closeDetail()
       load()
     } catch (err) {
-      setSaveError(getApiError(err, t('feedback.saveFailed')))
+      toast.error(getApiError(err, t('feedback.saveFailed')), {
+        action: { label: tCommon('button.retry', { defaultValue: 'Thử lại' }), onClick: () => handleUpdate(event) },
+      })
     } finally {
       setSaving(false)
     }
@@ -323,7 +323,6 @@ export default function StaffFeedbackPage() {
 
             {NEXT_STATUS_OPTIONS[selected.status] && (
               <form id="feedback-handle-form" className="space-y-4" onSubmit={handleUpdate}>
-                {saveError && <StaffErrorState message={saveError} />}
                 <label className="block space-y-2">
                   <span className="rogym-field-label">{t('feedback.action')}</span>
                   <StaffSelect value={nextStatus} onValueChange={setNextStatus} required>

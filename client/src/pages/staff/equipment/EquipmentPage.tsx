@@ -21,6 +21,7 @@ import {
   StaffStatusBadge,
   SubmitButton,
 } from '@/components/StaffUI'
+import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 
 function equipmentStatusTone(status: string) {
@@ -71,7 +72,6 @@ export default function EquipmentPage() {
   const [reportOpen, setReportOpen] = useState(false)
   const [reportDesc, setReportDesc] = useState('')
   const [reporting, setReporting] = useState(false)
-  const [reportError, setReportError] = useState<string | null>(null)
 
   const load = useCallback(() => {
     setLoading(true)
@@ -117,13 +117,11 @@ export default function EquipmentPage() {
 
   function openReport() {
     setReportDesc('')
-    setReportError(null)
     setReportOpen(true)
   }
 
   function closeReport() {
     setReportOpen(false)
-    setReportError(null)
   }
 
   async function refreshDetail(equipmentId: string) {
@@ -140,15 +138,17 @@ export default function EquipmentPage() {
     event.preventDefault()
     if (!selected || !reportDesc.trim()) return
     setReporting(true)
-    setReportError(null)
     try {
       await facilityService.createMaintenanceLog(selected.equipmentId, {
         description: reportDesc.trim(),
       })
+      toast.success(t('equipment.reportSuccess', { defaultValue: 'Báo cáo sự cố thành công' }))
       closeReport()
       await refreshDetail(selected.equipmentId)
     } catch (err) {
-      setReportError(getApiError(err, t('equipment.reportFailed')))
+      toast.error(getApiError(err, t('equipment.reportFailed')), {
+        action: { label: t('common.retry', { defaultValue: 'Thử lại' }), onClick: () => handleReport(event) },
+      })
     } finally {
       setReporting(false)
     }
@@ -163,9 +163,10 @@ export default function EquipmentPage() {
     setUpdatingLogId(log.maintenanceId)
     try {
       await facilityService.resolveMaintenanceLog(log.maintenanceId, { status: 'repairing' })
+      toast.success(t('equipment.repairStarted', { defaultValue: 'Đã bắt đầu sửa chữa' }))
       await refreshDetail(selected.equipmentId)
-    } catch {
-      // silently ignore — user can retry
+    } catch (err) {
+      toast.error(getApiError(err, t('equipment.actionFailed', { defaultValue: 'Thao tác thất bại' })))
     } finally {
       setUpdatingLogId(null)
     }
@@ -178,9 +179,10 @@ export default function EquipmentPage() {
     setUpdatingLogId(log.maintenanceId)
     try {
       await facilityService.resolveMaintenanceLog(log.maintenanceId, { status: 'resolved' })
+      toast.success(t('equipment.repairFinished', { defaultValue: 'Đã hoàn tất sửa chữa' }))
       await refreshDetail(selected.equipmentId)
-    } catch {
-      // silently ignore — user can retry
+    } catch (err) {
+      toast.error(getApiError(err, t('equipment.actionFailed', { defaultValue: 'Thao tác thất bại' })))
     } finally {
       setUpdatingLogId(null)
     }
@@ -193,9 +195,10 @@ export default function EquipmentPage() {
     setUpdatingStatus(true)
     try {
       await facilityService.resolveMaintenanceLog(log.maintenanceId, { status: 'failed' })
+      toast.success(t('equipment.retireSuccess', { defaultValue: 'Đã thanh lý thiết bị' }))
       await refreshDetail(selected.equipmentId)
-    } catch {
-      // silently ignore — user can retry
+    } catch (err) {
+      toast.error(getApiError(err, t('equipment.actionFailed', { defaultValue: 'Thao tác thất bại' })))
     } finally {
       setUpdatingStatus(false)
     }
@@ -517,7 +520,6 @@ export default function EquipmentPage() {
         }
       >
         <form id="report-form" className="space-y-4" onSubmit={handleReport}>
-          {reportError && <StaffErrorState message={reportError} />}
           <label className="block space-y-2">
             <span className="rogym-field-label">{t('equipment.incidentDesc')}</span>
             <textarea

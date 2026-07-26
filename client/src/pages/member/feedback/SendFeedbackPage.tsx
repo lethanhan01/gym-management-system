@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link } from 'react-router-dom'
 import { Button, ButtonLink } from '@/components/ui/Button'
 import { CheckCircle2, Users, Wrench, Star } from 'lucide-react'
 import { MemberPage, MemberPageHeader } from '@/components/MemberUI'

@@ -12,7 +12,6 @@ import {
   Lock,
   Plus,
   Search,
-  SlidersHorizontal,
   Trash2,
   X,
   Zap,
@@ -24,6 +23,7 @@ import {
   MemberPageHeader,
   MemberSkeleton,
 } from '@/components/MemberUI'
+import { toast } from 'sonner'
 import { getApiError, getApiErrorCode } from '@/lib/api-error'
 import workoutService, {
   type Exercise,
@@ -310,7 +310,7 @@ export default function MemberPlanBuilderPage() {
   const handleUseSuggestedPlan = useCallback(
     (suggested: WorkoutPlan) => {
       if (hasActivePtPlan) {
-        setError(t('workout.planBuilder.errorHasPtPlan'))
+        toast.error(t('workout.planBuilder.errorHasPtPlan'))
         return
       }
       if (existingSelfPlan) {
@@ -322,14 +322,21 @@ export default function MemberPlanBuilderPage() {
     [applySuggestedPlan, existingSelfPlan, hasActivePtPlan, t]
   )
 
-  function handleMutationError(err: unknown, fallback: string) {
+  function handleMutationError(err: unknown, fallback: string, retryAction?: () => void) {
     const code = getApiErrorCode(err)
     if (code === 'PLAN_WRITE_BLOCKED') {
       setWriteBlocked(true)
-      setError(t('workout.planBuilder.errorWriteBlocked'))
+      toast.error(t('workout.planBuilder.errorWriteBlocked'))
       return
     }
-    setError(getApiError(err, fallback))
+    const message = getApiError(err, fallback)
+    if (retryAction) {
+      toast.error(message, {
+        action: { label: t('button.retry', { defaultValue: 'Thử lại' }), onClick: retryAction },
+      })
+    } else {
+      toast.error(message)
+    }
   }
 
   async function createPlan(e: FormEvent) {
@@ -345,7 +352,9 @@ export default function MemberPlanBuilderPage() {
       setPlan(created)
       setPhase('build')
     } catch {
-      setError(t('workout.planBuilder.errorCreatePlan'))
+      toast.error(t('workout.planBuilder.errorCreatePlan'), {
+        action: { label: t('button.retry', { defaultValue: 'Thử lại' }), onClick: () => createPlan(e) },
+      })
     } finally {
       setSubmitting(false)
     }
@@ -367,7 +376,7 @@ export default function MemberPlanBuilderPage() {
       setAddingDay(false)
       await loadPlan(plan.planId)
     } catch (err) {
-      handleMutationError(err, t('workout.planBuilder.errorAddDay'))
+      handleMutationError(err, t('workout.planBuilder.errorAddDay'), () => addDay(dayName))
     } finally {
       setSubmitting(false)
     }
@@ -397,7 +406,7 @@ export default function MemberPlanBuilderPage() {
       setAddingExerciseTo(null)
       await loadPlan(plan.planId)
     } catch (err) {
-      handleMutationError(err, t('workout.planBuilder.errorAddExercise'))
+      handleMutationError(err, t('workout.planBuilder.errorAddExercise'), () => addExercise(day, selectedExercise, targets))
     } finally {
       setSubmitting(false)
     }
@@ -412,7 +421,7 @@ export default function MemberPlanBuilderPage() {
       setDeleteDay(null)
       await loadPlan(plan.planId)
     } catch (err) {
-      handleMutationError(err, t('workout.planBuilder.errorDeleteDay'))
+      handleMutationError(err, t('workout.planBuilder.errorDeleteDay'), () => removeDay(day))
     } finally {
       setSubmitting(false)
     }
@@ -425,7 +434,7 @@ export default function MemberPlanBuilderPage() {
       await workoutService.deletePlanExercise(plan.planId, dayId, planExerciseId)
       await loadPlan(plan.planId)
     } catch (err) {
-      handleMutationError(err, t('workout.planBuilder.errorRemoveExercise'))
+      handleMutationError(err, t('workout.planBuilder.errorRemoveExercise'), () => removeExercise(dayId, planExerciseId))
     }
   }
 
@@ -441,7 +450,9 @@ export default function MemberPlanBuilderPage() {
       })
       navigate('/member/workout/plan')
     } catch (err) {
-      setError(getApiError(err, t('workout.planBuilder.errorActivate')))
+      toast.error(getApiError(err, t('workout.planBuilder.errorActivate')), {
+        action: { label: t('button.retry', { defaultValue: 'Thử lại' }), onClick: activate },
+      })
     } finally {
       setSubmitting(false)
     }
@@ -513,7 +524,6 @@ export default function MemberPlanBuilderPage() {
             </button>
           }
         />
-        {error && <MemberErrorState message={error} />}
         <form onSubmit={(e) => void createPlan(e)} className="space-y-4 rogym-sx-19e5bf8c">
           <label className="block space-y-2">
             <span className="rogym-field-label">{t('workout.planBuilder.fieldName')}</span>

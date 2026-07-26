@@ -1,5 +1,4 @@
-import { memo, type ReactNode } from 'react'
-import { Link } from 'react-router-dom'
+import { memo } from 'react'
 import { ButtonLink } from '@/components/ui/Button'
 import { useTranslation } from 'react-i18next'
 import {
@@ -325,7 +324,7 @@ const CoachSection = memo(function CoachSection() {
         </div>
         <div className="flex justify-center mt-16">
           <ButtonLink variant="outline-green-light" size="hero" to="/trainers">
-            {t('trainers.cta')}
+            {t('trainers.cta', { defaultValue: 'Xem tất cả huấn luyện viên' })}
           </ButtonLink>
         </div>
       </div>

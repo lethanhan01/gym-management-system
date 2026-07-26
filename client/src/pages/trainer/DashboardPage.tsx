@@ -17,6 +17,7 @@ import {
   TrainerStatusBadge,
 } from '@/components/TrainerUI'
 import { PageLoader } from '@/components/shared/Spinner'
+import { toast } from 'sonner'
 
 const LOCAL_DAY_FORMATTER = new Intl.DateTimeFormat('en-CA', {
   timeZone: 'Asia/Ho_Chi_Minh',
@@ -186,7 +187,6 @@ export default function TrainerDashboardPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [actionLoading, setActionLoading] = useState<string | null>(null) // sessionId being updated
-  const [actionError, setActionError] = useState<string | null>(null)
   const [openedSessionId, setOpenedSessionId] = useState<string | null>(null)
   const [reloadKey, setReloadKey] = useState(0)
 
@@ -280,12 +280,15 @@ export default function TrainerDashboardPage() {
 
   const handleUpdateStatus = useCallback(async (sessionId: string, status: SessionStatusUpdate) => {
     setActionLoading(sessionId)
-    setActionError(null)
     try {
       const updated = await trainingService.updateSessionStatus(sessionId, status)
       setSessions((prev) => prev.map((s) => (s.sessionId === sessionId ? updated : s)))
+      toast.success(status === 'completed' 
+        ? t('dashboard.success.completed', { defaultValue: 'Đã hoàn thành buổi tập' })
+        : t('dashboard.success.started', { defaultValue: 'Đã bắt đầu buổi tập' })
+      )
     } catch (err) {
-      setActionError(getApiError(err, t('dashboard.error.updateStatus')))
+      toast.error(getApiError(err, t('dashboard.error.updateStatus')))
     } finally {
       setActionLoading(null)
     }
@@ -342,11 +345,6 @@ export default function TrainerDashboardPage() {
                 {t('dashboard.todaySchedule.allSessions')}
               </ButtonLink>
             </div>
-            {actionError && (
-              <p className="rogym-error-alert mb-4" role="alert">
-                {actionError}
-              </p>
-            )}
             {todaySessions.length === 0 ? (
               <TrainerEmptyState
                 title={t('dashboard.todaySchedule.noSessions')}
