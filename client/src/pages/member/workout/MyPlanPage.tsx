@@ -461,7 +461,7 @@ function SavedPlanCard({
 export default function MyPlanPage() {
   const navigate = useNavigate()
   const { t } = useTranslation('member')
-  const { user } = useAuthStore()
+  const user = useAuthStore(state => state.user)
   const memberId = user?.memberId ? String(user.memberId) : undefined
 
   const [assignments, setAssignments] = useState<WorkoutAssignmentSummary[]>([])

@@ -1,4 +1,4 @@
-import { FormEvent, useCallback, useEffect, useState } from 'react'
+import { FormEvent, useCallback, useEffect, useState, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Pencil, Plus, Search, X } from 'lucide-react'
 import { getApiError } from '@/lib/api-error'
@@ -100,13 +100,13 @@ export default function ExercisesPage() {
     void load()
   }, [load])
 
-  const filtered = filterExercises(
+  const filtered = useMemo(() => filterExercises(
     exercises,
     search,
     bodyPartId !== '' ? bodyPartId : undefined,
     targetMuscleId !== '' ? targetMuscleId : undefined,
     equipmentId !== '' ? equipmentId : undefined
-  )
+  ), [exercises, search, bodyPartId, targetMuscleId, equipmentId])
 
   function openCreate() {
     setEditing(null)

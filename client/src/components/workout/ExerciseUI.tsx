@@ -1,3 +1,4 @@
+import { memo } from 'react'
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ImageIcon } from 'lucide-react'
@@ -11,7 +12,7 @@ import { Select } from '@/components/Select'
 import { FilterDropdown } from '@/components/FilterDropdown'
 import { cn } from '@/lib/utils'
 
-export function ExerciseCard({
+export const ExerciseCard = memo(function ExerciseCard({
   exercise,
   action,
   onClick,
@@ -78,9 +79,9 @@ export function ExerciseCard({
       </div>
     </article>
   )
-}
+})
 
-export function ExerciseFilterDropdown({
+export const ExerciseFilterDropdown = memo(function ExerciseFilterDropdown({
   open,
   onOpenChange,
   activeCount,
@@ -157,4 +158,4 @@ export function ExerciseFilterDropdown({
       </div>
     </FilterDropdown>
   )
-}
+})

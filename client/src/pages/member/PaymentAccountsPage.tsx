@@ -30,7 +30,7 @@ function InputField({
 
 export default function PaymentAccountsPage() {
   const { t } = useTranslation('member')
-  const { user } = useAuthStore()
+  const user = useAuthStore(state => state.user)
 
   const [accounts, setAccounts]   = useState<PaymentAccount[]>([])
   const [loading, setLoading]     = useState(true)

@@ -42,7 +42,8 @@ export default function PaymentPage() {
   const [showPanel, setShowPanel] = useState(false)
 
   const navigate  = useNavigate()
-  const { user, isAuthenticated } = useAuthStore()
+  const user = useAuthStore(state => state.user)
+  const isAuthenticated = useAuthStore(state => state.isAuthenticated)
   const setResolvedStatus = useSubscriptionStore((s) => s.setResolvedStatus)
 
   useEffect(() => {

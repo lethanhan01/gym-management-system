@@ -72,7 +72,7 @@ function Pagination({ page, total, onChange }: { page: number; total: number; on
 
 export default function MyFeedbackPage() {
   const { t } = useTranslation('member')
-  const { user } = useAuthStore()
+  const user = useAuthStore(state => state.user)
 
   const STATUS_MAP: Record<string, { label: string; tone: string }> = {
     open:        { label: t('feedback.list.statusLabel.open'),        tone: 'warning' },

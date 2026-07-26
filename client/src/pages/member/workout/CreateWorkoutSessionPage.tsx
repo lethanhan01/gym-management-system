@@ -306,7 +306,7 @@ function SessionView({
 export default function CreateWorkoutSessionPage() {
   const { t } = useTranslation('member')
   const navigate = useNavigate()
-  const { user } = useAuthStore()
+  const user = useAuthStore(state => state.user)
   const memberId = user?.memberId ? String(user.memberId) : undefined
   const sessionPanelRef = useRef<HTMLDivElement | null>(null)
 

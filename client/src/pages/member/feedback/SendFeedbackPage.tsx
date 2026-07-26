@@ -11,7 +11,7 @@ type Severity = 'low' | 'medium' | 'high'
 
 export default function SendFeedbackPage() {
   const { t } = useTranslation('member')
-  const { user } = useAuthStore()
+  const user = useAuthStore(state => state.user)
 
   const TYPE_OPTIONS: { value: FeedbackType; label: string; icon: React.ReactNode }[] = [
     { value: 'staff',     label: t('feedback.send.typeLabel.staff'),     icon: <Users size={18} /> },

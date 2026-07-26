@@ -86,7 +86,7 @@ export default function SubscriptionCheckoutPage({ mode }: { mode: 'buy' | 'rene
   const location = useLocation()
   const state = location.state as PayState | null
 
-  const { user } = useAuthStore()
+  const user = useAuthStore(state => state.user)
   const setResolvedStatus = useSubscriptionStore((state) => state.setResolvedStatus)
 
   const [method, setMethod] = useState<PaymentMethod>('cash')

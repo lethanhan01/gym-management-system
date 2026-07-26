@@ -18,7 +18,10 @@ import { ProfilePasswordField } from '@/components/profile/ProfilePasswordField'
 export default function TrainerProfilePage() {
   const { t } = useTranslation('trainer')
   const navigate = useNavigate()
-  const { user, clearAuth, setAuth, token } = useAuthStore()
+  const user = useAuthStore(state => state.user)
+  const clearAuth = useAuthStore(state => state.clearAuth)
+  const setAuth = useAuthStore(state => state.setAuth)
+  const token = useAuthStore(state => state.token)
   const [profile, setProfile] = useState<StaffProfile | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)

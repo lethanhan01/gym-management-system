@@ -106,7 +106,7 @@ function buildMonthOptions(t: TFunction<'member'>, locale: string) {
 
 export default function WorkoutHistoryPage() {
   const { t, i18n } = useTranslation('member')
-  const { user } = useAuthStore()
+  const user = useAuthStore(state => state.user)
   const memberId = user?.memberId ? String(user.memberId) : undefined
 
   const [logs, setLogs] = useState<WorkoutLog[]>([])

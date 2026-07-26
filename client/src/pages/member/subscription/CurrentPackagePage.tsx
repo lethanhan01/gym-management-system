@@ -80,7 +80,8 @@ export default function CurrentPackagePage() {
 
   const navigate = useNavigate()
   const location = useLocation()
-  const { user, clearAuth } = useAuthStore()
+  const user = useAuthStore(state => state.user)
+  const clearAuth = useAuthStore(state => state.clearAuth)
   const setResolvedStatus = useSubscriptionStore((s) => s.setResolvedStatus)
 
   useEffect(() => {

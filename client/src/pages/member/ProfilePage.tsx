@@ -21,7 +21,8 @@ import { ProfilePasswordField } from '@/components/profile/ProfilePasswordField'
 export default function MemberProfilePage() {
   const { t } = useTranslation('member')
   const navigate = useNavigate()
-  const { user, clearAuth } = useAuthStore()
+  const user = useAuthStore(state => state.user)
+  const clearAuth = useAuthStore(state => state.clearAuth)
   const [profile, setProfile] = useState<MemberProfile | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)

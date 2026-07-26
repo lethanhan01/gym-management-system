@@ -14,7 +14,7 @@ export default function OwnerProfilePage() {
   const { t } = useTranslation('owner')
   const { t: tCommon } = useTranslation('common')
   const navigate = useNavigate()
-  const { clearAuth } = useAuthStore()
+  const clearAuth = useAuthStore(state => state.clearAuth)
   const [profile, setProfile] = useState<OwnerProfile | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)

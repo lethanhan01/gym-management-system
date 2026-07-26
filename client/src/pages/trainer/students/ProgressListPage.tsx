@@ -22,7 +22,7 @@ import {
 export default function ProgressListPage() {
   const { t } = useTranslation('trainer')
   const { id = '' } = useParams()
-  const { user } = useAuthStore()
+  const user = useAuthStore(state => state.user)
   const [student, setStudent] = useState<TrainerStudentDetail | null>(null)
   const [progress, setProgress] = useState<MemberProgress[]>([])
   const [loading, setLoading] = useState(true)

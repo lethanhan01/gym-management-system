@@ -124,7 +124,8 @@ export default function PackageHistoryPage() {
   const [sortDir, setSortDir]       = useState<'desc' | 'asc'>('desc')
 
   const navigate = useNavigate()
-  const { user, clearAuth } = useAuthStore()
+  const user = useAuthStore(state => state.user)
+  const clearAuth = useAuthStore(state => state.clearAuth)
 
   useEffect(() => {
     if (!user?.memberId) return

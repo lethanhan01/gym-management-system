@@ -24,7 +24,7 @@ export default function SubscriptionSetupPage() {
   const [selectedTrainerId, setSelectedTrainerId] = useState('')
   const [retryCount, setRetryCount] = useState(0)
   const navigate = useNavigate()
-  const { user } = useAuthStore()
+  const user = useAuthStore(state => state.user)
   const subscriptionStatus = useSubscriptionStore((state) => state.status)
   const hasActiveSub = useSubscriptionStore((state) => state.hasActiveSub)
   const checkedMemberId = useSubscriptionStore((state) => state.checkedMemberId)
