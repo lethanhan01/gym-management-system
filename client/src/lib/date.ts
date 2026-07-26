@@ -71,8 +71,28 @@ export function toDateTimeLocalInput(value?: string | Date | null): string {
 }
 
 export function localDateTimeInputToIso(value: string): string {
-  if (!value) return ''
-  return new Date(`${value}:00+07:00`).toISOString()
+  const match = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/.exec(value)
+  if (!match) return ''
+
+  const [, yearValue, monthValue, dayValue, hourValue, minuteValue] = match
+  const year = Number(yearValue)
+  const month = Number(monthValue)
+  const day = Number(dayValue)
+  const hour = Number(hourValue)
+  const minute = Number(minuteValue)
+  const localDate = new Date(Date.UTC(year, month - 1, day, hour, minute))
+
+  if (
+    localDate.getUTCFullYear() !== year ||
+    localDate.getUTCMonth() !== month - 1 ||
+    localDate.getUTCDate() !== day ||
+    localDate.getUTCHours() !== hour ||
+    localDate.getUTCMinutes() !== minute
+  ) {
+    return ''
+  }
+
+  return new Date(localDate.getTime() - 7 * 60 * 60 * 1000).toISOString()
 }
 
 export function startOfLocalDayIso(dateInput: string): string {

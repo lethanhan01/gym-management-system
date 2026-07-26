@@ -56,6 +56,10 @@ function pad(n: number): string {
   return String(n).padStart(2, '0')
 }
 
+function inRange(value: number, min: number, max: number, fallback: number) {
+  return Number.isInteger(value) && value >= min && value <= max ? value : fallback
+}
+
 export function DateTimePickerInput({
   value,
   onChange,
@@ -102,21 +106,21 @@ export function DateTimePickerInput({
   function handleDateSelect(date: Date | undefined) {
     if (!date) return
     const d = format(date, 'yyyy-MM-dd')
-    const h = selectedHour ?? 8
-    const m = selectedMinute ?? 0
+    const h = inRange(selectedHour ?? 8, 0, 23, 8)
+    const m = inRange(selectedMinute ?? 0, 0, 59, 0)
     onChange(`${d}T${pad(h)}:${pad(m)}`)
   }
 
   function handleHourSelect(h: number) {
     const d = validDate ? format(validDate, 'yyyy-MM-dd') : format(new Date(), 'yyyy-MM-dd')
-    const m = selectedMinute ?? 0
-    onChange(`${d}T${pad(h)}:${pad(m)}`)
+    const m = inRange(selectedMinute ?? 0, 0, 59, 0)
+    onChange(`${d}T${pad(inRange(h, 0, 23, selectedHour ?? 8))}:${pad(m)}`)
   }
 
   function handleMinuteSelect(m: number) {
     const d = validDate ? format(validDate, 'yyyy-MM-dd') : format(new Date(), 'yyyy-MM-dd')
-    const h = selectedHour ?? 8
-    onChange(`${d}T${pad(h)}:${pad(m)}`)
+    const h = inRange(selectedHour ?? 8, 0, 23, 8)
+    onChange(`${d}T${pad(h)}:${pad(inRange(m, 0, 59, selectedMinute ?? 0))}`)
   }
 
   const displayValue = validDate

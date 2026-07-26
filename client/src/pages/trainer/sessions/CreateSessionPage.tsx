@@ -156,8 +156,10 @@ export default function CreateSessionPage() {
   }, [editing, memberId, t])
 
   const endTime = useMemo(() => {
-    if (!startTime || duration <= 0) return ''
-    const start = new Date(localDateTimeInputToIso(startTime))
+    if (!startTime || !Number.isFinite(duration) || duration <= 0) return ''
+    const startIso = localDateTimeInputToIso(startTime)
+    if (!startIso) return ''
+    const start = new Date(startIso)
     return new Date(start.getTime() + duration * 60000).toISOString()
   }, [duration, startTime])
 
@@ -181,13 +183,14 @@ export default function CreateSessionPage() {
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault()
-    if (!memberId || !roomId || !startTime || !endTime || !hasWorkoutPlanLink) return
+    const startIso = localDateTimeInputToIso(startTime)
+    if (!memberId || !roomId || !startIso || !endTime || !hasWorkoutPlanLink) return
     setSubmitting(true)
     setError(null)
     try {
       const payload = {
         roomId,
-        startTime: localDateTimeInputToIso(startTime),
+        startTime: startIso,
         endTime,
       }
       if (editing && id) {
@@ -376,7 +379,13 @@ export default function CreateSessionPage() {
           <SubmitButton
             loading={submitting}
             disabled={
-              editBlocked || !memberId || !roomId || !startTime || duration <= 0 || !hasWorkoutPlanLink
+              editBlocked ||
+              !memberId ||
+              !roomId ||
+              !endTime ||
+              !Number.isFinite(duration) ||
+              duration <= 0 ||
+              !hasWorkoutPlanLink
             }
           >
             {editing ? t('sessions.create.save') : t('sessions.create.submit')}
