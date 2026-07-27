@@ -73,7 +73,11 @@
     "notFound": "データが見つかりません。",
     "loadFailed": "データを読み込めません。",
     "api": {
-      "EMAIL_IN_USE": "このメールアドレスは既に使用されています"
+      "EMAIL_IN_USE": "このメールアドレスは既に使用されています",
+      "LINE_AUTH_FAILED": "LINEで認証できません。LIFFを開き直して再試行してください。",
+      "LINE_LOGIN_MEMBER_ONLY": "LINEログインは会員のみ利用できます。",
+      "EMAIL_NOT_VERIFIED": "LINEでログインする前にメールアドレスを認証してください。",
+      "ACCOUNT_LOCKED": "アカウントはロックされています。ジムにお問い合わせください。"
     }
   },
   "date": {

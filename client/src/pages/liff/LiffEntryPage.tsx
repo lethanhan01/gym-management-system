@@ -4,6 +4,7 @@ import { initLiff } from '@/lib/liff'
 import { authService } from '@/services/auth.service'
 import { useAuthStore } from '@/stores/authStore'
 import { useSubscriptionStore } from '@/stores/subscriptionStore'
+import { getApiError } from '@/lib/api-error'
 import { getSafeMemberRedirect } from './liff-redirect'
 
 export default function LiffEntryPage() {
@@ -50,7 +51,7 @@ export default function LiffEntryPage() {
         navigate(redirectPath, { replace: true })
       } catch (err) {
         if (cancelled) return
-        setError(err instanceof Error ? err.message : 'Đăng nhập LINE thất bại')
+        setError(getApiError(err, 'Không thể kết nối tới máy chủ. Vui lòng kiểm tra mạng và thử lại.'))
       }
     }
 

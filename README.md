@@ -132,11 +132,11 @@ Mở `server/.env` và điền các giá trị sau:
 | `EXERCISEDB_SYNC_ENABLED` | Đặt `true` tạm thời khi chạy `cd server; npm run exercise:catalog:sync`; mặc định `false` |
 | `EXERCISEDB_SCHEDULER_ENABLED` | Bật cron sync định kỳ; giữ `false` cho nạp một lần |
 | `EXERCISEDB_MIN_EXPECTED_COUNT` | Ngưỡng record tối thiểu để chặn payload ExerciseDB bị cắt ngắn; chốt từ staging trước production |
-| `LINE_CHANNEL_ID` | *(Tùy chọn)* LINE channel/LIFF ID dùng để verify LINE ID token |
+| `LINE_CHANNEL_ID` | *(Tùy chọn)* ID số của LINE Login channel sở hữu LIFF app; backend dùng để verify LINE ID token |
 | `LINE_MESSAGING_ENABLED` | `true` khi bật LINE Messaging webhook/push/reminder; mặc định `false` |
 | `LINE_CHANNEL_SECRET` | Bắt buộc khi `LINE_MESSAGING_ENABLED=true`; lấy từ LINE Messaging API channel |
 | `LINE_CHANNEL_ACCESS_TOKEN` | Bắt buộc khi `LINE_MESSAGING_ENABLED=true`; channel access token của LINE Messaging API |
-| `LINE_LIFF_URL` | Bắt buộc khi `LINE_MESSAGING_ENABLED=true`; phải là `https://liff.line.me/<LIFF_ID>`, không phải URL `developers.line.biz` |
+| `LINE_LIFF_URL` | Bắt buộc khi `LINE_MESSAGING_ENABLED=true`; public LIFF URL `https://liff.line.me/<LIFF_ID>`, không phải Endpoint URL hay URL `developers.line.biz` |
 | `LINE_MESSAGE_LOCALE` | Locale nội dung LINE, nhận `vi` hoặc `ja` |
 | `LINE_REMINDER_MINUTES` | Số phút gửi nhắc lịch tập qua LINE trước giờ bắt đầu, mặc định `30` |
 
@@ -146,7 +146,7 @@ Mở `server/.env` và điền các giá trị sau:
 
 Thực hiện ở staging trước, chốt `EXERCISEDB_MIN_EXPECTED_COUNT` từ lượt staging thành công, tạo backup database production, rồi inject key qua secret runtime (không commit vào `.env`). Trong thư mục `server/`, đặt `EXERCISEDB_SYNC_ENABLED=true`, giữ `EXERCISEDB_SCHEDULER_ENABLED=false` và chạy `npm run exercise:catalog:sync` hai lần. Lượt hai phải có `insertedCount=0`, `updatedCount=0`, `hiddenCount=0` nếu provider không đổi. Sau nghiệm thu, đặt cả hai cờ thành `false`, gỡ API key và restart backend. Ảnh ExerciseDB vẫn tải từ URL của provider.
 
-> **LINE deploy:** `VITE_LIFF_ID` ở client chỉ là LIFF ID, còn `LINE_LIFF_URL` ở server dùng cho Messaging/Rich Menu phải là public LIFF URL dạng `https://liff.line.me/<LIFF_ID>`. Không copy URL trang quản trị `https://developers.line.biz/...` vào biến này. LIFF Endpoint URL trong LINE Developers phải trỏ về frontend app để callback chạy được route `/liff`; các link gửi qua LINE nên dùng `https://liff.line.me/<LIFF_ID>?redirect=%2Fmember...`. Sau khi build server, có thể chạy `npm run config:check` để kiểm tra env trước khi `npm start`.
+> **LINE deploy:** Với LIFF ID `2010144670-0RjWIyfv`, đặt `VITE_LIFF_ID=2010144670-0RjWIyfv`, `LINE_CHANNEL_ID=2010144670` và `LINE_LIFF_URL=https://liff.line.me/2010144670-0RjWIyfv`. `VITE_LIFF_ID` là LIFF ID đầy đủ; `LINE_CHANNEL_ID` là channel ID số dùng để verify token; `LINE_LIFF_URL` là URL người dùng mở, không phải Endpoint URL. Trong LINE Developers Console, đặt **Endpoint URL** là `https://<frontend-public-domain>/liff`, bật scope `openid`, và cấu hình reverse proxy để `/liff` trả SPA `index.html` còn `/api/v1` chuyển tiếp tới backend. Khi frontend và API cùng origin, giữ `VITE_API_URL` trống; đặt `CLIENT_URL=https://<frontend-public-domain>`. Các link gửi qua LINE nên dùng `https://liff.line.me/2010144670-0RjWIyfv?redirect=%2Fmember...`. Sau khi build server, có thể chạy `npm run config:check` để kiểm tra env trước khi `npm start`.
 
 ### 6.4 Khởi động Server
 
@@ -168,9 +168,9 @@ Mở `client/.env` và điền nếu cần:
 
 | Biến | Mô tả |
 |---|---|
-| `VITE_API_URL` | URL backend. Để trống khi chạy local (Vite proxy tự forward `/api` sang `localhost:3000`) |
+| `VITE_API_URL` | URL backend. Để trống khi chạy local hoặc khi production reverse proxy `/api/v1` về backend cùng origin |
 | `API_PROXY_TARGET` | Target proxy cho Vite dev (mặc định `http://127.0.0.1:3000`) |
-| `VITE_LIFF_ID` | *(Tùy chọn)* LINE LIFF App ID nếu dùng tính năng LINE Login |
+| `VITE_LIFF_ID` | *(Tùy chọn)* LIFF ID đầy đủ, ví dụ `2010144670-0RjWIyfv`; không dùng channel ID số hay LIFF URL |
 
 ### 6.6 Khởi động Client
 
