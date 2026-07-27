@@ -73,7 +73,11 @@
     "notFound": "Không tìm thấy dữ liệu.",
     "loadFailed": "Không thể tải dữ liệu.",
     "api": {
-      "EMAIL_IN_USE": "Email này đã được sử dụng"
+      "EMAIL_IN_USE": "Email này đã được sử dụng",
+      "LINE_AUTH_FAILED": "Không thể xác thực với LINE. Vui lòng mở lại LIFF và thử lại.",
+      "LINE_LOGIN_MEMBER_ONLY": "Đăng nhập LINE chỉ dành cho hội viên.",
+      "EMAIL_NOT_VERIFIED": "Vui lòng xác thực email trước khi đăng nhập LINE.",
+      "ACCOUNT_LOCKED": "Tài khoản đã bị khóa. Vui lòng liên hệ phòng tập."
     }
   },
   "date": {
