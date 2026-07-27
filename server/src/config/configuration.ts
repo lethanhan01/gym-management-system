@@ -32,14 +32,6 @@ export class EnvironmentVariables {
   @IsIn(['direct', 'supavisor-session'])
   DB_CONNECTION_MODE?: DatabaseConnectionMode
 
-  /**
-   * Dung trong schema.prisma (directUrl): migrate drift / tac vu can ket noi truc tiep toi Postgres,
-   * (vd Supabase tranh pooler `pgbouncer=true`). Ung dung Nest chu yeu chi dung DATABASE_URL.
-   */
-  @IsOptional()
-  @IsString()
-  DIRECT_URL?: string
-
   @IsString()
   JWT_SECRET!: string
 
@@ -145,7 +137,9 @@ function validateDatabaseConnectionConfig(
     throw new Error('Invalid environment configuration:\n  - DATABASE_URL: must use postgres or postgresql')
   }
   if (url.port !== '5432') {
-    throw new Error('Invalid environment configuration:\n  - DATABASE_URL: persistent connections must use port 5432')
+    throw new Error(
+      'Invalid environment configuration:\n  - DATABASE_URL: persistent connections must use port 5432; use the Supavisor Session pooler URL (or a direct URL), not the :6543 transaction pooler',
+    )
   }
   if (url.searchParams.get('sslmode') !== 'require') {
     throw new Error('Invalid environment configuration:\n  - DATABASE_URL: sslmode=require is required')

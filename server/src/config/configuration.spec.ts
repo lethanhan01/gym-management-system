@@ -122,7 +122,7 @@ describe('validateConfig database connection', () => {
         ...base(),
         DATABASE_URL: validUrl.replace(':5432', ':6543').replace('application_name', 'pgbouncer=true&application_name'),
       }),
-    ).toThrow('port 5432')
+    ).toThrow('use the Supavisor Session pooler URL')
   })
 
   it('requires an explicit mode in production', () => {

@@ -122,7 +122,6 @@ Mở `server/.env` và điền các giá trị sau:
 | Biến | Mô tả |
 |---|---|
 | `DATABASE_URL` | Connection string runtime PostgreSQL (Supavisor Session Pooler — port **5432** nếu dùng Supabase) |
-| `DIRECT_URL` | Direct connection string (dùng cho Prisma DDL — port 5432) |
 | `JWT_SECRET` | Chuỗi bí mật dài, ngẫu nhiên (tối thiểu 32 ký tự) |
 | `JWT_EXPIRES_IN` | Thời gian hết hạn token, ví dụ `7d` |
 | `CLIENT_URL` | URL frontend, ví dụ `http://localhost:5173` |
@@ -140,7 +139,7 @@ Mở `server/.env` và điền các giá trị sau:
 | `LINE_MESSAGE_LOCALE` | Locale nội dung LINE, nhận `vi` hoặc `ja` |
 | `LINE_REMINDER_MINUTES` | Số phút gửi nhắc lịch tập qua LINE trước giờ bắt đầu, mặc định `30` |
 
-> **Supabase:** Dùng **Session pooler** (port 5432) cho `DATABASE_URL`, cùng `DB_CONNECTION_MODE=supavisor-session`, `sslmode=require` và `connection_limit=5`; không thêm `pgbouncer=true`. Dùng **Direct connection** (port 5432) hoặc Session pooler làm `DIRECT_URL` cho Prisma DDL. URL-encode ký tự đặc biệt trong mật khẩu nếu có.
+> **Supabase:** Dùng **Session pooler** (port 5432) cho `DATABASE_URL`, cùng `DB_CONNECTION_MODE=supavisor-session`, `sslmode=require` và `connection_limit=5`; không thêm `pgbouncer=true`. Prisma runtime và `prisma db push` cùng dùng URL này. URL-encode ký tự đặc biệt trong mật khẩu nếu có.
 
 ### Nạp snapshot ExerciseDB một lần
 

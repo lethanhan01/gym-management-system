@@ -135,7 +135,7 @@ flowchart TB
     Browser -->|HTTPS REST| SPA
     SPA -->|Fetch /api/v1/* HTTPS| API
     Device -->|POST /devices/access-events HTTPS| API
-    API -->|TCP/SSL Prisma pooler :6543| DB
+    API -->|TCP/SSL Supavisor Session pooler :5432| DB
     Cron -.->|API と同一 process を共有| API
     Cron -->|Prisma queries| DB
     API -->|Signed URL handshake| Storage
@@ -594,7 +594,7 @@ flowchart LR
     User -->|HTTPS| CDN
     User -.->|Fetch /api/v1/*<br/>HTTPS| API
     CDN -->|Static asset| User
-    API -->|TCP/SSL pooler:6543| DB
+    API -->|TCP/SSL Supavisor Session pooler :5432| DB
     API -->|HTTPS| Storage
     User -->|PUT object signed URL| Storage
     API -->|SMTP TLS 587| SMTP
@@ -698,8 +698,7 @@ Source-of-truth: `server/src/config/configuration.ts` (boot 時に class-validat
 | `NODE_ENV` | No | `development` | Process env | `development` / `production` / `test`。 |
 | `PORT` | No | `3000` | Process env | NestJS の internal port。Provider 側で map し得る。 |
 | `CLIENT_URL` | No | `http://localhost:5173` | Process env | CORS whitelist 用。Production では実際の SPA ドメイン。 |
-| `DATABASE_URL` | **Yes** | — | Supabase | Runtime 用 transaction pooler `:6543`。**Commit 禁止。** |
-| `DIRECT_URL` | No (Prisma では yes) | — | Supabase | DDL 用 session pooler `:5432` (`prisma db push`)。Schema change 時は必須。 |
+| `DATABASE_URL` | **Yes** | — | Supabase | 長時間稼働する NestJS runtime 用 Supavisor Session pooler `:5432`（または direct `:5432`）。`sslmode=require`、`connection_limit=5`、`application_name` を付与し、`pgbouncer=true` は禁止。**Commit 禁止。** |
 | `JWT_SECRET` | **Yes** | — | 手動生成 | Random で最小 32 文字。**Rotation: restart 必須。** Leak 疑いがあれば rotate — 全 user が logout 状態になる。 |
 | `JWT_EXPIRES_IN` | No | `7d` | Config | jsonwebtoken の format (例 `7d`、`12h`)。 |
 | `SMTP_HOST` | No (メール送信時 yes) | — | Provider | Provider 未確定。 |
@@ -712,7 +711,7 @@ Source-of-truth: `server/src/config/configuration.ts` (boot 時に class-validat
 
 - `JWT_SECRET`: leak 疑いで rotate。全 user が logout (古い token は verify 失敗)。Downtime: 0 (user の再 login のみ必要)。
 - `DEVICE_API_KEY`: 四半期ごと、または device の compromise 疑いで rotate。Downtime: 約 5 分 (restart + device firmware 更新)。
-- `DATABASE_URL` / `DIRECT_URL`: Supabase project 変更や DB password reset 時に rotate。Restart 必須。
+- `DATABASE_URL`: Supabase project 変更や DB password reset 時に rotate。Restart 必須。
 - `SMTP_PASS`: Provider dashboard で rotate、downtime なし。
 
 #### 5.4.3 Secret storage
@@ -804,7 +803,7 @@ v1.1+: Microservice 分割時や多 layer の request path debug が必要な時
 | QPS burst | 50 req/s (5 秒) | Load test |
 | Concurrent users | 100 active session | JWT verify + 1 query each |
 | Storage 増加量 | 約 100 MB / 月 (1 gym、200 members) | Audit log と attendance_log の volume に基づく estimate |
-| DB connection pool | 20 connection (pooler 6543) | Supabase free tier の上限 |
+| DB connection pool | API あたり最大 5 connection（Session pooler `:5432`） | `DATABASE_URL` の `connection_limit=5`。scale 時は Supabase の接続上限を確認。 |
 
 Scale 前提: v1.0 は 5-10 gym owner を target、1 gym 当たり 50-200 member。総 concurrent: 約 100-200 user。NestJS 1 instance で十分。これを超えたら NestJS を 2 instance + cron 分離 (§5.2.3) または Supabase tier upgrade。
 

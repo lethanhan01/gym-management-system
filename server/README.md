@@ -63,7 +63,7 @@ server/
 
 ```bash
 cd server
-cp .env.example .env          # chỉnh DATABASE_URL, DIRECT_URL, JWT_SECRET, ...
+cp .env.example .env          # chỉnh DATABASE_URL, JWT_SECRET, ...
 npm install
 npm run prisma:push           # sync schema.prisma → DB (tạo bảng/enum nếu chưa có)
 npm run prisma:generate       # regenerate Prisma Client sau khi đổi schema
@@ -108,7 +108,7 @@ npm run start:prod            # node dist/main.js
 | Lệnh | Mô tả |
 | --- | --- |
 | `npm run dev` | `nest start --watch` |
-| `npm run build` | `nest build` → `dist/` |
+| `npm run build` | Kiểm tra lệnh DB an toàn → `prisma db push` (đồng bộ schema) → generate Prisma Client → `nest build` → `dist/` |
 | `npm start` | `node dist/main.js` |
 | `npm run start:prod` | Giống `npm start` |
 | `npm run lint` | ESLint `src/**/*.ts` |
@@ -128,7 +128,6 @@ Tham khảo [`.env.example`](./.env.example).
 | Biến | Bắt buộc | Mô tả |
 | --- | --- | --- |
 | `DATABASE_URL` | **yes** | Connection string runtime cho Prisma. Dùng **Supavisor Session Pooler** cổng `5432`, `sslmode=require`, `connection_limit=5` |
-| `DIRECT_URL` | –\* | Chuỗi dùng cho DDL khi `prisma db push`: Direct connection cổng `5432`, hoặc Session pooler `5432` nếu mạng không hỗ trợ IPv6/direct host |
 | `JWT_SECRET` | **yes** | Khóa ký JWT |
 | `JWT_EXPIRES_IN` | – | Mặc định `7d` |
 | `NODE_ENV` | – | `development` / `production` / `test` |
@@ -136,8 +135,6 @@ Tham khảo [`.env.example`](./.env.example).
 | `CLIENT_URL` | – | Origin CORS (VD: `http://localhost:5173`) |
 | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM` | bắt buộc ở production | SMTP gửi OTP; nếu đặt một biến thì phải đặt đủ cả năm |
 | `DEMO_MASTER_OTP` | – | Chỉ development/test; production sẽ từ chối khởi động khi biến này có giá trị |
-
-\* `DIRECT_URL` được khai báo trong [`prisma/schema.prisma`](./prisma/schema.prisma): thiếu biến này sẽ lỗi khi `npx prisma generate` / `npm run prisma:*` nếu schema vẫn dùng `directUrl`.
 
 ---
 
@@ -158,7 +155,6 @@ Server chỉ **dùng Postgres của Supabase** qua Prisma (JWT vẫn do NestJS c
 1. Tạo project tại [Supabase Dashboard](https://supabase.com/dashboard/project/_/settings/database).
 2. Vào **Project Settings → Database → Connection string**:
    - **`DATABASE_URL`**: chọn **Session pooler** (host `*.pooler.supabase.com`, cổng **5432**) và thêm `?sslmode=require&connection_limit=5&pool_timeout=5&connect_timeout=5&application_name=gym-api`. Đặt `DB_CONNECTION_MODE=supavisor-session`; không thêm `pgbouncer=true`.
-   - **`DIRECT_URL`**: chọn **Direct connection** (`db.<project-ref>.supabase.co`, cổng **5432**), không qua pooler transaction. Prisma dùng cho DDL khi `prisma db push`.
 3. Ghi vào `.env` (đổi mật khẩu, **URL-encode** ký tự đặc biệt trong mật khẩu; host vùng lấy đúng theo dashboard, không cứng region).
 4. Trong `server/`:
 
@@ -193,8 +189,6 @@ Test-NetConnection -ComputerName "db.<ref>.supabase.co" -Port 5432 -InformationL
 Nếu direct host không truy cập được, dùng **Session pooler** (cổng **5432**, hỗ trợ DDL):
 
 ```env
-# .env — thay DIRECT_URL
-DIRECT_URL=postgresql://postgres.<ref>:<password>@aws-X-<region>.pooler.supabase.com:5432/postgres?sslmode=require
 ```
 
 Lưu ý: username của Session pooler có dạng `postgres.<ref>` (giống Transaction pooler), khác với direct connection (`postgres`).
@@ -211,7 +205,7 @@ Nếu TCP thành công nhưng `/health` vẫn trả `db: down`, chạy một tru
 #### Runbook local và Render
 
 - Local: nếu `Test-NetConnection` đến Session pooler cổng `5432` trả `False`, kiểm tra VPN/proxy/firewall/router/antivirus và cho phép outbound TCP `5432` tới `*.pooler.supabase.com`; sau đó chạy `npm run prisma:smoke`.
-- Render: dùng `/health/live` làm health check của service để không restart app chỉ vì DB tạm lỗi. Kiểm tra service không bị suspend, `DATABASE_URL`/`DB_CONNECTION_MODE` đúng như trên và egress TCP `5432` không bị chặn.
+- Render: Build Command là `npm run build`; lệnh này tự chạy `db:safety:check` và `prisma db push` trước khi compile. Vì vậy, tạo backup/clone Supabase trước deploy có thay đổi schema. Chỉ cần `DATABASE_URL` dùng Session pooler `:5432`, `DB_CONNECTION_MODE=supavisor-session`, `sslmode=require`, `connection_limit=5`, `application_name=gym-api`, không có `pgbouncer=true`. Dùng `/health/live` làm health check và kiểm tra egress TCP `5432` không bị chặn.
 - Giám sát: cấu hình uptime monitor gọi `/health/ready` mỗi phút, gửi email sau 3 lần `503` liên tiếp; bật Render email/log notifications. `/health/ready` kiểm tra DB, còn `/health/live` chỉ kiểm tra tiến trình Nest.
 
 ---
@@ -335,7 +329,7 @@ curl http://localhost:3000/api/v1/auth/me \
 
 - **`P1001` / `P1017` / không kết nối được DB**: kiểm tra `Test-NetConnection` đến Session pooler `:5432`, VPN/proxy/firewall và trạng thái project Supabase; xác nhận `DATABASE_URL` có `sslmode=require`, `connection_limit=5`, không có `pgbouncer=true`.
 - **`P3005: schema is not empty`**: project dùng `prisma db push` (không phải `migrate deploy`) → lỗi này không xảy ra trong workflow chuẩn. Nếu gặp: bạn đang chạy `prisma migrate deploy` nhầm — dùng `npm run prisma:push`.
-- **`relation does not exist`**: chạy `npm run prisma:push` để sync schema lên DB.
+- **`relation does not exist` / `DATABASE_SCHEMA_OUT_OF_DATE`**: database đang thiếu bảng hoặc cột mà API hiện tại truy vấn. Tạo backup/clone Supabase, review thay đổi schema, chạy `npm run db:safety:check` rồi `npm run prisma:push` với đúng production env; sau đó restart/redeploy Render. Không dùng `prisma migrate deploy` và không dùng `--accept-data-loss`.
 - **JWT invalid**: đổi `JWT_SECRET` → đăng nhập lại.  
 - **Port bận**: đổi `PORT` trong `.env`.
 
