@@ -187,6 +187,17 @@ export class HttpExceptionFilter implements ExceptionFilter {
             details: err.meta,
           },
         }
+      case 'P2021':
+      case 'P2022':
+      case 'P2027':
+        return {
+          status: HttpStatus.SERVICE_UNAVAILABLE,
+          body: {
+            success: false,
+            code: 'DATABASE_SCHEMA_OUT_OF_DATE',
+            message: 'Cau truc database chua dong bo voi phien ban API hien tai',
+          },
+        }
       case 'P2003':
         return {
           status: HttpStatus.BAD_REQUEST,

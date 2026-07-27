@@ -145,7 +145,9 @@ function validateDatabaseConnectionConfig(
     throw new Error('Invalid environment configuration:\n  - DATABASE_URL: must use postgres or postgresql')
   }
   if (url.port !== '5432') {
-    throw new Error('Invalid environment configuration:\n  - DATABASE_URL: persistent connections must use port 5432')
+    throw new Error(
+      'Invalid environment configuration:\n  - DATABASE_URL: persistent connections must use port 5432; use the Supavisor Session pooler URL (or a direct URL), not the :6543 transaction pooler',
+    )
   }
   if (url.searchParams.get('sslmode') !== 'require') {
     throw new Error('Invalid environment configuration:\n  - DATABASE_URL: sslmode=require is required')

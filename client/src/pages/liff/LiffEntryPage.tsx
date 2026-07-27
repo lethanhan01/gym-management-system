@@ -5,6 +5,7 @@ import { authService } from '@/services/auth.service'
 import { useAuthStore } from '@/stores/authStore'
 import { useSubscriptionStore } from '@/stores/subscriptionStore'
 import { getApiError } from '@/lib/api-error'
+import i18n from '@/lib/i18n'
 import { getSafeMemberRedirect } from './liff-redirect'
 
 export default function LiffEntryPage() {
@@ -51,7 +52,7 @@ export default function LiffEntryPage() {
         navigate(redirectPath, { replace: true })
       } catch (err) {
         if (cancelled) return
-        setError(getApiError(err, 'Không thể kết nối tới máy chủ. Vui lòng kiểm tra mạng và thử lại.'))
+        setError(getApiError(err, i18n.t('error.network', { ns: 'common' })))
       }
     }
 

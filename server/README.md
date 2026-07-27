@@ -108,7 +108,7 @@ npm run start:prod            # node dist/main.js
 | Lệnh | Mô tả |
 | --- | --- |
 | `npm run dev` | `nest start --watch` |
-| `npm run build` | `nest build` → `dist/` |
+| `npm run build` | Kiểm tra lệnh DB an toàn → `prisma db push` (đồng bộ schema) → generate Prisma Client → `nest build` → `dist/` |
 | `npm start` | `node dist/main.js` |
 | `npm run start:prod` | Giống `npm start` |
 | `npm run lint` | ESLint `src/**/*.ts` |
@@ -211,7 +211,7 @@ Nếu TCP thành công nhưng `/health` vẫn trả `db: down`, chạy một tru
 #### Runbook local và Render
 
 - Local: nếu `Test-NetConnection` đến Session pooler cổng `5432` trả `False`, kiểm tra VPN/proxy/firewall/router/antivirus và cho phép outbound TCP `5432` tới `*.pooler.supabase.com`; sau đó chạy `npm run prisma:smoke`.
-- Render: dùng `/health/live` làm health check của service để không restart app chỉ vì DB tạm lỗi. Kiểm tra service không bị suspend, `DATABASE_URL`/`DB_CONNECTION_MODE` đúng như trên và egress TCP `5432` không bị chặn.
+- Render: Build Command là `npm run build`; lệnh này tự chạy `db:safety:check` và `prisma db push` trước khi compile. Vì vậy, tạo backup/clone Supabase trước deploy có thay đổi schema. Tại **Environment**, đặt `DIRECT_URL` là Direct connection `:5432` (hoặc Session pooler `:5432` nếu Render không có IPv6) để Prisma thực hiện DDL; `DATABASE_URL` runtime dùng Session pooler `:5432`, `DB_CONNECTION_MODE=supavisor-session`, `sslmode=require`, `connection_limit=5`, `application_name=gym-api`, không có `pgbouncer=true`. Dùng `/health/live` làm health check và kiểm tra egress TCP `5432` không bị chặn.
 - Giám sát: cấu hình uptime monitor gọi `/health/ready` mỗi phút, gửi email sau 3 lần `503` liên tiếp; bật Render email/log notifications. `/health/ready` kiểm tra DB, còn `/health/live` chỉ kiểm tra tiến trình Nest.
 
 ---
@@ -335,7 +335,7 @@ curl http://localhost:3000/api/v1/auth/me \
 
 - **`P1001` / `P1017` / không kết nối được DB**: kiểm tra `Test-NetConnection` đến Session pooler `:5432`, VPN/proxy/firewall và trạng thái project Supabase; xác nhận `DATABASE_URL` có `sslmode=require`, `connection_limit=5`, không có `pgbouncer=true`.
 - **`P3005: schema is not empty`**: project dùng `prisma db push` (không phải `migrate deploy`) → lỗi này không xảy ra trong workflow chuẩn. Nếu gặp: bạn đang chạy `prisma migrate deploy` nhầm — dùng `npm run prisma:push`.
-- **`relation does not exist`**: chạy `npm run prisma:push` để sync schema lên DB.
+- **`relation does not exist` / `DATABASE_SCHEMA_OUT_OF_DATE`**: database đang thiếu bảng hoặc cột mà API hiện tại truy vấn. Tạo backup/clone Supabase, review thay đổi schema, chạy `npm run db:safety:check` rồi `npm run prisma:push` với đúng production env; sau đó restart/redeploy Render. Không dùng `prisma migrate deploy` và không dùng `--accept-data-loss`.
 - **JWT invalid**: đổi `JWT_SECRET` → đăng nhập lại.  
 - **Port bận**: đổi `PORT` trong `.env`.
 
