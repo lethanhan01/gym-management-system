@@ -32,14 +32,6 @@ export class EnvironmentVariables {
   @IsIn(['direct', 'supavisor-session'])
   DB_CONNECTION_MODE?: DatabaseConnectionMode
 
-  /**
-   * Dung trong schema.prisma (directUrl): migrate drift / tac vu can ket noi truc tiep toi Postgres,
-   * (vd Supabase tranh pooler `pgbouncer=true`). Ung dung Nest chu yeu chi dung DATABASE_URL.
-   */
-  @IsOptional()
-  @IsString()
-  DIRECT_URL?: string
-
   @IsString()
   JWT_SECRET!: string
 
