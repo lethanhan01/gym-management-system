@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
+import { useSearchParams } from 'react-router-dom'
+import { Button, ButtonLink } from '@/components/ui/Button'
 import { Search, TrendingUp, UserRound } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useTrainerStudents } from '@/hooks/useTrainerStudents'
@@ -13,6 +14,7 @@ import {
   TrainerSkeleton,
   TrainerStatusBadge,
 } from '@/components/TrainerUI'
+import { FilterDropdown } from '@/components/FilterDropdown'
 
 export default function StudentsListPage() {
   const { t } = useTranslation('trainer')
@@ -20,6 +22,9 @@ export default function StudentsListPage() {
   const page = Number(searchParams.get('page') ?? 1)
   const status = searchParams.get('status') ?? ''
   const [search, setSearch] = useState(searchParams.get('search') ?? '')
+  const [filterOpen, setFilterOpen] = useState(false)
+  const [draftStatus, setDraftStatus] = useState<string>('')
+
   const { data, total, totalPages, loading, error, reload } = useTrainerStudents({
     page,
     pageSize: 12,
@@ -49,8 +54,8 @@ export default function StudentsListPage() {
         description={t('students.list.description', { total })}
       />
 
-      <div className="rogym-card rogym-card--compact grid gap-3 p-4 md:grid-cols-[1fr_220px_auto]">
-        <div className="relative">
+      <div className="rogym-card rogym-card--compact flex items-center gap-3 p-4">
+        <div className="relative min-w-0 flex-1">
           <Search
             className="absolute left-3 top-1/2 -translate-y-1/2 rogym-text-dim"
             size={17}
@@ -63,18 +68,39 @@ export default function StudentsListPage() {
             placeholder={t('students.list.searchPlaceholder')}
           />
         </div>
-        <TrainerSelect
-          value={status}
-          onValueChange={(value) => updateParam('status', value)}
+        <FilterDropdown
+          open={filterOpen}
+          onOpenChange={(open) => {
+            if (open) {
+              setDraftStatus(status)
+              setFilterOpen(true)
+            } else {
+              setFilterOpen(false)
+            }
+          }}
+          activeCount={status ? 1 : 0}
+          onApply={() => {
+            updateParam('status', draftStatus)
+            setFilterOpen(false)
+          }}
+          title={t('students.list.filterTitle', 'Bộ lọc')}
         >
-          <option value="">{t('students.list.allStatuses')}</option>
-          <option value="active">{t('students.list.statusActive')}</option>
-          <option value="pending_verification">{t('students.list.statusPending')}</option>
-          <option value="locked">{t('students.list.statusLocked')}</option>
-        </TrainerSelect>
-        <button type="button" className="rogym-btn rogym-btn--primary" onClick={applySearch}>
+          <div>
+            <p className="rogym-field-label mb-2">{t('students.list.colStatus')}</p>
+            <TrainerSelect
+              value={draftStatus}
+              onValueChange={setDraftStatus}
+            >
+              <option value="">{t('students.list.allStatuses')}</option>
+              <option value="active">{t('students.list.statusActive')}</option>
+              <option value="pending_verification">{t('students.list.statusPending')}</option>
+              <option value="locked">{t('students.list.statusLocked')}</option>
+            </TrainerSelect>
+          </div>
+        </FilterDropdown>
+        <Button variant="primary" onClick={applySearch}>
           {t('students.list.searchButton')}
-        </button>
+        </Button>
       </div>
 
       {loading ? (
@@ -124,18 +150,18 @@ export default function StudentsListPage() {
                     </td>
                     <td className="px-5 py-4">
                       <div className="flex justify-end gap-3">
-                        <Link
-                          className="rogym-text-link rogym-text-link--accent"
+                        <ButtonLink
+                          variant="text-accent"
                           to={`/trainer/students/${student.memberId}`}
                         >
                           {t('students.list.actionDetail')}
-                        </Link>
-                        <Link
-                          className="rogym-text-link"
+                        </ButtonLink>
+                        <ButtonLink
+                          variant="text"
                           to={`/trainer/students/${student.memberId}/progress`}
                         >
                           {t('students.list.actionProgress')}
-                        </Link>
+                        </ButtonLink>
                       </div>
                     </td>
                   </tr>
@@ -167,18 +193,20 @@ export default function StudentsListPage() {
                   {student.activeSubscription?.packageName ?? t('students.list.noPackageActive')}
                 </div>
                 <div className="mt-4 flex gap-3">
-                  <Link
-                    className="rogym-btn rogym-btn--outline-white flex-1"
+                  <ButtonLink
+                    variant="outline-white"
+                    className="flex-1"
                     to={`/trainer/students/${student.memberId}`}
                   >
                     {t('students.list.actionDetail')}
-                  </Link>
-                  <Link
-                    className="rogym-btn rogym-btn--primary flex-1"
+                  </ButtonLink>
+                  <ButtonLink
+                    variant="primary"
+                    className="flex-1"
                     to={`/trainer/students/${student.memberId}/progress`}
                   >
                     <TrendingUp size={15} /> {t('students.list.progressLink')}
-                  </Link>
+                  </ButtonLink>
                 </div>
               </div>
             ))}
@@ -188,25 +216,23 @@ export default function StudentsListPage() {
 
       {totalPages > 1 && (
         <div className="flex items-center justify-center gap-3">
-          <button
-            type="button"
-            className="rogym-btn rogym-btn--outline-white"
+          <Button
+            variant="outline-white"
             disabled={page <= 1}
             onClick={() => updateParam('page', String(page - 1))}
           >
             {t('students.list.prevPage')}
-          </button>
+          </Button>
           <span className="text-sm rogym-text-secondary">
             {t('students.list.page', { current: page, total: totalPages })}
           </span>
-          <button
-            type="button"
-            className="rogym-btn rogym-btn--outline-white"
+          <Button
+            variant="outline-white"
             disabled={page >= totalPages}
             onClick={() => updateParam('page', String(page + 1))}
           >
             {t('students.list.nextPage')}
-          </button>
+          </Button>
         </div>
       )}
     </TrainerPage>

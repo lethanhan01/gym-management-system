@@ -103,5 +103,7 @@
     --rogym-dashboard-padding: 16px;
     /* Chiều cao bottom nav — dùng để tính padding của main content */
     --rogym-bottom-nav-height: 64px;
+    /* Phần icon Check-in nổi lên và khoảng hở với action bar cố định. */
+    --rogym-bottom-nav-center-action-clearance: 44px;
   }
 }

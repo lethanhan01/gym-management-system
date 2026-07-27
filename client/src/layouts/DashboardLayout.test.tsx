@@ -11,11 +11,13 @@ import { makeSubscription } from '@/test/subscriptionFactory'
 vi.mock('@/components/shared/Sidebar', () => ({ default: () => <div>Sidebar</div> }))
 vi.mock('@/components/shared/Topbar', () => ({ default: () => <div>Topbar</div> }))
 const subscriptionExpiryCallbacks = vi.hoisted(() => [] as Array<() => void>)
+const toastMock = vi.hoisted(() => ({ error: vi.fn(), success: vi.fn() }))
 vi.mock('@/hooks/useSubscriptionExpiry', () => ({
   useSubscriptionExpiry: vi.fn((callback: () => void) => {
     subscriptionExpiryCallbacks.push(callback)
   }),
 }))
+vi.mock('@/lib/toast', () => ({ toast: toastMock }))
 vi.mock('@/services/subscription.service', async () => {
   const actual = await vi.importActual<typeof import('@/services/subscription.service')>(
     '@/services/subscription.service'
@@ -146,7 +148,7 @@ describe('DashboardLayout subscription orchestration', () => {
     expect(mockedGetByMember).not.toHaveBeenCalled()
   })
 
-  it('renders subscription expiry with the shared notification toast', () => {
+  it('notifies the member when the subscription expires', () => {
     useAuthStore.getState().setAuth(
       {
         userId: '1',
@@ -170,8 +172,6 @@ describe('DashboardLayout subscription orchestration', () => {
       subscriptionExpiryCallbacks[0]?.()
     })
 
-    const toast = screen.getByRole('alert')
-    expect(toast).toHaveClass('rogym-notification-toast')
-    expect(toast).toHaveTextContent('Gói tập đã hết hạn. Đang chuyển về trang đăng ký...')
+    expect(toastMock.error).toHaveBeenCalledWith('Gói tập đã hết hạn. Đang chuyển về trang đăng ký...')
   })
 })

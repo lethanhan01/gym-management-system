@@ -58,39 +58,12 @@ describe('ForgotPasswordDto', () => {
 })
 
 describe('ResetPasswordDto', () => {
-  const valid = { email: 'user@gym.local', otp: '123456', newPassword: 'NewPass1!' }
+  const valid = { newPassword: 'NewPass1!' }
 
-  it('accepts valid email, 6-char otp, and password of 8+ chars', async () => {
+  it('accepts a password of 8+ chars', async () => {
     const dto = plainToInstance(ResetPasswordDto, valid)
     const errors = await validate(dto)
     expect(errors).toHaveLength(0)
-  })
-
-  it('rejects missing email', async () => {
-    const dto = plainToInstance(ResetPasswordDto, { otp: '123456', newPassword: 'NewPass1!' })
-    const errors = await validate(dto)
-    expect(errors.some((e) => e.property === 'email')).toBe(true)
-  })
-
-  it('rejects missing otp', async () => {
-    const dto = plainToInstance(ResetPasswordDto, {
-      email: 'user@gym.local',
-      newPassword: 'NewPass1!',
-    })
-    const errors = await validate(dto)
-    expect(errors.some((e) => e.property === 'otp')).toBe(true)
-  })
-
-  it('rejects otp shorter than 6 characters', async () => {
-    const dto = plainToInstance(ResetPasswordDto, { ...valid, otp: '12345' })
-    const errors = await validate(dto)
-    expect(errors.some((e) => e.property === 'otp')).toBe(true)
-  })
-
-  it('rejects otp longer than 6 characters', async () => {
-    const dto = plainToInstance(ResetPasswordDto, { ...valid, otp: '1234567' })
-    const errors = await validate(dto)
-    expect(errors.some((e) => e.property === 'otp')).toBe(true)
   })
 
   it('rejects newPassword shorter than 8 characters', async () => {

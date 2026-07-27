@@ -12,8 +12,10 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common'
+import { ApiBody, ApiOperation, ApiQuery, ApiSecurity } from '@nestjs/swagger'
 import { PermissionsGuard } from '../common/guards/permissions.guard'
 import { RequirePermission } from '../common/decorators/require-permission.decorator'
+import { DatabaseRetryable } from '../common/decorators/database-retryable.decorator'
 import { CurrentUser } from '../auth/decorators/current-user.decorator'
 import { AuthenticatedUser } from '../auth/types/jwt-payload.interface'
 import { TrainingService } from './training.service'
@@ -27,6 +29,7 @@ export class TrainingController {
 
   // ---- Training Sessions ----
   @Get('training-sessions')
+  @DatabaseRetryable()
   @RequirePermission('session.read')
   async listSessions(@Query() query: ListSessionsDto,@CurrentUser() user: AuthenticatedUser) {
     const result = await this.training.listSessions(query , { userId: user.userId, roles: user.roles, staffId: user.staffId, memberId: user.memberId })
@@ -34,6 +37,7 @@ export class TrainingController {
   }
 
   @Get('training-sessions/:id')
+  @DatabaseRetryable()
   @RequirePermission('session.read')
   async getSession(@Param('id', ParseIntPipe) id: number, @CurrentUser() user: AuthenticatedUser) {
     const result = await this.training.getSession(BigInt(id), { userId: user.userId, roles: user.roles, staffId: user.staffId, memberId: user.memberId })
@@ -74,6 +78,7 @@ export class TrainingController {
   // ---- Attendance ----
 
   @Get('attendance-logs')
+  @DatabaseRetryable()
   @RequirePermission('attendance.read')
   async listAttendance(@Query() query: ListAttendanceLogsDto, @CurrentUser() user: AuthenticatedUser) {
     const result = await this.training.listAttendance(query, { userId: user.userId, roles: user.roles, staffId: user.staffId, memberId: user.memberId })
@@ -112,7 +117,12 @@ export class TrainingController {
   // ---- Progress ----
 
   @Get('members/:id/progress')
+  @DatabaseRetryable()
   @RequirePermission('progress.read')
+  @ApiOperation({ summary: 'Lấy lịch sử chỉ số tiến trình của hội viên' })
+  @ApiQuery({ name: 'from', required: false, description: 'Mốc thời gian bắt đầu (ISO 8601).' })
+  @ApiQuery({ name: 'to', required: false, description: 'Mốc thời gian kết thúc (ISO 8601).' })
+  @ApiQuery({ name: 'limit', required: false, description: 'Số bản ghi tối đa.' })
   async listProgress(@Param('id', ParseIntPipe) id: number, @Query() query: { from?: string; to?: string; limit?: string }, @CurrentUser() user: AuthenticatedUser) {
     const result = await this.training.listProgress(BigInt(id), query, { userId: user.userId, roles: user.roles, staffId: user.staffId, memberId: user.memberId })
     return { success: true, ...result }
@@ -141,6 +151,19 @@ export class DeviceController {
   constructor(private readonly training: TrainingService) {}
 
   @Post('access-events')
+  @ApiOperation({ summary: 'Nhận sự kiện ra/vào từ thiết bị kiểm soát' })
+  @ApiSecurity('deviceApiKey')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      required: ['memberIdentifier', 'occurredAt', 'deviceId'],
+      properties: {
+        memberIdentifier: { type: 'string', example: 'MEM-000001' },
+        occurredAt: { type: 'string', format: 'date-time', example: '2026-07-23T09:30:00.000Z' },
+        deviceId: { type: 'string', example: 'gate-01' },
+      },
+    },
+  })
   async accessEvent(@Body() body: { memberIdentifier: string; occurredAt: string; deviceId: string }) {
     return this.training.deviceAccessEvent(body)
   }

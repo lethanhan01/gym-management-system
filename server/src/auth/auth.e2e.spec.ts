@@ -34,6 +34,7 @@ const TEST_SECRET = 'e2e-test-secret-32-chars-minimum!'
 
 const mockPrisma = {
   user: { update: jest.fn(), findUnique: jest.fn(), findFirst: jest.fn() },
+  passwordResetGrant: { deleteMany: jest.fn(), upsert: jest.fn(), findUnique: jest.fn() },
   staff: { findFirst: jest.fn() },
   member: { findFirst: jest.fn(), count: jest.fn() },
   auditLog: { create: jest.fn() },
@@ -120,6 +121,7 @@ describe('Auth E2E', () => {
     mockPrisma.auditLog.create.mockResolvedValue({})
     mockPrisma.staff.findFirst.mockResolvedValue(null)
     mockPrisma.member.findFirst.mockResolvedValue({ memberId: 10n })
+    mockUsersService.findByIdWithRoles.mockResolvedValue({ ...baseUser, memberId: 10n, staffId: null })
   })
 
   // ---------------------------------------------------------------------------
@@ -169,6 +171,21 @@ describe('Auth E2E', () => {
 
       expect(res.status).toBe(400)
     })
+
+    it('403 — pending_verification user must verify email before logging in', async () => {
+      mockUsersService.findByEmailWithRoles.mockResolvedValue({
+        ...baseUser,
+        status: 'pending_verification',
+      })
+      ;(bcrypt.compare as jest.Mock).mockResolvedValue(true)
+
+      const res = await request(app.getHttpServer())
+        .post('/api/v1/auth/login')
+        .send({ email: 'member@gym.local', password: 'Password123!' })
+
+      expect(res.status).toBe(403)
+      expect(res.body.code).toBe('EMAIL_NOT_VERIFIED')
+    })
   })
 
   // ---------------------------------------------------------------------------
@@ -211,6 +228,53 @@ describe('Auth E2E', () => {
       expect(res.body.success).toBe(true)
       expect(res.body.data.email).toBe('member@gym.local')
       expect(res.body.data.roles).toContain('member')
+    })
+
+    it('uses the current database roles and profile IDs instead of stale JWT claims', async () => {
+      const token = await jwtService.signAsync({
+        sub: '1',
+        email: 'old@gym.local',
+        roles: ['member'],
+        memberId: '10',
+      })
+      mockUsersService.findByIdWithRoles.mockResolvedValue({
+        ...baseUser,
+        email: 'owner@gym.local',
+        roles: ['owner'],
+        staffId: 5n,
+        memberId: null,
+      })
+
+      const res = await request(app.getHttpServer())
+        .get('/api/v1/auth/me')
+        .set('Authorization', `Bearer ${token}`)
+
+      expect(res.status).toBe(200)
+      expect(res.body.data).toMatchObject({
+        email: 'owner@gym.local',
+        roles: ['owner'],
+        staffId: '5',
+        memberId: null,
+      })
+    })
+
+    it.each([
+      ['is no longer found', null],
+      ['has been locked', { ...baseUser, status: 'locked', roles: ['member'], memberId: 10n }],
+      ['has been soft-deleted', { ...baseUser, deletedAt: new Date(), roles: ['member'], memberId: 10n }],
+    ])('401 — rejects an otherwise valid token when its user %s', async (_description, currentUser) => {
+      const token = await jwtService.signAsync({
+        sub: '1',
+        email: 'member@gym.local',
+        roles: ['member'],
+      })
+      mockUsersService.findByIdWithRoles.mockResolvedValue(currentUser)
+
+      const res = await request(app.getHttpServer())
+        .get('/api/v1/auth/me')
+        .set('Authorization', `Bearer ${token}`)
+
+      expect(res.status).toBe(401)
     })
 
     it('401 — expired token', async () => {

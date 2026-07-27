@@ -1,4 +1,10 @@
 @layer components {
+  @media (max-width: 639px) {
+    .rogym-topbar__subscription-cta {
+      display: none !important;
+    }
+  }
+
   /* Layout */
   .rogym-page {
     min-height: 100vh;

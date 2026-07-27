@@ -84,6 +84,7 @@ describe('WorkoutSchedulePage deep links', () => {
     expect(await screen.findByText('Chi tiết buổi tập')).toBeVisible()
     expect(screen.getByText('Trainer A')).toBeVisible()
     expect(screen.getByText('Room A')).toBeVisible()
+    expect(screen.getByRole('button', { name: 'Bắt đầu' })).toBeVisible()
   })
 
   it('ignores malformed sessionId query parameters', async () => {

@@ -8,6 +8,7 @@ export type Role = 'owner' | 'staff' | 'trainer' | 'member'
 export interface UserWithRoles extends User {
   roles: Role[]
   memberId?: bigint | null
+  staffId?: bigint | null
 }
 
 /**
@@ -56,22 +57,28 @@ export class UsersService {
     }
   }
 
-  /** Tim user theo user_id kem roles (dung trong endpoint /me). Khong tra user da xoa. */
+  /**
+   * Tim user theo user_id kem roles va profile dang hoat dong.
+   * Duoc dung boi JWT strategy de request.user luon phan anh trang thai hien tai
+   * trong database, thay vi tin cac role/profile claim cu trong token.
+   */
   async findByIdWithRoles(userId: bigint): Promise<UserWithRoles | null> {
     const row = await this.prisma.user.findFirst({
       where: { userId, deletedAt: null },
       include: {
         groups: { include: { group: true } },
-        member: { select: { memberId: true } },
+        member: { where: { deletedAt: null }, select: { memberId: true } },
+        staff: { where: { deletedAt: null }, select: { staffId: true } },
       },
     })
     if (!row) return null
 
-    const { groups, member, ...user } = row
+    const { groups, member, staff, ...user } = row
     return {
       ...user,
       roles: groups.map((ug) => ug.group.name as Role),
       memberId: member?.memberId ?? null,
+      staffId: staff?.staffId ?? null,
     }
   }
 }

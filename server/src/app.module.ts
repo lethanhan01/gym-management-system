@@ -18,6 +18,7 @@ import { ReportsModule } from './reports/reports.module'
 import { PermissionCacheModule } from './common/cache/permission-cache.module'
 import { NotificationsModule } from './notifications/notifications.module'
 import { LineMessagingModule } from './line-messaging/line-messaging.module'
+import { DatabaseRetryInterceptor } from './common/interceptors/database-retry.interceptor'
 
 @Module({
   imports: [
@@ -44,5 +45,6 @@ import { LineMessagingModule } from './line-messaging/line-messaging.module'
     NotificationsModule,
     LineMessagingModule,
   ],
+  providers: [DatabaseRetryInterceptor],
 })
 export class AppModule {}

@@ -97,22 +97,20 @@ export class AttendanceService {
     if (from) where.startTime = { ...(where.startTime as object), gte: new Date(from) }
     if (to) where.startTime = { ...(where.startTime as object), lte: new Date(to) }
 
-    const [data, total] = await Promise.all([
-      this.prisma.attendanceLog.findMany({
-        where,
-        skip: (page - 1) * pageSize,
-        take: pageSize,
-        orderBy: { startTime: 'desc' },
-        include: {
-          member: {
-            select: { memberId: true, memberCode: true, userId: true, primaryTrainerId: true, user: { select: { fullName: true } } },
-          },
-          subscription: { select: { subscriptionId: true, startDate: true, endDate: true } },
-          session: { select: { sessionId: true, startTime: true, endTime: true } },
+    const data = await this.prisma.attendanceLog.findMany({
+      where,
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+      orderBy: { startTime: 'desc' },
+      include: {
+        member: {
+          select: { memberId: true, memberCode: true, userId: true, primaryTrainerId: true, user: { select: { fullName: true } } },
         },
-      }),
-      this.prisma.attendanceLog.count({ where }),
-    ])
+        subscription: { select: { subscriptionId: true, startDate: true, endDate: true } },
+        session: { select: { sessionId: true, startTime: true, endTime: true } },
+      },
+    })
+    const total = await this.prisma.attendanceLog.count({ where })
 
     return {
       data: data.map((a) => this.serializeAttendance(a)),

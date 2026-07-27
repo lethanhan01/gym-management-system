@@ -34,7 +34,7 @@ type LineMessage = {
   }
 }
 
-type TrainingLineEvent = 'created' | 'updated' | 'cancelled' | 'reminder'
+type TrainingLineEvent = 'created' | 'updated' | 'cancelled' | 'reminder' | 'starting'
 type LineMessageLocale = 'vi' | 'ja'
 
 const LINE_MESSAGE_TEMPLATES: Record<
@@ -71,6 +71,8 @@ const LINE_MESSAGE_TEMPLATES: Record<
         `Lịch tập với PT ${trainerName} vào ${when} đã bị hủy.`,
       reminder: ({ trainerName, roomName, when, reminderMinutes }) =>
         `Buổi tập của bạn sẽ bắt đầu sau ${reminderMinutes} phút.\nThời gian: ${when}\nPT: ${trainerName}\nPhòng: ${roomName}`,
+      starting: ({ trainerName, roomName, when }) =>
+        `Đến giờ tập của bạn.\nThời gian: ${when}\nPT: ${trainerName}\nPhòng: ${roomName}`,
     },
   },
   ja: {
@@ -88,6 +90,8 @@ const LINE_MESSAGE_TEMPLATES: Record<
         `PT ${trainerName} との ${when} のトレーニング予約はキャンセルされました。`,
       reminder: ({ trainerName, roomName, when, reminderMinutes }) =>
         `トレーニング開始まであと${reminderMinutes}分です。\n日時: ${when}\nPT: ${trainerName}\nルーム: ${roomName}`,
+      starting: ({ trainerName, roomName, when }) =>
+        `トレーニング開始時間です。\n日時: ${when}\nPT: ${trainerName}\nルーム: ${roomName}`,
     },
   },
 }
@@ -147,10 +151,15 @@ export class LineMessagingService {
 
   @Cron('* * * * *', { timeZone: 'Asia/Ho_Chi_Minh' })
   async sendUpcomingSessionReminders() {
-    if (!this.canPushMessages()) return
+    await this.sendSessionReminder(this.getReminderMinutes(), 'reminder')
+    await this.sendSessionReminder(0, 'starting')
+  }
 
-    const minutes = this.getReminderMinutes()
-    const target = Date.now() + minutes * 60 * 1000
+  private async sendSessionReminder(
+    reminderMinutes: number,
+    kind: Extract<TrainingLineEvent, 'reminder' | 'starting'>,
+  ) {
+    const target = Date.now() + reminderMinutes * 60 * 1000
     const from = new Date(target - 30 * 1000)
     const to = new Date(target + 30 * 1000)
 
@@ -161,7 +170,6 @@ export class LineMessagingService {
         startTime: { gte: from, lte: to },
         member: {
           user: {
-            lineId: { not: null },
             deletedAt: null,
           },
         },
@@ -176,16 +184,22 @@ export class LineMessagingService {
 
     for (const session of sessions) {
       const created = await this.notifications.safeNotifyUser(session.member.userId, {
-        type: 'training.reminder',
-        title: 'Sap den gio tap',
-        message: `Buoi tap voi PT ${session.trainer.user.fullName} se bat dau sau ${minutes} phut.`,
+        type: kind === 'reminder' ? 'training.reminder' : 'training.starting',
+        title: kind === 'reminder' ? 'Sap den gio tap' : 'Den gio tap',
+        message:
+          kind === 'reminder'
+            ? `Buoi tap voi PT ${session.trainer.user.fullName} se bat dau sau ${reminderMinutes} phut.`
+            : `Buoi tap voi PT ${session.trainer.user.fullName} bat dau ngay bay gio.`,
         resourceType: 'training_session',
         resourceId: session.sessionId.toString(),
-        metadata: { trainerName: session.trainer.user.fullName, reminderMinutes: minutes },
-        dedupeKey: `training:${session.sessionId.toString()}:reminder:${minutes}`,
+        metadata: { trainerName: session.trainer.user.fullName, reminderMinutes },
+        dedupeKey:
+          kind === 'reminder'
+            ? `training:${session.sessionId.toString()}:reminder:${reminderMinutes}`
+            : `training:${session.sessionId.toString()}:starting`,
       })
       if (created) {
-        await this.safePushTrainingSessionEvent('reminder', session.sessionId)
+        await this.safePushTrainingSessionEvent(kind, session.sessionId)
       }
     }
   }

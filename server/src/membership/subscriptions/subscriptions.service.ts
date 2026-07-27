@@ -289,16 +289,14 @@ export class SubscriptionsService {
     }
 
     const orderBy = this.buildOrder(sort)
-    const [data, total] = await Promise.all([
-      this.prisma.subscription.findMany({
-        where,
-        include: { member: true, package: true, trainer: { include: { user: true } } },
-        skip: (page - 1) * pageSize,
-        take: pageSize,
-        orderBy,
-      }),
-      this.prisma.subscription.count({ where }),
-    ])
+    const data = await this.prisma.subscription.findMany({
+      where,
+      include: { member: true, package: true, trainer: { include: { user: true } } },
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+      orderBy,
+    })
+    const total = await this.prisma.subscription.count({ where })
 
     return {
       data: data.map((s) => this.serializeSubscription(s)),

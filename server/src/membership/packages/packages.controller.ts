@@ -14,6 +14,7 @@ import {
 } from '@nestjs/common'
 import { PermissionsGuard } from '../../common/guards/permissions.guard'
 import { RequirePermission } from '../../common/decorators/require-permission.decorator'
+import { DatabaseRetryable } from '../../common/decorators/database-retryable.decorator'
 import { CurrentUser } from '../../auth/decorators/current-user.decorator'
 import { AuthenticatedUser } from '../../auth/types/jwt-payload.interface'
 import { PackagesService } from './packages.service'
@@ -28,6 +29,7 @@ export class PackagesController {
   constructor(private readonly packages: PackagesService) {}
 
   @Get()
+  @DatabaseRetryable()
   @RequirePermission('package.read')
   async list(@Query() query: ListPackagesDto, @CurrentUser() user: AuthenticatedUser) {
     const result = await this.packages.listPackages(query, user.roles)
@@ -35,6 +37,7 @@ export class PackagesController {
   }
 
   @Get(':id')
+  @DatabaseRetryable()
   @RequirePermission('package.read')
   async detail(@Param('id', ParseIntPipe) id: number, @CurrentUser() user: AuthenticatedUser) {
     const hasManage = user.roles.some((r) => r === 'owner' || r === 'staff')

@@ -433,9 +433,12 @@
       "terminateFailed": "退職処理に失敗しました。",
       "validation": {
         "nameRequired": "氏名は必須です。",
-        "emailRequired": "メールは必須です。",
+        "emailRequired": "メールアドレスは必須です",
         "positionRequired": "役職は必須です。"
-      }
+      },
+      "createSuccess": "スタッフの追加に成功しました",
+      "updateSuccess": "情報の更新に成功しました",
+      "terminateSuccess": "スタッフの削除に成功しました"
     },
     "schedule": {
       "title": "シフト管理",

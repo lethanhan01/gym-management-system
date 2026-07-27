@@ -1,5 +1,4 @@
-import { IsEnum, IsOptional, IsString, MaxLength, MinLength } from 'class-validator'
-import { ExerciseCategory } from '@prisma/client'
+import { IsArray, IsInt, IsOptional, IsPositive, IsString, MaxLength, MinLength } from 'class-validator'
 
 export class CreateExerciseDto {
   @IsString()
@@ -7,18 +6,20 @@ export class CreateExerciseDto {
   @MaxLength(100)
   name: string
 
-  @IsEnum(ExerciseCategory)
-  category: ExerciseCategory
+  @IsOptional()
+  @IsInt()
+  @IsPositive()
+  bodyPartId?: number
 
   @IsOptional()
-  @IsString()
-  @MaxLength(100)
-  muscleGroup?: string
+  @IsInt()
+  @IsPositive()
+  targetMuscleId?: number
 
   @IsOptional()
-  @IsString()
-  @MaxLength(100)
-  equipmentNeeded?: string
+  @IsInt()
+  @IsPositive()
+  equipmentId?: number
 
   @IsOptional()
   @IsString()
@@ -28,4 +29,9 @@ export class CreateExerciseDto {
   @IsString()
   @MaxLength(1000)
   imageUrl?: string
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  instructions?: string[]
 }

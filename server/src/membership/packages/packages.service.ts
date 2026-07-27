@@ -85,10 +85,13 @@ export class PackagesService {
       [toCamel(sortField ?? 'createdAt')]: sortDir === 'asc' ? 'asc' : 'desc',
     } as Prisma.PackageOrderByWithRelationInput
 
-    const [data, total] = await Promise.all([
-      this.prisma.package.findMany({ where, skip: (page - 1) * pageSize, take: pageSize, orderBy }),
-      this.prisma.package.count({ where }),
-    ])
+    const data = await this.prisma.package.findMany({
+      where,
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+      orderBy,
+    })
+    const total = await this.prisma.package.count({ where })
 
     return { data: data.map(this.serializePackage), meta: { page, pageSize, total } }
   }

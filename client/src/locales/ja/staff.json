@@ -65,7 +65,8 @@
     "edit": "編集",
     "save": "保存",
     "cancel": "キャンセル",
-    "logout": "ログアウト"
+    "logout": "ログアウト",
+    "saveSuccess": "更新に成功しました"
   },
   "schedule": {
     "title": "勤務スケジュール",
@@ -103,7 +104,7 @@
     "memberCode": "会員コード",
     "memberCodePlaceholder": "例：MEM-0001",
     "checkInButton": "チェックイン",
-    "checkInSuccess": "チェックイン成功！",
+    "checkInSuccess": "チェックインに成功しました！",
     "qrTitle": "本日のQRチェックイン",
     "qrDescription": "会員アプリでこのコードを読み取ります。",
     "qrRefresh": "QRを更新",
@@ -169,7 +170,12 @@
     "statusActive": "稼働中",
     "statusRepairing": "修理中",
     "statusBroken": "故障",
-    "statusRetired": "使用停止"
+    "statusRetired": "使用停止",
+    "reportSuccess": "問題の報告に成功しました",
+    "repairStarted": "修理を開始しました",
+    "repairFinished": "修理が完了しました",
+    "retireSuccess": "設備の廃棄に成功しました",
+    "actionFailed": "操作に失敗しました"
   },
   "facility": {
     "title": "トレーニングルーム管理",
@@ -195,7 +201,9 @@
     "capacityLabel": "収容人数（名）",
     "description": "説明",
     "descriptionPlaceholder": "トレーニングルームの簡単な説明...",
-    "saveFailed": "ルームを保存できません。"
+    "saveFailed": "ルームを保存できません。",
+    "updateSuccess": "施設の更新に成功しました",
+    "createSuccess": "施設の追加に成功しました"
   },
   "feedback": {
     "title": "会員フィードバック",
@@ -236,7 +244,8 @@
     "typeAll": "すべての種別",
     "severityHigh": "高",
     "severityMedium": "中",
-    "severityLow": "低"
+    "severityLow": "低",
+    "updateSuccess": "更新に成功しました"
   },
   "members": {
     "list": {
@@ -338,7 +347,9 @@
       "submitFailed": "会員登録に失敗しました。もう一度お試しください。",
       "cash": "現金",
       "bankCard": "銀行カード",
-      "ewallet": "電子マネー"
+      "ewallet": "電子マネー",
+      "success": "会員登録に成功しました",
+      "retry": "再試行"
     }
   },
   "renewal": {
@@ -433,5 +444,8 @@
     "cash": "現金",
     "bankCard": "銀行カード",
     "ewallet": "電子マネー"
+  },
+  "common": {
+    "retry": "再試行"
   }
 }

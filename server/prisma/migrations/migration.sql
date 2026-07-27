@@ -361,3 +361,13 @@ CREATE TABLE public.payment_accounts (
   CONSTRAINT payment_accounts_pkey PRIMARY KEY (account_id),
   CONSTRAINT payment_accounts_member_id_fkey FOREIGN KEY (member_id) REFERENCES public.members(member_id)
 );
+
+CREATE TABLE public.password_reset_grants (
+  password_reset_grant_id bigint GENERATED ALWAYS AS IDENTITY NOT NULL,
+  user_id bigint NOT NULL UNIQUE,
+  token_hash character varying(64) NOT NULL UNIQUE,
+  expires_at timestamp(6) without time zone NOT NULL,
+  created_at timestamp(6) without time zone NOT NULL DEFAULT now(),
+  CONSTRAINT password_reset_grants_pkey PRIMARY KEY (password_reset_grant_id),
+  CONSTRAINT password_reset_grants_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(user_id) ON DELETE CASCADE
+);

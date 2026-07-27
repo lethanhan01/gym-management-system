@@ -15,6 +15,7 @@ import {
 } from '@nestjs/common'
 import { PermissionsGuard } from '../common/guards/permissions.guard'
 import { RequirePermission } from '../common/decorators/require-permission.decorator'
+import { DatabaseRetryable } from '../common/decorators/database-retryable.decorator'
 import { CurrentUser } from '../auth/decorators/current-user.decorator'
 import { AuthenticatedUser } from '../auth/types/jwt-payload.interface'
 import { StaffService, ListStaffQuery } from './staff.service'
@@ -24,6 +25,7 @@ import { CreateScheduleDto } from './dto/create-schedule.dto'
 import { GetStaffAttendanceDto } from './dto/staff-attendance.dto'
 
 @Controller('staff')
+@DatabaseRetryable()
 @UseGuards(PermissionsGuard)
 export class StaffController {
   constructor(private readonly svc: StaffService) {}

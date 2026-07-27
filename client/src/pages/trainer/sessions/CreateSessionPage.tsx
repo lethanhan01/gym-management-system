@@ -1,5 +1,6 @@
 import { FormEvent, useEffect, useMemo, useState } from 'react'
-import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { ButtonLink } from '@/components/ui/Button'
 import { ArrowLeft, Clock3 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { getApiError } from '@/lib/api-error'
@@ -21,6 +22,7 @@ import {
   TrainerSelect,
   TrainerSkeleton,
 } from '@/components/TrainerUI'
+import { toast } from '@/lib/toast'
 import { DateTimePickerInput } from '@/components/DateTimePickerInput'
 
 type PlanDayOption = Pick<
@@ -154,8 +156,10 @@ export default function CreateSessionPage() {
   }, [editing, memberId, t])
 
   const endTime = useMemo(() => {
-    if (!startTime || duration <= 0) return ''
-    const start = new Date(localDateTimeInputToIso(startTime))
+    if (!startTime || !Number.isFinite(duration) || duration <= 0) return ''
+    const startIso = localDateTimeInputToIso(startTime)
+    if (!startIso) return ''
+    const start = new Date(startIso)
     return new Date(start.getTime() + duration * 60000).toISOString()
   }, [duration, startTime])
 
@@ -179,13 +183,14 @@ export default function CreateSessionPage() {
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault()
-    if (!memberId || !roomId || !startTime || !endTime || !hasWorkoutPlanLink) return
+    const startIso = localDateTimeInputToIso(startTime)
+    if (!memberId || !roomId || !startIso || !endTime || !hasWorkoutPlanLink) return
     setSubmitting(true)
     setError(null)
     try {
       const payload = {
         roomId,
-        startTime: localDateTimeInputToIso(startTime),
+        startTime: startIso,
         endTime,
       }
       if (editing && id) {
@@ -208,7 +213,9 @@ export default function CreateSessionPage() {
       }
       navigate('/trainer/sessions')
     } catch (err) {
-      setError(getApiError(err, t('sessions.create.error.saveFailed')))
+      toast.error(getApiError(err, t('sessions.create.error.saveFailed')), {
+        action: { label: t('button.retry', { defaultValue: 'Thử lại' }), onClick: handleSubmit },
+      })
     } finally {
       setSubmitting(false)
     }
@@ -228,12 +235,12 @@ export default function CreateSessionPage() {
         title={editing ? t('sessions.create.titleEdit') : t('sessions.create.title')}
         description={t('sessions.create.description')}
         actions={
-          <Link
-            className="rogym-btn rogym-btn--outline-white"
+          <ButtonLink
+            variant="outline-white"
             to={id ? `/trainer/sessions/${id}` : '/trainer/sessions'}
           >
             <ArrowLeft size={16} /> {t('sessions.create.back')}
-          </Link>
+          </ButtonLink>
         }
       />
       {error && <TrainerErrorState message={error} />}
@@ -363,16 +370,22 @@ export default function CreateSessionPage() {
           {endTime ? toDateTimeLocalInput(endTime).replace('T', ' ') : t('sessions.create.endUnknown')}
         </div>
         <div className="flex justify-end gap-3 border-t border-white/5 pt-5">
-          <Link
-            className="rogym-btn rogym-btn--outline-white"
+          <ButtonLink
+            variant="outline-white"
             to={id ? `/trainer/sessions/${id}` : '/trainer/sessions'}
           >
             {t('sessions.create.cancel')}
-          </Link>
+          </ButtonLink>
           <SubmitButton
             loading={submitting}
             disabled={
-              editBlocked || !memberId || !roomId || !startTime || duration <= 0 || !hasWorkoutPlanLink
+              editBlocked ||
+              !memberId ||
+              !roomId ||
+              !endTime ||
+              !Number.isFinite(duration) ||
+              duration <= 0 ||
+              !hasWorkoutPlanLink
             }
           >
             {editing ? t('sessions.create.save') : t('sessions.create.submit')}

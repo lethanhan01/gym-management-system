@@ -36,7 +36,13 @@
       "chooseTrainer": "Chọn huấn luyện viên",
       "changeTrainer": "Đổi PT",
       "cancelTrainer": "Hủy PT này",
-      "trainerIncluded": "PT đã chọn đi kèm gói"
+      "trainerIncluded": "PT đã chọn đi kèm gói",
+      "success": {
+        "removedTrainer": "Đã hủy PT thành công"
+      },
+      "error": {
+        "removeTrainerFailed": "Hủy PT thất bại"
+      }
     },
     "subscription": {
       "sectionTitle": "Gói tập",
@@ -284,7 +290,7 @@
       "backToPackages": "← Chọn lại gói",
       "buttonContinue": "Tiếp tục thanh toán",
       "mainTitle": "Chọn gói tập phù hợp với bạn",
-      "mainSubtitle": "Cuộn xuống để xem thêm gói tập.",
+      "mainSubtitle": "Chọn gói phù hợp và xem trước không gian tập luyện.",
       "errorNetwork": "Không thể kết nối đến máy chủ. Vui lòng thử lại.",
       "buttonRetry": "Thử lại",
       "emptyPackages": "Hiện tại chưa có gói tập nào khả dụng. Vui lòng liên hệ gym.",
@@ -327,7 +333,13 @@
       "defaultBadge": "Mặc định",
       "buttonDeleteAccount": "Xoá tài khoản",
       "errorRenewNotFound": "Không tìm thấy gói tập để gia hạn.",
-      "errorGeneric": "Có lỗi xảy ra. Vui lòng thử lại."
+      "errorGeneric": "Có lỗi xảy ra. Vui lòng thử lại.",
+      "success": {
+        "deletedAccount": "Đã xóa tài khoản thanh toán"
+      },
+      "error": {
+        "deleteAccount": "Xóa tài khoản thất bại"
+      }
     },
     "payment": {
       "headerTitle": "Chọn gói tập của bạn",
@@ -591,6 +603,7 @@
       "trainerManages": "Huấn luyện viên sẽ là người bắt đầu và kết thúc buổi tập này.",
       "dayWeek": "Ngày {{day}} · Tuần {{week}}",
       "buttonClose": "Đóng",
+      "buttonStart": "Bắt đầu",
       "unitSeconds": "giây",
       "errorLoad": "Không thể tải lịch tập."
     },
@@ -636,18 +649,48 @@
       "buttonShowDetail": "Xem chi tiết ngày tập",
       "buttonStart": "Bắt đầu",
       "buttonStartDay": "Bắt đầu {{name}}",
+       "buttonEditDay": "Chỉnh sửa {{name}}",
+       "editModalTitle": "Chỉnh sửa buổi {{name}}",
+       "editModalDescription": "Các thay đổi này chỉ áp dụng cho buổi tập bạn bắt đầu tiếp theo và không làm thay đổi kế hoạch gốc.",
+       "setLabel": "Set {{number}}",
+       "fieldReps": "Số reps",
+       "fieldDuration": "Thời gian tập mỗi set (giây)",
+       "fieldWeight": "Mức tạ (kg)",
+       "fieldRestSeconds": "Nghỉ giữa sets (giây)",
+       "buttonAddSet": "Thêm set",
+       "buttonRemoveSet": "Xóa set {{number}}",
+       "buttonCancelEdit": "Hủy",
+       "buttonSaveEdit": "Lưu cấu hình",
+       "buttonBackToDays": "Quay lại chọn ngày tập",
+       "restBreak": "Nghỉ {{seconds}} giây",
+       "configuredSets": "{{count}} set đã cấu hình",
+       "emptyConfiguredSets": "Không có set nào để lưu.",
+       "invalidDayLink": "Liên kết ngày tập không hợp lệ hoặc không còn khả dụng.",
       "completedTitle": "Buổi tập hoàn tất!",
       "completedDesc": "Kết quả đã được ghi nhận vào lịch sử tập luyện.",
       "buttonGoToPlan": "Về kế hoạch",
       "buttonViewHistory": "Xem lịch sử",
       "setsCompleted": "{{done}} / {{total}} set hoàn thành",
-      "buttonSaving": "Đang lưu...",
-      "buttonFinish": "Kết thúc buổi tập",
-      "emptyTitle": "Bạn chưa có kế hoạch tập",
+        "buttonSaving": "Đang lưu...",
+        "buttonFinish": "Kết thúc buổi tập",
+        "buttonStartWorkout": "Bắt đầu buổi tập",
+        "buttonStopWorkout": "Dừng buổi tập",
+        "buttonResumeWorkout": "Tiếp tục buổi tập",
+        "buttonRetrySave": "Thử lưu lại",
+        "timeRemaining": "Thời gian còn lại",
+        "restRemaining": "Nghỉ còn {{seconds}} giây",
+        "restRunning": "Đang nghỉ · {{seconds}} giây",
+        "leaveTimerTitle": "Dừng buổi tập?",
+        "leaveTimerDescription": "Tiến trình hiện tại sẽ được lưu ở trạng thái tạm dừng để bạn có thể tiếp tục sau.",
+        "buttonContinueWorkout": "Tiếp tục buổi tập",
+        "buttonStopAndLeave": "Dừng và rời đi",
+        "emptyTitle": "Bạn chưa có kế hoạch tập",
       "emptyDescription": "Tạo kế hoạch cá nhân để bắt đầu tập luyện.",
       "buttonCreatePlan": "Tạo plan",
       "placeholderTitle": "Chọn một ngày tập trong kế hoạch của bạn để bắt đầu",
       "placeholderHint": "Mở chi tiết kế hoạch, rồi nhấn biểu tượng bắt đầu ở ngày muốn tập.",
+      "noLinkedPlan": "Buổi tập này chưa có workout plan liên kết. Hãy chọn ngày tập thủ công.",
+      "linkedPlanUnavailable": "Không thể mở sẵn ngày tập của lịch này. Hãy chọn ngày tập thủ công.",
       "errorLoad": "Không thể tải kế hoạch tập.",
       "errorSave": "Không thể lưu buổi tập. Vui lòng thử lại.",
       "unitSeconds": "giây"
@@ -781,6 +824,17 @@
     "noBenefits": "Không có thông tin quyền lợi.",
     "start": "Bắt đầu",
     "continue": "Tiếp tục",
-    "scrollToSelect": "Cuộn để chọn gói"
+    "scrollToSelect": "Chọn một gói để xem chi tiết",
+    "galleryLabel": "Thư viện gói tập",
+    "imageAlt": "Không gian tập luyện cho gói {{name}}",
+    "viewImage": "Xem ảnh không gian tập luyện cho gói {{name}}",
+    "selected": "Đã chọn",
+    "lightbox": {
+      "dialogLabel": "Xem ảnh không gian tập luyện",
+      "close": "Đóng ảnh",
+      "previous": "Ảnh trước",
+      "next": "Ảnh sau",
+      "counter": "Ảnh {{current}} trên {{total}}"
+    }
   }
 }

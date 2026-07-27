@@ -1,10 +1,16 @@
-import { FormEvent, useCallback, useEffect, useMemo, useState } from 'react'
+import { FormEvent, useCallback, useEffect, useState, useMemo } from 'react'
+import { Button } from '@/components/ui/Button'
 import { useTranslation } from 'react-i18next'
-import { Pencil, Plus, Search } from 'lucide-react'
+import { Pencil, Plus, Search, X } from 'lucide-react'
 import { getApiError } from '@/lib/api-error'
-import workoutService, { type Exercise, type ExerciseCategory } from '@/services/workout.service'
-import { ExerciseCard } from '@/components/workout/ExerciseUI'
-import { getExerciseCategories, filterExercises } from '@/components/workout/exercise-data'
+import workoutService, {
+  type Exercise,
+  type ExerciseBodyPart,
+  type ExerciseMuscle,
+  type ExerciseEquipment,
+} from '@/services/workout.service'
+import { ExerciseCard, ExerciseFilterDropdown } from '@/components/workout/ExerciseUI'
+import { filterExercises } from '@/components/workout/exercise-data'
 import {
   SubmitButton,
   TrainerEmptyState,
@@ -18,67 +24,99 @@ import {
 
 export default function ExercisesPage() {
   const { t } = useTranslation('trainer')
-  const CATEGORIES = useMemo(
-    () =>
-      getExerciseCategories().filter(
-        (item): item is { value: ExerciseCategory; label: string } => item.value !== ''
-      ),
-    []
-  )
+  const { t: tm } = useTranslation('member')
+
   const [exercises, setExercises] = useState<Exercise[]>([])
+  const [bodyParts, setBodyParts] = useState<ExerciseBodyPart[]>([])
+  const [muscles, setMuscles] = useState<ExerciseMuscle[]>([])
+  const [equipments, setEquipments] = useState<ExerciseEquipment[]>([])
+
   const [search, setSearch] = useState('')
-  const [category, setCategory] = useState('')
-  const [muscleGroup, setMuscleGroup] = useState('')
+  const [bodyPartId, setBodyPartId] = useState<number | ''>('')
+  const [targetMuscleId, setTargetMuscleId] = useState<number | ''>('')
+  const [equipmentId, setEquipmentId] = useState<number | ''>('')
+
+  // Filter popup
+  const [filterOpen, setFilterOpen] = useState(false)
+  const [draftBodyPartId, setDraftBodyPartId] = useState<number | ''>('')
+  const [draftTargetMuscleId, setDraftTargetMuscleId] = useState<number | ''>('')
+  const [draftEquipmentId, setDraftEquipmentId] = useState<number | ''>('')
+
+  const activeCount = [bodyPartId, targetMuscleId, equipmentId].filter(v => v !== '').length
+
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  
   const [modalOpen, setModalOpen] = useState(false)
   const [editing, setEditing] = useState<Exercise | null>(null)
   const [submitting, setSubmitting] = useState(false)
+  
   const [name, setName] = useState('')
-  const [formCategory, setFormCategory] = useState<ExerciseCategory>('strength')
-  const [formMuscleGroup, setFormMuscleGroup] = useState('')
-  const [equipment, setEquipment] = useState('')
+  const [formBodyPartId, setFormBodyPartId] = useState<number | ''>('')
+  const [formTargetMuscleId, setFormTargetMuscleId] = useState<number | ''>('')
+  const [formEquipmentId, setFormEquipmentId] = useState<number | ''>('')
   const [description, setDescription] = useState('')
+  const [instructions, setInstructions] = useState<string[]>([''])
   const [imageUrl, setImageUrl] = useState('')
+
+  const loadLookups = useCallback(async () => {
+    try {
+      const [bp, mu, eq] = await Promise.all([
+        workoutService.getBodyParts(),
+        workoutService.getMuscles(),
+        workoutService.getEquipments(),
+      ])
+      setBodyParts(bp)
+      setMuscles(mu)
+      setEquipments(eq)
+    } catch (err) {
+      console.error('Failed to load lookups', err)
+    }
+  }, [])
 
   const load = useCallback(async () => {
     setLoading(true)
     setError(null)
     try {
-      setExercises(
-        await workoutService.getExercises({
-          category: category ? (category as ExerciseCategory) : undefined,
-        })
-      )
+      const result = await workoutService.getExercises({
+        bodyPartId: bodyPartId !== '' ? bodyPartId : undefined,
+        targetMuscleId: targetMuscleId !== '' ? targetMuscleId : undefined,
+        equipmentId: equipmentId !== '' ? equipmentId : undefined,
+        q: search || undefined,
+        pageSize: 100,
+      })
+      setExercises(result.data)
     } catch (err) {
       setError(getApiError(err, t('exercises.error.loadFailed')))
     } finally {
       setLoading(false)
     }
-  }, [category, t])
+  }, [bodyPartId, targetMuscleId, equipmentId, search, t])
+
+  useEffect(() => {
+    void loadLookups()
+  }, [loadLookups])
 
   useEffect(() => {
     void load()
   }, [load])
 
-  const muscleGroupOptions = useMemo(() => {
-    const groups = exercises
-      .map((ex) => ex.muscleGroup)
-      .filter((g): g is string => !!g)
-    return [...new Set(groups)].sort((a, b) => a.localeCompare(b, 'vi'))
-  }, [exercises])
-
-  const filtered = filterExercises(exercises, search).filter(
-    (ex) => !muscleGroup || ex.muscleGroup === muscleGroup,
-  )
+  const filtered = useMemo(() => filterExercises(
+    exercises,
+    search,
+    bodyPartId !== '' ? bodyPartId : undefined,
+    targetMuscleId !== '' ? targetMuscleId : undefined,
+    equipmentId !== '' ? equipmentId : undefined
+  ), [exercises, search, bodyPartId, targetMuscleId, equipmentId])
 
   function openCreate() {
     setEditing(null)
     setName('')
-    setFormCategory('strength')
-    setFormMuscleGroup('')
-    setEquipment('')
+    setFormBodyPartId('')
+    setFormTargetMuscleId('')
+    setFormEquipmentId('')
     setDescription('')
+    setInstructions([''])
     setImageUrl('')
     setModalOpen(true)
   }
@@ -86,10 +124,11 @@ export default function ExercisesPage() {
   function openEdit(exercise: Exercise) {
     setEditing(exercise)
     setName(exercise.name)
-    setFormCategory(exercise.category)
-    setFormMuscleGroup(exercise.muscleGroup ?? '')
-    setEquipment(exercise.equipmentNeeded ?? '')
+    setFormBodyPartId(exercise.bodyPartId ?? '')
+    setFormTargetMuscleId(exercise.targetMuscleId ?? '')
+    setFormEquipmentId(exercise.equipmentId ?? '')
     setDescription(exercise.description ?? '')
+    setInstructions(exercise.instructions?.length ? exercise.instructions : [''])
     setImageUrl(exercise.imageUrl ?? '')
     setModalOpen(true)
   }
@@ -100,10 +139,11 @@ export default function ExercisesPage() {
     setError(null)
     const payload = {
       name: name.trim(),
-      category: formCategory,
-      muscleGroup: formMuscleGroup.trim() || undefined,
-      equipmentNeeded: equipment.trim() || undefined,
+      bodyPartId: formBodyPartId !== '' ? formBodyPartId : undefined,
+      targetMuscleId: formTargetMuscleId !== '' ? formTargetMuscleId : undefined,
+      equipmentId: formEquipmentId !== '' ? formEquipmentId : undefined,
       description: description.trim() || undefined,
+      instructions: instructions.map(s => s.trim()).filter(s => s).length > 0 ? instructions.map(s => s.trim()).filter(s => s) : undefined,
       imageUrl: imageUrl.trim() || undefined,
     }
     try {
@@ -125,13 +165,13 @@ export default function ExercisesPage() {
         title={t('exercises.title')}
         description={t('exercises.description')}
         actions={
-          <button type="button" className="rogym-btn rogym-btn--primary" onClick={openCreate}>
+          <Button variant="primary" onClick={openCreate}>
             <Plus size={16} /> {t('exercises.addButton')}
-          </button>
+          </Button>
         }
       />
-      <div className="rogym-card rogym-card--compact grid gap-3 p-4 md:grid-cols-[1fr_220px_220px]">
-        <div className="relative">
+      <div className="rogym-card rogym-card--compact flex items-center gap-3 p-4">
+        <div className="relative min-w-0 flex-1">
           <Search
             className="absolute left-3 top-1/2 -translate-y-1/2 rogym-text-dim"
             size={17}
@@ -143,22 +183,37 @@ export default function ExercisesPage() {
             placeholder={t('exercises.searchPlaceholder')}
           />
         </div>
-        <TrainerSelect value={category} onValueChange={setCategory}>
-          <option value="">{t('exercises.allCategories')}</option>
-          {CATEGORIES.map((item) => (
-            <option key={item.value} value={item.value}>
-              {item.label}
-            </option>
-          ))}
-        </TrainerSelect>
-        <TrainerSelect value={muscleGroup} onValueChange={setMuscleGroup}>
-          <option value="">{t('exercises.allMuscleGroups')}</option>
-          {muscleGroupOptions.map((group) => (
-            <option key={group} value={group}>
-              {group}
-            </option>
-          ))}
-        </TrainerSelect>
+        <ExerciseFilterDropdown
+          open={filterOpen}
+          onOpenChange={(open) => {
+            if (open) {
+              setDraftBodyPartId(bodyPartId)
+              setDraftTargetMuscleId(targetMuscleId)
+              setDraftEquipmentId(equipmentId)
+              setFilterOpen(true)
+            } else {
+              setFilterOpen(false)
+            }
+          }}
+          activeCount={activeCount}
+          bodyPartId={draftBodyPartId !== '' ? draftBodyPartId : undefined}
+          targetMuscleId={draftTargetMuscleId !== '' ? draftTargetMuscleId : undefined}
+          equipmentId={draftEquipmentId !== '' ? draftEquipmentId : undefined}
+          bodyParts={bodyParts}
+          muscles={muscles}
+          equipments={equipments}
+          onChange={(fields) => {
+            if ('bodyPartId' in fields) setDraftBodyPartId(fields.bodyPartId ?? '')
+            if ('targetMuscleId' in fields) setDraftTargetMuscleId(fields.targetMuscleId ?? '')
+            if ('equipmentId' in fields) setDraftEquipmentId(fields.equipmentId ?? '')
+          }}
+          onApply={() => {
+            setBodyPartId(draftBodyPartId)
+            setTargetMuscleId(draftTargetMuscleId)
+            setEquipmentId(draftEquipmentId)
+            setFilterOpen(false)
+          }}
+        />
       </div>
       {error && <TrainerErrorState message={error} onRetry={load} />}
       {loading ? (
@@ -177,14 +232,13 @@ export default function ExercisesPage() {
               imageAspect="aspect-[6/5]"
               action={
                 /^\d+$/.test(exercise.exerciseId) ? (
-                  <button
-                    type="button"
-                    className="rogym-btn rogym-btn--icon rogym-btn--elevated"
+                  <Button
+                    variant="icon"
                     onClick={() => openEdit(exercise)}
                     aria-label={t('exercises.editAriaLabel', { name: exercise.name })}
                   >
                     <Pencil size={15} />
-                  </button>
+                  </Button>
                 ) : undefined
               }
             />
@@ -197,13 +251,12 @@ export default function ExercisesPage() {
         onClose={() => setModalOpen(false)}
         footer={
           <>
-            <button
-              type="button"
-              className="rogym-btn rogym-btn--outline-white"
+            <Button
+              variant="outline-white"
               onClick={() => setModalOpen(false)}
             >
               {t('exercises.modal.cancel')}
-            </button>
+            </Button>
             <SubmitButton form="exercise-form" loading={submitting} disabled={!name.trim()}>
               {t('exercises.modal.submit')}
             </SubmitButton>
@@ -224,36 +277,47 @@ export default function ExercisesPage() {
             />
           </label>
           <label className="block space-y-2">
-            <span className="rogym-field-label">{t('exercises.modal.fieldCategory')}</span>
+            <span className="rogym-field-label">{tm('workout.exercises.fieldBodyPart', 'Body Part')}</span>
             <TrainerSelect
-              value={formCategory}
-              onValueChange={(value) => setFormCategory(value as ExerciseCategory)}
+              value={String(formBodyPartId)}
+              onValueChange={(val) => setFormBodyPartId(val ? Number(val) : '')}
             >
-              {CATEGORIES.map((item) => (
-                <option key={item.value} value={item.value}>
-                  {item.label}
+              <option value="">—</option>
+              {bodyParts.map((item) => (
+                <option key={item.bodyPartId} value={item.bodyPartId}>
+                  {item.name}
                 </option>
               ))}
             </TrainerSelect>
           </label>
           <div className="grid gap-4 md:grid-cols-2">
             <label className="block space-y-2">
-              <span className="rogym-field-label">{t('exercises.modal.fieldMuscleGroup')}</span>
-              <input
-                className="rogym-input"
-                value={formMuscleGroup}
-                onChange={(event) => setFormMuscleGroup(event.target.value)}
-                maxLength={100}
-              />
+              <span className="rogym-field-label">{tm('workout.exercises.fieldTargetMuscle', 'Target Muscle')}</span>
+              <TrainerSelect
+                value={String(formTargetMuscleId)}
+                onValueChange={(val) => setFormTargetMuscleId(val ? Number(val) : '')}
+              >
+                <option value="">—</option>
+                {muscles.map((item) => (
+                  <option key={item.muscleId} value={item.muscleId}>
+                    {item.name}
+                  </option>
+                ))}
+              </TrainerSelect>
             </label>
             <label className="block space-y-2">
-              <span className="rogym-field-label">{t('exercises.modal.fieldEquipment')}</span>
-              <input
-                className="rogym-input"
-                value={equipment}
-                onChange={(event) => setEquipment(event.target.value)}
-                maxLength={100}
-              />
+              <span className="rogym-field-label">{tm('workout.exercises.fieldEquipment', 'Equipment')}</span>
+              <TrainerSelect
+                value={String(formEquipmentId)}
+                onValueChange={(val) => setFormEquipmentId(val ? Number(val) : '')}
+              >
+                <option value="">—</option>
+                {equipments.map((item) => (
+                  <option key={item.equipmentId} value={item.equipmentId}>
+                    {item.name}
+                  </option>
+                ))}
+              </TrainerSelect>
             </label>
           </div>
           <label className="block space-y-2">
@@ -264,6 +328,42 @@ export default function ExercisesPage() {
               onChange={(event) => setDescription(event.target.value)}
             />
           </label>
+          <div className="block space-y-2">
+            <span className="rogym-field-label">{tm('workout.exercises.fieldInstructions', 'Instructions')}</span>
+            <div className="space-y-2">
+              {instructions.map((step, idx) => (
+                <div key={idx} className="flex gap-2">
+                  <input
+                    className="rogym-input flex-1"
+                    value={step}
+                    onChange={(e) => {
+                      const newInst = [...instructions]
+                      newInst[idx] = e.target.value
+                      setInstructions(newInst)
+                    }}
+                    placeholder={`Step ${idx + 1}`}
+                  />
+                  <Button
+                    variant="outline-white"
+                    className="px-2 shrink-0"
+                    onClick={() => {
+                      const newInst = instructions.filter((_, i) => i !== idx)
+                      setInstructions(newInst)
+                    }}
+                  >
+                    <X size={15} />
+                  </Button>
+                </div>
+              ))}
+            </div>
+            <Button
+              variant="outline-white"
+              className="mt-2 w-full justify-center text-xs"
+              onClick={() => setInstructions([...instructions, ''])}
+            >
+              <Plus size={14} /> Add Step
+            </Button>
+          </div>
           <label className="block space-y-2">
             <span className="rogym-field-label">{t('exercises.modal.fieldImageUrl')}</span>
             <input

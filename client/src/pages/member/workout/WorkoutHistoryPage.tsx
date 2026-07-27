@@ -56,7 +56,7 @@ function MiniProgressBar({ done, total }: { done: number; total: number }) {
 
 function SetComparison({ set }: { set: WorkoutLogSet }) {
   const ex = set.planExercise
-  const isCardio = ex?.exercise?.category === 'cardio'
+  const isCardio = ex?.exercise?.bodyPart?.name?.toLowerCase() === 'cardio'
   const targetVal = isCardio
     ? ex?.targetDurationSec != null
       ? `${ex.targetDurationSec} giây`
@@ -106,7 +106,7 @@ function buildMonthOptions(t: TFunction<'member'>, locale: string) {
 
 export default function WorkoutHistoryPage() {
   const { t, i18n } = useTranslation('member')
-  const { user } = useAuthStore()
+  const user = useAuthStore(state => state.user)
   const memberId = user?.memberId ? String(user.memberId) : undefined
 
   const [logs, setLogs] = useState<WorkoutLog[]>([])

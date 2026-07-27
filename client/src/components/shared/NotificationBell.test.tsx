@@ -1,13 +1,14 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
-import NotificationBell from './NotificationBell'
+import NotificationBell, { showRealtimeNotificationToast } from './NotificationBell'
 import i18n from '@/lib/i18n'
 import { useAuthStore } from '@/stores/authStore'
 import { notificationService, type NotificationItem } from '@/services/notification.service'
 import type { Role } from '@/stores/authStore'
 
 const navigateMock = vi.hoisted(() => vi.fn())
+const toastInfoMock = vi.hoisted(() => vi.fn())
 
 vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual<typeof import('react-router-dom')>('react-router-dom')
@@ -25,6 +26,10 @@ vi.mock('@/services/notification.service', () => ({
     markRead: vi.fn(),
     markAllRead: vi.fn(),
   },
+}))
+
+vi.mock('@/lib/toast', () => ({
+  toast: { info: toastInfoMock },
 }))
 
 const item: NotificationItem = {
@@ -128,30 +133,10 @@ describe('NotificationBell', () => {
     expect(screen.getByText('Đã đọc tất cả')).toBeVisible()
   })
 
-  it('renders realtime notifications through the shared toast surface', async () => {
-    const realtimeItem = makeItem({
-      notificationId: '11',
-      type: 'custom.notice',
-      title: 'Realtime notice',
-      message: 'New notification body',
-    })
-    const setIntervalSpy = vi.spyOn(globalThis, 'setInterval').mockImplementation((handler) => {
-      if (typeof handler === 'function') void handler()
-      return 1 as unknown as ReturnType<typeof setInterval>
-    })
-    const clearIntervalSpy = vi.spyOn(globalThis, 'clearInterval').mockImplementation(() => undefined)
-    vi.mocked(notificationService.listNew).mockResolvedValueOnce([realtimeItem])
-    vi.mocked(notificationService.unreadCount).mockResolvedValue(2)
+  it('sends realtime notifications through the shared toast API', () => {
+    showRealtimeNotificationToast('Realtime notice')
 
-    renderBell()
-
-    const toast = await screen.findByRole('status')
-    expect(toast).toHaveClass('rogym-notification-toast')
-    expect(toast).toHaveTextContent('Realtime notice')
-    expect(screen.getByText('2')).toBeVisible()
-
-    setIntervalSpy.mockRestore()
-    clearIntervalSpy.mockRestore()
+    expect(toastInfoMock).toHaveBeenCalledWith('Realtime notice')
   })
 
   it('updates notification content when the language changes to Japanese', async () => {
@@ -232,7 +217,7 @@ describe('NotificationBell', () => {
   })
 
   it.each([
-    ['member', 'training_session', '/member/workout/sessions', '/member'],
+    ['member', 'training_session', '/member/workout/sessions?sessionId=5', '/member'],
     ['trainer', 'training_session', '/trainer/sessions', '/trainer'],
     ['staff', 'training_session', '/staff/schedules', '/staff'],
     ['owner', 'training_session', '/owner/staff/schedules', '/owner'],

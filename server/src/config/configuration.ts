@@ -1,4 +1,4 @@
-import { IsEmail, IsEnum, IsIn, IsNumber, IsOptional, IsString, Max, Min, validateSync } from 'class-validator'
+import { IsBooleanString, IsEmail, IsEnum, IsIn, IsNumber, IsOptional, IsString, Max, Min, validateSync } from 'class-validator'
 import { plainToInstance } from 'class-transformer'
 
 enum NodeEnv {
@@ -6,6 +6,8 @@ enum NodeEnv {
   Production = 'production',
   Test = 'test',
 }
+
+type DatabaseConnectionMode = 'direct' | 'supavisor-session'
 
 /**
  * Schema validate cho process.env. Validate o thoi diem boot, fail-fast neu thieu bien.
@@ -25,6 +27,10 @@ export class EnvironmentVariables {
 
   @IsString()
   DATABASE_URL!: string
+
+  @IsOptional()
+  @IsIn(['direct', 'supavisor-session'])
+  DB_CONNECTION_MODE?: DatabaseConnectionMode
 
   /**
    * Dung trong schema.prisma (directUrl): migrate drift / tac vu can ket noi truc tiep toi Postgres,
@@ -66,6 +72,17 @@ export class EnvironmentVariables {
   @IsOptional() @IsNumber() LINE_REMINDER_MINUTES: number = 30
   @IsOptional() @IsString() LINE_MESSAGING_ENABLED: string = 'false'
   @IsOptional() @IsIn(['vi', 'ja']) LINE_MESSAGE_LOCALE: 'vi' | 'ja' = 'vi'
+
+  @IsOptional() @IsString() EXERCISEDB_API_KEY?: string
+  @IsOptional() @IsBooleanString() EXERCISEDB_SYNC_ENABLED: string = 'false'
+  @IsOptional() @IsBooleanString() EXERCISEDB_SCHEDULER_ENABLED: string = 'false'
+  @IsOptional() @IsString() EXERCISEDB_SYNC_CRON: string = '0 3 * * 0'
+  @IsOptional() @IsNumber() @Min(1000) EXERCISEDB_TIMEOUT_MS: number = 15000
+  @IsOptional() @IsNumber() @Min(1) @Max(100) EXERCISEDB_PAGE_SIZE: number = 50
+  @IsOptional() @IsNumber() @Min(1) @Max(500) EXERCISEDB_UPSERT_BATCH_SIZE: number = 50
+  @IsOptional() @IsNumber() @Min(1) @Max(100000) EXERCISEDB_MIN_EXPECTED_COUNT: number = 1
+  @IsOptional() @IsNumber() @Min(0) @Max(10) EXERCISEDB_RETRY_LIMIT: number = 3
+  @IsOptional() @IsNumber() @Min(15) @Max(3600) EXERCISEDB_LOCK_LEASE_SECONDS: number = 300
 }
 
 export function validateConfig(raw: Record<string, unknown>): EnvironmentVariables {
@@ -79,9 +96,81 @@ export function validateConfig(raw: Record<string, unknown>): EnvironmentVariabl
       .join('\n')
     throw new Error(`Invalid environment configuration:\n${detail}`)
   }
+  validateDatabaseConnectionConfig(config, raw)
   validateLineMessagingConfig(config)
   validateSmtpConfig(config)
+  validateExerciseDbConfig(config)
   return config
+}
+
+function validateExerciseDbConfig(config: EnvironmentVariables) {
+  const syncEnabled = config.EXERCISEDB_SYNC_ENABLED === 'true'
+  const schedulerEnabled = config.EXERCISEDB_SCHEDULER_ENABLED === 'true'
+  if (schedulerEnabled && !syncEnabled) {
+    throw new Error('Invalid environment configuration:\n  - EXERCISEDB_SCHEDULER_ENABLED: requires EXERCISEDB_SYNC_ENABLED=true')
+  }
+  if (!syncEnabled) return
+  if (!config.EXERCISEDB_API_KEY?.trim()) {
+    throw new Error('Invalid environment configuration:\n  - EXERCISEDB_API_KEY: required when EXERCISEDB_SYNC_ENABLED=true')
+  }
+  if (schedulerEnabled && config.EXERCISEDB_SYNC_CRON.trim().split(/\s+/).length !== 5) {
+    throw new Error('Invalid environment configuration:\n  - EXERCISEDB_SYNC_CRON: must be a five-part cron expression')
+  }
+}
+
+function validateDatabaseConnectionConfig(
+  config: EnvironmentVariables,
+  raw: Record<string, unknown>,
+) {
+  const requestedMode = config.DB_CONNECTION_MODE?.trim() as DatabaseConnectionMode | undefined
+  if (config.NODE_ENV === NodeEnv.Production && !requestedMode) {
+    throw new Error(
+      'Invalid environment configuration:\n  - DB_CONNECTION_MODE: required in production (direct or supavisor-session)',
+    )
+  }
+
+  // Development retains a safe IPv4-compatible default while production must
+  // declare its topology explicitly.
+  const mode = requestedMode ?? 'supavisor-session'
+  config.DB_CONNECTION_MODE = mode
+
+  let url: URL
+  try {
+    url = new URL(config.DATABASE_URL)
+  } catch {
+    throw new Error('Invalid environment configuration:\n  - DATABASE_URL: must be a valid URL')
+  }
+
+  if (!['postgres:', 'postgresql:'].includes(url.protocol)) {
+    throw new Error('Invalid environment configuration:\n  - DATABASE_URL: must use postgres or postgresql')
+  }
+  if (url.port !== '5432') {
+    throw new Error('Invalid environment configuration:\n  - DATABASE_URL: persistent connections must use port 5432')
+  }
+  if (url.searchParams.get('sslmode') !== 'require') {
+    throw new Error('Invalid environment configuration:\n  - DATABASE_URL: sslmode=require is required')
+  }
+  if (url.searchParams.get('connection_limit') !== '5') {
+    throw new Error('Invalid environment configuration:\n  - DATABASE_URL: connection_limit=5 is required')
+  }
+  if (url.searchParams.get('pgbouncer') === 'true') {
+    throw new Error('Invalid environment configuration:\n  - DATABASE_URL: pgbouncer=true is not allowed for persistent connections')
+  }
+  if (!url.searchParams.get('application_name')?.trim()) {
+    throw new Error('Invalid environment configuration:\n  - DATABASE_URL: application_name is required')
+  }
+
+  const isDirect = /^db\.[a-z0-9-]+\.supabase\.co$/i.test(url.hostname)
+  const isSessionPooler = url.hostname.endsWith('.pooler.supabase.com')
+  if ((mode === 'direct' && !isDirect) || (mode === 'supavisor-session' && !isSessionPooler)) {
+    throw new Error(
+      `Invalid environment configuration:\n  - DATABASE_URL: does not match DB_CONNECTION_MODE=${mode}`,
+    )
+  }
+
+  // `raw` is deliberately accepted so validation remains tied to boot-time
+  // environment values instead of mutating the database URL at runtime.
+  void raw
 }
 
 function validateSmtpConfig(config: EnvironmentVariables) {

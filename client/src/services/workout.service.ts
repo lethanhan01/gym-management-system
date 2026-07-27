@@ -1,22 +1,45 @@
 import api from './api'
 
-export type ExerciseCategory = 'strength' | 'cardio' | 'flexibility' | 'balance'
 export type WorkoutPlanStatus = 'draft' | 'active' | 'archived'
 export type WorkoutAssignmentStatus = 'active' | 'completed' | 'replaced'
 export type PlanCreatorType = 'staff' | 'member'
 
+export interface ExerciseBodyPart {
+  bodyPartId: number
+  name: string
+}
+
+export interface ExerciseEquipment {
+  equipmentId: number
+  name: string
+}
+
+export interface ExerciseMuscle {
+  muscleId: number
+  name: string
+}
+
 export interface Exercise {
   exerciseId: string
   name: string
-  category: ExerciseCategory
-  muscleGroup: string | null
-  equipmentNeeded: string | null
+  bodyPartId: number | null
+  targetMuscleId: number | null
+  equipmentId: number | null
   description: string | null
+  instructions: string[] | null
   imageUrl: string | null
   createdByStaffId: string | null
   createdAt: string
   deletedAt: string | null
+  source?: 'legacy' | 'manual' | 'exercisedb'
+
+  bodyPart?: ExerciseBodyPart
+  targetMuscle?: ExerciseMuscle
+  equipment?: ExerciseEquipment
+  secondaryMuscles?: { muscle: ExerciseMuscle }[]
 }
+
+export interface ExerciseCatalogPage { data: Exercise[]; meta: { page: number; pageSize: number; total: number; totalPages: number } }
 
 export interface WorkoutPlanExercise {
   planExerciseId: string
@@ -111,6 +134,7 @@ export interface WorkoutLog {
   memberId: string
   assignmentId: string
   planDayId: string
+  clientCompletionKey?: string | null
   loggedAt: string
   durationMin: number | null
   notes: string | null
@@ -120,19 +144,21 @@ export interface WorkoutLog {
 
 export interface CreateExerciseDto {
   name: string
-  category: ExerciseCategory
-  muscleGroup?: string
-  equipmentNeeded?: string
+  bodyPartId?: number
+  targetMuscleId?: number
+  equipmentId?: number
   description?: string
+  instructions?: string[]
   imageUrl?: string
 }
 
 export interface UpdateExerciseDto {
   name?: string
-  category?: ExerciseCategory
-  muscleGroup?: string
-  equipmentNeeded?: string
+  bodyPartId?: number
+  targetMuscleId?: number
+  equipmentId?: number
   description?: string
+  instructions?: string[]
   imageUrl?: string
 }
 
@@ -192,6 +218,7 @@ export interface CreateWorkoutLogDto {
   assignmentId: number
   planDayId: number
   loggedAt: string
+  clientCompletionKey?: string
   durationMin?: number
   notes?: string
   sets: LogSetDto[]
@@ -200,10 +227,29 @@ export interface CreateWorkoutLogDto {
 const workoutService = {
   // Exercises
   async getExercises(params?: {
-    category?: ExerciseCategory
-    muscleGroup?: string
-  }): Promise<Exercise[]> {
-    const res = await api.get<{ success: boolean; data: Exercise[] }>('/exercises', { params })
+    bodyPartId?: number
+    targetMuscleId?: number
+    equipmentId?: number
+    q?: string
+    page?: number
+    pageSize?: number
+  }): Promise<ExerciseCatalogPage> {
+    const res = await api.get<{ success: boolean } & ExerciseCatalogPage>('/exercises', { params })
+    return { data: res.data.data, meta: res.data.meta }
+  },
+
+  async getBodyParts(): Promise<ExerciseBodyPart[]> {
+    const res = await api.get<{ success: boolean; data: ExerciseBodyPart[] }>('/exercises/body-parts')
+    return res.data.data
+  },
+
+  async getEquipments(): Promise<ExerciseEquipment[]> {
+    const res = await api.get<{ success: boolean; data: ExerciseEquipment[] }>('/exercises/equipments')
+    return res.data.data
+  },
+
+  async getMuscles(): Promise<ExerciseMuscle[]> {
+    const res = await api.get<{ success: boolean; data: ExerciseMuscle[] }>('/exercises/muscles')
     return res.data.data
   },
 

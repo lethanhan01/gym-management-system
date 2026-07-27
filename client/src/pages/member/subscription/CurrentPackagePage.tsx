@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useLocation } from 'react-router-dom'
 import {
@@ -24,7 +24,7 @@ import paymentService, { type Payment } from '@/services/payment.service'
 import { useAuthStore } from '@/stores/authStore'
 import { useSubscriptionStore } from '@/stores/subscriptionStore'
 import { MemberPage, MemberPageHeader, MemberSkeleton } from '@/components/MemberUI'
-import { NotificationToast } from '@/components/shared/NotificationUI'
+import { Button } from '@/components/ui/Button'
 import { getPaymentMethodLabel } from '@/components/payment/payment-method-data'
 import { formatVnd } from '@/lib/currency'
 import { formatDate } from '@/lib/date'
@@ -34,6 +34,7 @@ import {
   isSubscriptionActive,
   subscriptionEndDateKey,
 } from '@/lib/subscription'
+import { toast } from '@/lib/toast'
 
 function Badge({ label, tone = 'muted' }: { label: string; tone?: string }) {
   return (
@@ -65,11 +66,8 @@ export default function CurrentPackagePage() {
   const [payments, setPayments] = useState<Payment[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [toast, setToast] = useState<string | null>(null)
-  const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [cancelTarget, setCancelTarget] = useState<Subscription | null>(null)
   const [cancelling, setCancelling] = useState(false)
-  const [cancelError, setCancelError] = useState<string | null>(null)
 
   const [pkgModalOpen, setPkgModalOpen] = useState(false)
   const [allPkgs, setAllPkgs] = useState<Package[]>([])
@@ -80,24 +78,16 @@ export default function CurrentPackagePage() {
 
   const navigate = useNavigate()
   const location = useLocation()
-  const { user, clearAuth } = useAuthStore()
+  const user = useAuthStore(state => state.user)
+  const clearAuth = useAuthStore(state => state.clearAuth)
   const setResolvedStatus = useSubscriptionStore((s) => s.setResolvedStatus)
 
   useEffect(() => {
     if (location.state?.justActivated) {
-      setToast(t('subscription.current.toastActivated'))
-      if (toastTimerRef.current) clearTimeout(toastTimerRef.current)
-      toastTimerRef.current = setTimeout(() => setToast(null), 4000)
+      toast.success(t('subscription.current.toastActivated'))
       window.history.replaceState({}, '')
     }
   }, [location.state?.justActivated, t])
-
-  useEffect(
-    () => () => {
-      if (toastTimerRef.current) clearTimeout(toastTimerRef.current)
-    },
-    []
-  )
 
   useEffect(() => {
     if (!user?.memberId) return
@@ -141,24 +131,19 @@ export default function CurrentPackagePage() {
   async function handleCancel() {
     if (!cancelTarget || !user?.memberId) return
     setCancelling(true)
-    setCancelError(null)
     try {
       await subscriptionService.cancel(cancelTarget.subscriptionId)
       setCancelTarget(null)
       setResolvedStatus(false, user.memberId)
-      setToast(t('subscription.current.toastCancelled'))
-      if (toastTimerRef.current) clearTimeout(toastTimerRef.current)
-      toastTimerRef.current = setTimeout(() => {
-        setToast(null)
-        navigate('/member/subscription/setup', { replace: true })
-      }, 1500)
+      toast.success(t('subscription.current.toastCancelled'))
+      navigate('/member/subscription/setup', { replace: true })
     } catch (err) {
       const e = err as { response?: { status?: number; data?: { message?: string } } }
       if (e?.response?.status === 401) {
         clearAuth()
         navigate('/login')
       } else {
-        setCancelError(e?.response?.data?.message || 'Có lỗi xảy ra. Vui lòng thử lại.')
+        toast.error(e?.response?.data?.message || 'Có lỗi xảy ra. Vui lòng thử lại.')
       }
     } finally {
       setCancelling(false)
@@ -197,11 +182,6 @@ export default function CurrentPackagePage() {
 
   return (
     <MemberPage>
-      {/* Toast */}
-      {toast && (
-        <NotificationToast tone="success" message={toast} />
-      )}
-
       {/* Cancel dialog */}
       {cancelTarget && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 rogym-sx-49121f22">
@@ -220,17 +200,16 @@ export default function CurrentPackagePage() {
                 ? t('subscription.current.cancelDialog.bodyPending')
                 : t('subscription.current.cancelDialog.bodyActive')}
             </p>
-            {cancelError && <p className="text-red-300 text-sm mb-3">{cancelError}</p>}
             <div className="flex gap-3">
-              <button
+              <Button
                 onClick={() => {
                   setCancelTarget(null)
-                  setCancelError(null)
                 }}
-                className="rogym-btn rogym-btn--outline-white flex-1"
+                className="flex-1"
+                variant="outline-white"
               >
                 {t('subscription.current.cancelDialog.buttonKeep')}
-              </button>
+              </Button>
               <button
                 onClick={handleCancel}
                 disabled={cancelling}
@@ -248,12 +227,12 @@ export default function CurrentPackagePage() {
         title={t('subscription.current.title')}
         description={t('subscription.current.description')}
         actions={
-          <button
+          <Button
             onClick={() => void openPkgModal()}
-            className="rogym-btn rogym-btn--outline-white"
+            variant="outline-white"
           >
             {t('subscription.current.actionAvailable')}
-          </button>
+          </Button>
         }
       />
 
@@ -263,23 +242,23 @@ export default function CurrentPackagePage() {
         <div className="flex flex-col items-center justify-center py-16 gap-4">
           <AlertCircle size={40} className="text-red-400" />
           <p className="rogym-text-secondary">{error}</p>
-          <button
+          <Button
             onClick={() => navigate('/member/subscription/setup')}
-            className="rogym-btn rogym-btn--primary"
+            variant="primary"
           >
             {t('subscription.current.errorEmpty')}
-          </button>
+          </Button>
         </div>
       ) : !subscription ? (
         <div className="rogym-card rogym-card--compact flex flex-col items-center justify-center text-center py-16 gap-4">
           <ShoppingBag size={48} className="rogym-text-secondary" />
           <p className="rogym-text-secondary">{t('subscription.current.emptyState')}</p>
-          <button
+          <Button
             onClick={() => navigate('/member/subscription/setup')}
-            className="rogym-btn rogym-btn--primary"
+            variant="primary"
           >
             {t('subscription.current.errorEmpty')}
-          </button>
+          </Button>
         </div>
       ) : (
         <>
@@ -290,12 +269,13 @@ export default function CurrentPackagePage() {
               <p className="text-amber-300 text-sm flex-1">
                 {t('subscription.current.expiringAlert', { days: daysLeft })}
               </p>
-              <button
+              <Button
                 onClick={() => navigate('/member/subscription/renew')}
-                className="rogym-btn rogym-btn--primary text-sm px-4 py-2"
+                variant="primary"
+                className="text-sm px-4 py-2"
               >
                 {t('subscription.current.buttonRenewNow')}
-              </button>
+              </Button>
             </div>
           )}
 
@@ -379,21 +359,22 @@ export default function CurrentPackagePage() {
                     </p>
                   )}
                   <div className="flex flex-col gap-3 sm:flex-row sm:justify-between">
-                    <button
+                    <Button
                       onClick={() => setCancelTarget(subscription)}
-                      className="rogym-cancel-outline rogym-btn flex items-center justify-center gap-1.5 whitespace-nowrap w-full sm:w-auto rogym-sx-2fb3205c"
+                      className="rogym-cancel-outline flex items-center justify-center gap-1.5 whitespace-nowrap w-full sm:w-auto rogym-sx-2fb3205c"
                     >
                       <XCircle size={14} />
                       {t('subscription.current.buttonCancel')}
-                    </button>
+                    </Button>
                     {packageActive && (
-                      <button
+                      <Button
                         onClick={() => navigate('/member/subscription/renew')}
-                        className="rogym-btn rogym-btn--primary flex items-center justify-center gap-1.5 whitespace-nowrap w-full sm:w-auto"
+                        variant="primary"
+                        className="flex items-center justify-center gap-1.5 whitespace-nowrap w-full sm:w-auto"
                       >
                         <RefreshCw size={14} />
                         {t('subscription.current.buttonRenew')}
-                      </button>
+                      </Button>
                     )}
                   </div>
                 </div>
@@ -421,12 +402,13 @@ export default function CurrentPackagePage() {
               <div className="rogym-card rogym-card--compact p-5">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-base font-bold text-white">{t('subscription.current.paymentHistoryTitle')}</h3>
-                  <button
+                  <Button
                     onClick={() => navigate('/member/subscription/history')}
-                    className="rogym-text-link rogym-text-link--accent flex items-center gap-1 text-sm"
+                    variant="text-accent"
+                    className="flex items-center gap-1 text-sm"
                   >
                     {t('subscription.current.buttonViewAll')} <ChevronRight size={14} />
-                  </button>
+                  </Button>
                 </div>
                 {payments.length === 0 ? (
                   <p className="text-sm rogym-text-secondary py-4 text-center">
@@ -477,14 +459,14 @@ export default function CurrentPackagePage() {
             {/* Header */}
             <div className="flex items-center justify-between gap-3 px-6 pt-6 pb-4">
               <h2 className="text-lg font-bold text-white">{t('subscription.current.packageModal.title')}</h2>
-              <button
-                type="button"
-                className="rogym-btn rogym-btn--icon rogym-btn--elevated"
+              <Button
+                variant="icon"
+                className="rogym-btn--elevated"
                 onClick={() => setPkgModalOpen(false)}
                 aria-label="Đóng"
               >
                 <X size={16} />
-              </button>
+              </Button>
             </div>
 
             {/* Search + PT toggle (8fr / 2fr) */}

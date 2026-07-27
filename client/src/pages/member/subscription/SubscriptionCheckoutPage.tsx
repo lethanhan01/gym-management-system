@@ -24,6 +24,8 @@ import {
   type PaymentMethodOption,
 } from '@/components/payment/payment-method-data'
 import { PaymentMethodIcon } from '@/components/payment/payment-methods'
+import { Button } from '@/components/ui/Button'
+import { toast } from '@/lib/toast'
 
 interface PayState {
   packageId: string
@@ -86,7 +88,7 @@ export default function SubscriptionCheckoutPage({ mode }: { mode: 'buy' | 'rene
   const location = useLocation()
   const state = location.state as PayState | null
 
-  const { user } = useAuthStore()
+  const user = useAuthStore(state => state.user)
   const setResolvedStatus = useSubscriptionStore((state) => state.setResolvedStatus)
 
   const [method, setMethod] = useState<PaymentMethod>('cash')
@@ -97,7 +99,6 @@ export default function SubscriptionCheckoutPage({ mode }: { mode: 'buy' | 'rene
   const [txRef, setTxRef] = useState('')
   const [saveAccount, setSaveAccount] = useState(false)
   const [submitting, setSubmitting] = useState(false)
-  const [error, setError] = useState<string | null>(null)
 
   const [accounts, setAccounts] = useState<PaymentAccount[]>([])
   const [accountsLoading, setAccountsLoading] = useState(true)
@@ -153,15 +154,19 @@ export default function SubscriptionCheckoutPage({ mode }: { mode: 'buy' | 'rene
 
   async function handleDeleteAccount(accountId: number) {
     if (!user?.memberId) return
-    await paymentAccountService.remove(user.memberId, accountId)
-    setAccounts((prev) => prev.filter((a) => a.accountId !== accountId))
+    try {
+      await paymentAccountService.remove(user.memberId, accountId)
+      setAccounts((prev) => prev.filter((a) => a.accountId !== accountId))
+      toast.success(t('subscription.checkout.success.deletedAccount', { defaultValue: 'Đã xóa tài khoản thanh toán' }))
+    } catch (err) {
+      toast.error(t('subscription.checkout.error.deleteAccount', { defaultValue: 'Xóa tài khoản thất bại' }))
+    }
   }
 
   async function handleConfirm() {
     if (!user?.memberId) return
     const memberId = user.memberId
     setSubmitting(true)
-    setError(null)
     try {
       const saveAccountIfNeeded = async () => {
         if (saveAccount && method !== 'cash') {
@@ -179,7 +184,7 @@ export default function SubscriptionCheckoutPage({ mode }: { mode: 'buy' | 'rene
       // Không gọi paymentService.create riêng — backend không nhận payment cho sub đang active.
       if (mode === 'renew') {
         if (!state?.subscriptionId) {
-          setError(t('subscription.checkout.errorRenewNotFound'))
+          toast.error(t('subscription.checkout.errorRenewNotFound'))
           return
         }
         await subscriptionService.renew(state.subscriptionId, {
@@ -233,7 +238,7 @@ export default function SubscriptionCheckoutPage({ mode }: { mode: 'buy' | 'rene
       if (mode === 'renew' && e?.response?.status === 401) {
         navigate('/login')
       } else {
-        setError(e?.response?.data?.message || t('subscription.checkout.errorGeneric'))
+        toast.error(e?.response?.data?.message || t('subscription.checkout.errorGeneric'))
       }
     } finally {
       setSubmitting(false)
@@ -242,12 +247,13 @@ export default function SubscriptionCheckoutPage({ mode }: { mode: 'buy' | 'rene
 
   return (
     <div className="rogym-sx-13d95242">
-      <button
+      <Button
+        variant="text-accent"
         onClick={() => navigate(-1)}
-        className="rogym-text-link rogym-text-link--accent rogym-sx-dd54bdbf"
+        className="rogym-sx-dd54bdbf"
       >
         <ArrowLeft size={14} /> {t('subscription.checkout.backLink')}
-      </button>
+      </Button>
 
       <h1 className="text-2xl font-bold text-white mb-1">
         {mode === 'renew' ? t('subscription.checkout.titleRenew') : t('subscription.checkout.title')}
@@ -345,12 +351,12 @@ export default function SubscriptionCheckoutPage({ mode }: { mode: 'buy' | 'rene
             </label>
           )}
 
-          {error && <p className="rogym-sx-fff6a280">{error}</p>}
-
-          <button
+          <Button
+            variant="primary"
+            size="wide"
             onClick={handleConfirm}
             disabled={submitting}
-            className="rogym-btn rogym-btn--primary rogym-btn--wide mt-auto"
+            className="mt-auto"
           >
             {submitting
               ? t('subscription.checkout.buttonProcessing')
@@ -360,7 +366,7 @@ export default function SubscriptionCheckoutPage({ mode }: { mode: 'buy' | 'rene
                     : 'subscription.checkout.buttonConfirmPay',
                   { price: formatVnd(state.price) }
                 )}
-          </button>
+          </Button>
         </div>
 
         {/* Card right: saved accounts */}

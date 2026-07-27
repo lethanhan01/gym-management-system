@@ -13,8 +13,10 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common'
+import { ApiBody, ApiOperation } from '@nestjs/swagger'
 import { PermissionsGuard } from '../common/guards/permissions.guard'
 import { RequirePermission } from '../common/decorators/require-permission.decorator'
+import { DatabaseRetryable } from '../common/decorators/database-retryable.decorator'
 import { CurrentUser } from '../auth/decorators/current-user.decorator'
 import { AuthenticatedUser } from '../auth/types/jwt-payload.interface'
 import { Public } from '../auth/decorators/public.decorator'
@@ -27,6 +29,7 @@ import { AssignTrainerDto } from './dto/assign-trainer.dto'
 import { SelfProgressDto } from './dto/self-progress.dto'
 
 @Controller('members')
+@DatabaseRetryable()
 @UseGuards(PermissionsGuard)
 export class MembersController {
   constructor(private readonly members: MembersService) {}
@@ -56,6 +59,13 @@ export class MembersController {
 
   /** Member tự gán / hủy PT của mình */
   @Patch('me/trainer')
+  @ApiOperation({ summary: 'Tự gán hoặc hủy huấn luyện viên của hội viên' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: { trainerId: { type: 'integer', nullable: true, example: 12 } },
+    },
+  })
   async selfAssignTrainer(
     @Body() dto: { trainerId?: number | null },
     @CurrentUser() user: AuthenticatedUser

@@ -1,7 +1,9 @@
 import { FormEvent, memo, useCallback, useEffect, useMemo, useState } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
+import { Button, ButtonLink } from '@/components/ui/Button'
 import { useTranslation } from 'react-i18next'
 import { Archive, ArrowLeft, Lock, Pencil, Plus, Trash2, Zap } from 'lucide-react'
+import { toast } from '@/lib/toast'
 import { getApiError, getApiErrorCode, isApiConflict } from '@/lib/api-error'
 import workoutService, {
   type Exercise,
@@ -76,11 +78,11 @@ export default function TrainerPlanBuilderPage() {
     try {
       const [planData, exerciseData] = await Promise.all([
         workoutService.getPlan(id),
-        workoutService.getExercises(),
+        workoutService.getExercises({ pageSize: 100 }),
       ])
       setPlan(planData)
       if (planData.status === 'archived') setWriteBlocked(true)
-      setExercises(exerciseData)
+      setExercises(exerciseData.data)
     } catch (err) {
       setError(getApiError(err, t('plans.builder.error.loadFailed')))
     } finally {
@@ -116,17 +118,27 @@ export default function TrainerPlanBuilderPage() {
       }))
   }, [plan?.days])
 
-  function handleMutationError(err: unknown, fallback: string) {
+  function handleMutationError(err: unknown, fallback: string, retryAction?: () => void) {
     const message = getApiError(err, fallback)
     if (
       getApiErrorCode(err) === 'PLAN_WRITE_BLOCKED' ||
       (isApiConflict(err) && message.toLocaleLowerCase('vi').includes('workout log'))
     ) {
       setWriteBlocked(true)
-      setError(t('plans.builder.error.readonly'))
+      toast.error(t('plans.builder.error.readonly'))
       return
     }
-    setError(message)
+    
+    if (retryAction) {
+      toast.error(message, {
+        action: {
+          label: t('button.retry', { defaultValue: 'Thử lại' }),
+          onClick: retryAction,
+        },
+      })
+    } else {
+      toast.error(message)
+    }
   }
 
   async function saveMetadata(name: string, description: string) {
@@ -139,7 +151,7 @@ export default function TrainerPlanBuilderPage() {
       })
       await load()
     } catch (err) {
-      handleMutationError(err, t('plans.builder.error.saveMetaFailed'))
+      handleMutationError(err, t('plans.builder.error.saveMetaFailed'), () => saveMetadata(name, description))
     } finally {
       setSubmitting(false)
     }
@@ -184,7 +196,7 @@ export default function TrainerPlanBuilderPage() {
       setDayOpen(false)
       await load()
     } catch (err) {
-      handleMutationError(err, t('plans.builder.error.saveDayFailed'))
+      handleMutationError(err, t('plans.builder.error.saveDayFailed'), () => saveDay(event))
     } finally {
       setSubmitting(false)
     }
@@ -234,7 +246,7 @@ export default function TrainerPlanBuilderPage() {
         exerciseId: Number(selectedExercise.exerciseId),
         orderIndex: nextIndex,
         targetSets,
-        targetReps: selectedExercise.category === 'cardio' ? undefined : targetReps,
+        targetReps: selectedExercise.bodyPart?.name?.toLowerCase() === 'cardio' ? undefined : targetReps,
         targetDurationSec: targetDuration,
         targetWeightKg: targetWeight ? Number(targetWeight) : undefined,
         restSeconds,
@@ -243,7 +255,7 @@ export default function TrainerPlanBuilderPage() {
       setExerciseDay(null)
       await load()
     } catch (err) {
-      handleMutationError(err, t('plans.builder.error.addExerciseFailed'))
+      handleMutationError(err, t('plans.builder.error.addExerciseFailed'), () => addExercise(event))
     } finally {
       setSubmitting(false)
     }
@@ -262,7 +274,7 @@ export default function TrainerPlanBuilderPage() {
         {
           targetSets,
           targetReps:
-            editingPlanExercise.exercise.exercise?.category === 'cardio' ? undefined : targetReps,
+            editingPlanExercise.exercise.exercise?.bodyPart?.name?.toLowerCase() === 'cardio' ? undefined : targetReps,
           targetDurationSec: targetDuration,
           targetWeightKg: targetWeight ? Number(targetWeight) : 0,
           restSeconds,
@@ -295,17 +307,38 @@ export default function TrainerPlanBuilderPage() {
       setDeleteTarget(null)
       await load()
     } catch (err) {
-      handleMutationError(err, t('plans.builder.error.deleteFailed'))
+      handleMutationError(err, t('plans.builder.error.deleteFailed'), confirmDelete)
     } finally {
       setSubmitting(false)
     }
   }
 
   async function changeStatus(status: 'active' | 'archived') {
-    if (status === 'active' && (!plan?.days?.length || exerciseCount === 0)) {
-      setError(t('plans.builder.error.activateEmpty'))
-      return
+    if (status === 'active') {
+      if (!plan?.days?.length || exerciseCount === 0) {
+        toast.error(t('plans.builder.error.activateEmpty'))
+        return
+      }
+      
+      const emptyDay = plan.days.find((day) => !day.exercises?.length)
+      if (emptyDay) {
+        toast.error(t('plans.builder.error.activateEmptyDay', { day: emptyDay.name }))
+        return
+      }
+
+      const hasIncompleteExercise = plan.days.some((day) =>
+        day.exercises?.some(
+          (exercise) =>
+            (exercise.targetReps == null && exercise.targetDurationSec == null) ||
+            exercise.restSeconds == null
+        )
+      )
+      if (hasIncompleteExercise) {
+        toast.error(t('plans.builder.error.activateIncompleteExercise'))
+        return
+      }
     }
+    
     setSubmitting(true)
     setError(null)
     try {
@@ -316,7 +349,8 @@ export default function TrainerPlanBuilderPage() {
         err,
         status === 'active'
           ? t('plans.builder.error.activateFailed')
-          : t('plans.builder.error.archiveFailed')
+          : t('plans.builder.error.archiveFailed'),
+        () => changeStatus(status)
       )
     } finally {
       setSubmitting(false)
@@ -349,32 +383,29 @@ export default function TrainerPlanBuilderPage() {
         }
         actions={
           <>
-            <button
-              type="button"
-              className="rogym-btn rogym-btn--outline-white"
+            <Button
+              variant="outline-white"
               onClick={() => navigate('/trainer/plans')}
             >
               <ArrowLeft size={16} /> {t('plans.builder.backToList')}
-            </button>
+            </Button>
             {plan.status === 'draft' && !readonly && (
-              <button
-                type="button"
-                className="rogym-btn rogym-btn--primary"
+              <Button
+                variant="primary"
                 disabled={submitting}
                 onClick={() => changeStatus('active')}
               >
                 <Zap size={16} /> {t('plans.builder.activate')}
-              </button>
+              </Button>
             )}
             {plan.status !== 'archived' && !readonly && (
-              <button
-                type="button"
-                className="rogym-btn rogym-btn--outline-white"
+              <Button
+                variant="outline-white"
                 disabled={submitting}
                 onClick={() => changeStatus('archived')}
               >
                 <Archive size={16} /> {t('plans.builder.archive')}
-              </button>
+              </Button>
             )}
           </>
         }
@@ -394,8 +425,6 @@ export default function TrainerPlanBuilderPage() {
           <Lock size={18} /> {t('plans.builder.readonlyBanner')}
         </div>
       )}
-      {error && <TrainerErrorState message={error} onRetry={load} />}
-
       <PlanMetadataForm
         name={plan.name}
         description={plan.description ?? ''}
@@ -407,9 +436,9 @@ export default function TrainerPlanBuilderPage() {
       <div className="flex items-center justify-between gap-4">
         <h2 className="text-xl font-bold text-white">{t('plans.builder.structureTitle')}</h2>
         {!readonly && (
-          <button type="button" className="rogym-btn rogym-btn--primary" onClick={openCreateDay}>
+          <Button variant="primary" onClick={openCreateDay}>
             <Plus size={16} /> {t('plans.builder.addDay')}
-          </button>
+          </Button>
         )}
       </div>
       {!plan.days?.length ? (
@@ -418,13 +447,12 @@ export default function TrainerPlanBuilderPage() {
           description={t('plans.builder.noDayDesc')}
           action={
             !readonly ? (
-              <button
-                type="button"
-                className="rogym-btn rogym-btn--primary"
+              <Button
+                variant="primary"
                 onClick={openCreateDay}
               >
                 {t('plans.builder.addFirstDay')}
-              </button>
+              </Button>
             ) : undefined
           }
         />
@@ -470,13 +498,12 @@ export default function TrainerPlanBuilderPage() {
         onClose={() => setDayOpen(false)}
         footer={
           <>
-            <button
-              type="button"
-              className="rogym-btn rogym-btn--outline-white"
+            <Button
+              variant="outline-white"
               onClick={() => setDayOpen(false)}
             >
               {t('plans.builder.dayModal.cancel')}
-            </button>
+            </Button>
             <SubmitButton form="plan-day-form" loading={submitting} disabled={!dayName.trim()}>
               {t('plans.builder.dayModal.submit')}
             </SubmitButton>
@@ -530,13 +557,12 @@ export default function TrainerPlanBuilderPage() {
         onClose={() => setExerciseDay(null)}
         footer={
           <>
-            <button
-              type="button"
-              className="rogym-btn rogym-btn--outline-white"
+            <Button
+              variant="outline-white"
               onClick={() => setExerciseDay(null)}
             >
               {t('plans.builder.exerciseModal.cancel')}
-            </button>
+            </Button>
             <SubmitButton
               form="plan-exercise-form"
               loading={submitting}
@@ -554,7 +580,7 @@ export default function TrainerPlanBuilderPage() {
               <option value="">{t('plans.builder.exerciseModal.selectFromLib')}</option>
               {exercises.map((exercise) => (
                 <option key={exercise.exerciseId} value={exercise.exerciseId}>
-                  {exercise.name} - {exercise.category}
+                  {exercise.name} - {exercise.targetMuscle?.name ?? '—'}
                 </option>
               ))}
             </TrainerSelect>
@@ -572,15 +598,15 @@ export default function TrainerPlanBuilderPage() {
               <div className="text-sm rogym-text-secondary">
                 <div className="font-semibold text-white">{selectedExercise.name}</div>
                 <div className="mt-1">
-                  {selectedExercise.muscleGroup ?? t('plans.builder.dayCard.bodyPart')} ·{' '}
-                  {selectedExercise.equipmentNeeded ?? t('plans.builder.dayCard.noEquipment')}
+                  {selectedExercise.targetMuscle?.name ?? t('plans.builder.dayCard.bodyPart')} ·{' '}
+                  {selectedExercise.equipment?.name ?? t('plans.builder.dayCard.noEquipment')}
                 </div>
                 <p className="mt-2 line-clamp-3">{selectedExercise.description}</p>
               </div>
             </div>
           )}
           <ExerciseTargetFields
-            category={selectedExercise?.category}
+            isCardio={selectedExercise?.bodyPart?.name?.toLowerCase() === 'cardio'}
             durationMode="always"
             values={{
               sets: targetSets,
@@ -620,13 +646,12 @@ export default function TrainerPlanBuilderPage() {
         onClose={() => setEditingPlanExercise(null)}
         footer={
           <>
-            <button
-              type="button"
-              className="rogym-btn rogym-btn--outline-white"
+            <Button
+              variant="outline-white"
               onClick={() => setEditingPlanExercise(null)}
             >
               {t('plans.builder.editExerciseModal.cancel')}
-            </button>
+            </Button>
             <SubmitButton form="edit-plan-exercise-form" loading={submitting}>
               {t('plans.builder.editExerciseModal.submit')}
             </SubmitButton>
@@ -635,7 +660,7 @@ export default function TrainerPlanBuilderPage() {
       >
         <form id="edit-plan-exercise-form" className="space-y-4" onSubmit={updateExerciseTarget}>
           <ExerciseTargetFields
-            category={editingPlanExercise?.exercise.exercise?.category}
+            isCardio={editingPlanExercise?.exercise.exercise?.bodyPart?.name?.toLowerCase() === 'cardio'}
             durationMode="always"
             values={{
               sets: targetSets,
@@ -670,21 +695,19 @@ export default function TrainerPlanBuilderPage() {
         onClose={() => setDeleteTarget(null)}
         footer={
           <>
-            <button
-              type="button"
-              className="rogym-btn rogym-btn--outline-white"
+            <Button
+              variant="outline-white"
               onClick={() => setDeleteTarget(null)}
             >
               {t('plans.builder.deleteModal.cancel')}
-            </button>
-            <button
-              type="button"
-              className="rogym-btn rogym-btn--danger"
+            </Button>
+            <Button
+              variant="danger"
               disabled={submitting}
               onClick={confirmDelete}
             >
               {submitting ? t('plans.builder.deleteModal.submitting') : t('plans.builder.deleteModal.submit')}
-            </button>
+            </Button>
           </>
         }
       >
@@ -696,9 +719,9 @@ export default function TrainerPlanBuilderPage() {
       </TrainerModal>
 
       <div className="text-right">
-        <Link className="rogym-text-link rogym-text-link--accent" to="/trainer/exercises">
+        <ButtonLink variant="text-accent" to="/trainer/exercises">
           {t('plans.builder.openExerciseLib')}
-        </Link>
+        </ButtonLink>
       </div>
     </TrainerPage>
   )
@@ -811,20 +834,18 @@ const PlanDayCard = memo(function PlanDayCard({
         </div>
         {!readonly && (
           <div className="flex gap-2">
-            <button
-              type="button"
-              className="rogym-btn rogym-btn--outline-white"
+            <Button
+              variant="outline-white"
               onClick={() => onEditDay(day)}
             >
               <Pencil size={15} /> {t('plans.builder.dayCard.edit')}
-            </button>
-            <button
-              type="button"
-              className="rogym-btn rogym-btn--danger"
+            </Button>
+            <Button
+              variant="danger"
               onClick={() => onDeleteDay(day)}
             >
               <Trash2 size={15} /> {t('plans.builder.dayCard.delete')}
-            </button>
+            </Button>
           </div>
         )}
       </div>
@@ -867,29 +888,27 @@ const PlanDayCard = memo(function PlanDayCard({
                   : ''}
               </div>
               <div className="mt-1 text-xs rogym-text-secondary">
-                {item.exercise?.muscleGroup ?? t('plans.builder.dayCard.bodyPart')} ·{' '}
-                {item.exercise?.equipmentNeeded ?? t('plans.builder.dayCard.noEquipment')}
+                {item.exercise?.targetMuscle?.name ?? t('plans.builder.dayCard.bodyPart')} ·{' '}
+                {item.exercise?.equipment?.name ?? t('plans.builder.dayCard.noEquipment')}
               </div>
               {item.notes && <div className="mt-2 text-xs rogym-text-secondary">{item.notes}</div>}
             </div>
             {!readonly && (
               <div className="flex gap-2">
-                <button
-                  type="button"
-                  className="rogym-btn rogym-btn--icon rogym-btn--elevated"
+                <Button
+                  variant="icon"
                   onClick={() => onEditExercise(day, item)}
                   aria-label={t('plans.builder.dayCard.editAriaLabel')}
                 >
                   <Pencil size={15} />
-                </button>
-                <button
-                  type="button"
-                  className="rogym-btn rogym-btn--icon rogym-btn--elevated"
+                </Button>
+                <Button
+                  variant="icon"
                   onClick={() => onDeleteExercise(day, item)}
                   aria-label={t('plans.builder.dayCard.deleteAriaLabel')}
                 >
                   <Trash2 size={15} />
-                </button>
+                </Button>
               </div>
             )}
           </div>
@@ -898,13 +917,12 @@ const PlanDayCard = memo(function PlanDayCard({
           <p className="py-3 text-sm rogym-text-dim">{t('plans.builder.dayCard.noDayExercise')}</p>
         )}
         {!readonly && (
-          <button
-            type="button"
-            className="rogym-text-link rogym-text-link--accent"
+          <Button
+            variant="text-accent"
             onClick={() => onAddExercise(day)}
           >
             {t('plans.builder.dayCard.addExercise')}
-          </button>
+          </Button>
         )}
       </div>
     </section>

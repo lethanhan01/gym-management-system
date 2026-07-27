@@ -72,9 +72,9 @@ interface SessionRow {
       exercise?: {
         exerciseId: bigint
         name: string
-        category: string
-        muscleGroup: string | null
-        equipmentNeeded: string | null
+        bodyPart: { name: string } | null
+        targetMuscle: { name: string } | null
+        equipment: { name: string } | null
         description: string | null
         imageUrl: string | null
         createdByStaffId: bigint | null
@@ -127,7 +127,7 @@ const SESSION_DETAIL_INCLUDE = {
     include: {
       exercises: {
         orderBy: { orderIndex: 'asc' },
-        include: { exercise: true },
+        include: { exercise: { include: { bodyPart: true, targetMuscle: true, equipment: true } } },
       },
     },
   },
@@ -200,16 +200,14 @@ export class TrainingService {
       [sortKey]: sortDir === 'desc' ? 'desc' : 'asc',
     } as Prisma.TrainingSessionOrderByWithRelationInput
 
-    const [data, total] = await Promise.all([
-      this.prisma.trainingSession.findMany({
+    const data = await this.prisma.trainingSession.findMany({
         where,
         skip: (page - 1) * pageSize,
         take: pageSize,
         orderBy,
         include: SESSION_SUMMARY_INCLUDE,
-      }),
-      this.prisma.trainingSession.count({ where }),
-    ])
+      })
+    const total = await this.prisma.trainingSession.count({ where })
 
     return {
       data: data.map((s) => this.serializeSession(s)),
@@ -1114,9 +1112,9 @@ export class TrainingService {
                   ? {
                       exerciseId: exercise.exercise.exerciseId.toString(),
                       name: exercise.exercise.name,
-                      category: exercise.exercise.category,
-                      muscleGroup: exercise.exercise.muscleGroup,
-                      equipmentNeeded: exercise.exercise.equipmentNeeded,
+                      bodyPart: exercise.exercise.bodyPart ? { name: exercise.exercise.bodyPart.name } : null,
+                      targetMuscle: exercise.exercise.targetMuscle ? { name: exercise.exercise.targetMuscle.name } : null,
+                      equipment: exercise.exercise.equipment ? { name: exercise.exercise.equipment.name } : null,
                       description: exercise.exercise.description,
                       imageUrl: exercise.exercise.imageUrl,
                       createdByStaffId: exercise.exercise.createdByStaffId?.toString() ?? null,

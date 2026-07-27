@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import staffAttendanceService, { type StaffAttendanceLog } from '@/services/staffAttendance.service'
 import { getApiError, getApiErrorCode } from '@/lib/api-error'
 import { todayInput, startOfLocalDayIso, endOfLocalDayIso } from '@/lib/date'
+import { toast } from '@/lib/toast'
 
 interface StaffAttendanceState {
   openLog: StaffAttendanceLog | null
@@ -9,12 +10,9 @@ interface StaffAttendanceState {
   loaded: boolean
   loadingToday: boolean
   actionLoading: boolean
-  actionError: string | null
-  /** Tải chấm công hôm nay — bỏ qua nếu đã tải hoặc đang fetch để tránh ghi đè state từ action. */
   load: () => Promise<void>
   checkIn: () => Promise<StaffAttendanceLog | null>
   checkOut: () => Promise<StaffAttendanceLog | null>
-  clearError: () => void
 }
 
 export const useStaffAttendanceStore = create<StaffAttendanceState>((set, get) => ({
@@ -23,7 +21,6 @@ export const useStaffAttendanceStore = create<StaffAttendanceState>((set, get) =
   loaded: false,
   loadingToday: false,
   actionLoading: false,
-  actionError: null,
 
   load: async () => {
     const { loaded, loadingToday } = get()
@@ -52,13 +49,14 @@ export const useStaffAttendanceStore = create<StaffAttendanceState>((set, get) =
 
   checkIn: async () => {
     if (get().actionLoading) return null
-    set({ actionLoading: true, actionError: null })
+    set({ actionLoading: true })
     try {
       const log = await staffAttendanceService.checkIn()
       set((s) => ({ openLog: log, todayLogs: [log, ...s.todayLogs] }))
+      toast.success('Chấm vào thành công.')
       return log
     } catch (err) {
-      set({ actionError: getApiError(err, 'Chấm vào thất bại.') })
+      toast.error(getApiError(err, 'Chấm vào thất bại.'))
       return null
     } finally {
       set({ actionLoading: false })
@@ -67,30 +65,28 @@ export const useStaffAttendanceStore = create<StaffAttendanceState>((set, get) =
 
   checkOut: async () => {
     if (get().actionLoading) return null
-    set({ actionLoading: true, actionError: null })
+    set({ actionLoading: true })
     try {
       const updated = await staffAttendanceService.checkOut()
       set((s) => ({
         openLog: null,
         todayLogs: s.todayLogs.map((l) => (l.logId === updated.logId ? updated : l)),
       }))
+      toast.success('Chấm ra thành công.')
       return updated
     } catch (err) {
       if (getApiErrorCode(err) === 'ATTENDANCE_VOIDED_DIFFERENT_DAY') {
-        // Ngày công bị hủy do chấm ra khác ngày → bỏ phiên đang mở khỏi danh sách.
         set((s) => ({
           openLog: null,
           todayLogs: s.todayLogs.filter((l) => l.checkOut !== null),
-          actionError: getApiError(err, 'Ca làm việc đã bị hủy vì chấm ra khác ngày.'),
         }))
+        toast.error(getApiError(err, 'Ca làm việc đã bị hủy vì chấm ra khác ngày.'))
       } else {
-        set({ actionError: getApiError(err, 'Chấm ra thất bại.') })
+        toast.error(getApiError(err, 'Chấm ra thất bại.'))
       }
       return null
     } finally {
       set({ actionLoading: false })
     }
   },
-
-  clearError: () => set({ actionError: null }),
 }))

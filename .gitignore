@@ -37,6 +37,9 @@ pnpm-debug.log*
 *.seed
 *.pid.lock
 
+# Emergency database snapshots (may contain production data)
+server/backups/
+
 # OS
 .DS_Store
 Thumbs.db

@@ -127,11 +127,12 @@ describe('UsersService', () => {
   })
 
   describe('findByIdWithRoles', () => {
-    it('returns user with roles and memberId when member record exists', async () => {
+    it('returns user with roles and active profile IDs when profiles exist', async () => {
       mockPrisma.user.findFirst.mockResolvedValue({
         ...baseUser,
         groups: [{ group: { name: 'member' } }],
         member: { memberId: 42n },
+        staff: { staffId: 7n },
       })
 
       const result = await service.findByIdWithRoles(1n)
@@ -139,6 +140,7 @@ describe('UsersService', () => {
       expect(result).not.toBeNull()
       expect(result!.roles).toEqual(['member'])
       expect(result!.memberId).toBe(42n)
+      expect(result!.staffId).toBe(7n)
     })
 
     it('returns null memberId when user has no Member record', async () => {
@@ -146,11 +148,13 @@ describe('UsersService', () => {
         ...baseUser,
         groups: [{ group: { name: 'staff' } }],
         member: null,
+        staff: null,
       })
 
       const result = await service.findByIdWithRoles(1n)
 
       expect(result!.memberId).toBeNull()
+      expect(result!.staffId).toBeNull()
     })
 
     it('returns null when user does not exist', async () => {
@@ -171,17 +175,19 @@ describe('UsersService', () => {
       )
     })
 
-    it('does not expose groups or member fields on returned object', async () => {
+    it('does not expose Prisma relation fields on returned object', async () => {
       mockPrisma.user.findFirst.mockResolvedValue({
         ...baseUser,
         groups: [{ group: { name: 'owner' } }],
         member: null,
+        staff: null,
       })
 
       const result = await service.findByIdWithRoles(1n)
 
       expect((result as any).groups).toBeUndefined()
       expect((result as any).member).toBeUndefined()
+      expect((result as any).staff).toBeUndefined()
     })
   })
 })

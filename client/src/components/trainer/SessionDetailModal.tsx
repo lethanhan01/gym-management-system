@@ -107,20 +107,23 @@ export function SessionDetailModal({ sessionId, onClose, onUpdate }: Props) {
   }
 
   const editEndTime = useMemo(() => {
-    if (!editStartTime || editDuration <= 0) return ''
-    const start = new Date(localDateTimeInputToIso(editStartTime))
+    if (!editStartTime || !Number.isFinite(editDuration) || editDuration <= 0) return ''
+    const startIso = localDateTimeInputToIso(editStartTime)
+    if (!startIso) return ''
+    const start = new Date(startIso)
     return new Date(start.getTime() + editDuration * 60000).toISOString()
   }, [editStartTime, editDuration])
 
   async function handleSaveEdit(e: FormEvent) {
     e.preventDefault()
-    if (!sessionId || !editRoomId || !editStartTime || !editEndTime) return
+    const startIso = localDateTimeInputToIso(editStartTime)
+    if (!sessionId || !editRoomId || !startIso || !editEndTime) return
     setSaving(true)
     setError(null)
     try {
       await trainingService.updateSession(sessionId, {
         roomId: editRoomId,
-        startTime: localDateTimeInputToIso(editStartTime),
+        startTime: startIso,
         endTime: editEndTime,
       })
       onUpdate?.()
@@ -339,7 +342,13 @@ export function SessionDetailModal({ sessionId, onClose, onUpdate }: Props) {
           type="submit"
           form="session-edit-form"
           className="rogym-btn rogym-btn--primary"
-          disabled={saving || !editRoomId || !editStartTime || editDuration <= 0}
+          disabled={
+            saving ||
+            !editRoomId ||
+            !editEndTime ||
+            !Number.isFinite(editDuration) ||
+            editDuration <= 0
+          }
         >
           {saving && <LoaderCircle size={14} className="animate-spin" />}
           {t('sessionModal.btnSave')}

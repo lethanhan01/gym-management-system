@@ -1,7 +1,7 @@
 import { memo, useCallback, useEffect, useMemo, useState } from 'react'
 import type { TFunction } from 'i18next'
 import { useTranslation } from 'react-i18next'
-import { useSearchParams } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import {
   Calendar,
   CalendarX,
@@ -510,11 +510,13 @@ function SessionDetailModal({
   loading,
   error,
   onClose,
+  onStart,
 }: {
   session: TrainingSessionDetail | null
   loading: boolean
   error: string | null
   onClose: () => void
+  onStart: (sessionId: string) => void
 }) {
   const { t, i18n } = useTranslation('member')
   const exercises = session?.planDay?.exercises ?? []
@@ -599,7 +601,7 @@ function SessionDetailModal({
                     .slice()
                     .sort((a, b) => a.orderIndex - b.orderIndex)
                     .map((item, index) => {
-                      const isCardio = item.exercise?.category === 'cardio'
+                      const isCardio = item.exercise?.bodyPart?.name.toLowerCase() === 'cardio'
                       return (
                         <div
                           key={item.planExerciseId}
@@ -630,6 +632,13 @@ function SessionDetailModal({
                 <p className="text-xs rogym-sx-5e5c39ab">
                   {t('workout.schedule.trainerManages')}
                 </p>
+                <button
+                  type="button"
+                  className="rogym-btn rogym-btn--primary mt-4 w-full"
+                  onClick={() => onStart(session.sessionId)}
+                >
+                  {t('workout.schedule.buttonStart')}
+                </button>
               </div>
             </>
           ) : null}
@@ -643,6 +652,7 @@ function SessionDetailModal({
 
 export default function WorkoutSchedulePage() {
   const { t } = useTranslation('member')
+  const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
   const deepLinkSessionId = getDeepLinkSessionId(searchParams)
   const [upcoming, setUpcoming] = useState<TrainingSession[]>([])
@@ -730,6 +740,13 @@ export default function WorkoutSchedulePage() {
     setSearchParams(next, { replace: true })
   }, [searchParams, setSearchParams])
 
+  const handleStartSession = useCallback(
+    (sessionId: string) => {
+      navigate(`/member/workout/create-session?sessionId=${sessionId}`)
+    },
+    [navigate],
+  )
+
   if (loading)
     return (
       <MemberPage>
@@ -763,6 +780,7 @@ export default function WorkoutSchedulePage() {
           loading={detailLoading}
           error={detailError}
           onClose={handleCloseSession}
+          onStart={handleStartSession}
         />
       )}
     </MemberPage>

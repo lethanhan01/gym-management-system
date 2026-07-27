@@ -4,6 +4,7 @@ import { AuthenticatedUser } from '../../auth/types/jwt-payload.interface'
 import { RenewSubscriptionDto } from './dto/renew-subscription.dto'
 import { SubscriptionsController } from './subscriptions.controller'
 import { SubscriptionsService } from './subscriptions.service'
+import { DATABASE_RETRYABLE_KEY } from '../../common/decorators/database-retryable.decorator'
 
 const mockService = {
   createSubscription: jest.fn(),
@@ -53,6 +54,10 @@ describe('SubscriptionsController', () => {
   })
 
   describe('listByMember', () => {
+    it('marks the read-only member endpoint as safe for one database retry', () => {
+      expect(Reflect.getMetadata(DATABASE_RETRYABLE_KEY, SubscriptionsController.prototype.listByMember)).toBe(true)
+    })
+
     it('delegates to listByMember with BigInt memberId', async () => {
       const serviceResult = { data: [{ id: '10' }] }
       ;(mockService.listByMember as jest.Mock).mockResolvedValue(serviceResult)

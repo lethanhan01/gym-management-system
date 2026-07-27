@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { BrowserQRCodeReader, type IScannerControls } from '@zxing/browser'
 import { CheckCircle2, History, RefreshCcw, X } from 'lucide-react'
-import { Link } from 'react-router-dom'
+import { ButtonLink } from '@/components/ui/Button'
 import { getApiError, getApiErrorCode } from '@/lib/api-error'
 import { formatTime } from '@/lib/date'
 import { trainingService, type AttendanceLog } from '@/services/training.service'
@@ -163,9 +163,9 @@ export default function CheckInPage() {
               <RefreshCcw size={16} />
               {t('qrCheckIn.scanAgain')}
             </Button>
-            <Link className="rogym-text-link rogym-text-link--accent text-sm" to="/member/attendance">
+            <ButtonLink variant="text-accent" className="text-sm" to="/member/attendance">
               <History size={15} className="inline-block" /> {t('qrCheckIn.viewHistory')}
-            </Link>
+            </ButtonLink>
           </div>
         </section>
 

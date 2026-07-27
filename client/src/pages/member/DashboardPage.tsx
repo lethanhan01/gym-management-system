@@ -1,5 +1,6 @@
-import { memo, useCallback, useEffect, useMemo, useRef, useState, type ElementType } from 'react'
+import { memo, useCallback, useEffect, useMemo, useState, type ElementType } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
+import { Button } from '@/components/ui/Button'
 import { useTranslation } from 'react-i18next'
 import {
   Dumbbell,
@@ -11,7 +12,6 @@ import {
   AlertCircle,
   ClipboardList,
   MessageSquareOff,
-  CalendarCheck,
   User,
   Phone,
   Mail,
@@ -25,8 +25,9 @@ import { memberService, type MemberProgress, type MemberProfile } from '@/servic
 import { feedbackService, type Feedback } from '@/services/feedback.service'
 import api from '@/services/api'
 import { MemberPage, MemberPageHeader } from '@/components/MemberUI'
-import { NotificationToast } from '@/components/shared/NotificationUI'
 import { hasActiveSubscription, isSubscriptionActive } from '@/lib/subscription'
+import { getApiError } from '@/lib/api-error'
+import { toast } from '@/lib/toast'
 
 const T = '#42e09e'
 
@@ -165,12 +166,13 @@ const PtInfoCard = memo(function PtInfoCard({
           <p className="text-sm font-medium text-white">{t('dashboard.pt.sectionTitle')}</p>
           <p className="mt-1 text-xs rogym-text-secondary">{t('dashboard.pt.noTrainerAssigned')}</p>
         </div>
-        <button
-          className="rogym-btn rogym-btn--outline-white w-full text-sm"
+        <Button
+          variant="outline-white"
+          className="w-full text-sm"
           onClick={onChooseTrainer}
         >
           {t('dashboard.pt.chooseTrainer')}
-        </button>
+        </Button>
       </div>
     )
   }
@@ -209,15 +211,16 @@ const PtInfoCard = memo(function PtInfoCard({
 
       {/* Actions */}
       <div className="flex flex-col gap-2 pt-1 border-t border-white/5">
-        <button
-          className="rogym-btn rogym-btn--outline-white w-full text-sm"
+        <Button
+          variant="outline-white"
+          className="w-full text-sm"
           onClick={onChooseTrainer}
         >
           {t('dashboard.pt.changeTrainer')}
-        </button>
-        <button className="rogym-btn rogym-btn--danger w-full text-sm" onClick={onRemoveTrainer}>
+        </Button>
+        <Button variant="danger" className="w-full text-sm" onClick={onRemoveTrainer}>
           {t('dashboard.pt.cancelTrainer')}
-        </button>
+        </Button>
       </div>
     </div>
   )
@@ -252,12 +255,13 @@ const SubscriptionCard = memo(function SubscriptionCard({
         <p className="text-sm rogym-text-secondary">
           {t('dashboard.subscription.noPackageDesc')}
         </p>
-        <button
+        <Button
+          variant="primary"
+          className="self-start"
           onClick={() => navigate('/member/subscription/setup')}
-          className="rogym-btn rogym-btn--primary self-start"
         >
           {t('dashboard.subscription.choosePlan')}
-        </button>
+        </Button>
       </div>
     )
   }
@@ -314,19 +318,21 @@ const SubscriptionCard = memo(function SubscriptionCard({
 
       <div className="flex items-center gap-2 flex-wrap">
         {isExpired ? (
-          <button
+          <Button
+            variant="primary"
+            className="self-start"
             onClick={() => navigate('/member/subscription/renew')}
-            className="rogym-btn rogym-btn--primary self-start"
           >
             {t('dashboard.subscription.renew')}
-          </button>
+          </Button>
         ) : null}
-        <button
+        <Button
+          variant="outline-white"
+          className="self-start"
           onClick={() => navigate('/member/subscription/current')}
-          className="rogym-btn rogym-btn--outline-white self-start"
         >
           {t('dashboard.subscription.viewDetail')}
-        </button>
+        </Button>
       </div>
     </div>
   )
@@ -382,12 +388,13 @@ const SessionsWidget = memo(function SessionsWidget({
     <div className="rogym-card rogym-card--compact p-5 flex flex-col gap-3">
       <div className="flex items-center justify-between">
         <span className="text-base font-bold text-white">{t('dashboard.sessions.widgetTitle')}</span>
-        <button
+        <Button
+          variant="text-accent"
+          className="text-xs"
           onClick={() => navigate('/member/workout/sessions')}
-          className="rogym-text-link rogym-text-link--accent text-xs"
         >
           {t('dashboard.viewAll')}
-        </button>
+        </Button>
       </div>
       {sessions.length === 0 ? (
         <div className="flex flex-col items-center gap-2 py-6">
@@ -445,12 +452,13 @@ const WorkoutWidget = memo(function WorkoutWidget({
     <div className="rogym-card rogym-card--compact p-5 flex flex-col gap-3">
       <div className="flex items-center justify-between">
         <span className="text-base font-bold text-white">{t('dashboard.workoutPlan.widgetTitle')}</span>
-        <button
+        <Button
+          variant="text-accent"
+          className="text-xs"
           onClick={() => navigate('/member/workout/plan')}
-          className="rogym-text-link rogym-text-link--accent text-xs"
         >
           {t('dashboard.viewDetail')}
-        </button>
+        </Button>
       </div>
       {plan ? (
         <div className="flex items-center justify-between">
@@ -490,12 +498,13 @@ const FeedbackWidget = memo(function FeedbackWidget({
     <div className="rogym-card rogym-card--compact p-5 flex flex-col gap-3">
       <div className="flex items-center justify-between">
         <span className="text-base font-bold text-white">{t('dashboard.feedbackWidget.widgetTitle')}</span>
-        <button
+        <Button
+          variant="text-accent"
+          className="text-xs"
           onClick={() => navigate('/member/feedback')}
-          className="rogym-text-link rogym-text-link--accent text-xs"
         >
           {t('dashboard.viewAll')}
-        </button>
+        </Button>
       </div>
       {feedbacks.length === 0 ? (
         <div className="flex items-center gap-2 py-2">
@@ -543,7 +552,8 @@ export default function MemberDashboardPage() {
   const { t, i18n } = useTranslation('member')
   const navigate = useNavigate()
   const location = useLocation()
-  const { user, clearAuth } = useAuthStore()
+  const user = useAuthStore(state => state.user)
+  const clearAuth = useAuthStore(state => state.clearAuth)
   const setResolvedStatus = useSubscriptionStore((s) => s.setResolvedStatus)
 
   const [subscription, setSubscription] = useState<Subscription | null>(null)
@@ -569,29 +579,23 @@ export default function MemberDashboardPage() {
   const [errorPlan, setErrorPlan] = useState(false)
   const [errorFeedbacks, setErrorFeedbacks] = useState(false)
 
-  const [paymentSuccessToast, setPaymentSuccessToast] = useState(false)
-  const paymentToastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const todayDescription = useMemo(() => todayFull(i18n.language), [i18n.language])
   const handleChooseTrainer = useCallback(() => navigate('/member/choose-trainer'), [navigate])
   const handleRemoveTrainer = useCallback(async () => {
-    await memberService.selfAssignTrainer(null)
-    if (user?.memberId) memberService.getProfile(user.memberId).then(setProfile)
-  }, [user?.memberId])
+    try {
+      await memberService.selfAssignTrainer(null)
+      if (user?.memberId) memberService.getProfile(user.memberId).then(setProfile)
+      toast.success(t('dashboard.pt.success.removedTrainer', { defaultValue: 'Đã hủy PT thành công' }))
+    } catch (err) {
+      toast.error(getApiError(err, t('dashboard.pt.error.removeTrainerFailed', { defaultValue: 'Hủy PT thất bại' })))
+    }
+  }, [user?.memberId, t])
 
   useEffect(() => {
     if ((location.state as { paymentSuccess?: boolean } | null)?.paymentSuccess) {
-      setPaymentSuccessToast(true)
-      if (paymentToastTimerRef.current) clearTimeout(paymentToastTimerRef.current)
-      paymentToastTimerRef.current = setTimeout(() => setPaymentSuccessToast(false), 4000)
+      toast.success(t('dashboard.paymentSuccess'))
     }
   }, [location.state])
-
-  useEffect(
-    () => () => {
-      if (paymentToastTimerRef.current) clearTimeout(paymentToastTimerRef.current)
-    },
-    []
-  )
 
   useEffect(() => {
     const memberId = user?.memberId
@@ -718,15 +722,6 @@ export default function MemberDashboardPage() {
 
   return (
     <MemberPage>
-      {/* Toast */}
-      {paymentSuccessToast && (
-        <NotificationToast
-          tone="success"
-          message={t('dashboard.paymentSuccess')}
-          icon={<CalendarCheck size={18} />}
-        />
-      )}
-
       <MemberPageHeader
         eyebrow="Member workspace"
         title={t('dashboard.greeting', { name: user?.fullName ?? t('dashboard.greetingFallback') })}

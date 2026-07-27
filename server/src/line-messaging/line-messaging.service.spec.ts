@@ -167,6 +167,11 @@ describe('LineMessagingService', () => {
     expect(body.messages[0].quickReply.items[0].action.uri).toContain(
       'redirect=%2Fmember%2Fworkout%2Fsessions%3FsessionId%3D1'
     )
+
+    mockPrisma.trainingSession.findFirst.mockResolvedValue(makeSession())
+    await expect(service.safePushTrainingSessionEvent('starting', 1n)).resolves.toBe(true)
+    const startingBody = JSON.parse(mockFetch.mock.calls[1][1].body)
+    expect(startingBody.messages[0].text).toContain('トレーニング開始時間です。')
   })
 
   it('returns false instead of throwing when LINE push fails unexpectedly', async () => {
@@ -176,15 +181,24 @@ describe('LineMessagingService', () => {
     await expect(service.safePushTrainingSessionEvent('updated', 1n)).resolves.toBe(false)
   })
 
-  it('does not push duplicate reminders when notification dedupe skips the row', async () => {
-    mockPrisma.trainingSession.findMany.mockResolvedValue([makeSession()])
+  it('creates both in-app reminders without requiring LINE, and skips LINE when deduped', async () => {
+    env.LINE_MESSAGING_ENABLED = 'false'
+    mockPrisma.trainingSession.findMany.mockResolvedValue([
+      makeSession({ member: { userId: 100n, user: { lineId: null, fullName: 'Member' } } }),
+    ])
     mockNotifications.safeNotifyUser.mockResolvedValue(false)
 
     await service.sendUpcomingSessionReminders()
 
-    expect(mockNotifications.safeNotifyUser).toHaveBeenCalledWith(
+    expect(mockNotifications.safeNotifyUser).toHaveBeenNthCalledWith(
+      1,
       100n,
-      expect.objectContaining({ dedupeKey: 'training:1:reminder:30' })
+      expect.objectContaining({ type: 'training.reminder', dedupeKey: 'training:1:reminder:30' })
+    )
+    expect(mockNotifications.safeNotifyUser).toHaveBeenNthCalledWith(
+      2,
+      100n,
+      expect.objectContaining({ type: 'training.starting', dedupeKey: 'training:1:starting' })
     )
     expect(mockFetch).not.toHaveBeenCalled()
   })

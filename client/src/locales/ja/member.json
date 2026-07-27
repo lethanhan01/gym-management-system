@@ -36,7 +36,13 @@
       "chooseTrainer": "トレーナーを選択",
       "changeTrainer": "PTを変更",
       "cancelTrainer": "このPTをキャンセル",
-      "trainerIncluded": "選択済みのPT（プランに含む）"
+      "trainerIncluded": "選択済みのPT（プランに含む）",
+      "success": {
+        "removedTrainer": "パーソナルトレーナーの解約に成功しました"
+      },
+      "error": {
+        "removeTrainerFailed": "パーソナルトレーナーの解約に失敗しました"
+      }
     },
     "subscription": {
       "sectionTitle": "プラン",
@@ -284,7 +290,7 @@
       "backToPackages": "← プランを選び直す",
       "buttonContinue": "お支払いへ進む",
       "mainTitle": "あなたに合ったプランを選択",
-      "mainSubtitle": "スクロールしてプランをもっと見る。",
+      "mainSubtitle": "自分に合うプランを選び、トレーニングスペースを確認しましょう。",
       "errorNetwork": "サーバーに接続できません。再試行してください。",
       "buttonRetry": "再試行",
       "emptyPackages": "現在利用可能なプランがありません。ジムにお問い合わせください。",
@@ -327,7 +333,13 @@
       "defaultBadge": "デフォルト",
       "buttonDeleteAccount": "アカウントを削除",
       "errorRenewNotFound": "更新するプランが見つかりません。",
-      "errorGeneric": "エラーが発生しました。再試行してください。"
+      "errorGeneric": "エラーが発生しました。再試行してください。",
+      "success": {
+        "deletedAccount": "支払いアカウントを削除しました"
+      },
+      "error": {
+        "deleteAccount": "アカウントの削除に失敗しました"
+      }
     },
     "payment": {
       "headerTitle": "プランを選択",
@@ -591,6 +603,7 @@
       "trainerManages": "トレーナーがセッションの開始と終了を管理します。",
       "dayWeek": "{{day}}日目 · 第{{week}}週",
       "buttonClose": "閉じる",
+      "buttonStart": "開始",
       "unitSeconds": "秒",
       "errorLoad": "スケジュールを読み込めません。"
     },
@@ -635,8 +648,22 @@
       "buttonHideDetail": "詳細を非表示",
       "buttonShowDetail": "トレーニング日の詳細を見る",
       "buttonStart": "開始",
-      "buttonStartDay": "{{name}} を開始",
-      "completedTitle": "セッション完了！",
+       "buttonStartDay": "{{name}} を開始",
+       "buttonEditDay": "{{name}} を編集",
+       "editModalTitle": "{{name}} を編集",
+       "editModalDescription": "この変更は次に開始するセッションにのみ適用され、元のプランは変更されません。",
+       "setLabel": "セット {{number}}",
+       "fieldReps": "レップ数",
+       "fieldDuration": "セットごとの時間（秒）",
+       "fieldWeight": "重量（kg）",
+       "fieldRestSeconds": "セット間の休憩（秒）",
+       "buttonAddSet": "セットを追加",
+       "buttonRemoveSet": "セット {{number}} を削除",
+       "buttonCancelEdit": "キャンセル",
+       "buttonSaveEdit": "設定を保存",
+       "buttonBackToDays": "トレーニング日を選択に戻る",
+       "restBreak": "休憩 {{seconds}} 秒",
+       "completedTitle": "セッション完了！",
       "completedDesc": "結果がトレーニング履歴に記録されました。",
       "buttonGoToPlan": "プランへ戻る",
       "buttonViewHistory": "履歴を見る",
@@ -645,9 +672,14 @@
       "buttonFinish": "セッションを終了",
       "emptyTitle": "トレーニングプランがありません",
       "emptyDescription": "個人プランを作成してトレーニングを始めましょう。",
-      "buttonCreatePlan": "プランを作成",
+       "buttonCreatePlan": "プランを作成",
+       "configuredSets": "{{count}} セット設定済み",
+       "emptyConfiguredSets": "保存するセットがありません。",
+       "invalidDayLink": "トレーニング日のリンクが無効か、利用できなくなっています。",
       "placeholderTitle": "プラン内のトレーニング日を選択してください",
       "placeholderHint": "プランの詳細を開き、始めたい日の開始アイコンをタップしてください。",
+      "noLinkedPlan": "このセッションにはワークアウトプランが関連付けられていません。手動でトレーニング日を選択してください。",
+      "linkedPlanUnavailable": "この予定のトレーニング日を自動で開けませんでした。手動でトレーニング日を選択してください。",
       "errorLoad": "トレーニングプランを読み込めません。",
       "errorSave": "セッションを保存できません。再試行してください。",
       "unitSeconds": "秒"
@@ -781,6 +813,17 @@
     "noBenefits": "特典情報がありません。",
     "start": "開始",
     "continue": "続ける",
-    "scrollToSelect": "スクロールしてプランを選択"
+    "scrollToSelect": "プランを選択して詳細を確認",
+    "galleryLabel": "プランギャラリー",
+    "imageAlt": "{{name}} プランのトレーニングスペース",
+    "viewImage": "{{name}} プランのトレーニングスペースを見る",
+    "selected": "選択済み",
+    "lightbox": {
+      "dialogLabel": "トレーニングスペースの画像を見る",
+      "close": "画像を閉じる",
+      "previous": "前の画像",
+      "next": "次の画像",
+      "counter": "{{total}} 枚中 {{current}} 枚目"
+    }
   }
 }

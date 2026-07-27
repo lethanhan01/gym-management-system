@@ -13,6 +13,7 @@ import {
   StaffSkeleton,
   SubmitButton,
 } from '@/components/StaffUI'
+import { toast } from '@/lib/toast'
 
 export default function FacilityPage() {
   const { t } = useTranslation('staff')
@@ -29,7 +30,6 @@ export default function FacilityPage() {
   const [formCapacity, setFormCapacity] = useState('20')
   const [formDesc, setFormDesc] = useState('')
   const [saving, setSaving] = useState(false)
-  const [formError, setFormError] = useState<string | null>(null)
 
   const load = useCallback(() => {
     setLoading(true)
@@ -54,7 +54,6 @@ export default function FacilityPage() {
     setFormType('')
     setFormCapacity('20')
     setFormDesc('')
-    setFormError(null)
     setModalOpen(true)
   }
 
@@ -64,21 +63,18 @@ export default function FacilityPage() {
     setFormType(room.roomType ?? '')
     setFormCapacity(String(room.capacity))
     setFormDesc(room.description ?? '')
-    setFormError(null)
     setModalOpen(true)
   }
 
   function closeModal() {
     setModalOpen(false)
     setEditing(null)
-    setFormError(null)
   }
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault()
     if (!formName.trim()) return
     setSaving(true)
-    setFormError(null)
     try {
       const payload = {
         name: formName.trim(),
@@ -88,13 +84,17 @@ export default function FacilityPage() {
       }
       if (editing) {
         await facilityService.updateRoom(editing.roomId, payload)
+        toast.success(t('facility.updateSuccess', { defaultValue: 'Cập nhật phòng tập thành công' }))
       } else {
         await facilityService.createRoom(payload)
+        toast.success(t('facility.createSuccess', { defaultValue: 'Thêm phòng tập thành công' }))
       }
       closeModal()
       load()
     } catch (err) {
-      setFormError(getApiError(err, t('facility.saveFailed')))
+      toast.error(getApiError(err, t('facility.saveFailed')), {
+        action: { label: t('common.retry', { defaultValue: 'Thử lại' }), onClick: () => handleSubmit(event) },
+      })
     } finally {
       setSaving(false)
     }
@@ -187,7 +187,6 @@ export default function FacilityPage() {
         }
       >
         <form id="room-form" className="space-y-4" onSubmit={handleSubmit}>
-          {formError && <StaffErrorState message={formError} />}
           <label className="block space-y-2">
             <span className="rogym-field-label">{t('facility.roomName')}</span>
             <input

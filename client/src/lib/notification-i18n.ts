@@ -107,6 +107,16 @@ export function translateNotification(item: NotificationItem, t: Translate): Not
             : t('notification.templates.training.reminder.genericMessage'),
       }
     }
+    case 'training.starting': {
+      const metadata = metadataOf(item.metadata)
+      const trainerName = stringValue(metadata, 'trainerName')
+      return {
+        title: t('notification.templates.training.starting.title'),
+        message: trainerName
+          ? t('notification.templates.training.starting.memberMessage', { trainerName })
+          : t('notification.templates.training.starting.genericMessage'),
+      }
+    }
     case 'attendance.checkin': {
       const metadata = metadataOf(item.metadata)
       const memberName = stringValue(metadata, 'memberName')

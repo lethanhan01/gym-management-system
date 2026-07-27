@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Trash2, Star, Check, Wallet } from 'lucide-react'
+import { Button } from '@/components/ui/Button'
 import paymentAccountService, { type PaymentAccount, type CreatePaymentAccountPayload } from '@/services/paymentAccount.service'
 import { type PaymentMethod } from '@/services/payment.service'
 import { useAuthStore } from '@/stores/authStore'
@@ -30,7 +31,7 @@ function InputField({
 
 export default function PaymentAccountsPage() {
   const { t } = useTranslation('member')
-  const { user } = useAuthStore()
+  const user = useAuthStore(state => state.user)
 
   const [accounts, setAccounts]   = useState<PaymentAccount[]>([])
   const [loading, setLoading]     = useState(true)
@@ -152,22 +153,24 @@ export default function PaymentAccountsPage() {
                   </div>
 
                   {!acc.isDefault && (
-                    <button
+                    <Button
+                      variant="icon"
                       onClick={() => handleSetDefault(acc.accountId)}
                       title={t('paymentAccounts.buttonSetDefault')}
-                      className="rogym-account-action is-default-action rogym-btn rogym-btn--icon rogym-btn--elevated rogym-sx-8ae812d4"
+                      className="rogym-account-action is-default-action rogym-sx-8ae812d4"
                     >
                       <Star size={15} />
-                    </button>
+                    </Button>
                   )}
 
-                  <button
+                  <Button
+                    variant="icon"
                     onClick={() => handleDelete(acc.accountId)}
                     title={t('paymentAccounts.buttonDelete')}
-                    className="rogym-account-action is-delete-action rogym-btn rogym-btn--icon rogym-btn--elevated rogym-sx-81543379"
+                    className="rogym-account-action is-delete-action rogym-sx-81543379"
                   >
                     <Trash2 size={15} />
-                  </button>
+                  </Button>
                 </div>
               ))}
             </div>
@@ -225,13 +228,14 @@ export default function PaymentAccountsPage() {
           {formError && <p className="text-xs text-red-300">{formError}</p>}
           {formSuccess && <p className="text-xs rogym-sx-b2fbf853">{t('paymentAccounts.submitSuccess')}</p>}
 
-          <button
+          <Button
+            variant="primary"
             onClick={handleSave}
             disabled={saving}
-            className="rogym-btn rogym-btn--primary w-full justify-center mt-1"
+            className="w-full justify-center mt-1"
           >
             {saving ? t('paymentAccounts.buttonSaving') : t('paymentAccounts.buttonSave')}
-          </button>
+          </Button>
         </div>
       </div>
     </MemberPage>

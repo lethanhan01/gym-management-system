@@ -1,5 +1,6 @@
 import { Fragment, lazy, memo, Suspense, useCallback, useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { Button, ButtonLink } from '@/components/ui/Button'
 import { useTranslation } from 'react-i18next'
 import { CalendarDays, CheckCircle, CheckCircle2, Clock3, Play, Plus, Users } from 'lucide-react'
 import { getApiError } from '@/lib/api-error'
@@ -16,6 +17,7 @@ import {
   TrainerStatusBadge,
 } from '@/components/TrainerUI'
 import { PageLoader } from '@/components/shared/Spinner'
+import { toast } from '@/lib/toast'
 
 const LOCAL_DAY_FORMATTER = new Intl.DateTimeFormat('en-CA', {
   timeZone: 'Asia/Ho_Chi_Minh',
@@ -42,12 +44,12 @@ const TrainerDashboardActions = memo(function TrainerDashboardActions() {
   const { t } = useTranslation('trainer')
   return (
     <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
-      <Link className="rogym-btn rogym-btn--outline-white justify-center" to="/trainer/sessions">
+      <ButtonLink variant="outline-white" className="justify-center" to="/trainer/sessions">
         <CalendarDays size={16} /> {t('dashboard.viewSchedule')}
-      </Link>
-      <Link className="rogym-btn rogym-btn--primary justify-center" to="/trainer/sessions/create">
+      </ButtonLink>
+      <ButtonLink variant="primary" className="justify-center" to="/trainer/sessions/create">
         <Plus size={16} /> {t('dashboard.createSession')}
-      </Link>
+      </ButtonLink>
     </div>
   )
 })
@@ -118,14 +120,14 @@ const TodaySessionRow = memo(function TodaySessionRow({
             )}
           </>
         )}
-        <button
-          type="button"
-          className="rogym-text-link text-xs ml-auto"
+        <Button
+          variant="text"
+          className="text-xs ml-auto"
           aria-label={t('sessions.detailWith', { name: session.memberName })}
           onClick={() => onOpen(session.sessionId)}
         >
           {t('dashboard.actions.detail')}
-        </button>
+        </Button>
       </div>
     </div>
   )
@@ -185,7 +187,6 @@ export default function TrainerDashboardPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [actionLoading, setActionLoading] = useState<string | null>(null) // sessionId being updated
-  const [actionError, setActionError] = useState<string | null>(null)
   const [openedSessionId, setOpenedSessionId] = useState<string | null>(null)
   const [reloadKey, setReloadKey] = useState(0)
 
@@ -279,12 +280,15 @@ export default function TrainerDashboardPage() {
 
   const handleUpdateStatus = useCallback(async (sessionId: string, status: SessionStatusUpdate) => {
     setActionLoading(sessionId)
-    setActionError(null)
     try {
       const updated = await trainingService.updateSessionStatus(sessionId, status)
       setSessions((prev) => prev.map((s) => (s.sessionId === sessionId ? updated : s)))
+      toast.success(status === 'completed' 
+        ? t('dashboard.success.completed', { defaultValue: 'Đã hoàn thành buổi tập' })
+        : t('dashboard.success.started', { defaultValue: 'Đã bắt đầu buổi tập' })
+      )
     } catch (err) {
-      setActionError(getApiError(err, t('dashboard.error.updateStatus')))
+      toast.error(getApiError(err, t('dashboard.error.updateStatus')))
     } finally {
       setActionLoading(null)
     }
@@ -337,15 +341,10 @@ export default function TrainerDashboardPage() {
                   {t('dashboard.todaySchedule.description')}
                 </p>
               </div>
-              <Link className="rogym-text-link rogym-text-link--accent shrink-0 whitespace-nowrap text-sm" to="/trainer/sessions">
+              <ButtonLink variant="text-accent" className="shrink-0 whitespace-nowrap text-sm" to="/trainer/sessions">
                 {t('dashboard.todaySchedule.allSessions')}
-              </Link>
+              </ButtonLink>
             </div>
-            {actionError && (
-              <p className="rogym-error-alert mb-4" role="alert">
-                {actionError}
-              </p>
-            )}
             {todaySessions.length === 0 ? (
               <TrainerEmptyState
                 title={t('dashboard.todaySchedule.noSessions')}
@@ -370,9 +369,9 @@ export default function TrainerDashboardPage() {
             <section className="rogym-card rogym-card--compact p-6">
               <div className="mb-5 flex items-center justify-between">
                 <h2 className="text-lg font-bold text-white">{t('dashboard.upcoming.title')}</h2>
-                <Link className="rogym-text-link rogym-text-link--accent" to="/trainer/sessions">
+                <ButtonLink variant="text-accent" to="/trainer/sessions">
                   {t('dashboard.upcoming.viewAll')}
-                </Link>
+                </ButtonLink>
               </div>
               {upcoming.length === 0 ? (
                 <TrainerEmptyState title={t('dashboard.upcoming.noUpcoming')} />
@@ -397,9 +396,9 @@ export default function TrainerDashboardPage() {
             <section className="rogym-card rogym-card--compact p-6">
               <div className="mb-5 flex items-center justify-between">
                 <h2 className="text-lg font-bold text-white">{t('dashboard.expiring.title')}</h2>
-                <Link className="rogym-text-link rogym-text-link--accent" to="/trainer/students">
+                <ButtonLink variant="text-accent" to="/trainer/students">
                   {t('dashboard.expiring.students')}
-                </Link>
+                </ButtonLink>
               </div>
               {expiringStudents.length === 0 ? (
                 <TrainerEmptyState title={t('dashboard.expiring.noExpiring')} />

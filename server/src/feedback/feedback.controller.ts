@@ -13,12 +13,14 @@ import {
 } from '@nestjs/common'
 import { PermissionsGuard } from '../common/guards/permissions.guard'
 import { RequirePermission } from '../common/decorators/require-permission.decorator'
+import { DatabaseRetryable } from '../common/decorators/database-retryable.decorator'
 import { CurrentUser } from '../auth/decorators/current-user.decorator'
 import { AuthenticatedUser } from '../auth/types/jwt-payload.interface'
 import { FeedbackService } from './feedback.service'
 import { ListFeedbackDto, CreateFeedbackDto, AssignFeedbackDto, UpdateFeedbackStatusDto } from './dto'
 
 @Controller('feedback')
+@DatabaseRetryable()
 @UseGuards(PermissionsGuard)
 export class FeedbackController {
   constructor(private readonly feedback: FeedbackService) {}

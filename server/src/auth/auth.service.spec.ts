@@ -33,6 +33,7 @@ const mockAuditService = {
 
 const mockPasswordResetService = {
   forgotPassword: jest.fn(),
+  verifyResetOtp: jest.fn(),
   resetPassword: jest.fn(),
 }
 
@@ -227,9 +228,9 @@ describe('AuthService', () => {
     it('delegates to passwordResetService and returns its result', async () => {
       mockPasswordResetService.resetPassword.mockResolvedValue(undefined)
 
-      await service.resetPassword('user@gym.local', '123456', 'NewPass1!')
+      await service.resetPassword('grant-token', 'NewPass1!')
 
-      expect(mockPasswordResetService.resetPassword).toHaveBeenCalledWith('user@gym.local', '123456', 'NewPass1!', {})
+      expect(mockPasswordResetService.resetPassword).toHaveBeenCalledWith('grant-token', 'NewPass1!', {})
     })
   })
 
@@ -320,7 +321,7 @@ describe('AuthService', () => {
     it('propagates error from passwordResetService in resetPassword', async () => {
       mockPasswordResetService.resetPassword.mockRejectedValue(new Error('sub-service error'))
 
-      await expect(service.resetPassword('user@gym.local', '123456', 'NewPass1!')).rejects.toThrow(
+      await expect(service.resetPassword('grant-token', 'NewPass1!')).rejects.toThrow(
         'sub-service error'
       )
     })

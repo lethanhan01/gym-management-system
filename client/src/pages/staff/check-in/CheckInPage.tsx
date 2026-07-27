@@ -14,12 +14,12 @@ import {
   StaffStatusBadge,
   SubmitButton,
 } from '@/components/StaffUI'
+import { toast } from '@/lib/toast'
 
 export default function CheckInPage() {
   const { t } = useTranslation('staff')
   const [memberCode, setMemberCode] = useState('')
   const [checking, setChecking] = useState(false)
-  const [checkError, setCheckError] = useState<string | null>(null)
   const [lastCheckedIn, setLastCheckedIn] = useState<AttendanceLog | null>(null)
   const [todayLogs, setTodayLogs] = useState<AttendanceLog[]>([])
   const [logTotal, setLogTotal] = useState(0)
@@ -82,7 +82,6 @@ export default function CheckInPage() {
     event.preventDefault()
     if (!memberCode.trim()) return
     setChecking(true)
-    setCheckError(null)
     setLastCheckedIn(null)
     try {
       const log = await trainingService.manualCheckin({
@@ -91,6 +90,7 @@ export default function CheckInPage() {
       })
       setLastCheckedIn(log)
       setMemberCode('')
+      toast.success(t('checkIn.checkInSuccess', { defaultValue: 'Check-in thành công!' }))
       loadTodayLogs()
     } catch (err) {
       const code = getApiErrorCode(err)
@@ -100,7 +100,9 @@ export default function CheckInPage() {
           : code === 'MEMBER_NO_ACTIVE_SUBSCRIPTION'
             ? t('checkIn.errorNoSub')
             : getApiError(err, t('checkIn.errorDefault'))
-      setCheckError(message)
+      toast.error(message, {
+        action: { label: t('common.retry', { defaultValue: 'Thử lại' }), onClick: () => handleCheckin(event) },
+      })
     } finally {
       setChecking(false)
     }
@@ -136,7 +138,6 @@ export default function CheckInPage() {
                   />
                 </div>
               </label>
-              {checkError && <StaffErrorState message={checkError} />}
               <SubmitButton loading={checking} disabled={!memberCode.trim()}>
                 <LogIn size={16} /> Check-in
               </SubmitButton>

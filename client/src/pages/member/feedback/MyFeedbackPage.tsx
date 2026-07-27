@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link } from 'react-router-dom'
+import { Button, ButtonLink } from '@/components/ui/Button'
 import { ChevronLeft, ChevronRight, Trash2 } from 'lucide-react'
 import { MemberPage, MemberPageHeader, MemberSkeleton, MemberEmptyState, MemberErrorState } from '@/components/MemberUI'
 import { feedbackService, type Feedback } from '@/services/feedback.service'
@@ -72,7 +72,7 @@ function Pagination({ page, total, onChange }: { page: number; total: number; on
 
 export default function MyFeedbackPage() {
   const { t } = useTranslation('member')
-  const { user } = useAuthStore()
+  const user = useAuthStore(state => state.user)
 
   const STATUS_MAP: Record<string, { label: string; tone: string }> = {
     open:        { label: t('feedback.list.statusLabel.open'),        tone: 'warning' },
@@ -162,9 +162,9 @@ export default function MyFeedbackPage() {
         title={t('feedback.list.title')}
         description={t('feedback.list.description')}
         actions={
-          <Link to="/member/feedback/send" className="rogym-btn rogym-btn--primary px-5 py-2.5 text-sm">
+          <ButtonLink to="/member/feedback/send" variant="primary" className="px-5 py-2.5 text-sm">
             {t('feedback.list.buttonSendNew')}
-          </Link>
+          </ButtonLink>
         }
       />
 
@@ -203,9 +203,9 @@ export default function MyFeedbackPage() {
           description={activeTab ? t('feedback.list.emptyFiltered') : t('feedback.list.emptyNone')}
           action={
             !activeTab ? (
-              <Link to="/member/feedback/send" className="rogym-btn rogym-btn--primary px-5 py-2.5 text-sm">
+              <ButtonLink to="/member/feedback/send" variant="primary" className="px-5 py-2.5 text-sm">
                 {t('feedback.list.buttonSendFirst')}
-              </Link>
+              </ButtonLink>
             ) : undefined
           }
         />
@@ -274,13 +274,14 @@ export default function MyFeedbackPage() {
                       >
                         {t('feedback.list.buttonCancelDelete')}
                       </button>
-                      <button
+                      <Button
+                        variant="danger"
                         onClick={() => handleDelete(fb.feedbackId)}
                         disabled={isDeleting}
-                        className="rogym-danger-button rounded-lg px-3 py-1.5 text-xs font-semibold"
+                        className="rounded-lg px-3 py-1.5 text-xs font-semibold"
                       >
                         {isDeleting ? t('feedback.list.buttonDeleting') : t('feedback.list.buttonDelete')}
-                      </button>
+                      </Button>
                     </div>
                   )}
                 </div>

@@ -22,6 +22,7 @@ import {
   OwnerBadge,
   OwnerSelect,
 } from '@/components/OwnerUI'
+import { toast } from '@/lib/toast'
 
 const PAGE_SIZE = 20
 
@@ -53,7 +54,6 @@ export default function UsersPage() {
   const [status, setStatus] = useState('active')
   // Delete state
   const [deletingId, setDeletingId] = useState<string | null>(null)
-  const [deleteError, setDeleteError] = useState<string | null>(null)
 
   const fetchStaff = useCallback(
     async (pg: number) => {
@@ -93,17 +93,17 @@ export default function UsersPage() {
 
   async function handleDelete(staff: StaffProfile) {
     setDeletingId(staff.staffId)
-    setDeleteError(null)
     try {
       await staffService.delete(staff.staffId)
       setStaffList((prev) => prev.filter((s) => s.staffId !== staff.staffId))
       setTotal((prev) => prev - 1)
     } catch (err) {
-      if (isApiConflict(err)) {
-        setDeleteError(t('staffManagement.users.deleteFailed'))
-      } else {
-        setDeleteError(getApiError(err, t('staffManagement.users.deleteFailed')))
-      }
+      const message = isApiConflict(err)
+        ? t('staffManagement.users.deleteFailed')
+        : getApiError(err, t('staffManagement.users.deleteFailed'))
+      toast.error(message, {
+        action: { label: tCommon('button.retry', { defaultValue: 'Thử lại' }), onClick: () => handleDelete(staff) },
+      })
     } finally {
       setDeletingId(null)
     }
@@ -163,12 +163,6 @@ export default function UsersPage() {
           <Search size={17} />
         </button>
       </div>
-
-      {deleteError && (
-        <div className="rounded-xl border border-red-400/20 bg-red-400/8 px-4 py-3 text-sm text-red-200">
-          {deleteError}
-        </div>
-      )}
 
       {/* Table */}
       {loading ? (

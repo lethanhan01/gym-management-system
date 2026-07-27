@@ -9,9 +9,10 @@ import { DatePickerInput } from '@/components/DatePickerInput'
 import {
   StaffPage,
   StaffPageHeader,
-  StaffErrorState,
   StaffSkeleton,
+  StaffErrorState,
 } from '@/components/StaffUI'
+import { toast } from '@/lib/toast'
 
 type PaymentMethod = 'cash' | 'bank_card' | 'ewallet'
 
@@ -339,7 +340,6 @@ function Step3({
   onBack,
   onSubmit,
   submitting,
-  error,
 }: {
   member: MemberFormData
   pkg: Package
@@ -348,7 +348,6 @@ function Step3({
   onBack: () => void
   onSubmit: () => void
   submitting: boolean
-  error: string | null
 }) {
   const { t } = useTranslation('staff')
 
@@ -424,8 +423,6 @@ function Step3({
         )}
       </div>
 
-      {error && <StaffErrorState message={error} />}
-
       <div className="flex justify-between">
         <button type="button" className="rogym-btn rogym-btn--outline-white" onClick={onBack} disabled={submitting}>
           {t('members.register.back')}
@@ -466,12 +463,10 @@ export default function MemberRegisterPage() {
   })
 
   const [submitting, setSubmitting] = useState(false)
-  const [submitError, setSubmitError] = useState<string | null>(null)
 
   async function handleSubmit() {
     if (!selectedPackage) return
     setSubmitting(true)
-    setSubmitError(null)
     try {
       await memberService.createMember({
         fullName: memberData.fullName,
@@ -484,9 +479,12 @@ export default function MemberRegisterPage() {
         paymentMethod: paymentData.paymentMethod,
         transactionReference: paymentData.transactionReference || undefined,
       })
+      toast.success(t('members.register.success', { defaultValue: 'Đăng ký hội viên thành công' }))
       navigate('/staff/members', { state: { registeredMember: memberData.fullName } })
     } catch (err) {
-      setSubmitError(getApiError(err, t('members.register.submitFailed')))
+      toast.error(getApiError(err, t('members.register.submitFailed')), {
+        action: { label: t('members.register.retry', { defaultValue: 'Thử lại' }), onClick: handleSubmit },
+      })
       setSubmitting(false)
     }
   }
@@ -527,7 +525,6 @@ export default function MemberRegisterPage() {
           onBack={() => setStep(2)}
           onSubmit={handleSubmit}
           submitting={submitting}
-          error={submitError}
         />
       )}
     </StaffPage>

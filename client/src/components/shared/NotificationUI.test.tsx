@@ -23,6 +23,10 @@ describe('NotificationUI', () => {
     expect(screen.getByText('Payment complete')).toBeVisible()
     expect(screen.getByTestId('toast-icon')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'View' })).toBeVisible()
+    expect(screen.getByText('Payment complete')).toHaveClass('rogym-notification-toast__message')
+    expect(screen.getByRole('button', { name: 'View' }).parentElement).toHaveClass(
+      'rogym-notification-toast__action'
+    )
 
     fireEvent.click(screen.getByRole('button', { name: 'Close notification' }))
     expect(onClose).toHaveBeenCalledTimes(1)

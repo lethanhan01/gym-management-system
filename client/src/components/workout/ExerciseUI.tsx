@@ -1,17 +1,18 @@
+import { memo } from 'react'
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ImageIcon } from 'lucide-react'
 import type {
   Exercise,
+  ExerciseBodyPart,
+  ExerciseMuscle,
+  ExerciseEquipment,
 } from '@/services/workout.service'
+import { Select } from '@/components/Select'
+import { FilterDropdown } from '@/components/FilterDropdown'
 import { cn } from '@/lib/utils'
-import {
-  getExerciseCategories,
-  getExerciseCategoryLabel,
-  type ExerciseCategoryFilter,
-} from './exercise-data'
 
-export function ExerciseCard({
+export const ExerciseCard = memo(function ExerciseCard({
   exercise,
   action,
   onClick,
@@ -50,82 +51,111 @@ export function ExerciseCard({
           <div>
             <h2 className="font-semibold text-white">{exercise.name}</h2>
             <p className="mt-1 text-xs uppercase tracking-wider rogym-text-dim">
-              {getExerciseCategoryLabel(exercise.category)}
+              {exercise.targetMuscle?.name ?? '—'}
             </p>
           </div>
           {action}
         </div>
-        <p className="mt-4 flex-1 text-sm leading-6 rogym-text-secondary">
-          {exercise.description ?? t('workout.exercises.noDescription')}
-        </p>
+        <div className="mt-4 flex-1">
+          <p className="text-sm leading-6 rogym-text-secondary">
+            {exercise.description ?? t('workout.exercises.noDescription')}
+          </p>
+          {exercise.instructions && exercise.instructions.length > 0 && (
+            <p className="mt-2 text-sm leading-5 rogym-text-dim line-clamp-2">
+              {exercise.instructions.join(' ')}
+            </p>
+          )}
+        </div>
         <div className="mt-5 grid grid-cols-2 gap-3 border-t border-white/5 pt-4 text-xs">
           <div>
-            <span className="rogym-text-dim">{t('workout.exercises.fieldMuscleGroup')}</span>
-            <div className="mt-1 text-white">{exercise.muscleGroup ?? t('workout.exercises.muscleGroupUnknown')}</div>
+            <span className="rogym-text-dim">{t('workout.exercises.fieldBodyPart', 'Body Part')}</span>
+            <div className="mt-1 text-white">{exercise.bodyPart?.name ?? '—'}</div>
           </div>
           <div>
-            <span className="rogym-text-dim">{t('workout.exercises.fieldEquipment')}</span>
-            <div className="mt-1 text-white">{exercise.equipmentNeeded ?? t('workout.exercises.equipmentNone')}</div>
+            <span className="rogym-text-dim">{t('workout.exercises.fieldEquipment', 'Equipment')}</span>
+            <div className="mt-1 text-white">{exercise.equipment?.name ?? t('workout.exercises.equipmentNone', 'None')}</div>
           </div>
         </div>
       </div>
     </article>
   )
-}
+})
 
-export function ExerciseCategoryFilterPopover({
+export const ExerciseFilterDropdown = memo(function ExerciseFilterDropdown({
   open,
-  value,
+  onOpenChange,
+  activeCount,
+  bodyPartId,
+  targetMuscleId,
+  equipmentId,
+  bodyParts,
+  muscles,
+  equipments,
   onChange,
   onApply,
-  onClose,
 }: {
   open: boolean
-  value: ExerciseCategoryFilter
-  onChange: (value: ExerciseCategoryFilter) => void
+  onOpenChange: (open: boolean) => void
+  activeCount?: number
+  bodyPartId?: number
+  targetMuscleId?: number
+  equipmentId?: number
+  bodyParts: ExerciseBodyPart[]
+  muscles: ExerciseMuscle[]
+  equipments: ExerciseEquipment[]
+  onChange: (fields: { bodyPartId?: number; targetMuscleId?: number; equipmentId?: number }) => void
   onApply: () => void
-  onClose: () => void
 }) {
   const { t } = useTranslation('member')
-  const { t: tc } = useTranslation('common')
-  if (!open) return null
   return (
-    <>
-      <div className="fixed inset-0 z-10" onClick={onClose} />
-      <div className="absolute right-0 top-full z-20 mt-2 min-w-[260px] rounded-[20px] border border-[rgba(6,195,132,0.25)] bg-[#0a1f17] p-5 shadow-[0_12px_40px_rgba(0,0,0,0.6)]">
-        <p className="mb-4 text-sm font-bold text-white">{t('workout.exercises.filterTitle')}</p>
-        <p className="rogym-field-label mb-2">{t('workout.exercises.categoryLabel')}</p>
-        <div className="mb-5 flex flex-wrap gap-2">
-          {getExerciseCategories().map((option) => (
-            <button
-              key={option.value}
-              type="button"
-              onClick={() => onChange(option.value)}
-              className={`rogym-choice-chip rounded-xl px-3 py-1.5 text-xs font-semibold transition-colors ${
-                value === option.value ? 'is-active' : ''
-              }`}
-            >
-              {option.label}
-            </button>
+    <FilterDropdown
+      open={open}
+      onOpenChange={onOpenChange}
+      activeCount={activeCount}
+      title={t('workout.exercises.filterTitle')}
+      onApply={onApply}
+    >
+      <div>
+        <p className="rogym-field-label mb-2">{t('workout.exercises.fieldBodyPart', 'Body Part')}</p>
+        <Select
+          className="w-full"
+          value={bodyPartId ? String(bodyPartId) : ''}
+          onValueChange={(val) => onChange({ bodyPartId: val ? Number(val) : undefined })}
+        >
+          <option value="">{t('workout.categories.all', 'All')}</option>
+          {bodyParts.map((item) => (
+            <option key={item.bodyPartId} value={item.bodyPartId}>{item.name}</option>
           ))}
-        </div>
-        <div className="flex justify-end gap-2">
-          <button
-            type="button"
-            className="rogym-btn rogym-btn--outline-white px-4"
-            onClick={onClose}
-          >
-            {tc('button.cancel')}
-          </button>
-          <button
-            type="button"
-            className="rogym-btn rogym-btn--primary px-4"
-            onClick={onApply}
-          >
-            {tc('button.save')}
-          </button>
-        </div>
+        </Select>
       </div>
-    </>
+
+      <div>
+        <p className="rogym-field-label mb-2">{t('workout.exercises.fieldTargetMuscle', 'Target Muscle')}</p>
+        <Select
+          className="w-full"
+          value={targetMuscleId ? String(targetMuscleId) : ''}
+          onValueChange={(val) => onChange({ targetMuscleId: val ? Number(val) : undefined })}
+        >
+          <option value="">{t('workout.categories.all', 'All')}</option>
+          {muscles.map((item) => (
+            <option key={item.muscleId} value={item.muscleId}>{item.name}</option>
+          ))}
+        </Select>
+      </div>
+
+      <div>
+        <p className="rogym-field-label mb-2">{t('workout.exercises.fieldEquipment', 'Equipment')}</p>
+        <Select
+          className="w-full"
+          value={equipmentId ? String(equipmentId) : ''}
+          onValueChange={(val) => onChange({ equipmentId: val ? Number(val) : undefined })}
+        >
+          <option value="">{t('workout.categories.all', 'All')}</option>
+          {equipments.map((item) => (
+            <option key={item.equipmentId} value={item.equipmentId}>{item.name}</option>
+          ))}
+        </Select>
+      </div>
+    </FilterDropdown>
   )
-}
+})

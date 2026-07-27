@@ -13,6 +13,7 @@ import {
 } from '@nestjs/common'
 import { AuthenticatedUser } from '../../auth/types/jwt-payload.interface'
 import { CurrentUser } from '../../auth/decorators/current-user.decorator'
+import { DatabaseRetryable } from '../../common/decorators/database-retryable.decorator'
 import { RequirePermission } from '../../common/decorators/require-permission.decorator'
 import { PermissionsGuard } from '../../common/guards/permissions.guard'
 import { CreateSubscriptionDto } from './dto/create-subscription.dto'
@@ -41,6 +42,7 @@ export class SubscriptionsController {
   }
 
   @Get('member/:memberId')
+  @DatabaseRetryable()
   @RequirePermission('subscription.read')
   async listByMember(
     @Param('memberId', ParseIntPipe) memberId: number,

@@ -1,6 +1,7 @@
 import { FormEvent, lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react'
 import { SessionDetailModal } from '@/components/trainer/SessionDetailModal'
-import { Link, useParams, useSearchParams } from 'react-router-dom'
+import { useParams, useSearchParams } from 'react-router-dom'
+import { Button, ButtonLink } from '@/components/ui/Button'
 import { ArrowLeft, CalendarPlus, ClipboardList, Plus, TrendingUp } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { DatePickerInput } from '@/components/DatePickerInput'
@@ -177,27 +178,28 @@ export default function StudentDetailPage() {
 
   return (
     <TrainerPage>
-      <Link
+      <ButtonLink
+        variant="text"
         to="/trainer/students"
-        className="rogym-text-link mb-1 inline-flex items-center gap-1.5 text-xs rogym-text-dim hover:rogym-text-secondary"
+        className="mb-1 inline-flex items-center gap-1.5 text-xs rogym-text-dim hover:rogym-text-secondary"
       >
         <ArrowLeft size={13} /> {t('students.detail.backToList')}
-      </Link>
+      </ButtonLink>
       <TrainerPageHeader
         eyebrow={student.memberCode}
         title={student.fullName}
         description={`${student.email} · ${student.phone ?? t('students.detail.profile.noPhone')}`}
         actions={
           <>
-            <Link
-              className="rogym-btn rogym-btn--outline-white"
+            <ButtonLink
+              variant="outline-white"
               to={`/trainer/sessions/create?memberId=${id}`}
             >
               <CalendarPlus size={16} /> {t('students.detail.createSession')}
-            </Link>
-            <Link className="rogym-btn rogym-btn--primary" to={`/trainer/students/${id}/progress`}>
+            </ButtonLink>
+            <ButtonLink variant="primary" to={`/trainer/students/${id}/progress`}>
               <TrendingUp size={16} /> {t('students.detail.recordProgress')}
-            </Link>
+            </ButtonLink>
           </>
         }
       />
@@ -211,18 +213,14 @@ export default function StudentDetailPage() {
             ['workout', t('students.detail.tabs.workout')],
           ] as Array<[Tab, string]>
         ).map(([key, label]) => (
-          <button
+          <Button
             key={key}
-            type="button"
-            className={
-              tab === key
-                ? 'rogym-btn rogym-btn--primary whitespace-nowrap'
-                : 'rogym-btn rogym-btn--outline-white whitespace-nowrap'
-            }
+            variant={tab === key ? 'primary' : 'outline-white'}
+            className="whitespace-nowrap"
             onClick={() => selectTab(key)}
           >
             {label}
-          </button>
+          </Button>
         ))}
       </div>
 
@@ -278,25 +276,25 @@ export default function StudentDetailPage() {
               <p className="mb-4 text-sm rogym-text-secondary">
                 {assignment.plan?.description ?? t('students.detail.plan.noDescription')}
               </p>
-              <button
-                type="button"
-                className="rogym-text-link text-xs"
+              <Button
+                variant="text"
+                className="text-xs"
                 onClick={() => selectTab('workout')}
               >
                 {t('students.detail.workout.detail')}
-              </button>
+              </Button>
             </section>
           ))}
 
           <section className="rogym-card rogym-card--compact p-5 lg:col-span-2">
             <div className="mb-4 flex items-center justify-between">
               <h2 className="text-lg font-bold text-white">{t('students.detail.progress.title')}</h2>
-              <Link
-                className="rogym-btn rogym-btn--primary"
+              <ButtonLink
+                variant="primary"
                 to={`/trainer/students/${id}/progress`}
               >
                 <Plus size={15} /> {t('students.detail.progress.addNew')}
-              </Link>
+              </ButtonLink>
             </div>
             {progress.length === 0 ? (
               <p className="text-sm rogym-text-secondary">{t('students.detail.progress.noData')}</p>
@@ -354,12 +352,12 @@ export default function StudentDetailPage() {
           <TrainerEmptyState
             title={t('students.detail.sessions.noSessions')}
             action={
-              <Link
-                className="rogym-btn rogym-btn--primary"
+              <ButtonLink
+                variant="primary"
                 to={`/trainer/sessions/create?memberId=${id}`}
               >
                 {t('students.detail.sessions.createFirst')}
-              </Link>
+              </ButtonLink>
             }
           />
         ) : (
@@ -388,13 +386,12 @@ export default function StudentDetailPage() {
       {tab === 'workout' && (
         <div className="space-y-5">
           <div className="flex justify-end">
-            <button
-              type="button"
-              className="rogym-btn rogym-btn--primary"
+            <Button
+              variant="primary"
               onClick={() => setAssignOpen(true)}
             >
               <ClipboardList size={16} /> {t('students.detail.workout.assignNew')}
-            </button>
+            </Button>
           </div>
           {!activePlan ? (
             <TrainerEmptyState
@@ -425,13 +422,13 @@ export default function StudentDetailPage() {
                     </span>
                   )}
                   {activeAssignments[0]?.assignedByStaffId && (
-                    <button
-                      type="button"
-                      className="rogym-btn rogym-btn--danger rounded-full"
+                    <Button
+                      variant="danger"
+                      className="rounded-full"
                       onClick={() => setUnassignOpen(true)}
                     >
                       {t('students.detail.workout.unassign')}
-                    </button>
+                    </Button>
                   )}
                 </div>
               </div>
@@ -513,13 +510,12 @@ export default function StudentDetailPage() {
         onClose={() => setAssignOpen(false)}
         footer={
           <>
-            <button
-              type="button"
-              className="rogym-btn rogym-btn--outline-white"
+            <Button
+              variant="outline-white"
               onClick={() => setAssignOpen(false)}
             >
               {t('students.detail.assignModal.cancel')}
-            </button>
+            </Button>
             <SubmitButton form="assign-plan-form" loading={assigning} disabled={!assignPlanId}>
               {t('students.detail.assignModal.submit')}
             </SubmitButton>
@@ -563,24 +559,22 @@ export default function StudentDetailPage() {
         onClose={() => setUnassignOpen(false)}
         footer={
           <>
-            <button
-              type="button"
-              className="rogym-btn rogym-btn--outline-white"
+            <Button
+              variant="outline-white"
               onClick={() => setUnassignOpen(false)}
               disabled={unassigning}
             >
               {t('students.detail.unassignModal.cancel')}
-            </button>
-            <button
-              type="button"
-              className="rogym-btn rogym-btn--danger"
+            </Button>
+            <Button
+              variant="danger"
               onClick={handleUnassign}
               disabled={unassigning}
             >
               {unassigning
                 ? t('students.detail.unassignModal.submitting')
                 : t('students.detail.unassignModal.submit')}
-            </button>
+            </Button>
           </>
         }
       >

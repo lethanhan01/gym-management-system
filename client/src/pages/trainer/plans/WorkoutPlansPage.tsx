@@ -1,5 +1,6 @@
 import { FormEvent, useMemo, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
+import { Button, ButtonLink } from '@/components/ui/Button'
 import { useTranslation } from 'react-i18next'
 import {
   Archive,
@@ -14,6 +15,7 @@ import {
   UserMinus,
   Zap,
 } from 'lucide-react'
+import { FilterDropdown } from '@/components/FilterDropdown'
 import { DatePickerInput } from '@/components/DatePickerInput'
 import { useTrainerPlans } from '@/hooks/useTrainerPlans'
 import { useTrainerStudents } from '@/hooks/useTrainerStudents'
@@ -35,6 +37,7 @@ import {
   TrainerSkeleton,
   TrainerStatusBadge,
 } from '@/components/TrainerUI'
+import { toast } from '@/lib/toast'
 
 type PlanAction = { type: 'archive' | 'delete'; plan: WorkoutPlan } | null
 
@@ -44,7 +47,9 @@ export default function WorkoutPlansPage() {
   const { data, loading, error, reload } = useTrainerPlans()
   const { data: students } = useTrainerStudents({ pageSize: 100 })
   const [search, setSearch] = useState('')
-  const [status, setStatus] = useState('')
+  const [status, setStatus] = useState<string>('')
+  const [filterOpen, setFilterOpen] = useState(false)
+  const [draftStatus, setDraftStatus] = useState<string>('')
   const [createOpen, setCreateOpen] = useState(false)
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
@@ -54,7 +59,6 @@ export default function WorkoutPlansPage() {
   const [assignNotes, setAssignNotes] = useState('')
   const [action, setAction] = useState<PlanAction>(null)
   const [submitting, setSubmitting] = useState(false)
-  const [actionError, setActionError] = useState<string | null>(null)
   const [expandedPlan, setExpandedPlan] = useState<string | null>(null)
   const [planAssignments, setPlanAssignments] = useState<Record<string, PlanAssignment[]>>({})
   const [loadingExpand, setLoadingExpand] = useState<string | null>(null)
@@ -73,16 +77,18 @@ export default function WorkoutPlansPage() {
   async function createPlan(event: FormEvent) {
     event.preventDefault()
     setSubmitting(true)
-    setActionError(null)
     try {
       const plan = await workoutService.createPlan({
         name: name.trim(),
         description: description.trim() || undefined,
       })
+      toast.success(t('plans.workout.success.created', { defaultValue: 'Tạo giáo án thành công' }))
       setCreateOpen(false)
       navigate(`/trainer/plans/${plan.planId}/builder`)
     } catch (err) {
-      setActionError(getApiError(err, t('plans.workout.error.createFailed')))
+      toast.error(getApiError(err, t('plans.workout.error.createFailed')), {
+        action: { label: t('common.retry', { defaultValue: 'Thử lại' }), onClick: () => createPlan(event) },
+      })
     } finally {
       setSubmitting(false)
     }
@@ -92,32 +98,35 @@ export default function WorkoutPlansPage() {
     const exerciseCount =
       plan.days?.reduce((sum, day) => sum + (day.exercises?.length ?? 0), 0) ?? 0
     if (!plan.days?.length || exerciseCount === 0) {
-      setActionError(t('plans.workout.error.activateEmpty'))
+      toast.error(t('plans.workout.error.activateEmpty'))
       return
     }
-    setActionError(null)
     try {
       await workoutService.updatePlan(plan.planId, { status: 'active' })
+      toast.success(t('plans.workout.success.activated', { defaultValue: 'Giáo án đã được kích hoạt' }))
       await reload()
     } catch (err) {
-      setActionError(getApiError(err, t('plans.workout.error.activateFailed')))
+      toast.error(getApiError(err, t('plans.workout.error.activateFailed')))
     }
   }
 
   async function confirmAction() {
     if (!action) return
     setSubmitting(true)
-    setActionError(null)
     try {
       if (action.type === 'archive') {
         await workoutService.updatePlan(action.plan.planId, { status: 'archived' })
       } else {
         await workoutService.deletePlan(action.plan.planId)
       }
+      toast.success(action.type === 'archive' 
+        ? t('plans.workout.success.archived', { defaultValue: 'Đã lưu trữ giáo án' })
+        : t('plans.workout.success.deleted', { defaultValue: 'Đã xóa giáo án' })
+      )
       setAction(null)
       await reload()
     } catch (err) {
-      setActionError(
+      toast.error(
         getApiError(
           err,
           action.type === 'archive'
@@ -134,16 +143,16 @@ export default function WorkoutPlansPage() {
     event.preventDefault()
     if (!assignPlan || !memberId) return
     setSubmitting(true)
-    setActionError(null)
     try {
       await workoutService.assignPlan(memberId, {
         planId: Number(assignPlan.planId),
         startDate,
         notes: assignNotes.trim() || undefined,
       })
+      toast.success(t('plans.workout.success.assigned', { defaultValue: 'Giao giáo án thành công' }))
       navigate(`/trainer/students/${memberId}?tab=workout`)
     } catch (err) {
-      setActionError(
+      toast.error(
         getApiError(err, t('plans.workout.error.assignFailed'))
       )
     } finally {
@@ -166,7 +175,7 @@ export default function WorkoutPlansPage() {
       setPlanAssignments((prev) => ({ ...prev, [planId]: fetched }))
       setExpandedPlan(planId)
     } catch (err) {
-      setActionError(getApiError(err, t('plans.workout.error.loadStudentsFailed')))
+      toast.error(getApiError(err, t('plans.workout.error.loadStudentsFailed')))
     } finally {
       setLoadingExpand(null)
     }
@@ -175,7 +184,6 @@ export default function WorkoutPlansPage() {
   async function confirmUnassign() {
     if (!unassignTarget) return
     setConfirmingUnassign(true)
-    setActionError(null)
     try {
       await workoutService.unassignMember(unassignTarget.assignmentId)
       const planId = unassignTarget.planId
@@ -185,13 +193,16 @@ export default function WorkoutPlansPage() {
           (a) => a.assignmentId !== unassignTarget.assignmentId
         ),
       }))
+      toast.success(t('plans.workout.success.unassigned', { defaultValue: 'Đã hủy giao giáo án' }))
       setUnassignTarget(null)
     } catch (err) {
-      setActionError(getApiError(err, t('plans.workout.error.unassignFailed')))
+      toast.error(getApiError(err, t('plans.workout.error.unassignFailed')))
     } finally {
       setConfirmingUnassign(false)
     }
   }
+
+  const activeCount = status ? 1 : 0
 
   return (
     <TrainerPage>
@@ -200,17 +211,16 @@ export default function WorkoutPlansPage() {
         title={t('plans.workout.title')}
         description={t('plans.workout.description')}
         actions={
-          <button
-            type="button"
-            className="rogym-btn rogym-btn--primary"
+          <Button
+            variant="primary"
             onClick={() => setCreateOpen(true)}
           >
             <Plus size={16} /> {t('plans.workout.createPlan')}
-          </button>
+          </Button>
         }
       />
-      <div className="rogym-card rogym-card--compact grid gap-3 p-4 md:grid-cols-[1fr_240px]">
-        <div className="relative">
+      <div className="rogym-card rogym-card--compact flex items-center gap-3 p-4">
+        <div className="relative min-w-0 flex-1">
           <Search
             className="absolute left-3 top-1/2 -translate-y-1/2 rogym-text-dim"
             size={17}
@@ -222,14 +232,35 @@ export default function WorkoutPlansPage() {
             placeholder={t('plans.workout.searchPlaceholder')}
           />
         </div>
-        <TrainerSelect value={status} onValueChange={setStatus}>
-          <option value="">{t('plans.workout.allStatuses')}</option>
-          <option value="active">{t('plans.workout.statusActive')}</option>
-          <option value="archived">{t('plans.workout.statusArchived')}</option>
-        </TrainerSelect>
+        <FilterDropdown
+          open={filterOpen}
+          onOpenChange={(open) => {
+            if (open) {
+              setDraftStatus(status)
+              setFilterOpen(true)
+            } else {
+              setFilterOpen(false)
+            }
+          }}
+          activeCount={activeCount}
+          onApply={() => {
+            setStatus(draftStatus)
+            setFilterOpen(false)
+          }}
+          title={t('plans.workout.filterTitle', 'Bộ lọc')}
+        >
+          <div>
+            <p className="rogym-field-label mb-2">{t('plans.workout.fieldStatus', 'Trạng thái')}</p>
+            <TrainerSelect value={draftStatus} onValueChange={setDraftStatus}>
+              <option value="">{t('plans.workout.allStatuses')}</option>
+              <option value="active">{t('plans.workout.statusActive')}</option>
+              <option value="archived">{t('plans.workout.statusArchived')}</option>
+            </TrainerSelect>
+          </div>
+        </FilterDropdown>
       </div>
-      {(error || actionError) && (
-        <TrainerErrorState message={actionError ?? error!} onRetry={error ? reload : undefined} />
+      {error && (
+        <TrainerErrorState message={error} onRetry={reload} />
       )}
       {loading ? (
         <TrainerSkeleton rows={5} />
@@ -238,13 +269,12 @@ export default function WorkoutPlansPage() {
           title={t('plans.workout.noPlan')}
           description={t('plans.workout.noPlanDesc')}
           action={
-            <button
-              type="button"
-              className="rogym-btn rogym-btn--primary"
+            <Button
+              variant="primary"
               onClick={() => setCreateOpen(true)}
             >
               {t('plans.workout.createPlan')}
-            </button>
+            </Button>
           }
         />
       ) : (
@@ -256,31 +286,33 @@ export default function WorkoutPlansPage() {
             const assignments = planAssignments[plan.planId] ?? []
             const isLoadingExpand = loadingExpand === plan.planId
             return (
-              <article key={plan.planId} className="rogym-card rogym-card--compact p-6">
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <h2 className="text-lg font-bold text-white">{plan.name}</h2>
+              <article key={plan.planId} className="rogym-card rogym-card--compact p-4 sm:p-6">
+                <div className="flex flex-col items-start gap-3 sm:flex-row sm:justify-between sm:gap-4">
+                  <div className="min-w-0">
+                    <h2 className="break-words text-lg font-bold text-white">{plan.name}</h2>
                     <p className="mt-2 text-sm leading-6 rogym-text-secondary">
                       {plan.description ?? t('plans.workout.noDescription')}
                     </p>
                   </div>
-                  <TrainerStatusBadge status={plan.status} />
+                  <div className="shrink-0">
+                    <TrainerStatusBadge status={plan.status} />
+                  </div>
                 </div>
 
                 {/* 2 cột trên mobile, 4 cột từ md trở lên */}
-                <div className="mt-5 grid grid-cols-2 md:grid-cols-4 gap-3 rounded-xl border border-white/5 bg-white/[0.02] p-4 text-center">
+                <div className="mt-5 grid grid-cols-2 gap-2 rounded-xl border border-white/5 bg-white/[0.02] p-3 text-center sm:gap-3 sm:p-4 md:grid-cols-4">
                   <Metric value={plan.days?.length ?? 0} label={t('plans.workout.metrics.days')} />
                   <Metric value={exerciseCount} label={t('plans.workout.metrics.exercises')} />
                   <Metric value={plan._count?.assignments ?? 0} label={t('plans.workout.metrics.students')} />
                   <Metric value={formatDate(plan.createdAt)} label={t('plans.workout.metrics.createdAt')} />
                 </div>
 
-                <div className="mt-5 flex flex-wrap items-center justify-between gap-2">
-                  <div className="flex items-center gap-2">
+                <div className="mt-5 grid grid-cols-[minmax(0,1fr)_auto] gap-2 sm:flex sm:flex-wrap sm:items-center sm:justify-between">
+                  <div className="contents sm:flex sm:items-center sm:gap-2">
                     {plan.status === 'active' && (
-                      <button
-                        type="button"
-                        className="rogym-btn rogym-btn--primary"
+                      <Button
+                        variant="primary"
+                        className="w-full sm:w-auto"
                         onClick={() => {
                           setMemberId('')
                           setAssignNotes('')
@@ -288,11 +320,11 @@ export default function WorkoutPlansPage() {
                         }}
                       >
                         <Send size={15} /> {t('plans.workout.actions.assignStudent')}
-                      </button>
+                      </Button>
                     )}
-                    <button
-                      type="button"
-                      className="rogym-btn rogym-btn--outline-white"
+                    <Button
+                      variant="outline-white"
+                      className="rogym-btn--icon"
                       onClick={() => void toggleExpand(plan.planId)}
                       disabled={isLoadingExpand}
                       aria-label={isExpanded ? t('plans.workout.actions.collapseStudents') : t('plans.workout.actions.expandStudents')}
@@ -305,12 +337,14 @@ export default function WorkoutPlansPage() {
                       ) : (
                         <ChevronDown size={15} />
                       )}
-                    </button>
+                    </Button>
                   </div>
 
-                  <div className="flex flex-wrap items-center gap-2">
-                    <Link
-                      className="rogym-btn rogym-btn--outline-white"
+                  <div className="col-span-2 grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center">
+                    <ButtonLink
+                      variant="outline-white"
+                      size="compact"
+                      className="w-full sm:w-auto"
                       to={`/trainer/plans/${plan.planId}/builder`}
                     >
                       {plan.status === 'archived' ? (
@@ -319,32 +353,35 @@ export default function WorkoutPlansPage() {
                         <Pencil size={15} />
                       )}
                       {plan.status === 'archived' ? t('plans.workout.actions.view') : t('plans.workout.actions.builder')}
-                    </Link>
+                    </ButtonLink>
                     {plan.status === 'draft' && (
-                      <button
-                        type="button"
-                        className="rogym-btn rogym-btn--primary"
+                      <Button
+                        variant="primary"
+                        size="compact"
+                        className="w-full sm:w-auto"
                         onClick={() => activate(plan)}
                       >
                         <Zap size={15} /> {t('plans.workout.actions.activate')}
-                      </button>
+                      </Button>
                     )}
                     {plan.status !== 'archived' && (
-                      <button
-                        type="button"
-                        className="rogym-btn rogym-btn--outline-white"
+                      <Button
+                        variant="outline-white"
+                        size="compact"
+                        className="w-full sm:w-auto"
                         onClick={() => setAction({ type: 'archive', plan })}
                       >
                         <Archive size={15} /> {t('plans.workout.actions.archive')}
-                      </button>
+                      </Button>
                     )}
-                    <button
-                      type="button"
-                      className="rogym-btn rogym-btn--danger"
+                    <Button
+                      variant="danger"
+                      size="compact"
+                      className="col-span-2 w-full sm:col-auto sm:w-auto"
                       onClick={() => setAction({ type: 'delete', plan })}
                     >
                       <Trash2 size={15} /> {t('plans.workout.actions.delete')}
-                    </button>
+                    </Button>
                   </div>
                 </div>
 
@@ -359,36 +396,56 @@ export default function WorkoutPlansPage() {
                         {assignments.map((a) => (
                           <div
                             key={a.assignmentId}
-                            className="flex items-center justify-between gap-4 rounded-xl border border-white/5 bg-white/[0.02] px-4 py-3"
+                            className="flex flex-col gap-3 rounded-xl border border-white/5 bg-white/[0.02] px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4"
                           >
-                            <div className="min-w-0 flex-1">
-                              <div className="flex items-center gap-2">
-                                <span className="truncate font-semibold rogym-text-primary">
+                            <div className="min-w-0 w-full flex-1">
+                              <div className="flex min-w-0 items-center gap-2">
+                                <span className="min-w-0 truncate font-semibold rogym-text-primary">
                                   {a.memberName}
                                 </span>
-                                <TrainerStatusBadge status={a.status} />
+                                <span className="shrink-0">
+                                  <TrainerStatusBadge status={a.status} />
+                                </span>
                               </div>
                               <div className="mt-0.5 text-xs rogym-text-muted">
                                 {t('plans.workout.assignments.startedOn', { date: formatDate(a.startDate) })}
                                 {a.notes ? ` · ${a.notes}` : ''}
                               </div>
                             </div>
-                            <div className="flex shrink-0 items-center gap-2">
-                              <Link
+                            <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:shrink-0 sm:items-center">
+                              <ButtonLink
+                                variant="outline-white"
                                 to={`/trainer/students/${a.memberId}`}
-                                className="rogym-text-link text-xs"
+                                className={`w-full justify-center whitespace-nowrap px-3 text-xs sm:hidden${a.status !== 'active' ? ' col-span-2' : ''}`}
                               >
                                 {t('plans.workout.assignments.viewStudent')}
-                              </Link>
+                              </ButtonLink>
+                              <ButtonLink
+                                variant="text"
+                                to={`/trainer/students/${a.memberId}`}
+                                className="hidden text-xs sm:inline-flex"
+                              >
+                                {t('plans.workout.assignments.viewStudent')}
+                              </ButtonLink>
                               {a.status === 'active' && (
-                                <button
-                                  type="button"
-                                  className="rogym-inline-action rogym-inline-action--danger rounded-full"
-                                  onClick={() => setUnassignTarget(a)}
-                                  data-no-sweep
-                                >
-                                  <UserMinus size={12} /> {t('plans.workout.assignments.unassign')}
-                                </button>
+                                <>
+                                  <button
+                                    type="button"
+                                    className="rogym-btn rogym-btn--danger w-full justify-center whitespace-nowrap px-3 text-xs sm:hidden"
+                                    onClick={() => setUnassignTarget(a)}
+                                    data-no-sweep
+                                  >
+                                    <UserMinus size={12} /> {t('plans.workout.assignments.unassign')}
+                                  </button>
+                                  <button
+                                    type="button"
+                                    className="rogym-inline-action rogym-inline-action--danger hidden rounded-full sm:inline-flex"
+                                    onClick={() => setUnassignTarget(a)}
+                                    data-no-sweep
+                                  >
+                                    <UserMinus size={12} /> {t('plans.workout.assignments.unassign')}
+                                  </button>
+                                </>
                               )}
                             </div>
                           </div>
@@ -410,13 +467,12 @@ export default function WorkoutPlansPage() {
         onClose={() => setCreateOpen(false)}
         footer={
           <>
-            <button
-              type="button"
-              className="rogym-btn rogym-btn--outline-white"
+            <Button
+              variant="outline-white"
               onClick={() => setCreateOpen(false)}
             >
               {t('plans.workout.createModal.cancel')}
-            </button>
+            </Button>
             <SubmitButton form="create-plan-form" loading={submitting} disabled={!name.trim()}>
               {t('plans.workout.createModal.submit')}
             </SubmitButton>
@@ -453,13 +509,12 @@ export default function WorkoutPlansPage() {
         onClose={() => setAssignPlan(null)}
         footer={
           <>
-            <button
-              type="button"
-              className="rogym-btn rogym-btn--outline-white"
+            <Button
+              variant="outline-white"
               onClick={() => setAssignPlan(null)}
             >
               {t('plans.workout.assignModal.cancel')}
-            </button>
+            </Button>
             <SubmitButton form="assign-plan-list-form" loading={submitting} disabled={!memberId}>
               {t('plans.workout.assignModal.submit')}
             </SubmitButton>
@@ -496,25 +551,19 @@ export default function WorkoutPlansPage() {
         onClose={() => setAction(null)}
         footer={
           <>
-            <button
-              type="button"
-              className="rogym-btn rogym-btn--outline-white"
+            <Button
+              variant="outline-white"
               onClick={() => setAction(null)}
             >
               {t('plans.workout.confirmModal.cancel')}
-            </button>
-            <button
-              type="button"
-              className={
-                action?.type === 'delete'
-                  ? 'rogym-btn rogym-btn--danger'
-                  : 'rogym-btn rogym-btn--primary'
-              }
+            </Button>
+            <Button
+              variant={action?.type === 'delete' ? 'danger' : 'primary'}
               onClick={confirmAction}
               disabled={submitting}
             >
               {submitting ? t('plans.workout.confirmModal.submitting') : t('plans.workout.confirmModal.submit')}
-            </button>
+            </Button>
           </>
         }
       >
@@ -532,21 +581,19 @@ export default function WorkoutPlansPage() {
         onClose={() => setUnassignTarget(null)}
         footer={
           <>
-            <button
-              type="button"
-              className="rogym-btn rogym-btn--outline-white"
+            <Button
+              variant="outline-white"
               onClick={() => setUnassignTarget(null)}
             >
               {t('plans.workout.unassignModal.cancel')}
-            </button>
-            <button
-              type="button"
-              className="rogym-btn rogym-btn--danger"
+            </Button>
+            <Button
+              variant="danger"
               onClick={confirmUnassign}
               disabled={confirmingUnassign}
             >
               {confirmingUnassign ? t('plans.workout.unassignModal.submitting') : t('plans.workout.assignments.unassign')}
-            </button>
+            </Button>
           </>
         }
       >
@@ -560,7 +607,7 @@ export default function WorkoutPlansPage() {
 
 function Metric({ value, label }: { value: string | number; label: string }) {
   return (
-    <div>
+    <div className="min-w-0">
       <div className="truncate text-sm font-semibold text-white">{value}</div>
       <div className="mt-1 text-xs rogym-text-dim">{label}</div>
     </div>

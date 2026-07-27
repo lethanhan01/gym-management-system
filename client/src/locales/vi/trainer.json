@@ -45,6 +45,10 @@
     "error": {
       "loadFailed": "Không thể tải tổng quan trainer.",
       "updateStatus": "Không thể cập nhật trạng thái buổi tập."
+    },
+    "success": {
+      "completed": "Đã hoàn thành buổi tập",
+      "started": "Đã bắt đầu buổi tập"
     }
   },
   "sessions": {
@@ -368,6 +372,14 @@
         "assignFailed": "Không thể gán kế hoạch. Hãy kiểm tra trạng thái và cấu trúc kế hoạch.",
         "loadStudentsFailed": "Không thể tải danh sách học viên.",
         "unassignFailed": "Không thể gỡ gán."
+      },
+      "success": {
+        "created": "Tạo giáo án thành công",
+        "activated": "Giáo án đã được kích hoạt",
+        "archived": "Đã lưu trữ giáo án",
+        "deleted": "Đã xóa giáo án",
+        "assigned": "Giao giáo án thành công",
+        "unassigned": "Đã hủy giao giáo án"
       }
     },
     "lesson": {
@@ -473,6 +485,8 @@
         "deleteFailed": "Không thể xóa vì dữ liệu lịch sử đang được bảo vệ.",
         "activateFailed": "Không thể kích hoạt kế hoạch.",
         "activateEmpty": "Kế hoạch cần ít nhất một ngày và một bài tập trước khi kích hoạt.",
+        "activateEmptyDay": "Buổi tập '{{day}}' chưa có bài tập nào. Vui lòng thêm bài tập hoặc xóa buổi tập này.",
+        "activateIncompleteExercise": "Một số bài tập chưa được cài đặt target hoặc thời gian nghỉ.",
         "archiveFailed": "Không thể lưu trữ kế hoạch khi còn assignment active."
       }
     }
@@ -581,5 +595,8 @@
       "passwordTooShort": "Mật khẩu mới cần ít nhất 8 ký tự.",
       "changePasswordFailed": "Không thể đổi mật khẩu."
     }
+  },
+  "common": {
+    "retry": "Thử lại"
   }
 }

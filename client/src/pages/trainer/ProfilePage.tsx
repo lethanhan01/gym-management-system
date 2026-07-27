@@ -1,5 +1,6 @@
 import { FormEvent, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { Button } from '@/components/ui/Button'
 import { useTranslation } from 'react-i18next'
 import { KeyRound, LoaderCircle, LogOut, Save, UserRound } from 'lucide-react'
 import { getApiError } from '@/lib/api-error'
@@ -8,61 +9,57 @@ import { staffService, type StaffProfile } from '@/services/staff.service'
 import { useAuthStore } from '@/stores/authStore'
 import {
   SubmitButton,
-  TrainerErrorState,
   TrainerPage,
   TrainerPageHeader,
   TrainerSkeleton,
 } from '@/components/TrainerUI'
+import { toast } from '@/lib/toast'
 import { ProfileInfoRow } from '@/components/profile/ProfileInfoRow'
 import { ProfilePasswordField } from '@/components/profile/ProfilePasswordField'
 export default function TrainerProfilePage() {
   const { t } = useTranslation('trainer')
   const navigate = useNavigate()
-  const { user, clearAuth, setAuth, token } = useAuthStore()
+  const user = useAuthStore(state => state.user)
+  const clearAuth = useAuthStore(state => state.clearAuth)
+  const setAuth = useAuthStore(state => state.setAuth)
+  const token = useAuthStore(state => state.token)
   const [profile, setProfile] = useState<StaffProfile | null>(null)
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-
   const [isEditing, setIsEditing] = useState(false)
   const [editFullName, setEditFullName] = useState('')
   const [editPhone, setEditPhone] = useState('')
   const [profileSaving, setProfileSaving] = useState(false)
-  const [profileSaveError, setProfileSaveError] = useState<string | null>(null)
 
   const [currentPassword, setCurrentPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [saving, setSaving] = useState(false)
-  const [success, setSuccess] = useState('')
 
   useEffect(() => {
     staffService
       .getMe()
       .then((data) => setProfile(data))
-      .catch((err) => setError(getApiError(err, t('profile.error.loadFailed'))))
+      .catch((err) => toast.error(getApiError(err, t('profile.error.loadFailed'))))
       .finally(() => setLoading(false))
   }, [t])
 
   function startEdit() {
     setEditFullName(profile?.fullName ?? '')
     setEditPhone(profile?.phone ?? '')
-    setProfileSaveError(null)
     setIsEditing(true)
   }
 
   function cancelEdit() {
     setIsEditing(false)
-    setProfileSaveError(null)
   }
 
   async function handleSaveProfile() {
     const nameTrimmed = editFullName.trim()
     if (!nameTrimmed) {
-      setProfileSaveError(t('profile.error.nameRequired'))
+      toast.error(t('profile.error.nameRequired'))
       return
     }
     setProfileSaving(true)
-    setProfileSaveError(null)
     try {
       const updated = await staffService.update(profile!.staffId, {
         fullName: nameTrimmed,
@@ -74,7 +71,7 @@ export default function TrainerProfilePage() {
       }
       setIsEditing(false)
     } catch (err) {
-      setProfileSaveError(getApiError(err, t('profile.error.saveFailed')))
+      toast.error(getApiError(err, t('profile.error.saveFailed')))
     } finally {
       setProfileSaving(false)
     }
@@ -83,7 +80,7 @@ export default function TrainerProfilePage() {
   async function changePassword(event: FormEvent) {
     event.preventDefault()
     if (newPassword.length < 8 || newPassword !== confirmPassword) {
-      setError(
+      toast.error(
         newPassword !== confirmPassword
           ? t('profile.error.passwordMismatch')
           : t('profile.error.passwordTooShort')
@@ -91,16 +88,14 @@ export default function TrainerProfilePage() {
       return
     }
     setSaving(true)
-    setError(null)
-    setSuccess('')
     try {
       await authService.changePassword(currentPassword, newPassword)
       setCurrentPassword('')
       setNewPassword('')
       setConfirmPassword('')
-      setSuccess(t('profile.changePassword.success'))
+      toast.success(t('profile.changePassword.success'))
     } catch (err) {
-      setError(getApiError(err, t('profile.error.changePasswordFailed')))
+      toast.error(getApiError(err, t('profile.error.changePasswordFailed')))
     } finally {
       setSaving(false)
     }
@@ -129,12 +124,6 @@ export default function TrainerProfilePage() {
               </div>
               <h2 className="rogym-eyebrow">{t('profile.personalInfo.title')}</h2>
             </div>
-
-            {profileSaveError && (
-              <div className="mb-3 rounded-xl border border-red-400/20 bg-red-400/8 px-4 py-3 text-sm text-red-200">
-                {profileSaveError}
-              </div>
-            )}
 
             {isEditing ? (
               <div className="border-b border-white/5 py-3">
@@ -174,17 +163,17 @@ export default function TrainerProfilePage() {
             <div className="mt-auto pt-6 flex gap-3">
               {isEditing ? (
                 <>
-                  <button
-                    type="button"
-                    className="rogym-btn rogym-btn--outline-white flex-1"
+                  <Button
+                    variant="outline-white"
+                    className="flex-1"
                     onClick={cancelEdit}
                     disabled={profileSaving}
                   >
                     {t('profile.actions.cancel')}
-                  </button>
-                  <button
-                    type="button"
-                    className="rogym-btn rogym-btn--primary flex-1"
+                  </Button>
+                  <Button
+                    variant="primary"
+                    className="flex-1"
                     onClick={handleSaveProfile}
                     disabled={profileSaving}
                   >
@@ -194,24 +183,24 @@ export default function TrainerProfilePage() {
                       <Save size={16} />
                     )}{' '}
                     {t('profile.actions.save')}
-                  </button>
+                  </Button>
                 </>
               ) : (
                 <>
-                  <button
-                    type="button"
-                    className="rogym-btn rogym-btn--outline-white flex-1"
+                  <Button
+                    variant="outline-white"
+                    className="flex-1"
                     onClick={startEdit}
                   >
                     {t('profile.actions.edit')}
-                  </button>
-                  <button
-                    type="button"
-                    className="rogym-btn rogym-btn--danger flex-1"
+                  </Button>
+                  <Button
+                    variant="danger"
+                    className="flex-1"
                     onClick={logout}
                   >
                     <LogOut size={16} /> {t('profile.actions.logout')}
-                  </button>
+                  </Button>
                 </>
               )}
             </div>
@@ -224,12 +213,6 @@ export default function TrainerProfilePage() {
               </div>
               <h2 className="rogym-eyebrow">{t('profile.changePassword.title')}</h2>
             </div>
-            {error && <TrainerErrorState message={error} />}
-            {success && (
-              <div className="mb-4 rounded-xl border border-green-400/20 bg-green-400/10 p-3 text-sm text-green-200">
-                {success}
-              </div>
-            )}
             <form className="flex flex-col flex-1" onSubmit={changePassword}>
               <div className="space-y-4">
                 <ProfilePasswordField

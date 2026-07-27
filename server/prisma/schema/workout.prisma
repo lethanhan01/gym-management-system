@@ -1,20 +1,103 @@
 model Exercise {
-  exerciseId       BigInt                @id @default(autoincrement()) @map("exercise_id")
-  name             String                @db.VarChar(100)
-  category         ExerciseCategory
-  muscleGroup      String?               @map("muscle_group") @db.VarChar(100)
-  equipmentNeeded  String?               @map("equipment_needed") @db.VarChar(100)
-  description      String?
-  createdByStaffId BigInt?               @map("created_by_staff_id")
-  deletedAt        DateTime?             @map("deleted_at") @db.Timestamp(6)
-  createdAt        DateTime              @default(now()) @map("created_at") @db.Timestamp(6)
-  imageUrl         String?               @map("image_url") @db.VarChar(1000)
-  createdByStaff   Staff?                @relation(fields: [createdByStaffId], references: [staffId])
-  planExercises    WorkoutPlanExercise[]
+  exerciseId          BigInt                    @id @default(autoincrement()) @map("exercise_id")
+  name                String                    @db.VarChar(100)
+  bodyPartId          Int?                      @map("body_part_id")
+  targetMuscleId      Int?                      @map("target_muscle_id")
+  equipmentId         Int?                      @map("equipment_id")
+  description         String?
+  instructions        String?                   @map("instructions") @db.Text
+  createdByStaffId    BigInt?                   @map("created_by_staff_id")
+  deletedAt           DateTime?                 @map("deleted_at") @db.Timestamp(6)
+  createdAt           DateTime                  @default(now()) @map("created_at") @db.Timestamp(6)
+  imageUrl            String?                   @map("image_url") @db.VarChar(1000)
+  source              ExerciseSource            @default(legacy)
+  externalId          String?                   @map("external_id") @db.VarChar(191)
+  contentHash         String?                   @map("content_hash") @db.VarChar(64)
+  lastSeenSyncRunId   BigInt?                   @map("last_seen_sync_run_id")
+  catalogVisible      Boolean                   @default(false) @map("catalog_visible")
+  lastSyncedAt        DateTime?                 @map("last_synced_at") @db.Timestamp(6)
+  descriptionOverride String?                   @map("description_override")
+  imageUrlOverride    String?                   @map("image_url_override") @db.VarChar(1000)
+  bodyPart            ExerciseBodyPart?         @relation(fields: [bodyPartId], references: [bodyPartId])
+  targetMuscle        ExerciseMuscle?           @relation("PrimaryMuscle", fields: [targetMuscleId], references: [muscleId])
+  equipment           ExerciseEquipment?        @relation(fields: [equipmentId], references: [equipmentId])
+  createdByStaff      Staff?                    @relation(fields: [createdByStaffId], references: [staffId])
+  secondaryMuscles    ExerciseSecondaryMuscle[]
+  planExercises       WorkoutPlanExercise[]
 
-  @@index([category])
-  @@index([muscleGroup])
+  @@unique([source, externalId])
+  @@index([bodyPartId])
+  @@index([targetMuscleId])
+  @@index([equipmentId])
+  @@index([catalogVisible, bodyPartId, name])
+  @@index([catalogVisible, targetMuscleId])
+  @@index([catalogVisible, equipmentId])
   @@map("exercises")
+}
+
+model ExerciseBodyPart {
+  bodyPartId Int        @id @default(autoincrement()) @map("body_part_id")
+  name       String     @unique @db.VarChar(100)
+  createdAt  DateTime   @default(now()) @map("created_at") @db.Timestamp(6)
+  exercises  Exercise[]
+
+  @@map("exercise_body_parts")
+}
+
+model ExerciseEquipment {
+  equipmentId Int        @id @default(autoincrement()) @map("equipment_id")
+  name        String     @unique @db.VarChar(100)
+  createdAt   DateTime   @default(now()) @map("created_at") @db.Timestamp(6)
+  exercises   Exercise[]
+
+  @@map("exercise_equipments")
+}
+
+model ExerciseMuscle {
+  muscleId         Int                       @id @default(autoincrement()) @map("muscle_id")
+  name             String                    @unique @db.VarChar(100)
+  createdAt        DateTime                  @default(now()) @map("created_at") @db.Timestamp(6)
+  primaryExercises Exercise[]                @relation("PrimaryMuscle")
+  secondaryLinks   ExerciseSecondaryMuscle[]
+
+  @@map("exercise_muscles")
+}
+
+model ExerciseSecondaryMuscle {
+  exerciseId BigInt         @map("exercise_id")
+  muscleId   Int            @map("muscle_id")
+  exercise   Exercise       @relation(fields: [exerciseId], references: [exerciseId], onDelete: Cascade)
+  muscle     ExerciseMuscle @relation(fields: [muscleId], references: [muscleId])
+
+  @@id([exerciseId, muscleId])
+  @@index([muscleId])
+  @@map("exercise_secondary_muscles")
+}
+
+model ExerciseCatalogSyncRun {
+  syncRunId      BigInt                @id @default(autoincrement()) @map("sync_run_id")
+  status         ExerciseSyncRunStatus
+  executionToken String                @map("execution_token") @db.VarChar(64)
+  startedAt      DateTime              @default(now()) @map("started_at") @db.Timestamp(6)
+  completedAt    DateTime?             @map("completed_at") @db.Timestamp(6)
+  fetchedCount   Int                   @default(0) @map("fetched_count")
+  insertedCount  Int                   @default(0) @map("inserted_count")
+  updatedCount   Int                   @default(0) @map("updated_count")
+  unchangedCount Int                   @default(0) @map("unchanged_count")
+  hiddenCount    Int                   @default(0) @map("hidden_count")
+  errorMessage   String?               @map("error_message")
+
+  @@index([status, startedAt(sort: Desc)])
+  @@map("exercise_catalog_sync_runs")
+}
+
+model ExerciseCatalogSyncLock {
+  lockName       String    @id @map("lock_name") @db.VarChar(64)
+  executionToken String?   @map("execution_token") @db.VarChar(64)
+  leaseExpiresAt DateTime? @map("lease_expires_at") @db.Timestamp(6)
+  updatedAt      DateTime  @updatedAt @map("updated_at") @db.Timestamp(6)
+
+  @@map("exercise_catalog_sync_locks")
 }
 
 model WorkoutPlan {
@@ -101,6 +184,7 @@ model WorkoutLog {
   memberId     BigInt            @map("member_id")
   assignmentId BigInt            @map("assignment_id")
   planDayId    BigInt            @map("plan_day_id")
+  clientCompletionKey String?    @unique @map("client_completion_key") @db.Uuid
   loggedAt     DateTime          @map("logged_at") @db.Timestamp(6)
   durationMin  Int?              @map("duration_min")
   notes        String?
@@ -131,13 +215,21 @@ model WorkoutLogSet {
   @@map("workout_log_sets")
 }
 
-enum ExerciseCategory {
-  strength
-  cardio
-  flexibility
-  balance
+enum ExerciseSource {
+  legacy
+  manual
+  exercisedb
 
-  @@map("exercise_category")
+  @@map("exercise_source")
+}
+
+enum ExerciseSyncRunStatus {
+  running
+  succeeded
+  failed
+  skipped
+
+  @@map("exercise_sync_run_status")
 }
 
 enum WorkoutPlanStatus {

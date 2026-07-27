@@ -12,7 +12,6 @@ import {
   Lock,
   Plus,
   Search,
-  SlidersHorizontal,
   Trash2,
   X,
   Zap,
@@ -24,15 +23,19 @@ import {
   MemberPageHeader,
   MemberSkeleton,
 } from '@/components/MemberUI'
+import { toast } from '@/lib/toast'
 import { getApiError, getApiErrorCode } from '@/lib/api-error'
 import workoutService, {
   type Exercise,
+  type ExerciseBodyPart,
+  type ExerciseMuscle,
+  type ExerciseEquipment,
   type WorkoutPlan,
   type WorkoutPlanDay,
 } from '@/services/workout.service'
 import { useAuthStore } from '@/stores/authStore'
-import { ExerciseCategoryFilterPopover } from '@/components/workout/ExerciseUI'
-import { filterExercises, type ExerciseCategoryFilter } from '@/components/workout/exercise-data'
+import { ExerciseFilterDropdown } from '@/components/workout/ExerciseUI'
+import { filterExercises } from '@/components/workout/exercise-data'
 import { ExerciseTargetFields } from '@/components/workout/PlanBuilderUI'
 
 function formatSec(seconds: number | null | undefined) {
@@ -149,9 +152,9 @@ const SuggestedPlanCard = memo(function SuggestedPlanCard({
                         {ex.restSeconds ? ` · nghỉ ${ex.restSeconds}s` : ''}
                       </span>
                     </div>
-                    {ex.exercise?.muscleGroup && (
+                    {ex.exercise?.targetMuscle && (
                       <span className="shrink-0 text-xs rogym-sx-ed519d00">
-                        {ex.exercise.muscleGroup}
+                        {ex.exercise.targetMuscle.name}
                       </span>
                     )}
                   </div>
@@ -244,8 +247,8 @@ export default function MemberPlanBuilderPage() {
     if (phase !== 'build') return
     setLoadingExercises(true)
     workoutService
-      .getExercises()
-      .then(setExercises)
+      .getExercises({ pageSize: 100 })
+      .then((result) => setExercises(result.data))
       .catch(() => setError(t('workout.planBuilder.errorLoadExercises')))
       .finally(() => setLoadingExercises(false))
   }, [phase, t])
@@ -307,7 +310,7 @@ export default function MemberPlanBuilderPage() {
   const handleUseSuggestedPlan = useCallback(
     (suggested: WorkoutPlan) => {
       if (hasActivePtPlan) {
-        setError(t('workout.planBuilder.errorHasPtPlan'))
+        toast.error(t('workout.planBuilder.errorHasPtPlan'))
         return
       }
       if (existingSelfPlan) {
@@ -319,14 +322,21 @@ export default function MemberPlanBuilderPage() {
     [applySuggestedPlan, existingSelfPlan, hasActivePtPlan, t]
   )
 
-  function handleMutationError(err: unknown, fallback: string) {
+  function handleMutationError(err: unknown, fallback: string, retryAction?: () => void) {
     const code = getApiErrorCode(err)
     if (code === 'PLAN_WRITE_BLOCKED') {
       setWriteBlocked(true)
-      setError(t('workout.planBuilder.errorWriteBlocked'))
+      toast.error(t('workout.planBuilder.errorWriteBlocked'))
       return
     }
-    setError(getApiError(err, fallback))
+    const message = getApiError(err, fallback)
+    if (retryAction) {
+      toast.error(message, {
+        action: { label: t('button.retry', { defaultValue: 'Thử lại' }), onClick: retryAction },
+      })
+    } else {
+      toast.error(message)
+    }
   }
 
   async function createPlan(e: FormEvent) {
@@ -342,7 +352,9 @@ export default function MemberPlanBuilderPage() {
       setPlan(created)
       setPhase('build')
     } catch {
-      setError(t('workout.planBuilder.errorCreatePlan'))
+      toast.error(t('workout.planBuilder.errorCreatePlan'), {
+        action: { label: t('button.retry', { defaultValue: 'Thử lại' }), onClick: () => createPlan(e) },
+      })
     } finally {
       setSubmitting(false)
     }
@@ -364,7 +376,7 @@ export default function MemberPlanBuilderPage() {
       setAddingDay(false)
       await loadPlan(plan.planId)
     } catch (err) {
-      handleMutationError(err, t('workout.planBuilder.errorAddDay'))
+      handleMutationError(err, t('workout.planBuilder.errorAddDay'), () => addDay(dayName))
     } finally {
       setSubmitting(false)
     }
@@ -386,15 +398,15 @@ export default function MemberPlanBuilderPage() {
         exerciseId: Number(selectedExercise.exerciseId),
         orderIndex: nextIdx,
         targetSets: targets.sets,
-        targetReps: selectedExercise.category === 'cardio' ? undefined : targets.reps,
-        targetDurationSec: selectedExercise.category === 'cardio' ? targets.duration : undefined,
+        targetReps: selectedExercise.bodyPart?.name?.toLowerCase() === 'cardio' ? undefined : targets.reps,
+        targetDurationSec: selectedExercise.bodyPart?.name?.toLowerCase() === 'cardio' ? targets.duration : undefined,
         targetWeightKg: targets.weight ? Number(targets.weight) : undefined,
         restSeconds: targets.restSeconds,
       })
       setAddingExerciseTo(null)
       await loadPlan(plan.planId)
     } catch (err) {
-      handleMutationError(err, t('workout.planBuilder.errorAddExercise'))
+      handleMutationError(err, t('workout.planBuilder.errorAddExercise'), () => addExercise(day, selectedExercise, targets))
     } finally {
       setSubmitting(false)
     }
@@ -409,7 +421,7 @@ export default function MemberPlanBuilderPage() {
       setDeleteDay(null)
       await loadPlan(plan.planId)
     } catch (err) {
-      handleMutationError(err, t('workout.planBuilder.errorDeleteDay'))
+      handleMutationError(err, t('workout.planBuilder.errorDeleteDay'), () => removeDay(day))
     } finally {
       setSubmitting(false)
     }
@@ -422,7 +434,7 @@ export default function MemberPlanBuilderPage() {
       await workoutService.deletePlanExercise(plan.planId, dayId, planExerciseId)
       await loadPlan(plan.planId)
     } catch (err) {
-      handleMutationError(err, t('workout.planBuilder.errorRemoveExercise'))
+      handleMutationError(err, t('workout.planBuilder.errorRemoveExercise'), () => removeExercise(dayId, planExerciseId))
     }
   }
 
@@ -438,7 +450,9 @@ export default function MemberPlanBuilderPage() {
       })
       navigate('/member/workout/plan')
     } catch (err) {
-      setError(getApiError(err, t('workout.planBuilder.errorActivate')))
+      toast.error(getApiError(err, t('workout.planBuilder.errorActivate')), {
+        action: { label: t('button.retry', { defaultValue: 'Thử lại' }), onClick: activate },
+      })
     } finally {
       setSubmitting(false)
     }
@@ -510,7 +524,6 @@ export default function MemberPlanBuilderPage() {
             </button>
           }
         />
-        {error && <MemberErrorState message={error} />}
         <form onSubmit={(e) => void createPlan(e)} className="space-y-4 rogym-sx-19e5bf8c">
           <label className="block space-y-2">
             <span className="rogym-field-label">{t('workout.planBuilder.fieldName')}</span>
@@ -788,21 +801,21 @@ export default function MemberPlanBuilderPage() {
         </div>
       )}
 
-      {/* Floating activate bar — left-20 (80px) clears the collapsed sidebar rail */}
-      <div className="fixed bottom-0 left-20 right-0 px-6 py-4 rogym-sx-e122cbce">
-        <div className="flex items-center justify-between gap-4">
-          <p className="text-sm rogym-sx-d88f932f">
+      {/* Floating action bar — clears the desktop sidebar and mobile bottom navigation. */}
+      <div className="fixed bottom-[calc(var(--rogym-bottom-nav-height)+var(--rogym-bottom-nav-center-action-clearance)+env(safe-area-inset-bottom,0px))] left-0 right-0 z-[45] px-4 py-3 rogym-sx-e122cbce md:bottom-0 md:left-20 md:z-auto md:px-6 md:py-4">
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between md:gap-4">
+          <p className="w-full text-sm rogym-sx-d88f932f md:w-auto">
             {t('workout.planBuilder.floatingBar.summary', { days: plan?.days?.length ?? 0, exercises: exerciseCount })}
             {!canActivate && (
               <span className="rogym-sx-5e5c39ab"> — {t('workout.planBuilder.floatingBar.validationError')}</span>
             )}
           </p>
-          <div className="flex items-center gap-2">
+          <div className="flex w-full flex-col gap-2 md:w-auto md:flex-row md:items-center">
             {/* Read-only plan: no activate/archive actions */}
             {readonly ? (
               <button
                 type="button"
-                className="rogym-btn rogym-btn--outline-white px-4"
+                className="rogym-btn rogym-btn--outline-white w-full justify-center px-4 md:w-auto"
                 onClick={() => navigate('/member/workout/plan')}
               >
                 <ArrowLeft size={15} /> {t('workout.planBuilder.buttonBack')}
@@ -810,15 +823,15 @@ export default function MemberPlanBuilderPage() {
             ) : activateConfirm ? (
               <>
                 {existingSelfPlan ? (
-                  <span className="text-xs text-amber-200">
+                  <span className="break-words text-xs text-amber-200">
                     {t('workout.planBuilder.confirmActivateReplace', { name: existingSelfPlan.name })}
                   </span>
                 ) : (
-                  <span className="text-xs rogym-sx-5e5c39ab">{t('workout.planBuilder.confirmActivate')}</span>
+                  <span className="break-words text-xs rogym-sx-5e5c39ab">{t('workout.planBuilder.confirmActivate')}</span>
                 )}
                 <button
                   type="button"
-                  className="rogym-btn rogym-btn--primary px-4"
+                  className="rogym-btn rogym-btn--primary w-full justify-center px-4 md:w-auto"
                   disabled={submitting}
                   onClick={() => void activate()}
                 >
@@ -826,7 +839,7 @@ export default function MemberPlanBuilderPage() {
                 </button>
                 <button
                   type="button"
-                  className="rogym-btn rogym-btn--outline-white px-4"
+                  className="rogym-btn rogym-btn--outline-white w-full justify-center px-4 md:w-auto"
                   onClick={() => setActivateConfirm(false)}
                 >
                   {t('workout.planBuilder.floatingBar.buttonCancel')}
@@ -836,7 +849,7 @@ export default function MemberPlanBuilderPage() {
               <>
                 <button
                   type="button"
-                  className="rogym-btn rogym-btn--outline-white px-4"
+                  className="rogym-btn rogym-btn--outline-white w-full justify-center px-4 md:w-auto"
                   disabled={submitting}
                   onClick={saveToList}
                 >
@@ -845,7 +858,7 @@ export default function MemberPlanBuilderPage() {
                 {!hasActivePtPlan && (
                   <button
                     type="button"
-                    className="rogym-btn rogym-btn--primary px-6"
+                    className="rogym-btn rogym-btn--primary w-full justify-center px-6 md:w-auto"
                     disabled={!canActivate || submitting}
                     onClick={() => setActivateConfirm(true)}
                   >
@@ -863,8 +876,8 @@ export default function MemberPlanBuilderPage() {
         )}
       </div>
 
-      {/* Bottom padding for floating bar */}
-      <div className="h-20" />
+      {/* Mobile reserves room for the tallest action-bar state above the bottom navigation. */}
+      <div className="h-[calc(var(--rogym-bottom-nav-height)+var(--rogym-bottom-nav-center-action-clearance)+env(safe-area-inset-bottom,0px)+18rem)] md:h-20" />
     </MemberPage>
   )
 }
@@ -897,20 +910,41 @@ function AddExerciseForm({
   const [duration, setDuration] = useState(60)
   const [weight, setWeight] = useState('')
   const [restSeconds, setRestSeconds] = useState(60)
-  const [category, setCategory] = useState<ExerciseCategoryFilter>('')
   const [search, setSearch] = useState('')
+  const [bodyPartId, setBodyPartId] = useState<number | undefined>()
+  const [targetMuscleId, setTargetMuscleId] = useState<number | undefined>()
+  const [equipmentId, setEquipmentId] = useState<number | undefined>()
   const [filterOpen, setFilterOpen] = useState(false)
-  const [draftCategory, setDraftCategory] = useState<ExerciseCategoryFilter>('')
+  
+  const [draftBodyPartId, setDraftBodyPartId] = useState<number | undefined>()
+  const [draftTargetMuscleId, setDraftTargetMuscleId] = useState<number | undefined>()
+  const [draftEquipmentId, setDraftEquipmentId] = useState<number | undefined>()
+
+  const [bodyParts, setBodyParts] = useState<ExerciseBodyPart[]>([])
+  const [muscles, setMuscles] = useState<ExerciseMuscle[]>([])
+  const [equipments, setEquipments] = useState<ExerciseEquipment[]>([])
+
+  useEffect(() => {
+    void Promise.all([
+      workoutService.getBodyParts(),
+      workoutService.getMuscles(),
+      workoutService.getEquipments(),
+    ]).then(([bp, mu, eq]) => {
+      setBodyParts(bp)
+      setMuscles(mu)
+      setEquipments(eq)
+    })
+  }, [])
 
   const selectedExercise = useMemo(
     () => exercises.find((exercise) => exercise.exerciseId === exerciseId) ?? null,
     [exerciseId, exercises]
   )
   const filteredExercises = useMemo(
-    () => filterExercises(exercises, search, category),
-    [category, exercises, search]
+    () => filterExercises(exercises, search, bodyPartId, targetMuscleId, equipmentId),
+    [bodyPartId, targetMuscleId, equipmentId, exercises, search]
   )
-  const activeFilterCount = category ? 1 : 0
+  const activeFilterCount = [bodyPartId, targetMuscleId, equipmentId].filter((v) => v !== undefined).length
 
   return (
     <form
@@ -936,34 +970,37 @@ function AddExerciseForm({
               placeholder={t('workout.planBuilder.addExercise.searchPlaceholder')}
             />
           </div>
-          <button
-            type="button"
-            onClick={() => {
-              setDraftCategory(category)
-              setFilterOpen(true)
-            }}
-            className={`rogym-filter-trigger flex shrink-0 items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-semibold transition-colors ${
-              activeFilterCount > 0 ? 'is-active' : ''
-            }`}
-          >
-            <SlidersHorizontal size={13} />
-            {t('workout.planBuilder.addExercise.buttonFilter')}
-            {activeFilterCount > 0 && (
-              <span className="flex h-4 w-4 items-center justify-center rounded-full text-[10px] font-bold rogym-sx-fc269f1b">
-                {activeFilterCount}
-              </span>
-            )}
-          </button>
-          <ExerciseCategoryFilterPopover
+          <ExerciseFilterDropdown
             open={filterOpen}
-            value={draftCategory}
-            onChange={setDraftCategory}
+            onOpenChange={(open) => {
+              if (open) {
+                setDraftBodyPartId(bodyPartId)
+                setDraftTargetMuscleId(targetMuscleId)
+                setDraftEquipmentId(equipmentId)
+                setFilterOpen(true)
+              } else {
+                setFilterOpen(false)
+              }
+            }}
+            activeCount={activeFilterCount}
+            bodyPartId={draftBodyPartId}
+            targetMuscleId={draftTargetMuscleId}
+            equipmentId={draftEquipmentId}
+            bodyParts={bodyParts}
+            muscles={muscles}
+            equipments={equipments}
+            onChange={(fields) => {
+              if ('bodyPartId' in fields) setDraftBodyPartId(fields.bodyPartId)
+              if ('targetMuscleId' in fields) setDraftTargetMuscleId(fields.targetMuscleId)
+              if ('equipmentId' in fields) setDraftEquipmentId(fields.equipmentId)
+            }}
             onApply={() => {
-              setCategory(draftCategory)
+              setBodyPartId(draftBodyPartId)
+              setTargetMuscleId(draftTargetMuscleId)
+              setEquipmentId(draftEquipmentId)
               setExerciseId('')
               setFilterOpen(false)
             }}
-            onClose={() => setFilterOpen(false)}
           />
         </div>
         <div className="max-h-44 overflow-y-auto rounded-xl rogym-sx-9ff6a44e">
@@ -980,8 +1017,8 @@ function AddExerciseForm({
                 }`}
               >
                 <span className="flex-1 font-medium">{exercise.name}</span>
-                {exercise.muscleGroup && (
-                  <span className="shrink-0 text-xs rogym-sx-5e5c39ab">{exercise.muscleGroup}</span>
+                {exercise.targetMuscle && (
+                  <span className="shrink-0 text-xs rogym-sx-5e5c39ab">{exercise.targetMuscle.name}</span>
                 )}
               </button>
             ))
@@ -997,7 +1034,7 @@ function AddExerciseForm({
         )}
       </div>
       <ExerciseTargetFields
-        category={selectedExercise?.category}
+        isCardio={selectedExercise?.bodyPart?.name?.toLowerCase() === 'cardio'}
         gridClassName="grid gap-3 md:grid-cols-3"
         compact
         restOutsideGrid

@@ -198,8 +198,7 @@ export class PaymentsService {
     }
 
     const orderBy = this.buildOrder(sort)
-    const [data, total] = await Promise.all([
-      this.prisma.payment.findMany({
+    const data = await this.prisma.payment.findMany({
         where,
         include: {
           member: {
@@ -218,9 +217,8 @@ export class PaymentsService {
         skip: (page - 1) * pageSize,
         take: pageSize,
         orderBy,
-      }),
-      this.prisma.payment.count({ where }),
-    ])
+      })
+    const total = await this.prisma.payment.count({ where })
 
     return {
       data: data.map((p) => {

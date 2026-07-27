@@ -92,8 +92,7 @@ export class AuthService {
       throw new UnauthorizedException('Tài khoản đã bị khoá')
     }
 
-    // Tài khoản nhân sự được tạo bởi owner có mật khẩu mặc định, status pending_verification.
-    // Lần đăng nhập đầu tiên thành công → kích hoạt tài khoản thay vì block.
+    // Tai khoan pending_verification chi duoc kich hoat qua verify-email.
     if (user.status === UserStatus.pending_verification) {
       await this.audit.log({
         actorUserId: user.userId,
@@ -163,13 +162,12 @@ export class AuthService {
   // UC02 — Dat lai mat khau bang OTP
   // ---------------------------------------------------------------------------
 
-  async resetPassword(
-    email: string,
-    otp: string,
-    newPassword: string,
-    ctx: RequestContext = {},
-  ): Promise<void> {
-    return this.passwordReset.resetPassword(email, otp, newPassword, ctx)
+  async verifyResetOtp(email: string, otp: string, ctx: RequestContext = {}): Promise<string> {
+    return this.passwordReset.verifyResetOtp(email, otp, ctx)
+  }
+
+  async resetPassword(grantToken: string | undefined, newPassword: string, ctx: RequestContext = {}): Promise<void> {
+    return this.passwordReset.resetPassword(grantToken, newPassword, ctx)
   }
 
   // ---------------------------------------------------------------------------

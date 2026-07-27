@@ -71,7 +71,10 @@
     "network": "接続できません。ネットワークを確認して再試行してください。",
     "unknown": "エラーが発生しました。再試行してください。",
     "notFound": "データが見つかりません。",
-    "loadFailed": "データを読み込めません。"
+    "loadFailed": "データを読み込めません。",
+    "api": {
+      "EMAIL_IN_USE": "このメールアドレスは既に使用されています"
+    }
   },
   "date": {
     "notAvailable": "未設定",
@@ -158,6 +161,11 @@
           "title": "トレーニング開始間近",
           "memberMessage": "PT {{trainerName}} とのトレーニングはあと{{reminderMinutes}}分で始まります。",
           "genericMessage": "トレーニングがまもなく始まります。"
+        },
+        "starting": {
+          "title": "トレーニング開始時間です",
+          "memberMessage": "PT {{trainerName}} とのトレーニングは今始まります。",
+          "genericMessage": "トレーニングが今始まります。"
         }
       },
       "attendance": {

@@ -132,16 +132,22 @@ export class ReportsService {
         if (!current || sub.endDate > current) maxEndByMember.set(key, sub.endDate)
       }
 
+      const memberIds = Array.from(maxEndByMember.keys()).map((id) => BigInt(id))
+
+      const futureSubscriptions = await this.prisma.subscription.findMany({
+        where: {
+          memberId: { in: memberIds },
+        },
+        select: { memberId: true, startDate: true },
+      })
+
       let renewed = 0
-      for (const [memberId, maxEndDate] of maxEndByMember) {
-        const next = await this.prisma.subscription.findFirst({
-          where: {
-            memberId: BigInt(memberId),
-            startDate: { gt: maxEndDate },
-          },
-          select: { subscriptionId: true },
-        })
-        if (next) renewed += 1
+      for (const [memberIdStr, maxEndDate] of maxEndByMember) {
+        const memberId = BigInt(memberIdStr)
+        const hasRenewed = futureSubscriptions.some(
+          (sub) => sub.memberId === memberId && sub.startDate > maxEndDate
+        )
+        if (hasRenewed) renewed += 1
       }
 
       const eligible = maxEndByMember.size
@@ -172,70 +178,100 @@ export class ReportsService {
         include: { user: true },
       })
 
-      const rows = await Promise.all(
-        staff.map(async (s) => {
-          const [schedules, attendanceLogs, feedback] = await Promise.all([
-            this.prisma.staffSchedule.findMany({
-              where: {
-                staffId: s.staffId,
-                deletedAt: null,
-                workDate: { gte: range.startDate, lte: range.endDate },
-              },
-              select: { shift: true },
-            }),
-            this.prisma.staffAttendanceLog.findMany({
-              where: {
-                staffId: s.staffId,
-                checkIn: { gte: range.start, lt: range.endExclusive },
-              },
-              select: { checkIn: true, checkOut: true },
-            }),
-            this.prisma.feedback.findMany({
-              where: {
-                subjectStaffId: s.staffId,
-                feedbackType: FeedbackType.staff,
-                deletedAt: null,
-                createdAt: { gte: range.start, lt: range.endExclusive },
-              },
-              select: { severity: true },
-            }),
-          ])
+      if (staff.length === 0) {
+        return { data: [], meta: { from: range.from, to: range.to } }
+      }
 
-          const expectedMinutes = schedules.reduce(
-            (sum, sch) => sum + (SHIFT_DURATION_MINUTES[sch.shift] ?? 480),
-            0,
-          )
-          const actualMinutes = attendanceLogs.reduce((sum, log) => {
-            if (!log.checkOut) return sum
-            return sum + Math.floor((log.checkOut.getTime() - log.checkIn.getTime()) / 60000)
-          }, 0)
-          const performancePercent =
-            expectedMinutes === 0
-              ? 0
-              : Math.min(100, Math.round((actualMinutes / expectedMinutes) * 100))
+      const staffIds = staff.map((s) => s.staffId)
 
-          const avg =
-            feedback.length === 0
-              ? null
-              : Math.round(
-                  (feedback.reduce((sum, f) => sum + this.severityScore(f.severity), 0) /
-                    feedback.length) *
-                    100,
-                ) / 100
-
-          return {
-            staffId: s.staffId.toString(),
-            staffCode: s.staffCode,
-            fullName: s.user.fullName,
-            position: s.position,
-            shiftsWorked: schedules.length,
-            avgFeedbackSeverityScore: avg,
-            performancePercent,
-            actualMinutes,
-            expectedMinutes,
-          }
+      const [schedulesRows, attendanceLogsRows, feedbackRows] = await Promise.all([
+        this.prisma.staffSchedule.findMany({
+          where: {
+            staffId: { in: staffIds },
+            deletedAt: null,
+            workDate: { gte: range.startDate, lte: range.endDate },
+          },
+          select: { staffId: true, shift: true },
         }),
-      )
+        this.prisma.staffAttendanceLog.findMany({
+          where: {
+            staffId: { in: staffIds },
+            checkIn: { gte: range.start, lt: range.endExclusive },
+          },
+          select: { staffId: true, checkIn: true, checkOut: true },
+        }),
+        this.prisma.feedback.findMany({
+          where: {
+            subjectStaffId: { in: staffIds },
+            feedbackType: FeedbackType.staff,
+            deletedAt: null,
+            createdAt: { gte: range.start, lt: range.endExclusive },
+          },
+          select: { subjectStaffId: true, severity: true },
+        }),
+      ])
+
+      const scheduleMap = new Map<string, { shift: string }[]>()
+      for (const s of schedulesRows) {
+        const key = (s.staffId as bigint).toString()
+        if (!scheduleMap.has(key)) scheduleMap.set(key, [])
+        scheduleMap.get(key)!.push({ shift: s.shift })
+      }
+
+      const attendanceMap = new Map<string, { checkIn: Date; checkOut: Date | null }[]>()
+      for (const a of attendanceLogsRows) {
+        const key = (a.staffId as bigint).toString()
+        if (!attendanceMap.has(key)) attendanceMap.set(key, [])
+        attendanceMap.get(key)!.push({ checkIn: a.checkIn, checkOut: a.checkOut })
+      }
+
+      const feedbackMap = new Map<string, { severity: string }[]>()
+      for (const f of feedbackRows) {
+        const key = (f.subjectStaffId as bigint).toString()
+        if (!feedbackMap.has(key)) feedbackMap.set(key, [])
+        feedbackMap.get(key)!.push({ severity: f.severity })
+      }
+
+      const rows = staff.map((s) => {
+        const staffKey = s.staffId.toString()
+        const schedules = scheduleMap.get(staffKey) ?? []
+        const attendanceLogs = attendanceMap.get(staffKey) ?? []
+        const feedback = feedbackMap.get(staffKey) ?? []
+
+        const expectedMinutes = schedules.reduce(
+          (sum, sch) => sum + (SHIFT_DURATION_MINUTES[sch.shift] ?? 480),
+          0,
+        )
+        const actualMinutes = attendanceLogs.reduce((sum, log) => {
+          if (!log.checkOut) return sum
+          return sum + Math.floor((log.checkOut.getTime() - log.checkIn.getTime()) / 60000)
+        }, 0)
+        const performancePercent =
+          expectedMinutes === 0
+            ? 0
+            : Math.min(100, Math.round((actualMinutes / expectedMinutes) * 100))
+
+        const avg =
+          feedback.length === 0
+            ? null
+            : Math.round(
+                (feedback.reduce((sum, f) => sum + this.severityScore(f.severity as FeedbackSeverity), 0) /
+                  feedback.length) *
+                  100,
+              ) / 100
+
+        return {
+          staffId: s.staffId.toString(),
+          staffCode: s.staffCode,
+          fullName: s.user.fullName,
+          position: s.position,
+          shiftsWorked: schedules.length,
+          avgFeedbackSeverityScore: avg,
+          performancePercent,
+          actualMinutes,
+          expectedMinutes,
+        }
+      })
 
       return {
         data: rows.sort(
@@ -339,52 +375,75 @@ export class ReportsService {
         include: { user: true },
       })
 
-      const rows = await Promise.all(
-        staff.map(async (s) => {
-          const [completedSessions, feedback] = await Promise.all([
-            this.prisma.trainingSession.count({
-              where: {
-                trainerStaffId: s.staffId,
-                status: TrainingSessionStatus.completed,
-                deletedAt: null,
-                startTime: { gte: range.start, lt: range.endExclusive },
-              },
-            }),
-            this.prisma.feedback.findMany({
-              where: {
-                subjectStaffId: s.staffId,
-                feedbackType: FeedbackType.staff,
-                deletedAt: null,
-                createdAt: { gte: range.start, lt: range.endExclusive },
-              },
-              select: { severity: true },
-            }),
-          ])
+      if (staff.length === 0) {
+        return { data: [], meta: { from: range.from, to: range.to } }
+      }
 
-          const avg =
-            feedback.length === 0
-              ? null
-              : Math.round(
-                  (feedback.reduce((sum, f) => sum + this.severityScore(f.severity), 0) /
-                    feedback.length) *
-                    100
-                ) / 100
+      const staffIds = staff.map((s) => s.staffId)
 
-          return {
-            staffId: s.staffId.toString(),
-            staffCode: s.staffCode,
-            fullName: s.user.fullName,
-            completedSessions,
-            avgFeedbackSeverityScore: avg,
-          }
-        })
-      )
+      // Batch 2 queries thay vì N×2 queries song song — tránh cạn connection pool
+      const [sessionCounts, feedbackRows] = await Promise.all([
+        this.prisma.trainingSession.groupBy({
+          by: ['trainerStaffId'],
+          where: {
+            trainerStaffId: { in: staffIds },
+            status: TrainingSessionStatus.completed,
+            deletedAt: null,
+            startTime: { gte: range.start, lt: range.endExclusive },
+          },
+          _count: { _all: true },
+        }),
+        this.prisma.feedback.findMany({
+          where: {
+            subjectStaffId: { in: staffIds },
+            feedbackType: FeedbackType.staff,
+            deletedAt: null,
+            createdAt: { gte: range.start, lt: range.endExclusive },
+          },
+          select: { subjectStaffId: true, severity: true },
+        }),
+      ])
+
+      const sessionCountMap = new Map<bigint, number>()
+      for (const g of sessionCounts) {
+        if (g.trainerStaffId != null) {
+          sessionCountMap.set(g.trainerStaffId as bigint, g._count._all)
+        }
+      }
+      const feedbackMap = new Map<string, { severity: string }[]>()
+      for (const f of feedbackRows) {
+        const key = (f.subjectStaffId as bigint).toString()
+        if (!feedbackMap.has(key)) feedbackMap.set(key, [])
+        feedbackMap.get(key)!.push({ severity: f.severity })
+      }
+
+      const rows = staff.map((s) => {
+        const completedSessions = sessionCountMap.get(s.staffId) ?? 0
+        const feedback = feedbackMap.get(s.staffId.toString()) ?? []
+
+        const avg =
+          feedback.length === 0
+            ? null
+            : Math.round(
+                (feedback.reduce((sum, f) => sum + this.severityScore(f.severity as FeedbackSeverity), 0) /
+                  feedback.length) *
+                  100,
+              ) / 100
+
+        return {
+          staffId: s.staffId.toString(),
+          staffCode: s.staffCode,
+          fullName: s.user.fullName,
+          completedSessions,
+          avgFeedbackSeverityScore: avg,
+        }
+      })
 
       return {
         data: rows.sort(
           (a, b) =>
             b.completedSessions - a.completedSessions ||
-            Number(BigInt(a.staffId) - BigInt(b.staffId))
+            a.staffId.localeCompare(b.staffId),
         ),
         meta: { from: range.from, to: range.to },
       }

@@ -2,12 +2,14 @@ import { Controller, Get, HttpCode, HttpStatus, Param, ParseIntPipe, Patch, Quer
 import { CurrentUser } from '../auth/decorators/current-user.decorator'
 import { AuthenticatedUser } from '../auth/types/jwt-payload.interface'
 import { RequirePermission } from '../common/decorators/require-permission.decorator'
+import { DatabaseRetryable } from '../common/decorators/database-retryable.decorator'
 import { PermissionsGuard } from '../common/guards/permissions.guard'
 import { ListNotificationsDto } from './dto/list-notifications.dto'
 import { NewNotificationsDto } from './dto/new-notifications.dto'
 import { NotificationsService } from './notifications.service'
 
 @Controller('notifications')
+@DatabaseRetryable()
 @UseGuards(PermissionsGuard)
 @RequirePermission('notification.read')
 export class NotificationsController {

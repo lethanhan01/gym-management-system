@@ -1,5 +1,5 @@
-import { Body, Controller, Delete, Get, HttpCode, HttpStatus, NotFoundException, Post, Req, BadRequestException } from '@nestjs/common'
-import { Request } from 'express'
+import { Body, Controller, Delete, Get, HttpCode, HttpStatus, NotFoundException, Post, Req, BadRequestException, Res } from '@nestjs/common'
+import { Request, Response } from 'express'
 import { UsersService } from './users.service'
 import { CurrentUser } from './decorators/current-user.decorator'
 import { Public } from './decorators/public.decorator'
@@ -7,13 +7,19 @@ import { AuthService, RequestContext } from './auth.service'
 import { ForgotPasswordDto } from './dto/forgot-password.dto'
 import { LoginDto } from './dto/login.dto'
 import { ResetPasswordDto } from './dto/reset-password.dto'
+import { VerifyResetOtpDto } from './dto/verify-reset-otp.dto'
 import { VerifyEmailDto } from './dto/verify-email.dto'
 import { ResendVerifyDto } from './dto/resend-verify.dto'
 import { LineLoginDto } from './dto/line-login.dto'
 import { AuthenticatedUser } from './types/jwt-payload.interface'
+import { ApiBody, ApiOperation } from '@nestjs/swagger'
+import { DatabaseRetryable } from '../common/decorators/database-retryable.decorator'
 
 @Controller('auth')
+@DatabaseRetryable()
 export class AuthController {
+  private static readonly resetGrantCookie = 'password_reset_grant'
+  private static readonly resetGrantMaxAge = 10 * 60 * 1000
   constructor(
     private readonly authService: AuthService,
     private readonly usersService: UsersService,
@@ -95,10 +101,39 @@ export class AuthController {
   // ---------------------------------------------------------------------------
 
   @Public()
+  @Post('verify-reset-otp')
+  @HttpCode(HttpStatus.OK)
+  async verifyResetOtp(@Body() dto: VerifyResetOtpDto, @Req() req: Request, @Res({ passthrough: true }) res: Response) {
+    const grant = await this.authService.verifyResetOtp(dto.email, dto.otp, this.getCtx(req))
+    res.cookie(AuthController.resetGrantCookie, grant, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: AuthController.resetGrantMaxAge,
+      path: '/api/v1/auth',
+    })
+    return { success: true, message: 'OTP hợp lệ' }
+  }
+
+  private getCookie(req: Request, name: string): string | undefined {
+    const prefix = `${name}=`
+    const value = req.headers.cookie
+      ?.split(';')
+      .map((part) => part.trim())
+      .find((part) => part.startsWith(prefix))
+      ?.slice(prefix.length)
+    return value ? decodeURIComponent(value) : undefined
+  }
+
+  @Public()
   @Post('reset-password')
   @HttpCode(HttpStatus.OK)
-  async resetPassword(@Body() dto: ResetPasswordDto, @Req() req: Request) {
-    await this.authService.resetPassword(dto.email, dto.otp, dto.newPassword, this.getCtx(req))
+  async resetPassword(@Body() dto: ResetPasswordDto, @Req() req: Request, @Res({ passthrough: true }) res: Response) {
+    try {
+      await this.authService.resetPassword(this.getCookie(req, AuthController.resetGrantCookie), dto.newPassword, this.getCtx(req))
+    } finally {
+      res.clearCookie(AuthController.resetGrantCookie, { path: '/api/v1/auth', httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax' })
+    }
     return { success: true, message: 'Đặt lại mật khẩu thành công' }
   }
 
@@ -156,6 +191,17 @@ export class AuthController {
 
   @Post('change-password')
   @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Đổi mật khẩu của tài khoản đang đăng nhập' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      required: ['currentPassword', 'newPassword'],
+      properties: {
+        currentPassword: { type: 'string', format: 'password', writeOnly: true },
+        newPassword: { type: 'string', format: 'password', writeOnly: true, minLength: 8 },
+      },
+    },
+  })
   async changePassword(
     @Body() dto: { currentPassword: string; newPassword: string },
     @CurrentUser() user: AuthenticatedUser,

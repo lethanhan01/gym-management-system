@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import type { LucideIcon } from 'lucide-react'
 import { ArrowLeft, Eye, EyeOff } from 'lucide-react'
+import { Button } from '@/components/ui/Button'
 import gym from '@/assets/gym-bg-optimized.jpg'
 import roGymLogo from '@/assets/rogym_logo.svg'
 
@@ -25,14 +26,16 @@ export function BtnPrimary({
   className?: string
 }) {
   return (
-    <button
+    <Button
       type={type}
       onClick={onClick}
       disabled={disabled}
-      className={`rogym-btn rogym-btn--primary rogym-btn--wide ${className}`}
+      variant="primary"
+      size="wide"
+      className={className}
     >
       <span className="flex items-center justify-center gap-2">{children}</span>
-    </button>
+    </Button>
   )
 }
 
@@ -49,14 +52,15 @@ export function BtnOutlineWhite({
   disabled?: boolean
 }) {
   return (
-    <button
+    <Button
       type={type}
       onClick={onClick}
       disabled={disabled}
-      className="rogym-btn rogym-btn--outline-white rogym-btn--wide"
+      variant="outline-white"
+      size="wide"
     >
       <span className="flex items-center justify-center gap-2">{children}</span>
-    </button>
+    </Button>
   )
 }
 

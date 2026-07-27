@@ -12,6 +12,7 @@ import { useSubscriptionStore } from '@/stores/subscriptionStore'
 import { getPaymentMethodOptions } from '@/components/payment/payment-method-data'
 import { formatVnd } from '@/lib/currency'
 import { parsePackageBenefits } from '@/lib/package'
+import { Button } from '@/components/ui/Button'
 
 function Skeleton() {
   return (
@@ -21,13 +22,14 @@ function Skeleton() {
 
 function BtnPrimary({ onClick, disabled, children }: { onClick?: () => void; disabled?: boolean; children: React.ReactNode }) {
   return (
-    <button
+    <Button
+      variant="primary"
+      size="wide"
       onClick={onClick}
       disabled={disabled}
-      className="rogym-btn rogym-btn--primary rogym-btn--wide"
     >
-      <span>{children}</span>
-    </button>
+      {children}
+    </Button>
   )
 }
 
@@ -42,7 +44,8 @@ export default function PaymentPage() {
   const [showPanel, setShowPanel] = useState(false)
 
   const navigate  = useNavigate()
-  const { user, isAuthenticated } = useAuthStore()
+  const user = useAuthStore(state => state.user)
+  const isAuthenticated = useAuthStore(state => state.isAuthenticated)
   const setResolvedStatus = useSubscriptionStore((s) => s.setResolvedStatus)
 
   useEffect(() => {
