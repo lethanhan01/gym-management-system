@@ -37,7 +37,7 @@ describe('SubscriptionsController', () => {
     })
 
     it('propagates NotFoundException', async () => {
-      (mockService.createSubscription as jest.Mock).mockRejectedValue(new NotFoundException())
+      ;(mockService.createSubscription as jest.Mock).mockRejectedValue(new NotFoundException())
       await expect(ctrl.create({} as any, user)).rejects.toBeInstanceOf(NotFoundException)
     })
   })
@@ -55,7 +55,9 @@ describe('SubscriptionsController', () => {
 
   describe('listByMember', () => {
     it('marks the read-only member endpoint as safe for one database retry', () => {
-      expect(Reflect.getMetadata(DATABASE_RETRYABLE_KEY, SubscriptionsController.prototype.listByMember)).toBe(true)
+      expect(
+        Reflect.getMetadata(DATABASE_RETRYABLE_KEY, SubscriptionsController.prototype.listByMember)
+      ).toBe(true)
     })
 
     it('delegates to listByMember with BigInt memberId', async () => {
@@ -67,7 +69,7 @@ describe('SubscriptionsController', () => {
     })
 
     it('propagates ForbiddenException', async () => {
-      (mockService.listByMember as jest.Mock).mockRejectedValue(new ForbiddenException())
+      ;(mockService.listByMember as jest.Mock).mockRejectedValue(new ForbiddenException())
       await expect(ctrl.listByMember(15, user)).rejects.toBeInstanceOf(ForbiddenException)
     })
   })
@@ -82,7 +84,7 @@ describe('SubscriptionsController', () => {
     })
 
     it('propagates NotFoundException', async () => {
-      (mockService.cancelSubscription as jest.Mock).mockRejectedValue(new NotFoundException())
+      ;(mockService.cancelSubscription as jest.Mock).mockRejectedValue(new NotFoundException())
       await expect(ctrl.cancel(999, {}, user)).rejects.toBeInstanceOf(NotFoundException)
     })
   })
@@ -99,7 +101,7 @@ describe('SubscriptionsController', () => {
     })
 
     it('propagates exception', async () => {
-      (mockService.renewSubscription as jest.Mock).mockRejectedValue(new NotFoundException())
+      ;(mockService.renewSubscription as jest.Mock).mockRejectedValue(new NotFoundException())
       await expect(ctrl.renew(999, renewDto, user)).rejects.toBeInstanceOf(NotFoundException)
     })
   })
@@ -114,7 +116,7 @@ describe('SubscriptionsController', () => {
     })
 
     it('propagates NotFoundException', async () => {
-      (mockService.getSubscription as jest.Mock).mockRejectedValue(new NotFoundException())
+      ;(mockService.getSubscription as jest.Mock).mockRejectedValue(new NotFoundException())
       await expect(ctrl.detail(999, user)).rejects.toBeInstanceOf(NotFoundException)
     })
   })

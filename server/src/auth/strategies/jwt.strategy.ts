@@ -8,7 +8,10 @@ import { UsersService } from '../users.service'
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
-  constructor(config: ConfigService, private readonly users: UsersService) {
+  constructor(
+    config: ConfigService,
+    private readonly users: UsersService
+  ) {
     const secret = config.get<string>('JWT_SECRET')
     if (!secret) {
       throw new Error('JWT_SECRET phai duoc cau hinh trong .env')

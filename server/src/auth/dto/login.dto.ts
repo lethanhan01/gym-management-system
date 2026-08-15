@@ -5,7 +5,8 @@ import { normalizeEmail } from '../../common/normalization'
 
 export class LoginDto {
   @ApiProperty({ example: 'owner@gym.local' })
-  @Transform(({ value }) => normalizeEmail(String(value))) @IsEmail({}, { message: 'Email khong hop le' })
+  @Transform(({ value }) => normalizeEmail(String(value)))
+  @IsEmail({}, { message: 'Email khong hop le' })
   email!: string
 
   @ApiProperty({ format: 'password', writeOnly: true, example: 'Password123!' })

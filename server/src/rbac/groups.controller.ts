@@ -34,9 +34,14 @@ export class GroupsController {
     @Query('page') page = '1',
     @Query('pageSize') pageSize = '20',
     @Query('search') search?: string,
-    @Query('includeDeleted') includeDeleted?: string,
+    @Query('includeDeleted') includeDeleted?: string
   ) {
-    const result = await this.rbac.listGroups(Number(page), Number(pageSize), search, includeDeleted === 'true')
+    const result = await this.rbac.listGroups(
+      Number(page),
+      Number(pageSize),
+      search,
+      includeDeleted === 'true'
+    )
     return { success: true, ...result }
   }
 
@@ -57,7 +62,7 @@ export class GroupsController {
   async update(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateGroupDto,
-    @CurrentUser() user: AuthenticatedUser,
+    @CurrentUser() user: AuthenticatedUser
   ) {
     const result = await this.rbac.updateGroup(BigInt(id), dto, user.userId)
     return { success: true, ...result }
@@ -73,7 +78,7 @@ export class GroupsController {
   async assignPermissions(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: AssignPermissionsDto,
-    @CurrentUser() user: AuthenticatedUser,
+    @CurrentUser() user: AuthenticatedUser
   ) {
     const result = await this.rbac.assignPermissions(BigInt(id), dto.permissions, user.userId)
     return { success: true, ...result }
@@ -84,7 +89,7 @@ export class GroupsController {
   async revokePermission(
     @Param('id', ParseIntPipe) id: number,
     @Param('permissionId', ParseIntPipe) permissionId: number,
-    @CurrentUser() user: AuthenticatedUser,
+    @CurrentUser() user: AuthenticatedUser
   ) {
     await this.rbac.revokePermission(BigInt(id), BigInt(permissionId), user.userId)
   }

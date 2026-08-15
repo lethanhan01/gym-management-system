@@ -31,9 +31,7 @@ export class RolesGuard implements CanActivate {
 
     const hasRole = user.roles.some((r) => required.includes(r))
     if (!hasRole) {
-      throw new ForbiddenException(
-        `Endpoint nay chi danh cho: ${required.join(', ')}`,
-      )
+      throw new ForbiddenException(`Endpoint nay chi danh cho: ${required.join(', ')}`)
     }
     return true
   }

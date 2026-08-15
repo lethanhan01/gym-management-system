@@ -39,8 +39,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
     const isHealthy = await this.probe('startup')
     if (!isHealthy) {
       const err = this.health.lastErrorCode
-      const isAuthFailure =
-        err === 'P1000'
+      const isAuthFailure = err === 'P1000'
 
       if (isAuthFailure) {
         this.logger.error(
@@ -48,7 +47,6 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
         )
         process.exit(1)
       }
-
     }
   }
 
@@ -92,7 +90,10 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
       await this.$disconnect()
       await this.$connect()
       const healthy = await this.probe('reconnect')
-      this.logEvent('db_reconnect', { phase: healthy ? 'succeeded' : 'failed', durationMs: Date.now() - startedAt })
+      this.logEvent('db_reconnect', {
+        phase: healthy ? 'succeeded' : 'failed',
+        durationMs: Date.now() - startedAt,
+      })
       return healthy
     } catch (error) {
       this.recordFailure('reconnect', error, Date.now() - startedAt)
@@ -133,6 +134,8 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
   }
 
   private logEvent(event: string, data: Record<string, unknown>): void {
-    this.logger.log(JSON.stringify({ event, connectionMode: process.env.DB_CONNECTION_MODE, ...data }))
+    this.logger.log(
+      JSON.stringify({ event, connectionMode: process.env.DB_CONNECTION_MODE, ...data })
+    )
   }
 }

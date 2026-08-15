@@ -36,7 +36,12 @@ function makeFeedback(overrides: object = {}) {
     resolutionNote: null,
     createdAt: new Date('2024-01-01'),
     deletedAt: null,
-    member: { memberId: 1n, memberCode: 'MEM-001', userId: 100n, user: { fullName: 'Test Member' } },
+    member: {
+      memberId: 1n,
+      memberCode: 'MEM-001',
+      userId: 100n,
+      user: { fullName: 'Test Member' },
+    },
     handledByStaff: null,
     subjectStaff: null,
     subjectEquipment: null,

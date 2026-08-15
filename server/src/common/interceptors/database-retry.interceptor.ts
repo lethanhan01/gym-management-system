@@ -10,7 +10,7 @@ import { PrismaService } from '../../prisma/prisma.service'
 export class DatabaseRetryInterceptor implements NestInterceptor {
   constructor(
     private readonly reflector: Reflector,
-    private readonly prisma: PrismaService,
+    private readonly prisma: PrismaService
   ) {}
 
   intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
@@ -37,12 +37,17 @@ export class DatabaseRetryInterceptor implements NestInterceptor {
         return from(this.prisma.recoverConnection()).pipe(
           mergeMap((recovered) => {
             if (!recovered) throw error
-            this.prisma.logRetry(request.method, request.route?.path ?? request.path, 1, Date.now() - startedAt)
+            this.prisma.logRetry(
+              request.method,
+              request.route?.path ?? request.path,
+              1,
+              Date.now() - startedAt
+            )
             return timer(jitterMs)
           }),
-          mergeMap(() => execute()),
+          mergeMap(() => execute())
         )
-      }),
+      })
     )
   }
 }

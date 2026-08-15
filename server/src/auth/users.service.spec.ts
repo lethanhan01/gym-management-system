@@ -52,10 +52,7 @@ describe('UsersService', () => {
         expect.objectContaining({
           where: expect.objectContaining({
             deletedAt: null,
-            OR: [
-              { emailNormalized: 'test@example.com' },
-              { email: 'test@example.com' },
-            ],
+            OR: [{ emailNormalized: 'test@example.com' }, { email: 'test@example.com' }],
           }),
         })
       )

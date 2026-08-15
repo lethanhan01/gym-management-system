@@ -58,7 +58,7 @@ export class PackagesController {
   async update(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdatePackageDto,
-    @CurrentUser() user: AuthenticatedUser,
+    @CurrentUser() user: AuthenticatedUser
   ) {
     const result = await this.packages.updatePackage(BigInt(id), dto, user.userId)
     return { success: true, ...result }
@@ -69,7 +69,7 @@ export class PackagesController {
   async updateStatus(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdatePackageStatusDto,
-    @CurrentUser() user: AuthenticatedUser,
+    @CurrentUser() user: AuthenticatedUser
   ) {
     const result = await this.packages.updatePackageStatus(BigInt(id), dto.status, user.userId)
     return { success: true, ...result }

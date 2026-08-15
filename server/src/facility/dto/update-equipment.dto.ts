@@ -1,6 +1,15 @@
 import { EquipmentStatus } from '@prisma/client'
 import { Type } from 'class-transformer'
-import { IsDateString, IsEnum, IsInt, IsOptional, IsString, MaxLength, Min, MinLength } from 'class-validator'
+import {
+  IsDateString,
+  IsEnum,
+  IsInt,
+  IsOptional,
+  IsString,
+  MaxLength,
+  Min,
+  MinLength,
+} from 'class-validator'
 
 export class UpdateEquipmentDto {
   @IsOptional()

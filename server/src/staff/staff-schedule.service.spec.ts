@@ -77,7 +77,11 @@ describe('StaffScheduleService', () => {
       mockPrisma.staff.findFirst.mockResolvedValue(null)
 
       await expect(
-        service.createSchedule(5n, { schedules: [{ shift: 'morning' as any, workDate: futureDate() }] }, 1n)
+        service.createSchedule(
+          5n,
+          { schedules: [{ shift: 'morning' as any, workDate: futureDate() }] },
+          1n
+        )
       ).rejects.toMatchObject({ response: expect.objectContaining({ code: 'STAFF_NOT_FOUND' }) })
     })
 
@@ -85,7 +89,11 @@ describe('StaffScheduleService', () => {
       mockPrisma.staff.findFirst.mockResolvedValue(makeStaff({ position: 'trainer' }))
 
       await expect(
-        service.createSchedule(5n, { schedules: [{ shift: 'morning' as any, workDate: futureDate() }] }, 1n)
+        service.createSchedule(
+          5n,
+          { schedules: [{ shift: 'morning' as any, workDate: futureDate() }] },
+          1n
+        )
       ).rejects.toMatchObject({
         response: expect.objectContaining({ code: 'INVALID_SCHEDULE_STAFF_POSITION' }),
       })
@@ -95,7 +103,11 @@ describe('StaffScheduleService', () => {
       mockPrisma.staff.findFirst.mockResolvedValue(makeStaff())
 
       await expect(
-        service.createSchedule(5n, { schedules: [{ shift: 'morning' as any, workDate: '2000-01-01' }] }, 1n)
+        service.createSchedule(
+          5n,
+          { schedules: [{ shift: 'morning' as any, workDate: '2000-01-01' }] },
+          1n
+        )
       ).rejects.toMatchObject({ response: expect.objectContaining({ code: 'VALIDATION_ERROR' }) })
     })
 
@@ -106,8 +118,13 @@ describe('StaffScheduleService', () => {
       await expect(
         service.createSchedule(
           5n,
-          { schedules: [{ shift: 'morning' as any, workDate: wd }, { shift: 'morning' as any, workDate: wd }] },
-          1n,
+          {
+            schedules: [
+              { shift: 'morning' as any, workDate: wd },
+              { shift: 'morning' as any, workDate: wd },
+            ],
+          },
+          1n
         )
       ).rejects.toMatchObject({ response: expect.objectContaining({ code: 'VALIDATION_ERROR' }) })
     })
@@ -117,7 +134,11 @@ describe('StaffScheduleService', () => {
       mockPrisma.staffSchedule.findMany.mockResolvedValue([makeSchedule()])
 
       await expect(
-        service.createSchedule(5n, { schedules: [{ shift: 'morning' as any, workDate: futureDate() }] }, 1n)
+        service.createSchedule(
+          5n,
+          { schedules: [{ shift: 'morning' as any, workDate: futureDate() }] },
+          1n
+        )
       ).rejects.toMatchObject({ response: expect.objectContaining({ code: 'SCHEDULE_CONFLICT' }) })
     })
 
@@ -131,7 +152,7 @@ describe('StaffScheduleService', () => {
       const result = await service.createSchedule(
         5n,
         { schedules: [{ shift: 'morning' as any, workDate: futureDate() }] },
-        1n,
+        1n
       )
 
       expect(result.created).toBe(1)
@@ -162,7 +183,10 @@ describe('StaffScheduleService', () => {
       const result = await service.deleteSchedule(5n, 1n, 1n)
 
       expect(mockPrisma.staffSchedule.update).toHaveBeenCalledWith(
-        expect.objectContaining({ where: { scheduleId: 1n }, data: { deletedAt: expect.any(Date) } })
+        expect.objectContaining({
+          where: { scheduleId: 1n },
+          data: { deletedAt: expect.any(Date) },
+        })
       )
       expect(result.success).toBe(true)
       expect(mockAudit.log).toHaveBeenCalledWith(

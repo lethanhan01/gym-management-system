@@ -17,7 +17,7 @@ function todayVN(): Date {
 export class TrainerAssignmentService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly audit: AuditService,
+    private readonly audit: AuditService
   ) {}
 
   async assignTrainer(memberId: bigint, trainerId: number | null | undefined, actorUserId: bigint) {
@@ -95,7 +95,11 @@ export class TrainerAssignmentService {
       where: { userId: actorUserId, deletedAt: null },
       include: {
         subscriptions: {
-          where: { deletedAt: null, status: SubscriptionStatus.active, endDate: { gte: todayVN() } },
+          where: {
+            deletedAt: null,
+            status: SubscriptionStatus.active,
+            endDate: { gte: todayVN() },
+          },
           include: { package: true },
           orderBy: { endDate: 'desc' },
           take: 1,

@@ -13,7 +13,9 @@ export class UpdateUserDto {
   phone?: string
 
   @IsOptional()
-  @IsEnum(['active', 'pending_verification', 'locked'], { message: 'status chỉ cho phép: active, pending_verification, locked' })
+  @IsEnum(['active', 'pending_verification', 'locked'], {
+    message: 'status chỉ cho phép: active, pending_verification, locked',
+  })
   status?: 'active' | 'pending_verification' | 'locked'
 
   @IsOptional()

@@ -23,29 +23,41 @@ export interface NormalizedExerciseDbExercise {
 export class ExerciseDbV2Client {
   constructor(private readonly config: ConfigService) {}
 
-  isEnabled() { return this.config.get<string>('EXERCISEDB_SYNC_ENABLED') === 'true' }
+  isEnabled() {
+    return this.config.get<string>('EXERCISEDB_SYNC_ENABLED') === 'true'
+  }
 
-  async *allExercises(options: { pageSize?: number; strictPagination?: boolean; onRequest?: () => void } = {}): AsyncGenerator<NormalizedExerciseDbExercise[]> {
+  async *allExercises(
+    options: { pageSize?: number; strictPagination?: boolean; onRequest?: () => void } = {}
+  ): AsyncGenerator<NormalizedExerciseDbExercise[]> {
     const key = this.config.get<string>('EXERCISEDB_API_KEY')
     if (!this.isEnabled() || !key) throw new Error('ExerciseDB sync is not configured')
     const size = options.pageSize ?? Number(this.config.get<number>('EXERCISEDB_PAGE_SIZE') ?? 50)
-    if (!Number.isSafeInteger(size) || size < 1) throw new Error('ExerciseDB page size must be a positive integer')
+    if (!Number.isSafeInteger(size) || size < 1)
+      throw new Error('ExerciseDB page size must be a positive integer')
     let shortPageSeen = false
     for (let offset = 0; ; offset += size) {
       const url = new URL(EXERCISEDB_EXERCISES_URL)
-      url.searchParams.set('limit', String(size)); url.searchParams.set('offset', String(offset))
-      url.searchParams.set('sortMethod', 'id'); url.searchParams.set('sortOrder', 'ascending')
+      url.searchParams.set('limit', String(size))
+      url.searchParams.set('offset', String(offset))
+      url.searchParams.set('sortMethod', 'id')
+      url.searchParams.set('sortOrder', 'ascending')
       options.onRequest?.()
       const payload = await this.request(url, key)
       const items = Array.isArray(payload) ? payload : null
       if (!items) throw new Error('ExerciseDB returned an invalid exercises payload')
       if (options.strictPagination && shortPageSeen && items.length > 0) {
-        throw new Error(`ExerciseDB returned records after a short page at offset ${offset}; pagination is unstable`)
+        throw new Error(
+          `ExerciseDB returned records after a short page at offset ${offset}; pagination is unstable`
+        )
       }
       if (items.length === 0) return
       yield items.map((item: Record<string, unknown>) => normalize(item))
       if (options.strictPagination) {
-        if (items.length > size) throw new Error(`ExerciseDB returned ${items.length} records for requested page size ${size}`)
+        if (items.length > size)
+          throw new Error(
+            `ExerciseDB returned ${items.length} records for requested page size ${size}`
+          )
         if (items.length < size) shortPageSeen = true
       } else if (items.length < size) return
     }
@@ -56,27 +68,38 @@ export class ExerciseDbV2Client {
     const timeout = this.config.get<number>('EXERCISEDB_TIMEOUT_MS') ?? 15000
     let last: unknown
     for (let attempt = 0; attempt <= retries; attempt++) {
-      const controller = new AbortController(); const timer = setTimeout(() => controller.abort(), timeout)
+      const controller = new AbortController()
+      const timer = setTimeout(() => controller.abort(), timeout)
       let response: Response
       try {
         response = await fetch(url, {
-          headers: { 'x-rapidapi-key': apiKey, 'x-rapidapi-host': EXERCISEDB_RAPIDAPI_HOST, Accept: 'application/json' },
+          headers: {
+            'x-rapidapi-key': apiKey,
+            'x-rapidapi-host': EXERCISEDB_RAPIDAPI_HOST,
+            Accept: 'application/json',
+          },
           signal: controller.signal,
         })
       } catch (error) {
         last = new Error(`ExerciseDB network request failed: ${sanitize(String(error), apiKey)}`)
         if (attempt < retries) await wait(250 * 2 ** attempt)
         continue
+      } finally {
+        clearTimeout(timer)
       }
-      finally { clearTimeout(timer) }
 
       if (response.ok) {
-        try { return await response.json() }
-        catch { throw new Error('ExerciseDB returned invalid JSON') }
+        try {
+          return await response.json()
+        } catch {
+          throw new Error('ExerciseDB returned invalid JSON')
+        }
       }
 
       const preview = sanitize((await response.text()).slice(0, RESPONSE_PREVIEW_LIMIT), apiKey)
-      const error = new Error(`ExerciseDB request failed (${response.status}) at ${url.hostname}${url.pathname}: ${preview || '<empty response>'}`)
+      const error = new Error(
+        `ExerciseDB request failed (${response.status}) at ${url.hostname}${url.pathname}: ${preview || '<empty response>'}`
+      )
       if (response.status !== 429 && response.status < 500) throw error
       last = error
       if (attempt < retries) await wait(retryDelay(response, attempt))
@@ -85,7 +108,9 @@ export class ExerciseDbV2Client {
   }
 }
 
-function wait(ms: number) { return new Promise((resolve) => setTimeout(resolve, ms)) }
+function wait(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms))
+}
 
 function retryDelay(response: Response, attempt: number): number {
   const retryAfter = response.headers.get('retry-after')
@@ -145,7 +170,12 @@ function normalize(item: Record<string, unknown>): NormalizedExerciseDbExercise 
   }
 }
 
-function assertColumnLengths(item: Pick<NormalizedExerciseDbExercise, 'externalId' | 'name' | 'bodyPart' | 'targetMuscle' | 'equipmentName' | 'imageUrl'>) {
+function assertColumnLengths(
+  item: Pick<
+    NormalizedExerciseDbExercise,
+    'externalId' | 'name' | 'bodyPart' | 'targetMuscle' | 'equipmentName' | 'imageUrl'
+  >
+) {
   const limits: Array<[string, string | null, number]> = [
     ['id', item.externalId, 191],
     ['name', item.name, 100],
@@ -154,6 +184,9 @@ function assertColumnLengths(item: Pick<NormalizedExerciseDbExercise, 'externalI
     ['equipment', item.equipmentName, 100],
   ]
   for (const [field, value, limit] of limits) {
-    if (value && Array.from(value).length > limit) throw new Error(`ExerciseDB exercise ${item.externalId} has ${field} longer than ${limit} characters`)
+    if (value && Array.from(value).length > limit)
+      throw new Error(
+        `ExerciseDB exercise ${item.externalId} has ${field} longer than ${limit} characters`
+      )
   }
 }

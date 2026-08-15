@@ -175,7 +175,12 @@ describe('StaffService', () => {
 
   beforeEach(() => {
     tx = makeTx()
-    service = new StaffService(mockPrisma as any, mockAudit as any, mockScheduleService as any, mockAttendanceService as any)
+    service = new StaffService(
+      mockPrisma as any,
+      mockAudit as any,
+      mockScheduleService as any,
+      mockAttendanceService as any
+    )
     jest.clearAllMocks()
     // default: $transaction runs callback with tx object
     mockPrisma.$transaction.mockImplementation((arg: any) => {
@@ -530,7 +535,15 @@ describe('StaffService', () => {
     it('delegates to attendanceService.getMyAttendance and returns its result', async () => {
       const dto = { from: '2026-06-01', to: '2026-06-30', pageSize: 50 }
       const expected = {
-        data: [{ logId: '200', staffId: '10', checkIn: '2026-06-19T01:00:00.000Z', checkOut: null, durationMinutes: null }],
+        data: [
+          {
+            logId: '200',
+            staffId: '10',
+            checkIn: '2026-06-19T01:00:00.000Z',
+            checkOut: null,
+            durationMinutes: null,
+          },
+        ],
         total: 1,
       }
       mockAttendanceService.getMyAttendance.mockResolvedValue(expected)

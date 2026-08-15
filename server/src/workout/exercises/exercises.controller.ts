@@ -50,7 +50,17 @@ export class ExercisesController {
 
   @Get()
   @RequirePermission('exercise.read')
-  async list(@Query() query: { q?: string; bodyPartId?: string; targetMuscleId?: string; equipmentId?: string; page?: string; pageSize?: string }) {
+  async list(
+    @Query()
+    query: {
+      q?: string
+      bodyPartId?: string
+      targetMuscleId?: string
+      equipmentId?: string
+      page?: string
+      pageSize?: string
+    }
+  ) {
     const result = await this.exercises.findAll({
       ...query,
       bodyPartId: query.bodyPartId ? Number(query.bodyPartId) : undefined,
@@ -72,7 +82,10 @@ export class ExercisesController {
 
   @Delete(':id/overrides')
   @RequirePermission('exercise.update')
-  async clearOverrides(@Param('id', ParseIntPipe) id: number, @CurrentUser() user: AuthenticatedUser) {
+  async clearOverrides(
+    @Param('id', ParseIntPipe) id: number,
+    @CurrentUser() user: AuthenticatedUser
+  ) {
     const data = await this.exercises.clearOverrides(BigInt(id), user)
     return { success: true, data }
   }

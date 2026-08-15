@@ -8,5 +8,5 @@ export const RequirePermission = (permission: string) =>
     SetMetadata(PERMISSION_KEY, permission),
     ApiBearerAuth(),
     ApiUnauthorizedResponse({ description: 'JWT không hợp lệ hoặc chưa được cung cấp.' }),
-    ApiForbiddenResponse({ description: `Tài khoản cần quyền: ${permission}.` }),
+    ApiForbiddenResponse({ description: `Tài khoản cần quyền: ${permission}.` })
   )

@@ -40,7 +40,7 @@ export class DeviceAccessService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly audit: AuditService,
-    private readonly notifications: NotificationsService,
+    private readonly notifications: NotificationsService
   ) {}
 
   async deviceAccessEvent(body: {
@@ -172,7 +172,12 @@ export class DeviceAccessService {
       resourceId: attendance.attendanceId.toString(),
     })
 
-    await this.notifyDeviceCheckin(attendance.attendanceId, member.userId, member.primaryTrainerId, member.user.fullName)
+    await this.notifyDeviceCheckin(
+      attendance.attendanceId,
+      member.userId,
+      member.primaryTrainerId,
+      member.user.fullName
+    )
 
     return response
   }
@@ -190,7 +195,7 @@ export class DeviceAccessService {
     attendanceId: bigint,
     memberUserId: bigint,
     primaryTrainerId: bigint | null,
-    memberName: string,
+    memberName: string
   ) {
     const payload = {
       type: 'attendance.checkin',

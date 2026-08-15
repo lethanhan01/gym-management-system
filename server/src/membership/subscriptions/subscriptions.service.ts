@@ -34,7 +34,7 @@ export class SubscriptionsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly audit: AuditService,
-    private readonly notifications: NotificationsService,
+    private readonly notifications: NotificationsService
   ) {}
 
   async createSubscription(dto: CreateSubscriptionDto, caller: AuthenticatedUser) {
@@ -453,8 +453,12 @@ export class SubscriptionsService {
   }
 
   private async notifySubscriptionCreated(
-    subscription: { subscriptionId: bigint; member: { userId: bigint }; package?: { name: string } | null },
-    actorUserId: bigint,
+    subscription: {
+      subscriptionId: bigint
+      member: { userId: bigint }
+      package?: { name: string } | null
+    },
+    actorUserId: bigint
   ) {
     await this.notifications.safeNotifyUser(subscription.member.userId, {
       type: 'subscription.created',
@@ -476,13 +480,17 @@ export class SubscriptionsService {
         metadata: { packageName: subscription.package?.name ?? null },
         dedupeKey: `subscription:${subscription.subscriptionId.toString()}:created-admin`,
       },
-      { excludeActorUserId: actorUserId },
+      { excludeActorUserId: actorUserId }
     )
   }
 
   private async notifySubscriptionRenewed(
-    subscription: { subscriptionId: bigint; member: { userId: bigint }; package?: { name: string } | null },
-    actorUserId: bigint,
+    subscription: {
+      subscriptionId: bigint
+      member: { userId: bigint }
+      package?: { name: string } | null
+    },
+    actorUserId: bigint
   ) {
     await this.notifications.safeNotifyUser(subscription.member.userId, {
       type: 'subscription.renewed',
@@ -504,13 +512,17 @@ export class SubscriptionsService {
         metadata: { packageName: subscription.package?.name ?? null },
         dedupeKey: `subscription:${subscription.subscriptionId.toString()}:renewed-admin:${Date.now()}`,
       },
-      { excludeActorUserId: actorUserId },
+      { excludeActorUserId: actorUserId }
     )
   }
 
   private async notifySubscriptionCancelled(
-    subscription: { subscriptionId: bigint; member: { userId: bigint }; package?: { name: string } | null },
-    actorUserId: bigint,
+    subscription: {
+      subscriptionId: bigint
+      member: { userId: bigint }
+      package?: { name: string } | null
+    },
+    actorUserId: bigint
   ) {
     await this.notifications.safeNotifyUser(subscription.member.userId, {
       type: 'subscription.cancelled',
@@ -532,7 +544,7 @@ export class SubscriptionsService {
         metadata: { packageName: subscription.package?.name ?? null },
         dedupeKey: `subscription:${subscription.subscriptionId.toString()}:cancelled-admin`,
       },
-      { excludeActorUserId: actorUserId },
+      { excludeActorUserId: actorUserId }
     )
   }
 
@@ -567,8 +579,7 @@ export class SubscriptionsService {
     trainer?: { staffId: bigint; user: { fullName: string } } | null
   }) {
     const today = todayVN()
-    const effectiveStatus =
-      sub.status === 'active' && sub.endDate < today ? 'expired' : sub.status
+    const effectiveStatus = sub.status === 'active' && sub.endDate < today ? 'expired' : sub.status
     const daysLeft =
       effectiveStatus === 'active'
         ? Math.max(0, Math.ceil((sub.endDate.getTime() - today.getTime()) / 86400000) + 1)

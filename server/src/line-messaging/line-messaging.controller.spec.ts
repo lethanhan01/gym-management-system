@@ -79,9 +79,7 @@ describe('LineMessagingController', () => {
     const controller = new LineMessagingController(lineMessaging as unknown as LineMessagingService)
     const body = Buffer.from(JSON.stringify({ events: [] }))
 
-    await expect(
-      controller.webhook({ body } as ExpressRequest, sign(body))
-    ).resolves.toEqual({
+    await expect(controller.webhook({ body } as ExpressRequest, sign(body))).resolves.toEqual({
       success: true,
       data: { processedEvents: 0, enabled: true },
     })
@@ -152,9 +150,7 @@ describe('LineMessagingController', () => {
       .send(bodyText)
 
     expect(res.status).toBe(400)
-    expect(res.body).toEqual(
-      expect.objectContaining({ code: 'LINE_WEBHOOK_RAW_BODY_REQUIRED' })
-    )
+    expect(res.body).toEqual(expect.objectContaining({ code: 'LINE_WEBHOOK_RAW_BODY_REQUIRED' }))
 
     await app.close()
   })

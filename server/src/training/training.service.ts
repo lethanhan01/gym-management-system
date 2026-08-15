@@ -89,7 +89,6 @@ interface SessionRow {
   attendanceLogs?: AttendanceRow[]
 }
 
-
 const SESSION_PLAN_SELECT = {
   planId: true,
   name: true,
@@ -149,7 +148,7 @@ export class TrainingService {
     private readonly attendance: AttendanceService,
     private readonly deviceAccess: DeviceAccessService,
     private readonly notifications: NotificationsService,
-    private readonly lineMessaging: LineMessagingService,
+    private readonly lineMessaging: LineMessagingService
   ) {}
 
   async listSessions(dto: ListSessionsDto, caller: Caller) {
@@ -201,12 +200,12 @@ export class TrainingService {
     } as Prisma.TrainingSessionOrderByWithRelationInput
 
     const data = await this.prisma.trainingSession.findMany({
-        where,
-        skip: (page - 1) * pageSize,
-        take: pageSize,
-        orderBy,
-        include: SESSION_SUMMARY_INCLUDE,
-      })
+      where,
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+      orderBy,
+      include: SESSION_SUMMARY_INCLUDE,
+    })
     const total = await this.prisma.trainingSession.count({ where })
 
     return {
@@ -774,7 +773,6 @@ export class TrainingService {
     })
   }
 
-
   private async resolveCallerStaffId(caller: Caller): Promise<bigint | null> {
     if (caller.staffId) {
       return caller.staffId
@@ -805,7 +803,7 @@ export class TrainingService {
         message: `Ban co lich tap moi voi hoi vien ${session.member.user.fullName}.`,
         metadata: { memberName: session.member.user.fullName },
       },
-      { excludeActorUserId: actorUserId },
+      { excludeActorUserId: actorUserId }
     )
   }
 
@@ -826,11 +824,9 @@ export class TrainingService {
       metadata: { trainerName: after.trainer.user.fullName },
       dedupeKey: `training:${after.sessionId.toString()}:updated:${Date.now()}`,
     }
-    await this.notifications.safeNotifyManyUsers(
-      [after.member.userId],
-      memberPayload,
-      { excludeActorUserId: actorUserId },
-    )
+    await this.notifications.safeNotifyManyUsers([after.member.userId], memberPayload, {
+      excludeActorUserId: actorUserId,
+    })
     await this.lineMessaging.safePushTrainingSessionEvent('updated', after.sessionId)
     await this.notifications.safeNotifyManyUsers(
       [before.trainer.userId, after.trainer.userId],
@@ -839,7 +835,7 @@ export class TrainingService {
         message: `Lich tap voi hoi vien ${after.member.user.fullName} da duoc cap nhat.`,
         metadata: { memberName: after.member.user.fullName },
       },
-      { excludeActorUserId: actorUserId },
+      { excludeActorUserId: actorUserId }
     )
   }
 
@@ -853,11 +849,9 @@ export class TrainingService {
       metadata: { trainerName: session.trainer.user.fullName },
       dedupeKey: `training:${session.sessionId.toString()}:cancelled`,
     }
-    await this.notifications.safeNotifyManyUsers(
-      [session.member.userId],
-      memberPayload,
-      { excludeActorUserId: actorUserId },
-    )
+    await this.notifications.safeNotifyManyUsers([session.member.userId], memberPayload, {
+      excludeActorUserId: actorUserId,
+    })
     await this.lineMessaging.safePushTrainingSessionEvent('cancelled', session.sessionId)
     await this.notifications.safeNotifyManyUsers(
       [session.trainer.userId],
@@ -866,7 +860,7 @@ export class TrainingService {
         message: `Lich tap voi hoi vien ${session.member.user.fullName} da duoc huy.`,
         metadata: { memberName: session.member.user.fullName },
       },
-      { excludeActorUserId: actorUserId },
+      { excludeActorUserId: actorUserId }
     )
   }
 
@@ -1112,9 +1106,15 @@ export class TrainingService {
                   ? {
                       exerciseId: exercise.exercise.exerciseId.toString(),
                       name: exercise.exercise.name,
-                      bodyPart: exercise.exercise.bodyPart ? { name: exercise.exercise.bodyPart.name } : null,
-                      targetMuscle: exercise.exercise.targetMuscle ? { name: exercise.exercise.targetMuscle.name } : null,
-                      equipment: exercise.exercise.equipment ? { name: exercise.exercise.equipment.name } : null,
+                      bodyPart: exercise.exercise.bodyPart
+                        ? { name: exercise.exercise.bodyPart.name }
+                        : null,
+                      targetMuscle: exercise.exercise.targetMuscle
+                        ? { name: exercise.exercise.targetMuscle.name }
+                        : null,
+                      equipment: exercise.exercise.equipment
+                        ? { name: exercise.exercise.equipment.name }
+                        : null,
                       description: exercise.exercise.description,
                       imageUrl: exercise.exercise.imageUrl,
                       createdByStaffId: exercise.exercise.createdByStaffId?.toString() ?? null,

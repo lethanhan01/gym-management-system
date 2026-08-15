@@ -34,7 +34,7 @@ describe('PaymentsController', () => {
     })
 
     it('propagates NotFoundException when subscription not found', async () => {
-      (mockService.createPayment as jest.Mock).mockRejectedValue(new NotFoundException())
+      ;(mockService.createPayment as jest.Mock).mockRejectedValue(new NotFoundException())
       await expect(ctrl.create({} as any, user)).rejects.toBeInstanceOf(NotFoundException)
     })
 
@@ -139,7 +139,7 @@ describe('PaymentAccountsController', () => {
 
   describe('remove', () => {
     it('delegates to service.removePaymentAccount', async () => {
-      (mockService.removePaymentAccount as jest.Mock).mockResolvedValue(undefined)
+      ;(mockService.removePaymentAccount as jest.Mock).mockResolvedValue(undefined)
       const res = await paCtrl.remove(5, 10, memberUser)
       expect(mockService.removePaymentAccount).toHaveBeenCalledWith(BigInt(5), 10)
       expect(res).toBeUndefined()

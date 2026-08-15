@@ -25,7 +25,7 @@ export class PermissionsGuard implements CanActivate {
     private readonly reflector: Reflector,
     private readonly prisma: PrismaService,
     private readonly config: ConfigService,
-    @Inject(PERMISSION_CACHE_PROVIDER) private readonly cache: IPermissionCacheProvider,
+    @Inject(PERMISSION_CACHE_PROVIDER) private readonly cache: IPermissionCacheProvider
   ) {
     this.cacheTtlMs = this.config.get<number>('PERMISSION_CACHE_TTL_MS') ?? 60_000
   }

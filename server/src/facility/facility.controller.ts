@@ -36,7 +36,10 @@ export class FacilityController {
 
   @Get('rooms/lookup')
   async lookupRooms(@Query() query: ListRoomsDto) {
-    const result = await this.facility.listRooms({ ...query, pageSize: Math.min(query.pageSize ?? 100, 100) })
+    const result = await this.facility.listRooms({
+      ...query,
+      pageSize: Math.min(query.pageSize ?? 100, 100),
+    })
     return { success: true, ...result }
   }
 
@@ -67,7 +70,7 @@ export class FacilityController {
   async updateRoom(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateRoomDto,
-    @CurrentUser() user: AuthenticatedUser,
+    @CurrentUser() user: AuthenticatedUser
   ) {
     const result = await this.facility.updateRoom(BigInt(id), dto, user.userId)
     return { success: true, ...result }
@@ -107,7 +110,7 @@ export class FacilityController {
   async updateEquipment(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateEquipmentDto,
-    @CurrentUser() user: AuthenticatedUser,
+    @CurrentUser() user: AuthenticatedUser
   ) {
     const result = await this.facility.updateEquipment(BigInt(id), dto, user.userId)
     return { success: true, ...result }
@@ -119,7 +122,7 @@ export class FacilityController {
   async deleteEquipment(
     @Param('id', ParseIntPipe) id: number,
     @CurrentUser() user: AuthenticatedUser,
-    @Query('force') force?: string,
+    @Query('force') force?: string
   ) {
     await this.facility.deleteEquipment(BigInt(id), user.userId, user.roles, force === 'true')
   }
@@ -128,7 +131,7 @@ export class FacilityController {
   @RequirePermission('maintenance.read')
   async listMaintenanceLogs(
     @Param('id', ParseIntPipe) id: number,
-    @Query() query: ListMaintenanceLogsDto,
+    @Query() query: ListMaintenanceLogsDto
   ) {
     const result = await this.facility.listMaintenanceLogs(BigInt(id), query)
     return { success: true, ...result }
@@ -140,7 +143,7 @@ export class FacilityController {
   async createMaintenanceLog(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: CreateMaintenanceLogDto,
-    @CurrentUser() user: AuthenticatedUser,
+    @CurrentUser() user: AuthenticatedUser
   ) {
     const result = await this.facility.createMaintenanceLog(BigInt(id), dto, user.userId)
     return { success: true, ...result }
@@ -151,7 +154,7 @@ export class FacilityController {
   async updateMaintenanceLog(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateMaintenanceLogDto,
-    @CurrentUser() user: AuthenticatedUser,
+    @CurrentUser() user: AuthenticatedUser
   ) {
     const result = await this.facility.updateMaintenanceLog(BigInt(id), dto, user.userId)
     return { success: true, ...result }

@@ -21,5 +21,4 @@ export class InMemoryPermissionCacheService implements IPermissionCacheProvider 
   async delete(userId: string): Promise<void> {
     this.store.delete(userId)
   }
-
 }

@@ -219,7 +219,7 @@ describe('MembersService', () => {
       mockOtp as any,
       mockMailer as any,
       mockTrainerAssignmentService as any,
-      mockMemberProgressService as any,
+      mockMemberProgressService as any
     )
     jest.clearAllMocks()
     tx = makeTx()
@@ -507,7 +507,9 @@ describe('MembersService', () => {
 
   describe('assignTrainer', () => {
     it('delegates to trainerAssignmentService and returns its result', async () => {
-      const expected = { data: { memberId: '1', primaryTrainerId: '5', primaryTrainerName: 'Trainer Name' } }
+      const expected = {
+        data: { memberId: '1', primaryTrainerId: '5', primaryTrainerName: 'Trainer Name' },
+      }
       mockTrainerAssignmentService.assignTrainer.mockResolvedValue(expected)
 
       const result = await service.assignTrainer(1n, 5, 1n)
@@ -523,7 +525,11 @@ describe('MembersService', () => {
 
   describe('getAvailableTrainers', () => {
     it('delegates to trainerAssignmentService and returns its result', async () => {
-      const expected = { data: [{ staffId: '1', staffCode: 'ST-001', fullName: 'Alice Trainer', position: 'trainer' }] }
+      const expected = {
+        data: [
+          { staffId: '1', staffCode: 'ST-001', fullName: 'Alice Trainer', position: 'trainer' },
+        ],
+      }
       mockTrainerAssignmentService.getAvailableTrainers.mockResolvedValue(expected)
 
       const result = await service.getAvailableTrainers()
@@ -553,7 +559,11 @@ describe('MembersService', () => {
     it('allows self update when userId matches', async () => {
       const caller = makeCaller({ userId: 100n, roles: ['member'], memberId: 1n })
 
-      const result = await service.updateMemberForCaller(1n, { fullName: 'Updated Name' } as any, caller)
+      const result = await service.updateMemberForCaller(
+        1n,
+        { fullName: 'Updated Name' } as any,
+        caller
+      )
 
       expect(result.data.fullName).toBe('Updated Name')
     })
@@ -561,7 +571,11 @@ describe('MembersService', () => {
     it('allows staff to update any member', async () => {
       const staffCaller = makeCaller({ userId: 999n, roles: ['staff'] })
 
-      const result = await service.updateMemberForCaller(1n, { fullName: 'Updated Name' } as any, staffCaller)
+      const result = await service.updateMemberForCaller(
+        1n,
+        { fullName: 'Updated Name' } as any,
+        staffCaller
+      )
 
       expect(result.data).toBeDefined()
     })

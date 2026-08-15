@@ -15,7 +15,9 @@ const mockPrisma = {
 
 const mockAudit = { log: jest.fn() }
 const mockNotifications = { safeNotifyUser: jest.fn() }
-const mockConfig = { get: jest.fn((key: string) => (key === 'JWT_SECRET' ? 'test-jwt-secret' : undefined)) }
+const mockConfig = {
+  get: jest.fn((key: string) => (key === 'JWT_SECRET' ? 'test-jwt-secret' : undefined)),
+}
 const mockLineMessaging = { safePushAttendanceCheckin: jest.fn() }
 
 function makeCaller(overrides: object = {}): any {
@@ -35,7 +37,15 @@ function makeMember(overrides: object = {}) {
 }
 
 function makeSubscription(overrides: object = {}) {
-  return { subscriptionId: 20n, memberId: 10n, status: 'active', startDate: new Date('2020-01-01'), endDate: new Date('2099-12-31'), deletedAt: null, ...overrides }
+  return {
+    subscriptionId: 20n,
+    memberId: 10n,
+    status: 'active',
+    startDate: new Date('2020-01-01'),
+    endDate: new Date('2099-12-31'),
+    deletedAt: null,
+    ...overrides,
+  }
 }
 
 function makeAttendanceRow(overrides: object = {}) {
@@ -47,7 +57,13 @@ function makeAttendanceRow(overrides: object = {}) {
     startTime: new Date(),
     endTime: null,
     method: 'manual',
-    member: { memberId: 10n, memberCode: 'MEM-001', userId: 100n, primaryTrainerId: null, user: { fullName: 'Test Member' } },
+    member: {
+      memberId: 10n,
+      memberCode: 'MEM-001',
+      userId: 100n,
+      primaryTrainerId: null,
+      user: { fullName: 'Test Member' },
+    },
     subscription: { subscriptionId: 20n, startDate: new Date(), endDate: new Date() },
     session: null,
     ...overrides,
@@ -63,7 +79,7 @@ describe('AttendanceService', () => {
       mockAudit as any,
       mockNotifications as any,
       mockConfig as any,
-      mockLineMessaging as any,
+      mockLineMessaging as any
     )
     jest.clearAllMocks()
     mockAudit.log.mockResolvedValue(undefined)
@@ -186,7 +202,9 @@ describe('AttendanceService', () => {
       const result = await service.manualCheckin(makeDto() as any, caller)
 
       expect(mockPrisma.attendanceLog.create).toHaveBeenCalled()
-      expect(mockPrisma.attendanceLog.create.mock.calls[0][0].data).not.toHaveProperty('qrCheckinDate')
+      expect(mockPrisma.attendanceLog.create.mock.calls[0][0].data).not.toHaveProperty(
+        'qrCheckinDate'
+      )
       expect(mockAudit.log).toHaveBeenCalledWith(
         expect.objectContaining({ action: 'attendance.manual-checkin' })
       )
@@ -197,15 +215,17 @@ describe('AttendanceService', () => {
       mockPrisma.member.findFirst.mockResolvedValue(makeMember({ primaryTrainerId: 5n }))
       mockPrisma.subscription.findFirst.mockResolvedValue(makeSubscription())
       mockPrisma.attendanceLog.findFirst.mockResolvedValue(null)
-      mockPrisma.attendanceLog.create.mockResolvedValue(makeAttendanceRow({
-        member: {
-          memberId: 10n,
-          memberCode: 'MEM-001',
-          userId: 100n,
-          primaryTrainerId: 5n,
-          user: { fullName: 'Test Member' },
-        },
-      }))
+      mockPrisma.attendanceLog.create.mockResolvedValue(
+        makeAttendanceRow({
+          member: {
+            memberId: 10n,
+            memberCode: 'MEM-001',
+            userId: 100n,
+            primaryTrainerId: 5n,
+            user: { fullName: 'Test Member' },
+          },
+        })
+      )
       mockPrisma.staff.findFirst.mockResolvedValue({ userId: 200n })
       const caller = makeCaller()
 
@@ -213,7 +233,10 @@ describe('AttendanceService', () => {
 
       expect(mockNotifications.safeNotifyUser).toHaveBeenCalledWith(
         100n,
-        expect.objectContaining({ type: 'attendance.checkin', message: 'Ban da check-in thanh cong.' })
+        expect.objectContaining({
+          type: 'attendance.checkin',
+          message: 'Ban da check-in thanh cong.',
+        })
       )
       expect(mockNotifications.safeNotifyUser).toHaveBeenCalledWith(
         200n,
@@ -282,16 +305,36 @@ describe('AttendanceService', () => {
       const current = service.generateQrToken().token
       const badSignature = current.replace(/\.[^.]+$/, '.bad')
 
-      await expect(service.qrCheckin({ token: 'v1.2026-07-21.bad' } as any, makeCaller({ roles: ['member'], memberId: 10n }))).rejects.toMatchObject({
+      await expect(
+        service.qrCheckin(
+          { token: 'v1.2026-07-21.bad' } as any,
+          makeCaller({ roles: ['member'], memberId: 10n })
+        )
+      ).rejects.toMatchObject({
         response: expect.objectContaining({ code: 'QR_TOKEN_EXPIRED' }),
       })
-      await expect(service.qrCheckin({ token: 'v1.2026-07-23.bad' } as any, makeCaller({ roles: ['member'], memberId: 10n }))).rejects.toMatchObject({
+      await expect(
+        service.qrCheckin(
+          { token: 'v1.2026-07-23.bad' } as any,
+          makeCaller({ roles: ['member'], memberId: 10n })
+        )
+      ).rejects.toMatchObject({
         response: expect.objectContaining({ code: 'QR_TOKEN_INVALID' }),
       })
-      await expect(service.qrCheckin({ token: 'not-a-token' } as any, makeCaller({ roles: ['member'], memberId: 10n }))).rejects.toMatchObject({
+      await expect(
+        service.qrCheckin(
+          { token: 'not-a-token' } as any,
+          makeCaller({ roles: ['member'], memberId: 10n })
+        )
+      ).rejects.toMatchObject({
         response: expect.objectContaining({ code: 'QR_TOKEN_INVALID' }),
       })
-      await expect(service.qrCheckin({ token: badSignature } as any, makeCaller({ roles: ['member'], memberId: 10n }))).rejects.toMatchObject({
+      await expect(
+        service.qrCheckin(
+          { token: badSignature } as any,
+          makeCaller({ roles: ['member'], memberId: 10n })
+        )
+      ).rejects.toMatchObject({
         response: expect.objectContaining({ code: 'QR_TOKEN_INVALID' }),
       })
     })
@@ -329,7 +372,12 @@ describe('AttendanceService', () => {
       mockPrisma.member.findFirst.mockResolvedValue(makeMember())
       mockPrisma.attendanceLog.findFirst.mockResolvedValue({ attendanceId: 3n })
 
-      await expect(service.qrCheckin({ token: token.token } as any, makeCaller({ roles: ['member'], memberId: 10n }))).rejects.toMatchObject({
+      await expect(
+        service.qrCheckin(
+          { token: token.token } as any,
+          makeCaller({ roles: ['member'], memberId: 10n })
+        )
+      ).rejects.toMatchObject({
         response: expect.objectContaining({ code: 'QR_CHECKIN_ALREADY_TODAY' }),
       })
 
@@ -348,7 +396,12 @@ describe('AttendanceService', () => {
       mockPrisma.attendanceLog.findFirst.mockResolvedValue(null)
       mockPrisma.attendanceLog.create.mockRejectedValue({ code: 'P2002' })
 
-      await expect(service.qrCheckin({ token: token.token } as any, makeCaller({ roles: ['member'], memberId: 10n }))).rejects.toMatchObject({
+      await expect(
+        service.qrCheckin(
+          { token: token.token } as any,
+          makeCaller({ roles: ['member'], memberId: 10n })
+        )
+      ).rejects.toMatchObject({
         response: expect.objectContaining({ code: 'QR_CHECKIN_ALREADY_TODAY' }),
       })
 
@@ -373,8 +426,12 @@ describe('AttendanceService', () => {
       const secondToken = service.generateQrToken()
       await service.qrCheckin({ token: secondToken.token } as any, caller)
 
-      expect(mockPrisma.attendanceLog.create.mock.calls[0][0].data.qrCheckinDate).toEqual(new Date('2026-07-22'))
-      expect(mockPrisma.attendanceLog.create.mock.calls[1][0].data.qrCheckinDate).toEqual(new Date('2026-07-23'))
+      expect(mockPrisma.attendanceLog.create.mock.calls[0][0].data.qrCheckinDate).toEqual(
+        new Date('2026-07-22')
+      )
+      expect(mockPrisma.attendanceLog.create.mock.calls[1][0].data.qrCheckinDate).toEqual(
+        new Date('2026-07-23')
+      )
     })
 
     it('throws when member profile or active subscription is missing', async () => {
@@ -410,38 +467,57 @@ describe('AttendanceService', () => {
 
     it('throws ConflictException when already checked out', async () => {
       mockPrisma.attendanceLog.findFirst.mockResolvedValue({
-        attendanceId: 1n, startTime: new Date(Date.now() - 3600_000), endTime: new Date(),
+        attendanceId: 1n,
+        startTime: new Date(Date.now() - 3600_000),
+        endTime: new Date(),
       })
       const caller = makeCaller()
 
       await expect(
         service.checkout(1n, { endedAt: new Date().toISOString() } as any, caller)
-      ).rejects.toMatchObject({ response: expect.objectContaining({ code: 'ATTENDANCE_ALREADY_CLOSED' }) })
+      ).rejects.toMatchObject({
+        response: expect.objectContaining({ code: 'ATTENDANCE_ALREADY_CLOSED' }),
+      })
     })
 
     it('throws BadRequestException when endedAt <= startTime', async () => {
       const start = new Date()
       mockPrisma.attendanceLog.findFirst.mockResolvedValue({
-        attendanceId: 1n, startTime: start, endTime: null,
+        attendanceId: 1n,
+        startTime: start,
+        endTime: null,
       })
       const caller = makeCaller()
 
       await expect(
-        service.checkout(1n, { endedAt: new Date(start.getTime() - 1000).toISOString() } as any, caller)
+        service.checkout(
+          1n,
+          { endedAt: new Date(start.getTime() - 1000).toISOString() } as any,
+          caller
+        )
       ).rejects.toMatchObject({ response: expect.objectContaining({ code: 'VALIDATION_ERROR' }) })
     })
 
     it('happy path: updates endTime and logs audit', async () => {
       const start = new Date(Date.now() - 3600_000)
       const end = new Date()
-      mockPrisma.attendanceLog.findFirst.mockResolvedValue({ attendanceId: 1n, startTime: start, endTime: null })
-      mockPrisma.attendanceLog.update.mockResolvedValue(makeAttendanceRow({ startTime: start, endTime: end }))
+      mockPrisma.attendanceLog.findFirst.mockResolvedValue({
+        attendanceId: 1n,
+        startTime: start,
+        endTime: null,
+      })
+      mockPrisma.attendanceLog.update.mockResolvedValue(
+        makeAttendanceRow({ startTime: start, endTime: end })
+      )
       const caller = makeCaller()
 
       const result = await service.checkout(1n, { endedAt: end.toISOString() } as any, caller)
 
       expect(mockPrisma.attendanceLog.update).toHaveBeenCalledWith(
-        expect.objectContaining({ where: { attendanceId: 1n }, data: { endTime: expect.any(Date) } })
+        expect.objectContaining({
+          where: { attendanceId: 1n },
+          data: { endTime: expect.any(Date) },
+        })
       )
       expect(mockAudit.log).toHaveBeenCalledWith(
         expect.objectContaining({ action: 'attendance.checkout' })

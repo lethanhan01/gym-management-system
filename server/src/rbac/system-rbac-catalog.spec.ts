@@ -49,15 +49,35 @@ describe('system RBAC catalog', () => {
   })
 
   it('grants the intended new and sensitive permissions', () => {
-    expect(SYSTEM_ROLE_PERMISSIONS.owner).toEqual(SYSTEM_PERMISSIONS.map((permission) => permission.code))
+    expect(SYSTEM_ROLE_PERMISSIONS.owner).toEqual(
+      SYSTEM_PERMISSIONS.map((permission) => permission.code)
+    )
     expect(SYSTEM_ROLE_PERMISSIONS.owner).toContain('exercise.sync')
-    expect(SYSTEM_ROLE_PERMISSIONS.staff).toEqual(expect.arrayContaining(['subscription.cancel', 'staff.update']))
-    expect(SYSTEM_ROLE_PERMISSIONS.trainer).toEqual(expect.arrayContaining([
-      'staff.update', 'exercise.create', 'exercise.update', 'exercise.delete', 'workout_plan.create',
-    ]))
-    expect(SYSTEM_ROLE_PERMISSIONS.member).toEqual(expect.arrayContaining([
-      'feedback.read', 'subscription.cancel', 'exercise.read', 'workout_log.create', 'workout_log.update',
-    ]))
-    expect(SYSTEM_GROUP_NAMES.every((groupName) => SYSTEM_ROLE_PERMISSIONS[groupName].includes('notification.read'))).toBe(true)
+    expect(SYSTEM_ROLE_PERMISSIONS.staff).toEqual(
+      expect.arrayContaining(['subscription.cancel', 'staff.update'])
+    )
+    expect(SYSTEM_ROLE_PERMISSIONS.trainer).toEqual(
+      expect.arrayContaining([
+        'staff.update',
+        'exercise.create',
+        'exercise.update',
+        'exercise.delete',
+        'workout_plan.create',
+      ])
+    )
+    expect(SYSTEM_ROLE_PERMISSIONS.member).toEqual(
+      expect.arrayContaining([
+        'feedback.read',
+        'subscription.cancel',
+        'exercise.read',
+        'workout_log.create',
+        'workout_log.update',
+      ])
+    )
+    expect(
+      SYSTEM_GROUP_NAMES.every((groupName) =>
+        SYSTEM_ROLE_PERMISSIONS[groupName].includes('notification.read')
+      )
+    ).toBe(true)
   })
 })

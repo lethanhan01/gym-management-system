@@ -11,7 +11,13 @@ import { LineMessagingModule } from '../line-messaging/line-messaging.module'
 @Module({
   imports: [NotificationsModule, LineMessagingModule],
   controllers: [TrainingController, DeviceController],
-  providers: [TrainingService, AttendanceService, DeviceAccessService, DeviceApiKeyGuard, AuditService],
+  providers: [
+    TrainingService,
+    AttendanceService,
+    DeviceAccessService,
+    DeviceApiKeyGuard,
+    AuditService,
+  ],
   exports: [TrainingService, AttendanceService, DeviceAccessService],
 })
 export class TrainingModule {}

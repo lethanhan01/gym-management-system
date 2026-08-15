@@ -199,7 +199,7 @@ describe('TrainingService', () => {
       mockAttendanceService as any,
       mockDeviceAccessService as any,
       mockNotifications as any,
-      mockLineMessaging as any,
+      mockLineMessaging as any
     )
     jest.clearAllMocks()
   })
@@ -689,7 +689,13 @@ describe('TrainingService', () => {
     function makeDto(overrides: object = {}) {
       const start = futureTime(30)
       const end = futureTime(90)
-      return { memberId: '10', roomId: '3', startTime: start.toISOString(), endTime: end.toISOString(), ...overrides }
+      return {
+        memberId: '10',
+        roomId: '3',
+        startTime: start.toISOString(),
+        endTime: end.toISOString(),
+        ...overrides,
+      }
     }
 
     it('trainer caller must provide workout assignment and plan day', async () => {
@@ -717,10 +723,7 @@ describe('TrainingService', () => {
       const caller = makeCaller({ roles: ['trainer'], staffId: 5n })
 
       await expect(
-        service.createSession(
-          makeDto({ assignmentId: '100', planDayId: '10' }) as any,
-          caller
-        )
+        service.createSession(makeDto({ assignmentId: '100', planDayId: '10' }) as any, caller)
       ).rejects.toMatchObject({
         response: expect.objectContaining({ code: 'WORKOUT_ASSIGNMENT_INVALID' }),
       })
@@ -738,10 +741,7 @@ describe('TrainingService', () => {
       const caller = makeCaller({ roles: ['trainer'], staffId: 5n })
 
       await expect(
-        service.createSession(
-          makeDto({ assignmentId: '100', planDayId: '999' }) as any,
-          caller
-        )
+        service.createSession(makeDto({ assignmentId: '100', planDayId: '999' }) as any, caller)
       ).rejects.toMatchObject({
         response: expect.objectContaining({ code: 'WORKOUT_PLAN_DAY_INVALID' }),
       })
@@ -807,8 +807,11 @@ describe('TrainingService', () => {
       mockPrisma.trainingSession.findFirst.mockResolvedValue(session)
       const caller = makeCaller()
 
-      await expect(service.updateSession(1n, { startTime: futureTime(30).toISOString() } as any, caller))
-        .rejects.toMatchObject({ response: expect.objectContaining({ code: 'SESSION_ALREADY_STARTED' }) })
+      await expect(
+        service.updateSession(1n, { startTime: futureTime(30).toISOString() } as any, caller)
+      ).rejects.toMatchObject({
+        response: expect.objectContaining({ code: 'SESSION_ALREADY_STARTED' }),
+      })
     })
 
     it('throws BadRequestException when endTime <= startTime after update', async () => {
@@ -824,7 +827,11 @@ describe('TrainingService', () => {
 
     it('happy path: updates session fields and calls audit.log', async () => {
       const session = makeSession({ status: 'scheduled' })
-      const updated = makeSession({ status: 'scheduled', startTime: futureTime(90), endTime: futureTime(150) })
+      const updated = makeSession({
+        status: 'scheduled',
+        startTime: futureTime(90),
+        endTime: futureTime(150),
+      })
       mockPrisma.trainingSession.findFirst.mockResolvedValue(session)
       mockPrisma.trainingSession.count.mockResolvedValue(0)
       mockPrisma.trainingSession.update.mockResolvedValue(updated)
@@ -850,7 +857,11 @@ describe('TrainingService', () => {
 
     it('notifies member and trainer with role-specific update messages', async () => {
       const session = makeSession({ status: 'scheduled' })
-      const updated = makeSession({ status: 'scheduled', startTime: futureTime(90), endTime: futureTime(150) })
+      const updated = makeSession({
+        status: 'scheduled',
+        startTime: futureTime(90),
+        endTime: futureTime(150),
+      })
       mockPrisma.trainingSession.findFirst.mockResolvedValue(session)
       mockPrisma.trainingSession.count.mockResolvedValue(0)
       mockPrisma.trainingSession.update.mockResolvedValue(updated)
@@ -931,39 +942,40 @@ describe('TrainingService', () => {
           }),
         needsOverlapCheck: false,
       },
-    ])('sends update notifications and LINE push when $name changes', async ({ dto, updated, needsOverlapCheck }) => {
-      const session = makeSession({ status: 'scheduled' })
-      if (needsOverlapCheck) {
-        mockPrisma.trainingSession.findFirst
-          .mockResolvedValueOnce(session)
-          .mockResolvedValue(null)
-      } else {
-        mockPrisma.trainingSession.findFirst.mockResolvedValue(session)
+    ])(
+      'sends update notifications and LINE push when $name changes',
+      async ({ dto, updated, needsOverlapCheck }) => {
+        const session = makeSession({ status: 'scheduled' })
+        if (needsOverlapCheck) {
+          mockPrisma.trainingSession.findFirst
+            .mockResolvedValueOnce(session)
+            .mockResolvedValue(null)
+        } else {
+          mockPrisma.trainingSession.findFirst.mockResolvedValue(session)
+        }
+        mockPrisma.trainingSession.update.mockResolvedValue(updated())
+        const caller = makeCaller()
+
+        await service.updateSession(1n, dto as any, caller)
+
+        expect(mockNotifications.safeNotifyManyUsers).toHaveBeenCalledWith(
+          [100n],
+          expect.objectContaining({ type: 'training.updated' }),
+          { excludeActorUserId: caller.userId }
+        )
+        expect(mockLineMessaging.safePushTrainingSessionEvent).toHaveBeenCalledWith('updated', 1n)
       }
-      mockPrisma.trainingSession.update.mockResolvedValue(updated())
-      const caller = makeCaller()
-
-      await service.updateSession(1n, dto as any, caller)
-
-      expect(mockNotifications.safeNotifyManyUsers).toHaveBeenCalledWith(
-        [100n],
-        expect.objectContaining({ type: 'training.updated' }),
-        { excludeActorUserId: caller.userId }
-      )
-      expect(mockLineMessaging.safePushTrainingSessionEvent).toHaveBeenCalledWith('updated', 1n)
-    })
+    )
 
     it('triggers checkOverlap when roomId is updated — throws ConflictException on overlap', async () => {
       const session = makeSession({ status: 'scheduled' })
       const overlap = makeSession({ sessionId: 99n })
-      mockPrisma.trainingSession.findFirst
-        .mockResolvedValueOnce(session)
-        .mockResolvedValue(overlap)
+      mockPrisma.trainingSession.findFirst.mockResolvedValueOnce(session).mockResolvedValue(overlap)
       const caller = makeCaller()
 
-      await expect(
-        service.updateSession(1n, { roomId: '4' } as any, caller)
-      ).rejects.toMatchObject({ response: expect.objectContaining({ code: 'ROOM_TIME_OVERLAP' }) })
+      await expect(service.updateSession(1n, { roomId: '4' } as any, caller)).rejects.toMatchObject(
+        { response: expect.objectContaining({ code: 'ROOM_TIME_OVERLAP' }) }
+      )
     })
   })
 
@@ -1069,8 +1081,16 @@ describe('TrainingService', () => {
   describe('listProgress', () => {
     it('owner: returns progress list for given member', async () => {
       const progress = {
-        progressId: 1n, memberId: 10n, staffId: 5n, weight: null, bmi: null,
-        goal: null, notes: null, recordedAt: new Date(), deletedAt: null, createdAt: new Date(),
+        progressId: 1n,
+        memberId: 10n,
+        staffId: 5n,
+        weight: null,
+        bmi: null,
+        goal: null,
+        notes: null,
+        recordedAt: new Date(),
+        deletedAt: null,
+        createdAt: new Date(),
       }
       mockPrisma.memberProgress.findMany.mockResolvedValue([progress])
       const caller = makeCaller()
@@ -1085,9 +1105,9 @@ describe('TrainingService', () => {
       mockPrisma.member.findFirst.mockResolvedValue(makeMember())
       const caller = makeCaller({ roles: ['member'], memberId: 10n })
 
-      await expect(
-        service.listProgress(999n, {}, caller)
-      ).rejects.toMatchObject({ response: expect.objectContaining({ code: 'FORBIDDEN' }) })
+      await expect(service.listProgress(999n, {}, caller)).rejects.toMatchObject({
+        response: expect.objectContaining({ code: 'FORBIDDEN' }),
+      })
     })
 
     it('trainer only: throws ForbiddenException when member has different primary trainer', async () => {
@@ -1095,9 +1115,9 @@ describe('TrainingService', () => {
       mockPrisma.staff.findFirst.mockResolvedValue(makeStaff({ staffId: 5n }))
       const caller = makeCaller({ roles: ['trainer'], staffId: 5n })
 
-      await expect(
-        service.listProgress(10n, {}, caller)
-      ).rejects.toMatchObject({ response: expect.objectContaining({ code: 'FORBIDDEN' }) })
+      await expect(service.listProgress(10n, {}, caller)).rejects.toMatchObject({
+        response: expect.objectContaining({ code: 'FORBIDDEN' }),
+      })
     })
   })
 
@@ -1128,15 +1148,27 @@ describe('TrainingService', () => {
     it('happy path with staff caller: creates progress and logs audit', async () => {
       const member = makeMember({ primaryTrainerId: 5n })
       const progress = {
-        progressId: 1n, memberId: 10n, staffId: 5n, weight: null, bmi: null,
-        goal: null, notes: null, recordedAt: new Date(), deletedAt: null, createdAt: new Date(),
+        progressId: 1n,
+        memberId: 10n,
+        staffId: 5n,
+        weight: null,
+        bmi: null,
+        goal: null,
+        notes: null,
+        recordedAt: new Date(),
+        deletedAt: null,
+        createdAt: new Date(),
       }
       mockPrisma.member.findFirst.mockResolvedValue(member)
       mockPrisma.staff.findFirst.mockResolvedValue(makeStaff())
       mockPrisma.memberProgress.create.mockResolvedValue(progress)
       const caller = makeCaller({ roles: ['staff'], staffId: 5n })
 
-      const result = await service.recordProgress(10n, { recordedAt: new Date().toISOString() } as any, caller)
+      const result = await service.recordProgress(
+        10n,
+        { recordedAt: new Date().toISOString() } as any,
+        caller
+      )
 
       expect(mockPrisma.memberProgress.create).toHaveBeenCalled()
       expect(mockAudit.log).toHaveBeenCalledWith(
@@ -1156,7 +1188,11 @@ describe('TrainingService', () => {
 
   describe('deviceAccessEvent', () => {
     it('delegates to deviceAccessService and returns its result', async () => {
-      const body = { memberIdentifier: 'MEM-001', occurredAt: new Date().toISOString(), deviceId: 'DEVICE-A1' }
+      const body = {
+        memberIdentifier: 'MEM-001',
+        occurredAt: new Date().toISOString(),
+        deviceId: 'DEVICE-A1',
+      }
       const expected = { data: { attendanceLogId: '1', deduped: false } }
       mockDeviceAccessService.deviceAccessEvent.mockResolvedValue(expected)
 
@@ -1197,7 +1233,10 @@ describe('TrainingService', () => {
       await service.deleteProgress(1n, caller)
 
       expect(mockPrisma.memberProgress.update).toHaveBeenCalledWith(
-        expect.objectContaining({ where: { progressId: 1n }, data: { deletedAt: expect.any(Date) } })
+        expect.objectContaining({
+          where: { progressId: 1n },
+          data: { deletedAt: expect.any(Date) },
+        })
       )
       expect(mockAudit.log).toHaveBeenCalledWith(
         expect.objectContaining({ action: 'progress.delete' })
@@ -1250,7 +1289,13 @@ describe('TrainingService', () => {
     function makeDto(overrides: object = {}) {
       const start = futureTime(30)
       const end = futureTime(90)
-      return { memberId: '10', roomId: '3', startTime: start.toISOString(), endTime: end.toISOString(), ...overrides }
+      return {
+        memberId: '10',
+        roomId: '3',
+        startTime: start.toISOString(),
+        endTime: end.toISOString(),
+        ...overrides,
+      }
     }
 
     it('trainer caller throws ForbiddenException when member primary trainer is different', async () => {
@@ -1286,7 +1331,9 @@ describe('TrainingService', () => {
       mockPrisma.staff.findFirst.mockResolvedValue(null)
       const caller = makeCaller()
 
-      await expect(service.createSession(makeDto({ trainerStaffId: '99' }) as any, caller)).rejects.toMatchObject({
+      await expect(
+        service.createSession(makeDto({ trainerStaffId: '99' }) as any, caller)
+      ).rejects.toMatchObject({
         response: expect.objectContaining({ code: 'FK_CONSTRAINT' }),
       })
     })
@@ -1342,7 +1389,9 @@ describe('TrainingService', () => {
 
       await expect(
         service.recordProgress(10n, { recordedAt: new Date().toISOString() } as any, caller)
-      ).rejects.toMatchObject({ response: expect.objectContaining({ code: 'TRAINER_NOT_ASSIGNED' }) })
+      ).rejects.toMatchObject({
+        response: expect.objectContaining({ code: 'TRAINER_NOT_ASSIGNED' }),
+      })
     })
   })
 
@@ -1368,7 +1417,11 @@ describe('TrainingService', () => {
 
   describe('deviceAccessEvent — additional paths', () => {
     it('delegates to deviceAccessService (additional paths covered in device-access.service.spec.ts)', async () => {
-      const body = { memberIdentifier: 'MEM-ADV1', occurredAt: new Date().toISOString(), deviceId: 'DEVICE-ADV1' }
+      const body = {
+        memberIdentifier: 'MEM-ADV1',
+        occurredAt: new Date().toISOString(),
+        deviceId: 'DEVICE-ADV1',
+      }
       const expected = { data: { attendanceLogId: '10', deduped: false } }
       mockDeviceAccessService.deviceAccessEvent.mockResolvedValue(expected)
 

@@ -37,12 +37,16 @@ describe('FacilityController', () => {
 
       const res = await ctrl.lookupRooms({ page: 2, pageSize: 500, search: 'yoga' } as any)
 
-      expect(mockFacility.listRooms).toHaveBeenCalledWith({ page: 2, pageSize: 100, search: 'yoga' })
+      expect(mockFacility.listRooms).toHaveBeenCalledWith({
+        page: 2,
+        pageSize: 100,
+        search: 'yoga',
+      })
       expect(res).toEqual({ success: true, ...serviceResult })
     })
 
     it('defaults lookup page size to 100', async () => {
-      (mockFacility.listRooms as jest.Mock).mockResolvedValue({ data: [], meta: {} })
+      ;(mockFacility.listRooms as jest.Mock).mockResolvedValue({ data: [], meta: {} })
 
       await ctrl.lookupRooms({ search: 'cardio' } as any)
 
@@ -71,7 +75,7 @@ describe('FacilityController', () => {
     })
 
     it('propagates NotFoundException', async () => {
-      (mockFacility.getRoom as jest.Mock).mockRejectedValue(new NotFoundException())
+      ;(mockFacility.getRoom as jest.Mock).mockRejectedValue(new NotFoundException())
       await expect(ctrl.getRoom(999)).rejects.toBeInstanceOf(NotFoundException)
     })
   })
@@ -100,7 +104,7 @@ describe('FacilityController', () => {
 
   describe('deleteRoom', () => {
     it('delegates to deleteRoom and returns void', async () => {
-      (mockFacility.deleteRoom as jest.Mock).mockResolvedValue(undefined)
+      ;(mockFacility.deleteRoom as jest.Mock).mockResolvedValue(undefined)
       const res = await ctrl.deleteRoom(3, user)
       expect(mockFacility.deleteRoom).toHaveBeenCalledWith(BigInt(3), user.userId)
       expect(res).toBeUndefined()
@@ -154,14 +158,19 @@ describe('FacilityController', () => {
 
   describe('deleteEquipment', () => {
     it('delegates to deleteEquipment with force flag', async () => {
-      (mockFacility.deleteEquipment as jest.Mock).mockResolvedValue(undefined)
+      ;(mockFacility.deleteEquipment as jest.Mock).mockResolvedValue(undefined)
       const res = await ctrl.deleteEquipment(5, user, 'true')
-      expect(mockFacility.deleteEquipment).toHaveBeenCalledWith(BigInt(5), user.userId, user.roles, true)
+      expect(mockFacility.deleteEquipment).toHaveBeenCalledWith(
+        BigInt(5),
+        user.userId,
+        user.roles,
+        true
+      )
       expect(res).toBeUndefined()
     })
 
     it('defaults force to false when the query parameter is absent', async () => {
-      (mockFacility.deleteEquipment as jest.Mock).mockResolvedValue(undefined)
+      ;(mockFacility.deleteEquipment as jest.Mock).mockResolvedValue(undefined)
 
       await ctrl.deleteEquipment(5, user)
 

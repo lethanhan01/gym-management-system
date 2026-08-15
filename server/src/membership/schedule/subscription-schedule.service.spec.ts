@@ -62,10 +62,7 @@ describe('SubscriptionScheduleService', () => {
     })
 
     it('resets primaryTrainerId for members whose PT subscription expired', async () => {
-      mockPrisma.subscription.findMany.mockResolvedValue([
-        { memberId: 10n },
-        { memberId: 20n },
-      ])
+      mockPrisma.subscription.findMany.mockResolvedValue([{ memberId: 10n }, { memberId: 20n }])
       mockPrisma.subscription.updateMany.mockResolvedValue({ count: 2 })
       mockPrisma.member.updateMany.mockResolvedValue({ count: 2 })
 

@@ -17,7 +17,12 @@ import { DatabaseRetryable } from '../common/decorators/database-retryable.decor
 import { CurrentUser } from '../auth/decorators/current-user.decorator'
 import { AuthenticatedUser } from '../auth/types/jwt-payload.interface'
 import { FeedbackService } from './feedback.service'
-import { ListFeedbackDto, CreateFeedbackDto, AssignFeedbackDto, UpdateFeedbackStatusDto } from './dto'
+import {
+  ListFeedbackDto,
+  CreateFeedbackDto,
+  AssignFeedbackDto,
+  UpdateFeedbackStatusDto,
+} from './dto'
 
 @Controller('feedback')
 @DatabaseRetryable()
@@ -62,7 +67,11 @@ export class FeedbackController {
 
   @Patch(':id/assign')
   @RequirePermission('feedback.handle')
-  async assign(@Param('id', ParseIntPipe) id: number, @Body() dto: AssignFeedbackDto, @CurrentUser() user: AuthenticatedUser) {
+  async assign(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: AssignFeedbackDto,
+    @CurrentUser() user: AuthenticatedUser
+  ) {
     const result = await this.feedback.assign(BigInt(id), dto, {
       userId: user.userId,
       roles: user.roles,
@@ -73,7 +82,11 @@ export class FeedbackController {
 
   @Patch(':id/status')
   @RequirePermission('feedback.handle')
-  async updateStatus(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateFeedbackStatusDto, @CurrentUser() user: AuthenticatedUser) {
+  async updateStatus(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateFeedbackStatusDto,
+    @CurrentUser() user: AuthenticatedUser
+  ) {
     const result = await this.feedback.updateStatus(BigInt(id), dto, {
       userId: user.userId,
       roles: user.roles,

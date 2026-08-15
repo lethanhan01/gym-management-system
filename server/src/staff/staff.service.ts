@@ -34,7 +34,7 @@ export class StaffService {
     private readonly prisma: PrismaService,
     private readonly audit: AuditService,
     private readonly scheduleService: StaffScheduleService,
-    private readonly attendanceService: StaffAttendanceService,
+    private readonly attendanceService: StaffAttendanceService
   ) {}
 
   private async generateStaffCode(tx: Prisma.TransactionClient): Promise<string> {
@@ -279,14 +279,32 @@ export class StaffService {
       await tx.staffSchedule.deleteMany({ where: { staffId } })
 
       // Nullify optional FK references tới staff này
-      await tx.member.updateMany({ where: { primaryTrainerId: staffId }, data: { primaryTrainerId: null } })
+      await tx.member.updateMany({
+        where: { primaryTrainerId: staffId },
+        data: { primaryTrainerId: null },
+      })
       await tx.subscription.updateMany({ where: { trainerId: staffId }, data: { trainerId: null } })
       await tx.memberProgress.updateMany({ where: { staffId }, data: { staffId: null } })
-      await tx.exercise.updateMany({ where: { createdByStaffId: staffId }, data: { createdByStaffId: null } })
-      await tx.workoutPlan.updateMany({ where: { creatorStaffId: staffId }, data: { creatorStaffId: null } })
-      await tx.memberWorkoutPlan.updateMany({ where: { assignedByStaffId: staffId }, data: { assignedByStaffId: null } })
-      await tx.feedback.updateMany({ where: { handledByStaffId: staffId }, data: { handledByStaffId: null } })
-      await tx.feedback.updateMany({ where: { subjectStaffId: staffId }, data: { subjectStaffId: null } })
+      await tx.exercise.updateMany({
+        where: { createdByStaffId: staffId },
+        data: { createdByStaffId: null },
+      })
+      await tx.workoutPlan.updateMany({
+        where: { creatorStaffId: staffId },
+        data: { creatorStaffId: null },
+      })
+      await tx.memberWorkoutPlan.updateMany({
+        where: { assignedByStaffId: staffId },
+        data: { assignedByStaffId: null },
+      })
+      await tx.feedback.updateMany({
+        where: { handledByStaffId: staffId },
+        data: { handledByStaffId: null },
+      })
+      await tx.feedback.updateMany({
+        where: { subjectStaffId: staffId },
+        data: { subjectStaffId: null },
+      })
 
       // Anonymize audit logs (giữ audit trail, bỏ actor reference)
       await tx.auditLog.updateMany({ where: { actorUserId: userId }, data: { actorUserId: null } })
@@ -296,7 +314,10 @@ export class StaffService {
         .findMany({ where: { ownerUserId: userId }, select: { fileId: true } })
         .then((rows) => rows.map((r) => r.fileId))
       if (ownedFileIds.length > 0) {
-        await tx.user.updateMany({ where: { avatarFileId: { in: ownedFileIds } }, data: { avatarFileId: null } })
+        await tx.user.updateMany({
+          where: { avatarFileId: { in: ownedFileIds } },
+          data: { avatarFileId: null },
+        })
         await tx.file.deleteMany({ where: { ownerUserId: userId } })
       }
 

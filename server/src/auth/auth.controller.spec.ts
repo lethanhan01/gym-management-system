@@ -228,7 +228,7 @@ describe('AuthController', () => {
       const result = await controller.resetPassword(
         { newPassword: 'NewPass1!' } as any,
         makeReq({ headers: { cookie: 'password_reset_grant=grant-token' } }),
-        res as any,
+        res as any
       )
 
       expect(result).toEqual({ success: true, message: 'Đặt lại mật khẩu thành công' })

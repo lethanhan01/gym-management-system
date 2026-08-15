@@ -125,7 +125,10 @@ describe('DeviceAccessService', () => {
 
       expect(mockNotifications.safeNotifyUser).toHaveBeenCalledWith(
         100n,
-        expect.objectContaining({ type: 'attendance.checkin', message: 'Ban da check-in thanh cong.' })
+        expect.objectContaining({
+          type: 'attendance.checkin',
+          message: 'Ban da check-in thanh cong.',
+        })
       )
       expect(mockNotifications.safeNotifyUser).toHaveBeenCalledWith(
         200n,

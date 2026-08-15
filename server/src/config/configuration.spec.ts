@@ -32,13 +32,13 @@ describe('validateConfig LINE messaging', () => {
 
   it('rejects unsupported LINE message locales', () => {
     expect(() => validateConfig({ ...lineConfigBaseEnv, LINE_MESSAGE_LOCALE: 'en' })).toThrow(
-      /LINE_MESSAGE_LOCALE/,
+      /LINE_MESSAGE_LOCALE/
     )
   })
 
   it('requires LINE messaging credentials and LIFF URL when messaging is enabled', () => {
     expect(() => validateConfig({ ...lineConfigBaseEnv, LINE_MESSAGING_ENABLED: 'true' })).toThrow(
-      /LINE_CHANNEL_ACCESS_TOKEN[\s\S]*LINE_CHANNEL_SECRET[\s\S]*LINE_LIFF_URL/,
+      /LINE_CHANNEL_ACCESS_TOKEN[\s\S]*LINE_CHANNEL_SECRET[\s\S]*LINE_LIFF_URL/
     )
   })
 
@@ -65,7 +65,7 @@ describe('validateConfig LINE messaging', () => {
         LINE_CHANNEL_ACCESS_TOKEN: 'token',
         LINE_CHANNEL_SECRET: 'secret',
         LINE_LIFF_URL: 'https://developers.line.biz/console/channel/1/liff/1-test',
-      }),
+      })
     ).toThrow(/must not be a LINE Developers Console URL/)
   })
 
@@ -86,7 +86,7 @@ describe('validateConfig LINE messaging', () => {
         LINE_CHANNEL_ACCESS_TOKEN: 'token',
         LINE_CHANNEL_SECRET: 'secret',
         LINE_LIFF_URL,
-      }),
+      })
     ).toThrow(/LINE_LIFF_URL=https:\/\/liff\.line\.me\/<LIFF_ID>/)
   })
 })
@@ -120,28 +120,42 @@ describe('validateConfig database connection', () => {
     expect(() =>
       validateConfig({
         ...base(),
-        DATABASE_URL: validUrl.replace(':5432', ':6543').replace('application_name', 'pgbouncer=true&application_name'),
-      }),
+        DATABASE_URL: validUrl
+          .replace(':5432', ':6543')
+          .replace('application_name', 'pgbouncer=true&application_name'),
+      })
     ).toThrow('use the Supavisor Session pooler URL')
   })
 
   it('requires an explicit mode in production', () => {
-    expect(() => validateConfig({ ...base(), NODE_ENV: 'production' })).toThrow('DB_CONNECTION_MODE')
+    expect(() => validateConfig({ ...base(), NODE_ENV: 'production' })).toThrow(
+      'DB_CONNECTION_MODE'
+    )
   })
 })
 
 describe('validateConfig ExerciseDB sync', () => {
   it('requires a RapidAPI key only when the sync is enabled', () => {
-    expect(() => validateConfig({ ...lineConfigBaseEnv, EXERCISEDB_SYNC_ENABLED: 'true' })).toThrow('EXERCISEDB_API_KEY')
+    expect(() => validateConfig({ ...lineConfigBaseEnv, EXERCISEDB_SYNC_ENABLED: 'true' })).toThrow(
+      'EXERCISEDB_API_KEY'
+    )
     expect(validateConfig(lineConfigBaseEnv).EXERCISEDB_SYNC_ENABLED).toBe('false')
   })
 
   it('accepts a configured RapidAPI sync without provider URL overrides', () => {
-    expect(validateConfig({ ...lineConfigBaseEnv, EXERCISEDB_SYNC_ENABLED: 'true', EXERCISEDB_API_KEY: 'rapid-key' }).EXERCISEDB_API_KEY).toBe('rapid-key')
+    expect(
+      validateConfig({
+        ...lineConfigBaseEnv,
+        EXERCISEDB_SYNC_ENABLED: 'true',
+        EXERCISEDB_API_KEY: 'rapid-key',
+      }).EXERCISEDB_API_KEY
+    ).toBe('rapid-key')
   })
 
   it('keeps the ExerciseDB scheduler disabled unless explicitly enabled', () => {
     expect(validateConfig(lineConfigBaseEnv).EXERCISEDB_SCHEDULER_ENABLED).toBe('false')
-    expect(() => validateConfig({ ...lineConfigBaseEnv, EXERCISEDB_SCHEDULER_ENABLED: 'true' })).toThrow('requires EXERCISEDB_SYNC_ENABLED')
+    expect(() =>
+      validateConfig({ ...lineConfigBaseEnv, EXERCISEDB_SCHEDULER_ENABLED: 'true' })
+    ).toThrow('requires EXERCISEDB_SYNC_ENABLED')
   })
 })
