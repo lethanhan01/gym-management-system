@@ -39,7 +39,7 @@ describe('ReportsController', () => {
     })
 
     it('propagates InternalServerErrorException', async () => {
-      ;(mockService.revenue as jest.Mock).mockRejectedValue(new InternalServerErrorException())
+      (mockService.revenue as jest.Mock).mockRejectedValue(new InternalServerErrorException())
       await expect(ctrl.revenue({} as any)).rejects.toBeInstanceOf(InternalServerErrorException)
     })
   })

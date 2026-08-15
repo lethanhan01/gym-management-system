@@ -22,7 +22,7 @@ describe('PermissionsController', () => {
     })
 
     it('propagates exception from service', async () => {
-      ;(mockRbac.listPermissions as jest.Mock).mockRejectedValue(new Error('DB error'))
+      (mockRbac.listPermissions as jest.Mock).mockRejectedValue(new Error('DB error'))
       await expect(ctrl.list('1', '20', undefined)).rejects.toThrow('DB error')
     })
   })
@@ -37,7 +37,7 @@ describe('PermissionsController', () => {
     })
 
     it('propagates NotFoundException', async () => {
-      ;(mockRbac.getPermission as jest.Mock).mockRejectedValue(new NotFoundException())
+      (mockRbac.getPermission as jest.Mock).mockRejectedValue(new NotFoundException())
       await expect(ctrl.detail(999)).rejects.toBeInstanceOf(NotFoundException)
     })
   })

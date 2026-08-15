@@ -53,7 +53,7 @@ describe('WorkoutLogsController', () => {
     })
 
     it('propagates NotFoundException', async () => {
-      ;(mockLogs.update as jest.Mock).mockRejectedValue(new NotFoundException())
+      (mockLogs.update as jest.Mock).mockRejectedValue(new NotFoundException())
       await expect(ctrl.update(999, {} as any, user)).rejects.toBeInstanceOf(NotFoundException)
     })
   })

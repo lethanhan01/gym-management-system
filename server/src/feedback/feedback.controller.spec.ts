@@ -62,7 +62,7 @@ describe('FeedbackController', () => {
     })
 
     it('propagates NotFoundException', async () => {
-      ;(mockFeedback.get as jest.Mock).mockRejectedValue(new NotFoundException())
+      (mockFeedback.get as jest.Mock).mockRejectedValue(new NotFoundException())
       await expect(ctrl.detail(999, memberUser)).rejects.toBeInstanceOf(NotFoundException)
     })
   })
@@ -114,7 +114,7 @@ describe('FeedbackController', () => {
 
   describe('softDelete', () => {
     it('delegates to feedback.softDelete and returns success', async () => {
-      ;(mockFeedback.softDelete as jest.Mock).mockResolvedValue(undefined)
+      (mockFeedback.softDelete as jest.Mock).mockResolvedValue(undefined)
       const res = await ctrl.softDelete(3, memberUser)
       expect(mockFeedback.softDelete).toHaveBeenCalledWith(BigInt(3), {
         userId: memberUser.userId,

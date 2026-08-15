@@ -66,7 +66,7 @@ describe('TrainingController', () => {
     })
 
     it('propagates NotFoundException', async () => {
-      ;(mockService.getSession as jest.Mock).mockRejectedValue(new NotFoundException())
+      (mockService.getSession as jest.Mock).mockRejectedValue(new NotFoundException())
       await expect(ctrl.getSession(999, trainerUser)).rejects.toBeInstanceOf(NotFoundException)
     })
   })
@@ -111,7 +111,7 @@ describe('TrainingController', () => {
 
   describe('cancelSession', () => {
     it('delegates to cancelSession and returns success:true', async () => {
-      ;(mockService.cancelSession as jest.Mock).mockResolvedValue(undefined)
+      (mockService.cancelSession as jest.Mock).mockResolvedValue(undefined)
       const dto = { reason: 'sick' } as any
       const res = await ctrl.cancelSession(50, dto, trainerUser)
       expect(mockService.cancelSession).toHaveBeenCalledWith(BigInt(50), dto, ctx(trainerUser))
@@ -119,7 +119,7 @@ describe('TrainingController', () => {
     })
 
     it('propagates ForbiddenException', async () => {
-      ;(mockService.cancelSession as jest.Mock).mockRejectedValue(new ForbiddenException())
+      (mockService.cancelSession as jest.Mock).mockRejectedValue(new ForbiddenException())
       await expect(ctrl.cancelSession(50, {} as any, memberUser)).rejects.toBeInstanceOf(
         ForbiddenException
       )
@@ -242,7 +242,7 @@ describe('TrainingController', () => {
     })
 
     it('delegates progress deletion and preserves the no-content response', async () => {
-      ;(mockService.deleteProgress as jest.Mock).mockResolvedValue(undefined)
+      (mockService.deleteProgress as jest.Mock).mockResolvedValue(undefined)
 
       const res = await ctrl.deleteProgress(12, trainerUser)
 

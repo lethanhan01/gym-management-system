@@ -34,7 +34,7 @@ describe('GroupsController', () => {
     })
 
     it('passes includeDeleted=true when query param is "true"', async () => {
-      ;(mockRbac.listGroups as jest.Mock).mockResolvedValue({ data: [], meta: {} })
+      (mockRbac.listGroups as jest.Mock).mockResolvedValue({ data: [], meta: {} })
       await ctrl.list('1', '10', undefined, 'true')
       expect(mockRbac.listGroups).toHaveBeenCalledWith(1, 10, undefined, true)
     })
@@ -50,7 +50,7 @@ describe('GroupsController', () => {
     })
 
     it('propagates NotFoundException', async () => {
-      ;(mockRbac.getGroup as jest.Mock).mockRejectedValue(new NotFoundException())
+      (mockRbac.getGroup as jest.Mock).mockRejectedValue(new NotFoundException())
       await expect(ctrl.detail(999)).rejects.toBeInstanceOf(NotFoundException)
     })
   })
@@ -79,14 +79,14 @@ describe('GroupsController', () => {
 
   describe('delete', () => {
     it('delegates to deleteGroup and returns void', async () => {
-      ;(mockRbac.deleteGroup as jest.Mock).mockResolvedValue(undefined)
+      (mockRbac.deleteGroup as jest.Mock).mockResolvedValue(undefined)
       const res = await ctrl.delete(5, user)
       expect(mockRbac.deleteGroup).toHaveBeenCalledWith(BigInt(5), user.userId)
       expect(res).toBeUndefined()
     })
 
     it('propagates ForbiddenException (protected group)', async () => {
-      ;(mockRbac.deleteGroup as jest.Mock).mockRejectedValue(new ForbiddenException())
+      (mockRbac.deleteGroup as jest.Mock).mockRejectedValue(new ForbiddenException())
       await expect(ctrl.delete(1, user)).rejects.toBeInstanceOf(ForbiddenException)
     })
   })
@@ -104,7 +104,7 @@ describe('GroupsController', () => {
 
   describe('revokePermission', () => {
     it('delegates to revokePermission and returns void', async () => {
-      ;(mockRbac.revokePermission as jest.Mock).mockResolvedValue(undefined)
+      (mockRbac.revokePermission as jest.Mock).mockResolvedValue(undefined)
       const res = await ctrl.revokePermission(5, 3, user)
       expect(mockRbac.revokePermission).toHaveBeenCalledWith(BigInt(5), BigInt(3), user.userId)
       expect(res).toBeUndefined()
