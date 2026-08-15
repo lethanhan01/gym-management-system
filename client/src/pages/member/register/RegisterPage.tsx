@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { User, Phone, Mail, Lock, MapPin } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { DatePickerInput } from '@/components/DatePickerInput'
+import { DatePickerInput } from '@/components/ui'
 import { authService } from '@/services/auth.service'
 import {
   AuthShell,

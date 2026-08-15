@@ -8,8 +8,7 @@ import type {
   ExerciseMuscle,
   ExerciseEquipment,
 } from '@/services/workout.service'
-import { Select } from '@/components/Select'
-import { FilterDropdown } from '@/components/FilterDropdown'
+import { FilterDropdown, Select } from '@/components/ui'
 import { cn } from '@/lib/utils'
 
 export const ExerciseCard = memo(function ExerciseCard({

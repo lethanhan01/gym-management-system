@@ -3,7 +3,7 @@ import { Button, ButtonLink } from '@/components/ui/Button'
 import { useTranslation } from 'react-i18next'
 import { CalendarPlus, ChevronLeft, ChevronRight, MapPin } from 'lucide-react'
 import { SessionDetailModal } from '@/components/trainer/SessionDetailModal'
-import { DatePickerInput } from '@/components/DatePickerInput'
+import { DatePickerInput } from '@/components/ui'
 import { useTrainerSessions } from '@/hooks/useTrainerSessions'
 import { useTrainerStudents } from '@/hooks/useTrainerStudents'
 import {

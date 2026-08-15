@@ -16,7 +16,7 @@ import { getApiError } from '@/lib/api-error'
 import { formatDateTime, localDateTimeInputToIso, toDateTimeLocalInput } from '@/lib/date'
 import { facilityService, type GymRoom } from '@/services/facility.service'
 import { trainingService, type TrainingSessionDetail } from '@/services/training.service'
-import { DateTimePickerInput } from '@/components/DateTimePickerInput'
+import { DateTimePickerInput } from '@/components/ui'
 import { TrainerSelect, TrainerStatusBadge } from '@/components/TrainerUI'
 
 type ModalMode = 'view' | 'edit' | 'cancel' | 'status-confirm'

@@ -8,7 +8,7 @@ import {
   MemberPageHeader,
   MemberSkeleton,
 } from '@/components/MemberUI'
-import { DatePickerInput } from '@/components/DatePickerInput'
+import { DatePickerInput } from '@/components/ui'
 import { getApiError } from '@/lib/api-error'
 import { useAuthStore } from '@/stores/authStore'
 

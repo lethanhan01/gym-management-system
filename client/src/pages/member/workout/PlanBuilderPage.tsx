@@ -16,7 +16,7 @@ import {
   X,
   Zap,
 } from 'lucide-react'
-import { DatePickerInput } from '@/components/DatePickerInput'
+import { DatePickerInput } from '@/components/ui'
 import {
   MemberErrorState,
   MemberPage,

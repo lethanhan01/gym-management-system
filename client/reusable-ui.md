@@ -10,7 +10,7 @@ Dùng alias `@/` thay cho đường dẫn tương đối dài:
 
 ```tsx
 import { Page, PageHeader } from '@/components/shared/PageUI'
-import { Select } from '@/components/Select'
+import { Select } from '@/components/ui'
 import { useTrainerSessions } from '@/hooks/useTrainerSessions'
 ```
 
@@ -345,7 +345,7 @@ shared `StatCard` và `StatusBadge` trực tiếp khi cần.
 
 ### 5.1. `Select`
 
-Nguồn: [`Select.tsx`](./src/components/Select.tsx)
+Nguồn: [`Select.tsx`](./src/components/ui/Select.tsx)
 
 ```tsx
 <Select
@@ -374,7 +374,7 @@ Nguồn: [`Select.tsx`](./src/components/Select.tsx)
 
 ### 5.2. `DatePickerInput`
 
-Nguồn: [`DatePickerInput.tsx`](./src/components/DatePickerInput.tsx)
+Nguồn: [`DatePickerInput.tsx`](./src/components/ui/DatePickerInput.tsx)
 
 ```tsx
 <DatePickerInput
@@ -392,7 +392,7 @@ Nguồn: [`DatePickerInput.tsx`](./src/components/DatePickerInput.tsx)
 
 ### 5.3. `DateTimePickerInput`
 
-Nguồn: [`DateTimePickerInput.tsx`](./src/components/DateTimePickerInput.tsx)
+Nguồn: [`DateTimePickerInput.tsx`](./src/components/ui/DateTimePickerInput.tsx)
 
 ```tsx
 <DateTimePickerInput

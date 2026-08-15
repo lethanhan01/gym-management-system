@@ -23,7 +23,7 @@ import {
   TrainerSkeleton,
 } from '@/components/TrainerUI'
 import { toast } from '@/lib/toast'
-import { DateTimePickerInput } from '@/components/DateTimePickerInput'
+import { DateTimePickerInput } from '@/components/ui'
 
 type PlanDayOption = Pick<
   WorkoutPlanDay,
