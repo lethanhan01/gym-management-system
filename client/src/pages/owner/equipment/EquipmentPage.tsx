@@ -1,22 +1,26 @@
 import { FormEvent, useCallback, useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { ChevronLeft, ChevronRight, Edit2, Plus, Search, Trash2 } from 'lucide-react'
+import { Edit2, Plus, Trash2 } from 'lucide-react'
 import { getApiError } from '@/lib/api-error'
 import { formatDate } from '@/lib/date'
-import { DatePickerInput } from '@/components/DatePickerInput'
 import { facilityService, type Equipment, type GymRoom } from '@/services/facility.service'
 import {
-  OwnerEmptyState,
-  OwnerErrorState,
-  OwnerModal,
-  OwnerPage,
-  OwnerPageHeader,
-  OwnerSelect,
-  OwnerSkeleton,
-  OwnerStatusBadge,
-  OwnerSubmitButton,
-} from '@/components/OwnerUI'
+  Page,
+  PageHeader,
+  Card,
+  SearchInput,
+  Select,
+  ResponsiveTable,
+  Button,
+  Modal,
+  ConfirmDialog,
+  FormField,
+  Input,
+  DatePickerInput,
+  StatusBadge,
+  type ColumnDef,
+} from '@/components/ui'
 
 type FormState = {
   name: string
@@ -165,31 +169,29 @@ export default function EquipmentPage() {
   // ── Confirm delete ──
   const [deleteTarget, setDeleteTarget] = useState<Equipment | null>(null)
   const [deleting, setDeleting] = useState(false)
-  const [deleteError, setDeleteError] = useState<string | null>(null)
 
   function openDelete(eq: Equipment) {
     setDeleteTarget(eq)
-    setDeleteError(null)
   }
 
   async function handleDelete() {
     if (!deleteTarget) return
     setDeleting(true)
-    setDeleteError(null)
     try {
       await facilityService.deleteEquipment(deleteTarget.equipmentId)
       setDeleteTarget(null)
       load()
     } catch (err) {
-      setDeleteError(getApiError(err, t('equipment.deleteFailed')))
+      setFormError(getApiError(err, t('equipment.deleteFailed')))
     } finally {
       setDeleting(false)
     }
   }
 
-  function applySearch() {
+  function handleSearchChange(searchVal: string) {
+    setSearch(searchVal)
     const next = new URLSearchParams(searchParams)
-    search ? next.set('search', search) : next.delete('search')
+    searchVal ? next.set('search', searchVal) : next.delete('search')
     next.set('page', '1')
     setSearchParams(next)
   }
@@ -201,32 +203,95 @@ export default function EquipmentPage() {
     setSearchParams(next)
   }
 
+  const columns: ColumnDef<Equipment>[] = [
+    {
+      key: 'code',
+      header: t('equipment.table.code'),
+      render: (eq) => (
+        <span className="font-mono text-xs rogym-text-dim">{eq.equipmentCode}</span>
+      ),
+    },
+    {
+      key: 'name',
+      header: t('equipment.table.name'),
+      render: (eq) => <span className="font-semibold text-white">{eq.name}</span>,
+    },
+    {
+      key: 'room',
+      header: t('equipment.table.room'),
+      render: (eq) => (
+        <span className="rogym-text-secondary">
+          {eq.roomName ?? <span className="rogym-text-dim italic">{t('equipment.noRoom')}</span>}
+        </span>
+      ),
+    },
+    {
+      key: 'importDate',
+      header: t('equipment.table.importDate'),
+      render: (eq) => (
+        <span className="rogym-text-secondary">{formatDate(eq.importDate)}</span>
+      ),
+    },
+    {
+      key: 'warrantyUntil',
+      header: t('equipment.table.warrantyUntil'),
+      render: (eq) => (
+        <span className="rogym-text-secondary">{formatDate(eq.warrantyUntil)}</span>
+      ),
+    },
+    {
+      key: 'status',
+      header: t('equipment.table.status'),
+      render: (eq) => <StatusBadge status={eq.status} />,
+    },
+    {
+      key: 'actions',
+      header: t('equipment.table.actions'),
+      align: 'right',
+      render: (eq) => (
+        <div className="flex items-center justify-end gap-2">
+          <Button
+            variant="icon"
+            size="compact"
+            onClick={() => openEdit(eq)}
+            aria-label={tCommon('button.edit')}
+          >
+            <Edit2 size={15} />
+          </Button>
+          <Button
+            variant="danger"
+            size="compact"
+            onClick={() => openDelete(eq)}
+            aria-label={tCommon('button.delete')}
+          >
+            <Trash2 size={15} />
+          </Button>
+        </div>
+      ),
+    },
+  ]
+
   return (
-    <OwnerPage>
-      <OwnerPageHeader
+    <Page>
+      <PageHeader
         eyebrow={t('equipment.eyebrow')}
         title={t('equipment.title')}
         description={t('equipment.totalCount', { count: total })}
         actions={
-          <button type="button" className="rogym-btn rogym-btn--primary" onClick={openCreate}>
+          <Button variant="primary" onClick={openCreate}>
             <Plus size={16} /> {t('equipment.addEquipment')}
-          </button>
+          </Button>
         }
       />
 
       {/* Filters */}
-      <div className="rogym-card rogym-card--compact grid gap-3 p-4 md:grid-cols-[1fr_200px_auto]">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 rogym-text-dim" size={17} />
-          <input
-            className="rogym-input pl-10"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && applySearch()}
-            placeholder={t('equipment.searchPlaceholder')}
-          />
-        </div>
-        <OwnerSelect
+      <Card variant="compact" className="grid gap-3 p-4 md:grid-cols-[1fr_200px]">
+        <SearchInput
+          value={search}
+          onChange={handleSearchChange}
+          placeholder={t('equipment.searchPlaceholder')}
+        />
+        <Select
           value={statusFilter}
           onValueChange={(value) => updateParam('status', value)}
           ariaLabel={t('equipment.filterByStatus')}
@@ -236,123 +301,40 @@ export default function EquipmentPage() {
               {opt.label}
             </option>
           ))}
-        </OwnerSelect>
-        <button
-          type="button"
-          className="rogym-btn rogym-btn--icon rogym-btn--elevated"
-          onClick={applySearch}
-          aria-label={tCommon('button.search')}
-        >
-          <Search size={17} />
-        </button>
-      </div>
+        </Select>
+      </Card>
 
-      {loading ? (
-        <OwnerSkeleton rows={5} />
-      ) : error ? (
-        <OwnerErrorState message={error} onRetry={load} />
-      ) : data.length === 0 ? (
-        <OwnerEmptyState
-          title={t('equipment.notFound')}
-          description={t('equipment.notFoundDesc')}
-          action={
-            <button type="button" className="rogym-btn rogym-btn--primary" onClick={openCreate}>
-              <Plus size={15} /> {t('equipment.addEquipment')}
-            </button>
-          }
-        />
-      ) : (
-        <>
-          <div className="overflow-x-auto rounded-2xl border border-white/5">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-white/5 text-left text-xs rogym-text-dim">
-                  <th className="px-5 py-3 font-medium">{t('equipment.table.code')}</th>
-                  <th className="px-5 py-3 font-medium">{t('equipment.table.name')}</th>
-                  <th className="px-5 py-3 font-medium">{t('equipment.table.room')}</th>
-                  <th className="px-5 py-3 font-medium">{t('equipment.table.importDate')}</th>
-                  <th className="px-5 py-3 font-medium">{t('equipment.table.warrantyUntil')}</th>
-                  <th className="px-5 py-3 font-medium">{t('equipment.table.status')}</th>
-                  <th className="px-5 py-3 font-medium text-right">
-                    {t('equipment.table.actions')}
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-white/5">
-                {data.map((eq) => (
-                  <tr key={eq.equipmentId} className="hover:bg-white/[0.02] transition-colors">
-                    <td className="px-5 py-4 font-mono text-xs rogym-text-dim">
-                      {eq.equipmentCode}
-                    </td>
-                    <td className="px-5 py-4 font-semibold text-white">{eq.name}</td>
-                    <td className="px-5 py-4 rogym-text-secondary">
-                      {eq.roomName ?? (
-                        <span className="rogym-text-dim italic">{t('equipment.noRoom')}</span>
-                      )}
-                    </td>
-                    <td className="px-5 py-4 rogym-text-secondary">{formatDate(eq.importDate)}</td>
-                    <td className="px-5 py-4 rogym-text-secondary">
-                      {formatDate(eq.warrantyUntil)}
-                    </td>
-                    <td className="px-5 py-4 min-w-0">
-                      <OwnerStatusBadge status={eq.status} />
-                    </td>
-                    <td className="px-5 py-4">
-                      <div className="flex items-center justify-end gap-2">
-                        <button
-                          type="button"
-                          className="rogym-btn rogym-btn--icon rogym-btn--elevated"
-                          onClick={() => openEdit(eq)}
-                          aria-label={tCommon('button.edit')}
-                        >
-                          <Edit2 size={15} />
-                        </button>
-                        <button
-                          type="button"
-                          className="rogym-btn rogym-btn--icon rogym-btn--danger"
-                          onClick={() => openDelete(eq)}
-                          aria-label={tCommon('button.delete')}
-                        >
-                          <Trash2 size={15} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
-          {totalPages > 1 && (
-            <div className="flex items-center justify-center gap-3">
-              <button
-                type="button"
-                className="rogym-btn rogym-btn--icon rogym-btn--elevated"
-                disabled={page <= 1}
-                onClick={() => updateParam('page', String(page - 1))}
-                aria-label={tCommon('pagination.prev')}
-              >
-                <ChevronLeft size={17} />
-              </button>
-              <span className="text-sm rogym-text-secondary">
-                {t('equipment.pagination.page', { page, total: totalPages })}
-              </span>
-              <button
-                type="button"
-                className="rogym-btn rogym-btn--icon rogym-btn--elevated"
-                disabled={page >= totalPages}
-                onClick={() => updateParam('page', String(page + 1))}
-                aria-label={tCommon('pagination.next')}
-              >
-                <ChevronRight size={17} />
-              </button>
-            </div>
-          )}
-        </>
-      )}
+      {/* Data Table */}
+      <ResponsiveTable
+        columns={columns}
+        data={data}
+        keyExtractor={(item) => item.equipmentId}
+        loading={loading}
+        error={error}
+        onRetry={load}
+        emptyTitle={t('equipment.notFound')}
+        emptyDescription={t('equipment.notFoundDesc')}
+        emptyAction={
+          <Button variant="primary" onClick={openCreate}>
+            <Plus size={15} /> {t('equipment.addEquipment')}
+          </Button>
+        }
+        pagination={
+          totalPages > 1
+            ? {
+                page,
+                totalPages,
+                onPageChange: (p) => updateParam('page', String(p)),
+                totalItems: total,
+                pageSize: 15,
+                showItemCount: true,
+              }
+            : undefined
+        }
+      />
 
       {/* Modal thêm / chỉnh sửa thiết bị */}
-      <OwnerModal
+      <Modal
         open={modalOpen}
         title={
           editing ? t('equipment.editTitle', { name: editing.name }) : t('equipment.createTitle')
@@ -360,20 +342,18 @@ export default function EquipmentPage() {
         onClose={closeModal}
         footer={
           <>
-            <button
-              type="button"
-              className="rogym-btn rogym-btn--outline-white"
-              onClick={closeModal}
-            >
+            <Button variant="outline-white" onClick={closeModal}>
               {tCommon('button.cancel')}
-            </button>
-            <OwnerSubmitButton
+            </Button>
+            <Button
+              type="submit"
               form="equipment-form"
+              variant="primary"
               loading={saving}
               disabled={!form.name.trim() || !form.roomId}
             >
               {editing ? t('equipment.saveChanges') : t('equipment.addEquipment')}
-            </OwnerSubmitButton>
+            </Button>
           </>
         }
       >
@@ -384,53 +364,46 @@ export default function EquipmentPage() {
             </div>
           )}
 
-          <label className="block space-y-2">
-            <span className="rogym-field-label">{t('equipment.form.name')}</span>
-            <input
-              className="rogym-input"
+          <FormField label={t('equipment.form.name')} required>
+            <Input
               value={form.name}
               onChange={(e) => setField('name', e.target.value)}
               placeholder={t('equipment.form.namePlaceholder')}
               required
             />
-          </label>
+          </FormField>
 
-          <label className="block space-y-2">
-            <span className="rogym-field-label">{t('equipment.form.room')}</span>
-            <OwnerSelect value={form.roomId} onValueChange={(v) => setField('roomId', v)} required>
+          <FormField label={t('equipment.form.room')} required>
+            <Select value={form.roomId} onValueChange={(v) => setField('roomId', v)} required>
               <option value="">{t('equipment.form.selectRoom')}</option>
               {rooms.map((r) => (
                 <option key={r.roomId} value={r.roomId}>
                   {r.name}
                 </option>
               ))}
-            </OwnerSelect>
-          </label>
+            </Select>
+          </FormField>
 
-          {/* trên mobile hiển thị 1 cột, từ sm trở lên 2 cột */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <label className="block space-y-2">
-              <span className="rogym-field-label">{t('equipment.form.importDate')}</span>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <FormField label={t('equipment.form.importDate')}>
               <DatePickerInput
                 value={form.importDate}
                 onChange={(value) => setField('importDate', value)}
                 aria-label={t('equipment.form.importDate')}
               />
-            </label>
-            <label className="block space-y-2">
-              <span className="rogym-field-label">{t('equipment.form.warrantyUntil')}</span>
+            </FormField>
+            <FormField label={t('equipment.form.warrantyUntil')}>
               <DatePickerInput
                 value={form.warrantyUntil}
                 onChange={(value) => setField('warrantyUntil', value)}
                 aria-label={t('equipment.form.warrantyUntil')}
               />
-            </label>
+            </FormField>
           </div>
 
           {editing && (
-            <label className="block space-y-2">
-              <span className="rogym-field-label">{t('equipment.form.status')}</span>
-              <OwnerSelect
+            <FormField label={t('equipment.form.status')} required>
+              <Select
                 value={form.status}
                 onValueChange={(v) => setField('status', v)}
                 required
@@ -440,55 +413,28 @@ export default function EquipmentPage() {
                     {opt.label}
                   </option>
                 ))}
-              </OwnerSelect>
-            </label>
+              </Select>
+            </FormField>
           )}
-
-          <button type="submit" className="hidden" />
         </form>
-      </OwnerModal>
+      </Modal>
 
       {/* Modal xác nhận xóa */}
       {deleteTarget && (
-        <OwnerModal
+        <ConfirmDialog
           open={!!deleteTarget}
           title={t('equipment.deleteConfirmTitle')}
+          variant="danger"
+          loading={deleting}
           onClose={() => setDeleteTarget(null)}
-          footer={
-            <>
-              <button
-                type="button"
-                className="rogym-btn rogym-btn--outline-white"
-                onClick={() => setDeleteTarget(null)}
-              >
-                {tCommon('button.cancel')}
-              </button>
-              <button
-                type="button"
-                className="rogym-btn rogym-btn--danger"
-                disabled={deleting}
-                onClick={handleDelete}
-              >
-                {deleting ? t('equipment.deleting') : t('equipment.deleteBtn')}
-              </button>
-            </>
-          }
-        >
-          <div className="space-y-3">
-            {deleteError && (
-              <div className="rounded-xl border border-red-400/20 bg-red-400/8 px-4 py-3 text-sm text-red-200">
-                {deleteError}
-              </div>
-            )}
-            <p className="text-sm rogym-text-secondary">
-              {t('equipment.deleteConfirmMsg', {
-                name: deleteTarget.name,
-                code: deleteTarget.equipmentCode ?? '',
-              })}
-            </p>
-          </div>
-        </OwnerModal>
+          onConfirm={handleDelete}
+          description={t('equipment.deleteConfirmMsg', {
+            name: deleteTarget.name,
+            code: deleteTarget.equipmentCode ?? '',
+          })}
+          confirmLabel={t('equipment.deleteBtn')}
+        />
       )}
-    </OwnerPage>
+    </Page>
   )
 }

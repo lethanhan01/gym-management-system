@@ -1,6 +1,5 @@
 import { FormEvent, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Button, ButtonLink } from '@/components/ui/Button'
 import { useTranslation } from 'react-i18next'
 import {
   Archive,
@@ -9,14 +8,11 @@ import {
   ClipboardList,
   Pencil,
   Plus,
-  Search,
   Send,
   Trash2,
   UserMinus,
   Zap,
 } from 'lucide-react'
-import { FilterDropdown } from '@/components/FilterDropdown'
-import { DatePickerInput } from '@/components/DatePickerInput'
 import { useTrainerPlans } from '@/hooks/useTrainerPlans'
 import { useTrainerStudents } from '@/hooks/useTrainerStudents'
 import { getApiError } from '@/lib/api-error'
@@ -26,17 +22,26 @@ import workoutService, {
   type WorkoutPlan,
 } from '@/services/workout.service'
 import {
-  StudentCombobox,
-  SubmitButton,
-  TrainerEmptyState,
-  TrainerErrorState,
-  TrainerModal,
-  TrainerPage,
-  TrainerPageHeader,
-  TrainerSelect,
-  TrainerSkeleton,
-  TrainerStatusBadge,
-} from '@/components/TrainerUI'
+  Page,
+  PageHeader,
+  PageSkeleton,
+  PageEmptyState,
+  PageErrorState,
+  Card,
+  SearchInput,
+  Select,
+  FilterDropdown,
+  Button,
+  ButtonLink,
+  Modal,
+  ConfirmDialog,
+  FormField,
+  Input,
+  Textarea,
+  DatePickerInput,
+  StatusBadge,
+} from '@/components/ui'
+import { StudentCombobox } from '@/components/TrainerUI'
 import { toast } from '@/lib/toast'
 
 type PlanAction = { type: 'archive' | 'delete'; plan: WorkoutPlan } | null
@@ -119,9 +124,10 @@ export default function WorkoutPlansPage() {
       } else {
         await workoutService.deletePlan(action.plan.planId)
       }
-      toast.success(action.type === 'archive' 
-        ? t('plans.workout.success.archived', { defaultValue: 'Đã lưu trữ giáo án' })
-        : t('plans.workout.success.deleted', { defaultValue: 'Đã xóa giáo án' })
+      toast.success(
+        action.type === 'archive'
+          ? t('plans.workout.success.archived', { defaultValue: 'Đã lưu trữ giáo án' })
+          : t('plans.workout.success.deleted', { defaultValue: 'Đã xóa giáo án' })
       )
       setAction(null)
       await reload()
@@ -152,9 +158,7 @@ export default function WorkoutPlansPage() {
       toast.success(t('plans.workout.success.assigned', { defaultValue: 'Giao giáo án thành công' }))
       navigate(`/trainer/students/${memberId}?tab=workout`)
     } catch (err) {
-      toast.error(
-        getApiError(err, t('plans.workout.error.assignFailed'))
-      )
+      toast.error(getApiError(err, t('plans.workout.error.assignFailed')))
     } finally {
       setSubmitting(false)
     }
@@ -205,33 +209,24 @@ export default function WorkoutPlansPage() {
   const activeCount = status ? 1 : 0
 
   return (
-    <TrainerPage>
-      <TrainerPageHeader
+    <Page>
+      <PageHeader
         eyebrow={t('plans.workout.eyebrow')}
         title={t('plans.workout.title')}
         description={t('plans.workout.description')}
         actions={
-          <Button
-            variant="primary"
-            onClick={() => setCreateOpen(true)}
-          >
+          <Button variant="primary" onClick={() => setCreateOpen(true)}>
             <Plus size={16} /> {t('plans.workout.createPlan')}
           </Button>
         }
       />
-      <div className="rogym-card rogym-card--compact flex items-center gap-3 p-4">
-        <div className="relative min-w-0 flex-1">
-          <Search
-            className="absolute left-3 top-1/2 -translate-y-1/2 rogym-text-dim"
-            size={17}
-          />
-          <input
-            className="rogym-input pl-10"
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            placeholder={t('plans.workout.searchPlaceholder')}
-          />
-        </div>
+      <Card variant="compact" className="flex items-center gap-3 p-4">
+        <SearchInput
+          value={search}
+          onChange={setSearch}
+          placeholder={t('plans.workout.searchPlaceholder')}
+          className="min-w-0 flex-1"
+        />
         <FilterDropdown
           open={filterOpen}
           onOpenChange={(open) => {
@@ -247,32 +242,36 @@ export default function WorkoutPlansPage() {
             setStatus(draftStatus)
             setFilterOpen(false)
           }}
+          onClear={() => {
+            setDraftStatus('')
+            setStatus('')
+            setFilterOpen(false)
+          }}
           title={t('plans.workout.filterTitle', 'Bộ lọc')}
         >
           <div>
-            <p className="rogym-field-label mb-2">{t('plans.workout.fieldStatus', 'Trạng thái')}</p>
-            <TrainerSelect value={draftStatus} onValueChange={setDraftStatus}>
+            <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-white/80">
+              {t('plans.workout.fieldStatus', 'Trạng thái')}
+            </p>
+            <Select value={draftStatus} onValueChange={setDraftStatus}>
               <option value="">{t('plans.workout.allStatuses')}</option>
               <option value="active">{t('plans.workout.statusActive')}</option>
               <option value="archived">{t('plans.workout.statusArchived')}</option>
-            </TrainerSelect>
+            </Select>
           </div>
         </FilterDropdown>
-      </div>
-      {error && (
-        <TrainerErrorState message={error} onRetry={reload} />
-      )}
+      </Card>
+
+      {error && <PageErrorState message={error} onRetry={reload} />}
+
       {loading ? (
-        <TrainerSkeleton rows={5} />
+        <PageSkeleton rows={5} />
       ) : plans.length === 0 ? (
-        <TrainerEmptyState
+        <PageEmptyState
           title={t('plans.workout.noPlan')}
           description={t('plans.workout.noPlanDesc')}
           action={
-            <Button
-              variant="primary"
-              onClick={() => setCreateOpen(true)}
-            >
+            <Button variant="primary" onClick={() => setCreateOpen(true)}>
               {t('plans.workout.createPlan')}
             </Button>
           }
@@ -286,7 +285,7 @@ export default function WorkoutPlansPage() {
             const assignments = planAssignments[plan.planId] ?? []
             const isLoadingExpand = loadingExpand === plan.planId
             return (
-              <article key={plan.planId} className="rogym-card rogym-card--compact p-4 sm:p-6">
+              <Card key={plan.planId} variant="compact" className="p-4 sm:p-6">
                 <div className="flex flex-col items-start gap-3 sm:flex-row sm:justify-between sm:gap-4">
                   <div className="min-w-0">
                     <h2 className="break-words text-lg font-bold text-white">{plan.name}</h2>
@@ -295,11 +294,10 @@ export default function WorkoutPlansPage() {
                     </p>
                   </div>
                   <div className="shrink-0">
-                    <TrainerStatusBadge status={plan.status} />
+                    <StatusBadge status={plan.status} />
                   </div>
                 </div>
 
-                {/* 2 cột trên mobile, 4 cột từ md trở lên */}
                 <div className="mt-5 grid grid-cols-2 gap-2 rounded-xl border border-white/5 bg-white/[0.02] p-3 text-center sm:gap-3 sm:p-4 md:grid-cols-4">
                   <Metric value={plan.days?.length ?? 0} label={t('plans.workout.metrics.days')} />
                   <Metric value={exerciseCount} label={t('plans.workout.metrics.exercises')} />
@@ -324,10 +322,14 @@ export default function WorkoutPlansPage() {
                     )}
                     <Button
                       variant="outline-white"
-                      className="rogym-btn--icon"
+                      size="compact"
                       onClick={() => void toggleExpand(plan.planId)}
                       disabled={isLoadingExpand}
-                      aria-label={isExpanded ? t('plans.workout.actions.collapseStudents') : t('plans.workout.actions.expandStudents')}
+                      aria-label={
+                        isExpanded
+                          ? t('plans.workout.actions.collapseStudents')
+                          : t('plans.workout.actions.expandStudents')
+                      }
                       data-no-sweep
                     >
                       {isLoadingExpand ? (
@@ -352,7 +354,9 @@ export default function WorkoutPlansPage() {
                       ) : (
                         <Pencil size={15} />
                       )}
-                      {plan.status === 'archived' ? t('plans.workout.actions.view') : t('plans.workout.actions.builder')}
+                      {plan.status === 'archived'
+                        ? t('plans.workout.actions.view')
+                        : t('plans.workout.actions.builder')}
                     </ButtonLink>
                     {plan.status === 'draft' && (
                       <Button
@@ -400,52 +404,45 @@ export default function WorkoutPlansPage() {
                           >
                             <div className="min-w-0 w-full flex-1">
                               <div className="flex min-w-0 items-center gap-2">
-                                <span className="min-w-0 truncate font-semibold rogym-text-primary">
+                                <span className="min-w-0 truncate font-semibold text-white">
                                   {a.memberName}
                                 </span>
                                 <span className="shrink-0">
-                                  <TrainerStatusBadge status={a.status} />
+                                  <StatusBadge status={a.status} />
                                 </span>
                               </div>
                               <div className="mt-0.5 text-xs rogym-text-muted">
-                                {t('plans.workout.assignments.startedOn', { date: formatDate(a.startDate) })}
+                                {t('plans.workout.assignments.startedOn', {
+                                  date: formatDate(a.startDate),
+                                })}
                                 {a.notes ? ` · ${a.notes}` : ''}
                               </div>
                             </div>
                             <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:shrink-0 sm:items-center">
                               <ButtonLink
                                 variant="outline-white"
+                                size="compact"
                                 to={`/trainer/students/${a.memberId}`}
-                                className={`w-full justify-center whitespace-nowrap px-3 text-xs sm:hidden${a.status !== 'active' ? ' col-span-2' : ''}`}
+                                className={`w-full justify-center sm:hidden${a.status !== 'active' ? ' col-span-2' : ''}`}
                               >
                                 {t('plans.workout.assignments.viewStudent')}
                               </ButtonLink>
                               <ButtonLink
-                                variant="text"
+                                variant="text-accent"
+                                size="compact"
                                 to={`/trainer/students/${a.memberId}`}
-                                className="hidden text-xs sm:inline-flex"
+                                className="hidden sm:inline-flex"
                               >
                                 {t('plans.workout.assignments.viewStudent')}
                               </ButtonLink>
                               {a.status === 'active' && (
-                                <>
-                                  <button
-                                    type="button"
-                                    className="rogym-btn rogym-btn--danger w-full justify-center whitespace-nowrap px-3 text-xs sm:hidden"
-                                    onClick={() => setUnassignTarget(a)}
-                                    data-no-sweep
-                                  >
-                                    <UserMinus size={12} /> {t('plans.workout.assignments.unassign')}
-                                  </button>
-                                  <button
-                                    type="button"
-                                    className="rogym-inline-action rogym-inline-action--danger hidden rounded-full sm:inline-flex"
-                                    onClick={() => setUnassignTarget(a)}
-                                    data-no-sweep
-                                  >
-                                    <UserMinus size={12} /> {t('plans.workout.assignments.unassign')}
-                                  </button>
-                                </>
+                                <Button
+                                  variant="danger"
+                                  size="compact"
+                                  onClick={() => setUnassignTarget(a)}
+                                >
+                                  <UserMinus size={12} /> {t('plans.workout.assignments.unassign')}
+                                </Button>
                               )}
                             </div>
                           </div>
@@ -454,154 +451,138 @@ export default function WorkoutPlansPage() {
                     )}
                   </div>
                 )}
-              </article>
+              </Card>
             )
           })}
         </div>
       )}
 
       {/* Create plan modal */}
-      <TrainerModal
+      <Modal
         open={createOpen}
         title={t('plans.workout.createModal.title')}
         onClose={() => setCreateOpen(false)}
         footer={
           <>
-            <Button
-              variant="outline-white"
-              onClick={() => setCreateOpen(false)}
-            >
+            <Button variant="outline-white" onClick={() => setCreateOpen(false)}>
               {t('plans.workout.createModal.cancel')}
             </Button>
-            <SubmitButton form="create-plan-form" loading={submitting} disabled={!name.trim()}>
+            <Button
+              variant="primary"
+              type="submit"
+              form="create-plan-form"
+              loading={submitting}
+              disabled={!name.trim()}
+            >
               {t('plans.workout.createModal.submit')}
-            </SubmitButton>
+            </Button>
           </>
         }
       >
         <form id="create-plan-form" className="space-y-4" onSubmit={createPlan}>
-          <label className="block space-y-2">
-            <span className="rogym-field-label">{t('plans.workout.createModal.fieldName')}</span>
-            <input
-              className="rogym-input"
+          <FormField label={t('plans.workout.createModal.fieldName')} required>
+            <Input
               value={name}
               onChange={(event) => setName(event.target.value)}
               maxLength={100}
               autoFocus
               required
             />
-          </label>
-          <label className="block space-y-2">
-            <span className="rogym-field-label">{t('plans.workout.createModal.fieldDescription')}</span>
-            <textarea
-              className="rogym-input min-h-28"
+          </FormField>
+          <FormField label={t('plans.workout.createModal.fieldDescription')}>
+            <Textarea
+              rows={4}
               value={description}
               onChange={(event) => setDescription(event.target.value)}
             />
-          </label>
+          </FormField>
         </form>
-      </TrainerModal>
+      </Modal>
 
       {/* Assign student modal */}
-      <TrainerModal
+      <Modal
         open={Boolean(assignPlan)}
         title={t('plans.workout.assignModal.title', { name: assignPlan?.name ?? '' })}
         onClose={() => setAssignPlan(null)}
         footer={
           <>
-            <Button
-              variant="outline-white"
-              onClick={() => setAssignPlan(null)}
-            >
+            <Button variant="outline-white" onClick={() => setAssignPlan(null)}>
               {t('plans.workout.assignModal.cancel')}
             </Button>
-            <SubmitButton form="assign-plan-list-form" loading={submitting} disabled={!memberId}>
+            <Button
+              variant="primary"
+              type="submit"
+              form="assign-plan-list-form"
+              loading={submitting}
+              disabled={!memberId}
+            >
               {t('plans.workout.assignModal.submit')}
-            </SubmitButton>
+            </Button>
           </>
         }
       >
         <form id="assign-plan-list-form" className="space-y-4" onSubmit={assign}>
-          <label className="block space-y-2">
-            <span className="rogym-field-label">{t('plans.workout.assignModal.fieldStudent')}</span>
+          <FormField label={t('plans.workout.assignModal.fieldStudent')} required>
             <StudentCombobox students={students} value={memberId} onChange={setMemberId} />
-          </label>
-          <label className="block space-y-2">
-            <span className="rogym-field-label">{t('plans.workout.assignModal.fieldStartDate')}</span>
+          </FormField>
+          <FormField label={t('plans.workout.assignModal.fieldStartDate')} required>
             <DatePickerInput value={startDate} onChange={(value) => setStartDate(value)} />
-          </label>
-          <label className="block space-y-2">
-            <span className="rogym-field-label">{t('plans.workout.assignModal.fieldNotes')}</span>
-            <textarea
-              className="rogym-input min-h-24"
+          </FormField>
+          <FormField label={t('plans.workout.assignModal.fieldNotes')}>
+            <Textarea
+              rows={3}
               value={assignNotes}
               onChange={(event) => setAssignNotes(event.target.value)}
             />
-          </label>
+          </FormField>
           <p className="text-xs leading-5 text-amber-200">
             {t('plans.workout.assignModal.warning')}
           </p>
         </form>
-      </TrainerModal>
+      </Modal>
 
-      {/* Archive / delete confirm modal */}
-      <TrainerModal
-        open={Boolean(action)}
-        title={action?.type === 'delete' ? t('plans.workout.deleteModal.title') : t('plans.workout.archiveModal.title')}
-        onClose={() => setAction(null)}
-        footer={
-          <>
-            <Button
-              variant="outline-white"
-              onClick={() => setAction(null)}
-            >
-              {t('plans.workout.confirmModal.cancel')}
-            </Button>
-            <Button
-              variant={action?.type === 'delete' ? 'danger' : 'primary'}
-              onClick={confirmAction}
-              disabled={submitting}
-            >
-              {submitting ? t('plans.workout.confirmModal.submitting') : t('plans.workout.confirmModal.submit')}
-            </Button>
-          </>
-        }
-      >
-        <p className="text-sm leading-6 rogym-text-secondary">
-          {action?.type === 'delete'
-            ? t('plans.workout.deleteModal.confirm')
-            : t('plans.workout.archiveModal.confirm')}
-        </p>
-      </TrainerModal>
+      {/* Archive / delete confirm dialog */}
+      {action && (
+        <ConfirmDialog
+          open={Boolean(action)}
+          title={
+            action.type === 'delete'
+              ? t('plans.workout.deleteModal.title')
+              : t('plans.workout.archiveModal.title')
+          }
+          variant={action.type === 'delete' ? 'danger' : 'primary'}
+          loading={submitting}
+          onClose={() => setAction(null)}
+          onConfirm={confirmAction}
+          description={
+            action.type === 'delete'
+              ? t('plans.workout.deleteModal.confirm')
+              : t('plans.workout.archiveModal.confirm')
+          }
+          confirmLabel={
+            action.type === 'delete'
+              ? t('plans.workout.actions.delete')
+              : t('plans.workout.actions.archive')
+          }
+        />
+      )}
 
-      {/* Unassign confirm modal */}
-      <TrainerModal
-        open={Boolean(unassignTarget)}
-        title={t('plans.workout.unassignModal.title')}
-        onClose={() => setUnassignTarget(null)}
-        footer={
-          <>
-            <Button
-              variant="outline-white"
-              onClick={() => setUnassignTarget(null)}
-            >
-              {t('plans.workout.unassignModal.cancel')}
-            </Button>
-            <Button
-              variant="danger"
-              onClick={confirmUnassign}
-              disabled={confirmingUnassign}
-            >
-              {confirmingUnassign ? t('plans.workout.unassignModal.submitting') : t('plans.workout.assignments.unassign')}
-            </Button>
-          </>
-        }
-      >
-        <p className="text-sm leading-6 rogym-text-secondary">
-          {t('plans.workout.unassignModal.confirm', { name: unassignTarget?.memberName ?? '' })}
-        </p>
-      </TrainerModal>
-    </TrainerPage>
+      {/* Unassign confirm dialog */}
+      {unassignTarget && (
+        <ConfirmDialog
+          open={Boolean(unassignTarget)}
+          title={t('plans.workout.unassignModal.title')}
+          variant="danger"
+          loading={confirmingUnassign}
+          onClose={() => setUnassignTarget(null)}
+          onConfirm={confirmUnassign}
+          description={t('plans.workout.unassignModal.confirm', {
+            name: unassignTarget.memberName ?? '',
+          })}
+          confirmLabel={t('plans.workout.assignments.unassign')}
+        />
+      )}
+    </Page>
   )
 }
 

@@ -1,6 +1,12 @@
 import { type ReactNode } from 'react'
-import { statusLabel, statusTone, type StatusTone } from '@/lib/status'
-import { Modal, StatCard, StatusBadge, Button } from '@/components/ui'
+import {
+  Button,
+  Modal,
+  StatCard,
+  StatusBadge,
+  Select,
+  type StatusTone,
+} from '@/components/ui'
 
 export {
   Page as StaffPage,
@@ -8,15 +14,23 @@ export {
   PageErrorState as StaffErrorState,
   PageHeader as StaffPageHeader,
   PageSkeleton as StaffSkeleton,
-} from '@/components/shared/PageUI'
+} from '@/components/ui'
 
 export const StaffStatCard = StatCard
-
-export function StaffStatusBadge({ status, tone }: { status: string; tone?: StatusTone }) {
-  return <StatusBadge status={statusLabel(status)} tone={tone ?? statusTone(status)} />
-}
-
 export const StaffModal = Modal
+export const StaffSelect = Select
+
+export function StaffStatusBadge({
+  status,
+  tone,
+  label,
+}: {
+  status: string
+  tone?: StatusTone
+  label?: string
+}) {
+  return <StatusBadge status={status} tone={tone} label={label} />
+}
 
 export function SubmitButton({
   loading,
@@ -35,5 +49,3 @@ export function SubmitButton({
     </Button>
   )
 }
-
-export { Select as StaffSelect } from '@/components/Select'

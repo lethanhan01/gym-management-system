@@ -5,14 +5,20 @@ import { useTranslation } from 'react-i18next'
 import { getApiError } from '@/lib/api-error'
 import { memberService } from '@/services/member.service'
 import packageService, { type Package } from '@/services/package.service'
-import { DatePickerInput } from '@/components/DatePickerInput'
 import {
-  StaffPage,
-  StaffPageHeader,
-  StaffSkeleton,
-  StaffErrorState,
-} from '@/components/StaffUI'
+  Page,
+  PageHeader,
+  PageSkeleton,
+  PageErrorState,
+  Card,
+  FormField,
+  Input,
+  DatePickerInput,
+  Button,
+  Badge,
+} from '@/components/ui'
 import { toast } from '@/lib/toast'
+import { cn } from '@/lib/utils'
 
 type PaymentMethod = 'cash' | 'bank_card' | 'ewallet'
 
@@ -41,40 +47,40 @@ function StepIndicator({ current }: { current: number }) {
   ]
 
   return (
-    <div className="flex items-center gap-0 mb-8">
+    <div className="mb-8 flex items-center gap-0">
       {STEPS.map((s, i) => {
         const done = current > s.n
         const active = current === s.n
         return (
-          <div key={s.n} className="flex items-center flex-1 last:flex-none">
+          <div key={s.n} className="flex flex-1 items-center last:flex-none">
             <div className="flex flex-col items-center gap-1.5">
               <div
-                className={[
+                className={cn(
                   'flex h-9 w-9 items-center justify-center rounded-full text-sm font-bold transition-colors',
                   done
                     ? 'bg-[var(--rogym-green)] text-white'
                     : active
-                      ? 'border-2 border-[var(--rogym-green)] text-[var(--rogym-green)] bg-transparent'
-                      : 'border border-white/20 rogym-text-dim bg-transparent',
-                ].join(' ')}
+                      ? 'border-2 border-[var(--rogym-teal)] bg-transparent text-[var(--rogym-teal)]'
+                      : 'border border-white/20 bg-transparent rogym-text-dim'
+                )}
               >
                 {done ? <Check size={16} strokeWidth={2.5} /> : s.n}
               </div>
               <span
-                className={[
-                  'text-xs font-medium whitespace-nowrap',
-                  active ? 'text-[var(--rogym-teal)]' : done ? 'rogym-text-secondary' : 'rogym-text-dim',
-                ].join(' ')}
+                className={cn(
+                  'whitespace-nowrap text-xs font-medium',
+                  active ? 'text-[var(--rogym-teal)]' : done ? 'rogym-text-secondary' : 'rogym-text-dim'
+                )}
               >
                 {s.label}
               </span>
             </div>
             {i < STEPS.length - 1 && (
               <div
-                className={[
-                  'flex-1 h-px mx-3 mb-5',
-                  done ? 'bg-[var(--rogym-green)]' : 'bg-white/10',
-                ].join(' ')}
+                className={cn(
+                  'mx-3 mb-5 h-px flex-1',
+                  done ? 'bg-[var(--rogym-green)]' : 'bg-white/10'
+                )}
               />
             )}
           </div>
@@ -118,7 +124,11 @@ function Step1({
     const birth = new Date(`${data.dateOfBirth}T00:00:00`)
     const today = new Date()
     let age = today.getFullYear() - birth.getFullYear()
-    if (today.getMonth() < birth.getMonth() || (today.getMonth() === birth.getMonth() && today.getDate() < birth.getDate())) age--
+    if (
+      today.getMonth() < birth.getMonth() ||
+      (today.getMonth() === birth.getMonth() && today.getDate() < birth.getDate())
+    )
+      age--
     if (!data.dateOfBirth || Number.isNaN(birth.getTime()) || age < 14 || age > 120) {
       setError('Ngày sinh phải tương ứng tuổi từ 14 đến 120')
       return
@@ -129,47 +139,40 @@ function Step1({
 
   return (
     <form onSubmit={handleNext} className="space-y-4">
-      {error && <StaffErrorState message={error} />}
+      {error && <PageErrorState message={error} />}
 
-      <div className="rogym-card rogym-card--compact p-6 space-y-4">
+      <Card variant="compact" className="space-y-4 p-6">
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <label className="block space-y-2">
-            <span className="rogym-field-label">{t('members.register.fullName')}</span>
-            <input
-              className="rogym-input"
+          <FormField label={t('members.register.fullName')} required>
+            <Input
               value={data.fullName}
               onChange={(e) => set('fullName', e.target.value)}
               placeholder="Nguyễn Văn A"
               required
             />
-          </label>
+          </FormField>
 
-          <label className="block space-y-2">
-            <span className="rogym-field-label">{t('members.register.email')}</span>
-            <input
+          <FormField label={t('members.register.email')} required>
+            <Input
               type="email"
-              className="rogym-input"
               value={data.email}
               onChange={(e) => set('email', e.target.value)}
               placeholder="email@example.com"
               required
             />
-          </label>
+          </FormField>
 
-          <label className="block space-y-2">
-            <span className="rogym-field-label">{t('members.register.phone')}</span>
-            <input
+          <FormField label={t('members.register.phone')} required>
+            <Input
               type="tel"
-              className="rogym-input"
               value={data.phone}
               onChange={(e) => set('phone', e.target.value)}
               placeholder="0901 234 567"
               required
             />
-          </label>
+          </FormField>
 
-          <label className="block space-y-2">
-            <span className="rogym-field-label">{t('members.register.dateOfBirth')}</span>
+          <FormField label={t('members.register.dateOfBirth')} required>
             <DatePickerInput
               value={data.dateOfBirth}
               onChange={(v) => set('dateOfBirth', v)}
@@ -177,49 +180,45 @@ function Step1({
               required
               aria-label={t('members.register.dateOfBirth')}
             />
-          </label>
+          </FormField>
 
-          <label className="col-span-full block space-y-2">
-            <span className="rogym-field-label">{t('members.register.address')}</span>
-            <input
-              className="rogym-input"
+          <FormField label={t('members.register.address')} className="col-span-full">
+            <Input
               value={data.address}
               onChange={(e) => set('address', e.target.value)}
               placeholder={t('members.register.addressPlaceholder')}
             />
-          </label>
+          </FormField>
 
-          <label className="block space-y-2">
-            <span className="rogym-field-label">{t('members.register.password')}</span>
-            <input
+          <FormField label={t('members.register.password')} required>
+            <Input
               type="password"
-              className="rogym-input"
+              showPasswordToggle
               value={data.password}
               onChange={(e) => set('password', e.target.value)}
               placeholder={t('members.register.passwordPlaceholder')}
               minLength={8}
               required
             />
-          </label>
+          </FormField>
 
-          <label className="block space-y-2">
-            <span className="rogym-field-label">{t('members.register.confirmPassword')}</span>
-            <input
+          <FormField label={t('members.register.confirmPassword')} required>
+            <Input
               type="password"
-              className="rogym-input"
+              showPasswordToggle
               value={data.confirmPassword}
               onChange={(e) => set('confirmPassword', e.target.value)}
               placeholder={t('members.register.confirmPasswordPlaceholder')}
               required
             />
-          </label>
+          </FormField>
         </div>
-      </div>
+      </Card>
 
       <div className="flex justify-end">
-        <button type="submit" className="rogym-btn rogym-btn--primary flex items-center gap-2">
+        <Button type="submit" variant="primary" className="flex items-center gap-2">
           {t('members.register.next')} <ChevronRight size={16} />
-        </button>
+        </Button>
       </div>
     </form>
   )
@@ -256,30 +255,28 @@ function Step2({
   return (
     <div className="space-y-4">
       {loading ? (
-        <StaffSkeleton rows={3} />
+        <PageSkeleton rows={3} />
       ) : error ? (
-        <StaffErrorState message={error} />
+        <PageErrorState message={error} />
       ) : (
         <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
           {packages.map((pkg) => {
             const isSelected = selected?.packageId === pkg.packageId
             return (
-              <button
+              <Card
                 key={pkg.packageId}
-                type="button"
+                variant="interactive"
                 onClick={() => onSelect(pkg)}
-                className={[
-                  'rogym-card rogym-card--interactive w-full p-5 text-left transition-all',
-                  isSelected
-                    ? 'border-[var(--rogym-green)] bg-[rgba(6,195,132,0.08)] ring-1 ring-[var(--rogym-green)]'
-                    : '',
-                ].join(' ')}
+                className={cn(
+                  isSelected &&
+                    'border-[var(--rogym-green)] bg-[rgba(6,195,132,0.08)] ring-1 ring-[var(--rogym-green)]'
+                )}
               >
-                <div className="flex items-start justify-between gap-3 mb-3">
+                <div className="mb-3 flex items-start justify-between gap-3">
                   <h3 className="font-bold text-white">{pkg.name}</h3>
                   {isSelected && (
-                    <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[var(--rogym-green)]">
-                      <Check size={12} className="text-white" strokeWidth={3} />
+                    <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[var(--rogym-green)] text-white">
+                      <Check size={12} strokeWidth={3} />
                     </span>
                   )}
                 </div>
@@ -287,46 +284,46 @@ function Step2({
                 <div className="space-y-1 text-sm">
                   <div className="flex items-center justify-between">
                     <span className="rogym-text-dim">{t('members.register.duration')}</span>
-                    <span className="rogym-text-secondary font-medium">
+                    <span className="font-medium rogym-text-secondary">
                       {t('members.register.durationDays', { days: pkg.durationDays })}
                     </span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="rogym-text-dim">{t('members.register.price')}</span>
-                    <span className="text-[var(--rogym-teal)] font-bold">{formatPrice(pkg.price)}</span>
+                    <span className="font-bold text-[var(--rogym-teal)]">{formatPrice(pkg.price)}</span>
                   </div>
                   {pkg.includesPt && (
                     <div className="mt-2">
-                      <span className="rogym-tone-badge" data-tone="info">
+                      <Badge tone="accent" badgeSize="sm">
                         {t('members.register.includesPt')}
-                      </span>
+                      </Badge>
                     </div>
                   )}
                 </div>
 
                 {pkg.benefits && (
-                  <p className="mt-3 text-xs rogym-text-dim border-t border-white/5 pt-3">
+                  <p className="mt-3 border-t border-white/5 pt-3 text-xs rogym-text-dim">
                     {pkg.benefits}
                   </p>
                 )}
-              </button>
+              </Card>
             )
           })}
         </div>
       )}
 
       <div className="flex justify-between">
-        <button type="button" className="rogym-btn rogym-btn--outline-white" onClick={onBack}>
+        <Button variant="outline-white" onClick={onBack}>
           {t('members.register.back')}
-        </button>
-        <button
-          type="button"
-          className="rogym-btn rogym-btn--primary flex items-center gap-2"
+        </Button>
+        <Button
+          variant="primary"
+          className="flex items-center gap-2"
           onClick={onNext}
           disabled={!selected}
         >
           {t('members.register.next')} <ChevronRight size={16} />
-        </button>
+        </Button>
       </div>
     </div>
   )
@@ -366,16 +363,16 @@ function Step3({
   return (
     <div className="space-y-4">
       {/* Summary */}
-      <div className="rogym-card rogym-card--compact p-5 space-y-3">
-        <h3 className="text-sm font-bold text-white mb-4">{t('members.register.summarySectionTitle')}</h3>
+      <Card variant="compact" className="space-y-3 p-5">
+        <h3 className="mb-4 text-sm font-bold text-white">{t('members.register.summarySectionTitle')}</h3>
         <div className="grid grid-cols-2 gap-2 text-sm">
           <div className="rounded-xl border border-white/5 bg-white/[0.03] p-3">
-            <div className="text-xs rogym-text-dim mb-1">{t('members.register.summaryMember')}</div>
+            <div className="mb-1 text-xs rogym-text-dim">{t('members.register.summaryMember')}</div>
             <div className="font-medium text-white">{member.fullName}</div>
             <div className="text-xs rogym-text-dim">{member.email}</div>
           </div>
           <div className="rounded-xl border border-white/5 bg-white/[0.03] p-3">
-            <div className="text-xs rogym-text-dim mb-1">{t('members.register.summaryPackage')}</div>
+            <div className="mb-1 text-xs rogym-text-dim">{t('members.register.summaryPackage')}</div>
             <div className="font-medium text-white">{pkg.name}</div>
             <div className="text-xs rogym-text-dim">
               {t('members.register.durationDays', { days: pkg.durationDays })}
@@ -383,58 +380,52 @@ function Step3({
           </div>
         </div>
         <div className="flex items-center justify-between rounded-xl border border-[rgba(6,195,132,0.25)] bg-[rgba(6,195,132,0.06)] px-4 py-3">
-          <span className="rogym-text-secondary font-medium">{t('members.register.totalPayment')}</span>
+          <span className="font-medium rogym-text-secondary">{t('members.register.totalPayment')}</span>
           <span className="text-lg font-bold text-[var(--rogym-teal)]">{formatPrice(pkg.price)}</span>
         </div>
-      </div>
+      </Card>
 
       {/* Payment method */}
-      <div className="rogym-card rogym-card--compact p-5 space-y-4">
+      <Card variant="compact" className="space-y-4 p-5">
         <h3 className="text-sm font-bold text-white">{t('members.register.paymentMethod')}</h3>
 
-        <div className="flex gap-3 flex-wrap">
+        <div className="flex flex-wrap gap-3">
           {PAYMENT_METHODS.map((m) => (
-            <button
+            <Button
               key={m.value}
               type="button"
+              variant={data.paymentMethod === m.value ? 'primary' : 'outline-white'}
+              size="compact"
               onClick={() => onChange({ ...data, paymentMethod: m.value })}
-              className={[
-                'rogym-card rogym-card--interactive px-4 py-2.5 text-sm font-medium transition-all',
-                data.paymentMethod === m.value
-                  ? 'border-[var(--rogym-green)] bg-[rgba(6,195,132,0.08)] text-[var(--rogym-teal)]'
-                  : 'rogym-text-secondary',
-              ].join(' ')}
             >
               {m.label}
-            </button>
+            </Button>
           ))}
         </div>
 
         {needsRef && (
-          <label className="block space-y-2">
-            <span className="rogym-field-label">{t('members.register.transactionRef')}</span>
-            <input
-              className="rogym-input"
+          <FormField label={t('members.register.transactionRef')}>
+            <Input
               value={data.transactionReference}
               onChange={(e) => onChange({ ...data, transactionReference: e.target.value })}
               placeholder={t('members.register.transactionRefPlaceholder')}
             />
-          </label>
+          </FormField>
         )}
-      </div>
+      </Card>
 
       <div className="flex justify-between">
-        <button type="button" className="rogym-btn rogym-btn--outline-white" onClick={onBack} disabled={submitting}>
+        <Button variant="outline-white" onClick={onBack} disabled={submitting}>
           {t('members.register.back')}
-        </button>
-        <button
-          type="button"
-          className="rogym-btn rogym-btn--primary flex items-center gap-2"
+        </Button>
+        <Button
+          variant="primary"
+          className="flex items-center gap-2"
           onClick={onSubmit}
-          disabled={submitting}
+          loading={submitting}
         >
           {submitting ? t('members.register.processing') : t('members.register.complete')}
-        </button>
+        </Button>
       </div>
     </div>
   )
@@ -490,8 +481,8 @@ export default function MemberRegisterPage() {
   }
 
   return (
-    <StaffPage>
-      <StaffPageHeader
+    <Page>
+      <PageHeader
         eyebrow={t('members.register.eyebrow')}
         title={t('members.register.title')}
         description={t('members.register.description')}
@@ -527,6 +518,6 @@ export default function MemberRegisterPage() {
           submitting={submitting}
         />
       )}
-    </StaffPage>
+    </Page>
   )
 }

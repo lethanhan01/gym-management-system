@@ -1,18 +1,22 @@
 import { FormEvent, useCallback, useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
 import { Building2, Plus, Wrench } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { getApiError } from '@/lib/api-error'
 import { facilityService, type GymRoom } from '@/services/facility.service'
 import {
-  StaffEmptyState,
-  StaffErrorState,
-  StaffModal,
-  StaffPage,
-  StaffPageHeader,
-  StaffSkeleton,
-  SubmitButton,
-} from '@/components/StaffUI'
+  Page,
+  PageHeader,
+  PageSkeleton,
+  PageEmptyState,
+  PageErrorState,
+  Card,
+  Button,
+  ButtonLink,
+  Modal,
+  FormField,
+  Input,
+  Textarea,
+} from '@/components/ui'
 import { toast } from '@/lib/toast'
 
 export default function FacilityPage() {
@@ -101,36 +105,36 @@ export default function FacilityPage() {
   }
 
   return (
-    <StaffPage>
-      <StaffPageHeader
+    <Page>
+      <PageHeader
         eyebrow={t('facility.eyebrow')}
         title={t('facility.title')}
         description={t('facility.descriptionWithTotal', { total })}
         actions={
-          <button type="button" className="rogym-btn rogym-btn--primary" onClick={openCreate}>
+          <Button variant="primary" onClick={openCreate}>
             <Plus size={16} /> {t('facility.addRoom')}
-          </button>
+          </Button>
         }
       />
 
       {loading ? (
-        <StaffSkeleton rows={4} />
+        <PageSkeleton rows={4} />
       ) : error ? (
-        <StaffErrorState message={error} onRetry={load} />
+        <PageErrorState message={error} onRetry={load} />
       ) : rooms.length === 0 ? (
-        <StaffEmptyState
+        <PageEmptyState
           title={t('facility.noRooms')}
           description={t('facility.noRoomsDesc')}
           action={
-            <button type="button" className="rogym-btn rogym-btn--primary" onClick={openCreate}>
+            <Button variant="primary" onClick={openCreate}>
               <Plus size={15} /> {t('facility.addRoom')}
-            </button>
+            </Button>
           }
         />
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {rooms.map((room) => (
-            <div key={room.roomId} className="rogym-card rogym-card--compact p-5">
+            <Card key={room.roomId} variant="compact">
               <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl bg-[rgba(66,224,158,0.12)] rogym-text-accent">
                 <Building2 size={20} />
               </div>
@@ -148,87 +152,87 @@ export default function FacilityPage() {
                 )}
               </div>
               <div className="mt-5 flex gap-3">
-                <button
-                  type="button"
-                  className="rogym-btn rogym-btn--outline-white flex-1 text-sm"
+                <Button
+                  variant="outline-white"
+                  size="compact"
+                  className="flex-1"
                   onClick={() => openEdit(room)}
                 >
                   {t('facility.edit')}
-                </button>
-                <Link
-                  className="rogym-btn rogym-btn--outline-green flex-1 text-sm"
+                </Button>
+                <ButtonLink
+                  variant="outline-green"
+                  size="compact"
+                  className="flex-1"
                   to={`/staff/equipment?roomId=${room.roomId}`}
                 >
                   <Wrench size={14} /> {t('facility.equipment')}
-                </Link>
+                </ButtonLink>
               </div>
-            </div>
+            </Card>
           ))}
         </div>
       )}
 
-      <StaffModal
+      <Modal
         open={modalOpen}
         title={editing ? t('facility.editModal') : t('facility.createModal')}
         onClose={closeModal}
         footer={
           <>
-            <button
-              type="button"
-              className="rogym-btn rogym-btn--outline-white"
-              onClick={closeModal}
-            >
+            <Button variant="outline-white" onClick={closeModal}>
               {t('facility.cancel')}
-            </button>
-            <SubmitButton form="room-form" loading={saving} disabled={!formName.trim()}>
+            </Button>
+            <Button
+              variant="primary"
+              type="submit"
+              form="room-form"
+              loading={saving}
+              disabled={!formName.trim()}
+            >
               {editing ? t('facility.saveChanges') : t('facility.createRoom')}
-            </SubmitButton>
+            </Button>
           </>
         }
       >
         <form id="room-form" className="space-y-4" onSubmit={handleSubmit}>
-          <label className="block space-y-2">
-            <span className="rogym-field-label">{t('facility.roomName')}</span>
-            <input
-              className="rogym-input"
+          <FormField label={t('facility.roomName')} required>
+            <Input
               value={formName}
-              onChange={(event) => setFormName(event.target.value)}
+              onChange={(e) => setFormName(e.target.value)}
               required
               placeholder={t('facility.roomNamePlaceholder')}
             />
-          </label>
-          <label className="block space-y-2">
-            <span className="rogym-field-label">{t('facility.roomTypeLabel')}</span>
-            <input
-              className="rogym-input"
+          </FormField>
+
+          <FormField label={t('facility.roomTypeLabel')}>
+            <Input
               value={formType}
-              onChange={(event) => setFormType(event.target.value)}
+              onChange={(e) => setFormType(e.target.value)}
               placeholder={t('facility.roomTypePlaceholder')}
             />
-          </label>
-          <label className="block space-y-2">
-            <span className="rogym-field-label">{t('facility.capacityLabel')}</span>
-            <input
-              className="rogym-input"
+          </FormField>
+
+          <FormField label={t('facility.capacityLabel')} required>
+            <Input
               type="number"
               min={1}
               value={formCapacity}
-              onChange={(event) => setFormCapacity(event.target.value)}
+              onChange={(e) => setFormCapacity(e.target.value)}
               required
             />
-          </label>
-          <label className="block space-y-2">
-            <span className="rogym-field-label">{t('facility.description')}</span>
-            <textarea
-              className="rogym-input min-h-20"
+          </FormField>
+
+          <FormField label={t('facility.description')}>
+            <Textarea
+              rows={3}
               value={formDesc}
-              onChange={(event) => setFormDesc(event.target.value)}
+              onChange={(e) => setFormDesc(e.target.value)}
               placeholder={t('facility.descriptionPlaceholder')}
             />
-          </label>
-          <button type="submit" className="hidden" />
+          </FormField>
         </form>
-      </StaffModal>
-    </StaffPage>
+      </Modal>
+    </Page>
   )
 }

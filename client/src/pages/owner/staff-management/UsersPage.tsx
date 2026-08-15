@@ -1,6 +1,5 @@
 import { useEffect, useState, useCallback } from 'react'
-import { Link } from 'react-router-dom'
-import { CalendarDays, Eye, LoaderCircle, Plus, Search, Trash2 } from 'lucide-react'
+import { CalendarDays, Eye, Plus, Trash2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { getApiError, isApiConflict } from '@/lib/api-error'
 import { STAFF_POSITION_COLOR, USER_STATUS_COLOR } from '@/lib/owner-constants'
@@ -12,16 +11,18 @@ import {
 } from '@/services/staff.service'
 import { useAuthStore } from '@/stores/authStore'
 import {
-  OwnerEmptyState,
-  OwnerErrorState,
-  OwnerPage,
-  OwnerPageHeader,
-  OwnerPagination,
-  OwnerSearchInput,
-  OwnerSkeleton,
-  OwnerBadge,
-  OwnerSelect,
-} from '@/components/OwnerUI'
+  Page,
+  PageHeader,
+  Card,
+  SearchInput,
+  Select,
+  ResponsiveTable,
+  Button,
+  ButtonLink,
+  Badge,
+  ConfirmDialog,
+  type ColumnDef,
+} from '@/components/ui'
 import { toast } from '@/lib/toast'
 
 const PAGE_SIZE = 20
@@ -53,7 +54,8 @@ export default function UsersPage() {
   const [position, setPosition] = useState('')
   const [status, setStatus] = useState('active')
   // Delete state
-  const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<StaffProfile | null>(null)
+  const [deleting, setDeleting] = useState(false)
 
   const fetchStaff = useCallback(
     async (pg: number) => {
@@ -83,7 +85,6 @@ export default function UsersPage() {
     fetchStaff(page)
   }, [fetchStaff, page])
 
-  // Reset page on filter change
   function handleFilterChange(setter: (v: string) => void) {
     return (val: string) => {
       setter(val)
@@ -91,58 +92,145 @@ export default function UsersPage() {
     }
   }
 
-  async function handleDelete(staff: StaffProfile) {
-    setDeletingId(staff.staffId)
+  async function handleDeleteConfirm() {
+    if (!deleteTarget) return
+    setDeleting(true)
     try {
-      await staffService.delete(staff.staffId)
-      setStaffList((prev) => prev.filter((s) => s.staffId !== staff.staffId))
+      await staffService.delete(deleteTarget.staffId)
+      setStaffList((prev) => prev.filter((s) => s.staffId !== deleteTarget.staffId))
       setTotal((prev) => prev - 1)
+      toast.success(t('staffManagement.users.deleteSuccess', { defaultValue: 'Đã xóa nhân viên thành công' }))
+      setDeleteTarget(null)
     } catch (err) {
       const message = isApiConflict(err)
         ? t('staffManagement.users.deleteFailed')
         : getApiError(err, t('staffManagement.users.deleteFailed'))
-      toast.error(message, {
-        action: { label: tCommon('button.retry', { defaultValue: 'Thử lại' }), onClick: () => handleDelete(staff) },
-      })
+      toast.error(message)
     } finally {
-      setDeletingId(null)
+      setDeleting(false)
     }
   }
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE))
 
+  const columns: ColumnDef<StaffProfile>[] = [
+    {
+      key: 'code',
+      header: t('staffManagement.users.table.code'),
+      render: (staff) => (
+        <span className="font-mono text-xs rogym-text-dim">{staff.staffCode}</span>
+      ),
+    },
+    {
+      key: 'name',
+      header: t('staffManagement.users.table.name'),
+      render: (staff) => (
+        <span className="font-semibold text-white">{staff.fullName}</span>
+      ),
+    },
+    {
+      key: 'email',
+      header: t('staffManagement.users.table.email'),
+      render: (staff) => (
+        <span className="rogym-text-secondary">{staff.email}</span>
+      ),
+    },
+    {
+      key: 'position',
+      header: t('staffManagement.users.table.position'),
+      align: 'right',
+      render: (staff) => (
+        <Badge
+          style={{
+            borderColor: `${STAFF_POSITION_COLOR[staff.position] ?? '#6b7280'}40`,
+            color: STAFF_POSITION_COLOR[staff.position] ?? '#6b7280',
+          }}
+        >
+          {positionLabel[staff.position] ?? staff.position}
+        </Badge>
+      ),
+    },
+    {
+      key: 'status',
+      header: t('staffManagement.users.table.status'),
+      render: (staff) => (
+        <Badge
+          style={{
+            borderColor: `${USER_STATUS_COLOR[staff.status] ?? '#6b7280'}40`,
+            color: USER_STATUS_COLOR[staff.status] ?? '#6b7280',
+          }}
+        >
+          {userStatusLabel[staff.status] ?? staff.status}
+        </Badge>
+      ),
+    },
+    {
+      key: 'actions',
+      header: t('staffManagement.users.table.actions'),
+      align: 'right',
+      render: (staff) => (
+        <div className="flex items-center justify-end gap-2">
+          <ButtonLink
+            to={`/owner/staff/${staff.staffId}`}
+            variant="icon"
+            size="compact"
+            aria-label={tCommon('button.viewDetail')}
+          >
+            <Eye size={15} />
+          </ButtonLink>
+          {staff.status !== 'deleted' && staff.staffId !== currentUser?.staffId && (
+            <Button
+              variant="danger"
+              size="compact"
+              onClick={() => setDeleteTarget(staff)}
+              aria-label={tCommon('button.delete')}
+            >
+              <Trash2 size={14} />
+            </Button>
+          )}
+        </div>
+      ),
+    },
+  ]
+
   return (
-    <OwnerPage>
-      <OwnerPageHeader
+    <Page>
+      <PageHeader
         eyebrow={t('staffManagement.users.eyebrow')}
         title={t('staffManagement.users.title')}
         description={t('staffManagement.users.totalCount', { total })}
         actions={
           <div className="flex flex-col gap-2 sm:flex-row">
-            <Link className="rogym-btn rogym-btn--outline-white whitespace-nowrap" to="/owner/staff/schedules">
+            <ButtonLink
+              variant="outline-white"
+              to="/owner/staff/schedules"
+            >
               <CalendarDays size={16} /> {t('staffManagement.users.scheduleBtn')}
-            </Link>
-            <Link className="rogym-btn rogym-btn--primary whitespace-nowrap" to="/owner/staff/new">
+            </ButtonLink>
+            <ButtonLink
+              variant="primary"
+              to="/owner/staff/new"
+            >
               <Plus size={16} /> {t('staffManagement.users.addBtn')}
-            </Link>
+            </ButtonLink>
           </div>
         }
       />
 
       {/* Filters */}
-      <div className="rogym-card rogym-card--compact grid gap-3 p-4 md:grid-cols-[1fr_180px_180px_auto]">
-        <OwnerSearchInput
+      <Card variant="compact" className="grid gap-3 p-4 md:grid-cols-[1fr_180px_180px]">
+        <SearchInput
           value={search}
           onChange={handleFilterChange(setSearch)}
           placeholder={t('staffManagement.users.searchPlaceholder')}
         />
-        <OwnerSelect value={position} onValueChange={handleFilterChange(setPosition)}>
+        <Select value={position} onValueChange={handleFilterChange(setPosition)}>
           <option value="">{t('staffManagement.users.positions.all')}</option>
           <option value="staff">{t('staffManagement.users.positions.staff')}</option>
           <option value="trainer">{t('staffManagement.users.positions.trainer')}</option>
           <option value="owner">{t('staffManagement.users.positions.owner')}</option>
-        </OwnerSelect>
-        <OwnerSelect value={status} onValueChange={handleFilterChange(setStatus)} required>
+        </Select>
+        <Select value={status} onValueChange={handleFilterChange(setStatus)} required>
           <option value="">{t('staffManagement.users.statusFilter.all')}</option>
           <option value="active">{t('usersOverview.userStatus.active')}</option>
           <option value="pending_verification">
@@ -150,112 +238,53 @@ export default function UsersPage() {
           </option>
           <option value="locked">{t('usersOverview.userStatus.locked')}</option>
           <option value="deleted">{t('usersOverview.userStatus.deleted')}</option>
-        </OwnerSelect>
-        <button
-          type="button"
-          className="rogym-btn rogym-btn--icon rogym-btn--elevated"
-          onClick={() => {
-            setPage(1)
-            fetchStaff(1)
-          }}
-          aria-label={tCommon('button.search')}
-        >
-          <Search size={17} />
-        </button>
-      </div>
+        </Select>
+      </Card>
 
       {/* Table */}
-      {loading ? (
-        <OwnerSkeleton rows={6} />
-      ) : error ? (
-        <OwnerErrorState message={error} onRetry={() => fetchStaff(page)} />
-      ) : staffList.length === 0 ? (
-        <OwnerEmptyState
-          title={t('staffManagement.users.notFound')}
-          description={t('staffManagement.users.notFoundDesc')}
-          action={
-            <Link className="rogym-btn rogym-btn--primary" to="/owner/staff/new">
-              <Plus size={16} /> {t('staffManagement.users.addBtn')}
-            </Link>
-          }
-        />
-      ) : (
-        <>
-          <div className="overflow-x-auto rounded-2xl border border-white/5">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-white/5 text-left text-xs rogym-text-dim">
-                  <th className="px-5 py-3 font-medium">{t('staffManagement.users.table.code')}</th>
-                  <th className="px-5 py-3 font-medium">{t('staffManagement.users.table.name')}</th>
-                  <th className="px-5 py-3 font-medium">
-                    {t('staffManagement.users.table.email')}
-                  </th>
-                  <th className="px-5 py-3 font-medium text-right">
-                    {t('staffManagement.users.table.position')}
-                  </th>
-                  <th className="px-5 py-3 font-medium">
-                    {t('staffManagement.users.table.status')}
-                  </th>
-                  <th className="px-5 py-3 font-medium text-right">
-                    {t('staffManagement.users.table.actions')}
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-white/5">
-                {staffList.map((staff) => (
-                  <tr key={staff.staffId} className="hover:bg-white/[0.02] transition-colors">
-                    <td className="px-5 py-4 font-mono text-xs rogym-text-dim">
-                      {staff.staffCode}
-                    </td>
-                    <td className="px-5 py-4 font-semibold text-white">{staff.fullName}</td>
-                    <td className="px-5 py-4 rogym-text-secondary">{staff.email}</td>
-                    <td className="px-5 py-4 min-w-0 text-right">
-                      <OwnerBadge
-                        label={positionLabel[staff.position] ?? staff.position}
-                        color={STAFF_POSITION_COLOR[staff.position] ?? '#6b7280'}
-                      />
-                    </td>
-                    <td className="px-5 py-4 min-w-0">
-                      <OwnerBadge
-                        label={userStatusLabel[staff.status] ?? staff.status}
-                        color={USER_STATUS_COLOR[staff.status] ?? '#6b7280'}
-                      />
-                    </td>
-                    <td className="px-5 py-4">
-                      <div className="flex items-center justify-end gap-2">
-                        <Link
-                          to={`/owner/staff/${staff.staffId}`}
-                          className="rogym-btn rogym-btn--icon rogym-btn--elevated"
-                          aria-label={tCommon('button.viewDetail')}
-                        >
-                          <Eye size={15} />
-                        </Link>
-                        {staff.status !== 'deleted' && staff.staffId !== currentUser?.staffId && (
-                          <button
-                            className="rogym-btn rogym-btn--danger rogym-btn--icon"
-                            disabled={deletingId === staff.staffId}
-                            onClick={() => handleDelete(staff)}
-                            aria-label={tCommon('button.delete')}
-                          >
-                            {deletingId === staff.staffId ? (
-                              <LoaderCircle size={14} className="animate-spin" />
-                            ) : (
-                              <Trash2 size={14} />
-                            )}
-                          </button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+      <ResponsiveTable
+        columns={columns}
+        data={staffList}
+        keyExtractor={(item) => item.staffId}
+        loading={loading}
+        error={error}
+        onRetry={() => fetchStaff(page)}
+        emptyTitle={t('staffManagement.users.notFound')}
+        emptyDescription={t('staffManagement.users.notFoundDesc')}
+        emptyAction={
+          <ButtonLink variant="primary" to="/owner/staff/new">
+            <Plus size={16} /> {t('staffManagement.users.addBtn')}
+          </ButtonLink>
+        }
+        pagination={
+          totalPages > 1
+            ? {
+                page,
+                totalPages,
+                onPageChange: setPage,
+                totalItems: total,
+                pageSize: PAGE_SIZE,
+                showItemCount: true,
+              }
+            : undefined
+        }
+      />
 
-          {/* Pagination */}
-          <OwnerPagination page={page} totalPages={totalPages} onPageChange={setPage} />
-        </>
+      {deleteTarget && (
+        <ConfirmDialog
+          open={!!deleteTarget}
+          title={tCommon('button.delete')}
+          variant="danger"
+          loading={deleting}
+          onClose={() => setDeleteTarget(null)}
+          onConfirm={handleDeleteConfirm}
+          description={t('staffManagement.users.deleteConfirm', {
+            name: deleteTarget.fullName,
+            defaultValue: `Bạn có chắc muốn xóa nhân viên ${deleteTarget.fullName}?`,
+          })}
+          confirmLabel={tCommon('button.delete')}
+        />
       )}
-    </OwnerPage>
+    </Page>
   )
 }

@@ -1,6 +1,6 @@
 import { FormEvent, useCallback, useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { AlertTriangle, ChevronLeft, ChevronRight, Eye, Search, Wrench } from 'lucide-react'
+import { AlertTriangle, Eye, Wrench } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { getApiError } from '@/lib/api-error'
 import { formatDate } from '@/lib/date'
@@ -11,25 +11,21 @@ import {
   type MaintenanceLog,
 } from '@/services/facility.service'
 import {
-  StaffEmptyState,
-  StaffErrorState,
-  StaffModal,
-  StaffPage,
-  StaffPageHeader,
-  StaffSelect,
-  StaffSkeleton,
-  StaffStatusBadge,
-  SubmitButton,
-} from '@/components/StaffUI'
+  Page,
+  PageHeader,
+  Card,
+  SearchInput,
+  Select,
+  ResponsiveTable,
+  Button,
+  Modal,
+  FormField,
+  Textarea,
+  StatusBadge,
+  type ColumnDef,
+} from '@/components/ui'
 import { toast } from '@/lib/toast'
 import { cn } from '@/lib/utils'
-
-function equipmentStatusTone(status: string) {
-  if (status === 'active') return 'success'
-  if (status === 'repairing') return 'warning'
-  if (status === 'broken') return 'danger'
-  return 'muted'
-}
 
 export default function EquipmentPage() {
   const { t } = useTranslation('staff')
@@ -51,7 +47,6 @@ export default function EquipmentPage() {
   const statusFilter = searchParams.get('status') ?? ''
   const roomId = searchParams.get('roomId') ?? ''
   const page = Number(searchParams.get('page') ?? 1)
-  const [search, setSearch] = useState(searchParams.get('search') ?? '')
 
   const [data, setData] = useState<Equipment[]>([])
   const [total, setTotal] = useState(0)
@@ -204,9 +199,9 @@ export default function EquipmentPage() {
     }
   }
 
-  function applySearch() {
+  function handleSearchChange(searchVal: string) {
     const next = new URLSearchParams(searchParams)
-    search ? next.set('search', search) : next.delete('search')
+    searchVal ? next.set('search', searchVal) : next.delete('search')
     next.set('page', '1')
     setSearchParams(next)
   }
@@ -218,29 +213,74 @@ export default function EquipmentPage() {
     setSearchParams(next)
   }
 
+  const columns: ColumnDef<Equipment>[] = [
+    {
+      key: 'device',
+      header: t('equipment.colDevice'),
+      render: (eq) => (
+        <div>
+          <div className="font-semibold text-white">{eq.name}</div>
+          <div className="text-xs rogym-text-dim">{eq.equipmentCode}</div>
+        </div>
+      ),
+    },
+    {
+      key: 'room',
+      header: t('equipment.colRoom'),
+      render: (eq) => (
+        <span className="rogym-text-secondary">
+          {eq.roomName ?? t('equipment.notAssignedRoom')}
+        </span>
+      ),
+    },
+    {
+      key: 'warranty',
+      header: t('equipment.colWarranty'),
+      render: (eq) => (
+        <span className="rogym-text-secondary">
+          {formatDate(eq.warrantyUntil)}
+        </span>
+      ),
+    },
+    {
+      key: 'status',
+      header: t('equipment.colStatus'),
+      render: (eq) => (
+        <StatusBadge status={eq.status} label={equipmentStatusLabel(eq.status)} />
+      ),
+    },
+    {
+      key: 'actions',
+      header: t('equipment.colActions'),
+      align: 'right',
+      render: (eq) => (
+        <Button
+          variant="icon"
+          size="compact"
+          onClick={() => openDetail(eq)}
+          aria-label={tCommon('button.viewDetail')}
+        >
+          <Eye size={15} />
+        </Button>
+      ),
+    },
+  ]
+
   return (
-    <StaffPage>
-      <StaffPageHeader
+    <Page>
+      <PageHeader
         eyebrow={t('equipment.eyebrow')}
         title={t('equipment.title')}
         description={t('equipment.descriptionWithTotal', { total })}
       />
 
-      <div className="rogym-card rogym-card--compact grid gap-3 p-4 md:grid-cols-[1fr_180px_180px_auto]">
-        <div className="relative">
-          <Search
-            className="absolute left-3 top-1/2 -translate-y-1/2 rogym-text-dim"
-            size={17}
-          />
-          <input
-            className="rogym-input pl-10"
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            onKeyDown={(event) => event.key === 'Enter' && applySearch()}
-            placeholder={t('equipment.searchPlaceholder')}
-          />
-        </div>
-        <StaffSelect
+      <Card variant="compact" className="grid gap-3 p-4 md:grid-cols-[1fr_180px_180px]">
+        <SearchInput
+          value={searchParams.get('search') ?? ''}
+          onChange={handleSearchChange}
+          placeholder={t('equipment.searchPlaceholder')}
+        />
+        <Select
           value={statusFilter}
           onValueChange={(value) => updateParam('status', value)}
           ariaLabel={t('equipment.filterByStatus')}
@@ -250,8 +290,8 @@ export default function EquipmentPage() {
               {opt.label}
             </option>
           ))}
-        </StaffSelect>
-        <StaffSelect
+        </Select>
+        <Select
           value={roomId}
           onValueChange={(value) => updateParam('roomId', value)}
           ariaLabel={t('equipment.filterByRoom')}
@@ -260,191 +300,105 @@ export default function EquipmentPage() {
           {rooms.map((r) => (
             <option key={r.roomId} value={r.roomId}>{r.name}</option>
           ))}
-        </StaffSelect>
-        <button
-          type="button"
-          className="rogym-btn rogym-btn--icon rogym-btn--elevated"
-          onClick={applySearch}
-          aria-label={t('equipment.search')}
-        >
-          <Search size={17} />
-        </button>
-      </div>
+        </Select>
+      </Card>
 
-      {loading ? (
-        <StaffSkeleton rows={5} />
-      ) : error ? (
-        <StaffErrorState message={error} onRetry={load} />
-      ) : data.length === 0 ? (
-        <StaffEmptyState
-          title={t('equipment.noEquipment')}
-          description={t('equipment.noEquipmentDesc')}
-        />
-      ) : (
-        <>
-          <div className="hidden overflow-hidden rounded-2xl border border-[var(--rogym-border-teal-dim)] md:block">
-            <table className="w-full border-collapse text-left text-sm">
-              <thead className="bg-white/5 text-xs uppercase tracking-wider rogym-text-dim">
-                <tr>
-                  <th className="px-5 py-4">{t('equipment.colDevice')}</th>
-                  <th className="px-5 py-4">{t('equipment.colRoom')}</th>
-                  <th className="px-5 py-4">{t('equipment.colWarranty')}</th>
-                  <th className="px-5 py-4">{t('equipment.colStatus')}</th>
-                  <th className="px-5 py-4 text-right">{t('equipment.colActions')}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {data.map((eq) => (
-                  <tr key={eq.equipmentId} className="border-t border-white/5 bg-[var(--rogym-bg-card)]">
-                    <td className="px-5 py-4">
-                      <div className="font-semibold text-white">{eq.name}</div>
-                      <div className="text-xs rogym-text-dim">{eq.equipmentCode}</div>
-                    </td>
-                    <td className="px-5 py-4 rogym-text-secondary">
-                      {eq.roomName ?? t('equipment.notAssignedRoom')}
-                    </td>
-                    <td className="px-5 py-4 rogym-text-secondary">
-                      {formatDate(eq.warrantyUntil)}
-                    </td>
-                    <td className="px-5 py-4 min-w-0">
-                      <span
-                        className="rogym-tone-badge"
-                        data-tone={equipmentStatusTone(eq.status)}
-                      >
-                        {equipmentStatusLabel(eq.status)}
-                      </span>
-                    </td>
-                    <td className="px-5 py-4 text-right">
-                      <button
-                        type="button"
-                        className="rogym-btn rogym-btn--icon rogym-btn--elevated"
-                        onClick={() => openDetail(eq)}
-                        aria-label={tCommon('button.viewDetail')}
-                      >
-                        <Eye size={15} />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
-          <div className="grid gap-3 md:hidden">
-            {data.map((eq) => (
-              <button
-                key={eq.equipmentId}
-                type="button"
-                className="rogym-card rogym-card--compact rogym-card--interactive w-full p-5 text-left"
-                onClick={() => openDetail(eq)}
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex gap-3">
-                    <div className={cn(
-                      'flex h-10 w-10 shrink-0 items-center justify-center rounded-xl',
-                      eq.status === 'broken' ? 'bg-red-400/10 text-red-300' : 'bg-[rgba(66,224,158,0.12)] rogym-text-accent'
-                    )}>
-                      <Wrench size={19} />
-                    </div>
-                    <div>
-                      <div className="font-semibold text-white">{eq.name}</div>
-                      <div className="text-xs rogym-text-dim">{eq.equipmentCode}</div>
-                    </div>
-                  </div>
-                  <span className="rogym-tone-badge is-compact" data-tone={equipmentStatusTone(eq.status)}>
-                    {equipmentStatusLabel(eq.status)}
-                  </span>
-                </div>
-                <div className="mt-2 text-sm rogym-text-secondary">
-                  {eq.roomName ?? t('equipment.notAssignedRoom')}
-                </div>
-              </button>
-            ))}
-          </div>
-        </>
-      )}
-
-      {totalPages > 1 && (
-        <div className="flex items-center justify-center gap-3">
-          <button
-            type="button"
-            className="rogym-btn rogym-btn--icon rogym-btn--elevated"
-            disabled={page <= 1}
-            onClick={() => updateParam('page', String(page - 1))}
-            aria-label={tCommon('pagination.prev')}
+      <ResponsiveTable
+        columns={columns}
+        data={data}
+        keyExtractor={(item) => item.equipmentId}
+        loading={loading}
+        error={error}
+        onRetry={load}
+        emptyTitle={t('equipment.noEquipment')}
+        emptyDescription={t('equipment.noEquipmentDesc')}
+        renderMobileCard={(eq) => (
+          <Card
+            variant="interactive"
+            onClick={() => openDetail(eq)}
           >
-            <ChevronLeft size={17} />
-          </button>
-          <span className="text-sm rogym-text-secondary">
-            {t('equipment.page', { page, total: totalPages })}
-          </span>
-          <button
-            type="button"
-            className="rogym-btn rogym-btn--icon rogym-btn--elevated"
-            disabled={page >= totalPages}
-            onClick={() => updateParam('page', String(page + 1))}
-            aria-label={tCommon('pagination.next')}
-          >
-            <ChevronRight size={17} />
-          </button>
-        </div>
-      )}
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex gap-3">
+                <div
+                  className={cn(
+                    'flex h-10 w-10 shrink-0 items-center justify-center rounded-xl',
+                    eq.status === 'broken'
+                      ? 'bg-red-400/10 text-red-300'
+                      : 'bg-[rgba(66,224,158,0.12)] rogym-text-accent'
+                  )}
+                >
+                  <Wrench size={19} />
+                </div>
+                <div>
+                  <div className="font-semibold text-white">{eq.name}</div>
+                  <div className="text-xs rogym-text-dim">{eq.equipmentCode}</div>
+                </div>
+              </div>
+              <StatusBadge status={eq.status} label={equipmentStatusLabel(eq.status)} />
+            </div>
+            <div className="mt-2 text-sm rogym-text-secondary">
+              {eq.roomName ?? t('equipment.notAssignedRoom')}
+            </div>
+          </Card>
+        )}
+        pagination={
+          totalPages > 1
+            ? {
+                page,
+                totalPages,
+                onPageChange: (p) => updateParam('page', String(p)),
+                totalItems: total,
+                pageSize: 15,
+                showItemCount: true,
+              }
+            : undefined
+        }
+      />
 
       {/* Modal chi tiết thiết bị */}
-      <StaffModal
+      <Modal
         open={!!selected}
         title={selected?.name ?? t('equipment.detailTitle')}
         onClose={closeDetail}
         footer={
           selected ? (
             <>
-              <button
-                type="button"
-                className="rogym-btn rogym-btn--outline-white"
-                onClick={closeDetail}
-              >
+              <Button variant="outline-white" onClick={closeDetail}>
                 {t('equipment.close')}
-              </button>
+              </Button>
 
               {selected.status === 'active' && (
-                <button
-                  type="button"
-                  className="rogym-btn rogym-btn--danger"
-                  onClick={openReport}
-                >
+                <Button variant="danger" onClick={openReport}>
                   <AlertTriangle size={15} /> {t('equipment.reportIncident')}
-                </button>
+                </Button>
               )}
 
               {selected.status === 'broken' && (
-                <button
-                  type="button"
-                  className="rogym-btn rogym-btn--outline-white"
+                <Button
+                  variant="outline-white"
                   disabled={!!updatingLogId || logsLoading}
                   onClick={handleStartRepair}
                 >
                   {updatingLogId ? t('equipment.processing') : t('equipment.startRepair')}
-                </button>
+                </Button>
               )}
 
               {selected.status === 'repairing' && (
                 <>
-                  <button
-                    type="button"
-                    className="rogym-btn rogym-btn--outline-white"
+                  <Button
+                    variant="outline-white"
                     disabled={updatingStatus || logsLoading}
                     onClick={handleRetireFromRepairing}
                   >
                     {updatingStatus ? t('equipment.processing') : t('equipment.retire')}
-                  </button>
-                  <button
-                    type="button"
-                    className="rogym-btn rogym-btn--primary"
+                  </Button>
+                  <Button
+                    variant="primary"
                     disabled={!!updatingLogId || logsLoading}
                     onClick={handleFinishRepair}
                   >
                     {updatingLogId ? t('equipment.processing') : t('equipment.finishRepair')}
-                  </button>
+                  </Button>
                 </>
               )}
             </>
@@ -460,12 +414,7 @@ export default function EquipmentPage() {
               <InfoPair label={t('equipment.warrantyUntil')} value={formatDate(selected.warrantyUntil)} />
               <div className="col-span-2 flex items-center justify-between rounded-xl border border-white/5 bg-white/[0.03] p-3">
                 <span className="rogym-text-dim">{t('equipment.colStatus')}</span>
-                <span
-                  className="rogym-tone-badge"
-                  data-tone={equipmentStatusTone(selected.status)}
-                >
-                  {equipmentStatusLabel(selected.status)}
-                </span>
+                <StatusBadge status={selected.status} label={equipmentStatusLabel(selected.status)} />
               </div>
             </div>
 
@@ -484,7 +433,7 @@ export default function EquipmentPage() {
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div className="font-medium text-white">{log.description}</div>
-                        <StaffStatusBadge status={log.status} />
+                        <StatusBadge status={log.status} />
                       </div>
                       <div className="mt-1 text-xs rogym-text-dim">
                         {formatDate(log.reportedAt)} · {log.reportedByStaff?.fullName ?? t('equipment.unknownStaff')}
@@ -497,43 +446,43 @@ export default function EquipmentPage() {
             </div>
           </div>
         )}
-      </StaffModal>
+      </Modal>
 
       {/* Modal báo cáo sự cố */}
-      <StaffModal
+      <Modal
         open={reportOpen}
         title={t('equipment.reportTitle', { name: selected?.name ?? '' })}
         onClose={closeReport}
         footer={
           <>
-            <button
-              type="button"
-              className="rogym-btn rogym-btn--outline-white"
-              onClick={closeReport}
-            >
+            <Button variant="outline-white" onClick={closeReport}>
               {t('equipment.cancel')}
-            </button>
-            <SubmitButton form="report-form" loading={reporting} disabled={!reportDesc.trim()}>
+            </Button>
+            <Button
+              variant="primary"
+              type="submit"
+              form="report-form"
+              loading={reporting}
+              disabled={!reportDesc.trim()}
+            >
               {t('equipment.sendReport')}
-            </SubmitButton>
+            </Button>
           </>
         }
       >
         <form id="report-form" className="space-y-4" onSubmit={handleReport}>
-          <label className="block space-y-2">
-            <span className="rogym-field-label">{t('equipment.incidentDesc')}</span>
-            <textarea
-              className="rogym-input min-h-24"
+          <FormField label={t('equipment.incidentDesc')} required>
+            <Textarea
+              rows={4}
               value={reportDesc}
               onChange={(event) => setReportDesc(event.target.value)}
               placeholder={t('equipment.incidentPlaceholder')}
               required
             />
-          </label>
-          <button type="submit" className="hidden" />
+          </FormField>
         </form>
-      </StaffModal>
-    </StaffPage>
+      </Modal>
+    </Page>
   )
 }
 
