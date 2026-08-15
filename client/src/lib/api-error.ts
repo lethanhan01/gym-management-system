@@ -6,16 +6,33 @@ interface ApiErrorPayload {
   message?: string | string[]
 }
 
+export function isNetworkError(error: unknown): boolean {
+  if (!axios.isAxiosError(error)) return false
+  return (
+    error.code === 'ERR_NETWORK' ||
+    error.code === 'ECONNABORTED' ||
+    error.code === 'ECONNREFUSED' ||
+    error.message?.includes('Network Error') ||
+    !error.response ||
+    (typeof error.response?.status === 'number' && [502, 503, 504].includes(error.response.status))
+  )
+}
+
 export function getApiError(error: unknown, fallback?: string): string {
   const defaultFallback = fallback ?? i18n.t('error.unknown', { ns: 'common' })
   if (!axios.isAxiosError<ApiErrorPayload>(error)) {
     return error instanceof Error ? error.message : defaultFallback
   }
+
+  if (isNetworkError(error) && !error.response?.data?.message && !error.response?.data?.code) {
+    return fallback ?? i18n.t('error.network', { ns: 'common' })
+  }
+
   const payload = error.response?.data
   if (payload?.code && i18n.exists(`error.api.${payload.code}`, { ns: 'common' })) {
     return i18n.t(`error.api.${payload.code}`, payload.code, { ns: 'common' })
   }
-  
+
   if (fallback) return fallback
 
   const message = payload?.message
