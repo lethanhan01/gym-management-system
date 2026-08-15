@@ -3,6 +3,8 @@
 Tài liệu này mô tả cách ghép các Components, Hooks, Layouts và CSS API hiện có.
 Chuẩn màu sắc, typography và quy tắc thêm style được định nghĩa tại
 [`design.md`](./design.md).
+Quy chuẩn kiến trúc và tiêu chuẩn kỹ thuật thiết kế component nằm tại
+[`COMPONENT_CONVENTIONS.md`](./COMPONENT_CONVENTIONS.md).
 
 ## 1. Quy ước import và lựa chọn API
 
@@ -130,26 +132,65 @@ Các alias trong role UI files (`StaffModal`, `TrainerModal`, `StaffStatCard`,
 `TrainerStatCard`) đều trỏ về shared component này. Chỉ import từ `ui/` khi code
 không nằm trong role-specific context.
 
-### 3.2. `Button`
+### 3.2. `Button`, `ButtonLink`, `ButtonAnchor`
 
 ```tsx
+// Nút hành động chuẩn
 <Button variant="primary" loading={saving} onClick={handleSave}>
   Lưu
 </Button>
 
-<Button variant="outline-white" onClick={onCancel}>
-  Hủy
+// Nút với icon bên trái, tự thay thế bằng spinner khi loading
+<Button
+  variant="primary"
+  leftIcon={<Plus size={16} />}
+  loading={loading}
+  loadingText="Đang tạo..."
+  onClick={handleCreate}
+>
+  Tạo buổi tập mới
 </Button>
 
-<Button variant="icon" aria-label="Đóng" onClick={onClose}>
+// Nút responsive: tự ẩn chữ chỉ giữ icon trên mobile (<640px)
+<Button
+  variant="outline-white"
+  leftIcon={<Download size={16} />}
+  responsiveIconOnly
+  onClick={handleExport}
+>
+  Xuất báo cáo
+</Button>
+
+// Nút full-width trên mobile, tự co về kích thước nội dung trên desktop
+<Button variant="primary" mobileFull onClick={handlePay}>
+  Thanh toán ngay
+</Button>
+
+// Nút dạng Link (React Router) hoặc Anchor (thẻ <a>)
+<ButtonLink to="/member/checkout" variant="primary" size="lg">
+  Đăng ký gói
+</ButtonLink>
+<ButtonAnchor href="https://example.com" target="_blank" variant="outline-white">
+  Xem tài liệu
+</ButtonAnchor>
+
+// Icon-only button với size chuẩn
+<Button variant="icon" size="sm" aria-label="Đóng" onClick={onClose}>
   <X size={17} />
 </Button>
 ```
 
-`variant`: `'primary' | 'outline-white' | 'danger' | 'icon'` (mặc định `'primary'`).
-
-`loading`: khóa button và hiện spinner. `wide`: thêm full-width style. Component là
-`forwardRef` nên nhận được `ref`.
+**Props chính**:
+- `variant`: `'primary' | 'secondary' | 'danger' | 'outline-white' | 'outline-green' | 'outline-green-light' | 'dark' | 'elevated' | 'icon' | 'text' | 'text-muted' | 'text-accent' | 'nav-link'` (mặc định `'primary'`).
+- `size`: `'xs' | 'sm' | 'md' | 'lg' | 'xl'` (hỗ trợ alias `'default'` (md), `'compact'` (sm), `'hero'` (xl), `'nav'`, `'wide'`).
+- `leftIcon`, `rightIcon`: Slot chèn icon. Khi `loading={true}`, spinner tự động thay thế `leftIcon` để tránh giật layout và không bị lặp 2 icon.
+- `loading`: Khóa tương tác, gán `aria-busy="true"` và hiện spinner. Tự động chặn điều hướng với cả `ButtonLink` và `ButtonAnchor`.
+- `loadingText`: Text hiển thị thay thế trong lúc loading.
+- `fullWidth`: Chiều rộng 100% trên mọi kích thước màn hình.
+- `mobileFull`: Chiều rộng 100% trên mobile (<640px) và auto trên desktop (>=640px).
+- `responsiveIconOnly`: Tự động ẩn text trên mobile khi có `leftIcon`, chỉ hiển thị icon để tối ưu không gian chật hẹp.
+- `truncate`: Cắt ngắn text dài với dấu ba chấm (`...`) khi bị giới hạn chiều rộng.
+- Component hỗ trợ `forwardRef` hoàn chỉnh cho tất cả các biến thể (`Button`, `ButtonLink`, `ButtonAnchor`).
 
 ### 3.3. `Modal`
 

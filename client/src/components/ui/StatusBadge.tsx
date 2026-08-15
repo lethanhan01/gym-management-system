@@ -1,22 +1,32 @@
+import { forwardRef } from 'react'
 import { statusLabel, statusTone, type StatusTone } from '@/lib/status'
-import { Badge, type BadgeTone } from './Badge'
+import { Badge, type BadgeProps, type BadgeTone, type BadgeSize } from './Badge'
 
 export type { StatusTone }
 
-export interface StatusBadgeProps {
+export interface StatusBadgeProps extends Omit<BadgeProps, 'tone' | 'children'> {
   status: string
   tone?: StatusTone | BadgeTone
   label?: string
-  className?: string
+  size?: BadgeSize
 }
 
-export function StatusBadge({ status, tone, label, className }: StatusBadgeProps) {
-  const effectiveTone = (tone ?? statusTone(status)) as BadgeTone
-  const effectiveLabel = label ?? statusLabel(status)
+export const StatusBadge = forwardRef<HTMLSpanElement, StatusBadgeProps>(
+  ({ status, tone, label, size = 'md', className, ...props }, ref) => {
+    const effectiveTone = (tone ?? statusTone(status)) as BadgeTone
+    const effectiveLabel = label ?? statusLabel(status)
 
-  return (
-    <Badge tone={effectiveTone} className={className}>
-      {effectiveLabel}
-    </Badge>
-  )
-}
+    return (
+      <Badge
+        ref={ref}
+        tone={effectiveTone}
+        size={size}
+        className={className}
+        {...props}
+      >
+        {effectiveLabel}
+      </Badge>
+    )
+  }
+)
+StatusBadge.displayName = 'StatusBadge'
