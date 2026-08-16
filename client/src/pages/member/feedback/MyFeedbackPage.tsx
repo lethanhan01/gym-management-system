@@ -1,8 +1,16 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Button, ButtonLink } from '@/components/ui/Button'
-import { ChevronLeft, ChevronRight, Trash2 } from 'lucide-react'
-import { MemberPage, MemberPageHeader, MemberSkeleton, MemberEmptyState, MemberErrorState } from '@/components/MemberUI'
+import { Trash2 } from 'lucide-react'
+import { Button, ButtonLink, ConfirmDialog, Pagination, type BadgeTone } from '@/components/ui'
+import {
+  MemberBadge,
+  MemberCard,
+  MemberEmptyState,
+  MemberErrorState,
+  MemberPage,
+  MemberPageHeader,
+  MemberSkeleton,
+} from '@/components/MemberUI'
 import { feedbackService, type Feedback } from '@/services/feedback.service'
 import { useAuthStore } from '@/stores/authStore'
 
@@ -12,69 +20,11 @@ function fmtDate(iso: string) {
   return new Date(iso).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
 }
 
-
-function Badge({ label, tone = 'muted' }: { label: string; tone?: string }) {
-  return (
-    <span className="rogym-tone-badge is-compact" data-tone={tone}>
-      {label}
-    </span>
-  )
-}
-
-function Pagination({ page, total, onChange }: { page: number; total: number; onChange: (p: number) => void }) {
-  if (total <= 1) return null
-
-  const pages: (number | '...')[] = []
-  if (total <= 7) {
-    for (let i = 1; i <= total; i++) pages.push(i)
-  } else {
-    pages.push(1)
-    if (page > 3) pages.push('...')
-    for (let i = Math.max(2, page - 1); i <= Math.min(total - 1, page + 1); i++) pages.push(i)
-    if (page < total - 2) pages.push('...')
-    pages.push(total)
-  }
-
-  return (
-    <div className="flex items-center justify-center gap-1.5 mt-6">
-      <button
-        onClick={() => onChange(Math.max(1, page - 1))}
-        disabled={page === 1}
-        className="rogym-pagination-button"
-      >
-        <ChevronLeft size={15} />
-      </button>
-
-      {pages.map((p, i) =>
-        p === '...' ? (
-          <span key={`ellipsis-${i}`} className="rogym-sx-a731f100">…</span>
-        ) : (
-          <button
-            key={p}
-            onClick={() => onChange(p as number)}
-            className={`rogym-pagination-button ${p === page ? 'is-active' : ''}`}
-          >
-            {p}
-          </button>
-        )
-      )}
-
-      <button
-        onClick={() => onChange(Math.min(total, page + 1))}
-        disabled={page === total}
-        className="rogym-pagination-button"
-      >
-        <ChevronRight size={15} />
-      </button>
-    </div>
-  )
-}
-
 export default function MyFeedbackPage() {
   const { t } = useTranslation('member')
   const user = useAuthStore(state => state.user)
 
-  const STATUS_MAP: Record<string, { label: string; tone: string }> = {
+  const STATUS_MAP: Record<string, { label: string; tone: BadgeTone }> = {
     open:        { label: t('feedback.list.statusLabel.open'),        tone: 'warning' },
     in_progress: { label: t('feedback.list.statusLabel.in_progress'), tone: 'info' },
     resolved:    { label: t('feedback.list.statusLabel.resolved'),    tone: 'success' },
@@ -87,7 +37,7 @@ export default function MyFeedbackPage() {
     service:   t('feedback.list.typeLabel.service'),
   }
 
-  const SEVERITY_MAP: Record<string, { label: string; tone: string }> = {
+  const SEVERITY_MAP: Record<string, { label: string; tone: BadgeTone }> = {
     low:    { label: t('feedback.list.severityLabel.low'),    tone: 'success' },
     medium: { label: t('feedback.list.severityLabel.medium'), tone: 'warning' },
     high:   { label: t('feedback.list.severityLabel.high'),   tone: 'danger' },
@@ -162,7 +112,7 @@ export default function MyFeedbackPage() {
         title={t('feedback.list.title')}
         description={t('feedback.list.description')}
         actions={
-          <ButtonLink to="/member/feedback/send" variant="primary" className="px-5 py-2.5 text-sm">
+          <ButtonLink to="/member/feedback/send" variant="primary" size="sm">
             {t('feedback.list.buttonSendNew')}
           </ButtonLink>
         }
@@ -203,7 +153,7 @@ export default function MyFeedbackPage() {
           description={activeTab ? t('feedback.list.emptyFiltered') : t('feedback.list.emptyNone')}
           action={
             !activeTab ? (
-              <ButtonLink to="/member/feedback/send" variant="primary" className="px-5 py-2.5 text-sm">
+              <ButtonLink to="/member/feedback/send" variant="primary" size="sm">
                 {t('feedback.list.buttonSendFirst')}
               </ButtonLink>
             ) : undefined
@@ -213,83 +163,67 @@ export default function MyFeedbackPage() {
         <>
           <div className="flex flex-col gap-3">
             {paged.map(fb => {
-              const status = STATUS_MAP[fb.status] ?? { label: fb.status, tone: 'muted' }
-              const severity = SEVERITY_MAP[fb.severity] ?? { label: fb.severity, tone: 'muted' }
-              const isConfirming = deletingId === fb.feedbackId
-              const isDeleting = deletingSet.has(fb.feedbackId)
+              const status = STATUS_MAP[fb.status] ?? { label: fb.status, tone: 'muted' as BadgeTone }
+              const severity = SEVERITY_MAP[fb.severity] ?? { label: fb.severity, tone: 'muted' as BadgeTone }
               return (
-                <div
+                <MemberCard
                   key={fb.feedbackId}
-                  className="rogym-card rogym-card--compact rogym-sx-401e6d87"
-                  
+                  variant="compact"
+                  className="p-4"
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex flex-wrap gap-2">
-                      <Badge label={TYPE_MAP[fb.feedbackType] ?? fb.feedbackType} />
-                      <Badge label={severity.label} tone={severity.tone} />
+                      <MemberBadge tone="muted">{TYPE_MAP[fb.feedbackType] ?? fb.feedbackType}</MemberBadge>
+                      <MemberBadge tone={severity.tone}>{severity.label}</MemberBadge>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
-                      <Badge label={status.label} tone={status.tone} />
-                      {!isConfirming && (
-                        <button
-                          onClick={() => setDeletingId(fb.feedbackId)}
-                          title="Xóa phản hồi"
-                          className="rogym-sx-38202e62"
-                        >
-                          <Trash2 size={13} />
-                        </button>
-                      )}
+                      <MemberBadge tone={status.tone}>{status.label}</MemberBadge>
+                      <Button
+                        variant="icon"
+                        size="sm"
+                        onClick={() => setDeletingId(fb.feedbackId)}
+                        title={t('feedback.list.buttonDelete')}
+                        className="rogym-sx-38202e62"
+                      >
+                        <Trash2 size={13} />
+                      </Button>
                     </div>
                   </div>
 
-                  <p
-                    className="mt-3 text-sm text-white rogym-sx-73cdf811"
-                    
-                  >
+                  <p className="mt-3 text-sm text-white rogym-sx-73cdf811">
                     {fb.content}
                   </p>
 
                   <div className="mt-3 flex items-center justify-between gap-4">
-                    <p className="text-xs rogym-sx-d88f932f" >{t('feedback.list.sentAt', { date: fmtDate(fb.createdAt) })}</p>
+                    <p className="text-xs rogym-sx-d88f932f">{t('feedback.list.sentAt', { date: fmtDate(fb.createdAt) })}</p>
                     {fb.status === 'resolved' && fb.response && (
-                      <p
-                        className="text-xs max-w-xs text-right rogym-sx-4331cd11"
-                        
-                      >
+                      <p className="text-xs max-w-xs text-right rogym-sx-4331cd11">
                         {t('feedback.list.responsePrefix', { response: fb.response })}
                       </p>
                     )}
                   </div>
-
-                  {isConfirming && (
-                    <div
-                      className="mt-3 flex items-center gap-3 rounded-xl px-4 py-3 rogym-sx-6a3fe515"
-                      
-                    >
-                      <p className="flex-1 text-xs rogym-sx-1cfa11b1" >{t('feedback.list.deleteConfirm')}</p>
-                      <button
-                        onClick={() => setDeletingId(null)}
-                        className="text-xs font-medium rogym-sx-2c9ff230"
-
-                      >
-                        {t('feedback.list.buttonCancelDelete')}
-                      </button>
-                      <Button
-                        variant="danger"
-                        onClick={() => handleDelete(fb.feedbackId)}
-                        disabled={isDeleting}
-                        className="rounded-lg px-3 py-1.5 text-xs font-semibold"
-                      >
-                        {isDeleting ? t('feedback.list.buttonDeleting') : t('feedback.list.buttonDelete')}
-                      </Button>
-                    </div>
-                  )}
-                </div>
+                </MemberCard>
               )
             })}
           </div>
 
-          <Pagination page={page} total={totalPages} onChange={p => { setPage(p); window.scrollTo({ top: 0, behavior: 'smooth' }) }} />
+          <Pagination
+            page={page}
+            totalPages={totalPages}
+            onPageChange={p => { setPage(p); window.scrollTo({ top: 0, behavior: 'smooth' }) }}
+          />
+
+          <ConfirmDialog
+            open={deletingId !== null}
+            title={t('feedback.list.buttonDelete')}
+            description={t('feedback.list.deleteConfirm')}
+            confirmLabel={t('feedback.list.buttonDelete')}
+            cancelLabel={t('feedback.list.buttonCancelDelete')}
+            variant="danger"
+            loading={deletingId ? deletingSet.has(deletingId) : false}
+            onConfirm={() => { if (deletingId) return handleDelete(deletingId) }}
+            onClose={() => setDeletingId(null)}
+          />
         </>
       )}
     </MemberPage>

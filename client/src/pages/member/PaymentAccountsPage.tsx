@@ -1,33 +1,24 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Trash2, Star, Check, Wallet } from 'lucide-react'
-import { Button } from '@/components/ui/Button'
+import { Trash2, Star } from 'lucide-react'
+import { Button, Checkbox, FormField, Input } from '@/components/ui'
 import paymentAccountService, { type PaymentAccount, type CreatePaymentAccountPayload } from '@/services/paymentAccount.service'
 import { type PaymentMethod } from '@/services/payment.service'
 import { useAuthStore } from '@/stores/authStore'
-import { MemberPage, MemberPageHeader, MemberSkeleton } from '@/components/MemberUI'
+import {
+  MemberBadge,
+  MemberCard,
+  MemberEmptyState,
+  MemberPage,
+  MemberPageHeader,
+  MemberSkeleton,
+} from '@/components/MemberUI'
 import {
   getPaymentMethodLabel,
   getPaymentMethodOptions,
   maskPaymentAccountRef,
 } from '@/components/payment/payment-method-data'
 import { PaymentMethodIcon } from '@/components/payment/payment-methods'
-
-function InputField({
-  label, placeholder, value, onChange,
-}: { label: string; placeholder?: string; value: string; onChange: (v: string) => void }) {
-  return (
-    <div>
-      <label className="text-xs rogym-text-dim mb-1.5 block">{label}</label>
-      <input
-        value={value}
-        onChange={e => onChange(e.target.value)}
-        placeholder={placeholder}
-        className="rogym-input w-full"
-      />
-    </div>
-  )
-}
 
 export default function PaymentAccountsPage() {
   const { t } = useTranslation('member')
@@ -115,19 +106,17 @@ export default function PaymentAccountsPage() {
           {loading ? (
             <MemberSkeleton rows={3} />
           ) : accounts.length === 0 ? (
-            <div className="rogym-card rogym-card--compact flex flex-col items-center justify-center py-14 gap-3">
-              <Wallet size={36} className="rogym-text-faint" />
-              <p className="text-sm rogym-text-secondary">{t('paymentAccounts.emptyTitle')}</p>
-              <p className="text-xs rogym-text-dim text-center max-w-xs">
-                {t('paymentAccounts.emptyDescription')}
-              </p>
-            </div>
+            <MemberEmptyState
+              title={t('paymentAccounts.emptyTitle')}
+              description={t('paymentAccounts.emptyDescription')}
+            />
           ) : (
             <div className="flex flex-col gap-3">
               {accounts.map(acc => (
-                <div
+                <MemberCard
                   key={acc.accountId}
-                  className={`rogym-payment-account rogym-card rogym-card--compact px-5 py-4 flex items-center gap-4 ${
+                  variant="compact"
+                  className={`rogym-payment-account px-5 py-4 flex items-center gap-4 ${
                     acc.isDefault ? 'is-default' : ''
                   }`}
                 >
@@ -140,9 +129,13 @@ export default function PaymentAccountsPage() {
                         {acc.label || acc.provider || getPaymentMethodLabel(acc.type)}
                       </p>
                       {acc.isDefault && (
-                        <span className="flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full rogym-sx-044401f6" >
-                          <Star size={9} fill="currentColor" /> {t('paymentAccounts.defaultBadge')}
-                        </span>
+                        <MemberBadge
+                          tone="success"
+                          size="xs"
+                          leftIcon={<Star size={9} fill="currentColor" />}
+                        >
+                          {t('paymentAccounts.defaultBadge')}
+                        </MemberBadge>
                       )}
                     </div>
                     <p className="text-xs rogym-text-secondary mt-0.5">
@@ -171,14 +164,14 @@ export default function PaymentAccountsPage() {
                   >
                     <Trash2 size={15} />
                   </Button>
-                </div>
+                </MemberCard>
               ))}
             </div>
           )}
         </div>
 
         {/* ── RIGHT: quick add card ── */}
-        <div className="rogym-card rogym-card--compact p-6 flex flex-col gap-4 xl:self-start">
+        <MemberCard variant="compact" className="p-6 flex flex-col gap-4 xl:self-start">
           <h3 className="text-base font-bold text-white">
             {t('paymentAccounts.formTitle')}
           </h3>
@@ -200,30 +193,54 @@ export default function PaymentAccountsPage() {
 
           {type === 'bank_card' && (
             <>
-              <InputField label={t('paymentAccounts.fieldBankName')} placeholder="Vietcombank, BIDV, Techcombank..." value={provider} onChange={setProvider} />
-              <InputField label={t('paymentAccounts.fieldAccountNo')} placeholder="1234567890" value={accountRef} onChange={setAccountRef} />
+              <FormField label={t('paymentAccounts.fieldBankName')}>
+                <Input
+                  placeholder="Vietcombank, BIDV, Techcombank..."
+                  value={provider}
+                  onChange={e => setProvider(e.target.value)}
+                />
+              </FormField>
+              <FormField label={t('paymentAccounts.fieldAccountNo')}>
+                <Input
+                  placeholder="1234567890"
+                  value={accountRef}
+                  onChange={e => setAccountRef(e.target.value)}
+                />
+              </FormField>
             </>
           )}
           {type === 'ewallet' && (
             <>
-              <InputField label={t('paymentAccounts.fieldWallet')} placeholder="MoMo, ZaloPay, VNPay..." value={provider} onChange={setProvider} />
-              <InputField label={t('paymentAccounts.fieldPhone')} placeholder="0912 345 678" value={accountRef} onChange={setAccountRef} />
+              <FormField label={t('paymentAccounts.fieldWallet')}>
+                <Input
+                  placeholder="MoMo, ZaloPay, VNPay..."
+                  value={provider}
+                  onChange={e => setProvider(e.target.value)}
+                />
+              </FormField>
+              <FormField label={t('paymentAccounts.fieldPhone')}>
+                <Input
+                  placeholder="0912 345 678"
+                  value={accountRef}
+                  onChange={e => setAccountRef(e.target.value)}
+                />
+              </FormField>
             </>
           )}
 
-          <InputField label={t('paymentAccounts.fieldDisplayName')} placeholder="VD: Thẻ chính, Ví cá nhân..." value={label} onChange={setLabel} />
+          <FormField label={t('paymentAccounts.fieldDisplayName')}>
+            <Input
+              placeholder="VD: Thẻ chính, Ví cá nhân..."
+              value={label}
+              onChange={e => setLabel(e.target.value)}
+            />
+          </FormField>
 
-          <label className="flex items-center gap-2.5 cursor-pointer select-none">
-            <div
-              onClick={() => setIsDefault(v => !v)}
-              className={`rogym-checkbox flex items-center justify-center rounded transition-all shrink-0 ${
-                isDefault ? 'is-checked' : ''
-              }`}
-            >
-              {isDefault && <Check size={11} className="rogym-sx-b2fbf853" />}
-            </div>
-            <span className="text-sm rogym-text-secondary">{t('paymentAccounts.checkboxDefault')}</span>
-          </label>
+          <Checkbox
+            checked={isDefault}
+            onChange={e => setIsDefault(e.target.checked)}
+            label={t('paymentAccounts.checkboxDefault')}
+          />
 
           {formError && <p className="text-xs text-red-300">{formError}</p>}
           {formSuccess && <p className="text-xs rogym-sx-b2fbf853">{t('paymentAccounts.submitSuccess')}</p>}
@@ -232,11 +249,12 @@ export default function PaymentAccountsPage() {
             variant="primary"
             onClick={handleSave}
             disabled={saving}
+            loading={saving}
             className="w-full justify-center mt-1"
           >
-            {saving ? t('paymentAccounts.buttonSaving') : t('paymentAccounts.buttonSave')}
+            {t('paymentAccounts.buttonSave')}
           </Button>
-        </div>
+        </MemberCard>
       </div>
     </MemberPage>
   )

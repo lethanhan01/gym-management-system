@@ -8,7 +8,6 @@ import {
   Phone,
   WalletCards,
   Trash2,
-  Check,
   Hash,
 } from 'lucide-react'
 import paymentService, { type PaymentMethod } from '@/services/payment.service'
@@ -24,7 +23,15 @@ import {
   type PaymentMethodOption,
 } from '@/components/payment/payment-method-data'
 import { PaymentMethodIcon } from '@/components/payment/payment-methods'
-import { Button } from '@/components/ui/Button'
+import { Button, Checkbox, FormField, Input } from '@/components/ui'
+import {
+  MemberBadge,
+  MemberCard,
+  MemberEmptyState,
+  MemberPage,
+  MemberPageHeader,
+  MemberSkeleton,
+} from '@/components/MemberUI'
 import { toast } from '@/lib/toast'
 
 interface PayState {
@@ -46,39 +53,10 @@ function MethodBtn({
   onClick: () => void
 }) {
   return (
-    <button onClick={onClick} className={`rogym-checkout-method ${selected ? 'is-active' : ''}`}>
+    <button type="button" onClick={onClick} className={`rogym-checkout-method ${selected ? 'is-active' : ''}`}>
       <opt.Icon size={18} />
       {opt.label}
     </button>
-  )
-}
-
-function InputField({
-  label,
-  placeholder,
-  value,
-  onChange,
-  icon,
-}: {
-  label: string
-  placeholder?: string
-  value: string
-  onChange: (v: string) => void
-  icon?: React.ReactNode
-}) {
-  return (
-    <div>
-      <label className="rogym-sx-908da9f0">{label}</label>
-      <div className="rogym-checkout-field rogym-sx-50666a57">
-        {icon && <div className="rogym-checkout-field__icon">{icon}</div>}
-        <input
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          placeholder={placeholder}
-          className={`rogym-checkout-field__input ${icon ? 'has-icon' : ''}`}
-        />
-      </div>
-    </div>
   )
 }
 
@@ -158,7 +136,7 @@ export default function SubscriptionCheckoutPage({ mode }: { mode: 'buy' | 'rene
       await paymentAccountService.remove(user.memberId, accountId)
       setAccounts((prev) => prev.filter((a) => a.accountId !== accountId))
       toast.success(t('subscription.checkout.success.deletedAccount', { defaultValue: 'Đã xóa tài khoản thanh toán' }))
-    } catch (err) {
+    } catch {
       toast.error(t('subscription.checkout.error.deleteAccount', { defaultValue: 'Xóa tài khoản thất bại' }))
     }
   }
@@ -180,8 +158,7 @@ export default function SubscriptionCheckoutPage({ mode }: { mode: 'buy' | 'rene
         }
       }
 
-      // Gia hạn: 1 endpoint atomic (tạo payment + cộng endDate trong cùng transaction).
-      // Không gọi paymentService.create riêng — backend không nhận payment cho sub đang active.
+      // Gia hạn: 1 endpoint atomic
       if (mode === 'renew') {
         if (!state?.subscriptionId) {
           toast.error(t('subscription.checkout.errorRenewNotFound'))
@@ -196,7 +173,7 @@ export default function SubscriptionCheckoutPage({ mode }: { mode: 'buy' | 'rene
         return
       }
 
-      // Mua mới: tạo (hoặc dùng lại) sub pending rồi thanh toán để kích hoạt.
+      // Mua mới
       let subId: number
       if (state!.subscriptionId) {
         subId = Number(state!.subscriptionId)
@@ -246,21 +223,24 @@ export default function SubscriptionCheckoutPage({ mode }: { mode: 'buy' | 'rene
   }
 
   return (
-    <div className="rogym-sx-13d95242">
-      <Button
-        variant="text-accent"
-        onClick={() => navigate(-1)}
-        className="rogym-sx-dd54bdbf"
-      >
-        <ArrowLeft size={14} /> {t('subscription.checkout.backLink')}
-      </Button>
-
-      <h1 className="text-2xl font-bold text-white mb-1">
-        {mode === 'renew' ? t('subscription.checkout.titleRenew') : t('subscription.checkout.title')}
-      </h1>
+    <MemberPage>
+      <MemberPageHeader
+        eyebrow="Thanh toán"
+        title={mode === 'renew' ? t('subscription.checkout.titleRenew') : t('subscription.checkout.title')}
+        actions={
+          <Button
+            variant="outline-white"
+            size="sm"
+            onClick={() => navigate(-1)}
+            leftIcon={<ArrowLeft size={14} />}
+          >
+            {t('subscription.checkout.backLink')}
+          </Button>
+        }
+      />
 
       {/* Order summary bar */}
-      <div className="rounded-2xl px-5 py-4 mb-6 flex items-center justify-between rogym-sx-93eaf0d2">
+      <MemberCard variant="compact" className="px-5 py-4 mb-6 flex items-center justify-between">
         <div>
           <p className="rogym-sx-780e0fa6">{mode === 'renew' ? t('subscription.checkout.orderRenew') : t('subscription.checkout.orderBuy')}</p>
           <p className="rogym-sx-668e18f3">{state.packageName}</p>
@@ -269,11 +249,11 @@ export default function SubscriptionCheckoutPage({ mode }: { mode: 'buy' | 'rene
           </p>
         </div>
         <p className="rogym-sx-04751e92">{formatVnd(state.price)}</p>
-      </div>
+      </MemberCard>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Card left: payment info */}
-        <div className="rounded-2xl p-6 flex flex-col gap-4 rogym-sx-25952519">
+        <MemberCard variant="compact" className="p-6 flex flex-col gap-4">
           <h3 className="text-base font-bold text-white">{t('subscription.checkout.paymentInfoTitle')}</h3>
 
           <div className="flex flex-col gap-2">
@@ -289,110 +269,101 @@ export default function SubscriptionCheckoutPage({ mode }: { mode: 'buy' | 'rene
 
           {method === 'bank_card' && (
             <div className="flex flex-col gap-3">
-              <InputField
-                label={t('subscription.checkout.fieldBankName')}
-                placeholder="Vietcombank, BIDV..."
-                value={bankName}
-                onChange={setBankName}
-                icon={<Landmark size={15} />}
-              />
-              <InputField
-                label={t('subscription.checkout.fieldAccountNo')}
-                placeholder="1234567890"
-                value={accountNo}
-                onChange={setAccountNo}
-                icon={<CreditCard size={15} />}
-              />
-              <InputField
-                label={t('subscription.checkout.fieldTxRef')}
-                placeholder="REF-..."
-                value={txRef}
-                onChange={setTxRef}
-                icon={<Hash size={15} />}
-              />
+              <FormField label={t('subscription.checkout.fieldBankName')}>
+                <Input
+                  placeholder="Vietcombank, BIDV..."
+                  value={bankName}
+                  onChange={(e) => setBankName(e.target.value)}
+                  leftIcon={<Landmark size={15} />}
+                />
+              </FormField>
+              <FormField label={t('subscription.checkout.fieldAccountNo')}>
+                <Input
+                  placeholder="1234567890"
+                  value={accountNo}
+                  onChange={(e) => setAccountNo(e.target.value)}
+                  leftIcon={<CreditCard size={15} />}
+                />
+              </FormField>
+              <FormField label={t('subscription.checkout.fieldTxRef')}>
+                <Input
+                  placeholder="REF-..."
+                  value={txRef}
+                  onChange={(e) => setTxRef(e.target.value)}
+                  leftIcon={<Hash size={15} />}
+                />
+              </FormField>
             </div>
           )}
 
           {method === 'ewallet' && (
             <div className="flex flex-col gap-3">
-              <InputField
-                label={t('subscription.checkout.fieldWallet')}
-                placeholder="MoMo, ZaloPay, VNPay..."
-                value={provider}
-                onChange={setProvider}
-                icon={<WalletCards size={15} />}
-              />
-              <InputField
-                label={t('subscription.checkout.fieldPhone')}
-                placeholder="0912 345 678"
-                value={phoneNo}
-                onChange={setPhoneNo}
-                icon={<Phone size={15} />}
-              />
-              <InputField
-                label={t('subscription.checkout.fieldTxRef')}
-                placeholder="REF-..."
-                value={txRef}
-                onChange={setTxRef}
-                icon={<Hash size={15} />}
-              />
+              <FormField label={t('subscription.checkout.fieldWallet')}>
+                <Input
+                  placeholder="MoMo, ZaloPay, VNPay..."
+                  value={provider}
+                  onChange={(e) => setProvider(e.target.value)}
+                  leftIcon={<WalletCards size={15} />}
+                />
+              </FormField>
+              <FormField label={t('subscription.checkout.fieldPhone')}>
+                <Input
+                  placeholder="0912 345 678"
+                  value={phoneNo}
+                  onChange={(e) => setPhoneNo(e.target.value)}
+                  leftIcon={<Phone size={15} />}
+                />
+              </FormField>
+              <FormField label={t('subscription.checkout.fieldTxRef')}>
+                <Input
+                  placeholder="REF-..."
+                  value={txRef}
+                  onChange={(e) => setTxRef(e.target.value)}
+                  leftIcon={<Hash size={15} />}
+                />
+              </FormField>
             </div>
           )}
 
           {method !== 'cash' && (
-            <label className="rogym-sx-8cd06ff5">
-              <div
-                onClick={() => setSaveAccount((v) => !v)}
-                className={`rogym-checkbox ${saveAccount ? 'is-checked' : ''}`}
-              >
-                {saveAccount && <Check size={11} className="rogym-sx-b2fbf853" />}
-              </div>
-              <span className="rogym-sx-c2ff5e7f">{t('subscription.checkout.checkboxSave')}</span>
-            </label>
+            <Checkbox
+              checked={saveAccount}
+              onChange={(e) => setSaveAccount(e.target.checked)}
+              label={t('subscription.checkout.checkboxSave')}
+            />
           )}
 
           <Button
             variant="primary"
-            size="wide"
+            fullWidth
             onClick={handleConfirm}
             disabled={submitting}
+            loading={submitting}
             className="mt-auto"
           >
-            {submitting
-              ? t('subscription.checkout.buttonProcessing')
-              : t(
-                  mode === 'renew'
-                    ? 'subscription.checkout.buttonConfirmRenew'
-                    : 'subscription.checkout.buttonConfirmPay',
-                  { price: formatVnd(state.price) }
-                )}
+            {mode === 'renew'
+              ? t('subscription.checkout.buttonConfirmRenew')
+              : t('subscription.checkout.buttonConfirmPay', { price: formatVnd(state.price) })}
           </Button>
-        </div>
+        </MemberCard>
 
         {/* Card right: saved accounts */}
-        <div className="rounded-2xl p-6 flex flex-col gap-3 rogym-sx-25952519">
+        <MemberCard variant="compact" className="p-6 flex flex-col gap-3">
           <h3 className="text-base font-bold text-white">{t('subscription.checkout.savedAccountsTitle')}</h3>
           <p className="rogym-sx-61bc6441">{t('subscription.checkout.savedAccountsHint')}</p>
 
           {accountsLoading ? (
-            <div className="flex flex-col gap-2">
-              {[0, 1].map((i) => (
-                <div key={i} className="animate-pulse rounded-xl rogym-sx-38664d25" />
-              ))}
-            </div>
+            <MemberSkeleton rows={2} />
           ) : accounts.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-10 gap-3 rogym-sx-ee3d55bf">
-              <WalletCards size={36} className="rogym-sx-1c327a5d" />
-              <p className="rogym-sx-0ea5ff5a">{t('subscription.checkout.noSavedAccounts')}</p>
-              <p className="rogym-sx-78d149e3">
-                {t('subscription.checkout.noSavedAccountsHint')}
-              </p>
-            </div>
+            <MemberEmptyState
+              title={t('subscription.checkout.noSavedAccounts')}
+              description={t('subscription.checkout.noSavedAccountsHint')}
+            />
           ) : (
             <div className="flex flex-col gap-2">
               {accounts.map((acc) => (
                 <div key={acc.accountId} className="rogym-sx-ad669c58">
-                  <button onClick={() => fillFromAccount(acc)} className="rogym-sx-00ca7311">
+                  <button type="button" onClick={() => fillFromAccount(acc)} className="rogym-sx-00ca7311">
                     <div className="rogym-sx-52a21cf8">
                       <PaymentMethodIcon method={acc.type} size={15} />
                     </div>
@@ -401,26 +372,32 @@ export default function SubscriptionCheckoutPage({ mode }: { mode: 'buy' | 'rene
                         <p className="rogym-sx-3cb875af">
                           {acc.label || acc.provider || getPaymentMethodLabel(acc.type)}
                         </p>
-                        {acc.isDefault && <span className="rogym-sx-8abe74be">{t('subscription.checkout.defaultBadge')}</span>}
+                        {acc.isDefault && (
+                          <MemberBadge tone="success" size="xs">
+                            {t('subscription.checkout.defaultBadge')}
+                          </MemberBadge>
+                        )}
                       </div>
                       {acc.accountRef && (
                         <p className="rogym-sx-8c2d1cde">{maskPaymentAccountRef(acc.accountRef)}</p>
                       )}
                     </div>
                   </button>
-                  <button
+                  <Button
+                    variant="icon"
+                    size="sm"
                     onClick={() => handleDeleteAccount(acc.accountId)}
                     className="rogym-sx-07caf3f9"
                     title={t('subscription.checkout.buttonDeleteAccount')}
                   >
                     <Trash2 size={14} />
-                  </button>
+                  </Button>
                 </div>
               ))}
             </div>
           )}
-        </div>
+        </MemberCard>
       </div>
-    </div>
+    </MemberPage>
   )
 }

@@ -7,7 +7,7 @@ import {
   MemberErrorState,
   MemberSkeleton,
 } from '@/components/MemberUI'
-import { CardTitle } from '@/components/ui'
+import { Button, CardTitle } from '@/components/ui'
 import type {
   WorkoutAssignmentSummary,
   WorkoutPlan,
@@ -112,24 +112,22 @@ function WorkoutPlanCard({
                   </p>
                 </div>
                 <div className="flex shrink-0 items-center gap-2">
-                  <button
-                    type="button"
-                    className="rogym-btn rogym-btn--elevated rogym-btn--icon"
+                  <Button
+                    variant="outline-white"
+                    size="sm"
                     onClick={() => onEditDay(day, assignment)}
                     aria-label={t('workout.createSession.buttonEditDay', { name: day.name })}
                     title={t('workout.createSession.buttonEditDay', { name: day.name })}
-                  >
-                    <Pencil size={16} />
-                  </button>
-                  <button
-                    type="button"
-                    className="rogym-btn rogym-btn--primary rogym-btn--icon"
+                    leftIcon={<Pencil size={14} />}
+                  />
+                  <Button
+                    variant="primary"
+                    size="sm"
                     onClick={() => onStartDay(day, assignment)}
                     aria-label={t('workout.createSession.buttonStartDay', { name: day.name })}
                     title={t('workout.createSession.buttonStartDay', { name: day.name })}
-                  >
-                    <Play size={16} />
-                  </button>
+                    leftIcon={<Play size={14} />}
+                  />
                 </div>
               </div>
             ))}
@@ -168,9 +166,9 @@ export function WorkoutPlanList({
         title={t('workout.createSession.emptyTitle')}
         description={t('workout.createSession.emptyDescription')}
         action={
-          <button type="button" className="rogym-btn rogym-btn--primary" onClick={onCreatePlan}>
-            <Dumbbell size={14} /> {t('workout.createSession.buttonCreatePlan')}
-          </button>
+          <Button variant="primary" onClick={onCreatePlan} leftIcon={<Dumbbell size={14} />}>
+            {t('workout.createSession.buttonCreatePlan')}
+          </Button>
         }
       />
     )

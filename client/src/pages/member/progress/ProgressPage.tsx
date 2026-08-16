@@ -1,7 +1,10 @@
 import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react'
 import type { TFunction } from 'i18next'
 import { useTranslation } from 'react-i18next'
+import { Scale, Activity } from 'lucide-react'
 import {
+  MemberCard,
+  MemberStatCard,
   MemberPage,
   MemberPageHeader,
   MemberSkeleton,
@@ -11,8 +14,7 @@ import { trainingService, type MemberProgress } from '@/services/training.servic
 import { memberService } from '@/services/member.service'
 import { useAuthStore } from '@/stores/authStore'
 import { getApiError } from '@/lib/api-error'
-import { Button } from '@/components/ui/Button'
-
+import { Button, FormField, Input } from '@/components/ui'
 import { PageLoader } from '@/components/shared/Spinner'
 
 const MemberWeightChart = lazy(() => import('@/components/charts/MemberWeightChart'))
@@ -37,7 +39,7 @@ function bmiLabel(bmi: number, t: TFunction<'member'>): string {
   return t('progress.bmiLabel.obese')
 }
 
-function bmiTone(bmi: number): string {
+function bmiTone(bmi: number): 'warning' | 'success' | 'danger' {
   if (bmi < 18.5) return 'warning'
   if (bmi < 25) return 'success'
   if (bmi < 30) return 'warning'
@@ -86,14 +88,13 @@ function SelfReportForm({ onSuccess, t }: { onSuccess: () => void; t: TFunction<
   }
 
   return (
-    <div className="rogym-sx-103d1cc8 p-5">
+    <MemberCard variant="compact" className="p-5">
       <p className="text-sm font-semibold text-white mb-4">{t('progress.form.title')}</p>
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         {/* trên mobile hiển thị 1 cột, từ sm trở lên 2 cột */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div className="flex flex-col gap-1">
-            <label className="text-xs rogym-sx-6e4f9432">{t('progress.form.fieldWeight')}</label>
-            <input
+          <FormField label={t('progress.form.fieldWeight')}>
+            <Input
               type="number"
               step="0.1"
               min="1"
@@ -101,13 +102,11 @@ function SelfReportForm({ onSuccess, t }: { onSuccess: () => void; t: TFunction<
               placeholder="Vd: 65.5"
               value={weight}
               onChange={(e) => setWeight(e.target.value)}
-              className="input-base"
               required
             />
-          </div>
-          <div className="flex flex-col gap-1">
-            <label className="text-xs rogym-sx-6e4f9432">{t('progress.form.fieldHeight')}</label>
-            <input
+          </FormField>
+          <FormField label={t('progress.form.fieldHeight')}>
+            <Input
               type="number"
               step="0.1"
               min="50"
@@ -115,9 +114,8 @@ function SelfReportForm({ onSuccess, t }: { onSuccess: () => void; t: TFunction<
               placeholder="Vd: 170"
               value={height}
               onChange={(e) => setHeight(e.target.value)}
-              className="input-base"
             />
-          </div>
+          </FormField>
         </div>
 
         {previewBmi != null && (
@@ -131,11 +129,18 @@ function SelfReportForm({ onSuccess, t }: { onSuccess: () => void; t: TFunction<
 
         {error && <p className="text-xs text-red-400">{error}</p>}
 
-        <Button type="submit" disabled={submitting} variant="primary" className="self-start">
-          {submitting ? t('progress.form.buttonSaving') : t('progress.form.buttonSave')}
+        <Button
+          type="submit"
+          disabled={submitting}
+          loading={submitting}
+          variant="primary"
+          size="sm"
+          className="self-start"
+        >
+          {t('progress.form.buttonSave')}
         </Button>
       </form>
-    </div>
+    </MemberCard>
   )
 }
 
@@ -203,16 +208,21 @@ export default function ProgressPage() {
 
   return (
     <MemberPage>
-      <div className="flex items-start justify-between gap-4">
-        <MemberPageHeader
-          eyebrow={t('progress.eyebrow')}
-          title={t('progress.pageTitle')}
-          description={t('progress.description')}
-        />
-        <Button variant="primary" onClick={() => setShowForm((v) => !v)} className="shrink-0 mt-1">
-          {showForm ? t('progress.buttonClose') : t('progress.buttonRecord')}
-        </Button>
-      </div>
+      <MemberPageHeader
+        eyebrow={t('progress.eyebrow')}
+        title={t('progress.pageTitle')}
+        description={t('progress.description')}
+        actions={
+          <Button
+            variant="primary"
+            size="sm"
+            onClick={() => setShowForm((v) => !v)}
+            className="shrink-0 mt-1"
+          >
+            {showForm ? t('progress.buttonClose') : t('progress.buttonRecord')}
+          </Button>
+        }
+      />
 
       {showForm && <SelfReportForm onSuccess={handleFormSuccess} t={t} />}
 
@@ -225,34 +235,23 @@ export default function ProgressPage() {
       ) : (
         <div className="space-y-5">
           {/* Stat cards */}
-          <div className="grid grid-cols-1 gap-4">
-            <div className="rogym-sx-103d1cc8">
-              <p className="text-xs font-semibold uppercase tracking-wider rogym-sx-6e4f9432">
-                {t('progress.statCurrentWeight')}
-              </p>
-              <p className="mt-2 text-2xl sm:text-3xl font-bold text-white">
-                {latest.weight != null ? `${latest.weight} kg` : '—'}
-              </p>
-              <p className="mt-1 text-xs rogym-sx-d88f932f">{t('progress.recordedAt', { date: fmtDate(latest.recordedAt) })}</p>
-            </div>
-            <div className="rogym-sx-103d1cc8">
-              <p className="text-xs font-semibold uppercase tracking-wider rogym-sx-6e4f9432">
-                {t('progress.statCurrentBmi')}
-              </p>
-              <p
-                className="rogym-tone-text mt-2 text-2xl sm:text-3xl font-bold"
-                data-tone={latest.bmi != null ? bmiTone(latest.bmi) : 'default'}
-              >
-                {latest.bmi != null ? latest.bmi.toFixed(1) : '—'}
-              </p>
-              {latest.bmi != null && (
-                <p className="mt-1 text-xs rogym-sx-d88f932f">{bmiLabel(latest.bmi, t)}</p>
-              )}
-            </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <MemberStatCard
+              icon={<Scale size={20} />}
+              label={t('progress.statCurrentWeight')}
+              value={latest.weight != null ? `${latest.weight} kg` : '—'}
+              hint={t('progress.recordedAt', { date: fmtDate(latest.recordedAt) })}
+            />
+            <MemberStatCard
+              icon={<Activity size={20} />}
+              label={t('progress.statCurrentBmi')}
+              value={latest.bmi != null ? latest.bmi.toFixed(1) : '—'}
+              hint={latest.bmi != null ? bmiLabel(latest.bmi, t) : undefined}
+            />
           </div>
 
           {/* Chart */}
-          <div className="rogym-sx-103d1cc8">
+          <MemberCard variant="compact" className="p-5">
             <div className="mb-4 flex items-center justify-between">
               <p className="text-sm font-semibold text-white">{t('progress.chartTitle')}</p>
               <div className="flex gap-1">
@@ -278,10 +277,10 @@ export default function ProgressPage() {
                 <MemberWeightChart data={chartData} />
               </Suspense>
             )}
-          </div>
+          </MemberCard>
 
           {/* History */}
-          <div className="rogym-sx-103d1cc8">
+          <MemberCard variant="compact" className="p-5">
             <p className="mb-4 text-sm font-semibold text-white">{t('progress.historyTitle')}</p>
             <div>
               {filtered.map((entry) => (
@@ -314,7 +313,7 @@ export default function ProgressPage() {
                 </div>
               ))}
             </div>
-          </div>
+          </MemberCard>
         </div>
       )}
     </MemberPage>

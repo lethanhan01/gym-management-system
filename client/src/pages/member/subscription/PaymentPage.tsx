@@ -2,36 +2,25 @@ import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import {
-  Check, Calendar, PackageX, Dumbbell, ChevronDown, UserCheck, UserX,
+  Check, Calendar, ChevronDown, UserCheck, UserX,
 } from 'lucide-react'
 import packageService, { type Package } from '@/services/package.service'
 import paymentService, { type PaymentMethod } from '@/services/payment.service'
 import subscriptionService from '@/services/subscription.service'
 import { useAuthStore } from '@/stores/authStore'
 import { useSubscriptionStore } from '@/stores/subscriptionStore'
+import {
+  MemberBadge,
+  MemberCard,
+  MemberEmptyState,
+  MemberPage,
+  MemberPageHeader,
+  MemberSkeleton,
+} from '@/components/MemberUI'
 import { getPaymentMethodOptions } from '@/components/payment/payment-method-data'
 import { formatVnd } from '@/lib/currency'
 import { parsePackageBenefits } from '@/lib/package'
-import { Button } from '@/components/ui/Button'
-
-function Skeleton() {
-  return (
-    <div className="animate-pulse rounded-[40px] rogym-sx-cb421500"  />
-  )
-}
-
-function BtnPrimary({ onClick, disabled, children }: { onClick?: () => void; disabled?: boolean; children: React.ReactNode }) {
-  return (
-    <Button
-      variant="primary"
-      size="wide"
-      onClick={onClick}
-      disabled={disabled}
-    >
-      {children}
-    </Button>
-  )
-}
+import { Button } from '@/components/ui'
 
 export default function PaymentPage() {
   const { t } = useTranslation('member')
@@ -95,34 +84,21 @@ export default function PaymentPage() {
   }
 
   return (
-    <div className="rogym-sx-53c24bf2">
-      {/* Header */}
-      <div className="rogym-sx-18b166bc">
-        <div className="flex items-center gap-3 mb-2">
-          <div className="rogym-sx-9067c2f5">
-            <Dumbbell size={18} className="text-white" />
-          </div>
-          <span className="rogym-sx-28e83c22">ROGYM</span>
-        </div>
-        <h1 className="rogym-sx-c16b1e4e">
-          {t('subscription.payment.headerTitle')}
-        </h1>
-        <p className="rogym-sx-4187d75f">
-          {t('subscription.payment.headerSubtitle')}
-        </p>
-      </div>
+    <MemberPage>
+      <MemberPageHeader
+        eyebrow="Gói Hội Viên"
+        title={t('subscription.payment.headerTitle')}
+        description={t('subscription.payment.headerSubtitle')}
+      />
 
-      <div className="rogym-sx-08918853">
+      <div>
         {/* Package grid */}
         {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {[0, 1, 2].map(i => <Skeleton key={i} />)}
-          </div>
+          <MemberSkeleton rows={4} />
         ) : packages.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20 gap-4">
-            <PackageX size={48} className="rogym-sx-d88f932f" />
-            <p className="rogym-sx-d88f932f">{t('subscription.payment.emptyPackages')}</p>
-          </div>
+          <MemberEmptyState
+            title={t('subscription.payment.emptyPackages')}
+          />
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {packages.map((pkg, idx) => {
@@ -130,10 +106,12 @@ export default function PaymentPage() {
               const isPopular  = idx === 1
               const benefits   = parsePackageBenefits(pkg.benefits)
               return (
-                <div
+                <MemberCard
                   key={pkg.packageId}
+                  as="div"
                   onClick={() => handleSelect(pkg)}
-                  className={`rogym-package-option ${isSelected ? 'is-selected' : ''} ${
+                  variant="interactive"
+                  className={`rogym-package-option cursor-pointer transition-all ${isSelected ? 'is-selected ring-2 ring-[var(--rogym-teal)]' : ''} ${
                     isPopular ? 'is-popular' : ''
                   }`}
                 >
@@ -155,29 +133,33 @@ export default function PaymentPage() {
                       <span>{t('subscription.payment.days', { count: pkg.durationDays })}</span>
                     </div>
                     {pkg.includesPt ? (
-                      <span className="flex items-center gap-1 rounded-full bg-[rgba(66,224,158,0.15)] px-2 py-0.5 text-xs font-medium text-[var(--rogym-accent)]">
-                        <UserCheck size={11} /> {t('subscription.payment.withPt')}
-                      </span>
+                      <MemberBadge tone="success" size="xs" leftIcon={<UserCheck size={11} />}>
+                        {t('subscription.payment.withPt')}
+                      </MemberBadge>
                     ) : (
-                      <span className="flex items-center gap-1 rounded-full bg-white/5 px-2 py-0.5 text-xs font-medium rogym-text-dim">
-                        <UserX size={11} /> {t('subscription.payment.selfTrain')}
-                      </span>
+                      <MemberBadge tone="muted" size="xs" leftIcon={<UserX size={11} />}>
+                        {t('subscription.payment.selfTrain')}
+                      </MemberBadge>
                     )}
                   </div>
                   {benefits.length > 0 && (
                     <ul className="flex flex-col gap-2 mb-6">
                       {benefits.map((b, i) => (
-                        <li key={i} className="flex items-start gap-2 rogym-sx-c2ff5e7f" >
+                        <li key={i} className="flex items-start gap-2 rogym-sx-c2ff5e7f">
                           <Check size={14} className="rogym-sx-9b3528d7" />
                           {b}
                         </li>
                       ))}
                     </ul>
                   )}
-                  <BtnPrimary onClick={() => handleSelect(pkg)}>
+                  <Button
+                    variant={isSelected ? 'primary' : 'outline-white'}
+                    fullWidth
+                    onClick={(e) => { e.stopPropagation(); handleSelect(pkg) }}
+                  >
                     {isSelected ? t('subscription.payment.buttonSelected') : t('subscription.payment.buttonSelectThis')}
-                  </BtnPrimary>
-                </div>
+                  </Button>
+                </MemberCard>
               )
             })}
           </div>
@@ -191,25 +173,31 @@ export default function PaymentPage() {
                 <h2 className="rogym-sx-85be1f38">
                   {t('subscription.payment.panelTitle')}
                 </h2>
-                <button onClick={() => setShowPanel(false)} className="rogym-sx-c2117916">
+                <Button
+                  variant="icon"
+                  size="sm"
+                  onClick={() => setShowPanel(false)}
+                  className="rogym-sx-c2117916"
+                  aria-label="Close"
+                >
                   <ChevronDown size={20} />
-                </button>
+                </Button>
               </div>
 
               {/* Selected package summary */}
-              <div className="flex items-center justify-between mb-5 pb-5 rogym-sx-de699e26" >
+              <div className="flex items-center justify-between mb-5 pb-5 rogym-sx-de699e26">
                 <div>
                   <p className="rogym-sx-668e18f3">{selected.name}</p>
                   <div className="flex items-center gap-2 mt-1">
                     <p className="rogym-sx-0cce7195">{t('subscription.payment.days', { count: selected.durationDays })}</p>
                     {selected.includesPt ? (
-                      <span className="flex items-center gap-1 rounded-full bg-[rgba(66,224,158,0.15)] px-2 py-0.5 text-xs font-medium text-[var(--rogym-accent)]">
-                        <UserCheck size={11} /> {t('subscription.payment.withPt')}
-                      </span>
+                      <MemberBadge tone="success" size="xs" leftIcon={<UserCheck size={11} />}>
+                        {t('subscription.payment.withPt')}
+                      </MemberBadge>
                     ) : (
-                      <span className="flex items-center gap-1 rounded-full bg-white/5 px-2 py-0.5 text-xs font-medium rogym-text-dim">
-                        <UserX size={11} /> {t('subscription.payment.selfTrain')}
-                      </span>
+                      <MemberBadge tone="muted" size="xs" leftIcon={<UserX size={11} />}>
+                        {t('subscription.payment.selfTrain')}
+                      </MemberBadge>
                     )}
                   </div>
                 </div>
@@ -235,13 +223,19 @@ export default function PaymentPage() {
                 <p className="rogym-sx-3b31904d">{error}</p>
               )}
 
-              <BtnPrimary onClick={handlePay} disabled={paying}>
-                {paying ? t('subscription.payment.buttonPaying') : t('subscription.payment.buttonPay', { price: formatVnd(selected.price) })}
-              </BtnPrimary>
+              <Button
+                variant="primary"
+                fullWidth
+                onClick={handlePay}
+                disabled={paying}
+                loading={paying}
+              >
+                {t('subscription.payment.buttonPay', { price: formatVnd(selected.price) })}
+              </Button>
             </div>
           )}
         </div>
       </div>
-    </div>
+    </MemberPage>
   )
 }

@@ -1,8 +1,8 @@
 import { FormEvent, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
-import { Button } from '@/components/ui/Button'
-import { KeyRound, LoaderCircle, LogOut, Save, UserRound } from 'lucide-react'
+import { Button, Input } from '@/components/ui'
+import { KeyRound, LogOut, Save, UserRound } from 'lucide-react'
 import { getApiError } from '@/lib/api-error'
 import { initLiff } from '@/lib/liff'
 import { formatDate } from '@/lib/date'
@@ -10,11 +10,11 @@ import { authService } from '@/services/auth.service'
 import { memberService, type MemberProfile } from '@/services/member.service'
 import { useAuthStore } from '@/stores/authStore'
 import {
-  SubmitButton,
-  TrainerPage,
-  TrainerPageHeader,
-  TrainerSkeleton,
-} from '@/components/TrainerUI'
+  MemberCard,
+  MemberPage,
+  MemberPageHeader,
+  MemberSkeleton,
+} from '@/components/MemberUI'
 import { toast } from '@/lib/toast'
 import { ProfileInfoRow } from '@/components/profile/ProfileInfoRow'
 import { ProfilePasswordField } from '@/components/profile/ProfilePasswordField'
@@ -144,17 +144,17 @@ export default function MemberProfilePage() {
   }
 
   return (
-    <TrainerPage>
-      <TrainerPageHeader
+    <MemberPage>
+      <MemberPageHeader
         eyebrow={t('profile.eyebrow')}
         title={t('profile.pageTitle')}
         description={t('profile.description')}
       />
       {loading ? (
-        <TrainerSkeleton rows={5} />
+        <MemberSkeleton rows={5} />
       ) : (
         <div className="grid gap-5 xl:grid-cols-2">
-          <section className="rogym-card rogym-card--compact p-6 flex flex-col">
+          <MemberCard variant="compact" className="p-6 flex flex-col">
             <div className="mb-5 flex items-center gap-3">
               <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[rgba(66,224,158,0.12)] rogym-text-accent">
                 <UserRound size={22} />
@@ -172,9 +172,9 @@ export default function MemberProfilePage() {
             {isEditing ? (
               <div className="border-b border-white/5 py-3">
                 <label className="mb-1.5 block rogym-field-label">{t('profile.fieldPhone')}</label>
-                <input
+                <Input
                   type="tel"
-                  className="rogym-input"
+                  size="sm"
                   value={editPhone}
                   onChange={(e) => setEditPhone(e.target.value)}
                   placeholder="0901234567"
@@ -192,9 +192,9 @@ export default function MemberProfilePage() {
             {isEditing ? (
               <div className="border-b border-white/5 py-3">
                 <label className="mb-1.5 block rogym-field-label">{t('profile.fieldAddress')}</label>
-                <input
+                <Input
                   type="text"
-                  className="rogym-input"
+                  size="sm"
                   value={editAddress}
                   onChange={(e) => setEditAddress(e.target.value)}
                   placeholder="Số nhà, đường, quận, thành phố"
@@ -226,13 +226,9 @@ export default function MemberProfilePage() {
                     type="button"
                     className="flex-1"
                     onClick={handleSaveProfile}
-                    disabled={profileSaving}
+                    loading={profileSaving}
+                    leftIcon={<Save size={16} />}
                   >
-                    {profileSaving ? (
-                      <LoaderCircle size={16} className="animate-spin" />
-                    ) : (
-                      <Save size={16} />
-                    )}{' '}
                     {t('profile.buttonSave')}
                   </Button>
                 </>
@@ -251,15 +247,16 @@ export default function MemberProfilePage() {
                     type="button"
                     className="flex-1"
                     onClick={logout}
+                    leftIcon={<LogOut size={16} />}
                   >
-                    <LogOut size={16} /> {t('profile.buttonLogout')}
+                    {t('profile.buttonLogout')}
                   </Button>
                 </>
               )}
             </div>
-          </section>
+          </MemberCard>
 
-          <section className="rogym-card rogym-card--compact p-6 flex flex-col">
+          <MemberCard variant="compact" className="p-6 flex flex-col">
             <div className="mb-5 flex items-center gap-3">
               <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[rgba(66,224,158,0.12)] rogym-text-accent">
                 <KeyRound size={22} />
@@ -285,15 +282,21 @@ export default function MemberProfilePage() {
                 />
               </div>
               <div className="mt-auto pt-4">
-                <SubmitButton loading={saving}>
-                  <KeyRound size={16} /> {t('profile.buttonUpdatePassword')}
-                </SubmitButton>
+                <Button
+                  type="submit"
+                  variant="primary"
+                  loading={saving}
+                  leftIcon={<KeyRound size={16} />}
+                  className="w-full"
+                >
+                  {t('profile.buttonUpdatePassword')}
+                </Button>
               </div>
             </form>
-          </section>
+          </MemberCard>
 
           {/* LINE Account Link */}
-          <section className="rogym-card rogym-card--compact p-6 xl:col-span-2">
+          <MemberCard variant="compact" className="p-6 xl:col-span-2">
             <div className="mb-4 flex items-center gap-3">
               <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[rgba(0,195,0,0.12)]">
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -333,9 +336,9 @@ export default function MemberProfilePage() {
                 </Button>
               )}
             </div>
-          </section>
+          </MemberCard>
         </div>
       )}
-    </TrainerPage>
+    </MemberPage>
   )
 }
