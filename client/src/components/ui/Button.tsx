@@ -199,7 +199,7 @@ export function ButtonContent({
       {children && (
         <span
           className={cn(
-            'inline-flex items-center justify-center gap-1.5 min-w-0',
+            'inline-flex items-center justify-center gap-1.5 min-w-0 max-w-full text-center',
             truncate && 'truncate',
             responsiveIconOnly && leftIcon && 'hidden sm:inline-flex'
           )}

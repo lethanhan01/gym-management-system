@@ -98,7 +98,7 @@ const HeroSection = memo(function HeroSection() {
             <div className="h-px w-10 rounded-full rogym-sx-c3c1e2cb" />
             <span className="rogym-sx-e07a83ed">{t('hero.tagline')}</span>
           </div>
-          <h1 className="uppercase leading-none mb-6 rogym-sx-5ba16c42">
+          <h1 className="uppercase mb-6 rogym-sx-5ba16c42">
             {t('hero.heading1')}
             <br />
             <span className="rogym-sx-f27dac31">{t('hero.heading2')}</span>
@@ -243,7 +243,7 @@ const TrainingSection = memo(function TrainingSection() {
             <div className="text-xs font-bold uppercase tracking-[0.3em] mb-4 rogym-sx-9cd1aaa6">
               {t('programs.sectionLabel')}
             </div>
-            <h2 className="uppercase leading-none rogym-sx-37943c0d">
+            <h2 className="uppercase rogym-sx-37943c0d">
               {t('programs.heading1')}
               <br />
               {t('programs.heading2')}
@@ -314,7 +314,7 @@ const CoachSection = memo(function CoachSection() {
       <div className="absolute inset-0 pointer-events-none rogym-sx-bee9a30c" />
       <div className="max-w-[1280px] mx-auto px-10 relative">
         <div className="text-center mb-20">
-          <h2 className="uppercase leading-none mb-5 rogym-sx-339ac6c6">{t('trainers.sectionTitle')}</h2>
+          <h2 className="uppercase mb-5 rogym-sx-339ac6c6">{t('trainers.sectionTitle')}</h2>
           <p className="uppercase font-semibold tracking-[0.15em] opacity-50 rogym-sx-8b36c264">
             {t('trainers.sectionSubtitle')}
           </p>
@@ -430,7 +430,7 @@ const PricingSection = memo(function PricingSection() {
       <div className="absolute inset-0 pointer-events-none rogym-sx-49e5c51a" />
       <div className="max-w-[1280px] mx-auto px-10 relative">
         <div className="text-center mb-20">
-          <h2 className="uppercase leading-none mb-5 rogym-sx-37943c0d">{t('packages.sectionTitle')}</h2>
+          <h2 className="uppercase mb-5 rogym-sx-37943c0d">{t('packages.sectionTitle')}</h2>
           <div className="h-1 w-24 rounded-full mx-auto rogym-sx-c3c1e2cb" />
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch mt-8">
@@ -456,7 +456,7 @@ const CTABanner = memo(function CTABanner() {
         <p className="uppercase font-bold tracking-[0.28em] mb-4 rogym-sx-4c894103">
           {t('cta.eyebrow')}
         </p>
-        <h2 className="uppercase leading-none mb-8 rogym-sx-1297467b">
+        <h2 className="uppercase mb-8 rogym-sx-1297467b">
           {t('cta.heading1')}
           <br />
           <span className="rogym-sx-f27dac31">{t('cta.heading2')}</span>

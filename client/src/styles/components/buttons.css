@@ -79,8 +79,11 @@
     font-family: var(--rogym-font-body);
     font-size: var(--btn-font-size);
     font-weight: 600;
-    line-height: 1.25;
-    white-space: nowrap;
+    line-height: 1.3;
+    white-space: normal;
+    text-wrap: balance;
+    word-break: normal;
+    overflow-wrap: break-word;
     text-align: center;
     text-decoration: none;
     cursor: pointer;
@@ -302,25 +305,25 @@
 
   .rogym-btn--xl,
   .rogym-btn--hero {
-    --btn-min-height: 50px;
-    --btn-gap: 0.625rem;
+    --btn-min-height: 48px;
+    --btn-gap: 0.5rem;
     --btn-padding-y: 0.75rem;
-    --btn-padding-x: 1.5rem;
-    --btn-font-size: 0.9375rem;
+    --btn-padding-x: clamp(1rem, 3.5vw, 1.75rem);
+    --btn-font-size: clamp(0.8125rem, 2.2vw, 0.9375rem);
     --btn-radius: 0.875rem;
-    letter-spacing: 0.08em;
+    letter-spacing: clamp(0.04em, 1vw, 0.08em);
     text-transform: uppercase;
   }
 
   @media (min-width: 640px) {
     .rogym-btn--xl,
     .rogym-btn--hero {
-      --btn-min-height: 60px;
+      --btn-min-height: 56px;
       --btn-gap: 0.75rem;
-      --btn-padding-y: 1.25rem;
-      --btn-padding-x: 2.5rem;
-      --btn-font-size: 1.0625rem;
-      letter-spacing: 0.15em;
+      --btn-padding-y: 1rem;
+      --btn-padding-x: clamp(1.5rem, 3.5vw, 2.25rem);
+      --btn-font-size: clamp(0.875rem, 1.4vw, 1rem);
+      letter-spacing: 0.08em;
     }
   }
 
