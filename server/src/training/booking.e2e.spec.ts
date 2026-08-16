@@ -6,7 +6,10 @@ import request from 'supertest'
 import { Test } from '@nestjs/testing'
 import { INestApplication, ValidationPipe } from '@nestjs/common'
 import { TrainingController } from './training.controller'
-import { TrainingService } from './training.service'
+import { AttendanceService } from './attendance.service'
+import { MemberProgressService } from './member-progress.service'
+import { MemberSessionBookingService } from './member-session-booking.service'
+import { TrainingSessionService } from './training-session.service'
 import { AuthenticatedUser } from '../auth/types/jwt-payload.interface'
 import { PermissionsGuard } from '../common/guards/permissions.guard'
 
@@ -37,9 +40,15 @@ describe('Member PT Booking (Integration / E2E)', () => {
       controllers: [TrainingController],
       providers: [
         {
-          provide: TrainingService,
+          provide: TrainingSessionService,
           useValue: mockTrainingService,
         },
+        {
+          provide: MemberSessionBookingService,
+          useValue: mockTrainingService,
+        },
+        { provide: AttendanceService, useValue: mockTrainingService },
+        { provide: MemberProgressService, useValue: mockTrainingService },
       ],
     })
       .overrideGuard(PermissionsGuard)

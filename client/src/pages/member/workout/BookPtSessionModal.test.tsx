@@ -1,11 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { BookPtSessionModal } from './BookPtSessionModal'
-import { trainingService, type TrainerAvailabilityData } from '@/services/training.service'
+import { trainingSessionService, type TrainerAvailabilityData } from '@/services/training-session.service'
 import workoutService from '@/services/workout.service'
 
-vi.mock('@/services/training.service', () => ({
-  trainingService: {
+vi.mock('@/services/training-session.service', () => ({
+  trainingSessionService: {
     getTrainerAvailability: vi.fn(),
     bookSession: vi.fn(),
   },
@@ -59,7 +59,7 @@ describe('BookPtSessionModal', () => {
   })
 
   it('fetches and displays trainer name and availability slots', async () => {
-    vi.mocked(trainingService.getTrainerAvailability).mockResolvedValue(mockAvailability)
+    vi.mocked(trainingSessionService.getTrainerAvailability).mockResolvedValue(mockAvailability)
 
     render(
       <BookPtSessionModal
@@ -70,7 +70,7 @@ describe('BookPtSessionModal', () => {
       />
     )
 
-    await waitFor(() => expect(trainingService.getTrainerAvailability).toHaveBeenCalled())
+    await waitFor(() => expect(trainingSessionService.getTrainerAvailability).toHaveBeenCalled())
     expect(screen.getByText('Coach Alex')).toBeInTheDocument()
     expect(screen.getByText('Số buổi hẹn đang chờ: 1/3')).toBeInTheDocument()
     expect(screen.getByText('Còn trống')).toBeInTheDocument()
@@ -78,8 +78,8 @@ describe('BookPtSessionModal', () => {
   })
 
   it('selects an available slot and submits booking successfully', async () => {
-    vi.mocked(trainingService.getTrainerAvailability).mockResolvedValue(mockAvailability)
-    vi.mocked(trainingService.bookSession).mockResolvedValue({
+    vi.mocked(trainingSessionService.getTrainerAvailability).mockResolvedValue(mockAvailability)
+    vi.mocked(trainingSessionService.bookSession).mockResolvedValue({
       sessionId: '100',
       memberId: '10',
       memberName: 'Test Member',
@@ -108,7 +108,7 @@ describe('BookPtSessionModal', () => {
       />
     )
 
-    await waitFor(() => expect(trainingService.getTrainerAvailability).toHaveBeenCalled())
+    await waitFor(() => expect(trainingSessionService.getTrainerAvailability).toHaveBeenCalled())
 
     // Click available slot
     const availableSlotBtn = screen.getByText('Còn trống').closest('button')
@@ -121,7 +121,7 @@ describe('BookPtSessionModal', () => {
     fireEvent.click(submitBtn)
 
     await waitFor(() => {
-      expect(trainingService.bookSession).toHaveBeenCalledWith({
+    expect(trainingSessionService.bookSession).toHaveBeenCalledWith({
         startTime: mockAvailability.slots[0].startTime,
         endTime: mockAvailability.slots[0].endTime,
         assignmentId: undefined,
@@ -138,7 +138,7 @@ describe('BookPtSessionModal', () => {
       isAxiosError: true,
       response: { data: { code: 'NO_PRIMARY_TRAINER' } },
     })
-    vi.mocked(trainingService.getTrainerAvailability).mockRejectedValue(error)
+    vi.mocked(trainingSessionService.getTrainerAvailability).mockRejectedValue(error)
 
     render(
       <BookPtSessionModal
@@ -149,7 +149,7 @@ describe('BookPtSessionModal', () => {
       />
     )
 
-    await waitFor(() => expect(trainingService.getTrainerAvailability).toHaveBeenCalled())
+    await waitFor(() => expect(trainingSessionService.getTrainerAvailability).toHaveBeenCalled())
     expect(
       screen.getByText(/Bạn chưa được gán PT phụ trách/i)
     ).toBeInTheDocument()

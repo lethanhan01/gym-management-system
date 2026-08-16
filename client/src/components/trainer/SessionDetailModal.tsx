@@ -15,7 +15,7 @@ import {
 import { getApiError } from '@/lib/api-error'
 import { formatDateTime, localDateTimeInputToIso, toDateTimeLocalInput } from '@/lib/date'
 import { facilityService, type GymRoom } from '@/services/facility.service'
-import { trainingService, type TrainingSessionDetail } from '@/services/training.service'
+import { trainingSessionService, type TrainingSessionDetail } from '@/services/training-session.service'
 import { DateTimePickerInput } from '@/components/ui'
 import { TrainerSelect, TrainerStatusBadge } from '@/components/TrainerUI'
 
@@ -77,7 +77,7 @@ export function SessionDetailModal({ sessionId, onClose, onUpdate }: Props) {
     setCancelReason('')
     setStatusTarget(null)
     try {
-      const data = await trainingService.getSession(sessionId)
+const data = await trainingSessionService.getSession(sessionId)
       setSession(data)
     } catch (err) {
       setError(getApiError(err, t('sessionModal.error.loadFailed')))
@@ -121,7 +121,7 @@ export function SessionDetailModal({ sessionId, onClose, onUpdate }: Props) {
     setSaving(true)
     setError(null)
     try {
-      await trainingService.updateSession(sessionId, {
+await trainingSessionService.updateSession(sessionId, {
         roomId: editRoomId,
         startTime: startIso,
         endTime: editEndTime,
@@ -139,7 +139,7 @@ export function SessionDetailModal({ sessionId, onClose, onUpdate }: Props) {
     setCancelling(true)
     setError(null)
     try {
-      await trainingService.cancelSession(sessionId, cancelReason.trim() || undefined)
+await trainingSessionService.cancelSession(sessionId, cancelReason.trim() || undefined)
       onUpdate?.()
       await load()
     } catch (err) {
@@ -153,7 +153,7 @@ export function SessionDetailModal({ sessionId, onClose, onUpdate }: Props) {
     setUpdatingStatus(true)
     setError(null)
     try {
-      await trainingService.updateSessionStatus(sessionId, statusTarget)
+await trainingSessionService.updateSessionStatus(sessionId, statusTarget)
       onUpdate?.()
       await load()
     } catch (err) {

@@ -11,7 +11,7 @@ import {
   MemberSkeleton,
   MemberErrorState,
 } from '@/components/MemberUI'
-import { trainingService, type MemberProgress } from '@/services/training.service'
+import { memberProgressService, type MemberProgress } from '@/services/member-progress.service'
 import { memberService } from '@/services/member.service'
 import workoutService, { type WorkoutAssignmentSummary } from '@/services/workout.service'
 import { useAuthStore } from '@/stores/authStore'
@@ -176,7 +176,7 @@ export default function ProgressPage() {
     setError(null)
     try {
       const [progressData, assignmentData] = await Promise.all([
-        trainingService.listProgress(String(memberId)),
+memberProgressService.listProgress(String(memberId)),
         workoutService.getAssignments(String(memberId), { status: 'active' }).catch(() => []),
       ])
       setData(progressData)

@@ -14,7 +14,7 @@ import {
 import { feedbackService, type Feedback } from '@/services/feedback.service'
 import { memberService } from '@/services/member.service'
 import { staffService, type StaffProfile } from '@/services/staff.service'
-import { trainingService, type AttendanceLog } from '@/services/training.service'
+import { attendanceService, type AttendanceLog } from '@/services/attendance.service'
 import { type StaffAttendanceLog } from '@/services/staffAttendance.service'
 import { useStaffAttendanceStore } from '@/stores/staffAttendanceStore'
 import {
@@ -221,7 +221,7 @@ export default function StaffDashboardPage() {
     void loadAttendance()
     Promise.all([
       staffService.getMe(),
-      trainingService.getAttendance({ from, to, pageSize: 20 }),
+attendanceService.getAttendance({ from, to, pageSize: 20 }),
       feedbackService.list({ status: 'open', pageSize: 20 }),
       memberService.list({ pageSize: 1 }),
     ])

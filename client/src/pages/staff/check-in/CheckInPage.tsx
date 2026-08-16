@@ -4,7 +4,7 @@ import { QRCodeCanvas } from 'qrcode.react'
 import { CheckCircle2, LogIn, QrCode, RefreshCcw } from 'lucide-react'
 import { getApiError, getApiErrorCode } from '@/lib/api-error'
 import { formatDate, formatTime, todayInput, startOfLocalDayIso, endOfLocalDayIso } from '@/lib/date'
-import { trainingService, type AttendanceLog, type QrTokenResponse } from '@/services/training.service'
+import { attendanceService, type AttendanceLog, type QrTokenResponse } from '@/services/attendance.service'
 import {
   StaffEmptyState,
   StaffErrorState,
@@ -35,7 +35,7 @@ export default function CheckInPage() {
     const today = todayInput()
     setLoadingLogs(true)
     setLogsError(null)
-    trainingService
+attendanceService
       .getAttendance({
         from: startOfLocalDayIso(today),
         to: endOfLocalDayIso(today),
@@ -63,7 +63,7 @@ export default function CheckInPage() {
   function loadQrToken() {
     setLoadingQr(true)
     setQrError(null)
-    trainingService
+        attendanceService
       .getQrToken()
       .then(setQrToken)
       .catch((err) => setQrError(getApiError(err, t('checkIn.qrLoadFailed'))))
@@ -85,7 +85,7 @@ export default function CheckInPage() {
     setChecking(true)
     setLastCheckedIn(null)
     try {
-      const log = await trainingService.manualCheckin({
+    const log = await attendanceService.manualCheckin({
         memberCode: memberCode.trim().toUpperCase(),
         occurredAt: new Date().toISOString(),
       })

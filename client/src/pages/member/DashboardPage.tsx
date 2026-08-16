@@ -20,7 +20,8 @@ import { useAuthStore } from '@/stores/authStore'
 import { useSubscriptionStore } from '@/stores/subscriptionStore'
 import subscriptionService, { type Subscription } from '@/services/subscription.service'
 import packageService from '@/services/package.service'
-import { trainingService, type TrainingSession } from '@/services/training.service'
+import { attendanceService } from '@/services/attendance.service'
+import { trainingSessionService, type TrainingSession } from '@/services/training-session.service'
 import { memberService, type MemberProgress, type MemberProfile } from '@/services/member.service'
 import { feedbackService, type Feedback } from '@/services/feedback.service'
 import api from '@/services/api'
@@ -579,9 +580,9 @@ export default function MemberDashboardPage() {
 
     Promise.allSettled([
       subscriptionService.getByMember(memberId),
-      trainingService.getSessions({ status: 'scheduled', from: nowIso, pageSize: 3, sort: 'start_time:asc' }),
+      trainingSessionService.getSessions({ status: 'scheduled', from: nowIso, pageSize: 3, sort: 'start_time:asc' }),
       memberService.getProgress(memberId, { limit: 1 }),
-      trainingService.getAttendance({ memberId, month: todayYYYYMM() }),
+      attendanceService.getAttendance({ memberId, month: todayYYYYMM() }),
       api.get(`/workout-plans/members/${memberId}/assignments`, {
         params: { status: 'active', limit: 1 },
       }),

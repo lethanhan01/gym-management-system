@@ -12,7 +12,7 @@ import {
 } from '@/components/MemberUI'
 import { getApiError } from '@/lib/api-error'
 import workoutService, { type WorkoutAssignmentSummary, type WorkoutPlanDay } from '@/services/workout.service'
-import { trainingService } from '@/services/training.service'
+import { trainingSessionService } from '@/services/training-session.service'
 import { useAuthStore } from '@/stores/authStore'
 import { useWorkoutSessionControlStore } from '@/stores/workoutSessionControlStore'
 import { WorkoutFocusModal } from './create-session/WorkoutFocusModal'
@@ -130,7 +130,7 @@ export default function CreateWorkoutDaySessionPage() {
         return
       }
       if (sessionId) {
-        const session = await trainingService.getSession(sessionId)
+const session = await trainingSessionService.getSession(sessionId)
         if (session.assignmentId !== assignmentId || session.planDayId !== planDayId) {
           setError(t('workout.createSession.invalidDayLink'))
           return

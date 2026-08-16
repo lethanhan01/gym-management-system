@@ -4,7 +4,7 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import i18n from '@/lib/i18n'
 import { useAuthStore } from '@/stores/authStore'
 import workoutService, { type WorkoutAssignmentSummary, type WorkoutPlan } from '@/services/workout.service'
-import { trainingService, type TrainingSessionDetail } from '@/services/training.service'
+import { trainingSessionService, type TrainingSessionDetail } from '@/services/training-session.service'
 import { getSessionDraftStorageKey, saveSessionDraft } from './create-session/sessionDraft'
 import CreateWorkoutDaySessionPage from './CreateWorkoutDaySessionPage'
 
@@ -13,7 +13,7 @@ vi.mock('@/services/workout.service', async () => {
   return { ...actual, default: { ...actual.default, getAssignments: vi.fn(), getPlan: vi.fn(), createLog: vi.fn() } }
 })
 
-vi.mock('@/services/training.service', () => ({ trainingService: { getSession: vi.fn() } }))
+vi.mock('@/services/training-session.service', () => ({ trainingSessionService: { getSession: vi.fn() } }))
 
 const assignment: WorkoutAssignmentSummary = {
   assignmentId: '101', memberId: '10', planId: '1', assignedByStaffId: '20', startDate: '2026-07-01',
@@ -54,7 +54,7 @@ describe('CreateWorkoutDaySessionPage', () => {
     vi.mocked(workoutService.getAssignments).mockResolvedValue([assignment])
     vi.mocked(workoutService.getPlan).mockResolvedValue(plan)
     vi.mocked(workoutService.createLog).mockResolvedValue({} as never)
-    vi.mocked(trainingService.getSession).mockResolvedValue(session)
+    vi.mocked(trainingSessionService.getSession).mockResolvedValue(session)
   })
 
   it('renders configured sets read-only, starts the timer, and pauses it before leaving', async () => {

@@ -23,6 +23,14 @@ interface ModalProps {
   size?: ModalSize
 }
 
+export function ModalFooter({ children, className = '' }: { children: ReactNode; className?: string }) {
+  return (
+    <div className={`flex items-center justify-end gap-2.5 sm:gap-3 [&>button]:flex-1 sm:[&>button]:flex-initial ${className}`}>
+      {children}
+    </div>
+  )
+}
+
 export function Modal({ open, title, children, onClose, footer, headerActions, size = 'xl' }: ModalProps) {
   const { t } = useTranslation('common')
   useEffect(() => {
@@ -38,17 +46,16 @@ export function Modal({ open, title, children, onClose, footer, headerActions, s
 
   return (
     <div
-      className="fixed inset-0 z-[80] flex items-center justify-center bg-black/70 p-4"
+      className="fixed inset-0 z-[80] flex items-center justify-center bg-black/70 p-3 sm:p-4"
       role="dialog"
       aria-modal="true"
       aria-labelledby="modal-title"
     >
-      {/* w-[90vw] ngăn modal chạm sát cạnh màn hình nhỏ; md:w-full trở lại full-width bên trong backdrop p-4 */}
       <div
-        className={`max-h-[90vh] w-[90vw] md:w-full ${SIZE_CLASS[size]} overflow-y-auto rounded-2xl border border-[var(--rogym-border-teal-dim)] bg-[var(--rogym-bg-card)] shadow-[var(--rogym-shadow-glass)]`}
+        className={`max-h-[92vh] w-[calc(100vw-24px)] sm:w-full ${SIZE_CLASS[size]} overflow-y-auto rounded-2xl border border-[var(--rogym-border-teal-dim)] bg-[var(--rogym-bg-card)] shadow-[var(--rogym-shadow-glass)]`}
       >
-        <div className="flex items-center justify-between border-b border-white/5 px-6 py-4">
-          <h2 id="modal-title" className="text-lg font-bold text-white">
+        <div className="flex items-center justify-between border-b border-white/5 px-4 sm:px-6 py-3.5 sm:py-4">
+          <h2 id="modal-title" className="text-base sm:text-lg font-bold text-white">
             {title}
           </h2>
           <div className="flex items-center gap-1.5">
@@ -63,9 +70,11 @@ export function Modal({ open, title, children, onClose, footer, headerActions, s
             </Button>
           </div>
         </div>
-        <div className="p-6">{children}</div>
+        <div className="p-4 sm:p-6">{children}</div>
         {footer && (
-          <div className="flex justify-end gap-3 border-t border-white/5 px-6 py-4">{footer}</div>
+          <div className="border-t border-white/5 px-4 sm:px-6 py-3.5 sm:py-4">
+            <ModalFooter>{footer}</ModalFooter>
+          </div>
         )}
       </div>
     </div>

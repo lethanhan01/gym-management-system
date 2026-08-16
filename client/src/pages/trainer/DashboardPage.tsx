@@ -6,7 +6,7 @@ import { CalendarDays, CheckCircle, CheckCircle2, Clock3, Play, Plus, Users } fr
 import { getApiError } from '@/lib/api-error'
 import { formatDate, formatDateTime, formatTime, todayInput } from '@/lib/date'
 import { memberService, type TrainerStudentSummary } from '@/services/member.service'
-import { trainingService, type TrainingSession } from '@/services/training.service'
+import { trainingSessionService, type TrainingSession } from '@/services/training-session.service'
 import {
   TrainerEmptyState,
   TrainerErrorState,
@@ -196,7 +196,7 @@ export default function TrainerDashboardPage() {
     const nextWeek = new Date(Date.now() + 7 * 86400000).toISOString()
     Promise.all([
       memberService.list({ pageSize: 100 }),
-      trainingService.getSessions({
+trainingSessionService.getSessions({
         from: monthStart,
         to: nextWeek,
         pageSize: 100,
@@ -281,7 +281,7 @@ export default function TrainerDashboardPage() {
   const handleUpdateStatus = useCallback(async (sessionId: string, status: SessionStatusUpdate) => {
     setActionLoading(sessionId)
     try {
-      const updated = await trainingService.updateSessionStatus(sessionId, status)
+const updated = await trainingSessionService.updateSessionStatus(sessionId, status)
       setSessions((prev) => prev.map((s) => (s.sessionId === sessionId ? updated : s)))
       toast.success(status === 'completed' 
         ? t('dashboard.success.completed', { defaultValue: 'Đã hoàn thành buổi tập' })

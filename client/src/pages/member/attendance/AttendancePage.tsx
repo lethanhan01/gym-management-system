@@ -1,7 +1,7 @@
 import { memo, useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ChevronLeft, ChevronRight, Clock } from 'lucide-react'
-import { trainingService, type AttendanceLog } from '@/services/training.service'
+import { attendanceService, type AttendanceLog } from '@/services/attendance.service'
 import {
   MemberBadge,
   MemberCard,
@@ -377,7 +377,7 @@ export default function AttendancePage() {
     setCalError(null)
     const fromISO = toISODate(new Date(calMonth.getFullYear(), calMonth.getMonth(), 1))
     const toISO = toISODate(new Date(calMonth.getFullYear(), calMonth.getMonth() + 1, 0))
-    trainingService
+attendanceService
       .getAttendance({ memberId, from: fromISO, to: toISO, pageSize: 100 })
       .then((res) => setCalLogs(res.data))
       .catch((err) => setCalError(getApiError(err, t('attendance.errorCalendar'))))
@@ -395,7 +395,7 @@ export default function AttendancePage() {
     }
     setListLoading(true)
     setListError(null)
-    trainingService
+attendanceService
       .getAttendance({ memberId, from, to, pageSize: 100 })
       .then((res) => {
         const sorted = [...res.data].sort(

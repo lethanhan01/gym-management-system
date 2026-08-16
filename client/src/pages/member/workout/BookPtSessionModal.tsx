@@ -12,10 +12,10 @@ import { Button, Modal } from '@/components/ui'
 import { toast } from '@/lib/toast'
 import { getApiError, getApiErrorCode } from '@/lib/api-error'
 import {
-  trainingService,
+  trainingSessionService,
   type TrainerAvailabilityData,
   type TrainerAvailabilitySlot,
-} from '@/services/training.service'
+} from '@/services/training-session.service'
 import workoutService, { type WorkoutPlan } from '@/services/workout.service'
 import { useAuthStore } from '@/stores/authStore'
 
@@ -114,7 +114,7 @@ export function BookPtSessionModal({
     setLoadingAvailability(true)
     setNoTrainer(false)
     try {
-      const data = await trainingService.getTrainerAvailability(dateStr)
+      const data = await trainingSessionService.getTrainerAvailability(dateStr)
       setAvailability(data)
     } catch (err: unknown) {
       const code = getApiErrorCode(err)
@@ -145,7 +145,7 @@ export function BookPtSessionModal({
     if (!selectedSlot) return
     setBookingLoading(true)
     try {
-      await trainingService.bookSession({
+      await trainingSessionService.bookSession({
         startTime: selectedSlot.startTime,
         endTime: selectedSlot.endTime,
         assignmentId: activePlan && selectedPlanDayId ? activePlan.assignmentId : undefined,
@@ -171,28 +171,47 @@ export function BookPtSessionModal({
   return (
     <Modal
       open={open}
-      onClose={bookingLoading ? () => {} : onClose}
+      onClose={bookingLoading ? () => { } : onClose}
       title={t('workout.schedule.booking.modalTitle')}
       size="lg"
+      footer={
+        <>
+          <Button
+            variant="secondary"
+            onClick={onClose}
+            disabled={bookingLoading}
+          >
+            {t('workout.schedule.buttonClose')}
+          </Button>
+          <Button
+            variant="primary"
+            onClick={() => void handleBooking()}
+            disabled={!selectedSlot || bookingLoading || noTrainer || scheduledCount >= 3}
+            loading={bookingLoading}
+          >
+            {t('workout.schedule.booking.confirmBtn')}
+          </Button>
+        </>
+      }
     >
-      <div className="space-y-6 pt-2">
+      <div className="space-y-4 sm:space-y-5">
         {/* Trainer & Quota Bar */}
         {availability?.trainer ? (
-          <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-            <div className="flex items-center gap-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[var(--rogym-accent)]/15 text-[var(--rogym-accent)]">
-                <User size={24} />
+          <div className="flex flex-wrap items-center justify-between gap-2.5 rounded-xl border border-white/10 bg-white/[0.03] p-3 sm:p-3.5">
+            <div className="flex items-center gap-2.5">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[var(--rogym-accent)]/15 text-[var(--rogym-accent)]">
+                <User size={20} />
               </div>
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-wider text-white/50">
+              <div className="min-w-0">
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-white/50">
                   {t('workout.schedule.fieldTrainer')}
                 </p>
-                <p className="text-base font-bold text-white">
+                <p className="truncate text-sm font-bold text-white">
                   {availability.trainer.fullName}
                 </p>
               </div>
             </div>
-            <div className="rounded-xl border border-white/10 bg-white/[0.04] px-3.5 py-1.5 text-xs font-medium text-white/80">
+            <div className="rounded-lg border border-white/10 bg-white/[0.04] px-2.5 py-1 text-xs font-medium text-white/80">
               {t('workout.schedule.booking.activeQuota', { count: scheduledCount })}
             </div>
           </div>
@@ -200,7 +219,7 @@ export function BookPtSessionModal({
 
         {/* No Trainer Warning */}
         {noTrainer && (
-          <div className="flex items-start gap-3 rounded-2xl border border-amber-500/20 bg-amber-500/10 p-4 text-sm text-amber-200">
+          <div className="flex items-start gap-3 rounded-xl border border-amber-500/20 bg-amber-500/10 p-3.5 text-sm text-amber-200">
             <AlertCircle className="mt-0.5 shrink-0 text-amber-400" size={18} />
             <div>
               <p className="font-semibold">{t('workout.schedule.booking.noTrainer')}</p>
@@ -210,19 +229,19 @@ export function BookPtSessionModal({
 
         {/* Horizontal 7-day Date Picker */}
         {!noTrainer && (
-          <div className="space-y-2">
+          <div className="space-y-1.5">
             <label className="text-xs font-bold uppercase tracking-wider text-white/60">
               {t('workout.schedule.booking.selectDate')}
             </label>
-            <div className="grid grid-cols-4 sm:grid-cols-7 gap-2">
+            <div className="flex gap-2 overflow-x-auto pb-1 pt-0.5 no-scrollbar -mx-1 px-1">
               {availableDays.map(({ dateStr, dateObj }, idx) => {
                 const isSelected = selectedDate === dateStr
                 const dayName =
                   idx === 0
                     ? t('workout.schedule.today')
                     : idx === 1
-                    ? t('workout.schedule.tomorrow')
-                    : dateObj.toLocaleDateString(locale, { weekday: 'short' })
+                      ? t('workout.schedule.tomorrow')
+                      : dateObj.toLocaleDateString(locale, { weekday: 'short' })
                 const dayNum = dateObj.toLocaleDateString(locale, { day: '2-digit', month: '2-digit' })
 
                 return (
@@ -230,16 +249,15 @@ export function BookPtSessionModal({
                     key={dateStr}
                     type="button"
                     onClick={() => setSelectedDate(dateStr)}
-                    className={`flex flex-col items-center justify-center rounded-xl p-2.5 text-center transition-all ${
-                      isSelected
-                        ? 'border-2 border-[var(--rogym-accent)] bg-[var(--rogym-accent)]/15 text-white shadow-md'
+                    className={`flex min-w-[68px] flex-1 shrink-0 flex-col items-center justify-center rounded-xl py-2 px-2 text-center transition-all ${isSelected
+                        ? 'border border-[var(--rogym-accent)] bg-[var(--rogym-accent)]/15 text-white shadow-sm'
                         : 'border border-white/10 bg-white/[0.02] text-white/70 hover:border-white/20 hover:bg-white/[0.06]'
-                    }`}
+                      }`}
                   >
-                    <span className="text-[11px] font-medium capitalize text-white/50">
+                    <span className="text-[11px] font-medium capitalize text-white/60 whitespace-nowrap">
                       {dayName}
                     </span>
-                    <span className={`text-sm font-bold ${isSelected ? 'text-[var(--rogym-accent)]' : 'text-white'}`}>
+                    <span className={`mt-0.5 text-sm font-bold whitespace-nowrap ${isSelected ? 'text-[var(--rogym-accent)]' : 'text-white'}`}>
                       {dayNum}
                     </span>
                   </button>
@@ -251,7 +269,7 @@ export function BookPtSessionModal({
 
         {/* Slot Grid */}
         {!noTrainer && (
-          <div className="space-y-2">
+          <div className="space-y-1.5">
             <div className="flex items-center justify-between">
               <label className="text-xs font-bold uppercase tracking-wider text-white/60">
                 {t('workout.schedule.booking.selectSlot')}
@@ -265,16 +283,16 @@ export function BookPtSessionModal({
             </div>
 
             {loadingAvailability ? (
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 py-4">
-                {Array.from({ length: 9 }).map((_, i) => (
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 py-2">
+                {Array.from({ length: 6 }).map((_, i) => (
                   <div
                     key={i}
-                    className="h-14 animate-pulse rounded-xl border border-white/5 bg-white/[0.03]"
+                    className="h-12 animate-pulse rounded-xl border border-white/5 bg-white/[0.03]"
                   />
                 ))}
               </div>
             ) : availability?.slots?.length ? (
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-2.5">
                 {availability.slots.map((slot) => {
                   const isSelected =
                     selectedSlot?.startTime === slot.startTime &&
@@ -288,21 +306,20 @@ export function BookPtSessionModal({
                       type="button"
                       disabled={!slot.available || scheduledCount >= 3}
                       onClick={() => setSelectedSlot(slot)}
-                      className={`relative flex flex-col items-center justify-center rounded-xl p-3 text-center transition-all ${
-                        isSelected
-                          ? 'border-2 border-[var(--rogym-accent)] bg-[var(--rogym-accent)]/20 text-white shadow-lg'
+                      className={`relative flex flex-col items-center justify-center rounded-xl p-2.5 text-center transition-all ${isSelected
+                          ? 'border border-[var(--rogym-accent)] bg-[var(--rogym-accent)]/20 text-white shadow-md'
                           : slot.available && scheduledCount < 3
-                          ? 'border border-white/10 bg-white/[0.02] text-white hover:border-[var(--rogym-accent)]/40 hover:bg-white/[0.05]'
-                          : 'cursor-not-allowed border border-white/5 bg-white/[0.01] text-white/25 opacity-50'
-                      }`}
+                            ? 'border border-white/10 bg-white/[0.02] text-white hover:border-[var(--rogym-accent)]/40 hover:bg-white/[0.05]'
+                            : 'cursor-not-allowed border border-white/5 bg-white/[0.01] text-white/25 opacity-50'
+                        }`}
                     >
-                      <div className="flex items-center gap-1 text-sm font-semibold">
-                        <Clock size={13} className={isSelected ? 'text-[var(--rogym-accent)]' : 'text-white/40'} />
+                      <div className="flex items-center gap-1 text-xs sm:text-sm font-semibold whitespace-nowrap">
+                        <Clock size={12} className={isSelected ? 'text-[var(--rogym-accent)]' : 'text-white/40'} />
                         <span>
                           {startTimeFmt} - {endTimeFmt}
                         </span>
                       </div>
-                      <span className="mt-1 text-[11px] font-medium">
+                      <span className="mt-0.5 text-[10px] sm:text-[11px] font-medium whitespace-nowrap">
                         {slot.available ? (
                           <span className={isSelected ? 'font-bold text-[var(--rogym-accent)]' : 'text-emerald-400'}>
                             {t('workout.schedule.booking.slotAvailable')}
@@ -318,7 +335,7 @@ export function BookPtSessionModal({
                 })}
               </div>
             ) : (
-              <div className="rounded-xl border border-white/10 bg-white/[0.02] p-6 text-center text-sm text-white/50">
+              <div className="rounded-xl border border-white/10 bg-white/[0.02] p-4 text-center text-sm text-white/50">
                 {t('workout.schedule.noUpcoming')}
               </div>
             )}
@@ -327,18 +344,18 @@ export function BookPtSessionModal({
 
         {/* Optional Workout Plan Assignment Link */}
         {!noTrainer && activePlan && activePlan.plan.days?.length ? (
-          <div className="space-y-2 rounded-2xl border border-white/10 bg-white/[0.02] p-4">
-            <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-white/70">
-              <Dumbbell size={15} className="text-[var(--rogym-accent)]" />
+          <div className="space-y-1.5 rounded-xl border border-white/10 bg-white/[0.02] p-3 sm:p-3.5">
+            <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-white/70">
+              <Dumbbell size={14} className="text-[var(--rogym-accent)]" />
               <span>{t('workout.schedule.booking.workoutPlanOptional')}</span>
             </div>
-            <p className="text-xs text-white/50">
+            <p className="text-xs text-white/50 truncate">
               {activePlan.plan.name}
             </p>
             <select
               value={selectedPlanDayId}
               onChange={(e) => setSelectedPlanDayId(e.target.value)}
-              className="w-full rounded-xl border border-white/15 bg-[#0e1e17] px-3.5 py-2.5 text-sm text-white focus:border-[var(--rogym-accent)] focus:outline-none"
+              className="w-full rounded-xl border border-white/15 bg-[#0e1e17] px-3 py-2 text-sm text-white focus:border-[var(--rogym-accent)] focus:outline-none"
             >
               <option value="">{t('workout.schedule.booking.noPlanSelected')}</option>
               {activePlan.plan.days.map((day) => (
@@ -349,26 +366,6 @@ export function BookPtSessionModal({
             </select>
           </div>
         ) : null}
-
-        {/* Footer Actions */}
-        <div className="flex items-center justify-end gap-3 pt-4 border-t border-white/10">
-          <Button
-            variant="secondary"
-            onClick={onClose}
-            disabled={bookingLoading}
-          >
-            {t('workout.schedule.buttonClose')}
-          </Button>
-          <Button
-            variant="primary"
-            onClick={() => void handleBooking()}
-            disabled={!selectedSlot || bookingLoading || noTrainer || scheduledCount >= 3}
-            loading={bookingLoading}
-          >
-            <Check size={16} className="mr-1.5" />
-            {t('workout.schedule.booking.confirmBtn')}
-          </Button>
-        </div>
       </div>
     </Modal>
   )

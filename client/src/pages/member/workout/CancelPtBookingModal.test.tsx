@@ -1,10 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { CancelPtBookingModal } from './CancelPtBookingModal'
-import { trainingService, type TrainingSession } from '@/services/training.service'
+import { trainingSessionService, type TrainingSession } from '@/services/training-session.service'
 
-vi.mock('@/services/training.service', () => ({
-  trainingService: {
+vi.mock('@/services/training-session.service', () => ({
+  trainingSessionService: {
     cancelBooking: vi.fn(),
   },
 }))
@@ -37,7 +37,7 @@ describe('CancelPtBookingModal', () => {
 
   it('renders reason textarea and cancels successfully when time is >= 2 hours', async () => {
     const session = makeScheduledSession(3) // 3 hours in future
-    vi.mocked(trainingService.cancelBooking).mockResolvedValue({
+    vi.mocked(trainingSessionService.cancelBooking).mockResolvedValue({
       success: true,
       message: 'Cancelled',
     })
@@ -65,7 +65,7 @@ describe('CancelPtBookingModal', () => {
     fireEvent.click(confirmBtn)
 
     await waitFor(() => {
-      expect(trainingService.cancelBooking).toHaveBeenCalledWith('55', 'Bận việc gia đình')
+    expect(trainingSessionService.cancelBooking).toHaveBeenCalledWith('55', 'Bận việc gia đình')
     })
 
     expect(handleSuccess).toHaveBeenCalled()

@@ -116,7 +116,7 @@ export {
   type StatusBadgeProps,
   type StatusTone,
 } from './StatusBadge'
-export { Modal } from './Modal'
+export { Modal, ModalFooter } from './Modal'
 export { ConfirmDialog, type ConfirmDialogProps } from './ConfirmDialog'
 export { StatCard, type StatCardProps } from './StatCard'
 export { LanguageSwitcher } from './LanguageSwitcher'

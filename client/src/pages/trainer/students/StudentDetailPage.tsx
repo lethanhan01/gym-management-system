@@ -12,7 +12,7 @@ import {
   type MemberProgress,
   type TrainerStudentDetail,
 } from '@/services/member.service'
-import { trainingService, type TrainingSession } from '@/services/training.service'
+import { trainingSessionService, type TrainingSession } from '@/services/training-session.service'
 import workoutService, {
   type WorkoutAssignmentSummary,
   type WorkoutPlan,
@@ -65,7 +65,7 @@ export default function StudentDetailPage() {
       const [studentData, sessionResult, progressData, assignmentData, planData] =
         await Promise.all([
           memberService.getById(id),
-          trainingService.getSessions({ memberId: id, pageSize: 100, sort: 'start_time:desc' }),
+trainingSessionService.getSessions({ memberId: id, pageSize: 100, sort: 'start_time:desc' }),
           memberService.getProgress(id, { limit: 100 }),
           workoutService.getAssignments(id, { limit: 20 }),
           workoutService.getPlans(),

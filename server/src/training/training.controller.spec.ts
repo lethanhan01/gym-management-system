@@ -1,6 +1,5 @@
 import { NotFoundException, ForbiddenException } from '@nestjs/common'
 import { DeviceController, TrainingController } from './training.controller'
-import { TrainingService } from './training.service'
 import { AuthenticatedUser } from '../auth/types/jwt-payload.interface'
 
 const mockService = {
@@ -22,10 +21,10 @@ const mockService = {
   getTrainerAvailability: jest.fn(),
   bookSessionByMember: jest.fn(),
   cancelBookingByMember: jest.fn(),
-} as unknown as TrainingService
+}
 
-const ctrl = new TrainingController(mockService)
-const deviceCtrl = new DeviceController(mockService)
+const ctrl = new TrainingController(mockService as any, mockService as any, mockService as any, mockService as any)
+const deviceCtrl = new DeviceController(mockService as any)
 
 const trainerUser: AuthenticatedUser = {
   userId: BigInt(5),

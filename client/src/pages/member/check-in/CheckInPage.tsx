@@ -5,7 +5,7 @@ import { CheckCircle2, History, RefreshCcw } from 'lucide-react'
 import { Button, ButtonLink, Modal } from '@/components/ui'
 import { getApiError, getApiErrorCode } from '@/lib/api-error'
 import { formatTime } from '@/lib/date'
-import { trainingService, type AttendanceLog } from '@/services/training.service'
+import { attendanceService, type AttendanceLog } from '@/services/attendance.service'
 import {
   MemberCard,
   MemberErrorState,
@@ -52,7 +52,7 @@ export default function CheckInPage() {
       setSuccessOverlayOpen(false)
       stopScanner()
       try {
-        const log = await trainingService.qrCheckin(normalized)
+const log = await attendanceService.qrCheckin(normalized)
         setLastLog(log)
         setSuccessOverlayOpen(true)
       } catch (err) {
