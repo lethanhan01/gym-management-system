@@ -67,8 +67,7 @@ const LINE_MESSAGE_TEMPLATES: Record<
         `Bạn đã đặt lịch tập thành công.\nThời gian: ${when}\nPT: ${trainerName}\nPhòng: ${roomName}`,
       updated: ({ trainerName, roomName, when }) =>
         `Lịch tập của bạn đã được cập nhật.\nThời gian mới: ${when}\nPT: ${trainerName}\nPhòng: ${roomName}`,
-      cancelled: ({ trainerName, when }) =>
-        `Lịch tập với PT ${trainerName} vào ${when} đã bị hủy.`,
+      cancelled: ({ trainerName, when }) => `Lịch tập với PT ${trainerName} vào ${when} đã bị hủy.`,
       reminder: ({ trainerName, roomName, when, reminderMinutes }) =>
         `Buổi tập của bạn sẽ bắt đầu sau ${reminderMinutes} phút.\nThời gian: ${when}\nPT: ${trainerName}\nPhòng: ${roomName}`,
       starting: ({ trainerName, roomName, when }) =>
@@ -103,7 +102,7 @@ export class LineMessagingService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly config: ConfigService,
-    private readonly notifications: NotificationsService,
+    private readonly notifications: NotificationsService
   ) {}
 
   async handleWebhook(rawBody: Buffer, signature?: string) {
@@ -157,7 +156,7 @@ export class LineMessagingService {
 
   private async sendSessionReminder(
     reminderMinutes: number,
-    kind: Extract<TrainingLineEvent, 'reminder' | 'starting'>,
+    kind: Extract<TrainingLineEvent, 'reminder' | 'starting'>
   ) {
     const target = Date.now() + reminderMinutes * 60 * 1000
     const from = new Date(target - 30 * 1000)
@@ -211,11 +210,7 @@ export class LineMessagingService {
     if (event.type === 'follow' && event.replyToken) {
       const template = this.getMessageTemplate()
       await this.replyMessage(event.replyToken, [
-        this.withLiffButton(
-          template.followText,
-          template.followButton,
-          '/member',
-        ),
+        this.withLiffButton(template.followText, template.followButton, '/member'),
       ])
       return
     }
@@ -254,7 +249,7 @@ export class LineMessagingService {
           reminderMinutes: this.getReminderMinutes(),
         }),
         this.getMessageTemplate().detailButton,
-        this.buildTrainingRedirect(session.sessionId),
+        this.buildTrainingRedirect(session.sessionId)
       ),
     ])
   }
@@ -274,14 +269,14 @@ export class LineMessagingService {
       this.withLiffButton(
         this.getMessageTemplate().attendanceCheckin,
         this.getMessageTemplate().detailButton,
-        '/member/attendance',
+        '/member/attendance'
       ),
     ])
   }
 
   private buildTrainingText(
     kind: TrainingLineEvent,
-    session: { trainerName: string; roomName: string; startTime: Date; reminderMinutes: number },
+    session: { trainerName: string; roomName: string; startTime: Date; reminderMinutes: number }
   ) {
     const template = this.getMessageTemplate()
     const when = this.formatDateTime(session.startTime, template.dateLocale)
@@ -357,7 +352,10 @@ export class LineMessagingService {
     const expected = createHmac('sha256', secret).update(rawBody).digest('base64')
     const actualBuffer = Buffer.from(signature)
     const expectedBuffer = Buffer.from(expected)
-    if (actualBuffer.length !== expectedBuffer.length || !timingSafeEqual(actualBuffer, expectedBuffer)) {
+    if (
+      actualBuffer.length !== expectedBuffer.length ||
+      !timingSafeEqual(actualBuffer, expectedBuffer)
+    ) {
       throw new UnauthorizedException({
         success: false,
         code: 'LINE_WEBHOOK_SIGNATURE_INVALID',

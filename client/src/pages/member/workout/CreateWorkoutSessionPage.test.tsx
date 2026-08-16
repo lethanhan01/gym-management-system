@@ -4,7 +4,7 @@ import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom'
 import i18n from '@/lib/i18n'
 import { useAuthStore } from '@/stores/authStore'
 import workoutService, { type WorkoutAssignmentSummary, type WorkoutPlan } from '@/services/workout.service'
-import { trainingService, type TrainingSessionDetail } from '@/services/training.service'
+import { trainingSessionService, type TrainingSessionDetail } from '@/services/training-session.service'
 import CreateWorkoutSessionPage from './CreateWorkoutSessionPage'
 
 vi.mock('@/services/workout.service', async () => {
@@ -12,7 +12,7 @@ vi.mock('@/services/workout.service', async () => {
   return { ...actual, default: { ...actual.default, getAssignments: vi.fn(), getPlan: vi.fn() } }
 })
 
-vi.mock('@/services/training.service', () => ({ trainingService: { getSession: vi.fn() } }))
+vi.mock('@/services/training-session.service', () => ({ trainingSessionService: { getSession: vi.fn() } }))
 
 const assignment: WorkoutAssignmentSummary = {
   assignmentId: '101', memberId: '10', planId: '1', assignedByStaffId: '20', startDate: '2026-07-01',
@@ -63,7 +63,7 @@ describe('CreateWorkoutSessionPage', () => {
     useAuthStore.getState().setAuth({ userId: '1', email: 'member@example.com', fullName: 'Member', roles: ['member'], memberId: '10' }, 'token')
     vi.mocked(workoutService.getAssignments).mockResolvedValue([assignment])
     vi.mocked(workoutService.getPlan).mockResolvedValue(plan)
-    vi.mocked(trainingService.getSession).mockResolvedValue(makeSessionDetail())
+    vi.mocked(trainingSessionService.getSession).mockResolvedValue(makeSessionDetail())
   })
 
   it('configures per-set values and sends the started day to its child route', async () => {
@@ -83,11 +83,11 @@ describe('CreateWorkoutSessionPage', () => {
   it('redirects a valid scheduled-session deep link to the associated child route', async () => {
     renderPage('/member/workout/create-session?sessionId=555')
     expect(await screen.findByTestId('location')).toHaveTextContent('/member/workout/create-session/day/11?assignmentId=101&sessionId=555')
-    expect(trainingService.getSession).toHaveBeenCalledWith('555')
+    expect(trainingSessionService.getSession).toHaveBeenCalledWith('555')
   })
 
   it('keeps manual selection available when the session has no linked plan', async () => {
-    vi.mocked(trainingService.getSession).mockResolvedValue(makeSessionDetail({ assignmentId: null, planDayId: null, workoutPlan: null, planDay: null }))
+    vi.mocked(trainingSessionService.getSession).mockResolvedValue(makeSessionDetail({ assignmentId: null, planDayId: null, workoutPlan: null, planDay: null }))
     renderPage('/member/workout/create-session?sessionId=555')
     expect(await screen.findByRole('status')).toHaveTextContent('Buổi tập này chưa có workout plan liên kết')
   })

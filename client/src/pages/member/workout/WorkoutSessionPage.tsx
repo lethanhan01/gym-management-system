@@ -1,13 +1,14 @@
 import { memo, useCallback, useEffect, useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { CheckCircle2, Circle, ArrowLeft, Info, X } from 'lucide-react'
+import { CheckCircle2, Circle, ArrowLeft, Info } from 'lucide-react'
 import {
   MemberErrorState,
   MemberPage,
   MemberPageHeader,
   MemberSkeleton,
 } from '@/components/MemberUI'
+import { Button, Modal } from '@/components/ui'
 import workoutService, {
   type WorkoutAssignmentSummary,
   type WorkoutPlan,
@@ -270,20 +271,18 @@ export default function WorkoutSessionPage() {
             {t('workout.session.completedDesc')}
           </p>
           <div className="flex gap-3">
-            <button
-              type="button"
-              className="rogym-btn rogym-btn--outline-white"
+            <Button
+              variant="outline-white"
               onClick={() => navigate('/member/workout/plan')}
             >
               {t('workout.session.buttonGoToPlan')}
-            </button>
-            <button
-              type="button"
-              className="rogym-btn rogym-btn--primary"
+            </Button>
+            <Button
+              variant="primary"
               onClick={() => navigate('/member/workout/history')}
             >
               {t('workout.session.buttonViewHistory')}
-            </button>
+            </Button>
           </div>
         </div>
       </MemberPage>
@@ -305,13 +304,14 @@ export default function WorkoutSessionPage() {
             : t('workout.session.descriptionDefault')
         }
         actions={
-          <button
-            type="button"
-            className="rogym-btn rogym-btn--outline-white"
+          <Button
+            variant="outline-white"
+            size="sm"
             onClick={() => navigate('/member/workout/plan')}
+            leftIcon={<ArrowLeft size={15} />}
           >
-            <ArrowLeft size={15} /> {t('workout.session.buttonGoBack')}
-          </button>
+            {t('workout.session.buttonGoBack')}
+          </Button>
         }
       />
 
@@ -349,56 +349,40 @@ export default function WorkoutSessionPage() {
               total: sets.flat().length,
             })}
           </p>
-          <button
-            type="button"
-            className="rogym-btn rogym-btn--primary px-6"
+          <Button
+            variant="primary"
             disabled={!anyCompleted || submitting}
+            loading={submitting}
             onClick={() => void handleFinish()}
           >
             {submitting ? t('workout.session.buttonSaving') : t('workout.session.buttonFinish')}
-          </button>
+          </Button>
         </div>
       )}
       {/* Info Modal */}
       {infoModalExercise && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 rogym-sx-8578aed4"
-          onClick={() => setInfoModalExercise(null)}
+        <Modal
+          open={!!infoModalExercise}
+          onClose={() => setInfoModalExercise(null)}
+          title={infoModalExercise.name}
+          size="md"
+          footer={
+            <Button
+              variant="primary"
+              onClick={() => setInfoModalExercise(null)}
+            >
+              {t('workout.exercises.buttonClose', 'Close')}
+            </Button>
+          }
         >
-          <div
-            className="relative w-full max-w-md overflow-hidden rounded-[24px] bg-[#0a1f17] border border-[rgba(6,195,132,0.25)] p-6 shadow-[0_12px_40px_rgba(0,0,0,0.6)]"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-start justify-between gap-3 mb-4">
-              <h2 className="text-xl font-bold text-white">{infoModalExercise.name}</h2>
-              <button
-                type="button"
-                className="rogym-btn rogym-btn--icon rogym-btn--elevated shrink-0"
-                onClick={() => setInfoModalExercise(null)}
-              >
-                <X size={16} />
-              </button>
-            </div>
-            
-            <div className="max-h-72 overflow-y-auto pr-2">
-              <ol className="list-decimal space-y-2 pl-5 text-sm leading-6 rogym-text-secondary">
-                {infoModalExercise.instructions?.map((step, idx) => (
-                  <li key={idx} className="pl-1">{step}</li>
-                ))}
-              </ol>
-            </div>
-
-            <div className="mt-6 flex justify-end">
-              <button
-                type="button"
-                className="rogym-btn rogym-btn--primary px-6"
-                onClick={() => setInfoModalExercise(null)}
-              >
-                {t('workout.exercises.buttonClose', 'Close')}
-              </button>
-            </div>
+          <div className="max-h-72 overflow-y-auto pr-2">
+            <ol className="list-decimal space-y-2 pl-5 text-sm leading-6 rogym-text-secondary">
+              {infoModalExercise.instructions?.map((step, idx) => (
+                <li key={idx} className="pl-1">{step}</li>
+              ))}
+            </ol>
           </div>
-        </div>
+        </Modal>
       )}
     </MemberPage>
   )

@@ -1,14 +1,17 @@
 import { memo, useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { CalendarX, ChevronLeft, ChevronRight, Clock } from 'lucide-react'
-import { trainingService, type AttendanceLog } from '@/services/training.service'
+import { ChevronLeft, ChevronRight, Clock } from 'lucide-react'
+import { attendanceService, type AttendanceLog } from '@/services/attendance.service'
 import {
+  MemberBadge,
+  MemberCard,
+  MemberEmptyState,
   MemberErrorState,
   MemberPage,
   MemberPageHeader,
   MemberSkeleton,
 } from '@/components/MemberUI'
-import { DatePickerInput } from '@/components/DatePickerInput'
+import { Button, DatePickerInput, type BadgeTone } from '@/components/ui'
 import { getApiError } from '@/lib/api-error'
 import { useAuthStore } from '@/stores/authStore'
 
@@ -160,24 +163,26 @@ function AttendanceCalendarView({
   const today = todayKey()
 
   return (
-    <div className="rounded-[20px] p-5 rogym-sx-25952519">
+    <MemberCard variant="compact" className="p-5">
       {/* Month navigation */}
       <div className="mb-4 flex items-center justify-between">
-        <button
-          type="button"
+        <Button
+          variant="icon"
+          size="sm"
           onClick={onPrevMonth}
-          className="flex h-8 w-8 items-center justify-center rounded-full transition-colors hover:bg-white/10 rogym-sx-5e5c39ab"
+          aria-label="Previous month"
         >
           <ChevronLeft size={16} />
-        </button>
+        </Button>
         <p className="text-sm font-bold text-white capitalize">{fmtMonthYear(month, locale)}</p>
-        <button
-          type="button"
+        <Button
+          variant="icon"
+          size="sm"
           onClick={onNextMonth}
-          className="flex h-8 w-8 items-center justify-center rounded-full transition-colors hover:bg-white/10 rogym-sx-5e5c39ab"
+          aria-label="Next month"
         >
           <ChevronRight size={16} />
-        </button>
+        </Button>
       </div>
 
       {/* DOW header */}
@@ -233,7 +238,7 @@ function AttendanceCalendarView({
           </div>
         ))}
       </div>
-    </div>
+    </MemberCard>
   )
 }
 
@@ -258,14 +263,14 @@ function AttendanceListSidebar({
 }) {
   const { t, i18n } = useTranslation('member')
   const locale = i18n.language
-  const METHOD_LABEL: Record<string, { label: string; tone: string }> = {
+  const METHOD_LABEL: Record<string, { label: string; tone: BadgeTone }> = {
     realtime: { label: t('attendance.methodLabel.realtime'), tone: 'info' },
     manual: { label: t('attendance.methodLabel.manual'), tone: 'warning' },
     qr: { label: t('attendance.methodLabel.qr'), tone: 'muted' },
   }
   return (
     <div className="space-y-5">
-      <section className="rounded-[20px] p-5 rogym-sx-25952519">
+      <MemberCard variant="compact" className="p-5">
         {/* Date range pickers */}
         <div className="mb-4 flex items-center gap-2 px-1">
           <div className="flex-1 min-w-0">
@@ -300,14 +305,13 @@ function AttendanceListSidebar({
             <p className="text-center text-sm rogym-sx-5e5c39ab">{error}</p>
           </div>
         ) : logs.length === 0 ? (
-          <div className="flex flex-col items-center gap-2 py-6">
-            <CalendarX size={28} className="rogym-sx-ed519d00" />
-            <p className="text-sm rogym-sx-5e5c39ab">{t('attendance.noData')}</p>
-          </div>
+          <MemberEmptyState
+            title={t('attendance.noData')}
+          />
         ) : (
           <div className="space-y-2">
             {logs.map((log) => {
-              const method = METHOD_LABEL[log.method] ?? { label: log.method, tone: 'muted' }
+              const method = METHOD_LABEL[log.method] ?? { label: log.method, tone: 'muted' as BadgeTone }
               return (
                 <div
                   key={log.attendanceId}
@@ -325,15 +329,15 @@ function AttendanceListSidebar({
                       </p>
                     </div>
                   </div>
-                  <span className="rogym-tone-badge" data-tone={method.tone}>
+                  <MemberBadge tone={method.tone}>
                     {method.label}
-                  </span>
+                  </MemberBadge>
                 </div>
               )
             })}
           </div>
         )}
-      </section>
+      </MemberCard>
     </div>
   )
 }
@@ -373,7 +377,7 @@ export default function AttendancePage() {
     setCalError(null)
     const fromISO = toISODate(new Date(calMonth.getFullYear(), calMonth.getMonth(), 1))
     const toISO = toISODate(new Date(calMonth.getFullYear(), calMonth.getMonth() + 1, 0))
-    trainingService
+attendanceService
       .getAttendance({ memberId, from: fromISO, to: toISO, pageSize: 100 })
       .then((res) => setCalLogs(res.data))
       .catch((err) => setCalError(getApiError(err, t('attendance.errorCalendar'))))
@@ -391,7 +395,7 @@ export default function AttendancePage() {
     }
     setListLoading(true)
     setListError(null)
-    trainingService
+attendanceService
       .getAttendance({ memberId, from, to, pageSize: 100 })
       .then((res) => {
         const sorted = [...res.data].sort(
@@ -415,7 +419,7 @@ export default function AttendancePage() {
   }
 
   // Tính METHOD_LABEL cho inline mobile card list (dùng lại logic từ AttendanceListSidebar)
-  const METHOD_LABEL_MOBILE: Record<string, { label: string; tone: string }> = {
+  const METHOD_LABEL_MOBILE: Record<string, { label: string; tone: BadgeTone }> = {
     realtime: { label: t('attendance.methodLabel.realtime'), tone: 'info' },
     manual: { label: t('attendance.methodLabel.manual'), tone: 'warning' },
     qr: { label: t('attendance.methodLabel.qr'), tone: 'muted' },
@@ -475,15 +479,14 @@ export default function AttendancePage() {
         {!calLoading && !calError && (
           <div className="space-y-2">
             {calLogs.length === 0 ? (
-              <div className="flex flex-col items-center gap-2 py-6">
-                <CalendarX size={28} className="rogym-sx-ed519d00" />
-                <p className="text-sm rogym-sx-5e5c39ab">{t('attendance.noData')}</p>
-              </div>
+              <MemberEmptyState
+                title={t('attendance.noData')}
+              />
             ) : (
               [...calLogs]
                 .sort((a, b) => new Date(b.startTime).getTime() - new Date(a.startTime).getTime())
                 .map((log) => {
-                  const method = METHOD_LABEL_MOBILE[log.method] ?? { label: log.method, tone: 'muted' }
+                  const method = METHOD_LABEL_MOBILE[log.method] ?? { label: log.method, tone: 'muted' as BadgeTone }
                   return (
                     <div
                       key={log.attendanceId}
@@ -501,9 +504,9 @@ export default function AttendancePage() {
                           </p>
                         </div>
                       </div>
-                      <span className="rogym-tone-badge" data-tone={method.tone}>
+                      <MemberBadge tone={method.tone}>
                         {method.label}
-                      </span>
+                      </MemberBadge>
                     </div>
                   )
                 })

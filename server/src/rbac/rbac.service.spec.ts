@@ -616,7 +616,12 @@ describe('RbacService', () => {
         makeUser({
           userId: 10n,
           groups: [{ group: { groupId: 1n, name: 'member', _count: { permissions: 3 } } }],
-          member: { memberId: 5n, memberCode: 'MEM-001', dateOfBirth: null, primaryTrainerId: null },
+          member: {
+            memberId: 5n,
+            memberCode: 'MEM-001',
+            dateOfBirth: null,
+            primaryTrainerId: null,
+          },
           staff: null,
         })
       )
@@ -662,9 +667,9 @@ describe('RbacService', () => {
     it('throws BadRequestException when self tries to update status', async () => {
       mockPrisma.user.findFirst.mockResolvedValue(makeUser())
 
-      await expect(
-        service.updateUser(50n, { status: 'locked' as any }, 50n, true)
-      ).rejects.toThrow(BadRequestException)
+      await expect(service.updateUser(50n, { status: 'locked' as any }, 50n, true)).rejects.toThrow(
+        BadRequestException
+      )
     })
 
     it('updates fullName and logs audit on success', async () => {

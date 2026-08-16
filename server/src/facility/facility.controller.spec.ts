@@ -37,7 +37,11 @@ describe('FacilityController', () => {
 
       const res = await ctrl.lookupRooms({ page: 2, pageSize: 500, search: 'yoga' } as any)
 
-      expect(mockFacility.listRooms).toHaveBeenCalledWith({ page: 2, pageSize: 100, search: 'yoga' })
+      expect(mockFacility.listRooms).toHaveBeenCalledWith({
+        page: 2,
+        pageSize: 100,
+        search: 'yoga',
+      })
       expect(res).toEqual({ success: true, ...serviceResult })
     })
 
@@ -156,7 +160,12 @@ describe('FacilityController', () => {
     it('delegates to deleteEquipment with force flag', async () => {
       (mockFacility.deleteEquipment as jest.Mock).mockResolvedValue(undefined)
       const res = await ctrl.deleteEquipment(5, user, 'true')
-      expect(mockFacility.deleteEquipment).toHaveBeenCalledWith(BigInt(5), user.userId, user.roles, true)
+      expect(mockFacility.deleteEquipment).toHaveBeenCalledWith(
+        BigInt(5),
+        user.userId,
+        user.roles,
+        true
+      )
       expect(res).toBeUndefined()
     })
 

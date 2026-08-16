@@ -1,5 +1,4 @@
 import { memo } from 'react'
-import { ButtonLink } from '@/components/ui/Button'
 import { useTranslation } from 'react-i18next'
 import {
   Dumbbell,
@@ -24,9 +23,11 @@ import pt1 from '@/assets/trainer1.jpg'
 import pt2 from '@/assets/trainer2.jpg'
 import pt3 from '@/assets/trainer3.jpg'
 import HomeNavbar from '@/components/home/HomeNavbar'
+import { Button, ButtonLink, Badge } from '@/components/ui'
 
 const T = '#42e09e'
 const GD = '#00492f'
+
 
 
 
@@ -97,7 +98,7 @@ const HeroSection = memo(function HeroSection() {
             <div className="h-px w-10 rounded-full rogym-sx-c3c1e2cb" />
             <span className="rogym-sx-e07a83ed">{t('hero.tagline')}</span>
           </div>
-          <h1 className="uppercase leading-none mb-6 rogym-sx-5ba16c42">
+          <h1 className="uppercase mb-6 rogym-sx-5ba16c42">
             {t('hero.heading1')}
             <br />
             <span className="rogym-sx-f27dac31">{t('hero.heading2')}</span>
@@ -185,20 +186,21 @@ const TrainingCard = memo(function TrainingCard({
       />
       <div className="absolute inset-0 rogym-sx-23c73807" />
       <div className="absolute bottom-0 left-0 right-0 p-8">
-        <span className="inline-block px-4 py-1 rounded-full text-xs font-bold uppercase tracking-widest mb-3 rogym-sx-f1d39d6f">
-          {tag}
-        </span>
+        <div className="mb-3">
+          <Badge tone="accent" size="sm" className="font-bold tracking-widest uppercase">
+            {tag}
+          </Badge>
+        </div>
         <div className="uppercase mb-3 rogym-sx-7989cb59">{title}</div>
         <p className="rogym-sx-0d114162">{desc}</p>
-        <button
-          type="button"
-          className="rogym-text-link rogym-text-link--accent mt-4 rogym-sx-f27dac31"
+        <ButtonLink
+          to="/programs"
+          variant="text-accent"
+          rightIcon={<ArrowRight size={14} color={T} />}
+          className="mt-4 p-0 text-sm font-bold uppercase tracking-widest inline-flex items-center"
         >
-          <span className="text-sm font-bold uppercase tracking-widest rogym-sx-3278ee06">
-            {t('programs.detail')}
-          </span>
-          <ArrowRight size={14} color={T} />
-        </button>
+          {t('programs.detail')}
+        </ButtonLink>
       </div>
     </div>
   )
@@ -241,7 +243,7 @@ const TrainingSection = memo(function TrainingSection() {
             <div className="text-xs font-bold uppercase tracking-[0.3em] mb-4 rogym-sx-9cd1aaa6">
               {t('programs.sectionLabel')}
             </div>
-            <h2 className="uppercase leading-none rogym-sx-37943c0d">
+            <h2 className="uppercase rogym-sx-37943c0d">
               {t('programs.heading1')}
               <br />
               {t('programs.heading2')}
@@ -312,7 +314,7 @@ const CoachSection = memo(function CoachSection() {
       <div className="absolute inset-0 pointer-events-none rogym-sx-bee9a30c" />
       <div className="max-w-[1280px] mx-auto px-10 relative">
         <div className="text-center mb-20">
-          <h2 className="uppercase leading-none mb-5 rogym-sx-339ac6c6">{t('trainers.sectionTitle')}</h2>
+          <h2 className="uppercase mb-5 rogym-sx-339ac6c6">{t('trainers.sectionTitle')}</h2>
           <p className="uppercase font-semibold tracking-[0.15em] opacity-50 rogym-sx-8b36c264">
             {t('trainers.sectionSubtitle')}
           </p>
@@ -343,9 +345,13 @@ const PricingCard = memo(function PricingCard({ plan }: { plan: Plan }) {
       }`}
     >
       {hot && (
-        <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-5 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest rogym-sx-15e311e3">
+        <Badge
+          tone="primary"
+          size="sm"
+          className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-5 py-1 font-bold uppercase tracking-widest shadow-lg"
+        >
           {t('packages.popular')}
-        </div>
+        </Badge>
       )}
       <div className="rogym-pricing-card__tier text-xs font-bold uppercase tracking-[0.25em] mb-4">
         {plan.tier}
@@ -364,14 +370,14 @@ const PricingCard = memo(function PricingCard({ plan }: { plan: Plan }) {
           </div>
         ))}
       </div>
-      <button
-        type="button"
-        className={`rogym-btn rogym-btn--wide ${
-          hot ? 'rogym-btn--dark' : 'rogym-btn--outline-white'
-        }`}
+      <ButtonLink
+        to="/packages"
+        variant={hot ? 'dark' : 'outline-white'}
+        size="wide"
+        fullWidth
       >
-        <span>{t('packages.registerBtn')}</span>
-      </button>
+        {t('packages.registerBtn')}
+      </ButtonLink>
     </div>
   )
 })
@@ -424,7 +430,7 @@ const PricingSection = memo(function PricingSection() {
       <div className="absolute inset-0 pointer-events-none rogym-sx-49e5c51a" />
       <div className="max-w-[1280px] mx-auto px-10 relative">
         <div className="text-center mb-20">
-          <h2 className="uppercase leading-none mb-5 rogym-sx-37943c0d">{t('packages.sectionTitle')}</h2>
+          <h2 className="uppercase mb-5 rogym-sx-37943c0d">{t('packages.sectionTitle')}</h2>
           <div className="h-1 w-24 rounded-full mx-auto rogym-sx-c3c1e2cb" />
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch mt-8">
@@ -450,7 +456,7 @@ const CTABanner = memo(function CTABanner() {
         <p className="uppercase font-bold tracking-[0.28em] mb-4 rogym-sx-4c894103">
           {t('cta.eyebrow')}
         </p>
-        <h2 className="uppercase leading-none mb-8 rogym-sx-1297467b">
+        <h2 className="uppercase mb-8 rogym-sx-1297467b">
           {t('cta.heading1')}
           <br />
           <span className="rogym-sx-f27dac31">{t('cta.heading2')}</span>
@@ -508,14 +514,14 @@ const Footer = memo(function Footer() {
             </p>
             <div className="flex gap-3">
               {SOCIAL_LINKS.map(([Icon, label]) => (
-                <button
+                <Button
                   key={label}
-                  type="button"
+                  variant="icon"
+                  className="rogym-btn--elevated"
                   aria-label={label}
-                  className="rogym-btn rogym-btn--icon rogym-btn--elevated"
                 >
                   <Icon size={14} color="rgba(255,255,255,0.6)" strokeWidth={2} />
-                </button>
+                </Button>
               ))}
             </div>
           </div>

@@ -1,19 +1,22 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { BrowserQRCodeReader, type IScannerControls } from '@zxing/browser'
-import { CheckCircle2, History, RefreshCcw, X } from 'lucide-react'
-import { ButtonLink } from '@/components/ui/Button'
+import { CheckCircle2, History, RefreshCcw } from 'lucide-react'
+import { Button, ButtonLink, Modal } from '@/components/ui'
 import { getApiError, getApiErrorCode } from '@/lib/api-error'
 import { formatTime } from '@/lib/date'
-import { trainingService, type AttendanceLog } from '@/services/training.service'
-import { MemberErrorState, MemberPage, MemberPageHeader } from '@/components/MemberUI'
-import { Button } from '@/components/ui'
+import { attendanceService, type AttendanceLog } from '@/services/attendance.service'
+import {
+  MemberCard,
+  MemberErrorState,
+  MemberPage,
+  MemberPageHeader,
+} from '@/components/MemberUI'
 
 type ScanState = 'idle' | 'starting' | 'scanning' | 'blocked' | 'stopped'
 
 export default function CheckInPage() {
   const { t } = useTranslation('member')
-  const { t: tCommon } = useTranslation('common')
   const videoRef = useRef<HTMLVideoElement | null>(null)
   const controlsRef = useRef<IScannerControls | null>(null)
   const submittedRef = useRef(false)
@@ -49,7 +52,7 @@ export default function CheckInPage() {
       setSuccessOverlayOpen(false)
       stopScanner()
       try {
-        const log = await trainingService.qrCheckin(normalized)
+const log = await attendanceService.qrCheckin(normalized)
         setLastLog(log)
         setSuccessOverlayOpen(true)
       } catch (err) {
@@ -135,7 +138,7 @@ export default function CheckInPage() {
       />
 
       <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
-        <section className="rogym-card rogym-card--compact overflow-hidden p-0">
+        <MemberCard variant="compact" padding="none" className="overflow-hidden">
           <div className="relative aspect-[4/3] min-h-[280px] overflow-hidden bg-black">
             <video
               ref={videoRef}
@@ -159,19 +162,29 @@ export default function CheckInPage() {
           </div>
 
           <div className="flex flex-wrap items-center gap-3 p-5">
-            <Button type="button" onClick={handleScanAgain} disabled={checking}>
-              <RefreshCcw size={16} />
+            <Button
+              type="button"
+              variant="primary"
+              onClick={handleScanAgain}
+              disabled={checking}
+              leftIcon={<RefreshCcw size={16} />}
+            >
               {t('qrCheckIn.scanAgain')}
             </Button>
-            <ButtonLink variant="text-accent" className="text-sm" to="/member/attendance">
-              <History size={15} className="inline-block" /> {t('qrCheckIn.viewHistory')}
+            <ButtonLink
+              variant="text-accent"
+              className="text-sm"
+              to="/member/attendance"
+              leftIcon={<History size={15} />}
+            >
+              {t('qrCheckIn.viewHistory')}
             </ButtonLink>
           </div>
-        </section>
+        </MemberCard>
 
         <div className="space-y-5">
           {lastLog && (
-            <section className="rogym-card rogym-card--compact hidden border-[rgba(6,195,132,0.3)] p-6 md:block">
+            <MemberCard variant="compact" className="hidden border-[rgba(6,195,132,0.3)] p-6 md:block">
               <div className="mb-4 flex items-center gap-3 rogym-text-accent">
                 <CheckCircle2 size={24} />
                 <span className="font-bold">{t('qrCheckIn.successTitle')}</span>
@@ -186,61 +199,42 @@ export default function CheckInPage() {
                   <span className="text-white">{formatTime(lastLog.startTime)}</span>
                 </div>
               </div>
-            </section>
+            </MemberCard>
           )}
 
           {error && <MemberErrorState message={error} onRetry={handleScanAgain} />}
         </div>
       </div>
 
-      {lastLog && successOverlayOpen && (
-        <div
-          className="fixed inset-0 z-[80] flex items-center justify-center bg-black/70 p-4 md:hidden"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="member-check-in-success-title"
-          onClick={closeSuccessOverlay}
+      {lastLog && (
+        <Modal
+          open={successOverlayOpen}
+          onClose={closeSuccessOverlay}
+          title={t('qrCheckIn.successTitle')}
+          size="sm"
+          footer={
+            <Button
+              type="button"
+              variant="primary"
+              onClick={handleScanAgain}
+              fullWidth
+              leftIcon={<RefreshCcw size={16} />}
+            >
+              {t('qrCheckIn.scanAgain')}
+            </Button>
+          }
         >
-          <div
-            className="w-full max-w-sm rounded-2xl border border-[rgba(6,195,132,0.3)] bg-[var(--rogym-bg-card)] p-5 shadow-2xl"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <div className="mb-5 flex items-start justify-between gap-4">
-              <div className="flex items-center gap-3 rogym-text-accent">
-                <CheckCircle2 size={28} />
-                <h2 id="member-check-in-success-title" className="text-lg font-bold text-white">
-                  {t('qrCheckIn.successTitle')}
-                </h2>
-              </div>
-              <Button
-                type="button"
-                variant="icon"
-                onClick={closeSuccessOverlay}
-                aria-label={tCommon('button.close')}
-              >
-                <X size={17} />
-              </Button>
+          <div className="space-y-3 text-sm py-2">
+            <div className="flex justify-between gap-4">
+              <span className="rogym-text-dim">{t('qrCheckIn.member')}</span>
+              <span className="text-right font-semibold text-white">{lastLog.memberName}</span>
             </div>
-
-            <div className="space-y-3 text-sm">
-              <div className="flex justify-between gap-4">
-                <span className="rogym-text-dim">{t('qrCheckIn.member')}</span>
-                <span className="text-right font-semibold text-white">{lastLog.memberName}</span>
-              </div>
-              <div className="flex justify-between gap-4">
-                <span className="rogym-text-dim">{t('qrCheckIn.checkedInAt')}</span>
-                <span className="text-white">{formatTime(lastLog.startTime)}</span>
-              </div>
-            </div>
-
-            <div className="mt-6">
-              <Button type="button" onClick={handleScanAgain} wide>
-                <RefreshCcw size={16} />
-                {t('qrCheckIn.scanAgain')}
-              </Button>
+            <div className="flex justify-between gap-4">
+              <span className="rogym-text-dim">{t('qrCheckIn.checkedInAt')}</span>
+              <span className="text-white">{formatTime(lastLog.startTime)}</span>
             </div>
           </div>
-        </div>
+        </Modal>
       )}
     </MemberPage>
   )

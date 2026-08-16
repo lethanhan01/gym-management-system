@@ -45,7 +45,7 @@ export class WorkoutLogsController {
   async update(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateWorkoutLogDto,
-    @CurrentUser() user: AuthenticatedUser,
+    @CurrentUser() user: AuthenticatedUser
   ) {
     const data = await this.logs.update(BigInt(id), dto, user)
     return { success: true, data }

@@ -1,6 +1,17 @@
 import {
-  Body, Controller, Delete, Get, HttpCode, HttpStatus,
-  NotFoundException, Param, ParseIntPipe, Patch, Post, Query, UseGuards,
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  HttpStatus,
+  NotFoundException,
+  Param,
+  ParseIntPipe,
+  Patch,
+  Post,
+  Query,
+  UseGuards,
 } from '@nestjs/common'
 import { PermissionsGuard } from '../common/guards/permissions.guard'
 import { RequirePermission } from '../common/decorators/require-permission.decorator'
@@ -43,7 +54,7 @@ export class PaymentAccountsController {
   @DatabaseRetryable()
   async list(
     @Param('memberId', ParseIntPipe) memberId: number,
-    @CurrentUser() user: AuthenticatedUser,
+    @CurrentUser() user: AuthenticatedUser
   ) {
     this.assertAccess(memberId, user)
     return this.payments.listPaymentAccounts(BigInt(memberId))
@@ -54,7 +65,7 @@ export class PaymentAccountsController {
   async create(
     @Param('memberId', ParseIntPipe) memberId: number,
     @Body() dto: CreatePaymentAccountDto,
-    @CurrentUser() user: AuthenticatedUser,
+    @CurrentUser() user: AuthenticatedUser
   ) {
     this.assertAccess(memberId, user)
     return this.payments.createPaymentAccount(BigInt(memberId), dto)
@@ -65,7 +76,7 @@ export class PaymentAccountsController {
   async setDefault(
     @Param('memberId', ParseIntPipe) memberId: number,
     @Param('accountId', ParseIntPipe) accountId: number,
-    @CurrentUser() user: AuthenticatedUser,
+    @CurrentUser() user: AuthenticatedUser
   ) {
     this.assertAccess(memberId, user)
     return this.payments.setDefaultPaymentAccount(BigInt(memberId), accountId)
@@ -76,7 +87,7 @@ export class PaymentAccountsController {
   async remove(
     @Param('memberId', ParseIntPipe) memberId: number,
     @Param('accountId', ParseIntPipe) accountId: number,
-    @CurrentUser() user: AuthenticatedUser,
+    @CurrentUser() user: AuthenticatedUser
   ) {
     this.assertAccess(memberId, user)
     return this.payments.removePaymentAccount(BigInt(memberId), accountId)
@@ -84,7 +95,7 @@ export class PaymentAccountsController {
 
   private assertAccess(memberId: number, user: AuthenticatedUser) {
     const isSelf = user.memberId !== null && Number(user.memberId) === memberId
-    const isStaff = user.roles.some(r => r === 'staff' || r === 'owner')
+    const isStaff = user.roles.some((r) => r === 'staff' || r === 'owner')
     if (!isSelf && !isStaff) {
       throw new NotFoundException({ success: false, message: 'Không tìm thấy tài khoản' })
     }

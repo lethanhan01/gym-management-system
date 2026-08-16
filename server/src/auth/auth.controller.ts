@@ -1,4 +1,16 @@
-import { Body, Controller, Delete, Get, HttpCode, HttpStatus, NotFoundException, Post, Req, BadRequestException, Res } from '@nestjs/common'
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  HttpStatus,
+  NotFoundException,
+  Post,
+  Req,
+  BadRequestException,
+  Res,
+} from '@nestjs/common'
 import { Request, Response } from 'express'
 import { UsersService } from './users.service'
 import { CurrentUser } from './decorators/current-user.decorator'
@@ -22,7 +34,7 @@ export class AuthController {
   private static readonly resetGrantMaxAge = 10 * 60 * 1000
   constructor(
     private readonly authService: AuthService,
-    private readonly usersService: UsersService,
+    private readonly usersService: UsersService
   ) {}
 
   /** Trich xuat IP va User-Agent tu request de ghi audit log. */
@@ -103,7 +115,11 @@ export class AuthController {
   @Public()
   @Post('verify-reset-otp')
   @HttpCode(HttpStatus.OK)
-  async verifyResetOtp(@Body() dto: VerifyResetOtpDto, @Req() req: Request, @Res({ passthrough: true }) res: Response) {
+  async verifyResetOtp(
+    @Body() dto: VerifyResetOtpDto,
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response
+  ) {
     const grant = await this.authService.verifyResetOtp(dto.email, dto.otp, this.getCtx(req))
     res.cookie(AuthController.resetGrantCookie, grant, {
       httpOnly: true,
@@ -128,11 +144,24 @@ export class AuthController {
   @Public()
   @Post('reset-password')
   @HttpCode(HttpStatus.OK)
-  async resetPassword(@Body() dto: ResetPasswordDto, @Req() req: Request, @Res({ passthrough: true }) res: Response) {
+  async resetPassword(
+    @Body() dto: ResetPasswordDto,
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response
+  ) {
     try {
-      await this.authService.resetPassword(this.getCookie(req, AuthController.resetGrantCookie), dto.newPassword, this.getCtx(req))
+      await this.authService.resetPassword(
+        this.getCookie(req, AuthController.resetGrantCookie),
+        dto.newPassword,
+        this.getCtx(req)
+      )
     } finally {
-      res.clearCookie(AuthController.resetGrantCookie, { path: '/api/v1/auth', httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax' })
+      res.clearCookie(AuthController.resetGrantCookie, {
+        path: '/api/v1/auth',
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+      })
     }
     return { success: true, message: 'Đặt lại mật khẩu thành công' }
   }
@@ -205,7 +234,7 @@ export class AuthController {
   async changePassword(
     @Body() dto: { currentPassword: string; newPassword: string },
     @CurrentUser() user: AuthenticatedUser,
-    @Req() req: Request,
+    @Req() req: Request
   ) {
     if (!dto.currentPassword || !dto.newPassword) {
       throw new BadRequestException('currentPassword và newPassword là bắt buộc')
@@ -213,7 +242,12 @@ export class AuthController {
     if (dto.newPassword.length < 8) {
       throw new BadRequestException('Mật khẩu mới phải có ít nhất 8 ký tự')
     }
-    await this.authService.changePassword(user.userId, dto.currentPassword, dto.newPassword, this.getCtx(req))
+    await this.authService.changePassword(
+      user.userId,
+      dto.currentPassword,
+      dto.newPassword,
+      this.getCtx(req)
+    )
     return { success: true, message: 'Đổi mật khẩu thành công' }
   }
 }

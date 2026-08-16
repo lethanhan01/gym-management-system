@@ -35,7 +35,7 @@ describe('JwtStrategy', () => {
         email: 'stale@gym.local',
         roles: ['member'],
         memberId: '99',
-      }),
+      })
     ).resolves.toEqual({
       userId: 1n,
       email: 'current@gym.local',
@@ -54,15 +54,15 @@ describe('JwtStrategy', () => {
   ])('rejects a token when its user %s', async (_description, user) => {
     mockUsers.findByIdWithRoles.mockResolvedValue(user)
 
-    await expect(strategy.validate({ sub: '1', email: 'user@gym.local', roles: ['member'] })).rejects.toBeInstanceOf(
-      UnauthorizedException,
-    )
+    await expect(
+      strategy.validate({ sub: '1', email: 'user@gym.local', roles: ['member'] })
+    ).rejects.toBeInstanceOf(UnauthorizedException)
   })
 
   it('rejects a token with an invalid subject before querying the database', async () => {
-    await expect(strategy.validate({ sub: 'not-a-bigint', email: 'user@gym.local', roles: ['member'] })).rejects.toBeInstanceOf(
-      UnauthorizedException,
-    )
+    await expect(
+      strategy.validate({ sub: 'not-a-bigint', email: 'user@gym.local', roles: ['member'] })
+    ).rejects.toBeInstanceOf(UnauthorizedException)
     expect(mockUsers.findByIdWithRoles).not.toHaveBeenCalled()
   })
 })

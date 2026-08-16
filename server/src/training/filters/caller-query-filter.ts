@@ -35,7 +35,7 @@ export class TrainerCallerQueryFilter implements ICallerQueryFilter {
 export class AdminCallerQueryFilter implements ICallerQueryFilter {
   constructor(
     private readonly requestedMemberId?: bigint,
-    private readonly requestedStaffId?: bigint,
+    private readonly requestedStaffId?: bigint
   ) {}
 
   apply(where: Prisma.TrainingSessionWhereInput, _caller: Caller): void {
@@ -47,7 +47,7 @@ export class AdminCallerQueryFilter implements ICallerQueryFilter {
 export function resolveCallerFilter(
   caller: Caller,
   memberId?: string,
-  trainerStaffId?: string,
+  trainerStaffId?: string
 ): ICallerQueryFilter {
   const memberIdBig = memberId ? BigInt(memberId) : undefined
   const staffIdBig = trainerStaffId ? BigInt(trainerStaffId) : undefined
@@ -56,8 +56,7 @@ export function resolveCallerFilter(
     caller.roles.includes('member') &&
     !caller.roles.some((r) => ['owner', 'staff', 'trainer'].includes(r))
   const isTrainerOnly =
-    caller.roles.includes('trainer') &&
-    !caller.roles.some((r) => ['owner', 'staff'].includes(r))
+    caller.roles.includes('trainer') && !caller.roles.some((r) => ['owner', 'staff'].includes(r))
 
   if (isMemberOnly) return new MemberCallerQueryFilter()
   if (isTrainerOnly) return new TrainerCallerQueryFilter(memberIdBig)

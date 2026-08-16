@@ -1,8 +1,14 @@
-import { type ReactNode } from 'react'
+import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
-import { statusLabel, statusTone, type StatusTone } from '@/lib/status'
-import { Modal, StatCard, StatusBadge, Button } from '@/components/ui'
-import { Select } from '@/components/Select'
+import {
+  Button,
+  Card,
+  Modal,
+  StatCard,
+  StatusBadge,
+  Select,
+  type StatusTone,
+} from '@/components/ui'
 import type { TrainerStudentSummary } from '@/services/member.service'
 
 export {
@@ -11,15 +17,26 @@ export {
   PageErrorState as TrainerErrorState,
   PageHeader as TrainerPageHeader,
   PageSkeleton as TrainerSkeleton,
-} from '@/components/shared/PageUI'
+  SearchToolbar as TrainerSearchToolbar,
+  SearchInput as TrainerSearchInput,
+} from '@/components/ui'
 
+export const TrainerCard = Card
 export const TrainerStatCard = StatCard
-
-export function TrainerStatusBadge({ status, tone }: { status: string; tone?: StatusTone }) {
-  return <StatusBadge status={statusLabel(status)} tone={tone ?? statusTone(status)} />
-}
-
 export const TrainerModal = Modal
+export const TrainerSelect = Select
+
+export function TrainerStatusBadge({
+  status,
+  tone,
+  label,
+}: {
+  status: string
+  tone?: StatusTone
+  label?: string
+}) {
+  return <StatusBadge status={status} tone={tone} label={label} />
+}
 
 export function SubmitButton({
   loading,
@@ -38,8 +55,6 @@ export function SubmitButton({
     </Button>
   )
 }
-
-export { Select as TrainerSelect } from '@/components/Select'
 
 export function StudentCombobox({
   students,

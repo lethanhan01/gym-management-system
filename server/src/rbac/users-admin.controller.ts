@@ -30,7 +30,7 @@ import { ListUsersDto } from './dto/list-users.dto'
 export class UsersAdminController {
   constructor(
     private readonly rbac: RbacService,
-    private readonly prisma: PrismaService,
+    private readonly prisma: PrismaService
   ) {}
 
   @Get()
@@ -62,7 +62,7 @@ export class UsersAdminController {
   async assignGroup(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: AssignGroupDto,
-    @CurrentUser() user: AuthenticatedUser,
+    @CurrentUser() user: AuthenticatedUser
   ) {
     const result = await this.rbac.assignUserGroup(BigInt(id), BigInt(dto.groupId), user.userId)
     return { success: true, ...result }
@@ -74,7 +74,7 @@ export class UsersAdminController {
   async revokeGroup(
     @Param('id', ParseIntPipe) id: number,
     @Param('groupId', ParseIntPipe) groupId: number,
-    @CurrentUser() user: AuthenticatedUser,
+    @CurrentUser() user: AuthenticatedUser
   ) {
     await this.rbac.revokeUserGroup(BigInt(id), BigInt(groupId), user.userId)
   }
@@ -83,7 +83,7 @@ export class UsersAdminController {
   async update(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateUserDto,
-    @CurrentUser() user: AuthenticatedUser,
+    @CurrentUser() user: AuthenticatedUser
   ) {
     const targetId = BigInt(id)
     const isSelf = user.userId === targetId
@@ -106,6 +106,11 @@ export class UsersAdminController {
       include: { group: { include: { permissions: { include: { permission: true } } } } },
     })
     const has = rows.some((ug) => ug.group.permissions.some((gp) => gp.permission.code === code))
-    if (!has) throw new ForbiddenException({ success: false, code: 'FORBIDDEN', message: `Cần quyền: ${code}` })
+    if (!has)
+      throw new ForbiddenException({
+        success: false,
+        code: 'FORBIDDEN',
+        message: `Cần quyền: ${code}`,
+      })
   }
 }

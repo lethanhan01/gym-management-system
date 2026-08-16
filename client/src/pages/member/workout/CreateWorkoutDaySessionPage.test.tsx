@@ -4,7 +4,7 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import i18n from '@/lib/i18n'
 import { useAuthStore } from '@/stores/authStore'
 import workoutService, { type WorkoutAssignmentSummary, type WorkoutPlan } from '@/services/workout.service'
-import { trainingService, type TrainingSessionDetail } from '@/services/training.service'
+import { trainingSessionService, type TrainingSessionDetail } from '@/services/training-session.service'
 import { getSessionDraftStorageKey, saveSessionDraft } from './create-session/sessionDraft'
 import CreateWorkoutDaySessionPage from './CreateWorkoutDaySessionPage'
 
@@ -13,7 +13,7 @@ vi.mock('@/services/workout.service', async () => {
   return { ...actual, default: { ...actual.default, getAssignments: vi.fn(), getPlan: vi.fn(), createLog: vi.fn() } }
 })
 
-vi.mock('@/services/training.service', () => ({ trainingService: { getSession: vi.fn() } }))
+vi.mock('@/services/training-session.service', () => ({ trainingSessionService: { getSession: vi.fn() } }))
 
 const assignment: WorkoutAssignmentSummary = {
   assignmentId: '101', memberId: '10', planId: '1', assignedByStaffId: '20', startDate: '2026-07-01',
@@ -54,7 +54,7 @@ describe('CreateWorkoutDaySessionPage', () => {
     vi.mocked(workoutService.getAssignments).mockResolvedValue([assignment])
     vi.mocked(workoutService.getPlan).mockResolvedValue(plan)
     vi.mocked(workoutService.createLog).mockResolvedValue({} as never)
-    vi.mocked(trainingService.getSession).mockResolvedValue(session)
+    vi.mocked(trainingSessionService.getSession).mockResolvedValue(session)
   })
 
   it('renders configured sets read-only, starts the timer, and pauses it before leaving', async () => {
@@ -78,8 +78,20 @@ describe('CreateWorkoutDaySessionPage', () => {
     expect(screen.getByLabelText('Nghỉ 45 giây')).toBeVisible()
 
     fireEvent.click(screen.getByRole('button', { name: 'Bắt đầu buổi tập' }))
-    expect(await screen.findByRole('button', { name: 'Dừng buổi tập' })).toBeVisible()
-    expect(screen.getByText('02:45')).toBeVisible()
+    const stopButtons = await screen.findAllByRole('button', { name: 'Dừng buổi tập' })
+    expect(stopButtons.length).toBeGreaterThanOrEqual(1)
+    expect(screen.getAllByText('02:45')[0]).toBeVisible()
+    expect(screen.getByText('Đang thực hiện buổi tập')).toBeVisible()
+
+    // Test minimizing focus modal
+    fireEvent.click(screen.getByRole('button', { name: 'Thu nhỏ' }))
+    expect(screen.queryByText('Đang thực hiện buổi tập')).toBeNull()
+    expect(screen.getByRole('button', { name: 'Mở bảng tập luyện' })).toBeVisible()
+
+    // Reopen modal
+    fireEvent.click(screen.getByRole('button', { name: 'Mở bảng tập luyện' }))
+    expect(screen.getByText('Đang thực hiện buổi tập')).toBeVisible()
+
     fireEvent.click(screen.getByRole('button', { name: 'Quay lại chọn ngày tập' }))
     expect(screen.getByText('Dừng buổi tập?')).toBeVisible()
     fireEvent.click(screen.getByRole('button', { name: 'Dừng và rời đi' }))

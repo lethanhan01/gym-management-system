@@ -28,7 +28,7 @@ export class PaymentsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly audit: AuditService,
-    private readonly notifications: NotificationsService,
+    private readonly notifications: NotificationsService
   ) {}
 
   async createPayment(dto: CreatePaymentDto, caller: AuthenticatedUser) {
@@ -38,17 +38,24 @@ export class PaymentsService {
     if (caller.roles.includes('member') && !isOwnerOrStaff(caller)) {
       const selfMemberId = await this.resolveCallerMemberId(caller)
       if (selfMemberId !== memberId) {
-        throw new ForbiddenException({ success: false, code: 'FORBIDDEN', message: 'Member chi duoc thanh toan cho chinh minh' })
+        throw new ForbiddenException({
+          success: false,
+          code: 'FORBIDDEN',
+          message: 'Member chi duoc thanh toan cho chinh minh',
+        })
       }
     }
-
 
     const sub = await this.prisma.subscription.findFirst({
       where: { subscriptionId, deletedAt: null },
       include: { package: true, member: { include: { user: true } } },
     })
     if (!sub || sub.memberId !== memberId) {
-      throw new BadRequestException({ success: false, code: 'FK_CONSTRAINT', message: 'memberId hoac subscriptionId khong hop le' })
+      throw new BadRequestException({
+        success: false,
+        code: 'FK_CONSTRAINT',
+        message: 'memberId hoac subscriptionId khong hop le',
+      })
     }
 
     if (sub.status !== SubscriptionStatus.pending) {
@@ -70,7 +77,8 @@ export class PaymentsService {
         deletedAt: null,
       },
     })
-    const shouldActivate = paymentStatus === PaymentStatus.success && sub.startDate <= today && !activeOther
+    const shouldActivate =
+      paymentStatus === PaymentStatus.success && sub.startDate <= today && !activeOther
 
     const result = await this.prisma.$transaction(async (tx) => {
       const payment = await tx.payment.create({
@@ -115,7 +123,9 @@ export class PaymentsService {
         action: 'subscription.activate',
         resourceType: 'subscription',
         resourceId: sub.subscriptionId.toString(),
-        afterData: { activatedByPaymentId: result.payment.paymentId.toString() } as unknown as Record<string, unknown>,
+        afterData: {
+          activatedByPaymentId: result.payment.paymentId.toString(),
+        } as unknown as Record<string, unknown>,
       })
     }
 
@@ -179,14 +189,23 @@ export class PaymentsService {
     } else if (caller.roles.includes('member')) {
       const selfMemberId = await this.resolveCallerMemberId(caller)
       if (memberId && BigInt(memberId) !== selfMemberId) {
-        throw new ForbiddenException({ success: false, code: 'FORBIDDEN', message: 'Member chi duoc xem payment cua chinh minh' })
+        throw new ForbiddenException({
+          success: false,
+          code: 'FORBIDDEN',
+          message: 'Member chi duoc xem payment cua chinh minh',
+        })
       }
       where.memberId = selfMemberId
       if (subscriptionId) {
         await this.assertSubscriptionBelongsToMember(BigInt(subscriptionId), selfMemberId)
       }
     } else if (caller.roles.includes('trainer')) {
-      if (!caller.staffId) throw new ForbiddenException({ success: false, code: 'FORBIDDEN', message: 'Khong tim thay staff profile' })
+      if (!caller.staffId)
+        throw new ForbiddenException({
+          success: false,
+          code: 'FORBIDDEN',
+          message: 'Khong tim thay staff profile',
+        })
       if (memberId) {
         await this.assertTrainerOwnsMember(BigInt(memberId), caller.staffId)
         where.memberId = BigInt(memberId)
@@ -194,30 +213,34 @@ export class PaymentsService {
         where.member = { primaryTrainerId: caller.staffId }
       }
     } else {
-      throw new ForbiddenException({ success: false, code: 'FORBIDDEN', message: 'Khong co quyen xem payments' })
+      throw new ForbiddenException({
+        success: false,
+        code: 'FORBIDDEN',
+        message: 'Khong co quyen xem payments',
+      })
     }
 
     const orderBy = this.buildOrder(sort)
     const data = await this.prisma.payment.findMany({
-        where,
-        include: {
-          member: {
-            include: {
-              user: true,
-              primaryTrainer: { include: { user: true } },
-            },
-          },
-          subscription: {
-            include: {
-              package: true,
-              trainer: { include: { user: true } },
-            },
+      where,
+      include: {
+        member: {
+          include: {
+            user: true,
+            primaryTrainer: { include: { user: true } },
           },
         },
-        skip: (page - 1) * pageSize,
-        take: pageSize,
-        orderBy,
-      })
+        subscription: {
+          include: {
+            package: true,
+            trainer: { include: { user: true } },
+          },
+        },
+      },
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+      orderBy,
+    })
     const total = await this.prisma.payment.count({ where })
 
     return {
@@ -242,7 +265,8 @@ export class PaymentsService {
             fullName: p.member?.user.fullName ?? `Hoi vien #${p.memberId.toString()}`,
           },
           service: {
-            subscriptionId: p.subscription.subscriptionId?.toString() ?? p.subscriptionId.toString(),
+            subscriptionId:
+              p.subscription.subscriptionId?.toString() ?? p.subscriptionId.toString(),
             packageId: packageData?.packageId?.toString() ?? '',
             packageCode: packageData?.packageCode ?? '',
             name: packageName,
@@ -257,14 +281,26 @@ export class PaymentsService {
             : null,
         }
       }),
-      meta: { page, pageSize, totalItems: total, totalPages: Math.max(1, Math.ceil(total / pageSize)) },
+      meta: {
+        page,
+        pageSize,
+        totalItems: total,
+        totalPages: Math.max(1, Math.ceil(total / pageSize)),
+      },
     }
   }
 
   private async resolveCallerMemberId(caller: AuthenticatedUser): Promise<bigint> {
     if (caller.memberId) return caller.memberId
-    const member = await this.prisma.member.findFirst({ where: { userId: caller.userId, deletedAt: null } })
-    if (!member) throw new ForbiddenException({ success: false, code: 'MEMBER_PROFILE_NOT_FOUND', message: 'Khong tim thay member profile' })
+    const member = await this.prisma.member.findFirst({
+      where: { userId: caller.userId, deletedAt: null },
+    })
+    if (!member)
+      throw new ForbiddenException({
+        success: false,
+        code: 'MEMBER_PROFILE_NOT_FOUND',
+        message: 'Khong tim thay member profile',
+      })
     return member.memberId
   }
 
@@ -307,7 +343,9 @@ export class PaymentsService {
       {
         type: isSuccess ? 'payment.success.admin' : 'payment.failed.admin',
         title: isSuccess ? 'Thanh toan moi' : 'Thanh toan that bai',
-        message: isSuccess ? 'Co mot giao dich thanh toan moi.' : 'Co mot giao dich thanh toan that bai.',
+        message: isSuccess
+          ? 'Co mot giao dich thanh toan moi.'
+          : 'Co mot giao dich thanh toan that bai.',
         resourceType: 'payment',
         resourceId: args.paymentId.toString(),
         metadata: {
@@ -317,21 +355,31 @@ export class PaymentsService {
         },
         dedupeKey: `payment:${args.paymentId.toString()}:${args.status}:admin`,
       },
-      { excludeActorUserId: args.actorUserId },
+      { excludeActorUserId: args.actorUserId }
     )
   }
 
   private async assertSubscriptionBelongsToMember(subscriptionId: bigint, memberId: bigint) {
-    const sub = await this.prisma.subscription.findFirst({ where: { subscriptionId, deletedAt: null } })
+    const sub = await this.prisma.subscription.findFirst({
+      where: { subscriptionId, deletedAt: null },
+    })
     if (!sub || sub.memberId !== memberId) {
-      throw new ForbiddenException({ success: false, code: 'FORBIDDEN', message: 'Subscription khong thuoc member nay' })
+      throw new ForbiddenException({
+        success: false,
+        code: 'FORBIDDEN',
+        message: 'Subscription khong thuoc member nay',
+      })
     }
   }
 
   private async assertTrainerOwnsMember(memberId: bigint, staffId: bigint) {
     const member = await this.prisma.member.findFirst({ where: { memberId, deletedAt: null } })
     if (!member || member.primaryTrainerId !== staffId) {
-      throw new ForbiddenException({ success: false, code: 'FORBIDDEN', message: 'PT khong phu trach member nay' })
+      throw new ForbiddenException({
+        success: false,
+        code: 'FORBIDDEN',
+        message: 'PT khong phu trach member nay',
+      })
     }
   }
 
@@ -386,8 +434,10 @@ export class PaymentsService {
     const account = await this.prisma.paymentAccount.findFirst({
       where: { accountId, deletedAt: null },
     })
-    if (!account) throw new NotFoundException({ success: false, message: 'Tài khoản không tồn tại' })
-    if (account.memberId !== memberId) throw new ForbiddenException({ success: false, message: 'Không có quyền xoá tài khoản này' })
+    if (!account)
+      throw new NotFoundException({ success: false, message: 'Tài khoản không tồn tại' })
+    if (account.memberId !== memberId)
+      throw new ForbiddenException({ success: false, message: 'Không có quyền xoá tài khoản này' })
     await this.prisma.paymentAccount.update({
       where: { accountId },
       data: { deletedAt: new Date() },

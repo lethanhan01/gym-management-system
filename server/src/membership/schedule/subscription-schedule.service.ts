@@ -20,7 +20,12 @@ export class SubscriptionScheduleService {
 
     // Tìm PT subscriptions sắp expire để reset trainer cho member
     const ptSubsToExpire = await this.prisma.subscription.findMany({
-      where: { status: 'active', endDate: { lt: today }, deletedAt: null, trainerId: { not: null } },
+      where: {
+        status: 'active',
+        endDate: { lt: today },
+        deletedAt: null,
+        trainerId: { not: null },
+      },
       select: { memberId: true },
     })
 
@@ -54,9 +59,7 @@ export class SubscriptionScheduleService {
       },
     })
 
-    const toActivate = pendingSubs
-      .filter((s) => s.payments.length > 0)
-      .map((s) => s.subscriptionId)
+    const toActivate = pendingSubs.filter((s) => s.payments.length > 0).map((s) => s.subscriptionId)
 
     if (toActivate.length === 0) return
 
@@ -80,9 +83,7 @@ export class SubscriptionScheduleService {
       },
     })
 
-    const toCancel = pendingSubs
-      .filter((s) => s.payments.length === 0)
-      .map((s) => s.subscriptionId)
+    const toCancel = pendingSubs.filter((s) => s.payments.length === 0).map((s) => s.subscriptionId)
 
     if (toCancel.length === 0) return
 

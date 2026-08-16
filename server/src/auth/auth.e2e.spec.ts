@@ -93,7 +93,10 @@ describe('Auth E2E', () => {
         PasswordResetService,
         EmailVerificationService,
         LineOAuthService,
-        { provide: OtpService, useValue: { issue: jest.fn(), verify: jest.fn(), clear: jest.fn() } },
+        {
+          provide: OtpService,
+          useValue: { issue: jest.fn(), verify: jest.fn(), clear: jest.fn() },
+        },
         { provide: MailerService, useValue: { sendOtp: jest.fn() } },
         JwtStrategy,
         { provide: APP_GUARD, useClass: JwtAuthGuard },
@@ -121,7 +124,11 @@ describe('Auth E2E', () => {
     mockPrisma.auditLog.create.mockResolvedValue({})
     mockPrisma.staff.findFirst.mockResolvedValue(null)
     mockPrisma.member.findFirst.mockResolvedValue({ memberId: 10n })
-    mockUsersService.findByIdWithRoles.mockResolvedValue({ ...baseUser, memberId: 10n, staffId: null })
+    mockUsersService.findByIdWithRoles.mockResolvedValue({
+      ...baseUser,
+      memberId: 10n,
+      staffId: null,
+    })
   })
 
   // ---------------------------------------------------------------------------
@@ -261,21 +268,27 @@ describe('Auth E2E', () => {
     it.each([
       ['is no longer found', null],
       ['has been locked', { ...baseUser, status: 'locked', roles: ['member'], memberId: 10n }],
-      ['has been soft-deleted', { ...baseUser, deletedAt: new Date(), roles: ['member'], memberId: 10n }],
-    ])('401 — rejects an otherwise valid token when its user %s', async (_description, currentUser) => {
-      const token = await jwtService.signAsync({
-        sub: '1',
-        email: 'member@gym.local',
-        roles: ['member'],
-      })
-      mockUsersService.findByIdWithRoles.mockResolvedValue(currentUser)
+      [
+        'has been soft-deleted',
+        { ...baseUser, deletedAt: new Date(), roles: ['member'], memberId: 10n },
+      ],
+    ])(
+      '401 — rejects an otherwise valid token when its user %s',
+      async (_description, currentUser) => {
+        const token = await jwtService.signAsync({
+          sub: '1',
+          email: 'member@gym.local',
+          roles: ['member'],
+        })
+        mockUsersService.findByIdWithRoles.mockResolvedValue(currentUser)
 
-      const res = await request(app.getHttpServer())
-        .get('/api/v1/auth/me')
-        .set('Authorization', `Bearer ${token}`)
+        const res = await request(app.getHttpServer())
+          .get('/api/v1/auth/me')
+          .set('Authorization', `Bearer ${token}`)
 
-      expect(res.status).toBe(401)
-    })
+        expect(res.status).toBe(401)
+      }
+    )
 
     it('401 — expired token', async () => {
       const expiredToken = await jwtService.signAsync(
@@ -320,9 +333,7 @@ describe('Auth E2E', () => {
     })
 
     it('400 — missing email returns ValidationPipe error', async () => {
-      const res = await request(app.getHttpServer())
-        .post('/api/v1/auth/forgot-password')
-        .send({})
+      const res = await request(app.getHttpServer()).post('/api/v1/auth/forgot-password').send({})
 
       expect(res.status).toBe(400)
     })

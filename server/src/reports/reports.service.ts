@@ -240,7 +240,7 @@ export class ReportsService {
 
         const expectedMinutes = schedules.reduce(
           (sum, sch) => sum + (SHIFT_DURATION_MINUTES[sch.shift] ?? 480),
-          0,
+          0
         )
         const actualMinutes = attendanceLogs.reduce((sum, log) => {
           if (!log.checkOut) return sum
@@ -255,9 +255,12 @@ export class ReportsService {
           feedback.length === 0
             ? null
             : Math.round(
-                (feedback.reduce((sum, f) => sum + this.severityScore(f.severity as FeedbackSeverity), 0) /
+                (feedback.reduce(
+                  (sum, f) => sum + this.severityScore(f.severity as FeedbackSeverity),
+                  0
+                ) /
                   feedback.length) *
-                  100,
+                  100
               ) / 100
 
         return {
@@ -277,7 +280,7 @@ export class ReportsService {
         data: rows.sort(
           (a, b) =>
             b.performancePercent - a.performancePercent ||
-            Number(BigInt(a.staffId) - BigInt(b.staffId)),
+            Number(BigInt(a.staffId) - BigInt(b.staffId))
         ),
         meta: { from: range.from, to: range.to },
       }
@@ -425,9 +428,12 @@ export class ReportsService {
           feedback.length === 0
             ? null
             : Math.round(
-                (feedback.reduce((sum, f) => sum + this.severityScore(f.severity as FeedbackSeverity), 0) /
+                (feedback.reduce(
+                  (sum, f) => sum + this.severityScore(f.severity as FeedbackSeverity),
+                  0
+                ) /
                   feedback.length) *
-                  100,
+                  100
               ) / 100
 
         return {
@@ -441,9 +447,7 @@ export class ReportsService {
 
       return {
         data: rows.sort(
-          (a, b) =>
-            b.completedSessions - a.completedSessions ||
-            a.staffId.localeCompare(b.staffId),
+          (a, b) => b.completedSessions - a.completedSessions || a.staffId.localeCompare(b.staffId)
         ),
         meta: { from: range.from, to: range.to },
       }

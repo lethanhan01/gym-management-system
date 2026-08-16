@@ -17,8 +17,8 @@ export interface LoginResult {
     email: string
     fullName: string
     roles: string[]
-    staffId?: string   // ◄── Thêm trường này vào interface kết quả trả về
-    memberId?: string  // ◄── Thêm trường này vào interface kết quả trả về
+    staffId?: string // ◄── Thêm trường này vào interface kết quả trả về
+    memberId?: string // ◄── Thêm trường này vào interface kết quả trả về
   }
 }
 
@@ -39,7 +39,7 @@ export class AuthService {
     private readonly audit: AuditService,
     private readonly passwordReset: PasswordResetService,
     private readonly emailVerification: EmailVerificationService,
-    private readonly lineOAuth: LineOAuthService,
+    private readonly lineOAuth: LineOAuthService
   ) {}
 
   // ---------------------------------------------------------------------------
@@ -113,7 +113,7 @@ export class AuthService {
     // 1. TỰ ĐỘNG TRA CỨU: Tìm kiếm song song dữ liệu liên quan dưới DB từ userId
     const [staff, memberRecord] = await Promise.all([
       this.prisma.staff.findFirst({ where: { userId: user.userId, deletedAt: null } }),
-      this.prisma.member.findFirst({ where: { userId: user.userId, deletedAt: null } })
+      this.prisma.member.findFirst({ where: { userId: user.userId, deletedAt: null } }),
     ])
 
     // 2. NẠP DỮ LIỆU VÀO PAYLOAD: Đóng gói thêm staffId và memberId (đổi sang string để JWT hiểu)
@@ -166,7 +166,11 @@ export class AuthService {
     return this.passwordReset.verifyResetOtp(email, otp, ctx)
   }
 
-  async resetPassword(grantToken: string | undefined, newPassword: string, ctx: RequestContext = {}): Promise<void> {
+  async resetPassword(
+    grantToken: string | undefined,
+    newPassword: string,
+    ctx: RequestContext = {}
+  ): Promise<void> {
     return this.passwordReset.resetPassword(grantToken, newPassword, ctx)
   }
 
@@ -202,7 +206,12 @@ export class AuthService {
   // Change password (authenticated user đổi mật khẩu của chính mình)
   // ---------------------------------------------------------------------------
 
-  async changePassword(userId: bigint, currentPassword: string, newPassword: string, ctx: RequestContext = {}): Promise<void> {
+  async changePassword(
+    userId: bigint,
+    currentPassword: string,
+    newPassword: string,
+    ctx: RequestContext = {}
+  ): Promise<void> {
     const user = await this.prisma.user.findUnique({ where: { userId } })
     if (!user || !user.passwordHash) throw new UnauthorizedException('Không tìm thấy tài khoản')
 

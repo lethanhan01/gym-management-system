@@ -3,8 +3,13 @@ import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import subscriptionService, { type Subscription } from '@/services/subscription.service'
 import { useAuthStore } from '@/stores/authStore'
-import { MemberPage, MemberPageHeader, MemberSkeleton } from '@/components/MemberUI'
-import { Button } from '@/components/ui/Button'
+import {
+  MemberCard,
+  MemberPage,
+  MemberPageHeader,
+  MemberSkeleton,
+} from '@/components/MemberUI'
+import { Button } from '@/components/ui'
 import { formatDate } from '@/lib/date'
 
 function addDays(date: Date, days: number): Date {
@@ -72,6 +77,7 @@ export default function RenewPackagePage() {
           <Button
             onClick={() => navigate('/member/subscription/current')}
             variant="outline-white"
+            size="sm"
           >
             {t('subscription.renew.backToCurrent')}
           </Button>
@@ -83,7 +89,7 @@ export default function RenewPackagePage() {
         <div className="py-16 text-center rogym-text-secondary">{error}</div>
       ) : activeSub ? (
         <div className="mx-auto flex max-w-md flex-col gap-5">
-          <div className="rogym-card rogym-card--compact flex flex-col gap-4 p-6">
+          <MemberCard variant="compact" className="flex flex-col gap-4 p-6">
             <h3 className="text-base font-bold text-white">
               {activeSub.packageName ?? activeSub.package?.name ?? t('subscription.renew.packageFallback')}
             </h3>
@@ -109,11 +115,11 @@ export default function RenewPackagePage() {
                   : '',
               })}
             </p>
-          </div>
+          </MemberCard>
           <Button
             onClick={continueToPayment}
             variant="primary"
-            className="w-full"
+            fullWidth
           >
             {t('subscription.renew.buttonPay')}
           </Button>

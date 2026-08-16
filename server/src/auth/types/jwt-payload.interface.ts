@@ -12,7 +12,7 @@ export interface JwtPayload {
   sub: string
   email: string
   roles: Role[]
-  staffId?: string  // ◄── Thêm trường này
+  staffId?: string // ◄── Thêm trường này
   memberId?: string // ◄── Thêm trường này
 }
 

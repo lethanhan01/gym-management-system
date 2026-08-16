@@ -1,4 +1,11 @@
-import { Injectable, Logger, UnauthorizedException, InternalServerErrorException, ForbiddenException, ConflictException } from '@nestjs/common'
+import {
+  Injectable,
+  Logger,
+  UnauthorizedException,
+  InternalServerErrorException,
+  ForbiddenException,
+  ConflictException,
+} from '@nestjs/common'
 import { JwtService } from '@nestjs/jwt'
 import { ConfigService } from '@nestjs/config'
 import { UserStatus } from '@prisma/client'
@@ -24,7 +31,7 @@ export class LineOAuthService {
     private readonly users: UsersService,
     private readonly jwt: JwtService,
     private readonly config: ConfigService,
-    private readonly audit: AuditService,
+    private readonly audit: AuditService
   ) {}
 
   // ---------------------------------------------------------------------------
@@ -195,7 +202,7 @@ export class LineOAuthService {
 
     let data: { sub: string; name?: string; email?: string; picture?: string }
     try {
-      data = await res.json() as { sub: string; name?: string; email?: string; picture?: string }
+      data = (await res.json()) as { sub: string; name?: string; email?: string; picture?: string }
     } catch {
       throw new UnauthorizedException({
         success: false,
@@ -203,7 +210,12 @@ export class LineOAuthService {
         message: 'LINE ID token không hợp lệ hoặc đã hết hạn',
       })
     }
-    return { sub: data.sub, name: data.name ?? 'LINE User', email: data.email, picture: data.picture }
+    return {
+      sub: data.sub,
+      name: data.name ?? 'LINE User',
+      email: data.email,
+      picture: data.picture,
+    }
   }
 
   private async createMemberFromLine(profile: LineProfile): Promise<UserWithRoles> {
@@ -244,7 +256,9 @@ export class LineOAuthService {
   }
 
   private async generateLineMemberCode(): Promise<string> {
-    const year = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' }).slice(0, 4)
+    const year = new Date()
+      .toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' })
+      .slice(0, 4)
     for (let attempt = 0; attempt < 10; attempt++) {
       const count = await this.prisma.member.count({ where: { deletedAt: null } })
       const seq = String(count + 1 + attempt).padStart(6, '0')

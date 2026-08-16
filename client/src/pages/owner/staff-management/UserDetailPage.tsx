@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from 'react'
-import { Link, useParams, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '@/stores/authStore'
-import { ArrowLeft, Save, LoaderCircle, X } from 'lucide-react'
+import { ArrowLeft, Save, X } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { getApiError } from '@/lib/api-error'
 import { formatDate } from '@/lib/date'
@@ -14,14 +14,20 @@ import {
   type CreateStaffDto,
 } from '@/services/staff.service'
 import {
-  OwnerEmptyState,
-  OwnerErrorState,
-  OwnerPage,
-  OwnerPageHeader,
-  OwnerSkeleton,
-  OwnerBadge,
-  OwnerSelect,
-} from '@/components/OwnerUI'
+  Page,
+  PageHeader,
+  PageSkeleton,
+  PageEmptyState,
+  PageErrorState,
+  Card,
+  FormField,
+  Input,
+  Select,
+  Button,
+  ButtonLink,
+  Badge,
+  ConfirmDialog,
+} from '@/components/ui'
 import { toast } from '@/lib/toast'
 
 export default function UserDetailPage() {
@@ -101,11 +107,11 @@ export default function UserDetailPage() {
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault()
-    
+
     const errors: Record<string, string> = {}
     if (!form.fullName) errors.fullName = t('staffManagement.detail.validation.nameRequired')
     if (!form.email) errors.email = t('staffManagement.detail.validation.emailRequired', { defaultValue: 'Email là bắt buộc' })
-    
+
     setFormErrors(errors)
     if (Object.keys(errors).length > 0) return
 
@@ -150,20 +156,20 @@ export default function UserDetailPage() {
 
   if (loading)
     return (
-      <OwnerPage>
-        <OwnerSkeleton rows={4} />
-      </OwnerPage>
+      <Page>
+        <PageSkeleton rows={4} />
+      </Page>
     )
   if (error)
     return (
-      <OwnerPage>
-        <OwnerErrorState message={error} onRetry={loadStaff} />
-      </OwnerPage>
+      <Page>
+        <PageErrorState message={error} onRetry={loadStaff} />
+      </Page>
     )
 
   return (
-    <OwnerPage>
-      <OwnerPageHeader
+    <Page>
+      <PageHeader
         eyebrow={t('staffManagement.detail.eyebrow')}
         title={
           isNew
@@ -177,105 +183,108 @@ export default function UserDetailPage() {
         }
         actions={
           !isNew && staff ? (
-            <Link className="rogym-btn rogym-btn--outline-white" to="/owner/staff">
+            <ButtonLink variant="outline-white" to="/owner/staff">
               <ArrowLeft size={16} /> {tCommon('button.back')}
-            </Link>
+            </ButtonLink>
           ) : undefined
         }
       />
 
       <div className="grid gap-6 lg:grid-cols-[1fr_340px]">
         <div className="space-y-6">
-          <form onSubmit={handleSave} className="rogym-card rogym-card--compact p-6 space-y-5">
-            <h2 className="text-base font-bold text-white">
-              {isNew
-                ? t('staffManagement.detail.newInfoTitle')
-                : t('staffManagement.detail.editInfoTitle')}
-            </h2>
+          <Card variant="compact">
+            <form onSubmit={handleSave} className="space-y-5">
+              <h2 className="text-base font-bold text-white">
+                {isNew
+                  ? t('staffManagement.detail.newInfoTitle')
+                  : t('staffManagement.detail.editInfoTitle')}
+              </h2>
 
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div>
-                <label className="rogym-field-label mb-1.5 block">
-                  {t('staffManagement.detail.form.name')}
-                </label>
-                <input
-                  type="text"
-                  value={form.fullName}
-                  onChange={(e) => setForm((f) => ({ ...f, fullName: e.target.value }))}
-                  className="rogym-input"
-                  placeholder={t('staffManagement.detail.form.namePlaceholder')}
+              <div className="grid gap-4 sm:grid-cols-2">
+                <FormField
+                  label={t('staffManagement.detail.form.name')}
                   required
-                />
-                {formErrors.fullName && <p className="mt-1 text-xs text-red-400">{formErrors.fullName}</p>}
-              </div>
-              <div>
-                <label className="rogym-field-label mb-1.5 block">
-                  {t('staffManagement.detail.form.email')}
-                </label>
-                <input
-                  type="email"
-                  value={form.email}
-                  onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
-                  className="rogym-input"
-                  placeholder="nva@gym.local"
-                  required
-                  disabled={!isNew}
-                />
-                {formErrors.email && <p className="mt-1 text-xs text-red-400">{formErrors.email}</p>}
-              </div>
-              <div>
-                <label className="rogym-field-label mb-1.5 block">
-                  {t('staffManagement.detail.form.phone')}
-                </label>
-                <input
-                  type="tel"
-                  value={form.phone ?? ''}
-                  onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
-                  className="rogym-input"
-                  placeholder="0901234567"
-                />
-              </div>
-              <div>
-                <label className="rogym-field-label mb-1.5 block">
-                  {t('staffManagement.detail.form.position')}
-                </label>
-                <OwnerSelect
-                  value={form.position}
-                  onValueChange={(value) =>
-                    setForm((f) => ({ ...f, position: value as StaffPosition }))
-                  }
-                  required
+                  error={formErrors.fullName}
                 >
-                  <option value="staff">{t('staffManagement.detail.positions.staff')}</option>
-                  <option value="trainer">{t('staffManagement.detail.positions.trainer')}</option>
-                  <option value="owner">{t('staffManagement.detail.positions.owner')}</option>
-                </OwnerSelect>
-              </div>
-            </div>
+                  <Input
+                    value={form.fullName}
+                    onChange={(e) => setForm((f) => ({ ...f, fullName: e.target.value }))}
+                    placeholder={t('staffManagement.detail.form.namePlaceholder')}
+                    required
+                  />
+                </FormField>
 
-            <div className="flex flex-col gap-3 pt-2 sm:flex-row sm:justify-end">
-              {isNew ? (
-                <Link className="rogym-btn rogym-btn--outline-white whitespace-nowrap w-full sm:w-auto" to="/owner/staff">
-                  {tCommon('button.cancel')}
-                </Link>
-              ) : null}
-              <button type="submit" className="rogym-btn rogym-btn--primary whitespace-nowrap w-full sm:w-auto" disabled={saving}>
-                {saving && <LoaderCircle size={16} className="animate-spin" />}
-                <Save size={16} />{' '}
-                {isNew ? t('staffManagement.detail.createBtn') : tCommon('button.save')}
-              </button>
-            </div>
-          </form>
+                <FormField
+                  label={t('staffManagement.detail.form.email')}
+                  required
+                  error={formErrors.email}
+                >
+                  <Input
+                    type="email"
+                    value={form.email}
+                    onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
+                    placeholder="nva@gym.local"
+                    required
+                    disabled={!isNew}
+                  />
+                </FormField>
+
+                <FormField label={t('staffManagement.detail.form.phone')}>
+                  <Input
+                    type="tel"
+                    value={form.phone ?? ''}
+                    onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
+                    placeholder="0901234567"
+                  />
+                </FormField>
+
+                <FormField label={t('staffManagement.detail.form.position')} required>
+                  <Select
+                    value={form.position}
+                    onValueChange={(value) =>
+                      setForm((f) => ({ ...f, position: value as StaffPosition }))
+                    }
+                    required
+                  >
+                    <option value="staff">{t('staffManagement.detail.positions.staff')}</option>
+                    <option value="trainer">{t('staffManagement.detail.positions.trainer')}</option>
+                    <option value="owner">{t('staffManagement.detail.positions.owner')}</option>
+                  </Select>
+                </FormField>
+              </div>
+
+              <div className="flex flex-col gap-3 pt-2 sm:flex-row sm:justify-end">
+                {isNew ? (
+                  <ButtonLink
+                    variant="outline-white"
+                    to="/owner/staff"
+                    className="w-full sm:w-auto"
+                  >
+                    {tCommon('button.cancel')}
+                  </ButtonLink>
+                ) : null}
+                <Button
+                  type="submit"
+                  variant="primary"
+                  loading={saving}
+                  className="w-full sm:w-auto"
+                >
+                  <Save size={16} />{' '}
+                  {isNew ? t('staffManagement.detail.createBtn') : tCommon('button.save')}
+                </Button>
+              </div>
+            </form>
+          </Card>
 
           {!isNew && (
-            <div className="rogym-card rogym-card--compact p-6">
+            <Card variant="compact">
               <div className="mb-4 flex items-center justify-between">
                 <h2 className="text-base font-bold text-white">
                   {t('staffManagement.detail.scheduleTitle')}
                 </h2>
               </div>
               {schedules.length === 0 ? (
-                <OwnerEmptyState title={t('staffManagement.detail.noSchedule')} description="" />
+                <PageEmptyState title={t('staffManagement.detail.noSchedule')} description="" />
               ) : (
                 <div className="space-y-2">
                   {schedules.map((s) => (
@@ -295,15 +304,15 @@ export default function UserDetailPage() {
                   ))}
                 </div>
               )}
-            </div>
+            </Card>
           )}
         </div>
 
         {!isNew && staff && (
           <aside className="space-y-5">
-            <div className="rogym-card rogym-card--compact p-6">
+            <Card variant="compact">
               <div className="rogym-avatar-ring mb-4 flex h-14 w-14 items-center justify-center rounded-full">
-                <span className="rogym-font-display text-2xl rogym-text-green">
+                <span className="rogym-font-display text-2xl text-[var(--rogym-teal)]">
                   {staff.fullName
                     .split(' ')
                     .map((w) => w[0])
@@ -317,59 +326,57 @@ export default function UserDetailPage() {
               <p className="text-sm rogym-text-secondary">{staff.email}</p>
               {staff.phone && <p className="text-sm rogym-text-dim">{staff.phone}</p>}
               <div className="mt-3 flex flex-wrap gap-2">
-                <OwnerBadge
-                  label={POSITION_LABEL[staff.position] ?? staff.position}
-                  color={STAFF_POSITION_COLOR[staff.position] ?? '#6b7280'}
-                />
-                <OwnerBadge
-                  label={USER_STATUS_LABEL[staff.status] ?? staff.status}
-                  color={USER_STATUS_COLOR[staff.status] ?? '#6b7280'}
-                />
+                <Badge
+                  style={{
+                    borderColor: `${STAFF_POSITION_COLOR[staff.position] ?? '#6b7280'}40`,
+                    color: STAFF_POSITION_COLOR[staff.position] ?? '#6b7280',
+                  }}
+                >
+                  {POSITION_LABEL[staff.position] ?? staff.position}
+                </Badge>
+                <Badge
+                  style={{
+                    borderColor: `${USER_STATUS_COLOR[staff.status] ?? '#6b7280'}40`,
+                    color: USER_STATUS_COLOR[staff.status] ?? '#6b7280',
+                  }}
+                >
+                  {USER_STATUS_LABEL[staff.status] ?? staff.status}
+                </Badge>
               </div>
-            </div>
+            </Card>
 
             {staff.staffId !== currentUser?.staffId && (
-              <div className="rogym-card rogym-card--compact p-6">
+              <Card variant="compact">
                 <h3 className="mb-3 text-sm font-semibold text-white">
                   {t('staffManagement.detail.actions')}
                 </h3>
-                {!showDeleteConfirm ? (
-                  <button
-                    className="rogym-btn rogym-btn--danger w-full"
-                    onClick={() => setShowDeleteConfirm(true)}
-                  >
-                    <X size={16} /> {t('staffManagement.detail.terminate')}
-                  </button>
-                ) : (
-                  <div className="rogym-error-alert space-y-3">
-                    <p className="text-sm">
-                      {t('staffManagement.detail.terminateConfirm', {
-                        name: staff?.fullName ?? '',
-                      })}
-                    </p>
-                    <div className="flex gap-2">
-                      <button
-                        className="flex-1 rogym-btn rogym-btn--outline-white"
-                        onClick={() => setShowDeleteConfirm(false)}
-                      >
-                        {tCommon('button.cancel')}
-                      </button>
-                      <button
-                        className="flex-1 rounded-lg bg-red-500 px-3 py-2 text-sm font-semibold text-white"
-                        disabled={deleting}
-                        onClick={handleDelete}
-                      >
-                        {deleting && <LoaderCircle size={14} className="animate-spin" />}{' '}
-                        {t('staffManagement.detail.terminateConfirmBtn')}
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
+                <Button
+                  variant="danger"
+                  className="w-full"
+                  onClick={() => setShowDeleteConfirm(true)}
+                >
+                  <X size={16} /> {t('staffManagement.detail.terminate')}
+                </Button>
+              </Card>
             )}
           </aside>
         )}
       </div>
-    </OwnerPage>
+
+      {showDeleteConfirm && (
+        <ConfirmDialog
+          open={showDeleteConfirm}
+          title={t('staffManagement.detail.terminate')}
+          variant="danger"
+          loading={deleting}
+          onClose={() => setShowDeleteConfirm(false)}
+          onConfirm={handleDelete}
+          description={t('staffManagement.detail.terminateConfirm', {
+            name: staff?.fullName ?? '',
+          })}
+          confirmLabel={t('staffManagement.detail.terminateConfirmBtn')}
+        />
+      )}
+    </Page>
   )
 }

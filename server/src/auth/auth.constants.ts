@@ -1,6 +1,6 @@
-export const OTP_TTL_MS = 10 * 60 * 1000      // 10 phut
-export const OTP_RATE_LIMIT = 3               // 3 lan
-export const OTP_RATE_WINDOW_MS = 60 * 60 * 1000  // trong 1 gio
+export const OTP_TTL_MS = 10 * 60 * 1000 // 10 phut
+export const OTP_RATE_LIMIT = 3 // 3 lan
+export const OTP_RATE_WINDOW_MS = 60 * 60 * 1000 // trong 1 gio
 export const OTP_MAX_ATTEMPTS = 5
 
 /**

@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Button, ButtonLink } from '@/components/ui/Button'
+import { Button, ButtonLink, FormField, Textarea } from '@/components/ui'
 import { CheckCircle2, Users, Wrench, Star } from 'lucide-react'
-import { MemberPage, MemberPageHeader } from '@/components/MemberUI'
+import { MemberCard, MemberPage, MemberPageHeader } from '@/components/MemberUI'
 import { feedbackService } from '@/services/feedback.service'
 import { useAuthStore } from '@/stores/authStore'
 
@@ -60,50 +60,44 @@ export default function SendFeedbackPage() {
         title={t('feedback.send.title')}
         description={t('feedback.send.description')}
         actions={
-          <ButtonLink variant="outline-white" to="/member/feedback">
+          <ButtonLink variant="outline-white" size="sm" to="/member/feedback">
             {t('feedback.send.backLink')}
           </ButtonLink>
         }
       />
 
-      <div className="rogym-sx-28f2f99c">
+      <div className="max-w-2xl mx-auto">
         {success ? (
-          <div
-            
-            className="flex flex-col items-center text-center rogym-sx-dbb7df51"
-          >
-            <div
-              className="mb-5 flex h-16 w-16 items-center justify-center rounded-full rogym-sx-430b5d04"
-              
-            >
-              <CheckCircle2 size={32} className="rogym-sx-b2fbf853" />
+          <MemberCard variant="compact" className="p-8 flex flex-col items-center text-center">
+            <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-[rgba(6,195,132,0.12)]">
+              <CheckCircle2 size={32} className="rogym-text-accent" />
             </div>
             <h2 className="text-xl font-bold text-white">{t('feedback.send.successTitle')}</h2>
-            <p className="mt-2 text-sm rogym-sx-d88f932f">
+            <p className="mt-2 text-sm rogym-text-secondary max-w-md">
               {t('feedback.send.successDesc')}
             </p>
             <div className="mt-8 flex flex-wrap gap-3 justify-center">
               <ButtonLink
                 variant="primary"
                 to="/member/feedback"
-                className="px-6 py-2.5 text-sm"
+                size="sm"
               >
                 {t('feedback.send.buttonViewMy')}
               </ButtonLink>
               <Button
                 variant="outline-white"
+                size="sm"
                 onClick={() => { setSuccess(false); setContent(''); setFeedbackType('service'); setSeverity('medium') }}
-                className="px-6 py-2.5 text-sm"
               >
                 {t('feedback.send.buttonSendAnother')}
               </Button>
             </div>
-          </div>
+          </MemberCard>
         ) : (
-          <form onSubmit={handleSubmit}>
-            <div className="rogym-sx-df69c9fe">
+          <MemberCard variant="compact" className="p-6">
+            <form onSubmit={handleSubmit} className="space-y-6">
               {/* Type selector */}
-              <div className="mb-6">
+              <div>
                 <p className="mb-3 text-sm font-semibold text-white">{t('feedback.send.sectionType')}</p>
                 <div className="grid grid-cols-3 gap-3">
                   {TYPE_OPTIONS.map(opt => (
@@ -123,7 +117,7 @@ export default function SendFeedbackPage() {
               </div>
 
               {/* Severity */}
-              <div className="mb-6">
+              <div>
                 <p className="mb-3 text-sm font-semibold text-white">{t('feedback.send.sectionSeverity')}</p>
                 <div className="flex gap-3">
                   {SEVERITY_OPTIONS.map(opt => (
@@ -136,9 +130,7 @@ export default function SendFeedbackPage() {
                       }`}
                       data-tone={opt.value}
                     >
-                      <span
-                        className="rogym-severity-option__dot h-2 w-2 rounded-full"
-                      />
+                      <span className="rogym-severity-option__dot h-2 w-2 rounded-full" />
                       {opt.label}
                     </button>
                   ))}
@@ -146,34 +138,31 @@ export default function SendFeedbackPage() {
               </div>
 
               {/* Content */}
-              <div className="mb-6">
-                <p className="mb-2 text-sm font-semibold text-white">{t('feedback.send.sectionContent')}</p>
-                <textarea
+              <FormField label={t('feedback.send.sectionContent')}>
+                <Textarea
                   rows={5}
                   value={content}
                   onChange={e => setContent(e.target.value)}
                   placeholder={t('feedback.send.contentPlaceholder')}
                   required
-                  className="rogym-input w-full resize-none rogym-sx-75e2c7e4"
-                  
                 />
-              </div>
+              </FormField>
 
               {error && (
-                <p className="mb-4 text-sm rogym-sx-00644777" >{error}</p>
+                <p className="text-sm text-red-400">{error}</p>
               )}
 
               <Button
                 variant="primary"
-                size="wide"
                 type="submit"
                 disabled={submitting}
+                loading={submitting}
                 className="w-full"
               >
-                {submitting ? t('feedback.send.buttonSubmitting') : t('feedback.send.buttonSubmit')}
+                {t('feedback.send.buttonSubmit')}
               </Button>
-            </div>
-          </form>
+            </form>
+          </MemberCard>
         )}
       </div>
     </MemberPage>

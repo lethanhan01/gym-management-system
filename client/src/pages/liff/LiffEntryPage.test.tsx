@@ -1,10 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom'
 import { AxiosError, type AxiosResponse } from 'axios'
 import LiffEntryPage from './LiffEntryPage'
 import { useAuthStore } from '@/stores/authStore'
 import { useSubscriptionStore } from '@/stores/subscriptionStore'
+import i18n from '@/lib/i18n'
 
 const mocks = vi.hoisted(() => ({
   initLiff: vi.fn(),
@@ -54,17 +56,21 @@ describe('LiffEntryPage', () => {
     isLoggedIn: vi.fn(),
     getDecodedIDToken: vi.fn(),
     getIDToken: vi.fn(),
+    getLanguage: vi.fn(),
     login: vi.fn(),
     logout: vi.fn(),
   }
 
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks()
+    await i18n.changeLanguage('vi')
+    localStorage.clear()
     useAuthStore.getState().clearAuth()
     useSubscriptionStore.getState().clear()
     liff.isLoggedIn.mockReturnValue(true)
     liff.getDecodedIDToken.mockReturnValue({ exp: Math.floor(Date.now() / 1000) + 3_600 })
     liff.getIDToken.mockReturnValue('line-id-token')
+    liff.getLanguage.mockReturnValue('vi')
     mocks.initLiff.mockResolvedValue(liff)
     mocks.lineLogin.mockResolvedValue({
       user: {
@@ -113,11 +119,75 @@ describe('LiffEntryPage', () => {
     ['LINE_AUTH_FAILED', 'Không thể xác thực với LINE. Vui lòng mở lại LIFF và thử lại.'],
     ['LINE_LOGIN_MEMBER_ONLY', 'Đăng nhập LINE chỉ dành cho hội viên.'],
     ['EMAIL_NOT_VERIFIED', 'Vui lòng xác thực email trước khi đăng nhập LINE.'],
-  ])('shows a clear message for %s', async (code, expectedMessage) => {
+  ])('shows a clear message for %s in Vietnamese', async (code, expectedMessage) => {
     mocks.lineLogin.mockRejectedValue(apiError(code))
 
     renderEntry()
 
     expect(await screen.findByText(expectedMessage)).toBeVisible()
+    expect(screen.getByText('Quay lại đăng nhập')).toBeVisible()
+  })
+
+  it.each([
+    ['LINE_AUTH_FAILED', 'LINEで認証できません。LIFFを開き直して再試行してください。'],
+    ['LINE_LOGIN_MEMBER_ONLY', 'LINEログインは会員のみ利用できます。'],
+    ['EMAIL_NOT_VERIFIED', 'LINEでログインする前にメールアドレスを認証してください。'],
+  ])('shows a clear message for %s in Japanese', async (code, expectedMessage) => {
+    await i18n.changeLanguage('ja')
+    localStorage.setItem('gym-locale', 'ja')
+    mocks.lineLogin.mockRejectedValue(apiError(code))
+
+    renderEntry()
+
+    expect(await screen.findByText(expectedMessage)).toBeVisible()
+    expect(screen.getByText('ログインに戻る')).toBeVisible()
+  })
+
+  it('renders loading text and LanguageSwitcher in Vietnamese by default', () => {
+    mocks.lineLogin.mockImplementation(() => new Promise(() => {}))
+
+    renderEntry()
+
+    expect(screen.getByText('Đang đăng nhập bằng LINE...')).toBeVisible()
+    expect(screen.getByRole('button', { name: /switch to japanese/i })).toBeVisible()
+  })
+
+  it('auto-detects Japanese from liff.getLanguage() when gym-locale is not set', async () => {
+    liff.getLanguage.mockReturnValue('ja-JP')
+    mocks.lineLogin.mockImplementation(() => new Promise(() => {}))
+
+    renderEntry()
+
+    await waitFor(() => {
+      expect(i18n.language).toBe('ja')
+      expect(localStorage.getItem('gym-locale')).toBe('ja')
+    })
+    expect(await screen.findByText('LINEでログイン中...')).toBeVisible()
+  })
+
+  it('preserves existing gym-locale in localStorage over liff.getLanguage()', async () => {
+    localStorage.setItem('gym-locale', 'vi')
+    liff.getLanguage.mockReturnValue('ja-JP')
+    mocks.lineLogin.mockImplementation(() => new Promise(() => {}))
+
+    renderEntry()
+
+    expect(screen.getByText('Đang đăng nhập bằng LINE...')).toBeVisible()
+    expect(i18n.language).toBe('vi')
+    expect(localStorage.getItem('gym-locale')).toBe('vi')
+  })
+
+  it('allows toggling language using LanguageSwitcher', async () => {
+    const user = userEvent.setup()
+    mocks.lineLogin.mockImplementation(() => new Promise(() => {}))
+
+    renderEntry()
+
+    expect(screen.getByText('Đang đăng nhập bằng LINE...')).toBeVisible()
+    const switchBtn = screen.getByRole('button', { name: /switch to japanese/i })
+    await user.click(switchBtn)
+
+    expect(await screen.findByText('LINEでログイン中...')).toBeVisible()
+    expect(localStorage.getItem('gym-locale')).toBe('ja')
   })
 })

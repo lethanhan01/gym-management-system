@@ -28,7 +28,17 @@ function makePlan(overrides: object = {}) {
 }
 
 function makeDay(overrides: object = {}) {
-  return { planDayId: 10n, planId: 1n, dayNumber: 1, weekNumber: 1, dayOfWeek: 1, name: 'Day 1', notes: null, exercises: [], ...overrides }
+  return {
+    planDayId: 10n,
+    planId: 1n,
+    dayNumber: 1,
+    weekNumber: 1,
+    dayOfWeek: 1,
+    name: 'Day 1',
+    notes: null,
+    exercises: [],
+    ...overrides,
+  }
 }
 
 function makeOwner() {
@@ -52,7 +62,19 @@ function makeTx() {
     $queryRaw: jest.fn().mockResolvedValue([]),
     memberWorkoutPlan: {
       updateMany: jest.fn().mockResolvedValue({ count: 0 }),
-      create: jest.fn().mockResolvedValue({ assignmentId: 100n, memberId: 2n, planId: 1n, assignedByStaffId: null, startDate: new Date(), status: 'active', endedAt: null, notes: null, createdAt: new Date() }),
+      create: jest
+        .fn()
+        .mockResolvedValue({
+          assignmentId: 100n,
+          memberId: 2n,
+          planId: 1n,
+          assignedByStaffId: null,
+          startDate: new Date(),
+          status: 'active',
+          endedAt: null,
+          notes: null,
+          createdAt: new Date(),
+        }),
     },
   }
 }
@@ -115,7 +137,7 @@ describe('WorkoutPlansService', () => {
     jest.clearAllMocks()
     tx = makeTx()
     mockPrisma.$transaction.mockImplementation(async (fn: any) =>
-      typeof fn === 'function' ? fn(tx) : fn,
+      typeof fn === 'function' ? fn(tx) : fn
     )
     mockPrisma.workoutLog.findFirst.mockResolvedValue(null)
   })
@@ -219,7 +241,9 @@ describe('WorkoutPlansService', () => {
       mockPrisma.member.findFirst.mockResolvedValue(null)
       const caller = { ...makeMember(), memberId: undefined }
 
-      await expect(service.create({ name: 'X' } as any, caller as any)).rejects.toThrow(ForbiddenException)
+      await expect(service.create({ name: 'X' } as any, caller as any)).rejects.toThrow(
+        ForbiddenException
+      )
     })
 
     it('sets status=draft on create', async () => {
@@ -243,7 +267,9 @@ describe('WorkoutPlansService', () => {
       mockPrisma.workoutPlan.findFirst.mockResolvedValue(null)
       const caller = makeOwner()
 
-      await expect(service.update(999n, {} as any, caller as any)).rejects.toThrow(NotFoundException)
+      await expect(service.update(999n, {} as any, caller as any)).rejects.toThrow(
+        NotFoundException
+      )
     })
 
     it('throws ConflictException PLAN_WRITE_BLOCKED when plan has workout logs', async () => {
@@ -251,47 +277,55 @@ describe('WorkoutPlansService', () => {
       mockPrisma.workoutLog.findFirst.mockResolvedValue({ logId: 1n })
       const caller = makeOwner()
 
-      await expect(
-        service.update(1n, { name: 'X' } as any, caller as any),
-      ).rejects.toThrow(ConflictException)
+      await expect(service.update(1n, { name: 'X' } as any, caller as any)).rejects.toThrow(
+        ConflictException
+      )
     })
 
     it('throws BadRequestException on draft→active with empty days', async () => {
-      mockPrisma.workoutPlan.findFirst.mockResolvedValue(makePlan({ status: WorkoutPlanStatus.draft }))
+      mockPrisma.workoutPlan.findFirst.mockResolvedValue(
+        makePlan({ status: WorkoutPlanStatus.draft })
+      )
       mockPrisma.workoutPlanDay.findMany.mockResolvedValue([])
       const caller = makeOwner()
 
       await expect(
-        service.update(1n, { status: WorkoutPlanStatus.active } as any, caller as any),
+        service.update(1n, { status: WorkoutPlanStatus.active } as any, caller as any)
       ).rejects.toThrow(BadRequestException)
     })
 
     it('throws BadRequestException on active→draft (invalid transition)', async () => {
-      mockPrisma.workoutPlan.findFirst.mockResolvedValue(makePlan({ status: WorkoutPlanStatus.active }))
+      mockPrisma.workoutPlan.findFirst.mockResolvedValue(
+        makePlan({ status: WorkoutPlanStatus.active })
+      )
       const caller = makeOwner()
 
       await expect(
-        service.update(1n, { status: WorkoutPlanStatus.draft } as any, caller as any),
+        service.update(1n, { status: WorkoutPlanStatus.draft } as any, caller as any)
       ).rejects.toThrow(BadRequestException)
     })
 
     it('throws ConflictException on active→archived when active assignment exists', async () => {
-      mockPrisma.workoutPlan.findFirst.mockResolvedValue(makePlan({ status: WorkoutPlanStatus.active }))
+      mockPrisma.workoutPlan.findFirst.mockResolvedValue(
+        makePlan({ status: WorkoutPlanStatus.active })
+      )
       mockPrisma.memberWorkoutPlan.findFirst.mockResolvedValue({ assignmentId: 1n })
       const caller = makeOwner()
 
       await expect(
-        service.update(1n, { status: WorkoutPlanStatus.archived } as any, caller as any),
+        service.update(1n, { status: WorkoutPlanStatus.archived } as any, caller as any)
       ).rejects.toThrow(ConflictException)
     })
 
     it('throws BadRequestException when trying to update archived plan', async () => {
-      mockPrisma.workoutPlan.findFirst.mockResolvedValue(makePlan({ status: WorkoutPlanStatus.archived }))
+      mockPrisma.workoutPlan.findFirst.mockResolvedValue(
+        makePlan({ status: WorkoutPlanStatus.archived })
+      )
       const caller = makeOwner()
 
-      await expect(
-        service.update(1n, { name: 'X' } as any, caller as any),
-      ).rejects.toThrow(BadRequestException)
+      await expect(service.update(1n, { name: 'X' } as any, caller as any)).rejects.toThrow(
+        BadRequestException
+      )
     })
 
     it('happy path: updates name and calls audit.log', async () => {
@@ -304,7 +338,7 @@ describe('WorkoutPlansService', () => {
 
       expect(mockPrisma.workoutPlan.update).toHaveBeenCalled()
       expect(mockAudit.log).toHaveBeenCalledWith(
-        expect.objectContaining({ action: 'workout_plan.update' }),
+        expect.objectContaining({ action: 'workout_plan.update' })
       )
       expect(result.name).toBe('Updated Plan')
     })
@@ -323,7 +357,9 @@ describe('WorkoutPlansService', () => {
     })
 
     it('throws ConflictException for staff plan with active assignment', async () => {
-      mockPrisma.workoutPlan.findFirst.mockResolvedValue(makePlan({ creatorType: PlanCreatorType.staff }))
+      mockPrisma.workoutPlan.findFirst.mockResolvedValue(
+        makePlan({ creatorType: PlanCreatorType.staff })
+      )
       mockPrisma.memberWorkoutPlan.findFirst.mockResolvedValue({ assignmentId: 1n })
       const caller = makeOwner()
 
@@ -332,7 +368,7 @@ describe('WorkoutPlansService', () => {
 
     it('member plan: auto-ends active assignments and deletes plan', async () => {
       mockPrisma.workoutPlan.findFirst.mockResolvedValue(
-        makePlan({ creatorType: PlanCreatorType.member, creatorMemberId: 2n }),
+        makePlan({ creatorType: PlanCreatorType.member, creatorMemberId: 2n })
       )
       const deleted = makePlan({ deletedAt: new Date() })
       mockPrisma.workoutPlan.update.mockResolvedValue(deleted)
@@ -342,11 +378,13 @@ describe('WorkoutPlansService', () => {
       await service.softDelete(1n, caller as any)
 
       expect(mockPrisma.memberWorkoutPlan.updateMany).toHaveBeenCalledWith(
-        expect.objectContaining({ data: expect.objectContaining({ status: WorkoutAssignmentStatus.replaced }) }),
+        expect.objectContaining({
+          data: expect.objectContaining({ status: WorkoutAssignmentStatus.replaced }),
+        })
       )
       expect(mockPrisma.workoutPlan.update).toHaveBeenCalled()
       expect(mockAudit.log).toHaveBeenCalledWith(
-        expect.objectContaining({ action: 'workout_plan.delete' }),
+        expect.objectContaining({ action: 'workout_plan.delete' })
       )
     })
   })
@@ -361,16 +399,18 @@ describe('WorkoutPlansService', () => {
       const caller = makeOwner()
 
       await expect(
-        service.addDay(999n, { dayNumber: 1, name: 'Day 1' } as any, caller as any),
+        service.addDay(999n, { dayNumber: 1, name: 'Day 1' } as any, caller as any)
       ).rejects.toThrow(NotFoundException)
     })
 
     it('throws BadRequestException when plan is archived', async () => {
-      mockPrisma.workoutPlan.findFirst.mockResolvedValue(makePlan({ status: WorkoutPlanStatus.archived }))
+      mockPrisma.workoutPlan.findFirst.mockResolvedValue(
+        makePlan({ status: WorkoutPlanStatus.archived })
+      )
       const caller = makeOwner()
 
       await expect(
-        service.addDay(1n, { dayNumber: 1, name: 'Day 1' } as any, caller as any),
+        service.addDay(1n, { dayNumber: 1, name: 'Day 1' } as any, caller as any)
       ).rejects.toThrow(BadRequestException)
     })
 
@@ -380,7 +420,7 @@ describe('WorkoutPlansService', () => {
       const caller = makeOwner()
 
       await expect(
-        service.addDay(1n, { dayNumber: 1, name: 'Day 1' } as any, caller as any),
+        service.addDay(1n, { dayNumber: 1, name: 'Day 1' } as any, caller as any)
       ).rejects.toThrow(ConflictException)
     })
 
@@ -390,7 +430,7 @@ describe('WorkoutPlansService', () => {
       const caller = makeOwner()
 
       await expect(
-        service.addDay(1n, { dayNumber: 1, name: 'Day 1' } as any, caller as any),
+        service.addDay(1n, { dayNumber: 1, name: 'Day 1' } as any, caller as any)
       ).rejects.toMatchObject({ code: 'P2002' })
     })
 
@@ -403,7 +443,7 @@ describe('WorkoutPlansService', () => {
 
       expect(mockPrisma.workoutPlanDay.create).toHaveBeenCalled()
       expect(mockAudit.log).toHaveBeenCalledWith(
-        expect.objectContaining({ action: 'workout_plan.update' }),
+        expect.objectContaining({ action: 'workout_plan.update' })
       )
       expect(result.planDayId).toBe(10n)
     })
@@ -419,7 +459,7 @@ describe('WorkoutPlansService', () => {
       const caller = makeOwner()
 
       await expect(
-        service.assignPlan(99n, { planId: '1', startDate: '2024-06-01' } as any, caller as any),
+        service.assignPlan(99n, { planId: '1', startDate: '2024-06-01' } as any, caller as any)
       ).rejects.toThrow(NotFoundException)
     })
 
@@ -429,41 +469,54 @@ describe('WorkoutPlansService', () => {
       const caller = makeOwner()
 
       await expect(
-        service.assignPlan(2n, { planId: '999', startDate: '2024-06-01' } as any, caller as any),
+        service.assignPlan(2n, { planId: '999', startDate: '2024-06-01' } as any, caller as any)
       ).rejects.toThrow(NotFoundException)
     })
 
     it('throws BadRequestException when plan is not active', async () => {
       mockPrisma.member.findFirst.mockResolvedValue({ memberId: 2n, primaryTrainerId: null })
-      mockPrisma.workoutPlan.findFirst.mockResolvedValue({ planId: 1n, status: WorkoutPlanStatus.draft })
+      mockPrisma.workoutPlan.findFirst.mockResolvedValue({
+        planId: 1n,
+        status: WorkoutPlanStatus.draft,
+      })
       const caller = makeOwner()
 
       await expect(
-        service.assignPlan(2n, { planId: '1', startDate: '2024-06-01' } as any, caller as any),
+        service.assignPlan(2n, { planId: '1', startDate: '2024-06-01' } as any, caller as any)
       ).rejects.toThrow(BadRequestException)
     })
 
     it('throws ForbiddenException when trainer is not assigned to member', async () => {
       mockPrisma.member.findFirst.mockResolvedValue({ memberId: 2n, primaryTrainerId: 99n })
-      mockPrisma.workoutPlan.findFirst.mockResolvedValue({ planId: 1n, status: WorkoutPlanStatus.active })
+      mockPrisma.workoutPlan.findFirst.mockResolvedValue({
+        planId: 1n,
+        status: WorkoutPlanStatus.active,
+      })
       mockPrisma.workoutPlanDay.count.mockResolvedValue(2)
       mockPrisma.workoutPlanExercise.count.mockResolvedValue(4)
       const caller = { ...makeStaff(5n), roles: ['trainer'] as any[] }
 
       await expect(
-        service.assignPlan(2n, { planId: '1', startDate: '2024-06-01' } as any, caller as any),
+        service.assignPlan(2n, { planId: '1', startDate: '2024-06-01' } as any, caller as any)
       ).rejects.toThrow(ForbiddenException)
     })
 
     it('happy path: owner assigns plan, creates assignment', async () => {
       mockPrisma.member.findFirst.mockResolvedValue({ memberId: 2n, primaryTrainerId: null })
-      mockPrisma.workoutPlan.findFirst.mockResolvedValue({ planId: 1n, status: WorkoutPlanStatus.active })
+      mockPrisma.workoutPlan.findFirst.mockResolvedValue({
+        planId: 1n,
+        status: WorkoutPlanStatus.active,
+      })
       mockPrisma.workoutPlanDay.count.mockResolvedValue(2)
       mockPrisma.workoutPlanExercise.count.mockResolvedValue(4)
       mockPrisma.staff.findFirst.mockResolvedValue(null)
       const caller = makeOwner()
 
-      const result = await service.assignPlan(2n, { planId: '1', startDate: '2024-06-01' } as any, caller as any)
+      const result = await service.assignPlan(
+        2n,
+        { planId: '1', startDate: '2024-06-01' } as any,
+        caller as any
+      )
 
       expect(tx.$queryRaw).toHaveBeenCalled()
       expect(String((tx.$queryRaw as jest.Mock).mock.calls[0][0])).not.toContain(
@@ -471,7 +524,7 @@ describe('WorkoutPlansService', () => {
       )
       expect(tx.memberWorkoutPlan.create).toHaveBeenCalled()
       expect(mockAudit.log).toHaveBeenCalledWith(
-        expect.objectContaining({ action: 'workout_plan.assign' }),
+        expect.objectContaining({ action: 'workout_plan.assign' })
       )
       expect(result.status).toBe('active')
     })
@@ -488,11 +541,7 @@ describe('WorkoutPlansService', () => {
       tx.$queryRaw.mockResolvedValueOnce([{ assignmentId: 10n }, { assignmentId: 11n }])
       const caller = makeOwner()
 
-      await service.assignPlan(
-        2n,
-        { planId: '1', startDate: '2024-06-01' } as any,
-        caller as any
-      )
+      await service.assignPlan(2n, { planId: '1', startDate: '2024-06-01' } as any, caller as any)
 
       expect(tx.memberWorkoutPlan.updateMany).toHaveBeenCalledWith({
         where: { assignmentId: { in: [10n, 11n] } },
@@ -550,9 +599,16 @@ describe('WorkoutPlansService', () => {
 
   describe('updatePlanExercise', () => {
     const planExercise = {
-      planExerciseId: 50n, planDayId: 10n, exerciseId: 1n,
-      orderIndex: 1, targetSets: 3, targetReps: null, targetDurationSec: null,
-      targetWeightKg: null, restSeconds: 60, notes: null,
+      planExerciseId: 50n,
+      planDayId: 10n,
+      exerciseId: 1n,
+      orderIndex: 1,
+      targetSets: 3,
+      targetReps: null,
+      targetDurationSec: null,
+      targetWeightKg: null,
+      restSeconds: 60,
+      notes: null,
       planDay: { ...makeDay(), plan: makePlan() },
       exercise: { exerciseId: 1n, name: 'Push-up' },
     }
@@ -572,7 +628,13 @@ describe('WorkoutPlansService', () => {
       mockPrisma.workoutPlanExercise.update.mockResolvedValue(updated)
       const caller = makeOwner()
 
-      const result = await service.updatePlanExercise(1n, 10n, 50n, { targetSets: 4 } as any, caller as any)
+      const result = await service.updatePlanExercise(
+        1n,
+        10n,
+        50n,
+        { targetSets: 4 } as any,
+        caller as any
+      )
 
       expect(mockPrisma.workoutPlanExercise.update).toHaveBeenCalled()
       expect(mockAudit.log).toHaveBeenCalledWith(
@@ -587,11 +649,48 @@ describe('WorkoutPlansService', () => {
   // -------------------------------------------------------------------------
 
   describe('listAssignments', () => {
-    it('owner: returns assignments for given member', async () => {
+    it('owner: returns assignments for given member with progress', async () => {
       const assignment = {
-        assignmentId: 100n, memberId: 2n, planId: 1n, assignedByStaffId: null,
-        startDate: new Date(), status: 'active', endedAt: null, notes: null, createdAt: new Date(),
-        plan: { planId: 1n, name: 'My Plan', description: null, status: WorkoutPlanStatus.active, days: [] },
+        assignmentId: 100n,
+        memberId: 2n,
+        planId: 1n,
+        assignedByStaffId: null,
+        startDate: new Date(),
+        status: 'active',
+        endedAt: null,
+        notes: null,
+        createdAt: new Date(),
+        plan: {
+          planId: 1n,
+          name: 'My Plan',
+          description: null,
+          status: WorkoutPlanStatus.active,
+          days: [
+            {
+              planDayId: 10n,
+              weekNumber: 1,
+              dayOfWeek: 1,
+              dayNumber: 1,
+              name: 'Day 1',
+              exercises: [{ planExerciseId: 101n, targetSets: 4 }],
+            },
+            {
+              planDayId: 11n,
+              weekNumber: 1,
+              dayOfWeek: 2,
+              dayNumber: 2,
+              name: 'Day 2',
+              exercises: [{ planExerciseId: 102n, targetSets: 4 }],
+            },
+          ],
+        },
+        logs: [
+          {
+            logId: 501n,
+            planDayId: 10n,
+            sets: [{ completed: true }, { completed: true }, { completed: true }, { completed: true }],
+          },
+        ],
       }
       mockPrisma.memberWorkoutPlan.findMany.mockResolvedValue([assignment])
       const caller = makeOwner()
@@ -601,15 +700,23 @@ describe('WorkoutPlansService', () => {
       expect(result.data).toHaveLength(1)
       expect(result.data[0].assignmentId).toBe('100')
       expect(result.data[0].planId).toBe('1')
+      expect(result.data[0].progress).toEqual({
+        completedSets: 4,
+        totalTargetSets: 8,
+        percentage: 50,
+        completedDays: 1,
+        totalDays: 2,
+        totalSessionsLogged: 1,
+      })
     })
 
     it('member only: throws ForbiddenException when viewing other member assignments', async () => {
       mockPrisma.member.findFirst.mockResolvedValue({ memberId: 2n })
       const caller = makeMember(2n)
 
-      await expect(
-        service.listAssignments(999n, {}, caller as any)
-      ).rejects.toThrow(ForbiddenException)
+      await expect(service.listAssignments(999n, {}, caller as any)).rejects.toThrow(
+        ForbiddenException
+      )
     })
   })
 
@@ -715,7 +822,12 @@ describe('WorkoutPlansService', () => {
       const caller = makeOwner()
 
       await expect(
-        service.addExercise(1n, 10n, { exerciseId: '1', orderIndex: 1, targetSets: 3 } as any, caller as any)
+        service.addExercise(
+          1n,
+          10n,
+          { exerciseId: '1', orderIndex: 1, targetSets: 3 } as any,
+          caller as any
+        )
       ).rejects.toThrow(NotFoundException)
     })
 
@@ -725,7 +837,12 @@ describe('WorkoutPlansService', () => {
       const caller = makeOwner()
 
       await expect(
-        service.addExercise(1n, 10n, { exerciseId: '999', orderIndex: 1, targetSets: 3 } as any, caller as any)
+        service.addExercise(
+          1n,
+          10n,
+          { exerciseId: '999', orderIndex: 1, targetSets: 3 } as any,
+          caller as any
+        )
       ).rejects.toThrow(NotFoundException)
     })
 
@@ -736,7 +853,12 @@ describe('WorkoutPlansService', () => {
       const caller = makeOwner()
 
       await expect(
-        service.addExercise(1n, 10n, { exerciseId: '1', orderIndex: 1, targetSets: 3 } as any, caller as any)
+        service.addExercise(
+          1n,
+          10n,
+          { exerciseId: '1', orderIndex: 1, targetSets: 3 } as any,
+          caller as any
+        )
       ).rejects.toMatchObject({ code: 'P2002' })
     })
 
@@ -744,14 +866,27 @@ describe('WorkoutPlansService', () => {
       mockPrisma.workoutPlanDay.findFirst.mockResolvedValue(dayWithPlan)
       mockPrisma.exercise.findFirst.mockResolvedValue({ exerciseId: 1n })
       const created = {
-        planExerciseId: 50n, planDayId: 10n, exerciseId: 1n, orderIndex: 1, targetSets: 3,
-        targetReps: null, targetDurationSec: null, targetWeightKg: null, restSeconds: 60, notes: null,
+        planExerciseId: 50n,
+        planDayId: 10n,
+        exerciseId: 1n,
+        orderIndex: 1,
+        targetSets: 3,
+        targetReps: null,
+        targetDurationSec: null,
+        targetWeightKg: null,
+        restSeconds: 60,
+        notes: null,
         exercise: { exerciseId: 1n, name: 'Push-up' },
       }
       mockPrisma.workoutPlanExercise.create.mockResolvedValue(created)
       const caller = makeOwner()
 
-      const result = await service.addExercise(1n, 10n, { exerciseId: '1', orderIndex: 1, targetSets: 3 } as any, caller as any)
+      const result = await service.addExercise(
+        1n,
+        10n,
+        { exerciseId: '1', orderIndex: 1, targetSets: 3 } as any,
+        caller as any
+      )
 
       expect(result.planExerciseId).toBe(50n)
       expect(mockAudit.log).toHaveBeenCalledWith(
@@ -766,7 +901,9 @@ describe('WorkoutPlansService', () => {
 
   describe('removePlanExercise', () => {
     const planExercise = {
-      planExerciseId: 50n, planDayId: 10n, exerciseId: 1n,
+      planExerciseId: 50n,
+      planDayId: 10n,
+      exerciseId: 1n,
       planDay: { ...makeDay(), plan: makePlan() },
     }
 
@@ -774,9 +911,9 @@ describe('WorkoutPlansService', () => {
       mockPrisma.workoutPlanExercise.findFirst.mockResolvedValue(null)
       const caller = makeOwner()
 
-      await expect(
-        service.removePlanExercise(1n, 10n, 50n, caller as any)
-      ).rejects.toThrow(NotFoundException)
+      await expect(service.removePlanExercise(1n, 10n, 50n, caller as any)).rejects.toThrow(
+        NotFoundException
+      )
     })
 
     it('throws ConflictException on P2003 (referenced by workout log)', async () => {
@@ -784,9 +921,9 @@ describe('WorkoutPlansService', () => {
       mockPrisma.workoutPlanExercise.delete.mockRejectedValue({ code: 'P2003' })
       const caller = makeOwner()
 
-      await expect(
-        service.removePlanExercise(1n, 10n, 50n, caller as any)
-      ).rejects.toThrow(ConflictException)
+      await expect(service.removePlanExercise(1n, 10n, 50n, caller as any)).rejects.toThrow(
+        ConflictException
+      )
     })
 
     it('happy path: deletes exercise and logs audit', async () => {

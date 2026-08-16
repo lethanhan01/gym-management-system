@@ -63,7 +63,9 @@ describe('StaffAttendanceService', () => {
 
     it('deletes stale open session from previous day and creates new check-in', async () => {
       const yesterday = new Date(Date.now() - 86400_000)
-      mockPrisma.staffAttendanceLog.findFirst.mockResolvedValue(makeLog({ logId: 99n, checkIn: yesterday }))
+      mockPrisma.staffAttendanceLog.findFirst.mockResolvedValue(
+        makeLog({ logId: 99n, checkIn: yesterday })
+      )
       mockPrisma.staffAttendanceLog.delete.mockResolvedValue({})
       mockPrisma.staffAttendanceLog.create.mockResolvedValue(makeLog({ logId: 2n }))
 
@@ -110,7 +112,9 @@ describe('StaffAttendanceService', () => {
 
     it('voids attendance and throws when check-out is on a different day', async () => {
       const yesterday = new Date(Date.now() - 86400_000)
-      mockPrisma.staffAttendanceLog.findFirst.mockResolvedValue(makeLog({ logId: 1n, checkIn: yesterday }))
+      mockPrisma.staffAttendanceLog.findFirst.mockResolvedValue(
+        makeLog({ logId: 1n, checkIn: yesterday })
+      )
       mockPrisma.staffAttendanceLog.delete.mockResolvedValue({})
 
       await expect(service.checkOut(5n)).rejects.toMatchObject({
@@ -143,7 +147,11 @@ describe('StaffAttendanceService', () => {
       mockPrisma.staffAttendanceLog.findMany.mockResolvedValue([])
       mockPrisma.staffAttendanceLog.count.mockResolvedValue(0)
 
-      await service.getMyAttendance(5n, { from: '2024-01-01', to: '2024-01-31', pageSize: 50 } as any)
+      await service.getMyAttendance(5n, {
+        from: '2024-01-01',
+        to: '2024-01-31',
+        pageSize: 50,
+      } as any)
 
       const callArg = (mockPrisma.staffAttendanceLog.findMany as jest.Mock).mock.calls[0][0]
       expect(callArg.take).toBe(50)

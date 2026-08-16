@@ -1,11 +1,22 @@
-import { EXERCISEDB_PAGE_SIZE, ExerciseCatalogManifest, assertUniqueExternalIds, externalIdHash } from './exercise-catalog-manifest'
+import {
+  EXERCISEDB_PAGE_SIZE,
+  ExerciseCatalogManifest,
+  assertUniqueExternalIds,
+  externalIdHash,
+} from './exercise-catalog-manifest'
 import { ExerciseDbV2Client, NormalizedExerciseDbExercise } from './exercise-db-v2.client'
 
-export async function preflightExerciseCatalog(client: ExerciseDbV2Client): Promise<ExerciseCatalogManifest> {
+export async function preflightExerciseCatalog(
+  client: ExerciseDbV2Client
+): Promise<ExerciseCatalogManifest> {
   const items: NormalizedExerciseDbExercise[] = []
   let requestCount = 0
 
-  for await (const page of client.allExercises({ pageSize: EXERCISEDB_PAGE_SIZE, strictPagination: true, onRequest: () => requestCount++ })) {
+  for await (const page of client.allExercises({
+    pageSize: EXERCISEDB_PAGE_SIZE,
+    strictPagination: true,
+    onRequest: () => requestCount++,
+  })) {
     items.push(...page)
   }
 

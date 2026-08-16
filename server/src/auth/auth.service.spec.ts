@@ -188,7 +188,9 @@ describe('AuthService', () => {
         status: 'pending_verification',
       })
       ;(bcrypt.compare as jest.Mock).mockResolvedValue(true)
-      await expect(service.login('user@gym.local', 'Password123!')).rejects.toBeInstanceOf(ForbiddenException)
+      await expect(service.login('user@gym.local', 'Password123!')).rejects.toBeInstanceOf(
+        ForbiddenException
+      )
       expect(mockPrisma.user.update).not.toHaveBeenCalled()
       expect(mockJwtService.signAsync).not.toHaveBeenCalled()
     })
@@ -230,7 +232,11 @@ describe('AuthService', () => {
 
       await service.resetPassword('grant-token', 'NewPass1!')
 
-      expect(mockPasswordResetService.resetPassword).toHaveBeenCalledWith('grant-token', 'NewPass1!', {})
+      expect(mockPasswordResetService.resetPassword).toHaveBeenCalledWith(
+        'grant-token',
+        'NewPass1!',
+        {}
+      )
     })
   })
 
@@ -244,7 +250,11 @@ describe('AuthService', () => {
 
       await service.verifyEmail('user@gym.local', '123456')
 
-      expect(mockEmailVerificationService.verifyEmail).toHaveBeenCalledWith('user@gym.local', '123456', {})
+      expect(mockEmailVerificationService.verifyEmail).toHaveBeenCalledWith(
+        'user@gym.local',
+        '123456',
+        {}
+      )
     })
   })
 

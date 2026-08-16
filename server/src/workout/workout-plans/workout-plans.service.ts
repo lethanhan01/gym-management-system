@@ -5,12 +5,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common'
-import {
-  PlanCreatorType,
-  Prisma,
-  WorkoutAssignmentStatus,
-  WorkoutPlanStatus,
-} from '@prisma/client'
+import { PlanCreatorType, Prisma, WorkoutAssignmentStatus, WorkoutPlanStatus } from '@prisma/client'
 import { AuthenticatedUser } from '../../auth/types/jwt-payload.interface'
 import { AuditService } from '../../common/audit/audit.service'
 import { PrismaService } from '../../prisma/prisma.service'
@@ -40,7 +35,7 @@ const PLAN_DETAIL_INCLUDE = {
 export class WorkoutPlansService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly audit: AuditService,
+    private readonly audit: AuditService
   ) {}
 
   async findSuggested() {
@@ -76,7 +71,13 @@ export class WorkoutPlansService {
       where,
       include: {
         days: PLAN_DETAIL_INCLUDE.days,
-        _count: { select: { assignments: { where: { status: WorkoutAssignmentStatus.active, assignedByStaffId: { not: null } } } } },
+        _count: {
+          select: {
+            assignments: {
+              where: { status: WorkoutAssignmentStatus.active, assignedByStaffId: { not: null } },
+            },
+          },
+        },
       },
       orderBy: { createdAt: 'desc' },
     })
@@ -150,13 +151,13 @@ export class WorkoutPlansService {
           day.exercises.some(
             (exercise) =>
               // exercise must have either reps or duration, AND must have rest seconds
-              (exercise.targetReps == null && exercise.targetDurationSec == null)
-              || exercise.restSeconds == null,
-          ),
+              (exercise.targetReps == null && exercise.targetDurationSec == null) ||
+              exercise.restSeconds == null
+          )
         )
         if (days.length === 0 || hasIncompleteDay || hasIncompleteExercise) {
           throw new BadRequestException(
-            'Moi ngay can co bai tap; moi bai can co thoi gian tap va thoi gian nghi',
+            'Moi ngay can co bai tap; moi bai can co thoi gian tap va thoi gian nghi'
           )
         }
       }
@@ -281,7 +282,12 @@ export class WorkoutPlansService {
     return day
   }
 
-  async updateDay(planId: bigint, planDayId: bigint, dto: UpdatePlanDayDto, user: AuthenticatedUser) {
+  async updateDay(
+    planId: bigint,
+    planDayId: bigint,
+    dto: UpdatePlanDayDto,
+    user: AuthenticatedUser
+  ) {
     const day = await this.prisma.workoutPlanDay.findFirst({
       where: { planDayId, planId },
       include: { plan: true },
@@ -348,7 +354,12 @@ export class WorkoutPlansService {
     })
   }
 
-  async addExercise(planId: bigint, planDayId: bigint, dto: AddPlanExerciseDto, user: AuthenticatedUser) {
+  async addExercise(
+    planId: bigint,
+    planDayId: bigint,
+    dto: AddPlanExerciseDto,
+    user: AuthenticatedUser
+  ) {
     const day = await this.prisma.workoutPlanDay.findFirst({
       where: { planDayId, planId },
       include: { plan: true },
@@ -399,7 +410,12 @@ export class WorkoutPlansService {
     return created
   }
 
-  async removePlanExercise(planId: bigint, planDayId: bigint, planExerciseId: bigint, user: AuthenticatedUser) {
+  async removePlanExercise(
+    planId: bigint,
+    planDayId: bigint,
+    planExerciseId: bigint,
+    user: AuthenticatedUser
+  ) {
     const pe = await this.prisma.workoutPlanExercise.findFirst({
       where: { planExerciseId, planDayId },
       include: {
@@ -443,16 +459,16 @@ export class WorkoutPlansService {
     planDayId: bigint,
     planExerciseId: bigint,
     dto: UpdatePlanExerciseDto,
-    user: AuthenticatedUser,
+    user: AuthenticatedUser
   ) {
     const planExercise = await this.prisma.workoutPlanExercise.findFirst({
       where: { planExerciseId, planDayId },
       include: { planDay: { include: { plan: true } } },
     })
     if (
-      !planExercise
-      || planExercise.planDay.plan.deletedAt
-      || planExercise.planDay.plan.planId !== planId
+      !planExercise ||
+      planExercise.planDay.plan.deletedAt ||
+      planExercise.planDay.plan.planId !== planId
     ) {
       throw new NotFoundException(`WorkoutPlanExercise ${planExerciseId} khong ton tai`)
     }
@@ -469,9 +485,7 @@ export class WorkoutPlansService {
         ...(dto.targetDurationSec !== undefined
           ? { targetDurationSec: dto.targetDurationSec }
           : {}),
-        ...(dto.targetWeightKg !== undefined
-          ? { targetWeightKg: dto.targetWeightKg }
-          : {}),
+        ...(dto.targetWeightKg !== undefined ? { targetWeightKg: dto.targetWeightKg } : {}),
         ...(dto.restSeconds !== undefined ? { restSeconds: dto.restSeconds } : {}),
         ...(dto.notes !== undefined ? { notes: dto.notes } : {}),
       },
@@ -497,7 +511,7 @@ export class WorkoutPlansService {
   async listAssignments(
     memberId: bigint,
     params: { status?: string; limit?: number },
-    caller: AuthenticatedUser,
+    caller: AuthenticatedUser
   ) {
     const isMemberOnly = this.isMemberOnly(caller)
     if (isMemberOnly) {
@@ -530,8 +544,25 @@ export class WorkoutPlansService {
                 dayOfWeek: true,
                 dayNumber: true,
                 name: true,
+                exercises: {
+                  select: {
+                    planExerciseId: true,
+                    targetSets: true,
+                  },
+                },
               },
               orderBy: { dayNumber: 'asc' } as const,
+            },
+          },
+        },
+        logs: {
+          select: {
+            logId: true,
+            planDayId: true,
+            sets: {
+              select: {
+                completed: true,
+              },
             },
           },
         },
@@ -539,32 +570,65 @@ export class WorkoutPlansService {
     })
 
     return {
-      data: data.map((a) => ({
-        assignmentId: a.assignmentId.toString(),
-        memberId: a.memberId.toString(),
-        planId: a.planId.toString(),
-        assignedByStaffId: a.assignedByStaffId?.toString() ?? null,
-        startDate: a.startDate,
-        status: a.status,
-        endedAt: a.endedAt,
-        notes: a.notes,
-        createdAt: a.createdAt,
-        plan: a.plan
-          ? {
-              planId: a.plan.planId.toString(),
-              name: a.plan.name,
-              description: a.plan.description,
-              status: a.plan.status,
-              days: a.plan.days.map((d) => ({
-                planDayId: d.planDayId.toString(),
-                weekNumber: d.weekNumber,
-                dayOfWeek: d.dayOfWeek,
-                dayNumber: d.dayNumber,
-                name: d.name,
-              })),
-            }
-          : null,
-      })),
+      data: data.map((a) => {
+        const totalTargetSets = a.plan?.days
+          ? a.plan.days.reduce(
+              (acc, day) =>
+                acc + (day.exercises ?? []).reduce((s, ex) => s + (ex.targetSets || 0), 0),
+              0
+            )
+          : 0
+        const completedSets = a.logs
+          ? a.logs.reduce(
+              (acc, log) => acc + (log.sets ?? []).filter((s) => s.completed).length,
+              0
+            )
+          : 0
+        const percentage =
+          totalTargetSets > 0
+            ? Math.min(100, Math.round((completedSets / totalTargetSets) * 100))
+            : 0
+        const completedDays = a.logs
+          ? new Set(a.logs.map((l) => l.planDayId.toString())).size
+          : 0
+        const totalDays = a.plan?.days?.length ?? 0
+        const totalSessionsLogged = a.logs?.length ?? 0
+
+        return {
+          assignmentId: a.assignmentId.toString(),
+          memberId: a.memberId.toString(),
+          planId: a.planId.toString(),
+          assignedByStaffId: a.assignedByStaffId?.toString() ?? null,
+          startDate: a.startDate,
+          status: a.status,
+          endedAt: a.endedAt,
+          notes: a.notes,
+          createdAt: a.createdAt,
+          progress: {
+            completedSets,
+            totalTargetSets,
+            percentage,
+            completedDays,
+            totalDays,
+            totalSessionsLogged,
+          },
+          plan: a.plan
+            ? {
+                planId: a.plan.planId.toString(),
+                name: a.plan.name,
+                description: a.plan.description,
+                status: a.plan.status,
+                days: a.plan.days.map((d) => ({
+                  planDayId: d.planDayId.toString(),
+                  weekNumber: d.weekNumber,
+                  dayOfWeek: d.dayOfWeek,
+                  dayNumber: d.dayNumber,
+                  name: d.name,
+                })),
+              }
+            : null,
+        }
+      }),
     }
   }
 
@@ -583,7 +647,11 @@ export class WorkoutPlansService {
       }
       // Block member from overriding an active PT-assigned plan
       const activePtAssignment = await this.prisma.memberWorkoutPlan.findFirst({
-        where: { memberId, status: WorkoutAssignmentStatus.active, assignedByStaffId: { not: null } },
+        where: {
+          memberId,
+          status: WorkoutAssignmentStatus.active,
+          assignedByStaffId: { not: null },
+        },
         select: { assignmentId: true },
       })
       if (activePtAssignment) {
@@ -696,20 +764,70 @@ export class WorkoutPlansService {
       orderBy: { createdAt: 'desc' },
       include: {
         member: { select: { memberId: true, user: { select: { fullName: true } } } },
+        plan: {
+          select: {
+            days: {
+              select: {
+                planDayId: true,
+                exercises: { select: { targetSets: true } },
+              },
+            },
+          },
+        },
+        logs: {
+          select: {
+            logId: true,
+            planDayId: true,
+            sets: { select: { completed: true } },
+          },
+        },
       },
     })
 
-    return assignments.map((a) => ({
-      assignmentId: a.assignmentId.toString(),
-      memberId: a.memberId.toString(),
-      memberName: a.member.user.fullName,
-      planId: planId.toString(),
-      startDate: a.startDate,
-      status: a.status,
-      endedAt: a.endedAt,
-      notes: a.notes,
-      createdAt: a.createdAt,
-    }))
+    return assignments.map((a) => {
+      const totalTargetSets = a.plan?.days
+        ? a.plan.days.reduce(
+            (acc, day) =>
+              acc + (day.exercises ?? []).reduce((s, ex) => s + (ex.targetSets || 0), 0),
+            0
+          )
+        : 0
+      const completedSets = a.logs
+        ? a.logs.reduce(
+            (acc, log) => acc + (log.sets ?? []).filter((s) => s.completed).length,
+            0
+          )
+        : 0
+      const percentage =
+        totalTargetSets > 0
+          ? Math.min(100, Math.round((completedSets / totalTargetSets) * 100))
+          : 0
+      const completedDays = a.logs
+        ? new Set(a.logs.map((l) => l.planDayId.toString())).size
+        : 0
+      const totalDays = a.plan?.days?.length ?? 0
+      const totalSessionsLogged = a.logs?.length ?? 0
+
+      return {
+        assignmentId: a.assignmentId.toString(),
+        memberId: a.memberId.toString(),
+        memberName: a.member.user.fullName,
+        planId: planId.toString(),
+        startDate: a.startDate,
+        status: a.status,
+        endedAt: a.endedAt,
+        notes: a.notes,
+        createdAt: a.createdAt,
+        progress: {
+          completedSets,
+          totalTargetSets,
+          percentage,
+          completedDays,
+          totalDays,
+          totalSessionsLogged,
+        },
+      }
+    })
   }
 
   async unassignMember(assignmentId: bigint, user: AuthenticatedUser) {
@@ -772,7 +890,10 @@ export class WorkoutPlansService {
     }
   }
 
-  private async assertCanMutatePlan(plan: { creatorType: PlanCreatorType; creatorMemberId: bigint | null }, caller: AuthenticatedUser) {
+  private async assertCanMutatePlan(
+    plan: { creatorType: PlanCreatorType; creatorMemberId: bigint | null },
+    caller: AuthenticatedUser
+  ) {
     if (plan.creatorType === PlanCreatorType.staff) {
       return
     }
@@ -786,7 +907,7 @@ export class WorkoutPlansService {
   private assertValidStatusTransition(
     currentStatus: WorkoutPlanStatus,
     nextStatus: WorkoutPlanStatus,
-    planId: bigint,
+    planId: bigint
   ) {
     if (currentStatus === nextStatus) {
       return
@@ -798,7 +919,10 @@ export class WorkoutPlansService {
 
     if (nextStatus === WorkoutPlanStatus.active) {
       // handled below
-    } else if (nextStatus !== WorkoutPlanStatus.archived && nextStatus !== WorkoutPlanStatus.draft) {
+    } else if (
+      nextStatus !== WorkoutPlanStatus.archived &&
+      nextStatus !== WorkoutPlanStatus.draft
+    ) {
       throw new BadRequestException('INVALID_TRANSITION')
     }
 
@@ -852,22 +976,28 @@ export class WorkoutPlansService {
   }
 
   private isMemberOnly(user: AuthenticatedUser): boolean {
-    return user.roles.includes('member')
-      && !user.roles.includes('staff')
-      && !user.roles.includes('trainer')
-      && !user.roles.includes('owner')
+    return (
+      user.roles.includes('member') &&
+      !user.roles.includes('staff') &&
+      !user.roles.includes('trainer') &&
+      !user.roles.includes('owner')
+    )
   }
 
   private isTrainerOnly(user: AuthenticatedUser): boolean {
-    return user.roles.includes('trainer')
-      && !user.roles.includes('staff')
-      && !user.roles.includes('owner')
+    return (
+      user.roles.includes('trainer') &&
+      !user.roles.includes('staff') &&
+      !user.roles.includes('owner')
+    )
   }
 
   private isAssignmentStatus(value: string): value is WorkoutAssignmentStatus {
-    return value === WorkoutAssignmentStatus.active
-      || value === WorkoutAssignmentStatus.completed
-      || value === WorkoutAssignmentStatus.replaced
+    return (
+      value === WorkoutAssignmentStatus.active ||
+      value === WorkoutAssignmentStatus.completed ||
+      value === WorkoutAssignmentStatus.replaced
+    )
   }
 
   private parseDateOnly(value: string): Date {

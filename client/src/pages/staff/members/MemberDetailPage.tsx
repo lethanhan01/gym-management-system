@@ -6,6 +6,7 @@ import { getApiError } from '@/lib/api-error'
 import { formatDate } from '@/lib/date'
 import { memberService, type TrainerStudentDetail } from '@/services/member.service'
 import {
+  StaffCard,
   StaffEmptyState,
   StaffErrorState,
   StaffPage,
@@ -13,6 +14,7 @@ import {
   StaffSkeleton,
   StaffStatusBadge,
 } from '@/components/StaffUI'
+import { CardTitle } from '@/components/ui'
 
 export default function MemberDetailPage() {
   const { t } = useTranslation('staff')
@@ -72,8 +74,8 @@ export default function MemberDetailPage() {
       {error && <StaffErrorState message={error} onRetry={load} />}
 
       <div className="grid gap-5 lg:grid-cols-2">
-        <section className="rogym-card rogym-card--compact p-6">
-          <h2 className="mb-5 text-lg font-bold text-white">{t('members.detail.personalInfo')}</h2>
+        <StaffCard as="section" variant="compact" padding="md">
+          <CardTitle as="h2" size="md" className="mb-5">{t('members.detail.personalInfo')}</CardTitle>
           <Info label={t('members.detail.memberCode')} value={member.memberCode} />
           <Info label={t('members.detail.email')} value={member.email} />
           <Info label={t('members.detail.phone')} value={member.phone ?? t('members.detail.phoneNotUpdated')} />
@@ -84,10 +86,10 @@ export default function MemberDetailPage() {
             value={member.primaryTrainer?.fullName ?? t('members.detail.trainerNotAssigned')}
           />
           <Info label={t('members.detail.joinedAt')} value={formatDate(member.createdAt)} />
-        </section>
+        </StaffCard>
 
-        <section className="rogym-card rogym-card--compact p-6">
-          <h2 className="mb-5 text-lg font-bold text-white">{t('members.detail.currentPackage')}</h2>
+        <StaffCard as="section" variant="compact" padding="md">
+          <CardTitle as="h2" size="md" className="mb-5">{t('members.detail.currentPackage')}</CardTitle>
           {activeSubscription ? (
             <>
               <Info label={t('members.detail.package')} value={activeSubscription.packageName} />
@@ -104,12 +106,12 @@ export default function MemberDetailPage() {
               description={t('members.detail.noActivePackageDesc')}
             />
           )}
-        </section>
+        </StaffCard>
       </div>
 
       {subscriptionHistory.length > 0 && (
-        <section className="rogym-card rogym-card--compact p-6">
-          <h2 className="mb-5 text-lg font-bold text-white">{t('members.detail.packageHistory')}</h2>
+        <StaffCard as="section" variant="compact" padding="md">
+          <CardTitle as="h2" size="md" className="mb-5">{t('members.detail.packageHistory')}</CardTitle>
           <div className="overflow-x-auto">
             <table className="w-full border-collapse text-left text-sm">
               <thead className="border-b border-white/5 text-xs uppercase tracking-wider rogym-text-dim">
@@ -142,7 +144,7 @@ export default function MemberDetailPage() {
               </tbody>
             </table>
           </div>
-        </section>
+        </StaffCard>
       )}
     </StaffPage>
   )

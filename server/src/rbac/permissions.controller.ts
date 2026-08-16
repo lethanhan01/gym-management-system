@@ -15,7 +15,7 @@ export class PermissionsController {
   async list(
     @Query('page') page = '1',
     @Query('pageSize') pageSize = '20',
-    @Query('resource') resource?: string,
+    @Query('resource') resource?: string
   ) {
     const result = await this.rbac.listPermissions(Number(page), Number(pageSize), resource)
     return { success: true, ...result }

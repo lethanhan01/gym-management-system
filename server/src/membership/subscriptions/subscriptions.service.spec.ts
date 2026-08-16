@@ -92,7 +92,11 @@ describe('SubscriptionsService', () => {
   let service: SubscriptionsService
 
   beforeEach(() => {
-    service = new SubscriptionsService(mockPrisma as any, mockAudit as any, mockNotifications as any)
+    service = new SubscriptionsService(
+      mockPrisma as any,
+      mockAudit as any,
+      mockNotifications as any
+    )
     jest.clearAllMocks()
     mockPrisma.$transaction.mockImplementation(async (fn: (tx: any) => Promise<any>) =>
       fn(mockPrisma)
@@ -312,7 +316,9 @@ describe('SubscriptionsService', () => {
       mockPrisma.subscription.findFirst.mockResolvedValue(null)
       const caller = makeCaller({ roles: ['owner'] })
 
-      await expect(service.renewSubscription(1n, renewDto, caller)).rejects.toThrow(NotFoundException)
+      await expect(service.renewSubscription(1n, renewDto, caller)).rejects.toThrow(
+        NotFoundException
+      )
     })
 
     it('throws NotFoundException when subscription is not active (expired)', async () => {
@@ -321,7 +327,9 @@ describe('SubscriptionsService', () => {
       )
       const caller = makeCaller({ roles: ['owner'] })
 
-      await expect(service.renewSubscription(1n, renewDto, caller)).rejects.toThrow(NotFoundException)
+      await expect(service.renewSubscription(1n, renewDto, caller)).rejects.toThrow(
+        NotFoundException
+      )
     })
 
     it('extends endDate by package durationDays', async () => {

@@ -10,12 +10,7 @@ import { NotificationsModule } from '../notifications/notifications.module'
 @Module({
   imports: [NotificationsModule],
   controllers: [PackagesController, SubscriptionsController],
-  providers: [
-    PackagesService,
-    SubscriptionsService,
-    SubscriptionScheduleService,
-    AuditService,
-  ],
+  providers: [PackagesService, SubscriptionsService, SubscriptionScheduleService, AuditService],
   exports: [PackagesService, SubscriptionsService],
 })
 export class MembershipModule {}

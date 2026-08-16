@@ -7,6 +7,8 @@ Component CSS được tổ chức trong [`src/styles/components/`](./src/styles
 
 Tài liệu về cách sử dụng component, hook và layout nằm tại
 [`reusable-ui.md`](./reusable-ui.md).
+Quy chuẩn kiến trúc và tiêu chuẩn kỹ thuật thiết kế component nằm tại
+[`COMPONENT_CONVENTIONS.md`](./COMPONENT_CONVENTIONS.md).
 
 ## 1. Nguyên tắc bắt buộc
 
@@ -207,9 +209,12 @@ Button luôn có base class `.rogym-btn` và một variant:
 | `.rogym-btn--danger` | Destructive action |
 | `.rogym-btn--dark` | Action trên surface xanh/sáng |
 | `.rogym-btn--elevated` | Control trên panel nâng cao |
-| `.rogym-btn--icon` | Icon-only button |
+| `.rogym-btn--icon` | Icon-only button (44x44px touch target) |
+| `.rogym-btn--icon-xs`, `--icon-sm`, `--icon-lg` | Icon-only button kích thước khác nhau |
 | `.rogym-btn--nav` | Button trong navbar |
-| `.rogym-btn--wide`, `.rogym-btn--hero` | Modifier kích thước |
+| `.rogym-btn--xs`, `--sm`, `--md`, `--lg`, `--xl` | Hệ thống kích thước chuẩn |
+| `.rogym-btn--full`, `.rogym-btn--mobile-full` | Chiều rộng 100% toàn bộ hoặc chỉ trên mobile (<640px) |
+| `.rogym-btn--truncate` | Cắt ngắn text dài có ellipsis khi container co hẹp |
 
 ```tsx
 <button type="submit" className="rogym-btn rogym-btn--primary">
@@ -219,8 +224,11 @@ Button luôn có base class `.rogym-btn` và một variant:
 
 Không mô phỏng button bằng `div`. Icon-only button phải có `aria-label`.
 
-Sweep animation được áp dụng tự động cho tất cả `<button>`. Để tắt trên một button
-cụ thể (ví dụ khi cần dùng Tailwind `transition-*`), thêm `data-no-sweep`:
+Button sử dụng bo góc vuông mềm (`--btn-radius`) đồng bộ với `SearchToolbar` và hệ thống form control (`0.75rem` / `rounded-xl` cho size `md`, `0.5rem` cho `xs`/`sm`, `0.875rem` cho `xl`).
+
+Sweep animation được giới hạn trong `@media (hover: hover) and (pointer: fine)` để tránh hiện tượng sticky hover trên màn hình cảm ứng điện thoại/máy tính bảng. Trên thiết bị cảm ứng, nút kích hoạt phản hồi `:active` (scale nhẹ 0.98).
+
+Để tắt sweep trên một button cụ thể (ví dụ khi cần dùng Tailwind `transition-*`), thêm `data-no-sweep`:
 
 ```tsx
 <button data-no-sweep className="transition-colors rogym-btn rogym-btn--outline-white">

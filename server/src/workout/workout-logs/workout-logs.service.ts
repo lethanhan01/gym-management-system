@@ -14,7 +14,7 @@ import { UpdateWorkoutLogDto } from './dto/update-workout-log.dto'
 export class WorkoutLogsService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly audit: AuditService,
+    private readonly audit: AuditService
   ) {}
 
   async create(dto: CreateWorkoutLogDto, user: AuthenticatedUser) {
@@ -93,46 +93,46 @@ export class WorkoutLogsService {
     let result
     try {
       result = await this.prisma.$transaction(async (tx) => {
-      const log = await tx.workoutLog.create({
-        data: {
-          memberId: member.memberId,
-          assignmentId: BigInt(dto.assignmentId),
-          planDayId: BigInt(dto.planDayId),
-          clientCompletionKey: dto.clientCompletionKey ?? null,
-          loggedAt: new Date(dto.loggedAt),
-          durationMin: dto.durationMin ?? null,
-          notes: dto.notes ?? null,
-        },
-      })
-
-      if (dto.sets.length > 0) {
-        await tx.workoutLogSet.createMany({
-          data: dto.sets.map((set) => ({
-            logId: log.logId,
-            planExerciseId: BigInt(set.planExerciseId),
-            setNumber: set.setNumber,
-            actualReps: set.actualReps ?? null,
-            actualWeightKg: set.actualWeightKg ?? null,
-            actualDurationSec: set.actualDurationSec ?? null,
-            completed: set.completed ?? true,
-          })),
-        })
-      }
-
-      return tx.workoutLog.findUnique({
-        where: { logId: log.logId },
-        include: {
-          planDay: true,
-          sets: {
-            include: {
-              planExercise: {
-                include: { exercise: true },
-              },
-            },
-            orderBy: { setNumber: 'asc' },
+        const log = await tx.workoutLog.create({
+          data: {
+            memberId: member.memberId,
+            assignmentId: BigInt(dto.assignmentId),
+            planDayId: BigInt(dto.planDayId),
+            clientCompletionKey: dto.clientCompletionKey ?? null,
+            loggedAt: new Date(dto.loggedAt),
+            durationMin: dto.durationMin ?? null,
+            notes: dto.notes ?? null,
           },
-        },
-      })
+        })
+
+        if (dto.sets.length > 0) {
+          await tx.workoutLogSet.createMany({
+            data: dto.sets.map((set) => ({
+              logId: log.logId,
+              planExerciseId: BigInt(set.planExerciseId),
+              setNumber: set.setNumber,
+              actualReps: set.actualReps ?? null,
+              actualWeightKg: set.actualWeightKg ?? null,
+              actualDurationSec: set.actualDurationSec ?? null,
+              completed: set.completed ?? true,
+            })),
+          })
+        }
+
+        return tx.workoutLog.findUnique({
+          where: { logId: log.logId },
+          include: {
+            planDay: true,
+            sets: {
+              include: {
+                planExercise: {
+                  include: { exercise: true },
+                },
+              },
+              orderBy: { setNumber: 'asc' },
+            },
+          },
+        })
       })
     } catch (caught) {
       if (!dto.clientCompletionKey || !this.isCompletionKeyConflict(caught)) throw caught
@@ -155,18 +155,19 @@ export class WorkoutLogsService {
       throw new NotFoundException('Workout log khong ton tai')
     }
 
-    if (created) await this.audit.log({
-      actorUserId: user.userId,
-      action: 'workout_log.create',
-      resourceType: 'workout_log',
-      resourceId: result.logId.toString(),
-      afterData: {
-        logId: result.logId.toString(),
-        assignmentId: assignment.assignmentId.toString(),
-        planDayId: planDay.planDayId.toString(),
-        setCount: dto.sets.length,
-      },
-    })
+    if (created)
+      await this.audit.log({
+        actorUserId: user.userId,
+        action: 'workout_log.create',
+        resourceType: 'workout_log',
+        resourceId: result.logId.toString(),
+        afterData: {
+          logId: result.logId.toString(),
+          assignmentId: assignment.assignmentId.toString(),
+          planDayId: planDay.planDayId.toString(),
+          setCount: dto.sets.length,
+        },
+      })
 
     return result
   }
@@ -256,7 +257,11 @@ export class WorkoutLogsService {
   }
 
   private isCompletionKeyConflict(error: unknown) {
-    return typeof error === 'object' && error !== null
-      && 'code' in error && (error as { code?: unknown }).code === 'P2002'
+    return (
+      typeof error === 'object' &&
+      error !== null &&
+      'code' in error &&
+      (error as { code?: unknown }).code === 'P2002'
+    )
   }
 }

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Minus, Plus } from 'lucide-react'
-import { Modal } from '@/components/ui/Modal'
+import { Button, FormField, Input, Modal } from '@/components/ui'
 import type { WorkoutPlanDay } from '@/services/workout.service'
 import { makeSessionDayConfig, makeSessionSetConfig } from './sessionTargets'
 import type { SessionDayConfig, SessionSetConfig } from './types'
@@ -78,12 +78,12 @@ export function SessionConfigModal({
       onClose={onClose}
       footer={
         <>
-          <button type="button" className="rogym-btn rogym-btn--outline-white" onClick={onClose}>
+          <Button variant="outline-white" onClick={onClose}>
             {t('workout.createSession.buttonCancelEdit')}
-          </button>
-          <button type="button" className="rogym-btn rogym-btn--primary" onClick={() => onSave(config)}>
+          </Button>
+          <Button variant="primary" onClick={() => onSave(config)}>
             {t('workout.createSession.buttonSaveEdit')}
-          </button>
+          </Button>
         </>
       }
     >
@@ -106,23 +106,23 @@ export function SessionConfigModal({
                       <p className="text-sm font-medium text-white">
                         {t('workout.createSession.setLabel', { number: setIndex + 1 })}
                       </p>
-                      <button
-                        type="button"
-                        className="rogym-btn rogym-btn--icon rogym-btn--elevated"
+                      <Button
+                        variant="icon"
+                        size="sm"
                         disabled={currentConfig.sets.length <= 1}
                         onClick={() => removeSet(exercise.planExerciseId, setIndex)}
                         aria-label={t('workout.createSession.buttonRemoveSet', { number: setIndex + 1 })}
-                      >
-                        <Minus size={15} />
-                      </button>
+                        leftIcon={<Minus size={14} />}
+                      />
                     </div>
                     <div className="grid gap-3 md:grid-cols-2">
-                      <label className="block space-y-1.5">
-                        <span className="rogym-field-label">
-                          {isCardio ? t('workout.createSession.fieldDuration') : t('workout.createSession.fieldReps')}
-                        </span>
-                        <input
-                          className="rogym-input"
+                      <FormField
+                        label={isCardio ? t('workout.createSession.fieldDuration') : t('workout.createSession.fieldReps')}
+                        htmlFor={`set-${exercise.planExerciseId}-${setIndex}-reps`}
+                      >
+                        <Input
+                          id={`set-${exercise.planExerciseId}-${setIndex}-reps`}
+                          aria-label={isCardio ? t('workout.createSession.fieldDuration') : t('workout.createSession.fieldReps')}
                           type="number"
                           min={0}
                           required
@@ -134,11 +134,14 @@ export function SessionConfigModal({
                             event.target.value,
                           )}
                         />
-                      </label>
-                      <label className="block space-y-1.5">
-                        <span className="rogym-field-label">{t('workout.createSession.fieldWeight')}</span>
-                        <input
-                          className="rogym-input"
+                      </FormField>
+                      <FormField
+                        label={t('workout.createSession.fieldWeight')}
+                        htmlFor={`set-${exercise.planExerciseId}-${setIndex}-weight`}
+                      >
+                        <Input
+                          id={`set-${exercise.planExerciseId}-${setIndex}-weight`}
+                          aria-label={t('workout.createSession.fieldWeight')}
                           type="number"
                           min={0}
                           step={0.25}
@@ -146,28 +149,32 @@ export function SessionConfigModal({
                           value={set.actualWeightKg}
                           onChange={(event) => updateSet(exercise.planExerciseId, setIndex, 'actualWeightKg', event.target.value)}
                         />
-                      </label>
+                      </FormField>
                     </div>
                   </div>
                 ))}
-                <button
-                  type="button"
-                  className="rogym-btn rogym-btn--outline-white"
+                <Button
+                  variant="outline-white"
+                  size="sm"
                   onClick={() => addSet(exercise.planExerciseId, makeSessionSetConfig(exercise))}
+                  leftIcon={<Plus size={14} />}
                 >
-                  <Plus size={15} /> {t('workout.createSession.buttonAddSet')}
-                </button>
-                <label className="block space-y-1.5">
-                  <span className="rogym-field-label">{t('workout.createSession.fieldRestSeconds')}</span>
-                  <input
-                    className="rogym-input"
+                  {t('workout.createSession.buttonAddSet')}
+                </Button>
+                <FormField
+                  label={t('workout.createSession.fieldRestSeconds')}
+                  htmlFor={`exercise-${exercise.planExerciseId}-rest`}
+                >
+                  <Input
+                    id={`exercise-${exercise.planExerciseId}-rest`}
+                    aria-label={t('workout.createSession.fieldRestSeconds')}
                     type="number"
                     min={0}
                     required
-                    value={currentConfig.restSeconds}
+                    value={String(currentConfig.restSeconds)}
                     onChange={(event) => updateRest(exercise.planExerciseId, event.target.value)}
                   />
-                </label>
+                </FormField>
               </div>
             </section>
           )

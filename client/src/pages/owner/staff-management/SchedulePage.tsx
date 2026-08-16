@@ -7,10 +7,10 @@ import {
   OwnerModal,
   OwnerPage,
   OwnerPageHeader,
+  OwnerSelect,
   OwnerSkeleton,
   OwnerSubmitButton,
 } from '@/components/OwnerUI'
-import { Select as OwnerSelect } from '@/components/Select'
 import { StaffScheduleCalendar } from '@/components/staff/StaffScheduleCalendar'
 import {
   getScheduleMonthRange,

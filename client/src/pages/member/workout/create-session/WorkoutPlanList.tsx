@@ -2,10 +2,12 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ChevronDown, ChevronUp, Clock, Dumbbell, Pencil, Play } from 'lucide-react'
 import {
+  MemberCard,
   MemberEmptyState,
   MemberErrorState,
   MemberSkeleton,
 } from '@/components/MemberUI'
+import { Button, CardTitle } from '@/components/ui'
 import type {
   WorkoutAssignmentSummary,
   WorkoutPlan,
@@ -41,7 +43,12 @@ function WorkoutPlanCard({
   const avgMinPerDay = totalDays > 0 ? Math.round(totalEstSec / totalDays / 60) : 0
 
   return (
-    <div className={`rogym-plan-card rogym-card rogym-card--md ${isPT ? 'is-trainer-plan' : ''}`}>
+    <MemberCard
+      as="article"
+      variant={isPT ? 'accent' : 'default'}
+      padding="none"
+      className="overflow-hidden"
+    >
       <div className="p-5">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 flex-1">
@@ -53,7 +60,9 @@ function WorkoutPlanCard({
               >
                 {isPT ? t('workout.createSession.sourceTrainer') : t('workout.createSession.sourcePersonal')}
               </span>
-              <h3 className="break-words font-bold text-white">{assignment.plan?.name ?? plan?.name ?? '—'}</h3>
+              <CardTitle size="md" as="h3" className="break-words">
+                {assignment.plan?.name ?? plan?.name ?? '—'}
+              </CardTitle>
             </div>
             {plan?.description && <p className="mt-1 text-xs rogym-sx-5e5c39ab">{plan.description}</p>}
             <div className="mt-2 flex gap-3 text-xs rogym-sx-5e5c39ab">
@@ -103,30 +112,28 @@ function WorkoutPlanCard({
                   </p>
                 </div>
                 <div className="flex shrink-0 items-center gap-2">
-                  <button
-                    type="button"
-                    className="rogym-btn rogym-btn--elevated rogym-btn--icon"
+                  <Button
+                    variant="outline-white"
+                    size="sm"
                     onClick={() => onEditDay(day, assignment)}
                     aria-label={t('workout.createSession.buttonEditDay', { name: day.name })}
                     title={t('workout.createSession.buttonEditDay', { name: day.name })}
-                  >
-                    <Pencil size={16} />
-                  </button>
-                  <button
-                    type="button"
-                    className="rogym-btn rogym-btn--primary rogym-btn--icon"
+                    leftIcon={<Pencil size={14} />}
+                  />
+                  <Button
+                    variant="primary"
+                    size="sm"
                     onClick={() => onStartDay(day, assignment)}
                     aria-label={t('workout.createSession.buttonStartDay', { name: day.name })}
                     title={t('workout.createSession.buttonStartDay', { name: day.name })}
-                  >
-                    <Play size={16} />
-                  </button>
+                    leftIcon={<Play size={14} />}
+                  />
                 </div>
               </div>
             ))}
         </div>
       )}
-    </div>
+    </MemberCard>
   )
 }
 
@@ -159,9 +166,9 @@ export function WorkoutPlanList({
         title={t('workout.createSession.emptyTitle')}
         description={t('workout.createSession.emptyDescription')}
         action={
-          <button type="button" className="rogym-btn rogym-btn--primary" onClick={onCreatePlan}>
-            <Dumbbell size={14} /> {t('workout.createSession.buttonCreatePlan')}
-          </button>
+          <Button variant="primary" onClick={onCreatePlan} leftIcon={<Dumbbell size={14} />}>
+            {t('workout.createSession.buttonCreatePlan')}
+          </Button>
         }
       />
     )

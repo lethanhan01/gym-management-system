@@ -84,7 +84,7 @@ describe('WorkoutLogsService', () => {
     jest.clearAllMocks()
     tx = makeTx()
     mockPrisma.$transaction.mockImplementation(async (fn: any) =>
-      typeof fn === 'function' ? fn(tx) : fn,
+      typeof fn === 'function' ? fn(tx) : fn
     )
   })
 
@@ -115,7 +115,9 @@ describe('WorkoutLogsService', () => {
     })
 
     it('throws BadRequestException when assignment is not active', async () => {
-      mockPrisma.memberWorkoutPlan.findFirst.mockResolvedValue(makeAssignment({ status: 'completed' }))
+      mockPrisma.memberWorkoutPlan.findFirst.mockResolvedValue(
+        makeAssignment({ status: 'completed' })
+      )
       const user = makeUser()
 
       await expect(service.create(baseDto as any, user as any)).rejects.toThrow(BadRequestException)
@@ -133,7 +135,9 @@ describe('WorkoutLogsService', () => {
       mockPrisma.memberWorkoutPlan.findFirst.mockResolvedValue(makeAssignment())
       mockPrisma.workoutPlanDay.findFirst.mockResolvedValue(makePlanDay())
       // Only 1 planExercise returned for 2 requested
-      mockPrisma.workoutPlanExercise.findMany.mockResolvedValue([{ planExerciseId: 1n, exercise: {} }])
+      mockPrisma.workoutPlanExercise.findMany.mockResolvedValue([
+        { planExerciseId: 1n, exercise: {} },
+      ])
       const user = makeUser()
       const dto = {
         ...baseDto,
@@ -156,7 +160,7 @@ describe('WorkoutLogsService', () => {
       expect(tx.workoutLog.create).toHaveBeenCalled()
       expect(tx.workoutLogSet.createMany).not.toHaveBeenCalled()
       expect(mockAudit.log).toHaveBeenCalledWith(
-        expect.objectContaining({ action: 'workout_log.create' }),
+        expect.objectContaining({ action: 'workout_log.create' })
       )
       expect(result).toBeDefined()
     })
@@ -165,10 +169,13 @@ describe('WorkoutLogsService', () => {
       const existing = makeLog({ clientCompletionKey: '30b7b192-0f02-4c86-a596-171bebb327ec' })
       mockPrisma.workoutLog.findFirst.mockResolvedValue(existing)
 
-      const result = await service.create({
-        ...baseDto,
-        clientCompletionKey: '30b7b192-0f02-4c86-a596-171bebb327ec',
-      } as any, makeUser() as any)
+      const result = await service.create(
+        {
+          ...baseDto,
+          clientCompletionKey: '30b7b192-0f02-4c86-a596-171bebb327ec',
+        } as any,
+        makeUser() as any
+      )
 
       expect(result).toBe(existing)
       expect(mockPrisma.$transaction).not.toHaveBeenCalled()
@@ -178,7 +185,9 @@ describe('WorkoutLogsService', () => {
     it('happy path with sets: calls workoutLogSet.createMany', async () => {
       mockPrisma.memberWorkoutPlan.findFirst.mockResolvedValue(makeAssignment())
       mockPrisma.workoutPlanDay.findFirst.mockResolvedValue(makePlanDay())
-      mockPrisma.workoutPlanExercise.findMany.mockResolvedValue([{ planExerciseId: 1n, exercise: {} }])
+      mockPrisma.workoutPlanExercise.findMany.mockResolvedValue([
+        { planExerciseId: 1n, exercise: {} },
+      ])
       const user = makeUser()
       const dto = {
         ...baseDto,
@@ -244,21 +253,27 @@ describe('WorkoutLogsService', () => {
       mockPrisma.member.findFirst.mockResolvedValue(null)
       const user = { ...makeUser(), memberId: undefined }
 
-      await expect(service.update(100n, { notes: 'X' } as any, user as any)).rejects.toThrow(ForbiddenException)
+      await expect(service.update(100n, { notes: 'X' } as any, user as any)).rejects.toThrow(
+        ForbiddenException
+      )
     })
 
     it('throws NotFoundException when log does not exist', async () => {
       mockPrisma.workoutLog.findUnique.mockResolvedValue(null)
       const user = makeUser()
 
-      await expect(service.update(999n, { notes: 'X' } as any, user as any)).rejects.toThrow(NotFoundException)
+      await expect(service.update(999n, { notes: 'X' } as any, user as any)).rejects.toThrow(
+        NotFoundException
+      )
     })
 
     it('throws ForbiddenException when log belongs to different member', async () => {
       mockPrisma.workoutLog.findUnique.mockResolvedValue(makeLog({ memberId: 99n }))
       const user = makeUser({ memberId: 1n })
 
-      await expect(service.update(100n, { notes: 'X' } as any, user as any)).rejects.toThrow(ForbiddenException)
+      await expect(service.update(100n, { notes: 'X' } as any, user as any)).rejects.toThrow(
+        ForbiddenException
+      )
     })
 
     it('throws ForbiddenException when log is older than 24 hours', async () => {
@@ -266,7 +281,9 @@ describe('WorkoutLogsService', () => {
       mockPrisma.workoutLog.findUnique.mockResolvedValue(makeLog({ loggedAt: oldDate }))
       const user = makeUser()
 
-      await expect(service.update(100n, { notes: 'X' } as any, user as any)).rejects.toThrow(ForbiddenException)
+      await expect(service.update(100n, { notes: 'X' } as any, user as any)).rejects.toThrow(
+        ForbiddenException
+      )
     })
 
     it('happy path: updates notes and calls audit.log', async () => {
@@ -280,7 +297,7 @@ describe('WorkoutLogsService', () => {
 
       expect(mockPrisma.workoutLog.update).toHaveBeenCalled()
       expect(mockAudit.log).toHaveBeenCalledWith(
-        expect.objectContaining({ action: 'workout_log.update' }),
+        expect.objectContaining({ action: 'workout_log.update' })
       )
       expect(result.notes).toBe('Updated notes')
     })

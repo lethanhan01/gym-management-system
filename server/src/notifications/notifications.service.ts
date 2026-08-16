@@ -37,7 +37,10 @@ export class NotificationsService {
 
   constructor(private readonly prisma: PrismaService) {}
 
-  async list(userId: bigint, query: { page?: number; pageSize?: number; status?: 'all' | 'unread' }) {
+  async list(
+    userId: bigint,
+    query: { page?: number; pageSize?: number; status?: 'all' | 'unread' }
+  ) {
     const page = query.page ?? 1
     const pageSize = Math.min(query.pageSize ?? 20, 50)
     const where: Prisma.NotificationWhereInput = {
@@ -57,7 +60,12 @@ export class NotificationsService {
 
     return {
       data: rows.map((row) => this.serialize(row)),
-      meta: { page, pageSize, totalItems: total, totalPages: Math.max(1, Math.ceil(total / pageSize)) },
+      meta: {
+        page,
+        pageSize,
+        totalItems: total,
+        totalPages: Math.max(1, Math.ceil(total / pageSize)),
+      },
     }
   }
 
@@ -98,7 +106,11 @@ export class NotificationsService {
     return this.createForUser(userId, payload)
   }
 
-  async notifyManyUsers(userIds: Array<bigint | null | undefined>, payload: NotificationPayload, options: NotifyOptions = {}) {
+  async notifyManyUsers(
+    userIds: Array<bigint | null | undefined>,
+    payload: NotificationPayload,
+    options: NotifyOptions = {}
+  ) {
     const uniqueIds = this.uniqueRecipients(userIds, options.excludeActorUserId)
     let created = 0
     for (const userId of uniqueIds) {
@@ -107,7 +119,11 @@ export class NotificationsService {
     return created
   }
 
-  async notifyGroups(groupNames: GroupName[], payload: NotificationPayload, options: NotifyOptions = {}) {
+  async notifyGroups(
+    groupNames: GroupName[],
+    payload: NotificationPayload,
+    options: NotifyOptions = {}
+  ) {
     const users = await this.prisma.user.findMany({
       where: {
         status: UserStatus.active,
@@ -123,7 +139,11 @@ export class NotificationsService {
       },
       select: { userId: true },
     })
-    await this.notifyManyUsers(users.map((user) => user.userId), payload, options)
+    await this.notifyManyUsers(
+      users.map((user) => user.userId),
+      payload,
+      options
+    )
   }
 
   async safeNotifyUser(userId: bigint | null | undefined, payload: NotificationPayload) {
@@ -137,7 +157,11 @@ export class NotificationsService {
     }
   }
 
-  async safeNotifyManyUsers(userIds: Array<bigint | null | undefined>, payload: NotificationPayload, options: NotifyOptions = {}) {
+  async safeNotifyManyUsers(
+    userIds: Array<bigint | null | undefined>,
+    payload: NotificationPayload,
+    options: NotifyOptions = {}
+  ) {
     try {
       await this.notifyManyUsers(userIds, payload, options)
     } catch (error) {
@@ -147,7 +171,11 @@ export class NotificationsService {
     }
   }
 
-  async safeNotifyGroups(groupNames: GroupName[], payload: NotificationPayload, options: NotifyOptions = {}) {
+  async safeNotifyGroups(
+    groupNames: GroupName[],
+    payload: NotificationPayload,
+    options: NotifyOptions = {}
+  ) {
     try {
       await this.notifyGroups(groupNames, payload, options)
     } catch (error) {
@@ -179,7 +207,10 @@ export class NotificationsService {
     }
   }
 
-  private uniqueRecipients(userIds: Array<bigint | null | undefined>, excludeActorUserId?: bigint | null) {
+  private uniqueRecipients(
+    userIds: Array<bigint | null | undefined>,
+    excludeActorUserId?: bigint | null
+  ) {
     const seen = new Set<string>()
     const recipients: bigint[] = []
     for (const userId of userIds) {

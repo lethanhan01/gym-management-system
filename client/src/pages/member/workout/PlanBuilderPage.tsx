@@ -11,16 +11,16 @@ import {
   Dumbbell,
   Lock,
   Plus,
-  Search,
   Trash2,
   X,
   Zap,
 } from 'lucide-react'
-import { DatePickerInput } from '@/components/DatePickerInput'
+import { DatePickerInput, Button } from '@/components/ui'
 import {
   MemberErrorState,
   MemberPage,
   MemberPageHeader,
+  MemberSearchToolbar,
   MemberSkeleton,
 } from '@/components/MemberUI'
 import { toast } from '@/lib/toast'
@@ -91,13 +91,13 @@ const SuggestedPlanCard = memo(function SuggestedPlanCard({
               <p className="mt-1 text-sm rogym-sx-d88f932f">{plan.description}</p>
             )}
           </div>
-          <button
-            type="button"
-            className="rogym-btn rogym-btn--primary shrink-0 px-4 text-sm"
+          <Button
+            variant="primary"
+            size="sm"
             onClick={() => onUse(plan)}
           >
             {t('workout.planBuilder.buttonUsePlan')}
-          </button>
+          </Button>
         </div>
 
         {/* Stats row */}
@@ -492,13 +492,14 @@ export default function MemberPlanBuilderPage() {
           eyebrow={t('workout.planBuilder.builderEyebrow')}
           title={t('workout.planBuilder.editTitle')}
           actions={
-            <button
-              type="button"
-              className="rogym-btn rogym-btn--outline-white"
+            <Button
+              variant="outline-white"
+              size="sm"
               onClick={() => navigate('/member/workout/plan')}
+              leftIcon={<ArrowLeft size={15} />}
             >
-              <ArrowLeft size={15} /> {t('workout.planBuilder.buttonBack')}
-            </button>
+              {t('workout.planBuilder.buttonBack')}
+            </Button>
           }
         />
         <MemberErrorState message={error ?? t('workout.planBuilder.notFound')} />
@@ -515,13 +516,14 @@ export default function MemberPlanBuilderPage() {
           title={t('workout.planBuilder.title')}
           description={t('workout.planBuilder.namePhaseDesc')}
           actions={
-            <button
-              type="button"
-              className="rogym-btn rogym-btn--outline-white"
+            <Button
+              variant="outline-white"
+              size="sm"
               onClick={() => navigate('/member/workout/plan')}
+              leftIcon={<ArrowLeft size={15} />}
             >
-              <ArrowLeft size={15} /> {t('workout.planBuilder.buttonBack')}
-            </button>
+              {t('workout.planBuilder.buttonBack')}
+            </Button>
           }
         />
         <form onSubmit={(e) => void createPlan(e)} className="space-y-4 rogym-sx-19e5bf8c">
@@ -560,13 +562,14 @@ export default function MemberPlanBuilderPage() {
           </div>
 
           <div className="flex justify-end">
-            <button
+            <Button
+              variant="primary"
               type="submit"
-              className="rogym-btn rogym-btn--primary"
               disabled={!name.trim() || submitting}
+              loading={submitting}
             >
               {submitting ? t('workout.planBuilder.buttonCreating') : t('workout.planBuilder.buttonNext')}
-            </button>
+            </Button>
           </div>
         </form>
 
@@ -604,21 +607,22 @@ export default function MemberPlanBuilderPage() {
                 {t('workout.planBuilder.replaceModal.body', { name: existingSelfPlan?.name ?? '' })}
               </p>
               <div className="flex justify-end gap-2">
-                <button
-                  type="button"
-                  className="rogym-btn rogym-btn--outline-white px-4"
+                <Button
+                  variant="outline-white"
+                  size="sm"
                   onClick={() => setPendingSuggestedPlan(null)}
                 >
                   {t('workout.planBuilder.replaceModal.buttonCancel')}
-                </button>
-                <button
-                  type="button"
-                  className="rogym-btn rogym-btn--primary px-4"
+                </Button>
+                <Button
+                  variant="primary"
+                  size="sm"
                   disabled={submitting}
+                  loading={submitting}
                   onClick={() => void applySuggestedPlan(pendingSuggestedPlan)}
                 >
                   {submitting ? t('workout.planBuilder.processingBtn') : t('workout.planBuilder.replaceModal.buttonApply')}
-                </button>
+                </Button>
               </div>
             </div>
           </div>
@@ -641,13 +645,14 @@ export default function MemberPlanBuilderPage() {
               : t('workout.planBuilder.builderDescBuild')
         }
         actions={
-          <button
-            type="button"
-            className="rogym-btn rogym-btn--outline-white"
+          <Button
+            variant="outline-white"
+            size="sm"
             onClick={() => navigate('/member/workout/plan')}
+            leftIcon={<ArrowLeft size={15} />}
           >
-            <ArrowLeft size={15} /> {isEditMode ? t('workout.planBuilder.buttonBack') : t('workout.planBuilder.buttonCancel')}
-          </button>
+            {isEditMode ? t('workout.planBuilder.buttonBack') : t('workout.planBuilder.buttonCancel')}
+          </Button>
         }
       />
 
@@ -687,31 +692,30 @@ export default function MemberPlanBuilderPage() {
                 {readonly ? null : deleteDay?.planDayId === day.planDayId ? (
                   <div className="flex items-center gap-2">
                     <span className="text-xs text-red-200">{t('workout.planBuilder.buttonDeleteDay')}</span>
-                    <button
-                      type="button"
-                      className="rogym-btn rogym-btn--danger px-3 py-1 text-xs"
+                    <Button
+                      variant="danger"
+                      size="sm"
                       disabled={submitting}
                       onClick={() => void removeDay(day)}
                     >
                       {t('workout.planBuilder.buttonDeleteDayConfirm')}
-                    </button>
-                    <button
-                      type="button"
-                      className="rogym-btn rogym-btn--outline-white px-3 py-1 text-xs"
+                    </Button>
+                    <Button
+                      variant="outline-white"
+                      size="sm"
                       onClick={() => setDeleteDay(null)}
                     >
                       {t('workout.planBuilder.buttonDeleteDayCancel')}
-                    </button>
+                    </Button>
                   </div>
                 ) : (
-                  <button
-                    type="button"
-                    className="rogym-btn rogym-btn--icon rogym-btn--elevated"
+                  <Button
+                    variant="icon"
+                    size="sm"
                     onClick={() => setDeleteDay(day)}
                     aria-label={t('workout.planBuilder.buttonDeleteDayConfirm')}
-                  >
-                    <Trash2 size={15} />
-                  </button>
+                    leftIcon={<Trash2 size={15} />}
+                  />
                 )}
               </div>
 
@@ -740,14 +744,13 @@ export default function MemberPlanBuilderPage() {
                         </p>
                       </div>
                       {!readonly && (
-                        <button
-                          type="button"
-                          className="rogym-btn rogym-btn--icon rogym-btn--elevated"
+                        <Button
+                          variant="icon"
+                          size="sm"
                           onClick={() => void removeExercise(day.planDayId, ex.planExerciseId)}
                           aria-label={t('workout.planBuilder.errorRemoveExercise')}
-                        >
-                          <Trash2 size={13} />
-                        </button>
+                          leftIcon={<Trash2 size={13} />}
+                        />
                       )}
                     </div>
                   ))}
@@ -790,13 +793,14 @@ export default function MemberPlanBuilderPage() {
               onSubmit={addDay}
             />
           ) : (
-            <button
-              type="button"
-              className="rogym-btn rogym-btn--outline-white w-full justify-center"
+            <Button
+              variant="outline-white"
+              fullWidth
               onClick={() => setAddingDay(true)}
+              leftIcon={<Plus size={16} />}
             >
-              <Plus size={16} /> {t('workout.planBuilder.buttonAddDay')}
-            </button>
+              {t('workout.planBuilder.buttonAddDay')}
+            </Button>
           )}
         </div>
       )}
@@ -813,13 +817,14 @@ export default function MemberPlanBuilderPage() {
           <div className="flex w-full flex-col gap-2 md:w-auto md:flex-row md:items-center">
             {/* Read-only plan: no activate/archive actions */}
             {readonly ? (
-              <button
-                type="button"
-                className="rogym-btn rogym-btn--outline-white w-full justify-center px-4 md:w-auto"
+              <Button
+                variant="outline-white"
+                className="w-full md:w-auto"
                 onClick={() => navigate('/member/workout/plan')}
+                leftIcon={<ArrowLeft size={15} />}
               >
-                <ArrowLeft size={15} /> {t('workout.planBuilder.buttonBack')}
-              </button>
+                {t('workout.planBuilder.buttonBack')}
+              </Button>
             ) : activateConfirm ? (
               <>
                 {existingSelfPlan ? (
@@ -829,41 +834,44 @@ export default function MemberPlanBuilderPage() {
                 ) : (
                   <span className="break-words text-xs rogym-sx-5e5c39ab">{t('workout.planBuilder.confirmActivate')}</span>
                 )}
-                <button
-                  type="button"
-                  className="rogym-btn rogym-btn--primary w-full justify-center px-4 md:w-auto"
+                <Button
+                  variant="primary"
+                  className="w-full md:w-auto"
                   disabled={submitting}
+                  loading={submitting}
                   onClick={() => void activate()}
                 >
                   {submitting ? t('workout.planBuilder.processingBtn') : t('workout.planBuilder.floatingBar.buttonConfirm')}
-                </button>
-                <button
-                  type="button"
-                  className="rogym-btn rogym-btn--outline-white w-full justify-center px-4 md:w-auto"
+                </Button>
+                <Button
+                  variant="outline-white"
+                  className="w-full md:w-auto"
                   onClick={() => setActivateConfirm(false)}
                 >
                   {t('workout.planBuilder.floatingBar.buttonCancel')}
-                </button>
+                </Button>
               </>
             ) : (
               <>
-                <button
-                  type="button"
-                  className="rogym-btn rogym-btn--outline-white w-full justify-center px-4 md:w-auto"
+                <Button
+                  variant="outline-white"
+                  className="w-full md:w-auto"
                   disabled={submitting}
                   onClick={saveToList}
+                  leftIcon={<Archive size={15} />}
                 >
-                  <Archive size={15} /> {t('workout.planBuilder.floatingBar.buttonSave')}
-                </button>
+                  {t('workout.planBuilder.floatingBar.buttonSave')}
+                </Button>
                 {!hasActivePtPlan && (
-                  <button
-                    type="button"
-                    className="rogym-btn rogym-btn--primary w-full justify-center px-6 md:w-auto"
+                  <Button
+                    variant="primary"
+                    className="w-full md:w-auto"
                     disabled={!canActivate || submitting}
                     onClick={() => setActivateConfirm(true)}
+                    leftIcon={<Zap size={15} />}
                   >
-                    <Zap size={15} /> {t('workout.planBuilder.floatingBar.buttonActivate')}
-                  </button>
+                    {t('workout.planBuilder.floatingBar.buttonActivate')}
+                  </Button>
                 )}
               </>
             )}
@@ -957,52 +965,47 @@ function AddExerciseForm({
     >
       <div className="space-y-2">
         <span className="rogym-field-label block">{t('workout.planBuilder.addExercise.title')}</span>
-        <div className="relative flex gap-2">
-          <div className="relative flex-1">
-            <Search
-              className="absolute left-3 top-1/2 -translate-y-1/2 rogym-sx-5e5c39ab"
-              size={13}
-            />
-            <input
-              className="rogym-input py-2 pl-9 text-sm"
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              placeholder={t('workout.planBuilder.addExercise.searchPlaceholder')}
-            />
-          </div>
-          <ExerciseFilterDropdown
-            open={filterOpen}
-            onOpenChange={(open) => {
-              if (open) {
-                setDraftBodyPartId(bodyPartId)
-                setDraftTargetMuscleId(targetMuscleId)
-                setDraftEquipmentId(equipmentId)
-                setFilterOpen(true)
-              } else {
+        <MemberSearchToolbar
+          variant="plain"
+          layout="row"
+          value={search}
+          onChange={setSearch}
+          placeholder={t('workout.planBuilder.addExercise.searchPlaceholder')}
+          filters={
+            <ExerciseFilterDropdown
+              open={filterOpen}
+              onOpenChange={(open) => {
+                if (open) {
+                  setDraftBodyPartId(bodyPartId)
+                  setDraftTargetMuscleId(targetMuscleId)
+                  setDraftEquipmentId(equipmentId)
+                  setFilterOpen(true)
+                } else {
+                  setFilterOpen(false)
+                }
+              }}
+              activeCount={activeFilterCount}
+              bodyPartId={draftBodyPartId}
+              targetMuscleId={draftTargetMuscleId}
+              equipmentId={draftEquipmentId}
+              bodyParts={bodyParts}
+              muscles={muscles}
+              equipments={equipments}
+              onChange={(fields) => {
+                if ('bodyPartId' in fields) setDraftBodyPartId(fields.bodyPartId)
+                if ('targetMuscleId' in fields) setDraftTargetMuscleId(fields.targetMuscleId)
+                if ('equipmentId' in fields) setDraftEquipmentId(fields.equipmentId)
+              }}
+              onApply={() => {
+                setBodyPartId(draftBodyPartId)
+                setTargetMuscleId(draftTargetMuscleId)
+                setEquipmentId(draftEquipmentId)
+                setExerciseId('')
                 setFilterOpen(false)
-              }
-            }}
-            activeCount={activeFilterCount}
-            bodyPartId={draftBodyPartId}
-            targetMuscleId={draftTargetMuscleId}
-            equipmentId={draftEquipmentId}
-            bodyParts={bodyParts}
-            muscles={muscles}
-            equipments={equipments}
-            onChange={(fields) => {
-              if ('bodyPartId' in fields) setDraftBodyPartId(fields.bodyPartId)
-              if ('targetMuscleId' in fields) setDraftTargetMuscleId(fields.targetMuscleId)
-              if ('equipmentId' in fields) setDraftEquipmentId(fields.equipmentId)
-            }}
-            onApply={() => {
-              setBodyPartId(draftBodyPartId)
-              setTargetMuscleId(draftTargetMuscleId)
-              setEquipmentId(draftEquipmentId)
-              setExerciseId('')
-              setFilterOpen(false)
-            }}
-          />
-        </div>
+              }}
+            />
+          }
+        />
         <div className="max-h-44 overflow-y-auto rounded-xl rogym-sx-9ff6a44e">
           {filteredExercises.length === 0 ? (
             <p className="py-4 text-center text-xs rogym-sx-5e5c39ab">{t('workout.planBuilder.addExercise.notFound')}</p>
@@ -1049,16 +1052,18 @@ function AddExerciseForm({
         }}
       />
       <div className="flex justify-end gap-2">
-        <button type="button" className="rogym-btn rogym-btn--outline-white" onClick={onCancel}>
+        <Button variant="outline-white" size="sm" onClick={onCancel}>
           {t('workout.planBuilder.addExercise.buttonCancel')}
-        </button>
-        <button
+        </Button>
+        <Button
+          variant="primary"
+          size="sm"
           type="submit"
-          className="rogym-btn rogym-btn--primary"
           disabled={!exerciseId || submitting}
+          loading={submitting}
         >
           {submitting ? t('workout.planBuilder.addExercise.buttonAdding') : t('workout.planBuilder.addExercise.buttonAdd')}
-        </button>
+        </Button>
       </div>
     </form>
   )
@@ -1098,16 +1103,18 @@ function AddDayForm({
         />
       </label>
       <div className="flex justify-end gap-2">
-        <button type="button" className="rogym-btn rogym-btn--outline-white" onClick={onCancel}>
+        <Button variant="outline-white" size="sm" onClick={onCancel}>
           {t('workout.planBuilder.buttonCancel')}
-        </button>
-        <button
+        </Button>
+        <Button
+          variant="primary"
+          size="sm"
           type="submit"
-          className="rogym-btn rogym-btn--primary"
           disabled={!name.trim() || submitting}
+          loading={submitting}
         >
           {submitting ? t('workout.planBuilder.addDayForm.buttonAdding') : t('workout.planBuilder.addDayForm.buttonAdd')}
-        </button>
+        </Button>
       </div>
     </form>
   )

@@ -1,4 +1,12 @@
-import { IsArray, IsInt, IsOptional, IsPositive, IsString, MaxLength, MinLength } from 'class-validator'
+import {
+  IsArray,
+  IsInt,
+  IsOptional,
+  IsPositive,
+  IsString,
+  MaxLength,
+  MinLength,
+} from 'class-validator'
 
 export class CreateExerciseDto {
   @IsString()

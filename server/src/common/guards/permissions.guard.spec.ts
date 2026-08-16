@@ -34,7 +34,12 @@ describe('PermissionsGuard', () => {
   beforeEach(() => {
     reflector = { getAllAndOverride: jest.fn() }
     cacheProvider = new InMemoryPermissionCacheService()
-    guard = new PermissionsGuard(reflector as any, mockPrisma as any, mockConfig as any, cacheProvider)
+    guard = new PermissionsGuard(
+      reflector as any,
+      mockPrisma as any,
+      mockConfig as any,
+      cacheProvider
+    )
     jest.clearAllMocks()
   })
 

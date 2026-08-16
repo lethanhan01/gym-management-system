@@ -190,7 +190,11 @@
         "ptAssigned": "PT割り当て",
         "personal": "個人プラン",
         "notFound": "プランが見つかりません",
-        "noDescription": "説明なし"
+        "noDescription": "説明なし",
+        "progressLabel": "進捗状況",
+        "progressSets": "{{completed}} / {{total}} セット",
+        "progressDays": "{{completed}} / {{total}} 日",
+        "progressSessions": "{{count}} 回記録済み"
       },
       "progress": {
         "title": "進捗",
@@ -215,7 +219,11 @@
         "unassign": "割り当て解除",
         "historyTitle": "プラン割り当て履歴",
         "detail": "詳細",
-        "startedOn": "開始：{{date}}"
+        "startedOn": "開始：{{date}}",
+        "progressTitle": "プラン完了進捗",
+        "progressSets": "{{completed}} / {{total}} セット完了",
+        "progressDays": "{{completed}} / {{total}} 日実施済み",
+        "progressSessions": "{{count}} 回セッション実施"
       },
       "assignModal": {
         "title": "プランを割り当て",

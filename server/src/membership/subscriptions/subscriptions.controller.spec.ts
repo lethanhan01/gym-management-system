@@ -55,7 +55,9 @@ describe('SubscriptionsController', () => {
 
   describe('listByMember', () => {
     it('marks the read-only member endpoint as safe for one database retry', () => {
-      expect(Reflect.getMetadata(DATABASE_RETRYABLE_KEY, SubscriptionsController.prototype.listByMember)).toBe(true)
+      expect(
+        Reflect.getMetadata(DATABASE_RETRYABLE_KEY, SubscriptionsController.prototype.listByMember)
+      ).toBe(true)
     })
 
     it('delegates to listByMember with BigInt memberId', async () => {

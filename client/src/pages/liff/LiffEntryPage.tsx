@@ -1,14 +1,16 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { initLiff } from '@/lib/liff'
 import { authService } from '@/services/auth.service'
 import { useAuthStore } from '@/stores/authStore'
 import { useSubscriptionStore } from '@/stores/subscriptionStore'
 import { getApiError } from '@/lib/api-error'
-import i18n from '@/lib/i18n'
+import { LanguageSwitcher } from '@/components/ui/LanguageSwitcher'
 import { getSafeMemberRedirect } from './liff-redirect'
 
 export default function LiffEntryPage() {
+  const { t, i18n } = useTranslation(['auth', 'common'])
   const navigate = useNavigate()
   const setAuth = useAuthStore((s) => s.setAuth)
   const clearSubscription = useSubscriptionStore((s) => s.clear)
@@ -23,6 +25,18 @@ export default function LiffEntryPage() {
       )
       try {
         const liff = await initLiff()
+
+        // Sync LINE user's language if the user hasn't explicitly set their locale
+        const savedLocale = localStorage.getItem('gym-locale')
+        if (!savedLocale && typeof liff.getLanguage === 'function') {
+          const liffLang = liff.getLanguage() || ''
+          const detectedLang = liffLang.toLowerCase().startsWith('ja') ? 'ja' : 'vi'
+          if (i18n.language !== detectedLang) {
+            await i18n.changeLanguage(detectedLang)
+          }
+          document.documentElement.lang = detectedLang
+          localStorage.setItem('gym-locale', detectedLang)
+        }
 
         if (!liff.isLoggedIn()) {
           liff.login({ redirectUri: window.location.href })
@@ -42,7 +56,7 @@ export default function LiffEntryPage() {
         }
 
         const idToken = liff.getIDToken()
-        if (!idToken) throw new Error('Không lấy được LINE idToken')
+        if (!idToken) throw new Error(t('liff.idTokenError'))
 
         const { user, token } = await authService.lineLogin(idToken)
         if (cancelled) return
@@ -52,7 +66,7 @@ export default function LiffEntryPage() {
         navigate(redirectPath, { replace: true })
       } catch (err) {
         if (cancelled) return
-        setError(getApiError(err, i18n.t('error.network', { ns: 'common' })))
+        setError(getApiError(err, t('error.network', { ns: 'common' })))
       }
     }
 
@@ -60,27 +74,28 @@ export default function LiffEntryPage() {
     return () => {
       cancelled = true
     }
-  }, [clearSubscription, navigate, setAuth])
-
-  if (error) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-[#080e0b]">
-        <div className="text-center">
-          <p className="text-error mb-4">{error}</p>
-          <a href="/login" className="text-primary underline">
-            Quay về đăng nhập
-          </a>
-        </div>
-      </div>
-    )
-  }
+  }, [clearSubscription, i18n, navigate, setAuth, t])
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[#080e0b]">
-      <div className="text-center">
-        <div className="mb-4 h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent mx-auto" />
-        <p className="text-on-surface-variant text-sm">Đang đăng nhập bằng LINE...</p>
+    <>
+      <div className="fixed top-4 right-5 z-50">
+        <LanguageSwitcher />
       </div>
-    </div>
+      <div className="flex min-h-screen items-center justify-center bg-[#080e0b]">
+        {error ? (
+          <div className="text-center">
+            <p className="text-error mb-4">{error}</p>
+            <a href="/login" className="text-primary underline">
+              {t('liff.backToLogin')}
+            </a>
+          </div>
+        ) : (
+          <div className="text-center">
+            <div className="mb-4 h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent mx-auto" />
+            <p className="text-on-surface-variant text-sm">{t('liff.loggingIn')}</p>
+          </div>
+        )}
+      </div>
+    </>
   )
 }

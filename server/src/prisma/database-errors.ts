@@ -17,7 +17,7 @@ export function isTransientDatabaseError(error: unknown): boolean {
 
   const message = error instanceof Error ? error.message : String(error)
   return /connection reset|connection closed|socket hang up|econnreset|econnrefused|etimedout|can't reach database server|database server.*timed out/i.test(
-    message,
+    message
   )
 }
 
@@ -27,5 +27,7 @@ export function isTransientDatabaseError(error: unknown): boolean {
  */
 export function isConnectionPoolTimeout(error: unknown): boolean {
   const message = error instanceof Error ? error.message : String(error)
-  return /timed out fetching a new connection from the connection pool|connection pool timeout/i.test(message)
+  return /timed out fetching a new connection from the connection pool|connection pool timeout/i.test(
+    message
+  )
 }

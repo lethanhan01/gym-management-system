@@ -12,7 +12,20 @@ import { WorkoutLogsService } from './workout-logs/workout-logs.service'
 import { AuditService } from '../common/audit/audit.service'
 
 @Module({
-  controllers: [ExercisesController, ExerciseCatalogController, WorkoutPlansController, WorkoutLogsController],
-  providers: [ExercisesService, ExerciseDbV2Client, ExerciseCatalogSyncService, ExerciseCatalogScheduler, WorkoutPlansService, WorkoutLogsService, AuditService],
+  controllers: [
+    ExercisesController,
+    ExerciseCatalogController,
+    WorkoutPlansController,
+    WorkoutLogsController,
+  ],
+  providers: [
+    ExercisesService,
+    ExerciseDbV2Client,
+    ExerciseCatalogSyncService,
+    ExerciseCatalogScheduler,
+    WorkoutPlansService,
+    WorkoutLogsService,
+    AuditService,
+  ],
 })
 export class WorkoutModule {}

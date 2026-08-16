@@ -344,6 +344,36 @@
       box-shadow: 0 12px 28px rgba(6, 195, 132, 0.22);
     }
 
+    .rogym-bottom-nav--member .rogym-bottom-nav__item--workout-running svg {
+      border-color: var(--rogym-teal);
+      color: var(--rogym-teal);
+      box-shadow: 0 0 20px rgba(6, 195, 132, 0.45);
+      animation: rogym-workout-running-pulse 2s infinite ease-in-out;
+    }
+
+    .rogym-bottom-nav--member .rogym-bottom-nav__item--workout-paused svg {
+      border-color: #f59e0b;
+      color: #f59e0b;
+      box-shadow: 0 0 16px rgba(245, 158, 11, 0.35);
+    }
+
+    @keyframes rogym-workout-running-pulse {
+      0%, 100% {
+        box-shadow: 0 10px 24px rgba(6, 195, 132, 0.3);
+        transform: translateX(-50%) scale(1);
+      }
+      50% {
+        box-shadow: 0 12px 28px rgba(6, 195, 132, 0.6);
+        transform: translateX(-50%) scale(1.05);
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .rogym-bottom-nav--member .rogym-bottom-nav__item--workout-running svg {
+        animation: none;
+      }
+    }
+
     .rogym-bottom-nav__label {
       font-size: 10px;
       font-weight: 600;
@@ -352,3 +382,4 @@
     }
   }
 }
+

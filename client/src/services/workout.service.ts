@@ -80,6 +80,15 @@ export interface WorkoutPlan {
   _count?: { assignments: number }
 }
 
+export interface WorkoutAssignmentProgress {
+  completedSets: number
+  totalTargetSets: number
+  percentage: number
+  completedDays: number
+  totalDays: number
+  totalSessionsLogged: number
+}
+
 export interface PlanAssignment {
   assignmentId: string
   memberId: string
@@ -90,6 +99,7 @@ export interface PlanAssignment {
   endedAt: string | null
   notes: string | null
   createdAt: string
+  progress?: WorkoutAssignmentProgress
 }
 
 export interface MemberWorkoutPlan {
@@ -103,6 +113,7 @@ export interface MemberWorkoutPlan {
   notes: string | null
   createdAt: string
   plan?: WorkoutPlan
+  progress?: WorkoutAssignmentProgress
 }
 
 export interface WorkoutAssignmentSummary extends Omit<MemberWorkoutPlan, 'plan'> {

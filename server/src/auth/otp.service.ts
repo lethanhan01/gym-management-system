@@ -16,8 +16,11 @@ export class OtpService {
     const otp = randomInt(100000, 1000000).toString()
     const codeHash = await bcrypt.hash(otp, 10)
     const accepted = await this.prisma.$transaction(async (tx) => {
-      const throttle = await tx.otpRequestThrottle.findUnique({ where: { userId_purpose: { userId, purpose } } })
-      const inWindow = throttle && now.getTime() - throttle.windowStartedAt.getTime() < OTP_RATE_WINDOW_MS
+      const throttle = await tx.otpRequestThrottle.findUnique({
+        where: { userId_purpose: { userId, purpose } },
+      })
+      const inWindow =
+        throttle && now.getTime() - throttle.windowStartedAt.getTime() < OTP_RATE_WINDOW_MS
       const count = inWindow ? throttle.requestCount : 0
       if (count >= OTP_RATE_LIMIT) return false
       await tx.otpRequestThrottle.upsert({
@@ -38,7 +41,9 @@ export class OtpService {
   }
 
   async verify(userId: bigint, purpose: OtpPurpose, otp: string): Promise<OtpCheckResult> {
-    const entry = await this.prisma.otpCode.findUnique({ where: { userId_purpose: { userId, purpose } } })
+    const entry = await this.prisma.otpCode.findUnique({
+      where: { userId_purpose: { userId, purpose } },
+    })
     if (!entry) return 'missing'
     if (entry.expiresAt <= new Date()) {
       await this.prisma.otpCode.deleteMany({ where: { otpCodeId: entry.otpCodeId } })
@@ -53,7 +58,9 @@ export class OtpService {
     }
     const attempts = entry.attemptCount + 1
     if (attempts >= OTP_MAX_ATTEMPTS) {
-      await this.prisma.otpCode.deleteMany({ where: { otpCodeId: entry.otpCodeId, attemptCount: entry.attemptCount } })
+      await this.prisma.otpCode.deleteMany({
+        where: { otpCodeId: entry.otpCodeId, attemptCount: entry.attemptCount },
+      })
       return 'locked'
     }
     await this.prisma.otpCode.updateMany({

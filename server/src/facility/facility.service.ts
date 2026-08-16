@@ -31,7 +31,7 @@ export class FacilityService {
     private readonly prisma: PrismaService,
     private readonly audit: AuditService,
     private readonly equipment: EquipmentService,
-    private readonly maintenance: MaintenanceService,
+    private readonly maintenance: MaintenanceService
   ) {}
 
   async listRooms(query: ListRoomsDto) {
@@ -47,7 +47,9 @@ export class FacilityService {
     }
 
     const [sortField, sortDir] = sort.split(':')
-    const orderBy = { [toCamel(sortField ?? 'roomCode')]: sortDir === 'asc' ? 'asc' : 'desc' } as Prisma.GymRoomOrderByWithRelationInput
+    const orderBy = {
+      [toCamel(sortField ?? 'roomCode')]: sortDir === 'asc' ? 'asc' : 'desc',
+    } as Prisma.GymRoomOrderByWithRelationInput
 
     const [data, totalItems] = await Promise.all([
       this.prisma.gymRoom.findMany({ where, skip: (page - 1) * pageSize, take: pageSize, orderBy }),
@@ -62,11 +64,18 @@ export class FacilityService {
 
   async getRoom(roomId: bigint) {
     const room = await this.prisma.gymRoom.findFirst({ where: { roomId } })
-    if (!room) throw new NotFoundException({ success: false, code: 'NOT_FOUND', message: 'Room không tồn tại' })
+    if (!room)
+      throw new NotFoundException({
+        success: false,
+        code: 'NOT_FOUND',
+        message: 'Room không tồn tại',
+      })
 
     const [equipmentCount, activeSessionsCount] = await Promise.all([
       this.prisma.equipment.count({ where: { roomId } }),
-      this.prisma.trainingSession.count({ where: { roomId, deletedAt: null, endTime: { gt: new Date() } } }),
+      this.prisma.trainingSession.count({
+        where: { roomId, deletedAt: null, endTime: { gt: new Date() } },
+      }),
     ])
 
     return {
@@ -103,10 +112,19 @@ export class FacilityService {
 
   async updateRoom(roomId: bigint, dto: UpdateRoomDto, actorUserId: bigint) {
     const existing = await this.prisma.gymRoom.findFirst({ where: { roomId } })
-    if (!existing) throw new NotFoundException({ success: false, code: 'NOT_FOUND', message: 'Room không tồn tại' })
+    if (!existing)
+      throw new NotFoundException({
+        success: false,
+        code: 'NOT_FOUND',
+        message: 'Room không tồn tại',
+      })
 
     if (!this.hasAnyField(dto)) {
-      throw new BadRequestException({ success: false, code: 'VALIDATION_ERROR', message: 'Phải truyền ít nhất một trường để cập nhật' })
+      throw new BadRequestException({
+        success: false,
+        code: 'VALIDATION_ERROR',
+        message: 'Phải truyền ít nhất một trường để cập nhật',
+      })
     }
 
     const updated = await this.prisma.gymRoom.update({
@@ -134,11 +152,18 @@ export class FacilityService {
 
   async deleteRoom(roomId: bigint, actorUserId: bigint) {
     const existing = await this.prisma.gymRoom.findFirst({ where: { roomId } })
-    if (!existing) throw new NotFoundException({ success: false, code: 'NOT_FOUND', message: 'Room không tồn tại' })
+    if (!existing)
+      throw new NotFoundException({
+        success: false,
+        code: 'NOT_FOUND',
+        message: 'Room không tồn tại',
+      })
 
     const [equipmentCount, activeSessionsCount] = await Promise.all([
       this.prisma.equipment.count({ where: { roomId } }),
-      this.prisma.trainingSession.count({ where: { roomId, deletedAt: null, endTime: { gt: new Date() } } }),
+      this.prisma.trainingSession.count({
+        where: { roomId, deletedAt: null, endTime: { gt: new Date() } },
+      }),
     ])
 
     if (equipmentCount > 0) {
@@ -186,7 +211,12 @@ export class FacilityService {
     return this.equipment.updateEquipment(equipmentId, dto, actorUserId)
   }
 
-  async deleteEquipment(equipmentId: bigint, actorUserId: bigint, callerRoles: Role[], force = false) {
+  async deleteEquipment(
+    equipmentId: bigint,
+    actorUserId: bigint,
+    callerRoles: Role[],
+    force = false
+  ) {
     return this.equipment.deleteEquipment(equipmentId, actorUserId, callerRoles, force)
   }
 
@@ -194,16 +224,38 @@ export class FacilityService {
     return this.maintenance.listMaintenanceLogs(equipmentId, query)
   }
 
-  async createMaintenanceLog(equipmentId: bigint, dto: CreateMaintenanceLogDto, actorUserId: bigint) {
+  async createMaintenanceLog(
+    equipmentId: bigint,
+    dto: CreateMaintenanceLogDto,
+    actorUserId: bigint
+  ) {
     return this.maintenance.createMaintenanceLog(equipmentId, dto, actorUserId)
   }
 
-  async updateMaintenanceLog(maintenanceId: bigint, dto: UpdateMaintenanceLogDto, actorUserId: bigint) {
+  async updateMaintenanceLog(
+    maintenanceId: bigint,
+    dto: UpdateMaintenanceLogDto,
+    actorUserId: bigint
+  ) {
     return this.maintenance.updateMaintenanceLog(maintenanceId, dto, actorUserId)
   }
 
-  private serializeRoom(room: { roomId: bigint; roomCode: string; name: string; roomType: string | null; capacity: number; description: string | null }) {
-    return { roomId: room.roomId.toString(), roomCode: room.roomCode, name: room.name, roomType: room.roomType, capacity: room.capacity, description: room.description }
+  private serializeRoom(room: {
+    roomId: bigint
+    roomCode: string
+    name: string
+    roomType: string | null
+    capacity: number
+    description: string | null
+  }) {
+    return {
+      roomId: room.roomId.toString(),
+      roomCode: room.roomCode,
+      name: room.name,
+      roomType: room.roomType,
+      capacity: room.capacity,
+      description: room.description,
+    }
   }
 
   private buildMeta(page: number, pageSize: number, totalItems: number) {
@@ -225,6 +277,10 @@ export class FacilityService {
       const exists = await this.prisma.gymRoom.findFirst({ where: { roomCode: code } })
       if (!exists) return code
     }
-    throw new InternalServerErrorException({ success: false, code: 'ROOM_CODE_GENERATION_FAILED', message: 'Không thể tự sinh roomCode' })
+    throw new InternalServerErrorException({
+      success: false,
+      code: 'ROOM_CODE_GENERATION_FAILED',
+      message: 'Không thể tự sinh roomCode',
+    })
   }
 }

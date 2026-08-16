@@ -4,7 +4,7 @@ import { useParams, useSearchParams } from 'react-router-dom'
 import { Button, ButtonLink } from '@/components/ui/Button'
 import { ArrowLeft, CalendarPlus, ClipboardList, Plus, TrendingUp } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { DatePickerInput } from '@/components/DatePickerInput'
+import { DatePickerInput } from '@/components/ui'
 import { getApiError } from '@/lib/api-error'
 import { formatDate, formatDateTime, todayInput } from '@/lib/date'
 import {
@@ -12,13 +12,14 @@ import {
   type MemberProgress,
   type TrainerStudentDetail,
 } from '@/services/member.service'
-import { trainingService, type TrainingSession } from '@/services/training.service'
+import { trainingSessionService, type TrainingSession } from '@/services/training-session.service'
 import workoutService, {
   type WorkoutAssignmentSummary,
   type WorkoutPlan,
 } from '@/services/workout.service'
 import {
   SubmitButton,
+  TrainerCard,
   TrainerEmptyState,
   TrainerErrorState,
   TrainerModal,
@@ -28,6 +29,7 @@ import {
   TrainerSkeleton,
   TrainerStatusBadge,
 } from '@/components/TrainerUI'
+import { CardTitle } from '@/components/ui'
 import { PageLoader } from '@/components/shared/Spinner'
 
 type Tab = 'overview' | 'sessions' | 'workout'
@@ -63,7 +65,7 @@ export default function StudentDetailPage() {
       const [studentData, sessionResult, progressData, assignmentData, planData] =
         await Promise.all([
           memberService.getById(id),
-          trainingService.getSessions({ memberId: id, pageSize: 100, sort: 'start_time:desc' }),
+trainingSessionService.getSessions({ memberId: id, pageSize: 100, sort: 'start_time:desc' }),
           memberService.getProgress(id, { limit: 100 }),
           workoutService.getAssignments(id, { limit: 20 }),
           workoutService.getPlans(),
@@ -226,17 +228,17 @@ export default function StudentDetailPage() {
 
       {tab === 'overview' && (
         <div className="grid gap-5 lg:grid-cols-2">
-          <section className="rogym-card rogym-card--compact p-6">
-            <h2 className="mb-5 text-lg font-bold text-white">{t('students.detail.profile.title')}</h2>
+          <TrainerCard as="section" variant="compact" padding="md">
+            <CardTitle as="h2" size="md" className="mb-5">{t('students.detail.profile.title')}</CardTitle>
             <Info label={t('students.detail.profile.memberCode')} value={student.memberCode} />
             <Info label={t('students.detail.profile.email')} value={student.email} />
             <Info label={t('students.detail.profile.phone')} value={student.phone ?? t('students.detail.profile.noPhone')} />
             <Info label={t('students.detail.profile.dob')} value={formatDate(student.dateOfBirth)} />
             <Info label={t('students.detail.profile.address')} value={student.address ?? t('students.detail.profile.noAddress')} />
-          </section>
+          </TrainerCard>
 
-          <section className="rogym-card rogym-card--compact p-6">
-            <h2 className="mb-5 text-lg font-bold text-white">{t('students.detail.training.title')}</h2>
+          <TrainerCard as="section" variant="compact" padding="md">
+            <CardTitle as="h2" size="md" className="mb-5">{t('students.detail.training.title')}</CardTitle>
             <Info
               label={t('students.detail.training.currentPackage')}
               value={activeSubscription?.packageName ?? t('students.detail.training.noPackage')}
@@ -252,12 +254,15 @@ export default function StudentDetailPage() {
               }
             />
             <Info label={t('students.detail.training.goal')} value={latestProgress?.goal ?? t('students.detail.training.noGoal')} />
-          </section>
+          </TrainerCard>
 
           {activeAssignments.map((assignment) => (
-            <section
+            <TrainerCard
+              as="section"
               key={assignment.assignmentId}
-              className="rogym-card rogym-card--compact relative p-6 lg:col-span-2"
+              variant={assignment.assignedByStaffId ? 'accent' : 'compact'}
+              padding="md"
+              className="relative lg:col-span-2"
             >
               <span
                 className={`absolute right-5 top-5 rounded-full border px-3 py-1 text-xs font-medium ${
@@ -270,12 +275,48 @@ export default function StudentDetailPage() {
                   ? t('students.detail.plan.ptAssigned')
                   : t('students.detail.plan.personal')}
               </span>
-              <h2 className="mb-2 pr-28 text-lg font-bold text-white">
+              <CardTitle as="h2" size="md" className="mb-2 pr-28">
                 {assignment.plan?.name ?? t('students.detail.plan.notFound')}
-              </h2>
+              </CardTitle>
               <p className="mb-4 text-sm rogym-text-secondary">
                 {assignment.plan?.description ?? t('students.detail.plan.noDescription')}
               </p>
+
+              {assignment.progress && (
+                <div className="mb-4 rounded-xl border border-white/5 bg-white/[0.03] p-3.5">
+                  <div className="mb-2 flex items-center justify-between text-xs">
+                    <span className="font-medium text-white/80">
+                      {t('students.detail.plan.progressLabel')}
+                    </span>
+                    <span className="font-bold text-teal-400">
+                      {assignment.progress.percentage}%
+                    </span>
+                  </div>
+                  <div className="h-2 w-full overflow-hidden rounded-full bg-white/10">
+                    <div
+                      className="h-full rounded-full bg-teal-400 transition-all duration-500"
+                      style={{
+                        width: `${Math.min(100, Math.max(0, assignment.progress.percentage))}%`,
+                      }}
+                    />
+                  </div>
+                  <div className="mt-2 flex items-center justify-between text-[11px] rogym-text-dim">
+                    <span>
+                      {t('students.detail.plan.progressSets', {
+                        completed: assignment.progress.completedSets,
+                        total: assignment.progress.totalTargetSets,
+                      })}
+                    </span>
+                    <span>
+                      {t('students.detail.plan.progressDays', {
+                        completed: assignment.progress.completedDays,
+                        total: assignment.progress.totalDays,
+                      })}
+                    </span>
+                  </div>
+                </div>
+              )}
+
               <Button
                 variant="text"
                 className="text-xs"
@@ -283,12 +324,12 @@ export default function StudentDetailPage() {
               >
                 {t('students.detail.workout.detail')}
               </Button>
-            </section>
+            </TrainerCard>
           ))}
 
-          <section className="rogym-card rogym-card--compact p-5 lg:col-span-2">
+          <TrainerCard as="section" variant="compact" padding="md" className="lg:col-span-2">
             <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-lg font-bold text-white">{t('students.detail.progress.title')}</h2>
+              <CardTitle as="h2" size="md">{t('students.detail.progress.title')}</CardTitle>
               <ButtonLink
                 variant="primary"
                 to={`/trainer/students/${id}/progress`}
@@ -305,11 +346,11 @@ export default function StudentDetailPage() {
                 </Suspense>
               </div>
             )}
-          </section>
+          </TrainerCard>
 
           {progress.length > 0 && (
-            <section className="rogym-card rogym-card--compact p-5 lg:col-span-2">
-              <h2 className="mb-4 text-base font-bold text-white">{t('students.detail.progress.historyTitle')}</h2>
+            <TrainerCard as="section" variant="compact" padding="md" className="lg:col-span-2">
+              <CardTitle as="h2" size="md" className="mb-4">{t('students.detail.progress.historyTitle')}</CardTitle>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
@@ -342,7 +383,7 @@ export default function StudentDetailPage() {
                   </tbody>
                 </table>
               </div>
-            </section>
+            </TrainerCard>
           )}
         </div>
       )}
@@ -432,6 +473,56 @@ export default function StudentDetailPage() {
                   )}
                 </div>
               </div>
+
+              {activeAssignments[0]?.progress && (
+                <div className="mt-5 rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                  <div className="mb-2 flex items-center justify-between">
+                    <span className="text-sm font-semibold text-white">
+                      {t('students.detail.workout.progressTitle')}
+                    </span>
+                    <span className="text-base font-bold text-teal-400">
+                      {activeAssignments[0].progress.percentage}%
+                    </span>
+                  </div>
+                  <div className="h-2.5 w-full overflow-hidden rounded-full bg-white/10">
+                    <div
+                      className="h-full rounded-full bg-teal-400 transition-all duration-500"
+                      style={{
+                        width: `${Math.min(100, Math.max(0, activeAssignments[0].progress.percentage))}%`,
+                      }}
+                    />
+                  </div>
+                  <div className="mt-3 grid grid-cols-3 gap-2 text-center text-xs">
+                    <div className="rounded-lg bg-black/20 p-2">
+                      <p className="text-[11px] rogym-text-dim">Sets</p>
+                      <p className="mt-0.5 font-bold text-white">
+                        {t('students.detail.workout.progressSets', {
+                          completed: activeAssignments[0].progress.completedSets,
+                          total: activeAssignments[0].progress.totalTargetSets,
+                        })}
+                      </p>
+                    </div>
+                    <div className="rounded-lg bg-black/20 p-2">
+                      <p className="text-[11px] rogym-text-dim">Days</p>
+                      <p className="mt-0.5 font-bold text-white">
+                        {t('students.detail.workout.progressDays', {
+                          completed: activeAssignments[0].progress.completedDays,
+                          total: activeAssignments[0].progress.totalDays,
+                        })}
+                      </p>
+                    </div>
+                    <div className="rounded-lg bg-black/20 p-2">
+                      <p className="text-[11px] rogym-text-dim">Sessions</p>
+                      <p className="mt-0.5 font-bold text-white">
+                        {t('students.detail.workout.progressSessions', {
+                          count: activeAssignments[0].progress.totalSessionsLogged,
+                        })}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <div className="mt-6 grid gap-4 lg:grid-cols-2">
                 {activePlan.days?.map((day) => (
                   <div

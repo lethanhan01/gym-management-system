@@ -41,7 +41,7 @@ async function bootstrap(): Promise<void> {
       forbidNonWhitelisted: true,
       transform: true,
       transformOptions: { enableImplicitConversion: true },
-    }),
+    })
   )
   app.useGlobalFilters(new HttpExceptionFilter())
   app.useGlobalInterceptors(app.get(DatabaseRetryInterceptor))

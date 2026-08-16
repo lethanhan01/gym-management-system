@@ -1,39 +1,37 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
-import { PackageSearch, ReceiptText, ChevronLeft, ChevronRight, ArrowUpDown } from 'lucide-react'
+import { ArrowUpDown } from 'lucide-react'
 import subscriptionService, { type Subscription } from '@/services/subscription.service'
 import paymentService, { type Payment } from '@/services/payment.service'
 import { useAuthStore } from '@/stores/authStore'
-import { MemberPage, MemberPageHeader, MemberSkeleton } from '@/components/MemberUI'
-import { Button } from '@/components/ui/Button'
+import {
+  MemberBadge,
+  MemberCard,
+  MemberEmptyState,
+  MemberPage,
+  MemberPageHeader,
+  MemberSkeleton,
+} from '@/components/MemberUI'
+import { CardTitle, Button, Pagination, ResponsiveTable } from '@/components/ui'
 import { getPaymentMethodLabel } from '@/components/payment/payment-method-data'
 import { formatVnd } from '@/lib/currency'
 import { formatDate } from '@/lib/date'
 
-function Badge({ label, tone = 'muted' }: { label: string; tone?: string }) {
-  return (
-    <span className="rogym-tone-badge" data-tone={tone}>
-      {label}
-    </span>
-  )
-}
-
-const SUB_STATUS: Record<string, { label: string; tone: string }> = {
+const SUB_STATUS: Record<string, { label: string; tone: 'success' | 'warning' | 'muted' | 'danger' }> = {
   active:    { label: 'Đang hoạt động', tone: 'success' },
   pending:   { label: 'Chờ kích hoạt',  tone: 'warning' },
   expired:   { label: 'Đã hết hạn',     tone: 'muted' },
   cancelled: { label: 'Đã huỷ',         tone: 'danger' },
 }
 
-const PAY_STATUS: Record<string, { label: string; tone: string }> = {
+const PAY_STATUS: Record<string, { label: string; tone: 'success' | 'danger' | 'muted' }> = {
   success: { label: 'Thành công', tone: 'success' },
   failed:  { label: 'Thất bại',   tone: 'danger' },
 }
 
 const PAGE_SIZE = 5
 
-/* Island button group */
 function IslandGroup<T extends string>({
   options,
   value,
@@ -41,147 +39,96 @@ function IslandGroup<T extends string>({
 }: {
   options: { value: T; label: string }[]
   value: T
-  onChange: (v: T) => void
+  onChange: (val: T) => void
 }) {
   return (
-    <div className="flex rounded-xl overflow-hidden rogym-sx-82d3c837" >
-      {options.map((opt) => (
-        <button
+    <div className="inline-flex rounded-xl p-1 bg-white/5 border border-white/10 gap-1">
+      {options.map(opt => (
+        <Button
           key={opt.value}
+          variant={value === opt.value ? 'primary' : 'outline-white'}
+          size="sm"
           onClick={() => onChange(opt.value)}
-          className={`rogym-island-option px-3 py-2 text-xs font-medium transition-colors ${
-            value === opt.value ? 'is-active' : ''
-          }`}
         >
           {opt.label}
-        </button>
+        </Button>
       ))}
     </div>
   )
 }
 
-/* Numbered pagination */
-function Pagination({ page, total, onChange }: { page: number; total: number; onChange: (p: number) => void }) {
-  if (total <= 1) return null
+const METHOD_OPTIONS = [
+  { value: 'all', label: 'Tất cả PT' },
+  { value: 'vietqr', label: 'VietQR' },
+  { value: 'cash', label: 'Tiền mặt' },
+  { value: 'card', label: 'Thẻ' },
+]
 
-  const pages: (number | '...')[] = []
-  if (total <= 7) {
-    for (let i = 1; i <= total; i++) pages.push(i)
-  } else {
-    pages.push(1)
-    if (page > 3) pages.push('...')
-    for (let i = Math.max(2, page - 1); i <= Math.min(total - 1, page + 1); i++) pages.push(i)
-    if (page < total - 2) pages.push('...')
-    pages.push(total)
-  }
-
-  return (
-    <div className="flex items-center justify-center gap-1.5 mt-6">
-      <button
-        onClick={() => onChange(Math.max(1, page - 1))}
-        disabled={page === 1}
-        className="rogym-pagination-button"
-      >
-        <ChevronLeft size={15} />
-      </button>
-
-      {pages.map((p, i) =>
-        p === '...' ? (
-          <span key={`ellipsis-${i}`} className="rogym-sx-71088fc3">…</span>
-        ) : (
-          <button
-            key={p}
-            onClick={() => onChange(p as number)}
-            className={`rogym-pagination-button ${p === page ? 'is-active' : ''}`}
-          >
-            {p}
-          </button>
-        )
-      )}
-
-      <button
-        onClick={() => onChange(Math.min(total, page + 1))}
-        disabled={page === total}
-        className="rogym-pagination-button"
-      >
-        <ChevronRight size={15} />
-      </button>
-    </div>
-  )
-}
+const STATUS_OPTIONS = [
+  { value: 'all', label: 'Tất cả trạng thái' },
+  { value: 'success', label: 'Thành công' },
+  { value: 'failed', label: 'Thất bại' },
+]
 
 export default function PackageHistoryPage() {
   const { t } = useTranslation('member')
-  const [activeTab, setActiveTab]   = useState<'subscriptions' | 'payments'>('subscriptions')
-  const [subs, setSubs]             = useState<Subscription[]>([])
-  const [payments, setPayments]     = useState<Payment[]>([])
-  const [loadingSubs, setLoadingSubs]   = useState(true)
-  const [loadingPays, setLoadingPays]   = useState(false)
-  const [paysLoaded, setPaysLoaded]     = useState(false)
-  const [page, setPage]             = useState(1)
-  const [subPage, setSubPage]       = useState(1)
-  const [methodFilter, setMethodFilter] = useState<'all' | 'cash' | 'bank_card' | 'ewallet'>('all')
-  const [statusFilter, setStatusFilter] = useState<'all' | 'success' | 'failed'>('all')
-  const [sortDir, setSortDir]       = useState<'desc' | 'asc'>('desc')
-
   const navigate = useNavigate()
   const user = useAuthStore(state => state.user)
-  const clearAuth = useAuthStore(state => state.clearAuth)
+  const memberId = user?.memberId ? String(user.memberId) : ''
+
+  const [activeTab, setActiveTab] = useState<'subscriptions' | 'payments'>('subscriptions')
+
+  // Subscriptions state
+  const [subs, setSubs] = useState<Subscription[]>([])
+  const [loadingSubs, setLoadingSubs] = useState(true)
+  const [subPage, setSubPage] = useState(1)
+
+  // Payments state
+  const [payments, setPayments] = useState<Payment[]>([])
+  const [loadingPays, setLoadingPays] = useState(true)
+  const [methodFilter, setMethodFilter] = useState('all')
+  const [statusFilter, setStatusFilter] = useState('all')
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc')
+  const [page, setPage] = useState(1)
 
   useEffect(() => {
-    if (!user?.memberId) return
-    subscriptionService.getByMember(user.memberId)
-      .then(data => setSubs(data.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())))
-      .catch(err => {
-        if (err?.response?.status === 401) { clearAuth(); navigate('/login') }
+    if (!memberId) return
+
+    setLoadingSubs(true)
+    subscriptionService.getByMember(memberId)
+      .then(res => {
+        const sorted = (res ?? []).slice().sort(
+          (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        )
+        setSubs(sorted)
       })
+      .catch(() => setSubs([]))
       .finally(() => setLoadingSubs(false))
-  }, [user?.memberId, navigate, clearAuth])
 
-  function loadPayments() {
-    if (paysLoaded || !user?.memberId) return
     setLoadingPays(true)
-    paymentService.listByMember(user.memberId)
-      .then(data => { setPayments(data); setPaysLoaded(true) })
-      .catch(() => {})
+    paymentService.listByMember(memberId)
+      .then(res => setPayments(res ?? []))
+      .catch(() => setPayments([]))
       .finally(() => setLoadingPays(false))
-  }
+  }, [memberId])
 
-  function handleTabChange(tab: 'subscriptions' | 'payments') {
-    setActiveTab(tab)
-    setPage(1)
-    setSubPage(1)
-    if (tab === 'payments') loadPayments()
-  }
-
-  const METHOD_OPTIONS = [
-    { value: 'all' as const, label: t('subscription.history.methodAll') },
-    { value: 'cash' as const, label: t('subscription.history.methodCash') },
-    { value: 'bank_card' as const, label: t('subscription.history.methodBankCard') },
-    { value: 'ewallet' as const, label: t('subscription.history.methodEwallet') },
-  ]
-  const STATUS_OPTIONS = [
-    { value: 'all' as const, label: t('subscription.history.statusAll') },
-    { value: 'success' as const, label: t('subscription.history.statusSuccess') },
-    { value: 'failed' as const, label: t('subscription.history.statusFailed') },
-  ]
-
+  // Filtered & sorted payments
   const filteredPayments = payments
-    .filter(p => {
-      if (methodFilter !== 'all' && p.method !== methodFilter) return false
-      if (statusFilter !== 'all' && p.status !== statusFilter) return false
-      return true
-    })
+    .filter(p => methodFilter === 'all' || p.method === methodFilter)
+    .filter(p => statusFilter === 'all' || p.status === statusFilter)
     .sort((a, b) => {
-      const diff = new Date(b.paidAt).getTime() - new Date(a.paidAt).getTime()
-      return sortDir === 'desc' ? diff : -diff
+      const ta = new Date(a.paidAt).getTime()
+      const tb = new Date(b.paidAt).getTime()
+      return sortDir === 'desc' ? tb - ta : ta - tb
     })
 
-  const totalPayPages = Math.ceil(filteredPayments.length / PAGE_SIZE)
-  const pagedPayments = filteredPayments.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
-
-  const totalSubPages = Math.ceil(subs.length / PAGE_SIZE)
+  // Pagination for subscriptions
+  const totalSubPages = Math.max(1, Math.ceil(subs.length / PAGE_SIZE))
   const pagedSubs = subs.slice((subPage - 1) * PAGE_SIZE, subPage * PAGE_SIZE)
+
+  // Pagination for payments
+  const totalPayPages = Math.max(1, Math.ceil(filteredPayments.length / PAGE_SIZE))
+  const pagedPayments = filteredPayments.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
 
   return (
     <MemberPage>
@@ -190,25 +137,32 @@ export default function PackageHistoryPage() {
         title={t('subscription.history.title')}
         description={t('subscription.history.description')}
         actions={
-          <Button onClick={() => navigate('/member/subscription/current')} variant="outline-white">
+          <Button
+            variant="outline-white"
+            size="sm"
+            onClick={() => navigate('/member/subscription/current')}
+          >
             {t('subscription.history.backToCurrent')}
           </Button>
         }
       />
 
-      {/* Tab bar */}
-      <div className="flex gap-1 border-b border-white/5">
-        {(['subscriptions', 'payments'] as const).map(tab => (
-          <button
-            key={tab}
-            onClick={() => handleTabChange(tab)}
-            className={`rogym-history-tab px-5 py-2.5 text-sm font-semibold transition-colors ${
-              activeTab === tab ? 'is-active' : ''
-            }`}
-          >
-            {tab === 'subscriptions' ? t('subscription.history.tabSubscriptions') : t('subscription.history.tabPayments')}
-          </button>
-        ))}
+      {/* Tabs */}
+      <div className="flex gap-2 border-b border-[var(--rogym-border-section)] pb-3">
+        <Button
+          variant={activeTab === 'subscriptions' ? 'primary' : 'outline-white'}
+          size="sm"
+          onClick={() => setActiveTab('subscriptions')}
+        >
+          {t('subscription.history.tabSubscriptions')}
+        </Button>
+        <Button
+          variant={activeTab === 'payments' ? 'primary' : 'outline-white'}
+          size="sm"
+          onClick={() => setActiveTab('payments')}
+        >
+          {t('subscription.history.tabPayments')}
+        </Button>
       </div>
 
       {/* Subscriptions tab */}
@@ -216,10 +170,9 @@ export default function PackageHistoryPage() {
         loadingSubs ? (
           <MemberSkeleton rows={4} />
         ) : subs.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 gap-4">
-            <PackageSearch size={48} className="rogym-text-secondary" />
-            <p className="rogym-text-secondary">{t('subscription.history.emptySubscriptions')}</p>
-          </div>
+          <MemberEmptyState
+            title={t('subscription.history.emptySubscriptions')}
+          />
         ) : (
           <>
             <div className="flex flex-col gap-3">
@@ -227,15 +180,16 @@ export default function PackageHistoryPage() {
                 const st = SUB_STATUS[sub.status] ?? { label: sub.status, tone: 'muted' }
                 const statusLabel = t(`subscription.history.statusLabel.${sub.status}`, { defaultValue: st.label })
                 return (
-                  <div
+                  <MemberCard
                     key={sub.subscriptionId}
-                    className="rogym-card rogym-card--compact px-5 py-4"
+                    variant="compact"
+                    padding="sm"
                   >
                     <div className="flex items-start justify-between">
                       <div>
-                        <p className="text-base font-bold text-white mb-1.5 rogym-sx-d63063a8" >
+                        <CardTitle size="sm" as="p" className="mb-1.5 rogym-sx-d63063a8">
                           {sub.packageName ?? t('subscription.history.packageFallback')}
-                        </p>
+                        </CardTitle>
                         <p className="text-sm rogym-text-secondary">
                           {formatDate(sub.startDate)} → {formatDate(sub.endDate)}
                         </p>
@@ -243,13 +197,17 @@ export default function PackageHistoryPage() {
                           <p className="text-xs text-red-400 mt-1">{t('subscription.history.cancelledAt', { date: formatDate(sub.cancelledAt) })}</p>
                         )}
                       </div>
-                      <Badge label={statusLabel} tone={st.tone} />
+                      <MemberBadge tone={st.tone}>{statusLabel}</MemberBadge>
                     </div>
-                  </div>
+                  </MemberCard>
                 )
               })}
             </div>
-            <Pagination page={subPage} total={totalSubPages} onChange={p => { setSubPage(p); window.scrollTo({ top: 0, behavior: 'smooth' }) }} />
+            <Pagination
+              page={subPage}
+              totalPages={totalSubPages}
+              onPageChange={p => { setSubPage(p); window.scrollTo({ top: 0, behavior: 'smooth' }) }}
+            />
           </>
         )
       )}
@@ -262,52 +220,48 @@ export default function PackageHistoryPage() {
             <IslandGroup options={METHOD_OPTIONS} value={methodFilter} onChange={v => { setMethodFilter(v); setPage(1) }} />
             <IslandGroup options={STATUS_OPTIONS} value={statusFilter} onChange={v => { setStatusFilter(v); setPage(1) }} />
 
-            {/* Sort toggle */}
-            <button
+            <Button
+              variant="outline-white"
+              size="sm"
               onClick={() => { setSortDir(d => d === 'desc' ? 'asc' : 'desc'); setPage(1) }}
-              className="rogym-sort-toggle flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium transition-colors rogym-sx-3a671e25"
+              leftIcon={<ArrowUpDown size={13} />}
             >
-              <ArrowUpDown size={13} />
               {sortDir === 'desc' ? t('subscription.history.sortNewest') : t('subscription.history.sortOldest')}
-            </button>
+            </Button>
           </div>
 
           {loadingPays ? (
             <MemberSkeleton rows={4} />
           ) : filteredPayments.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16 gap-4">
-              <ReceiptText size={48} className="rogym-text-secondary" />
-              <p className="rogym-text-secondary">{t('subscription.history.emptyPayments')}</p>
-            </div>
+            <MemberEmptyState
+              title={t('subscription.history.emptyPayments')}
+            />
           ) : (
             <>
-              {/* Header row */}
-              <div
-                className="grid gap-4 px-4 mb-2 text-xs rogym-text-secondary rogym-sx-03afc6c9"
-                
-              >
-                <span>{t('subscription.history.tableDate')}</span><span>{t('subscription.history.tablePackage')}</span><span>{t('subscription.history.tableMethod')}</span><span>{t('subscription.history.tableAmount')}</span><span>{t('subscription.history.tableStatus')}</span>
-              </div>
-              <div className="flex flex-col gap-2">
-                {pagedPayments.map(p => {
-                  const ps = PAY_STATUS[p.status] ?? { label: p.status, tone: 'muted' }
-                  const payStatusLabel = t(`subscription.history.payStatusLabel.${p.status}`, { defaultValue: ps.label })
-                  return (
-                    <div
-                      key={p.paymentId}
-                      className="grid items-center gap-4 rounded-xl px-4 py-3 rogym-sx-88714df9"
-
-                    >
-                      <span className="text-white">{formatDate(p.paidAt)}</span>
-                      <span className="rogym-text-secondary truncate">{p.packageName ?? '—'}</span>
-                      <span className="rogym-text-secondary">{getPaymentMethodLabel(p.method, true)}</span>
-                      <span className="font-semibold rogym-sx-b2fbf853" >{formatVnd(p.amount)}</span>
-                      <Badge label={payStatusLabel} tone={ps.tone} />
-                    </div>
-                  )
-                })}
-              </div>
-              <Pagination page={page} total={totalPayPages} onChange={p => { setPage(p); window.scrollTo({ top: 0, behavior: 'smooth' }) }} />
+              <ResponsiveTable<Payment>
+                columns={[
+                  { key: 'date', header: t('subscription.history.tableDate'), render: (p) => <span className="text-white">{formatDate(p.paidAt)}</span> },
+                  { key: 'pkg', header: t('subscription.history.tablePackage'), render: (p) => <span className="text-white/80">{p.packageName ?? '—'}</span> },
+                  { key: 'method', header: t('subscription.history.tableMethod'), render: (p) => <span className="text-white/70">{getPaymentMethodLabel(p.method, true)}</span> },
+                  { key: 'amount', header: t('subscription.history.tableAmount'), render: (p) => <span className="font-semibold text-[var(--rogym-teal)]">{formatVnd(p.amount)}</span> },
+                  {
+                    key: 'status',
+                    header: t('subscription.history.tableStatus'),
+                    render: (p) => {
+                      const ps = PAY_STATUS[p.status] ?? { label: p.status, tone: 'muted' }
+                      const payStatusLabel = t(`subscription.history.payStatusLabel.${p.status}`, { defaultValue: ps.label })
+                      return <MemberBadge tone={ps.tone}>{payStatusLabel}</MemberBadge>
+                    },
+                  },
+                ]}
+                data={pagedPayments}
+                keyExtractor={(p) => String(p.paymentId)}
+              />
+              <Pagination
+                page={page}
+                totalPages={totalPayPages}
+                onPageChange={p => { setPage(p); window.scrollTo({ top: 0, behavior: 'smooth' }) }}
+              />
             </>
           )}
         </div>

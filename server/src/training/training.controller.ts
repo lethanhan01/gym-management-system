@@ -18,29 +18,113 @@ import { RequirePermission } from '../common/decorators/require-permission.decor
 import { DatabaseRetryable } from '../common/decorators/database-retryable.decorator'
 import { CurrentUser } from '../auth/decorators/current-user.decorator'
 import { AuthenticatedUser } from '../auth/types/jwt-payload.interface'
-import { TrainingService } from './training.service'
+import { AttendanceService } from './attendance.service'
+import { DeviceAccessService } from './device-access.service'
+import { MemberProgressService } from './member-progress.service'
+import { MemberSessionBookingService } from './member-session-booking.service'
+import { TrainingSessionService } from './training-session.service'
 import { DeviceApiKeyGuard } from './guards/device-api-key.guard'
-import { ListSessionsDto, CreateSessionDto, UpdateSessionDto, UpdateSessionStatusDto, CancelSessionDto, ListAttendanceLogsDto, ManualCheckinDto, QrCheckinDto, CheckoutDto, CreateProgressDto } from './dto'
+import {
+  ListSessionsDto,
+  CreateSessionDto,
+  UpdateSessionDto,
+  UpdateSessionStatusDto,
+  CancelSessionDto,
+  ListAttendanceLogsDto,
+  ManualCheckinDto,
+  QrCheckinDto,
+  CheckoutDto,
+  CreateProgressDto,
+  TrainerAvailabilityQueryDto,
+  CreateMemberBookingDto,
+  CancelBookingDto,
+} from './dto'
 
 @Controller()
 @UseGuards(PermissionsGuard)
 export class TrainingController {
-  constructor(private readonly training: TrainingService) {}
+  constructor(
+    private readonly sessions: TrainingSessionService,
+    private readonly bookings: MemberSessionBookingService,
+    private readonly attendance: AttendanceService,
+    private readonly progress: MemberProgressService
+  ) {}
 
   // ---- Training Sessions ----
   @Get('training-sessions')
   @DatabaseRetryable()
   @RequirePermission('session.read')
-  async listSessions(@Query() query: ListSessionsDto,@CurrentUser() user: AuthenticatedUser) {
-    const result = await this.training.listSessions(query , { userId: user.userId, roles: user.roles, staffId: user.staffId, memberId: user.memberId })
+  async listSessions(@Query() query: ListSessionsDto, @CurrentUser() user: AuthenticatedUser) {
+    const result = await this.sessions.listSessions(query, {
+      userId: user.userId,
+      roles: user.roles,
+      staffId: user.staffId,
+      memberId: user.memberId,
+    })
     return { success: true, ...result }
+  }
+
+  @Get('training-sessions/trainer-availability')
+  @DatabaseRetryable()
+  @RequirePermission('session.book')
+  async getTrainerAvailability(
+    @Query() query: TrainerAvailabilityQueryDto,
+    @CurrentUser() user: AuthenticatedUser
+  ) {
+    const result = await this.bookings.getTrainerAvailability(query, {
+      userId: user.userId,
+      roles: user.roles,
+      staffId: user.staffId,
+      memberId: user.memberId,
+    })
+    return { success: true, ...result }
+  }
+
+  @Post('training-sessions/book')
+  @HttpCode(HttpStatus.CREATED)
+  @DatabaseRetryable()
+  @RequirePermission('session.book')
+  async bookSession(
+    @Body() dto: CreateMemberBookingDto,
+    @CurrentUser() user: AuthenticatedUser
+  ) {
+    const result = await this.bookings.bookSessionByMember(dto, {
+      userId: user.userId,
+      roles: user.roles,
+      staffId: user.staffId,
+      memberId: user.memberId,
+    })
+    return { success: true, ...result }
+  }
+
+  @Post('training-sessions/:id/cancel-booking')
+  @HttpCode(HttpStatus.OK)
+  @DatabaseRetryable()
+  @RequirePermission('session.book')
+  async cancelBooking(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: CancelBookingDto,
+    @CurrentUser() user: AuthenticatedUser
+  ) {
+    const result = await this.bookings.cancelBookingByMember(BigInt(id), dto, {
+      userId: user.userId,
+      roles: user.roles,
+      staffId: user.staffId,
+      memberId: user.memberId,
+    })
+    return result
   }
 
   @Get('training-sessions/:id')
   @DatabaseRetryable()
   @RequirePermission('session.read')
   async getSession(@Param('id', ParseIntPipe) id: number, @CurrentUser() user: AuthenticatedUser) {
-    const result = await this.training.getSession(BigInt(id), { userId: user.userId, roles: user.roles, staffId: user.staffId, memberId: user.memberId })
+    const result = await this.sessions.getSession(BigInt(id), {
+      userId: user.userId,
+      roles: user.roles,
+      staffId: user.staffId,
+      memberId: user.memberId,
+    })
     return { success: true, ...result }
   }
 
@@ -48,30 +132,60 @@ export class TrainingController {
   @HttpCode(HttpStatus.CREATED)
   @RequirePermission('session.manage')
   async createSession(@Body() dto: CreateSessionDto, @CurrentUser() user: AuthenticatedUser) {
-    const result = await this.training.createSession(dto, { userId: user.userId, roles: user.roles, staffId: user.staffId })
+    const result = await this.sessions.createSession(dto, {
+      userId: user.userId,
+      roles: user.roles,
+      staffId: user.staffId,
+    })
     return { success: true, ...result }
   }
 
   @Patch('training-sessions/:id')
   @RequirePermission('session.manage')
-  async updateSession(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateSessionDto, @CurrentUser() user: AuthenticatedUser) {
-    const result = await this.training.updateSession(BigInt(id), dto, { userId: user.userId, roles: user.roles, staffId: user.staffId })
+  async updateSession(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateSessionDto,
+    @CurrentUser() user: AuthenticatedUser
+  ) {
+    const result = await this.sessions.updateSession(BigInt(id), dto, {
+      userId: user.userId,
+      roles: user.roles,
+      staffId: user.staffId,
+    })
     return { success: true, ...result }
   }
 
   @Post('training-sessions/:id/cancel')
   @HttpCode(HttpStatus.OK)
   @RequirePermission('session.manage')
-  async cancelSession(@Param('id', ParseIntPipe) id: number, @Body() dto: CancelSessionDto, @CurrentUser() user: AuthenticatedUser) {
-    await this.training.cancelSession(BigInt(id), dto, { userId: user.userId, roles: user.roles, staffId: user.staffId, memberId: user.memberId })
+  async cancelSession(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: CancelSessionDto,
+    @CurrentUser() user: AuthenticatedUser
+  ) {
+    await this.sessions.cancelSession(BigInt(id), dto, {
+      userId: user.userId,
+      roles: user.roles,
+      staffId: user.staffId,
+      memberId: user.memberId,
+    })
     return { success: true }
   }
 
   @Post('training-sessions/:id/status')
   @HttpCode(HttpStatus.OK)
   @RequirePermission('session.manage')
-  async updateSessionStatus(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateSessionStatusDto, @CurrentUser() user: AuthenticatedUser) {
-    const result = await this.training.updateSessionStatus(BigInt(id), dto.status, { userId: user.userId, roles: user.roles, staffId: user.staffId, memberId: user.memberId })
+  async updateSessionStatus(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateSessionStatusDto,
+    @CurrentUser() user: AuthenticatedUser
+  ) {
+    const result = await this.sessions.updateSessionStatus(BigInt(id), dto.status, {
+      userId: user.userId,
+      roles: user.roles,
+      staffId: user.staffId,
+      memberId: user.memberId,
+    })
     return { success: true, ...result }
   }
 
@@ -80,8 +194,16 @@ export class TrainingController {
   @Get('attendance-logs')
   @DatabaseRetryable()
   @RequirePermission('attendance.read')
-  async listAttendance(@Query() query: ListAttendanceLogsDto, @CurrentUser() user: AuthenticatedUser) {
-    const result = await this.training.listAttendance(query, { userId: user.userId, roles: user.roles, staffId: user.staffId, memberId: user.memberId })
+  async listAttendance(
+    @Query() query: ListAttendanceLogsDto,
+    @CurrentUser() user: AuthenticatedUser
+  ) {
+    const result = await this.attendance.listAttendance(query, {
+      userId: user.userId,
+      roles: user.roles,
+      staffId: user.staffId,
+      memberId: user.memberId,
+    })
     return { success: true, ...result }
   }
 
@@ -89,28 +211,44 @@ export class TrainingController {
   @HttpCode(HttpStatus.CREATED)
   @RequirePermission('attendance.checkin')
   async manualCheckin(@Body() dto: ManualCheckinDto, @CurrentUser() user: AuthenticatedUser) {
-    const result = await this.training.manualCheckin(dto, { userId: user.userId, roles: user.roles, staffId: user.staffId })
+    const result = await this.attendance.manualCheckin(dto, {
+      userId: user.userId,
+      roles: user.roles,
+      staffId: user.staffId,
+    })
     return { success: true, ...result }
   }
 
   @Get('attendance/qr-token')
   @RequirePermission('attendance.checkin')
   async getQrToken() {
-    return { success: true, data: this.training.generateQrToken() }
+    return { success: true, data: this.attendance.generateQrToken() }
   }
 
   @Post('attendance/qr-checkin')
   @HttpCode(HttpStatus.CREATED)
   @RequirePermission('attendance.self-checkin')
   async qrCheckin(@Body() dto: QrCheckinDto, @CurrentUser() user: AuthenticatedUser) {
-    const result = await this.training.qrCheckin(dto, { userId: user.userId, roles: user.roles, memberId: user.memberId })
+    const result = await this.attendance.qrCheckin(dto, {
+      userId: user.userId,
+      roles: user.roles,
+      memberId: user.memberId,
+    })
     return { success: true, ...result }
   }
 
   @Patch('attendance-logs/:id/checkout')
   @RequirePermission('attendance.checkin')
-  async checkout(@Param('id', ParseIntPipe) id: number, @Body() dto: CheckoutDto, @CurrentUser() user: AuthenticatedUser) {
-    const result = await this.training.checkout(BigInt(id), dto, { userId: user.userId, roles: user.roles, staffId: user.staffId })
+  async checkout(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: CheckoutDto,
+    @CurrentUser() user: AuthenticatedUser
+  ) {
+    const result = await this.attendance.checkout(BigInt(id), dto, {
+      userId: user.userId,
+      roles: user.roles,
+      staffId: user.staffId,
+    })
     return { success: true, ...result }
   }
 
@@ -123,24 +261,48 @@ export class TrainingController {
   @ApiQuery({ name: 'from', required: false, description: 'Mốc thời gian bắt đầu (ISO 8601).' })
   @ApiQuery({ name: 'to', required: false, description: 'Mốc thời gian kết thúc (ISO 8601).' })
   @ApiQuery({ name: 'limit', required: false, description: 'Số bản ghi tối đa.' })
-  async listProgress(@Param('id', ParseIntPipe) id: number, @Query() query: { from?: string; to?: string; limit?: string }, @CurrentUser() user: AuthenticatedUser) {
-    const result = await this.training.listProgress(BigInt(id), query, { userId: user.userId, roles: user.roles, staffId: user.staffId, memberId: user.memberId })
+  async listProgress(
+    @Param('id', ParseIntPipe) id: number,
+    @Query() query: { from?: string; to?: string; limit?: string },
+    @CurrentUser() user: AuthenticatedUser
+  ) {
+    const result = await this.progress.listProgress(BigInt(id), query, {
+      userId: user.userId,
+      roles: user.roles,
+      staffId: user.staffId,
+      memberId: user.memberId,
+    })
     return { success: true, ...result }
   }
 
   @Post('members/:id/progress')
   @HttpCode(HttpStatus.CREATED)
   @RequirePermission('progress.record')
-  async recordProgress(@Param('id', ParseIntPipe) id: number, @Body() dto: CreateProgressDto, @CurrentUser() user: AuthenticatedUser) {
-    const result = await this.training.recordProgress(BigInt(id), dto, { userId: user.userId, roles: user.roles, staffId: user.staffId })
+  async recordProgress(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: CreateProgressDto,
+    @CurrentUser() user: AuthenticatedUser
+  ) {
+    const result = await this.progress.recordProgress(BigInt(id), dto, {
+      userId: user.userId,
+      roles: user.roles,
+      staffId: user.staffId,
+    })
     return { success: true, ...result }
   }
 
   @Delete('member-progress/:id')
   @HttpCode(HttpStatus.NO_CONTENT)
   @RequirePermission('progress.record')
-  async deleteProgress(@Param('id', ParseIntPipe) id: number, @CurrentUser() user: AuthenticatedUser) {
-    await this.training.deleteProgress(BigInt(id), { userId: user.userId, roles: user.roles, staffId: user.staffId })
+  async deleteProgress(
+    @Param('id', ParseIntPipe) id: number,
+    @CurrentUser() user: AuthenticatedUser
+  ) {
+    await this.progress.deleteProgress(BigInt(id), {
+      userId: user.userId,
+      roles: user.roles,
+      staffId: user.staffId,
+    })
   }
 }
 
@@ -148,7 +310,7 @@ export class TrainingController {
 @Controller('devices')
 @UseGuards(DeviceApiKeyGuard)
 export class DeviceController {
-  constructor(private readonly training: TrainingService) {}
+  constructor(private readonly deviceAccess: DeviceAccessService) {}
 
   @Post('access-events')
   @ApiOperation({ summary: 'Nhận sự kiện ra/vào từ thiết bị kiểm soát' })
@@ -164,7 +326,9 @@ export class DeviceController {
       },
     },
   })
-  async accessEvent(@Body() body: { memberIdentifier: string; occurredAt: string; deviceId: string }) {
-    return this.training.deviceAccessEvent(body)
+  async accessEvent(
+    @Body() body: { memberIdentifier: string; occurredAt: string; deviceId: string }
+  ) {
+    return this.deviceAccess.deviceAccessEvent(body)
   }
 }

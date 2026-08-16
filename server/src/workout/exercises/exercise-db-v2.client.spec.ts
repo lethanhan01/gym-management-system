@@ -8,9 +8,16 @@ function clientWith(values: Record<string, unknown>) {
 
 function exercise(overrides: Record<string, unknown> = {}) {
   return {
-    id: '0001', name: 'Push-up', bodyPart: 'chest', target: 'pectorals', secondaryMuscles: ['triceps', 'deltoids'],
-    equipment: 'body weight', instructions: ['Lower body', 'Push up'],
-    description: 'A push-up.', gifUrl: null, ...overrides,
+    id: '0001',
+    name: 'Push-up',
+    bodyPart: 'chest',
+    target: 'pectorals',
+    secondaryMuscles: ['triceps', 'deltoids'],
+    equipment: 'body weight',
+    instructions: ['Lower body', 'Push up'],
+    description: 'A push-up.',
+    gifUrl: null,
+    ...overrides,
   }
 }
 
@@ -24,32 +31,46 @@ describe('ExerciseDbV2Client', () => {
 
   it('requests the fixed RapidAPI endpoint with stable pagination and headers', async () => {
     fetchMock.mockResolvedValue(new Response(JSON.stringify([exercise()]), { status: 200 }))
-    const client = clientWith({ EXERCISEDB_SYNC_ENABLED: 'true', EXERCISEDB_API_KEY: apiKey, EXERCISEDB_PAGE_SIZE: 2 })
+    const client = clientWith({
+      EXERCISEDB_SYNC_ENABLED: 'true',
+      EXERCISEDB_API_KEY: apiKey,
+      EXERCISEDB_PAGE_SIZE: 2,
+    })
 
     const page = await client.allExercises().next()
 
-    expect(page.value).toEqual([expect.objectContaining({
-      externalId: '0001',
-      bodyPart: 'chest',
-      targetMuscle: 'pectorals',
-      secondaryMuscles: ['triceps', 'deltoids'],
-      equipmentName: 'body weight',
-      imageUrl: null,
-    })])
+    expect(page.value).toEqual([
+      expect.objectContaining({
+        externalId: '0001',
+        bodyPart: 'chest',
+        targetMuscle: 'pectorals',
+        secondaryMuscles: ['triceps', 'deltoids'],
+        equipmentName: 'body weight',
+        imageUrl: null,
+      }),
+    ])
     expect(fetchMock).toHaveBeenCalledWith(
       expect.objectContaining({
-        hostname: 'exercisedb.p.rapidapi.com', pathname: '/exercises',
+        hostname: 'exercisedb.p.rapidapi.com',
+        pathname: '/exercises',
         search: '?limit=2&offset=0&sortMethod=id&sortOrder=ascending',
       }),
-      expect.objectContaining({ headers: expect.objectContaining({
-        'x-rapidapi-key': apiKey, 'x-rapidapi-host': 'exercisedb.p.rapidapi.com',
-      }) }),
+      expect.objectContaining({
+        headers: expect.objectContaining({
+          'x-rapidapi-key': apiKey,
+          'x-rapidapi-host': 'exercisedb.p.rapidapi.com',
+        }),
+      })
     )
   })
 
   it('keeps fields separate and does not merge into muscleGroup string', async () => {
     fetchMock.mockResolvedValue(new Response(JSON.stringify([exercise()]), { status: 200 }))
-    const client = clientWith({ EXERCISEDB_SYNC_ENABLED: 'true', EXERCISEDB_API_KEY: apiKey, EXERCISEDB_PAGE_SIZE: 2 })
+    const client = clientWith({
+      EXERCISEDB_SYNC_ENABLED: 'true',
+      EXERCISEDB_API_KEY: apiKey,
+      EXERCISEDB_PAGE_SIZE: 2,
+    })
 
     const first = (await client.allExercises().next()).value![0]
 
@@ -60,8 +81,16 @@ describe('ExerciseDbV2Client', () => {
   })
 
   it('captures gifUrl into imageUrl when present', async () => {
-    fetchMock.mockResolvedValue(new Response(JSON.stringify([exercise({ gifUrl: 'https://example.com/pushup.gif' })]), { status: 200 }))
-    const client = clientWith({ EXERCISEDB_SYNC_ENABLED: 'true', EXERCISEDB_API_KEY: apiKey, EXERCISEDB_PAGE_SIZE: 2 })
+    fetchMock.mockResolvedValue(
+      new Response(JSON.stringify([exercise({ gifUrl: 'https://example.com/pushup.gif' })]), {
+        status: 200,
+      })
+    )
+    const client = clientWith({
+      EXERCISEDB_SYNC_ENABLED: 'true',
+      EXERCISEDB_API_KEY: apiKey,
+      EXERCISEDB_PAGE_SIZE: 2,
+    })
 
     const first = (await client.allExercises().next()).value![0]
 
@@ -69,8 +98,14 @@ describe('ExerciseDbV2Client', () => {
   })
 
   it('sets imageUrl to null when gifUrl is absent', async () => {
-    fetchMock.mockResolvedValue(new Response(JSON.stringify([exercise({ gifUrl: null })]), { status: 200 }))
-    const client = clientWith({ EXERCISEDB_SYNC_ENABLED: 'true', EXERCISEDB_API_KEY: apiKey, EXERCISEDB_PAGE_SIZE: 2 })
+    fetchMock.mockResolvedValue(
+      new Response(JSON.stringify([exercise({ gifUrl: null })]), { status: 200 })
+    )
+    const client = clientWith({
+      EXERCISEDB_SYNC_ENABLED: 'true',
+      EXERCISEDB_API_KEY: apiKey,
+      EXERCISEDB_PAGE_SIZE: 2,
+    })
 
     const first = (await client.allExercises().next()).value![0]
 
@@ -78,8 +113,19 @@ describe('ExerciseDbV2Client', () => {
   })
 
   it('stores instructions as array and uses description field', async () => {
-    fetchMock.mockResolvedValue(new Response(JSON.stringify([exercise({ description: 'A push-up.', instructions: ['Step 1', 'Step 2', 'Step 3'] })]), { status: 200 }))
-    const client = clientWith({ EXERCISEDB_SYNC_ENABLED: 'true', EXERCISEDB_API_KEY: apiKey, EXERCISEDB_PAGE_SIZE: 2 })
+    fetchMock.mockResolvedValue(
+      new Response(
+        JSON.stringify([
+          exercise({ description: 'A push-up.', instructions: ['Step 1', 'Step 2', 'Step 3'] }),
+        ]),
+        { status: 200 }
+      )
+    )
+    const client = clientWith({
+      EXERCISEDB_SYNC_ENABLED: 'true',
+      EXERCISEDB_API_KEY: apiKey,
+      EXERCISEDB_PAGE_SIZE: 2,
+    })
 
     const first = (await client.allExercises().next()).value![0]
 
@@ -88,8 +134,19 @@ describe('ExerciseDbV2Client', () => {
   })
 
   it('falls back description to first 3 instructions when description is blank', async () => {
-    fetchMock.mockResolvedValue(new Response(JSON.stringify([exercise({ description: '  ', instructions: [' One ', 'Two', 'Three', 'Four'] })]), { status: 200 }))
-    const client = clientWith({ EXERCISEDB_SYNC_ENABLED: 'true', EXERCISEDB_API_KEY: apiKey, EXERCISEDB_PAGE_SIZE: 2 })
+    fetchMock.mockResolvedValue(
+      new Response(
+        JSON.stringify([
+          exercise({ description: '  ', instructions: [' One ', 'Two', 'Three', 'Four'] }),
+        ]),
+        { status: 200 }
+      )
+    )
+    const client = clientWith({
+      EXERCISEDB_SYNC_ENABLED: 'true',
+      EXERCISEDB_API_KEY: apiKey,
+      EXERCISEDB_PAGE_SIZE: 2,
+    })
 
     const first = (await client.allExercises().next()).value![0]
 
@@ -100,7 +157,11 @@ describe('ExerciseDbV2Client', () => {
   it('keeps hashes canonical across two identical fetches', async () => {
     const ex = exercise({ description: '  ', instructions: [' One ', 'Two', 'Three', 'Four'] })
     fetchMock.mockResolvedValue(new Response(JSON.stringify([ex]), { status: 200 }))
-    const client = clientWith({ EXERCISEDB_SYNC_ENABLED: 'true', EXERCISEDB_API_KEY: apiKey, EXERCISEDB_PAGE_SIZE: 2 })
+    const client = clientWith({
+      EXERCISEDB_SYNC_ENABLED: 'true',
+      EXERCISEDB_API_KEY: apiKey,
+      EXERCISEDB_PAGE_SIZE: 2,
+    })
 
     const first = (await client.allExercises().next()).value![0]
     fetchMock.mockResolvedValue(new Response(JSON.stringify([ex]), { status: 200 }))
@@ -111,10 +172,18 @@ describe('ExerciseDbV2Client', () => {
 
   it('does not retry non-rate-limited 4xx responses and redacts the API key', async () => {
     fetchMock.mockResolvedValue(new Response(`invalid key ${apiKey}`, { status: 404 }))
-    const client = clientWith({ EXERCISEDB_SYNC_ENABLED: 'true', EXERCISEDB_API_KEY: apiKey, EXERCISEDB_RETRY_LIMIT: 3 })
+    const client = clientWith({
+      EXERCISEDB_SYNC_ENABLED: 'true',
+      EXERCISEDB_API_KEY: apiKey,
+      EXERCISEDB_RETRY_LIMIT: 3,
+    })
 
     let error: Error | undefined
-    try { await client.allExercises().next() } catch (caught) { error = caught as Error }
+    try {
+      await client.allExercises().next()
+    } catch (caught) {
+      error = caught as Error
+    }
     expect(error?.message).toContain('[REDACTED]')
     expect(error?.message).not.toContain(apiKey)
     expect(fetchMock).toHaveBeenCalledTimes(1)
@@ -124,7 +193,12 @@ describe('ExerciseDbV2Client', () => {
     fetchMock
       .mockResolvedValueOnce(new Response('temporary', { status, headers: { 'retry-after': '0' } }))
       .mockResolvedValueOnce(new Response(JSON.stringify([exercise()]), { status: 200 }))
-    const client = clientWith({ EXERCISEDB_SYNC_ENABLED: 'true', EXERCISEDB_API_KEY: apiKey, EXERCISEDB_RETRY_LIMIT: 1, EXERCISEDB_PAGE_SIZE: 2 })
+    const client = clientWith({
+      EXERCISEDB_SYNC_ENABLED: 'true',
+      EXERCISEDB_API_KEY: apiKey,
+      EXERCISEDB_RETRY_LIMIT: 1,
+      EXERCISEDB_PAGE_SIZE: 2,
+    })
 
     await client.allExercises().next()
 
@@ -136,8 +210,15 @@ describe('ExerciseDbV2Client', () => {
     Object.assign(new Error('request aborted'), { name: 'AbortError' }),
   ])('retries network and timeout failures', async (failure) => {
     jest.useFakeTimers()
-    fetchMock.mockRejectedValueOnce(failure).mockResolvedValueOnce(new Response(JSON.stringify([exercise()]), { status: 200 }))
-    const client = clientWith({ EXERCISEDB_SYNC_ENABLED: 'true', EXERCISEDB_API_KEY: apiKey, EXERCISEDB_RETRY_LIMIT: 1, EXERCISEDB_PAGE_SIZE: 2 })
+    fetchMock
+      .mockRejectedValueOnce(failure)
+      .mockResolvedValueOnce(new Response(JSON.stringify([exercise()]), { status: 200 }))
+    const client = clientWith({
+      EXERCISEDB_SYNC_ENABLED: 'true',
+      EXERCISEDB_API_KEY: apiKey,
+      EXERCISEDB_RETRY_LIMIT: 1,
+      EXERCISEDB_PAGE_SIZE: 2,
+    })
 
     const result = client.allExercises().next()
     await jest.advanceTimersByTimeAsync(250)
@@ -147,8 +228,14 @@ describe('ExerciseDbV2Client', () => {
   })
 
   it('rejects records that cannot fit the exercise table columns', async () => {
-    fetchMock.mockResolvedValue(new Response(JSON.stringify([exercise({ name: 'x'.repeat(101) })]), { status: 200 }))
-    const client = clientWith({ EXERCISEDB_SYNC_ENABLED: 'true', EXERCISEDB_API_KEY: apiKey, EXERCISEDB_PAGE_SIZE: 10 })
+    fetchMock.mockResolvedValue(
+      new Response(JSON.stringify([exercise({ name: 'x'.repeat(101) })]), { status: 200 })
+    )
+    const client = clientWith({
+      EXERCISEDB_SYNC_ENABLED: 'true',
+      EXERCISEDB_API_KEY: apiKey,
+      EXERCISEDB_PAGE_SIZE: 10,
+    })
 
     await expect(client.allExercises().next()).rejects.toThrow('name longer than 100')
   })
@@ -159,18 +246,33 @@ describe('ExerciseDbV2Client', () => {
     ['equipment', { equipment: 'x'.repeat(101) }, 'equipment longer than 100'],
     ['bodyPart', { bodyPart: 'x'.repeat(101) }, 'bodyPart longer than 100'],
     ['target', { target: 'x'.repeat(101) }, 'target longer than 100'],
-  ])('rejects a provider %s value beyond its database column limit', async (_field, override, message) => {
-    fetchMock.mockResolvedValue(new Response(JSON.stringify([exercise(override)]), { status: 200 }))
-    const client = clientWith({ EXERCISEDB_SYNC_ENABLED: 'true', EXERCISEDB_API_KEY: apiKey, EXERCISEDB_PAGE_SIZE: 10 })
+  ])(
+    'rejects a provider %s value beyond its database column limit',
+    async (_field, override, message) => {
+      fetchMock.mockResolvedValue(
+        new Response(JSON.stringify([exercise(override)]), { status: 200 })
+      )
+      const client = clientWith({
+        EXERCISEDB_SYNC_ENABLED: 'true',
+        EXERCISEDB_API_KEY: apiKey,
+        EXERCISEDB_PAGE_SIZE: 10,
+      })
 
-    await expect(client.allExercises().next()).rejects.toThrow(message)
-  })
+      await expect(client.allExercises().next()).rejects.toThrow(message)
+    }
+  )
 
   it('detects records after a short page during strict preflight pagination', async () => {
     fetchMock
       .mockResolvedValueOnce(new Response(JSON.stringify([exercise()]), { status: 200 }))
-      .mockResolvedValueOnce(new Response(JSON.stringify([exercise({ id: '0002' })]), { status: 200 }))
-    const client = clientWith({ EXERCISEDB_SYNC_ENABLED: 'true', EXERCISEDB_API_KEY: apiKey, EXERCISEDB_PAGE_SIZE: 10 })
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify([exercise({ id: '0002' })]), { status: 200 })
+      )
+    const client = clientWith({
+      EXERCISEDB_SYNC_ENABLED: 'true',
+      EXERCISEDB_API_KEY: apiKey,
+      EXERCISEDB_PAGE_SIZE: 10,
+    })
     const pages = client.allExercises({ pageSize: 10, strictPagination: true })
 
     await pages.next()
@@ -179,12 +281,19 @@ describe('ExerciseDbV2Client', () => {
 
   it('fetches an empty terminal page after an exact multiple during strict preflight pagination', async () => {
     fetchMock
-      .mockResolvedValueOnce(new Response(JSON.stringify([exercise(), exercise({ id: '0002' })]), { status: 200 }))
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify([exercise(), exercise({ id: '0002' })]), { status: 200 })
+      )
       .mockResolvedValueOnce(new Response(JSON.stringify([]), { status: 200 }))
-    const client = clientWith({ EXERCISEDB_SYNC_ENABLED: 'true', EXERCISEDB_API_KEY: apiKey, EXERCISEDB_PAGE_SIZE: 2 })
+    const client = clientWith({
+      EXERCISEDB_SYNC_ENABLED: 'true',
+      EXERCISEDB_API_KEY: apiKey,
+      EXERCISEDB_PAGE_SIZE: 2,
+    })
     const pages: unknown[] = []
 
-    for await (const page of client.allExercises({ pageSize: 2, strictPagination: true })) pages.push(page)
+    for await (const page of client.allExercises({ pageSize: 2, strictPagination: true }))
+      pages.push(page)
 
     expect(pages).toHaveLength(1)
     expect(fetchMock).toHaveBeenCalledTimes(2)

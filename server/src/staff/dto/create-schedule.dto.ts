@@ -1,5 +1,12 @@
 import { Type } from 'class-transformer'
-import { ArrayMaxSize, ArrayMinSize, IsArray, IsDateString, IsEnum, ValidateNested } from 'class-validator'
+import {
+  ArrayMaxSize,
+  ArrayMinSize,
+  IsArray,
+  IsDateString,
+  IsEnum,
+  ValidateNested,
+} from 'class-validator'
 import { StaffShift } from '@prisma/client'
 
 export class ScheduleEntryDto {

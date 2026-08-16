@@ -29,7 +29,10 @@ describe('DatabaseRetryInterceptor', () => {
       logRetry: jest.fn(),
     } as unknown as PrismaService
     const handler = {
-      handle: jest.fn().mockReturnValueOnce(throwError(() => transientError())).mockReturnValueOnce(of('ok')),
+      handle: jest
+        .fn()
+        .mockReturnValueOnce(throwError(() => transientError()))
+        .mockReturnValueOnce(of('ok')),
     } as unknown as CallHandler
 
     const interceptor = new DatabaseRetryInterceptor(reflector, prisma)
@@ -39,22 +42,32 @@ describe('DatabaseRetryInterceptor', () => {
   })
 
   it('does not retry an unmarked GET', async () => {
-    const reflector = { getAllAndOverride: jest.fn().mockReturnValue(false) } as unknown as Reflector
+    const reflector = {
+      getAllAndOverride: jest.fn().mockReturnValue(false),
+    } as unknown as Reflector
     const prisma = { recoverConnection: jest.fn(), logRetry: jest.fn() } as unknown as PrismaService
-    const handler = { handle: jest.fn().mockReturnValue(throwError(() => transientError())) } as unknown as CallHandler
+    const handler = {
+      handle: jest.fn().mockReturnValue(throwError(() => transientError())),
+    } as unknown as CallHandler
 
     const interceptor = new DatabaseRetryInterceptor(reflector, prisma)
-    await expect(lastValueFrom(interceptor.intercept(context(), handler))).rejects.toThrow('connection reset')
+    await expect(lastValueFrom(interceptor.intercept(context(), handler))).rejects.toThrow(
+      'connection reset'
+    )
     expect(prisma.recoverConnection).not.toHaveBeenCalled()
   })
 
   it('does not retry a marked POST', async () => {
     const reflector = { getAllAndOverride: jest.fn().mockReturnValue(true) } as unknown as Reflector
     const prisma = { recoverConnection: jest.fn(), logRetry: jest.fn() } as unknown as PrismaService
-    const handler = { handle: jest.fn().mockReturnValue(throwError(() => transientError())) } as unknown as CallHandler
+    const handler = {
+      handle: jest.fn().mockReturnValue(throwError(() => transientError())),
+    } as unknown as CallHandler
 
     const interceptor = new DatabaseRetryInterceptor(reflector, prisma)
-    await expect(lastValueFrom(interceptor.intercept(context('POST'), handler))).rejects.toThrow('connection reset')
+    await expect(lastValueFrom(interceptor.intercept(context('POST'), handler))).rejects.toThrow(
+      'connection reset'
+    )
     expect(prisma.recoverConnection).not.toHaveBeenCalled()
     expect(handler.handle).toHaveBeenCalledTimes(1)
   })
@@ -64,12 +77,16 @@ describe('DatabaseRetryInterceptor', () => {
     const prisma = { recoverConnection: jest.fn(), logRetry: jest.fn() } as unknown as PrismaService
     const poolTimeout = new Prisma.PrismaClientKnownRequestError(
       'Timed out fetching a new connection from the connection pool',
-      { code: 'P2024', clientVersion: 'test' },
+      { code: 'P2024', clientVersion: 'test' }
     )
-    const handler = { handle: jest.fn().mockReturnValue(throwError(() => poolTimeout)) } as unknown as CallHandler
+    const handler = {
+      handle: jest.fn().mockReturnValue(throwError(() => poolTimeout)),
+    } as unknown as CallHandler
 
     const interceptor = new DatabaseRetryInterceptor(reflector, prisma)
-    await expect(lastValueFrom(interceptor.intercept(context(), handler))).rejects.toThrow('connection pool')
+    await expect(lastValueFrom(interceptor.intercept(context(), handler))).rejects.toThrow(
+      'connection pool'
+    )
     expect(prisma.recoverConnection).not.toHaveBeenCalled()
     expect(handler.handle).toHaveBeenCalledTimes(1)
   })

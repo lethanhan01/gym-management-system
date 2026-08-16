@@ -1,4 +1,15 @@
-import { IsBooleanString, IsEmail, IsEnum, IsIn, IsNumber, IsOptional, IsString, Max, Min, validateSync } from 'class-validator'
+import {
+  IsBooleanString,
+  IsEmail,
+  IsEnum,
+  IsIn,
+  IsNumber,
+  IsOptional,
+  IsString,
+  Max,
+  Min,
+  validateSync,
+} from 'class-validator'
 import { plainToInstance } from 'class-transformer'
 
 enum NodeEnv {
@@ -99,25 +110,31 @@ function validateExerciseDbConfig(config: EnvironmentVariables) {
   const syncEnabled = config.EXERCISEDB_SYNC_ENABLED === 'true'
   const schedulerEnabled = config.EXERCISEDB_SCHEDULER_ENABLED === 'true'
   if (schedulerEnabled && !syncEnabled) {
-    throw new Error('Invalid environment configuration:\n  - EXERCISEDB_SCHEDULER_ENABLED: requires EXERCISEDB_SYNC_ENABLED=true')
+    throw new Error(
+      'Invalid environment configuration:\n  - EXERCISEDB_SCHEDULER_ENABLED: requires EXERCISEDB_SYNC_ENABLED=true'
+    )
   }
   if (!syncEnabled) return
   if (!config.EXERCISEDB_API_KEY?.trim()) {
-    throw new Error('Invalid environment configuration:\n  - EXERCISEDB_API_KEY: required when EXERCISEDB_SYNC_ENABLED=true')
+    throw new Error(
+      'Invalid environment configuration:\n  - EXERCISEDB_API_KEY: required when EXERCISEDB_SYNC_ENABLED=true'
+    )
   }
   if (schedulerEnabled && config.EXERCISEDB_SYNC_CRON.trim().split(/\s+/).length !== 5) {
-    throw new Error('Invalid environment configuration:\n  - EXERCISEDB_SYNC_CRON: must be a five-part cron expression')
+    throw new Error(
+      'Invalid environment configuration:\n  - EXERCISEDB_SYNC_CRON: must be a five-part cron expression'
+    )
   }
 }
 
 function validateDatabaseConnectionConfig(
   config: EnvironmentVariables,
-  raw: Record<string, unknown>,
+  raw: Record<string, unknown>
 ) {
   const requestedMode = config.DB_CONNECTION_MODE?.trim() as DatabaseConnectionMode | undefined
   if (config.NODE_ENV === NodeEnv.Production && !requestedMode) {
     throw new Error(
-      'Invalid environment configuration:\n  - DB_CONNECTION_MODE: required in production (direct or supavisor-session)',
+      'Invalid environment configuration:\n  - DB_CONNECTION_MODE: required in production (direct or supavisor-session)'
     )
   }
 
@@ -134,31 +151,41 @@ function validateDatabaseConnectionConfig(
   }
 
   if (!['postgres:', 'postgresql:'].includes(url.protocol)) {
-    throw new Error('Invalid environment configuration:\n  - DATABASE_URL: must use postgres or postgresql')
+    throw new Error(
+      'Invalid environment configuration:\n  - DATABASE_URL: must use postgres or postgresql'
+    )
   }
   if (url.port !== '5432') {
     throw new Error(
-      'Invalid environment configuration:\n  - DATABASE_URL: persistent connections must use port 5432; use the Supavisor Session pooler URL (or a direct URL), not the :6543 transaction pooler',
+      'Invalid environment configuration:\n  - DATABASE_URL: persistent connections must use port 5432; use the Supavisor Session pooler URL (or a direct URL), not the :6543 transaction pooler'
     )
   }
   if (url.searchParams.get('sslmode') !== 'require') {
-    throw new Error('Invalid environment configuration:\n  - DATABASE_URL: sslmode=require is required')
+    throw new Error(
+      'Invalid environment configuration:\n  - DATABASE_URL: sslmode=require is required'
+    )
   }
   if (url.searchParams.get('connection_limit') !== '5') {
-    throw new Error('Invalid environment configuration:\n  - DATABASE_URL: connection_limit=5 is required')
+    throw new Error(
+      'Invalid environment configuration:\n  - DATABASE_URL: connection_limit=5 is required'
+    )
   }
   if (url.searchParams.get('pgbouncer') === 'true') {
-    throw new Error('Invalid environment configuration:\n  - DATABASE_URL: pgbouncer=true is not allowed for persistent connections')
+    throw new Error(
+      'Invalid environment configuration:\n  - DATABASE_URL: pgbouncer=true is not allowed for persistent connections'
+    )
   }
   if (!url.searchParams.get('application_name')?.trim()) {
-    throw new Error('Invalid environment configuration:\n  - DATABASE_URL: application_name is required')
+    throw new Error(
+      'Invalid environment configuration:\n  - DATABASE_URL: application_name is required'
+    )
   }
 
   const isDirect = /^db\.[a-z0-9-]+\.supabase\.co$/i.test(url.hostname)
   const isSessionPooler = url.hostname.endsWith('.pooler.supabase.com')
   if ((mode === 'direct' && !isDirect) || (mode === 'supavisor-session' && !isSessionPooler)) {
     throw new Error(
-      `Invalid environment configuration:\n  - DATABASE_URL: does not match DB_CONNECTION_MODE=${mode}`,
+      `Invalid environment configuration:\n  - DATABASE_URL: does not match DB_CONNECTION_MODE=${mode}`
     )
   }
 
@@ -178,14 +205,20 @@ function validateSmtpConfig(config: EnvironmentVariables) {
   const configured = smtp.some(([, value]) => value !== undefined && String(value).trim() !== '')
   const missing = smtp.filter(([, value]) => value === undefined || String(value).trim() === '')
   if (configured && missing.length > 0) {
-    throw new Error(`Invalid environment configuration:\n${missing.map(([key]) => `  - ${key}: required when SMTP is configured`).join('\n')}`)
+    throw new Error(
+      `Invalid environment configuration:\n${missing.map(([key]) => `  - ${key}: required when SMTP is configured`).join('\n')}`
+    )
   }
   if (config.NODE_ENV === NodeEnv.Production) {
     if (missing.length > 0) {
-      throw new Error(`Invalid environment configuration:\n${missing.map(([key]) => `  - ${key}: required in production`).join('\n')}`)
+      throw new Error(
+        `Invalid environment configuration:\n${missing.map(([key]) => `  - ${key}: required in production`).join('\n')}`
+      )
     }
     if (config.DEMO_MASTER_OTP?.trim()) {
-      throw new Error('Invalid environment configuration:\n  - DEMO_MASTER_OTP: must be empty in production')
+      throw new Error(
+        'Invalid environment configuration:\n  - DEMO_MASTER_OTP: must be empty in production'
+      )
     }
   }
 }

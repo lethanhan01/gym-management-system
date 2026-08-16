@@ -4,7 +4,14 @@ import { useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/Button'
 import { ArrowLeft } from 'lucide-react'
 import { memberService, type TrainerSummary } from '@/services/member.service'
-import { MemberPage, MemberPageHeader, MemberSkeleton, MemberEmptyState } from '@/components/MemberUI'
+import {
+  MemberBadge,
+  MemberCard,
+  MemberEmptyState,
+  MemberPage,
+  MemberPageHeader,
+  MemberSkeleton,
+} from '@/components/MemberUI'
 
 export default function ChooseTrainerPage() {
   const { t } = useTranslation('member')
@@ -44,10 +51,10 @@ export default function ChooseTrainerPage() {
         actions={
           <Button
             variant="outline-white"
-            className="flex items-center gap-1.5 text-sm"
+            size="sm"
+            leftIcon={<ArrowLeft size={14} />}
             onClick={() => navigate('/member')}
           >
-            <ArrowLeft size={14} />
             {t('chooseTrainer.buttonBack')}
           </Button>
         }
@@ -72,10 +79,12 @@ export default function ChooseTrainerPage() {
               const initials = trainer.fullName.split(' ').map(w => w[0]).filter(Boolean).slice(-2).join('').toUpperCase()
               const isSelected = selected === trainer.staffId
               return (
-                <button
+                <MemberCard
+                  as="div"
                   key={trainer.staffId}
                   onClick={() => setSelected(trainer.staffId)}
-                  className={`rogym-card rogym-card--compact p-5 flex flex-col items-center gap-3 text-center cursor-pointer transition-all duration-150 ${
+                  variant="interactive"
+                  className={`p-5 flex flex-col items-center gap-3 text-center cursor-pointer transition-all duration-150 ${
                     isSelected
                       ? 'ring-2 ring-[var(--rogym-teal)] ring-offset-1 ring-offset-transparent'
                       : 'hover:bg-white/[0.06]'
@@ -91,9 +100,9 @@ export default function ChooseTrainerPage() {
                     </p>
                   </div>
                   {isSelected && (
-                    <span className="rogym-tone-badge" data-tone="success">{t('chooseTrainer.selectedBadge')}</span>
+                    <MemberBadge tone="success">{t('chooseTrainer.selectedBadge')}</MemberBadge>
                   )}
-                </button>
+                </MemberCard>
               )
             })}
           </div>
@@ -107,9 +116,10 @@ export default function ChooseTrainerPage() {
               variant="primary"
               className="px-8"
               disabled={!selected || submitting}
+              loading={submitting}
               onClick={handleConfirm}
             >
-              {submitting ? t('chooseTrainer.buttonProcessing') : t('chooseTrainer.buttonChoose')}
+              {t('chooseTrainer.buttonChoose')}
             </Button>
           </div>
         </div>

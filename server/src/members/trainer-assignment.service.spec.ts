@@ -8,7 +8,14 @@ const mockPrisma = {
 const mockAudit = { log: jest.fn() }
 
 function makeMember(overrides: object = {}) {
-  return { memberId: 10n, userId: 1n, primaryTrainerId: null, deletedAt: null, subscriptions: [], ...overrides }
+  return {
+    memberId: 10n,
+    userId: 1n,
+    primaryTrainerId: null,
+    deletedAt: null,
+    subscriptions: [],
+    ...overrides,
+  }
 }
 
 function makeTrainer(overrides: object = {}) {
@@ -89,7 +96,12 @@ describe('TrainerAssignmentService', () => {
     it('returns list of trainer/pt staff', async () => {
       mockPrisma.staff.findMany.mockResolvedValue([
         makeTrainer(),
-        makeTrainer({ staffId: 6n, staffCode: 'PT-002', position: 'pt', user: { fullName: 'Trainer B' } }),
+        makeTrainer({
+          staffId: 6n,
+          staffCode: 'PT-002',
+          position: 'pt',
+          user: { fullName: 'Trainer B' },
+        }),
       ])
 
       const result = await service.getAvailableTrainers()

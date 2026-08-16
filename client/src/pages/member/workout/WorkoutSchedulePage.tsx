@@ -3,7 +3,7 @@ import type { TFunction } from 'i18next'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import {
-  Calendar,
+  CalendarPlus,
   CalendarX,
   ChevronLeft,
   ChevronRight,
@@ -11,19 +11,22 @@ import {
   Dumbbell,
   MapPin,
   User,
-  X,
 } from 'lucide-react'
 import {
-  trainingService,
+  trainingSessionService,
   type TrainingSession,
   type TrainingSessionDetail,
-} from '@/services/training.service'
+} from '@/services/training-session.service'
+import { BookPtSessionModal } from './BookPtSessionModal'
+import { CancelPtBookingModal } from './CancelPtBookingModal'
 import {
+  MemberCard,
   MemberErrorState,
   MemberPage,
   MemberPageHeader,
   MemberSkeleton,
 } from '@/components/MemberUI'
+import { Button, Modal } from '@/components/ui'
 import { getApiError } from '@/lib/api-error'
 
 // ── Format helpers ─────────────────────────────────────────────────────────────
@@ -57,7 +60,23 @@ function fmtMonthYear(d: Date, locale: string) {
   return d.toLocaleDateString(locale, { month: 'long', year: 'numeric' })
 }
 
+function fmtSelectedDate(d: Date, locale: string) {
+  return d.toLocaleDateString(locale, {
+    weekday: 'long',
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  })
+}
+
 function getDowLabels(locale: string): string[] {
+  const lang = (locale || '').toLowerCase()
+  if (lang.startsWith('vi')) {
+    return ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN']
+  }
+  if (lang.startsWith('ja')) {
+    return ['月', '火', '水', '木', '金', '土', '日']
+  }
   const base = new Date(2024, 0, 1) // Monday 1 Jan 2024
   return Array.from({ length: 7 }, (_, i) => {
     const d = new Date(base)
@@ -66,8 +85,8 @@ function getDowLabels(locale: string): string[] {
   })
 }
 
-function dateKey(iso: string) {
-  const d = new Date(iso)
+function dateKey(isoOrDate: string | Date) {
+  const d = typeof isoOrDate === 'string' ? new Date(isoOrDate) : isoOrDate
   return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`
 }
 
@@ -154,20 +173,204 @@ const CalendarSession = memo(function CalendarSession({
     <button
       type="button"
       className="rogym-session-hover relative block w-full text-left"
-      onClick={() => onSelect(session)}
+      onClick={(e) => {
+        e.stopPropagation()
+        onSelect(session)
+      }}
       data-no-sweep
     >
       <div
-        className="rogym-calendar-session truncate rounded-md px-1.5 py-0.5 text-[10px] font-semibold leading-tight"
+        className="rogym-calendar-session flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[11px] font-medium transition-opacity hover:opacity-90"
         data-status={session.status}
       >
-        {fmtTime(session.startTime, locale)}
-        {session.trainerName ? ` · ${session.trainerName.split(' ').pop()}` : ''}
+        <span className="shrink-0">{fmtTime(session.startTime, locale)}</span>
+        <span className="truncate">{session.trainerName ? `· ${session.trainerName}` : ''}</span>
       </div>
       <SessionTooltip session={session} locale={locale} align={align} />
     </button>
   )
 })
+
+const CalendarCell = memo(function CalendarCell({
+  cell,
+  sessions,
+  today,
+  selectedKey,
+  locale,
+  colIndex,
+  onSelectDate,
+  onSelectSession,
+}: {
+  cell: { date: Date | null; key: string | null }
+  sessions: TrainingSession[]
+  today: string
+  selectedKey: string
+  locale: string
+  colIndex: number
+  onSelectDate: (date: Date) => void
+  onSelectSession: (session: TrainingSession) => void
+}) {
+  if (!cell.date || !cell.key) {
+    return <div className="rogym-calendar-cell is-empty aspect-square p-1 lg:aspect-auto lg:min-h-[76px]" />
+  }
+
+  const isToday = cell.key === today
+  const isSelected = cell.key === selectedKey
+  const dayNum = cell.date.getDate()
+  const align = colIndex >= 5 ? 'right' : 'left'
+  const dateObj = cell.date
+
+  return (
+    <div
+      role="button"
+      tabIndex={0}
+      onClick={() => onSelectDate(dateObj)}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault()
+          onSelectDate(dateObj)
+        }
+      }}
+      className={`rogym-calendar-cell is-interactive flex flex-col justify-between aspect-square p-1 transition-all outline-none sm:p-1.5 lg:aspect-auto lg:min-h-[76px] ${
+        isSelected ? 'is-selected' : isToday ? 'is-today' : ''
+      }`}
+    >
+      <div className="flex items-center justify-between">
+        <span
+          className={`flex h-5 w-5 sm:h-6 sm:w-6 items-center justify-center rounded-full text-[11px] sm:text-xs font-bold transition-colors ${
+            isToday
+              ? 'text-[var(--rogym-accent)] font-extrabold'
+              : 'text-white'
+          }`}
+        >
+          {dayNum}
+        </span>
+        {/* Desktop badge count if multiple sessions */}
+        {sessions.length > 0 && (
+          <span className="hidden text-[10px] font-semibold text-white/40 lg:inline-block">
+            {sessions.length}
+          </span>
+        )}
+      </div>
+
+      {/* Mobile view: Event Dots */}
+      {sessions.length > 0 && (
+        <div className="flex items-center justify-center gap-1 py-0.5 lg:hidden">
+          {sessions.slice(0, 3).map((s) => (
+            <span
+              key={s.sessionId}
+              className="rogym-calendar-dot"
+              data-status={s.status}
+            />
+          ))}
+          {sessions.length > 3 && (
+            <span className="text-[9px] font-bold text-[var(--rogym-accent)]">+</span>
+          )}
+        </div>
+      )}
+
+      {/* Desktop view: Session Badges with tooltips */}
+      <div className="hidden space-y-1 mt-1 lg:block">
+        {sessions.map((s) => (
+          <CalendarSession
+            key={s.sessionId}
+            session={s}
+            locale={locale}
+            align={align}
+            onSelect={onSelectSession}
+          />
+        ))}
+      </div>
+    </div>
+  )
+})
+
+// ── Selected Date Section ──────────────────────────────────────────────────────
+
+function StatusBadge({ status }: { status: string }) {
+  const { t } = useTranslation('member')
+  return (
+    <span
+      className="rogym-session-status inline-flex shrink-0 items-center rounded-md px-2 py-0.5 text-xs font-semibold whitespace-nowrap"
+      data-status={status}
+    >
+      {t(`workout.schedule.statusLabel.${status}`, { defaultValue: status })}
+    </span>
+  )
+}
+
+function SelectedDateSection({
+  date,
+  sessions,
+  locale,
+  onSelectSession,
+}: {
+  date: Date
+  sessions: TrainingSession[]
+  locale: string
+  onSelectSession: (session: TrainingSession) => void
+}) {
+  const { t } = useTranslation('member')
+
+  return (
+    <div className="mt-4 rounded-xl border border-white/10 bg-white/[0.02] p-3.5 sm:p-4">
+      <div className="flex items-center justify-between border-b border-white/5 pb-2.5">
+        <p className="text-xs sm:text-sm font-bold text-white capitalize">
+          {fmtSelectedDate(date, locale)}
+        </p>
+        <span className="rounded-full bg-white/10 px-2 py-0.5 text-[10px] font-semibold text-white/70">
+          {t('workout.schedule.sessionCount', { count: sessions.length })}
+        </span>
+      </div>
+
+      <div className="mt-3 space-y-2">
+        {sessions.length === 0 ? (
+          <div className="flex flex-col items-center justify-center gap-1.5 py-4 text-center">
+            <CalendarX size={20} className="text-white/30" />
+            <p className="text-xs text-white/50">{t('workout.schedule.noSessionsForDay')}</p>
+          </div>
+        ) : (
+          sessions.map((s) => (
+            <button
+              key={s.sessionId}
+              type="button"
+              onClick={() => onSelectSession(s)}
+              className="group flex w-full items-center justify-between gap-3 rounded-xl border border-white/5 bg-white/[0.03] p-3 text-left transition-all hover:border-[var(--rogym-border-teal-dim)] hover:bg-white/[0.06] active:scale-[0.99]"
+              data-no-sweep
+            >
+              <div className="min-w-0 flex-1 space-y-1.5">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-bold text-white">
+                    {fmtTime(s.startTime, locale)}
+                  </span>
+                  <StatusBadge status={s.status} />
+                </div>
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-white/60">
+                  {s.trainerName && (
+                    <span className="inline-flex items-center gap-1">
+                      <User size={12} className="text-[var(--rogym-accent)] shrink-0" />
+                      <span>{t('workout.schedule.trainerPrefix')} {s.trainerName}</span>
+                    </span>
+                  )}
+                  {s.roomName && (
+                    <span className="inline-flex items-center gap-1">
+                      <MapPin size={12} className="text-[var(--rogym-accent)] shrink-0" />
+                      <span>{s.roomName}</span>
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex shrink-0 items-center text-white/40 transition-transform group-hover:translate-x-0.5 group-hover:text-white">
+                <ChevronRight size={18} />
+              </div>
+            </button>
+          ))
+        )}
+      </div>
+    </div>
+  )
+}
 
 // ── Calendar view ──────────────────────────────────────────────────────────────
 
@@ -180,15 +383,12 @@ function CalendarView({
 }) {
   const { t, i18n } = useTranslation('member')
   const locale = i18n.language
+  const [month, setMonth] = useState(() => new Date())
+  const [selectedDate, setSelectedDate] = useState(() => new Date())
   const dowLabels = useMemo(() => getDowLabels(locale), [locale])
-  const [month, setMonth] = useState(() => {
-    const d = new Date()
-    d.setDate(1)
-    d.setHours(0, 0, 0, 0)
-    return d
-  })
-  // Index sessions by date key
-  const byDate = useMemo(() => {
+
+  // Map session list to a Date key dictionary
+  const sessionMap = useMemo(() => {
     const map = new Map<string, TrainingSession[]>()
     for (const s of sessions) {
       const k = dateKey(s.startTime)
@@ -221,6 +421,8 @@ function CalendarView({
   }, [month])
 
   const today = todayKey()
+  const selectedKey = dateKey(selectedDate)
+  const selectedDaySessions = sessionMap.get(selectedKey) ?? []
 
   function prevMonth() {
     setMonth((m) => new Date(m.getFullYear(), m.getMonth() - 1, 1))
@@ -228,112 +430,112 @@ function CalendarView({
   function nextMonth() {
     setMonth((m) => new Date(m.getFullYear(), m.getMonth() + 1, 1))
   }
+  function goToToday() {
+    const now = new Date()
+    setMonth(now)
+    setSelectedDate(now)
+  }
+
+  const handleSelectDate = useCallback((date: Date) => {
+    setSelectedDate(date)
+  }, [])
 
   return (
-    <div className="rounded-[20px] p-5 rogym-sx-25952519">
-      {/* Legend */}
-      <div className="mb-4 flex flex-wrap items-center gap-4 text-xs rogym-sx-5e5c39ab">
-        {[
-          { status: 'scheduled', label: t('workout.schedule.legendScheduled') },
-          { status: 'completed', label: t('workout.schedule.legendCompleted') },
-        ].map(({ status, label }) => (
-          <span key={label} className="flex items-center gap-1.5">
-            <span
-              className="rogym-session-legend inline-block h-2.5 w-2.5 rounded-full"
-              data-status={status}
-            />
-            {label}
-          </span>
-        ))}
+    <MemberCard variant="compact" className="p-3.5 sm:p-5">
+      {/* Legend & Header controls */}
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3 text-xs rogym-sx-5e5c39ab">
+        <div className="flex flex-wrap items-center gap-3 sm:gap-4">
+          {[
+            { status: 'scheduled', label: t('workout.schedule.legendScheduled') },
+            { status: 'completed', label: t('workout.schedule.legendCompleted') },
+          ].map(({ status, label }) => (
+            <span key={label} className="flex items-center gap-1.5">
+              <span
+                className="rogym-session-legend inline-block h-2.5 w-2.5 rounded-full"
+                data-status={status}
+              />
+              {label}
+            </span>
+          ))}
+        </div>
       </div>
 
-      {/* Month navigation */}
-      <div className="mb-4 flex items-center justify-between">
-        <button
-          type="button"
-          onClick={prevMonth}
-          className="flex h-8 w-8 items-center justify-center rounded-full transition-colors hover:bg-white/10 rogym-sx-5e5c39ab"
-        >
-          <ChevronLeft size={16} />
-        </button>
-        <p className="text-sm font-bold text-white capitalize">{fmtMonthYear(month, locale)}</p>
-        <button
-          type="button"
-          onClick={nextMonth}
-          className="flex h-8 w-8 items-center justify-center rounded-full transition-colors hover:bg-white/10 rogym-sx-5e5c39ab"
-        >
-          <ChevronRight size={16} />
-        </button>
+      {/* Month navigation & Today jump */}
+      <div className="mb-4 flex items-center justify-between gap-2">
+        <p className="text-sm sm:text-base font-bold text-white capitalize">
+          {fmtMonthYear(month, locale)}
+        </p>
+        <div className="flex items-center gap-1.5">
+          <Button
+            variant="outline-white"
+            size="sm"
+            onClick={goToToday}
+            className="text-xs px-2.5 py-1"
+          >
+            {t('workout.schedule.btnToday')}
+          </Button>
+          <Button
+            variant="icon"
+            size="sm"
+            onClick={prevMonth}
+            aria-label="Previous month"
+            leftIcon={<ChevronLeft size={16} />}
+          />
+          <Button
+            variant="icon"
+            size="sm"
+            onClick={nextMonth}
+            aria-label="Next month"
+            leftIcon={<ChevronRight size={16} />}
+          />
+        </div>
       </div>
 
       {/* DOW header */}
-      <div className="mb-1 grid grid-cols-7">
+      <div className="mb-1.5 grid grid-cols-7 gap-1 text-center">
         {dowLabels.map((d) => (
           <div
             key={d}
-            className="py-1 text-center text-[11px] font-bold uppercase tracking-wider rogym-sx-ed519d00"
+            className="py-1 text-[11px] sm:text-xs font-bold uppercase tracking-wider text-white/50"
           >
             {d}
           </div>
         ))}
       </div>
 
-      {/* Weeks */}
-      <div className="space-y-0.5">
-        {grid.map((row, ri) => (
-          <div key={ri} className="grid grid-cols-7">
-            {row.map((cell, ci) => {
-              const isToday = cell.key === today
-              const cellSessions = cell.key ? (byDate.get(cell.key) ?? []) : []
-              return (
-                <div
-                  key={ci}
-                  className={`rogym-calendar-cell relative min-h-[68px] p-1 ${
-                    isToday ? 'is-today' : ''
-                  }`}
-                >
-                  {cell.date && (
-                    <>
-                      <span
-                        className={`rogym-calendar-date flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold ${
-                          isToday ? 'is-today' : ''
-                        }`}
-                      >
-                        {cell.date.getDate()}
-                      </span>
-                      <div className="mt-0.5 space-y-0.5">
-                        {cellSessions.map((s) => (
-                          <CalendarSession
-                            key={s.sessionId}
-                            session={s}
-                            locale={locale}
-                            align={ci >= 4 ? 'right' : 'left'}
-                            onSelect={onSelect}
-                          />
-                        ))}
-                      </div>
-                    </>
-                  )}
-                </div>
-              )
-            })}
+      {/* Calendar grid */}
+      <div className="space-y-1 sm:space-y-1.5">
+        {grid.map((row, rIdx) => (
+          <div key={rIdx} className="grid grid-cols-7 gap-1 sm:gap-1.5">
+            {row.map((cell, cIdx) => (
+              <CalendarCell
+                key={cIdx}
+                cell={cell}
+                sessions={cell.key ? sessionMap.get(cell.key) ?? [] : []}
+                today={today}
+                selectedKey={selectedKey}
+                locale={locale}
+                colIndex={cIdx}
+                onSelectDate={handleSelectDate}
+                onSelectSession={onSelect}
+              />
+            ))}
           </div>
         ))}
       </div>
-    </div>
+
+      {/* Selected Date Section */}
+      <SelectedDateSection
+        date={selectedDate}
+        sessions={selectedDaySessions}
+        locale={locale}
+        onSelectSession={onSelect}
+      />
+    </MemberCard>
   )
 }
 
-// ── Session sidebar ────────────────────────────────────────────────────────────
-
-function StatusBadge({ status }: { status: string }) {
-  const { t } = useTranslation('member')
-  return (
-    <span className="rogym-session-status is-pill" data-status={status}>
-      {t(`workout.schedule.statusLabel.${status}`, { defaultValue: status })}
-    </span>
-  )
-}
+// ── Sidebar lists ──────────────────────────────────────────────────────────────
 
 function UpcomingRow({
   session,
@@ -343,31 +545,25 @@ function UpcomingRow({
   onSelect: (session: TrainingSession) => void
 }) {
   const { t, i18n } = useTranslation('member')
+  const countdown = daysUntil(session.startTime, t)
+
   return (
     <button
       type="button"
-      className="rogym-session-hover relative block w-full text-left"
+      className="flex w-full items-center justify-between rounded-xl p-3 text-left transition-colors hover:bg-white/5 rogym-sx-a15e2a7c"
       onClick={() => onSelect(session)}
       data-no-sweep
     >
-      <div className="rogym-upcoming-session flex items-center justify-between gap-4 rounded-xl p-4 transition-colors">
-        <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg rogym-sx-e15f57de">
-            <Calendar size={16} className="rogym-sx-b2fbf853" />
-          </div>
-          <div>
-            <p className="text-sm font-semibold text-white">{fmtDateShort(session.startTime, i18n.language)}</p>
-            {session.trainerName && (
-              <p className="mt-0.5 text-xs rogym-sx-5e5c39ab">
-                {t('workout.schedule.trainerPrefix')}: {session.trainerName}
-                {session.roomName ? ` · ${session.roomName}` : ''}
-              </p>
-            )}
-          </div>
+      <div className="min-w-0 flex-1">
+        <p className="text-sm font-semibold text-white">{fmtDateShort(session.startTime, i18n.language)}</p>
+        <div className="mt-0.5 flex flex-wrap gap-2 text-xs rogym-sx-5e5c39ab">
+          {session.trainerName && (
+            <span>{t('workout.schedule.trainerPrefix')} {session.trainerName}</span>
+          )}
+          {session.roomName && <span>· {session.roomName}</span>}
         </div>
-        <StatusBadge status={session.status} />
       </div>
-      <SessionTooltip session={session} locale={i18n.language} />
+      <span className="shrink-0 text-xs font-semibold rogym-sx-f27dac31">{countdown}</span>
     </button>
   )
 }
@@ -380,19 +576,19 @@ function PastRow({
   onSelect: (session: TrainingSession) => void
 }) {
   const { t, i18n } = useTranslation('member')
+
   return (
     <button
       type="button"
-      className="flex w-full items-center justify-between gap-4 rounded-xl p-4 text-left rogym-sx-a15e2a7c"
+      className="flex w-full items-center justify-between rounded-xl p-3 text-left opacity-70 transition-opacity hover:opacity-100 rogym-sx-a15e2a7c"
       onClick={() => onSelect(session)}
       data-no-sweep
     >
-      <div>
+      <div className="min-w-0 flex-1">
         <p className="text-sm font-semibold text-white">{fmtDateShort(session.startTime, i18n.language)}</p>
         {session.trainerName && (
-          <p className="mt-0.5 text-xs rogym-sx-5e5c39ab">
-            {t('workout.schedule.trainerPrefix')}: {session.trainerName}
-            {session.roomName ? ` · ${session.roomName}` : ''}
+          <p className="text-xs rogym-sx-5e5c39ab">
+            {t('workout.schedule.trainerPrefix')} {session.trainerName}
           </p>
         )}
       </div>
@@ -428,7 +624,7 @@ function SessionSidebar({
       {nextSession ? (
         <button
           type="button"
-          className="rogym-card rogym-card--md block w-full p-5 text-left rogym-sx-f1ead95f"
+          className="rogym-card rogym-card--md block w-full p-5 text-left cursor-pointer transition-all hover:scale-[1.01] rogym-sx-f1ead95f"
           onClick={() => onSelect(nextSession)}
           data-no-sweep
         >
@@ -466,27 +662,27 @@ function SessionSidebar({
           </div>
         </button>
       ) : (
-        <div className="flex flex-col items-center justify-center gap-3 rounded-[20px] p-6 text-center rogym-sx-180e132e">
+        <MemberCard variant="compact" className="flex flex-col items-center justify-center gap-3 p-6 text-center">
           <CalendarX size={32} className="rogym-sx-ed519d00" />
           <p className="text-sm font-medium text-white">{t('workout.schedule.noUpcoming')}</p>
           <p className="text-xs rogym-sx-5e5c39ab">{t('workout.schedule.noUpcomingHint')}</p>
-        </div>
+        </MemberCard>
       )}
 
       {/* Upcoming rest */}
       {upcomingRest.length > 0 && (
-        <section className="rounded-[20px] p-5 rogym-sx-25952519">
+        <MemberCard as="section" variant="compact" className="p-5">
           <h2 className="mb-3 text-sm font-bold text-white">{t('workout.schedule.sectionUpcoming')}</h2>
           <div className="space-y-2">
             {upcomingRest.map((s) => (
               <UpcomingRow key={s.sessionId} session={s} onSelect={onSelect} />
             ))}
           </div>
-        </section>
+        </MemberCard>
       )}
 
       {/* Past */}
-      <section className="rounded-[20px] p-5 rogym-sx-25952519">
+      <MemberCard as="section" variant="compact" className="p-5">
         <h2 className="mb-3 text-sm font-bold text-white">{t('workout.schedule.sectionCompleted')}</h2>
         {past.length === 0 ? (
           <div className="flex flex-col items-center gap-2 py-6">
@@ -500,7 +696,7 @@ function SessionSidebar({
             ))}
           </div>
         )}
-      </section>
+      </MemberCard>
     </div>
   )
 }
@@ -511,140 +707,142 @@ function SessionDetailModal({
   error,
   onClose,
   onStart,
+  onCancel,
 }: {
   session: TrainingSessionDetail | null
   loading: boolean
   error: string | null
   onClose: () => void
   onStart: (sessionId: string) => void
+  onCancel?: (session: TrainingSession) => void
 }) {
   const { t, i18n } = useTranslation('member')
   const exercises = session?.planDay?.exercises ?? []
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 rogym-sx-8578aed4">
-      <div className="relative max-h-[90vh] w-full max-w-2xl overflow-auto rounded-[24px] rogym-sx-1f8ae2ef">
-        <div className="flex items-start justify-between gap-4 p-6 pb-4">
-          <div>
-            <p className="text-xs font-bold uppercase tracking-widest rogym-sx-b2fbf853">
-              {t('workout.schedule.modalTitle')}
-            </p>
-            <h2 className="mt-1 text-xl font-bold text-white">
-              {session?.planDay?.name ?? t('workout.session.defaultDayName')}
-            </h2>
-          </div>
-          <button
-            type="button"
-            className="rogym-btn rogym-btn--icon rogym-btn--elevated"
-            onClick={onClose}
-            aria-label={t('workout.schedule.buttonClose')}
-          >
-            <X size={16} />
-          </button>
-        </div>
-
-        <div className="space-y-4 px-6 pb-6">
-          {loading ? (
-            <MemberSkeleton rows={4} />
-          ) : error ? (
-            <MemberErrorState message={error} />
-          ) : session ? (
-            <>
-              <div className="grid gap-3 text-sm md:grid-cols-2">
-                <div className="rounded-xl p-4 rogym-sx-a15e2a7c">
-                  <p className="text-xs font-semibold uppercase rogym-sx-ed519d00">{t('workout.schedule.fieldTime')}</p>
-                  <p className="mt-1 font-semibold text-white">{fmtDatetime(session.startTime, i18n.language)}</p>
-                </div>
-                <div className="rounded-xl p-4 rogym-sx-a15e2a7c">
-                  <p className="text-xs font-semibold uppercase rogym-sx-ed519d00">{t('workout.schedule.fieldStatus')}</p>
-                  <div className="mt-2">
-                    <StatusBadge status={session.status} />
-                  </div>
-                </div>
-                <div className="rounded-xl p-4 rogym-sx-a15e2a7c">
-                  <p className="text-xs font-semibold uppercase rogym-sx-ed519d00">{t('workout.schedule.fieldTrainer')}</p>
-                  <p className="mt-1 font-semibold text-white">{session.trainerName ?? '—'}</p>
-                </div>
-                <div className="rounded-xl p-4 rogym-sx-a15e2a7c">
-                  <p className="text-xs font-semibold uppercase rogym-sx-ed519d00">{t('workout.schedule.fieldRoom')}</p>
-                  <p className="mt-1 font-semibold text-white">{session.roomName ?? '—'}</p>
+    <Modal
+      open={!!session || loading || !!error}
+      onClose={onClose}
+      title={t('workout.schedule.modalTitle')}
+      size="lg"
+      footer={
+        session ? (
+          <>
+            {session.status === 'scheduled' && onCancel && (
+              <Button
+                variant="danger"
+                onClick={() => onCancel(session)}
+              >
+                {t('workout.schedule.booking.cancelBtn')}
+              </Button>
+            )}
+            <Button
+              variant="primary"
+              onClick={() => onStart(session.sessionId)}
+            >
+              {t('workout.schedule.buttonStart')}
+            </Button>
+          </>
+        ) : undefined
+      }
+    >
+      <div className="space-y-4">
+        {session?.planDay?.name && (
+          <h3 className="text-base font-bold text-white -mt-1 mb-2">{session.planDay.name}</h3>
+        )}
+        {loading ? (
+          <MemberSkeleton rows={4} />
+        ) : error ? (
+          <MemberErrorState message={error} />
+        ) : session ? (
+          <>
+            <div className="grid gap-3 text-sm md:grid-cols-2">
+              <div className="rounded-xl p-4 rogym-sx-a15e2a7c">
+                <p className="text-xs font-semibold uppercase rogym-sx-ed519d00">{t('workout.schedule.fieldTime')}</p>
+                <p className="mt-1 font-semibold text-white">{fmtDatetime(session.startTime, i18n.language)}</p>
+              </div>
+              <div className="rounded-xl p-4 rogym-sx-a15e2a7c">
+                <p className="text-xs font-semibold uppercase rogym-sx-ed519d00">{t('workout.schedule.fieldStatus')}</p>
+                <div className="mt-2">
+                  <StatusBadge status={session.status} />
                 </div>
               </div>
+              <div className="rounded-xl p-4 rogym-sx-a15e2a7c">
+                <p className="text-xs font-semibold uppercase rogym-sx-ed519d00">{t('workout.schedule.fieldTrainer')}</p>
+                <p className="mt-1 font-semibold text-white">{session.trainerName ?? '—'}</p>
+              </div>
+              <div className="rounded-xl p-4 rogym-sx-a15e2a7c">
+                <p className="text-xs font-semibold uppercase rogym-sx-ed519d00">{t('workout.schedule.fieldRoom')}</p>
+                <p className="mt-1 font-semibold text-white">{session.roomName ?? '—'}</p>
+              </div>
+            </div>
 
-              {session.workoutPlan && session.planDay ? (
-                <section className="rounded-xl p-4 rogym-sx-25952519">
-                  <div className="flex items-start gap-3">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl rogym-sx-e15f57de">
-                      <Dumbbell size={18} className="rogym-sx-b2fbf853" />
-                    </div>
-                    <div>
-                      <p className="font-semibold text-white">{session.workoutPlan.name}</p>
-                      <p className="mt-1 text-xs rogym-sx-5e5c39ab">
-                        {t('workout.schedule.dayWeek', { day: session.planDay.dayNumber, week: session.planDay.weekNumber })} ·{' '}
-                        {exercises.length} {t('workout.myPlan.unitExercises')}
-                      </p>
-                      {session.planDay.notes && (
-                        <p className="mt-2 text-xs rogym-sx-d88f932f">{session.planDay.notes}</p>
-                      )}
-                    </div>
+            {session.workoutPlan && session.planDay ? (
+              <section className="rounded-xl p-4 rogym-sx-25952519">
+                <div className="flex items-start gap-3">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl rogym-sx-e15f57de">
+                    <Dumbbell size={18} className="rogym-sx-b2fbf853" />
                   </div>
-                </section>
-              ) : (
-                <p className="rounded-xl p-4 text-sm rogym-sx-a15e2a7c">
-                  {t('workout.schedule.noWorkoutPlan')}
-                </p>
-              )}
+                  <div>
+                    <p className="font-semibold text-white">{session.workoutPlan.name}</p>
+                    <p className="mt-1 text-xs rogym-sx-5e5c39ab">
+                      {t('workout.schedule.dayWeek', { day: session.planDay.dayNumber, week: session.planDay.weekNumber })} ·{' '}
+                      {exercises.length} {t('workout.myPlan.unitExercises')}
+                    </p>
+                    {session.planDay.notes && (
+                      <p className="mt-2 text-xs rogym-sx-d88f932f">{session.planDay.notes}</p>
+                    )}
+                  </div>
+                </div>
+              </section>
+            ) : (
+              <p className="rounded-xl p-4 text-sm rogym-sx-a15e2a7c">
+                {t('workout.schedule.noWorkoutPlan')}
+              </p>
+            )}
 
-              {exercises.length > 0 && (
-                <section className="space-y-2">
-                  {exercises
-                    .slice()
-                    .sort((a, b) => a.orderIndex - b.orderIndex)
-                    .map((item, index) => {
-                      const isCardio = item.exercise?.bodyPart?.name.toLowerCase() === 'cardio'
-                      return (
-                        <div
-                          key={item.planExerciseId}
-                          className="flex items-center gap-3 rounded-xl px-4 py-3 rogym-sx-a15e2a7c"
-                        >
-                          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-xs font-bold rogym-sx-252b3c13">
-                            {index + 1}
-                          </span>
-                          <div className="min-w-0 flex-1">
-                            <p className="truncate text-sm font-semibold text-white">
-                              {item.exercise?.name ?? t('workout.session.defaultExerciseName')}
-                            </p>
-                            <p className="mt-0.5 text-xs rogym-sx-5e5c39ab">
-                              {item.targetSets} sets ·{' '}
-                              {isCardio
-                                ? `${item.targetDurationSec ?? 0} ${t('workout.schedule.unitSeconds')}`
-                                : `${item.targetReps ?? 0} reps`}
-                              {item.targetWeightKg ? ` · ${Number(item.targetWeightKg)} kg` : ''}
-                            </p>
-                          </div>
+            {exercises.length > 0 && (
+              <section className="space-y-2">
+                {exercises
+                  .slice()
+                  .sort((a, b) => a.orderIndex - b.orderIndex)
+                  .map((item, index) => {
+                    const isCardio = item.exercise?.bodyPart?.name.toLowerCase() === 'cardio'
+                    return (
+                      <div
+                        key={item.planExerciseId}
+                        className="flex items-center gap-3 rounded-xl px-4 py-3 rogym-sx-a15e2a7c"
+                      >
+                        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-xs font-bold rogym-sx-252b3c13">
+                          {index + 1}
+                        </span>
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-semibold text-white">
+                            {item.exercise?.name ?? t('workout.session.defaultExerciseName')}
+                          </p>
+                          <p className="mt-0.5 text-xs rogym-sx-5e5c39ab">
+                            {item.targetSets} sets ·{' '}
+                            {isCardio
+                              ? `${item.targetDurationSec ?? 0} ${t('workout.schedule.unitSeconds')}`
+                              : `${item.targetReps ?? 0} reps`}
+                            {item.targetWeightKg ? ` · ${Number(item.targetWeightKg)} kg` : ''}
+                          </p>
                         </div>
-                      )
-                    })}
-                </section>
-              )}
+                      </div>
+                    )
+                  })}
+              </section>
+            )}
 
-              <div className="border-t border-white/10 pt-4">
-                <p className="text-xs rogym-sx-5e5c39ab">
-                  {t('workout.schedule.trainerManages')}
-                </p>
-                <button
-                  type="button"
-                  className="rogym-btn rogym-btn--primary mt-4 w-full"
-                  onClick={() => onStart(session.sessionId)}
-                >
-                  {t('workout.schedule.buttonStart')}
-                </button>
-              </div>
-            </>
-          ) : null}
-        </div>
+            <div className="border-t border-white/10 pt-4">
+              <p className="text-xs rogym-sx-5e5c39ab">
+                {t('workout.schedule.trainerManages')}
+              </p>
+            </div>
+          </>
+        ) : null}
       </div>
-    </div>
+    </Modal>
   )
 }
 
@@ -665,14 +863,17 @@ export default function WorkoutSchedulePage() {
   const [detailLoading, setDetailLoading] = useState(false)
   const [detailError, setDetailError] = useState<string | null>(null)
 
+  const [bookModalOpen, setBookModalOpen] = useState(false)
+  const [sessionToCancel, setSessionToCancel] = useState<TrainingSession | null>(null)
+
   const loadSessions = useCallback(() => {
     setLoading(true)
     setError(null)
     const now = new Date()
     Promise.all([
-      trainingService.getSessions({ status: 'scheduled', pageSize: 50, sort: 'start_time:asc' }),
-      trainingService.getSessions({ status: 'in_progress', pageSize: 20, sort: 'start_time:asc' }),
-      trainingService.getSessions({ status: 'completed', pageSize: 30, sort: 'start_time:desc' }),
+      trainingSessionService.getSessions({ status: 'scheduled', pageSize: 50, sort: 'start_time:asc' }),
+      trainingSessionService.getSessions({ status: 'in_progress', pageSize: 20, sort: 'start_time:asc' }),
+      trainingSessionService.getSessions({ status: 'completed', pageSize: 30, sort: 'start_time:desc' }),
     ])
       .then(([scheduledRes, inProgressRes, doneRes]) => {
         const activeSessions = [...inProgressRes.data, ...scheduledRes.data].sort(
@@ -710,7 +911,7 @@ export default function WorkoutSchedulePage() {
     let active = true
     setDetailLoading(true)
     setDetailError(null)
-    trainingService
+    trainingSessionService
       .getSession(selectedSessionId)
       .then((session) => {
         if (active) setSessionDetail(session)
@@ -769,6 +970,16 @@ export default function WorkoutSchedulePage() {
         eyebrow={t('workout.schedule.eyebrow')}
         title={t('workout.schedule.pageTitle')}
         description={t('workout.schedule.description')}
+        actions={
+          <Button
+            variant="primary"
+            onClick={() => setBookModalOpen(true)}
+            className="flex items-center gap-2"
+          >
+            <CalendarPlus size={16} />
+            <span>{t('workout.schedule.booking.btnBook')}</span>
+          </Button>
+        }
       />
       <div className="grid gap-5 lg:grid-cols-[65fr_35fr]">
         <CalendarView sessions={all} onSelect={handleSelectSession} />
@@ -781,8 +992,26 @@ export default function WorkoutSchedulePage() {
           error={detailError}
           onClose={handleCloseSession}
           onStart={handleStartSession}
+          onCancel={(session) => setSessionToCancel(session)}
         />
       )}
+      <BookPtSessionModal
+        open={bookModalOpen}
+        onClose={() => setBookModalOpen(false)}
+        onSuccess={() => {
+          loadSessions()
+        }}
+        scheduledCount={upcoming.length}
+      />
+      <CancelPtBookingModal
+        open={!!sessionToCancel}
+        session={sessionToCancel}
+        onClose={() => setSessionToCancel(null)}
+        onSuccess={() => {
+          setSelectedSessionId(null)
+          loadSessions()
+        }}
+      />
     </MemberPage>
   )
 }

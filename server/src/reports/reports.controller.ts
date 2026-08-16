@@ -39,7 +39,7 @@ export class ReportsController {
   @Get('employee-performance/:staffId/detail')
   async employeePerformanceDetail(
     @Param('staffId') staffId: string,
-    @Query() query: ReportRangeDto,
+    @Query() query: ReportRangeDto
   ) {
     const result = await this.reports.employeePerformanceDetail(staffId, query.from, query.to)
     return { success: true, ...result }

@@ -18,7 +18,10 @@ export class MailerService {
           connectionTimeout: 10_000,
           greetingTimeout: 10_000,
           socketTimeout: 15_000,
-          auth: { user: this.config.get<string>('SMTP_USER'), pass: this.config.get<string>('SMTP_PASS') },
+          auth: {
+            user: this.config.get<string>('SMTP_USER'),
+            pass: this.config.get<string>('SMTP_PASS'),
+          },
         })
       : null
   }
@@ -26,7 +29,11 @@ export class MailerService {
   async sendOtp(to: string, purpose: OtpPurpose, otp: string): Promise<void> {
     if (!this.transporter) {
       if (this.config.get<string>('NODE_ENV') === 'production') {
-        throw new ServiceUnavailableException({ success: false, code: 'OTP_DELIVERY_FAILED', message: 'Không thể gửi mã xác thực' })
+        throw new ServiceUnavailableException({
+          success: false,
+          code: 'OTP_DELIVERY_FAILED',
+          message: 'Không thể gửi mã xác thực',
+        })
       }
       return
     }
@@ -43,7 +50,11 @@ export class MailerService {
       this.logger.error(
         `OTP email delivery failed (purpose=${purpose}, code=${smtpError.code ?? 'UNKNOWN'}, responseCode=${smtpError.responseCode ?? 'UNKNOWN'})`
       )
-      throw new ServiceUnavailableException({ success: false, code: 'OTP_DELIVERY_FAILED', message: 'Không thể gửi mã xác thực' })
+      throw new ServiceUnavailableException({
+        success: false,
+        code: 'OTP_DELIVERY_FAILED',
+        message: 'Không thể gửi mã xác thực',
+      })
     }
   }
 }

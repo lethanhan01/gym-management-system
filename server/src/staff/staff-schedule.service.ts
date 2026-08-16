@@ -22,7 +22,7 @@ function parseDateOnly(value: string): Date {
 export class StaffScheduleService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly audit: AuditService,
+    private readonly audit: AuditService
   ) {}
 
   async listSchedules(staffId: bigint) {
@@ -193,4 +193,3 @@ export class StaffScheduleService {
     }
   }
 }
-

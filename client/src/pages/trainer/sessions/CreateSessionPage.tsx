@@ -7,7 +7,7 @@ import { getApiError } from '@/lib/api-error'
 import { localDateTimeInputToIso, toDateTimeLocalInput } from '@/lib/date'
 import { facilityService, type GymRoom } from '@/services/facility.service'
 import { memberService, type TrainerStudentSummary } from '@/services/member.service'
-import { trainingService } from '@/services/training.service'
+import { trainingSessionService } from '@/services/training-session.service'
 import workoutService, {
   type WorkoutAssignmentSummary,
   type WorkoutPlan,
@@ -23,7 +23,7 @@ import {
   TrainerSkeleton,
 } from '@/components/TrainerUI'
 import { toast } from '@/lib/toast'
-import { DateTimePickerInput } from '@/components/DateTimePickerInput'
+import { DateTimePickerInput } from '@/components/ui'
 
 type PlanDayOption = Pick<
   WorkoutPlanDay,
@@ -73,7 +73,7 @@ export default function CreateSessionPage() {
         const [studentResult, roomResult, existingSession, planResult] = await Promise.all([
           memberService.list({ pageSize: 100 }),
           facilityService.listRooms(),
-          id ? trainingService.getSession(id) : Promise.resolve(null),
+id ? trainingSessionService.getSession(id) : Promise.resolve(null),
           workoutService.getPlans(),
         ])
         if (!active) return
@@ -194,7 +194,7 @@ export default function CreateSessionPage() {
         endTime,
       }
       if (editing && id) {
-        await trainingService.updateSession(id, payload)
+await trainingSessionService.updateSession(id, payload)
       } else {
         let assignmentId = activeAssignment?.assignmentId ?? ''
         if (!assignmentId) {
@@ -204,7 +204,7 @@ export default function CreateSessionPage() {
           })
           assignmentId = assignment.assignmentId
         }
-        await trainingService.createSession({
+await trainingSessionService.createSession({
           ...payload,
           memberId,
           assignmentId,

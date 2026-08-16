@@ -7,7 +7,14 @@ import {
   NotFoundException,
   ServiceUnavailableException,
 } from '@nestjs/common'
-import { Member, OtpPurpose, PaymentStatus, Prisma, SubscriptionStatus, UserStatus } from '@prisma/client'
+import {
+  Member,
+  OtpPurpose,
+  PaymentStatus,
+  Prisma,
+  SubscriptionStatus,
+  UserStatus,
+} from '@prisma/client'
 import bcrypt from 'bcryptjs'
 import { AuthenticatedUser } from '../auth/types/jwt-payload.interface'
 import { AuditService } from '../common/audit/audit.service'
@@ -52,7 +59,7 @@ export class MembersService {
     private readonly otp: OtpService,
     private readonly mailer: MailerService,
     private readonly trainerAssignment: TrainerAssignmentService,
-    private readonly memberProgress: MemberProgressService,
+    private readonly memberProgress: MemberProgressService
   ) {}
 
   /** UC03A: staff creates a member, active subscription, and successful payment at the counter. */
@@ -209,7 +216,11 @@ export class MembersService {
 
     const otp = await this.otp.issue(result.user.userId, OtpPurpose.email_verify)
     if (!otp) {
-      await this.rollbackSelfRegistration(result.user.userId, result.member.memberId, result.subscription?.subscriptionId)
+      await this.rollbackSelfRegistration(
+        result.user.userId,
+        result.member.memberId,
+        result.subscription?.subscriptionId
+      )
       throw new InternalServerErrorException('Không thể khởi tạo OTP xác thực')
     }
     try {
@@ -220,9 +231,16 @@ export class MembersService {
         action: 'member.create',
         resourceType: 'member',
         resourceId: result.member.memberId.toString(),
-        afterData: { memberCode, selfRegister: true, delivery_failed: true } as unknown as Record<string, unknown>,
+        afterData: { memberCode, selfRegister: true, delivery_failed: true } as unknown as Record<
+          string,
+          unknown
+        >,
       })
-      await this.rollbackSelfRegistration(result.user.userId, result.member.memberId, result.subscription?.subscriptionId)
+      await this.rollbackSelfRegistration(
+        result.user.userId,
+        result.member.memberId,
+        result.subscription?.subscriptionId
+      )
       throw new ServiceUnavailableException({
         success: false,
         code: 'OTP_DELIVERY_FAILED',
@@ -528,7 +546,11 @@ export class MembersService {
     }
   }
 
-  private async rollbackSelfRegistration(userId: bigint, memberId: bigint, subscriptionId?: bigint) {
+  private async rollbackSelfRegistration(
+    userId: bigint,
+    memberId: bigint,
+    subscriptionId?: bigint
+  ) {
     await this.prisma.$transaction(async (tx) => {
       if (subscriptionId) await tx.subscription.deleteMany({ where: { subscriptionId } })
       await tx.otpCode.deleteMany({ where: { userId } })
@@ -596,7 +618,10 @@ export class MembersService {
             subscriptionId: member.subscriptions[0].subscriptionId.toString(),
             packageName: member.subscriptions[0].package.name,
             endDate: member.subscriptions[0].endDate,
-            status: effectiveSubStatus(member.subscriptions[0].status, member.subscriptions[0].endDate),
+            status: effectiveSubStatus(
+              member.subscriptions[0].status,
+              member.subscriptions[0].endDate
+            ),
           }
         : null,
     }

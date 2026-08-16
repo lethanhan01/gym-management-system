@@ -12,7 +12,7 @@ function vnDayStr(d: Date): string {
 export class StaffAttendanceService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly audit: AuditService,
+    private readonly audit: AuditService
   ) {}
 
   async checkIn(staffId: bigint) {
@@ -69,7 +69,9 @@ export class StaffAttendanceService {
   async getMyAttendance(staffId: bigint, dto: GetStaffAttendanceDto) {
     const now = new Date()
     const from = dto.from ? new Date(dto.from) : new Date(now.getFullYear(), now.getMonth(), 1)
-    const to = dto.to ? new Date(dto.to) : new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999)
+    const to = dto.to
+      ? new Date(dto.to)
+      : new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999)
     const pageSize = dto.pageSize ? Math.min(Number(dto.pageSize), 200) : 100
 
     const [data, total] = await Promise.all([
@@ -86,7 +88,12 @@ export class StaffAttendanceService {
     return { data: data.map((r) => this.serializeAttendanceLog(r)), total }
   }
 
-  private serializeAttendanceLog(r: { logId: bigint; staffId: bigint; checkIn: Date; checkOut: Date | null }) {
+  private serializeAttendanceLog(r: {
+    logId: bigint
+    staffId: bigint
+    checkIn: Date
+    checkOut: Date | null
+  }) {
     const durationMinutes = r.checkOut
       ? Math.max(0, Math.floor((r.checkOut.getTime() - r.checkIn.getTime()) / 60000))
       : null

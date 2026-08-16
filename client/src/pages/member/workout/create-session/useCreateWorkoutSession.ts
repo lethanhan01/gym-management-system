@@ -6,7 +6,7 @@ import workoutService, {
   type WorkoutPlan,
   type WorkoutPlanDay,
 } from '@/services/workout.service'
-import { trainingService } from '@/services/training.service'
+import { trainingSessionService } from '@/services/training-session.service'
 import { useAuthStore } from '@/stores/authStore'
 import { loadSessionDraft, saveSessionDraft } from './sessionDraft'
 import type { SessionConfigTarget, SessionDayConfig } from './types'
@@ -66,7 +66,7 @@ export function useCreateWorkoutSession(sessionIdValue?: string | null) {
 
       if (sessionId) {
         try {
-          const session = await trainingService.getSession(sessionId)
+const session = await trainingSessionService.getSession(sessionId)
           if (!session.assignmentId || !session.planDayId) {
             setPreselectionNotice(t('workout.createSession.noLinkedPlan'))
           } else {

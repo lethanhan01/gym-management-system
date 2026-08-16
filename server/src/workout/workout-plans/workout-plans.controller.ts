@@ -52,7 +52,7 @@ export class WorkoutPlansController {
   async update(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateWorkoutPlanDto,
-    @CurrentUser() user: AuthenticatedUser,
+    @CurrentUser() user: AuthenticatedUser
   ) {
     const data = await this.plans.update(BigInt(id), dto, user)
     return { success: true, data }
@@ -68,7 +68,11 @@ export class WorkoutPlansController {
   @Post(':id/days')
   @HttpCode(HttpStatus.CREATED)
   @RequirePermission('workout_plan.update')
-  async addDay(@Param('id', ParseIntPipe) id: number, @Body() dto: AddPlanDayDto, @CurrentUser() user: AuthenticatedUser) {
+  async addDay(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: AddPlanDayDto,
+    @CurrentUser() user: AuthenticatedUser
+  ) {
     const data = await this.plans.addDay(BigInt(id), dto, user)
     return { success: true, data }
   }
@@ -79,7 +83,7 @@ export class WorkoutPlansController {
     @Param('id', ParseIntPipe) _id: number,
     @Param('dayId', ParseIntPipe) dayId: number,
     @Body() dto: UpdatePlanDayDto,
-    @CurrentUser() user: AuthenticatedUser,
+    @CurrentUser() user: AuthenticatedUser
   ) {
     const data = await this.plans.updateDay(BigInt(_id), BigInt(dayId), dto, user)
     return { success: true, data }
@@ -90,7 +94,7 @@ export class WorkoutPlansController {
   async deleteDay(
     @Param('id', ParseIntPipe) _id: number,
     @Param('dayId', ParseIntPipe) dayId: number,
-    @CurrentUser() user: AuthenticatedUser,
+    @CurrentUser() user: AuthenticatedUser
   ) {
     await this.plans.deleteDay(BigInt(_id), BigInt(dayId), user)
     return { success: true }
@@ -103,7 +107,7 @@ export class WorkoutPlansController {
     @Param('id', ParseIntPipe) _id: number,
     @Param('dayId', ParseIntPipe) dayId: number,
     @Body() dto: AddPlanExerciseDto,
-    @CurrentUser() user: AuthenticatedUser,
+    @CurrentUser() user: AuthenticatedUser
   ) {
     const data = await this.plans.addExercise(BigInt(_id), BigInt(dayId), dto, user)
     return { success: true, data }
@@ -115,7 +119,7 @@ export class WorkoutPlansController {
     @Param('id', ParseIntPipe) _id: number,
     @Param('dayId', ParseIntPipe) _dayId: number,
     @Param('peId', ParseIntPipe) peId: number,
-    @CurrentUser() user: AuthenticatedUser,
+    @CurrentUser() user: AuthenticatedUser
   ) {
     await this.plans.removePlanExercise(BigInt(_id), BigInt(_dayId), BigInt(peId), user)
     return { success: true }
@@ -128,14 +132,14 @@ export class WorkoutPlansController {
     @Param('dayId', ParseIntPipe) dayId: number,
     @Param('peId', ParseIntPipe) peId: number,
     @Body() dto: UpdatePlanExerciseDto,
-    @CurrentUser() user: AuthenticatedUser,
+    @CurrentUser() user: AuthenticatedUser
   ) {
     const data = await this.plans.updatePlanExercise(
       BigInt(id),
       BigInt(dayId),
       BigInt(peId),
       dto,
-      user,
+      user
     )
     return { success: true, data }
   }
@@ -145,9 +149,13 @@ export class WorkoutPlansController {
     @Param('memberId', ParseIntPipe) memberId: number,
     @Query('status') status: string | undefined,
     @Query('limit') limit: string | undefined,
-    @CurrentUser() user: AuthenticatedUser,
+    @CurrentUser() user: AuthenticatedUser
   ) {
-    const data = await this.plans.listAssignments(BigInt(memberId), { status, limit: limit ? Number(limit) : undefined }, user)
+    const data = await this.plans.listAssignments(
+      BigInt(memberId),
+      { status, limit: limit ? Number(limit) : undefined },
+      user
+    )
     return { success: true, ...data }
   }
 
@@ -156,7 +164,7 @@ export class WorkoutPlansController {
   async assign(
     @Param('memberId', ParseIntPipe) memberId: number,
     @Body() dto: AssignPlanDto,
-    @CurrentUser() user: AuthenticatedUser,
+    @CurrentUser() user: AuthenticatedUser
   ) {
     const data = await this.plans.assignPlan(BigInt(memberId), dto, user)
     return { success: true, data }
@@ -172,7 +180,7 @@ export class WorkoutPlansController {
   @RequirePermission('workout_plan.create')
   async listPlanAssignments(
     @Param('id', ParseIntPipe) id: number,
-    @CurrentUser() user: AuthenticatedUser,
+    @CurrentUser() user: AuthenticatedUser
   ) {
     const data = await this.plans.listAssignmentsByPlan(BigInt(id), user)
     return { success: true, data }
@@ -181,7 +189,7 @@ export class WorkoutPlansController {
   @Delete('assignments/:assignmentId')
   async unassignMember(
     @Param('assignmentId', ParseIntPipe) assignmentId: number,
-    @CurrentUser() user: AuthenticatedUser,
+    @CurrentUser() user: AuthenticatedUser
   ) {
     await this.plans.unassignMember(BigInt(assignmentId), user)
     return { success: true }

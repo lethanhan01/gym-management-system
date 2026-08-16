@@ -6,18 +6,14 @@ import { useAuthStore } from '@/stores/authStore'
 import { useSubscriptionStore } from '@/stores/subscriptionStore'
 import subscriptionService from '@/services/subscription.service'
 import packageService from '@/services/package.service'
-import { trainingService, type TrainingSession } from '@/services/training.service'
+import { attendanceService } from '@/services/attendance.service'
+import { trainingSessionService, type TrainingSession } from '@/services/training-session.service'
 import { memberService } from '@/services/member.service'
 import { feedbackService } from '@/services/feedback.service'
 import api from '@/services/api'
 import { makeSubscription } from '@/test/subscriptionFactory'
 
 const toastSuccessMock = vi.hoisted(() => vi.fn())
-
-vi.mock('@/components/MemberUI', () => ({
-  MemberPage: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  MemberPageHeader: ({ title }: { title: React.ReactNode }) => <header>{title}</header>,
-}))
 
 vi.mock('@/services/subscription.service', async () => {
   const actual = await vi.importActual<typeof import('@/services/subscription.service')>(
@@ -39,11 +35,12 @@ vi.mock('@/services/package.service', async () => {
   }
 })
 
-vi.mock('@/services/training.service', () => ({
-  trainingService: {
-    getSessions: vi.fn(),
-    getAttendance: vi.fn(),
-  },
+vi.mock('@/services/training-session.service', () => ({
+  trainingSessionService: { getSessions: vi.fn() },
+}))
+
+vi.mock('@/services/attendance.service', () => ({
+  attendanceService: { getAttendance: vi.fn() },
 }))
 
 vi.mock('@/services/member.service', () => ({
@@ -75,8 +72,8 @@ vi.mock('@/lib/toast', () => ({
 
 const mockedGetByMember = vi.mocked(subscriptionService.getByMember)
 const mockedGetPackage = vi.mocked(packageService.get)
-const mockedGetSessions = vi.mocked(trainingService.getSessions)
-const mockedGetAttendance = vi.mocked(trainingService.getAttendance)
+const mockedGetSessions = vi.mocked(trainingSessionService.getSessions)
+const mockedGetAttendance = vi.mocked(attendanceService.getAttendance)
 const mockedGetProgress = vi.mocked(memberService.getProgress)
 const mockedGetProfile = vi.mocked(memberService.getProfile)
 const mockedListFeedback = vi.mocked(feedbackService.list)

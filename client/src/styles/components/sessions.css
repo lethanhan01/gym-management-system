@@ -39,7 +39,9 @@
   }
 
   .rogym-session-status {
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
+    white-space: nowrap;
     border: 1px solid color-mix(in srgb, var(--rogym-session-color) 27%, transparent);
     background: color-mix(in srgb, var(--rogym-session-color) 13%, transparent);
     color: var(--rogym-session-color);
@@ -63,15 +65,52 @@
   }
 
   .rogym-calendar-cell {
-    margin: 1px;
-    border: 1px solid rgba(255, 255, 255, 0.03);
-    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.04);
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.015);
+    transition: all 150ms ease;
+  }
+
+  .rogym-calendar-cell.is-empty {
+    border-color: transparent;
     background: transparent;
+    pointer-events: none;
+  }
+
+  .rogym-calendar-cell.is-interactive {
+    cursor: pointer;
+  }
+
+  .rogym-calendar-cell.is-interactive:hover {
+    border-color: rgba(66, 224, 158, 0.3);
+    background: rgba(66, 224, 158, 0.04);
   }
 
   .rogym-calendar-cell.is-today {
-    border-color: rgba(66, 224, 158, 0.33);
-    background: rgba(66, 224, 158, 0.03);
+    border-color: rgba(66, 224, 158, 0.45);
+    background: rgba(66, 224, 158, 0.05);
+  }
+
+  .rogym-calendar-cell.is-selected {
+    border-color: var(--rogym-teal);
+    background: rgba(66, 224, 158, 0.12);
+    box-shadow: 0 0 12px rgba(6, 195, 132, 0.2);
+  }
+
+  .rogym-calendar-dot {
+    display: inline-block;
+    width: 5px;
+    height: 5px;
+    border-radius: 9999px;
+    background: var(--rogym-teal);
+  }
+
+  .rogym-calendar-dot[data-status='completed'] {
+    background: rgba(255, 255, 255, 0.4);
+  }
+
+  .rogym-calendar-dot[data-status='cancelled'] {
+    background: #f59e0b;
   }
 
   .rogym-calendar-date {

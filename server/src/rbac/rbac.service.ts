@@ -24,7 +24,7 @@ export class RbacService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly audit: AuditService,
-    @Inject(PERMISSION_CACHE_PROVIDER) private readonly permCache: IPermissionCacheProvider,
+    @Inject(PERMISSION_CACHE_PROVIDER) private readonly permCache: IPermissionCacheProvider
   ) {}
 
   // ──────────────────────────────────────────────────────────────
@@ -50,7 +50,12 @@ export class RbacService {
 
   async getPermission(id: bigint) {
     const p = await this.prisma.permission.findUnique({ where: { permissionId: id } })
-    if (!p) throw new NotFoundException({ success: false, code: 'NOT_FOUND', message: 'Permission không tồn tại' })
+    if (!p)
+      throw new NotFoundException({
+        success: false,
+        code: 'NOT_FOUND',
+        message: 'Permission không tồn tại',
+      })
     return { data: this.serializePermission(p) }
   }
 
@@ -61,10 +66,11 @@ export class RbacService {
   async listGroups(page: number, pageSize: number, search?: string, includeDeleted = false) {
     const where: Prisma.GroupWhereInput = {}
     if (!includeDeleted) where.deletedAt = null
-    if (search) where.OR = [
-      { name: { contains: search, mode: 'insensitive' } },
-      { description: { contains: search, mode: 'insensitive' } },
-    ]
+    if (search)
+      where.OR = [
+        { name: { contains: search, mode: 'insensitive' } },
+        { description: { contains: search, mode: 'insensitive' } },
+      ]
 
     const [rows, total] = await Promise.all([
       this.prisma.group.findMany({
@@ -107,7 +113,12 @@ export class RbacService {
         permissions: { include: { permission: true } },
       },
     })
-    if (!g) throw new NotFoundException({ success: false, code: 'NOT_FOUND', message: 'Group không tồn tại' })
+    if (!g)
+      throw new NotFoundException({
+        success: false,
+        code: 'NOT_FOUND',
+        message: 'Group không tồn tại',
+      })
     return {
       data: {
         groupId: g.groupId.toString(),
@@ -122,7 +133,12 @@ export class RbacService {
 
   async createGroup(dto: CreateGroupDto, actorUserId: bigint) {
     if (SYSTEM_GROUPS.has(dto.name)) {
-      throw new BadRequestException({ success: false, code: 'VALIDATION_ERROR', message: 'Validation failed', details: ['name reserved for system group'] })
+      throw new BadRequestException({
+        success: false,
+        code: 'VALIDATION_ERROR',
+        message: 'Validation failed',
+        details: ['name reserved for system group'],
+      })
     }
 
     const permIds = await this.resolvePermissionCodes(dto.permissions ?? [])
@@ -166,10 +182,20 @@ export class RbacService {
 
   async updateGroup(id: bigint, dto: UpdateGroupDto, actorUserId: bigint) {
     const existing = await this.prisma.group.findFirst({ where: { groupId: id, deletedAt: null } })
-    if (!existing) throw new NotFoundException({ success: false, code: 'NOT_FOUND', message: 'Group không tồn tại' })
+    if (!existing)
+      throw new NotFoundException({
+        success: false,
+        code: 'NOT_FOUND',
+        message: 'Group không tồn tại',
+      })
 
     if (dto.name && SYSTEM_GROUPS.has(existing.name) && dto.name !== existing.name) {
-      throw new BadRequestException({ success: false, code: 'VALIDATION_ERROR', message: 'Validation failed', details: ['cannot rename system group'] })
+      throw new BadRequestException({
+        success: false,
+        code: 'VALIDATION_ERROR',
+        message: 'Validation failed',
+        details: ['cannot rename system group'],
+      })
     }
 
     const updated = await this.prisma.group.update({
@@ -207,17 +233,42 @@ export class RbacService {
       where: { groupId: id, deletedAt: null },
       include: { _count: { select: { users: true } } },
     })
-    if (!g) throw new NotFoundException({ success: false, code: 'NOT_FOUND', message: 'Group không tồn tại' })
-    if (SYSTEM_GROUPS.has(g.name)) throw new ConflictException({ success: false, code: 'GROUP_IS_SYSTEM', message: 'Không thể xóa system group' })
-    if (g._count.users > 0) throw new ConflictException({ success: false, code: 'GROUP_HAS_USERS', message: 'Group còn user được gán — hãy remove user trước' })
+    if (!g)
+      throw new NotFoundException({
+        success: false,
+        code: 'NOT_FOUND',
+        message: 'Group không tồn tại',
+      })
+    if (SYSTEM_GROUPS.has(g.name))
+      throw new ConflictException({
+        success: false,
+        code: 'GROUP_IS_SYSTEM',
+        message: 'Không thể xóa system group',
+      })
+    if (g._count.users > 0)
+      throw new ConflictException({
+        success: false,
+        code: 'GROUP_HAS_USERS',
+        message: 'Group còn user được gán — hãy remove user trước',
+      })
 
     await this.prisma.group.update({ where: { groupId: id }, data: { deletedAt: new Date() } })
-    this.audit.log({ actorUserId, action: 'group.delete', resourceType: 'group', resourceId: id.toString() })
+    this.audit.log({
+      actorUserId,
+      action: 'group.delete',
+      resourceType: 'group',
+      resourceId: id.toString(),
+    })
   }
 
   async assignPermissions(groupId: bigint, permissionIds: string[], actorUserId: bigint) {
     const g = await this.prisma.group.findFirst({ where: { groupId, deletedAt: null } })
-    if (!g) throw new NotFoundException({ success: false, code: 'NOT_FOUND', message: 'Group không tồn tại' })
+    if (!g)
+      throw new NotFoundException({
+        success: false,
+        code: 'NOT_FOUND',
+        message: 'Group không tồn tại',
+      })
 
     const bigintIds = permissionIds.map((id) => BigInt(id))
     const existing = await this.prisma.groupPermission.findMany({ where: { groupId } })
@@ -231,13 +282,23 @@ export class RbacService {
       await this.invalidatePermissionCacheForGroup(groupId)
     }
 
-    const permMap = await this.prisma.permission.findMany({ where: { permissionId: { in: bigintIds } } })
+    const permMap = await this.prisma.permission.findMany({
+      where: { permissionId: { in: bigintIds } },
+    })
     const codeMap = new Map(permMap.map((p) => [p.permissionId.toString(), p.code]))
     const added = toAdd.map((id) => codeMap.get(id.toString()) ?? '')
-    const skipped = bigintIds.filter((id) => existingIds.has(id.toString())).map((id) => codeMap.get(id.toString()) ?? '')
+    const skipped = bigintIds
+      .filter((id) => existingIds.has(id.toString()))
+      .map((id) => codeMap.get(id.toString()) ?? '')
 
     if (added.length > 0) {
-      this.audit.log({ actorUserId, action: 'group.assign-permission', resourceType: 'group', resourceId: groupId.toString(), afterData: { added } })
+      this.audit.log({
+        actorUserId,
+        action: 'group.assign-permission',
+        resourceType: 'group',
+        resourceId: groupId.toString(),
+        afterData: { added },
+      })
     }
 
     return { data: { groupId: groupId.toString(), added, skipped } }
@@ -247,13 +308,24 @@ export class RbacService {
     const row = await this.prisma.groupPermission.findUnique({
       where: { groupId_permissionId: { groupId, permissionId } },
     })
-    if (!row) throw new NotFoundException({ success: false, code: 'NOT_FOUND', message: 'Permission chưa được gán cho group này' })
+    if (!row)
+      throw new NotFoundException({
+        success: false,
+        code: 'NOT_FOUND',
+        message: 'Permission chưa được gán cho group này',
+      })
 
     await this.prisma.groupPermission.delete({
       where: { groupId_permissionId: { groupId, permissionId } },
     })
     await this.invalidatePermissionCacheForGroup(groupId)
-    this.audit.log({ actorUserId, action: 'group.revoke-permission', resourceType: 'group', resourceId: groupId.toString(), afterData: { permissionId: permissionId.toString() } })
+    this.audit.log({
+      actorUserId,
+      action: 'group.revoke-permission',
+      resourceType: 'group',
+      resourceId: groupId.toString(),
+      afterData: { permissionId: permissionId.toString() },
+    })
   }
 
   // ──────────────────────────────────────────────────────────────
@@ -261,16 +333,26 @@ export class RbacService {
   // ──────────────────────────────────────────────────────────────
 
   async listUsers(q: ListUsersDto) {
-    const { page = 1, pageSize = 20, search, groupId, role, status, includeDeleted = false, sort = 'created_at:desc' } = q
+    const {
+      page = 1,
+      pageSize = 20,
+      search,
+      groupId,
+      role,
+      status,
+      includeDeleted = false,
+      sort = 'created_at:desc',
+    } = q
 
     const where: Prisma.UserWhereInput = {}
     if (!includeDeleted) where.deletedAt = null
     if (status) where.status = status
-    if (search) where.OR = [
-      { email: { contains: search, mode: 'insensitive' } },
-      { fullName: { contains: search, mode: 'insensitive' } },
-      { phone: { contains: search, mode: 'insensitive' } },
-    ]
+    if (search)
+      where.OR = [
+        { email: { contains: search, mode: 'insensitive' } },
+        { fullName: { contains: search, mode: 'insensitive' } },
+        { phone: { contains: search, mode: 'insensitive' } },
+      ]
     if (groupId) {
       where.groups = { some: { groupId: BigInt(groupId) } }
     } else if (role) {
@@ -278,7 +360,9 @@ export class RbacService {
     }
 
     const [field, dir] = (sort ?? 'created_at:desc').split(':')
-    const orderBy = { [this.toCamel(field ?? 'created_at')]: dir === 'asc' ? 'asc' : 'desc' } as Prisma.UserOrderByWithRelationInput
+    const orderBy = {
+      [this.toCamel(field ?? 'created_at')]: dir === 'asc' ? 'asc' : 'desc',
+    } as Prisma.UserOrderByWithRelationInput
 
     const [rows, total] = await Promise.all([
       this.prisma.user.findMany({
@@ -316,7 +400,12 @@ export class RbacService {
         staff: true,
       },
     })
-    if (!u) throw new NotFoundException({ success: false, code: 'NOT_FOUND', message: 'User không tồn tại' })
+    if (!u)
+      throw new NotFoundException({
+        success: false,
+        code: 'NOT_FOUND',
+        message: 'User không tồn tại',
+      })
 
     return {
       data: {
@@ -341,7 +430,11 @@ export class RbacService {
             }
           : null,
         staff: u.staff
-          ? { staffId: u.staff.staffId.toString(), staffCode: u.staff.staffCode, position: u.staff.position }
+          ? {
+              staffId: u.staff.staffId.toString(),
+              staffCode: u.staff.staffCode,
+              position: u.staff.position,
+            }
           : null,
         createdAt: u.createdAt,
         deletedAt: u.deletedAt,
@@ -368,43 +461,100 @@ export class RbacService {
 
   async assignUserGroup(userId: bigint, groupId: bigint, actorUserId: bigint) {
     const user = await this.prisma.user.findFirst({ where: { userId, deletedAt: null } })
-    if (!user) throw new NotFoundException({ success: false, code: 'NOT_FOUND', message: 'User không tồn tại' })
+    if (!user)
+      throw new NotFoundException({
+        success: false,
+        code: 'NOT_FOUND',
+        message: 'User không tồn tại',
+      })
 
     const group = await this.prisma.group.findFirst({ where: { groupId, deletedAt: null } })
-    if (!group) throw new BadRequestException({ success: false, code: 'VALIDATION_ERROR', message: 'groupId không tồn tại' })
+    if (!group)
+      throw new BadRequestException({
+        success: false,
+        code: 'VALIDATION_ERROR',
+        message: 'groupId không tồn tại',
+      })
 
     const existing = await this.prisma.userGroup.findUnique({
       where: { userId_groupId: { userId, groupId } },
     })
-    if (existing) return { data: { userId: userId.toString(), groupId: groupId.toString(), groupName: group.name, wasAlreadyAssigned: true } }
+    if (existing)
+      return {
+        data: {
+          userId: userId.toString(),
+          groupId: groupId.toString(),
+          groupName: group.name,
+          wasAlreadyAssigned: true,
+        },
+      }
 
     await this.prisma.userGroup.create({ data: { userId, groupId } })
     await this.permCache.delete(userId.toString())
 
-    this.audit.log({ actorUserId, action: 'user.assign-group', resourceType: 'user', resourceId: userId.toString(), afterData: { groupId: groupId.toString(), groupName: group.name } })
+    this.audit.log({
+      actorUserId,
+      action: 'user.assign-group',
+      resourceType: 'user',
+      resourceId: userId.toString(),
+      afterData: { groupId: groupId.toString(), groupName: group.name },
+    })
 
-    return { data: { userId: userId.toString(), groupId: groupId.toString(), groupName: group.name, wasAlreadyAssigned: false } }
+    return {
+      data: {
+        userId: userId.toString(),
+        groupId: groupId.toString(),
+        groupName: group.name,
+        wasAlreadyAssigned: false,
+      },
+    }
   }
 
   async revokeUserGroup(userId: bigint, groupId: bigint, actorUserId: bigint) {
     const row = await this.prisma.userGroup.findUnique({
       where: { userId_groupId: { userId, groupId } },
     })
-    if (!row) throw new NotFoundException({ success: false, code: 'NOT_FOUND', message: 'Assignment không tồn tại' })
+    if (!row)
+      throw new NotFoundException({
+        success: false,
+        code: 'NOT_FOUND',
+        message: 'Assignment không tồn tại',
+      })
 
     const count = await this.prisma.userGroup.count({ where: { userId } })
-    if (count <= 1) throw new ConflictException({ success: false, code: 'USER_NEEDS_AT_LEAST_ONE_GROUP', message: 'User phải có ít nhất 1 group — assign group khác trước' })
+    if (count <= 1)
+      throw new ConflictException({
+        success: false,
+        code: 'USER_NEEDS_AT_LEAST_ONE_GROUP',
+        message: 'User phải có ít nhất 1 group — assign group khác trước',
+      })
 
     await this.prisma.userGroup.delete({ where: { userId_groupId: { userId, groupId } } })
     await this.permCache.delete(userId.toString())
-    this.audit.log({ actorUserId, action: 'user.revoke-group', resourceType: 'user', resourceId: userId.toString(), afterData: { groupId: groupId.toString() } })
+    this.audit.log({
+      actorUserId,
+      action: 'user.revoke-group',
+      resourceType: 'user',
+      resourceId: userId.toString(),
+      afterData: { groupId: groupId.toString() },
+    })
   }
 
   async updateUser(id: bigint, dto: UpdateUserDto, actorUserId: bigint, isSelf: boolean) {
     const user = await this.prisma.user.findFirst({ where: { userId: id, deletedAt: null } })
-    if (!user) throw new NotFoundException({ success: false, code: 'NOT_FOUND', message: 'User không tồn tại' })
+    if (!user)
+      throw new NotFoundException({
+        success: false,
+        code: 'NOT_FOUND',
+        message: 'User không tồn tại',
+      })
 
-    if (isSelf && dto.status) throw new BadRequestException({ success: false, code: 'FORBIDDEN', message: 'Không thể tự cập nhật status' })
+    if (isSelf && dto.status)
+      throw new BadRequestException({
+        success: false,
+        code: 'FORBIDDEN',
+        message: 'Không thể tự cập nhật status',
+      })
 
     const data: Prisma.UserUncheckedUpdateInput = {}
     if (dto.fullName !== undefined) data.fullName = dto.fullName
@@ -440,31 +590,57 @@ export class RbacService {
   }
 
   async deleteUser(id: bigint, actorUserId: bigint) {
-    if (id === actorUserId) throw new ConflictException({ success: false, code: 'USER_IS_SELF', message: 'Không thể tự xóa tài khoản của mình' })
+    if (id === actorUserId)
+      throw new ConflictException({
+        success: false,
+        code: 'USER_IS_SELF',
+        message: 'Không thể tự xóa tài khoản của mình',
+      })
 
     const user = await this.prisma.user.findFirst({
       where: { userId: id, deletedAt: null },
       include: { groups: { include: { group: true } }, member: true, staff: true },
     })
-    if (!user) throw new NotFoundException({ success: false, code: 'NOT_FOUND', message: 'User không tồn tại' })
+    if (!user)
+      throw new NotFoundException({
+        success: false,
+        code: 'NOT_FOUND',
+        message: 'User không tồn tại',
+      })
 
     const isOwner = user.groups.some((ug) => ug.group.name === 'owner')
     if (isOwner) {
       const ownerCount = await this.prisma.userGroup.count({
         where: { group: { name: 'owner' }, user: { deletedAt: null } },
       })
-      if (ownerCount <= 1) throw new ConflictException({ success: false, code: 'USER_IS_LAST_OWNER', message: 'Không thể xóa owner duy nhất còn lại' })
+      if (ownerCount <= 1)
+        throw new ConflictException({
+          success: false,
+          code: 'USER_IS_LAST_OWNER',
+          message: 'Không thể xóa owner duy nhất còn lại',
+        })
     }
 
     const now = new Date()
     await this.prisma.$transaction(async (tx) => {
       await tx.user.update({ where: { userId: id }, data: { deletedAt: now } })
-      if (user.member) await tx.member.update({ where: { memberId: user.member.memberId }, data: { deletedAt: now } })
-      if (user.staff) await tx.staff.update({ where: { staffId: user.staff.staffId }, data: { deletedAt: now } })
+      if (user.member)
+        await tx.member.update({
+          where: { memberId: user.member.memberId },
+          data: { deletedAt: now },
+        })
+      if (user.staff)
+        await tx.staff.update({ where: { staffId: user.staff.staffId }, data: { deletedAt: now } })
     })
 
     await this.permCache.delete(id.toString())
-    this.audit.log({ actorUserId, action: 'user.delete', resourceType: 'user', resourceId: id.toString(), beforeData: { email: user.email, fullName: user.fullName } })
+    this.audit.log({
+      actorUserId,
+      action: 'user.delete',
+      resourceType: 'user',
+      resourceId: id.toString(),
+      beforeData: { email: user.email, fullName: user.fullName },
+    })
   }
 
   // ──────────────────────────────────────────────────────────────
@@ -476,7 +652,13 @@ export class RbacService {
     const rows = await this.prisma.permission.findMany({ where: { code: { in: codes } } })
     const found = new Set(rows.map((r) => r.code))
     const unknown = codes.filter((c) => !found.has(c))
-    if (unknown.length > 0) throw new BadRequestException({ success: false, code: 'VALIDATION_ERROR', message: 'Validation failed', details: unknown.map((c) => `unknown permission: ${c}`) })
+    if (unknown.length > 0)
+      throw new BadRequestException({
+        success: false,
+        code: 'VALIDATION_ERROR',
+        message: 'Validation failed',
+        details: unknown.map((c) => `unknown permission: ${c}`),
+      })
     return rows.map((r) => r.permissionId)
   }
 
@@ -488,8 +670,18 @@ export class RbacService {
     await Promise.all(users.map((user) => this.permCache.delete(user.userId.toString())))
   }
 
-  private serializePermission(p: { permissionId: bigint; code: string; name: string; description: string | null }) {
-    return { permissionId: p.permissionId.toString(), code: p.code, name: p.name, description: p.description }
+  private serializePermission(p: {
+    permissionId: bigint
+    code: string
+    name: string
+    description: string | null
+  }) {
+    return {
+      permissionId: p.permissionId.toString(),
+      code: p.code,
+      name: p.name,
+      description: p.description,
+    }
   }
 
   private toCamel(snake: string) {

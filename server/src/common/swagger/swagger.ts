@@ -1,6 +1,10 @@
 import type { INestApplication } from '@nestjs/common'
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger'
-import type { OpenAPIObject, OperationObject, PathItemObject } from '@nestjs/swagger/dist/interfaces/open-api-spec.interface'
+import type {
+  OpenAPIObject,
+  OperationObject,
+  PathItemObject,
+} from '@nestjs/swagger/dist/interfaces/open-api-spec.interface'
 import packageJson from '../../../package.json'
 
 const API_PREFIX = '/api/v1'
@@ -65,14 +69,31 @@ const tagForPath = (path: string): string => {
   if (route.startsWith('/line')) return 'LINE'
   if (route.startsWith('/devices')) return 'Devices'
   if (route.startsWith('/payments') || route.includes('/payment-accounts')) return 'Payments'
-  if (route.startsWith('/training-sessions') || route.startsWith('/attendance') || route.startsWith('/member-progress') || route.endsWith('/progress')) return 'Training'
-  if (route.startsWith('/workout-plans') || route.startsWith('/workout-logs') || route.startsWith('/exercises')) return 'Workout'
-  if (route.startsWith('/rooms') || route.startsWith('/equipment') || route.startsWith('/maintenance-logs')) return 'Facility'
+  if (
+    route.startsWith('/training-sessions') ||
+    route.startsWith('/attendance') ||
+    route.startsWith('/member-progress') ||
+    route.endsWith('/progress')
+  )
+    return 'Training'
+  if (
+    route.startsWith('/workout-plans') ||
+    route.startsWith('/workout-logs') ||
+    route.startsWith('/exercises')
+  )
+    return 'Workout'
+  if (
+    route.startsWith('/rooms') ||
+    route.startsWith('/equipment') ||
+    route.startsWith('/maintenance-logs')
+  )
+    return 'Facility'
   if (route.startsWith('/subscriptions') || route.startsWith('/packages')) return 'Membership'
   if (route.startsWith('/feedback')) return 'Feedback'
   if (route.startsWith('/staff')) return 'Staff'
   if (route.startsWith('/members')) return 'Members'
-  if (route.startsWith('/groups') || route.startsWith('/permissions') || route.startsWith('/users')) return 'RBAC'
+  if (route.startsWith('/groups') || route.startsWith('/permissions') || route.startsWith('/users'))
+    return 'RBAC'
   if (route.startsWith('/reports')) return 'Reports'
   if (route.startsWith('/notifications')) return 'Notifications'
   return 'API'
@@ -90,11 +111,12 @@ const setOperationMetadata = (path: string, item: PathItemObject): void => {
     value.responses = Object.fromEntries(
       Object.entries({ ...STANDARD_ERRORS, ...value.responses }).map(([status, response]) => {
         const fallback = STANDARD_ERRORS[status]
-        if (!fallback || typeof response !== 'object' || response === null) return [status, response]
+        if (!fallback || typeof response !== 'object' || response === null)
+          return [status, response]
         const documented = response as Record<string, unknown>
         const content = documented.content ?? fallback?.content
         return [status, { ...fallback, ...documented, content }]
-      }),
+      })
     )
     for (const status of ['200', '201', '202']) {
       const response = value.responses[status]

@@ -56,7 +56,11 @@ describe('LineMessagingService', () => {
   beforeEach(() => {
     for (const key of Object.keys(env)) delete env[key]
     Object.assign(env, defaultEnv)
-    service = new LineMessagingService(mockPrisma as any, mockConfig as any, mockNotifications as any)
+    service = new LineMessagingService(
+      mockPrisma as any,
+      mockConfig as any,
+      mockNotifications as any
+    )
     mockFetch = jest.fn().mockResolvedValue({ ok: true, text: jest.fn().mockResolvedValue('') })
     global.fetch = mockFetch as any
     jest.clearAllMocks()
@@ -145,9 +149,7 @@ describe('LineMessagingService', () => {
     expect(mockFetch).toHaveBeenCalledWith(
       'https://api.line.me/v2/bot/message/push',
       expect.objectContaining({
-        body: expect.stringContaining(
-          'redirect=%2Fmember%2Fworkout%2Fsessions%3FsessionId%3D1'
-        ),
+        body: expect.stringContaining('redirect=%2Fmember%2Fworkout%2Fsessions%3FsessionId%3D1'),
       })
     )
     const body = JSON.parse(mockFetch.mock.calls[0][1].body)

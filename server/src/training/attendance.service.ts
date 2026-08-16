@@ -27,7 +27,12 @@ type Caller = {
 export interface AttendanceRow {
   attendanceId: bigint
   memberId: bigint
-  member: { memberCode: string; userId?: bigint; primaryTrainerId?: bigint | null; user: { fullName: string } }
+  member: {
+    memberCode: string
+    userId?: bigint
+    primaryTrainerId?: bigint | null
+    user: { fullName: string }
+  }
   subscriptionId: bigint
   sessionId?: bigint | null
   startTime: Date
@@ -56,7 +61,7 @@ export class AttendanceService {
     private readonly audit: AuditService,
     private readonly notifications: NotificationsService,
     private readonly config: ConfigService,
-    private readonly lineMessaging: LineMessagingService,
+    private readonly lineMessaging: LineMessagingService
   ) {}
 
   async listAttendance(dto: ListAttendanceLogsDto, caller: Caller) {
@@ -104,7 +109,13 @@ export class AttendanceService {
       orderBy: { startTime: 'desc' },
       include: {
         member: {
-          select: { memberId: true, memberCode: true, userId: true, primaryTrainerId: true, user: { select: { fullName: true } } },
+          select: {
+            memberId: true,
+            memberCode: true,
+            userId: true,
+            primaryTrainerId: true,
+            user: { select: { fullName: true } },
+          },
         },
         subscription: { select: { subscriptionId: true, startDate: true, endDate: true } },
         session: { select: { sessionId: true, startTime: true, endTime: true } },
@@ -170,7 +181,13 @@ export class AttendanceService {
       },
       include: {
         member: {
-          select: { memberId: true, memberCode: true, userId: true, primaryTrainerId: true, user: { select: { fullName: true } } },
+          select: {
+            memberId: true,
+            memberCode: true,
+            userId: true,
+            primaryTrainerId: true,
+            user: { select: { fullName: true } },
+          },
         },
         subscription: { select: { subscriptionId: true, endDate: true } },
       },
@@ -273,7 +290,13 @@ export class AttendanceService {
         },
         include: {
           member: {
-            select: { memberId: true, memberCode: true, userId: true, primaryTrainerId: true, user: { select: { fullName: true } } },
+            select: {
+              memberId: true,
+              memberCode: true,
+              userId: true,
+              primaryTrainerId: true,
+              user: { select: { fullName: true } },
+            },
           },
           subscription: { select: { subscriptionId: true, endDate: true } },
         },
@@ -470,12 +493,11 @@ export class AttendanceService {
   }
 
   private signQrTokenDate(date: string) {
-    const secret = this.config.get<string>('QR_CHECKIN_SECRET') || this.config.get<string>('JWT_SECRET')
+    const secret =
+      this.config.get<string>('QR_CHECKIN_SECRET') || this.config.get<string>('JWT_SECRET')
     if (!secret) {
       throw new Error('QR_CHECKIN_SECRET or JWT_SECRET is required')
     }
-    return createHmac('sha256', secret)
-      .update(`qr-checkin:v1:${date}`)
-      .digest('base64url')
+    return createHmac('sha256', secret).update(`qr-checkin:v1:${date}`).digest('base64url')
   }
 }

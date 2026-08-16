@@ -1,4 +1,8 @@
-import { BadRequestException, InternalServerErrorException, NotFoundException } from '@nestjs/common'
+import {
+  BadRequestException,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common'
 import { Prisma } from '@prisma/client'
 import { ReportsService } from './reports.service'
 
@@ -214,7 +218,9 @@ describe('ReportsService', () => {
       mockPrisma.staff.findMany.mockResolvedValue([
         { staffId: 1n, staffCode: 'ST-001', user: { fullName: 'Trainer A' } },
       ])
-      mockPrisma.trainingSession.groupBy.mockResolvedValue([{ trainerStaffId: 1n, _count: { _all: 3 } }])
+      mockPrisma.trainingSession.groupBy.mockResolvedValue([
+        { trainerStaffId: 1n, _count: { _all: 3 } },
+      ])
       mockPrisma.feedback.findMany.mockResolvedValue([])
 
       const result = await service.staffPerformance(FROM, TO)
@@ -306,7 +312,7 @@ describe('ReportsService', () => {
       mockPrisma.staff.findMany.mockRejectedValue(new Error('DB down'))
 
       await expect(service.employeePerformance(FROM, TO)).rejects.toThrow(
-        InternalServerErrorException,
+        InternalServerErrorException
       )
     })
   })
@@ -318,7 +324,7 @@ describe('ReportsService', () => {
   describe('employeePerformanceDetail', () => {
     it('throws BadRequestException when staffId is not numeric', async () => {
       await expect(service.employeePerformanceDetail('abc', FROM, TO)).rejects.toThrow(
-        BadRequestException,
+        BadRequestException
       )
     })
 
@@ -326,7 +332,7 @@ describe('ReportsService', () => {
       mockPrisma.staff.findFirst.mockResolvedValue(null)
 
       await expect(service.employeePerformanceDetail('1', FROM, TO)).rejects.toThrow(
-        NotFoundException,
+        NotFoundException
       )
     })
 

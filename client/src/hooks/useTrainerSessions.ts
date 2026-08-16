@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { trainingService, type TrainingSession } from '@/services/training.service'
+import { trainingSessionService, type TrainingSession } from '@/services/training-session.service'
 import { getApiError } from '@/lib/api-error'
 
 export interface TrainerSessionFilters {
@@ -32,7 +32,7 @@ export function useTrainerSessions({
     setLoading(true)
     setError(null)
     try {
-      const result = await trainingService.getSessions({
+const result = await trainingSessionService.getSessions({
         memberId,
         roomId,
         status,

@@ -1,6 +1,12 @@
-import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import HomeNavbar from '@/components/home/HomeNavbar'
+import {
+  Card,
+  CardTitle,
+  CardDescription,
+  Badge,
+  ButtonLink,
+} from '@/components/ui'
 
 export default function ProgramsPage() {
   const { t } = useTranslation('home')
@@ -35,25 +41,45 @@ export default function ProgramsPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {programs.map((x) => (
-            <div key={x.t} className="rounded-[40px] border border-white/10 bg-white/5 p-7">
-              <div className="text-sm font-bold uppercase tracking-widest text-[#42e09e]">
-                {x.t}
+            <Card
+              key={x.t}
+              variant="glass"
+              padding="lg"
+              className="rounded-[40px] border border-white/10 bg-white/5 transition-all duration-300 hover:-translate-y-1.5 hover:border-[var(--rogym-teal)]/40 hover:shadow-[0_12px_32px_rgba(0,0,0,0.35)] flex flex-col justify-start"
+            >
+              <div className="mb-3">
+                <Badge tone="accent" size="sm" className="font-bold tracking-widest uppercase">
+                  {x.t}
+                </Badge>
               </div>
-              <div className="mt-3 text-lg font-semibold">{x.d.split('—')[0]}</div>
-              <div className="mt-2 text-white/70">{x.d}</div>
-            </div>
+              <CardTitle size="md" className="mt-1 font-bold text-white text-lg sm:text-xl">
+                {x.d.split('—')[0]}
+              </CardTitle>
+              <CardDescription className="mt-2.5 text-white/70 leading-relaxed">
+                {x.d}
+              </CardDescription>
+            </Card>
           ))}
         </div>
 
         <div className="mt-12 flex gap-4 flex-wrap">
-          <Link to="/member/register" className="rogym-btn rogym-btn--primary rogym-btn--hero">
-            <span>{t('programs.registerBtn')}</span>
-          </Link>
-          <Link to="/contact" className="rogym-btn rogym-btn--hero rogym-btn--outline-white">
-            <span>{t('programs.contactBtn')}</span>
-          </Link>
+          <ButtonLink
+            to="/member/register"
+            variant="primary"
+            size="hero"
+          >
+            {t('programs.registerBtn')}
+          </ButtonLink>
+          <ButtonLink
+            to="/contact"
+            variant="outline-white"
+            size="hero"
+          >
+            {t('programs.contactBtn')}
+          </ButtonLink>
         </div>
       </div>
     </div>
   )
 }
+
