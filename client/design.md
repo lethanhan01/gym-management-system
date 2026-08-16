@@ -224,6 +224,8 @@ Button luôn có base class `.rogym-btn` và một variant:
 
 Không mô phỏng button bằng `div`. Icon-only button phải có `aria-label`.
 
+Button sử dụng bo góc vuông mềm (`--btn-radius`) đồng bộ với `SearchToolbar` và hệ thống form control (`0.75rem` / `rounded-xl` cho size `md`, `0.5rem` cho `xs`/`sm`, `0.875rem` cho `xl`).
+
 Sweep animation được giới hạn trong `@media (hover: hover) and (pointer: fine)` để tránh hiện tượng sticky hover trên màn hình cảm ứng điện thoại/máy tính bảng. Trên thiết bị cảm ứng, nút kích hoạt phản hồi `:active` (scale nhẹ 0.98).
 
 Để tắt sweep trên một button cụ thể (ví dụ khi cần dùng Tailwind `transition-*`), thêm `data-no-sweep`:
