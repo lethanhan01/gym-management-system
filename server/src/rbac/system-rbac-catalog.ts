@@ -79,6 +79,11 @@ export const SYSTEM_PERMISSIONS: readonly SystemPermissionDefinition[] = [
     description: 'Cập nhật kết quả xử lý bảo trì',
   },
   { code: 'session.read', name: 'Xem lịch tập', description: 'Xem lịch tập với huấn luyện viên' },
+  {
+    code: 'session.book',
+    name: 'Đặt lịch tập với PT',
+    description: 'Cho phép hội viên tự đặt và hủy lịch tập của chính mình với PT phụ trách',
+  },
   { code: 'session.manage', name: 'Quản lý lịch tập', description: 'Tạo, sửa và hủy lịch tập' },
   {
     code: 'attendance.read',
@@ -215,6 +220,7 @@ export const SYSTEM_ROLE_PERMISSIONS: Record<SystemGroupName, readonly string[]>
     'payment.read',
     'payment.create',
     'session.read',
+    'session.book',
     'attendance.read',
     'attendance.self-checkin',
     'progress.read',

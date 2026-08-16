@@ -3,6 +3,7 @@ import type { TFunction } from 'i18next'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import {
+  CalendarPlus,
   CalendarX,
   ChevronLeft,
   ChevronRight,
@@ -16,6 +17,8 @@ import {
   type TrainingSession,
   type TrainingSessionDetail,
 } from '@/services/training.service'
+import { BookPtSessionModal } from './BookPtSessionModal'
+import { CancelPtBookingModal } from './CancelPtBookingModal'
 import {
   MemberCard,
   MemberErrorState,
@@ -535,12 +538,14 @@ function SessionDetailModal({
   error,
   onClose,
   onStart,
+  onCancel,
 }: {
   session: TrainingSessionDetail | null
   loading: boolean
   error: string | null
   onClose: () => void
   onStart: (sessionId: string) => void
+  onCancel?: (session: TrainingSession) => void
 }) {
   const { t, i18n } = useTranslation('member')
   const exercises = session?.planDay?.exercises ?? []
@@ -553,13 +558,24 @@ function SessionDetailModal({
       size="lg"
       footer={
         session ? (
-          <Button
-            variant="primary"
-            fullWidth
-            onClick={() => onStart(session.sessionId)}
-          >
-            {t('workout.schedule.buttonStart')}
-          </Button>
+          <div className="flex w-full items-center gap-3">
+            {session.status === 'scheduled' && onCancel && (
+              <Button
+                variant="danger"
+                className="flex-1"
+                onClick={() => onCancel(session)}
+              >
+                {t('workout.schedule.booking.cancelBtn')}
+              </Button>
+            )}
+            <Button
+              variant="primary"
+              className={session.status === 'scheduled' && onCancel ? 'flex-1' : 'w-full'}
+              onClick={() => onStart(session.sessionId)}
+            >
+              {t('workout.schedule.buttonStart')}
+            </Button>
+          </div>
         ) : undefined
       }
     >
@@ -680,6 +696,9 @@ export default function WorkoutSchedulePage() {
   const [detailLoading, setDetailLoading] = useState(false)
   const [detailError, setDetailError] = useState<string | null>(null)
 
+  const [bookModalOpen, setBookModalOpen] = useState(false)
+  const [sessionToCancel, setSessionToCancel] = useState<TrainingSession | null>(null)
+
   const loadSessions = useCallback(() => {
     setLoading(true)
     setError(null)
@@ -784,6 +803,16 @@ export default function WorkoutSchedulePage() {
         eyebrow={t('workout.schedule.eyebrow')}
         title={t('workout.schedule.pageTitle')}
         description={t('workout.schedule.description')}
+        actions={
+          <Button
+            variant="primary"
+            onClick={() => setBookModalOpen(true)}
+            className="flex items-center gap-2"
+          >
+            <CalendarPlus size={16} />
+            <span>{t('workout.schedule.booking.btnBook')}</span>
+          </Button>
+        }
       />
       <div className="grid gap-5 lg:grid-cols-[65fr_35fr]">
         <CalendarView sessions={all} onSelect={handleSelectSession} />
@@ -796,8 +825,26 @@ export default function WorkoutSchedulePage() {
           error={detailError}
           onClose={handleCloseSession}
           onStart={handleStartSession}
+          onCancel={(session) => setSessionToCancel(session)}
         />
       )}
+      <BookPtSessionModal
+        open={bookModalOpen}
+        onClose={() => setBookModalOpen(false)}
+        onSuccess={() => {
+          loadSessions()
+        }}
+        scheduledCount={upcoming.length}
+      />
+      <CancelPtBookingModal
+        open={!!sessionToCancel}
+        session={sessionToCancel}
+        onClose={() => setSessionToCancel(null)}
+        onSuccess={() => {
+          setSelectedSessionId(null)
+          loadSessions()
+        }}
+      />
     </MemberPage>
   )
 }

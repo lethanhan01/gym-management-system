@@ -16,3 +16,22 @@ model Notification {
   @@index([recipientUserId, notificationId(sort: Desc)])
   @@map("notifications")
 }
+
+model DebugLog {
+  id         BigInt    @id @default(autoincrement())
+  message    String
+  source     String?   @db.VarChar(500)
+  lineno     Int?
+  colno      Int?
+  stack      String?
+  pageUrl    String    @map("page_url") @db.VarChar(2000)
+  userAgent  String    @map("user_agent") @db.VarChar(500)
+  isLineApp  Boolean?  @map("is_line_app")
+  liffOs     String?   @map("liff_os") @db.VarChar(50)
+  liffUserId String?   @map("liff_user_id") @db.VarChar(100)
+  metadata   Json?
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamp(6)
+
+  @@index([createdAt(sort: Desc)])
+  @@map("debug_logs")
+}

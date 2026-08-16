@@ -31,6 +31,9 @@ import {
   QrCheckinDto,
   CheckoutDto,
   CreateProgressDto,
+  TrainerAvailabilityQueryDto,
+  CreateMemberBookingDto,
+  CancelBookingDto,
 } from './dto'
 
 @Controller()
@@ -50,6 +53,57 @@ export class TrainingController {
       memberId: user.memberId,
     })
     return { success: true, ...result }
+  }
+
+  @Get('training-sessions/trainer-availability')
+  @DatabaseRetryable()
+  @RequirePermission('session.book')
+  async getTrainerAvailability(
+    @Query() query: TrainerAvailabilityQueryDto,
+    @CurrentUser() user: AuthenticatedUser
+  ) {
+    const result = await this.training.getTrainerAvailability(query, {
+      userId: user.userId,
+      roles: user.roles,
+      staffId: user.staffId,
+      memberId: user.memberId,
+    })
+    return { success: true, ...result }
+  }
+
+  @Post('training-sessions/book')
+  @HttpCode(HttpStatus.CREATED)
+  @DatabaseRetryable()
+  @RequirePermission('session.book')
+  async bookSession(
+    @Body() dto: CreateMemberBookingDto,
+    @CurrentUser() user: AuthenticatedUser
+  ) {
+    const result = await this.training.bookSessionByMember(dto, {
+      userId: user.userId,
+      roles: user.roles,
+      staffId: user.staffId,
+      memberId: user.memberId,
+    })
+    return { success: true, ...result }
+  }
+
+  @Post('training-sessions/:id/cancel-booking')
+  @HttpCode(HttpStatus.OK)
+  @DatabaseRetryable()
+  @RequirePermission('session.book')
+  async cancelBooking(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: CancelBookingDto,
+    @CurrentUser() user: AuthenticatedUser
+  ) {
+    const result = await this.training.cancelBookingByMember(BigInt(id), dto, {
+      userId: user.userId,
+      roles: user.roles,
+      staffId: user.staffId,
+      memberId: user.memberId,
+    })
+    return result
   }
 
   @Get('training-sessions/:id')

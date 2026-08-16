@@ -93,6 +93,31 @@ export interface TrainingSessionPayload {
   endTime?: string
 }
 
+export interface TrainerAvailabilitySlot {
+  slotIndex: number
+  startTime: string
+  endTime: string
+  available: boolean
+  reason?: 'PAST_TIME' | 'TRAINER_BUSY' | 'MEMBER_BUSY'
+}
+
+export interface TrainerAvailabilityData {
+  date: string
+  trainer: {
+    staffId: string
+    fullName: string
+    avatarFileId: string | null
+  }
+  slots: TrainerAvailabilitySlot[]
+}
+
+export interface CreateMemberBookingPayload {
+  startTime: string
+  endTime: string
+  assignmentId?: string
+  planDayId?: string
+}
+
 export interface MemberProgress {
   progressId: string
   memberId: string
@@ -264,5 +289,31 @@ export const trainingService = {
       height: toNullableNumber(progress.height),
       bmi: toNullableNumber(progress.bmi),
     }))
+  },
+
+  getTrainerAvailability: async (date: string): Promise<TrainerAvailabilityData> => {
+    const res = await api.get<
+      TrainerAvailabilityData & { success: boolean; data?: TrainerAvailabilityData }
+    >('/training-sessions/trainer-availability', { params: { date } })
+    return (res.data?.data ?? res.data) as TrainerAvailabilityData
+  },
+
+  bookSession: async (payload: CreateMemberBookingPayload): Promise<TrainingSession> => {
+    const res = await api.post<{ success: boolean; data: TrainingSession }>(
+      '/training-sessions/book',
+      payload
+    )
+    return res.data.data
+  },
+
+  cancelBooking: async (
+    sessionId: string,
+    reason: string
+  ): Promise<{ success: boolean; message: string }> => {
+    const res = await api.post<{ success: boolean; message: string }>(
+      `/training-sessions/${sessionId}/cancel-booking`,
+      { reason }
+    )
+    return res.data
   },
 }

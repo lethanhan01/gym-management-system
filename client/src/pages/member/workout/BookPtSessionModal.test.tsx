@@ -1,0 +1,157 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { BookPtSessionModal } from './BookPtSessionModal'
+import { trainingService, type TrainerAvailabilityData } from '@/services/training.service'
+import workoutService from '@/services/workout.service'
+
+vi.mock('@/services/training.service', () => ({
+  trainingService: {
+    getTrainerAvailability: vi.fn(),
+    bookSession: vi.fn(),
+  },
+}))
+
+vi.mock('@/services/workout.service', () => ({
+  default: {
+    getAssignments: vi.fn(),
+    getPlan: vi.fn(),
+  },
+}))
+
+vi.mock('@/stores/authStore', () => ({
+  useAuthStore: () => ({
+    user: { memberId: '10', fullName: 'Test Member' },
+  }),
+}))
+
+const mockAvailability: TrainerAvailabilityData = {
+  date: '2026-08-18',
+  trainer: {
+    staffId: '5',
+    fullName: 'Coach Alex',
+    avatarFileId: null,
+  },
+  slots: [
+    {
+      slotIndex: 1,
+      startTime: '2026-08-18T06:00:00.000Z',
+      endTime: '2026-08-18T07:00:00.000Z',
+      available: true,
+    },
+    {
+      slotIndex: 2,
+      startTime: '2026-08-18T07:00:00.000Z',
+      endTime: '2026-08-18T08:00:00.000Z',
+      available: false,
+      reason: 'TRAINER_BUSY',
+    },
+  ],
+}
+
+describe('BookPtSessionModal', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    vi.mocked(workoutService.getAssignments).mockResolvedValue([])
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  it('fetches and displays trainer name and availability slots', async () => {
+    vi.mocked(trainingService.getTrainerAvailability).mockResolvedValue(mockAvailability)
+
+    render(
+      <BookPtSessionModal
+        open={true}
+        onClose={vi.fn()}
+        onSuccess={vi.fn()}
+        scheduledCount={1}
+      />
+    )
+
+    await waitFor(() => expect(trainingService.getTrainerAvailability).toHaveBeenCalled())
+    expect(screen.getByText('Coach Alex')).toBeInTheDocument()
+    expect(screen.getByText('Số buổi hẹn đang chờ: 1/3')).toBeInTheDocument()
+    expect(screen.getByText('Còn trống')).toBeInTheDocument()
+    expect(screen.getByText('Đã có lịch')).toBeInTheDocument()
+  })
+
+  it('selects an available slot and submits booking successfully', async () => {
+    vi.mocked(trainingService.getTrainerAvailability).mockResolvedValue(mockAvailability)
+    vi.mocked(trainingService.bookSession).mockResolvedValue({
+      sessionId: '100',
+      memberId: '10',
+      memberName: 'Test Member',
+      trainerStaffId: '5',
+      trainerName: 'Coach Alex',
+      roomId: '1',
+      roomName: 'Room A',
+      assignmentId: null,
+      planDayId: null,
+      workoutPlan: null,
+      planDay: null,
+      startTime: mockAvailability.slots[0].startTime,
+      endTime: mockAvailability.slots[0].endTime,
+      status: 'scheduled',
+    })
+
+    const handleSuccess = vi.fn()
+    const handleClose = vi.fn()
+
+    render(
+      <BookPtSessionModal
+        open={true}
+        onClose={handleClose}
+        onSuccess={handleSuccess}
+        scheduledCount={0}
+      />
+    )
+
+    await waitFor(() => expect(trainingService.getTrainerAvailability).toHaveBeenCalled())
+
+    // Click available slot
+    const availableSlotBtn = screen.getByText('Còn trống').closest('button')
+    expect(availableSlotBtn).not.toBeNull()
+    fireEvent.click(availableSlotBtn!)
+
+    // Submit booking
+    const submitBtn = screen.getByRole('button', { name: /Xác nhận đặt lịch/i })
+    expect(submitBtn).toBeEnabled()
+    fireEvent.click(submitBtn)
+
+    await waitFor(() => {
+      expect(trainingService.bookSession).toHaveBeenCalledWith({
+        startTime: mockAvailability.slots[0].startTime,
+        endTime: mockAvailability.slots[0].endTime,
+        assignmentId: undefined,
+        planDayId: undefined,
+      })
+    })
+
+    expect(handleSuccess).toHaveBeenCalled()
+    expect(handleClose).toHaveBeenCalled()
+  })
+
+  it('displays friendly message when member has no primary trainer', async () => {
+    const error: any = Object.assign(new Error('No primary trainer'), {
+      isAxiosError: true,
+      response: { data: { code: 'NO_PRIMARY_TRAINER' } },
+    })
+    vi.mocked(trainingService.getTrainerAvailability).mockRejectedValue(error)
+
+    render(
+      <BookPtSessionModal
+        open={true}
+        onClose={vi.fn()}
+        onSuccess={vi.fn()}
+        scheduledCount={0}
+      />
+    )
+
+    await waitFor(() => expect(trainingService.getTrainerAvailability).toHaveBeenCalled())
+    expect(
+      screen.getByText(/Bạn chưa được gán PT phụ trách/i)
+    ).toBeInTheDocument()
+  })
+})

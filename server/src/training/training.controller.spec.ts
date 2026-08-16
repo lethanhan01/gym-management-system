@@ -19,6 +19,9 @@ const mockService = {
   recordProgress: jest.fn(),
   deleteProgress: jest.fn(),
   deviceAccessEvent: jest.fn(),
+  getTrainerAvailability: jest.fn(),
+  bookSessionByMember: jest.fn(),
+  cancelBookingByMember: jest.fn(),
 } as unknown as TrainingService
 
 const ctrl = new TrainingController(mockService)
@@ -53,6 +56,39 @@ describe('TrainingController', () => {
       const res = await ctrl.listSessions(query, trainerUser)
       expect(mockService.listSessions).toHaveBeenCalledWith(query, ctx(trainerUser))
       expect(res).toEqual({ success: true, ...serviceResult })
+    })
+  })
+
+  describe('getTrainerAvailability', () => {
+    it('delegates to getTrainerAvailability with query and caller context', async () => {
+      const serviceResult = { date: '2026-08-18', trainer: { fullName: 'Alex' }, slots: [] }
+      ;(mockService.getTrainerAvailability as jest.Mock).mockResolvedValue(serviceResult)
+      const query = { date: '2026-08-18' }
+      const res = await ctrl.getTrainerAvailability(query, memberUser)
+      expect(mockService.getTrainerAvailability).toHaveBeenCalledWith(query, ctx(memberUser))
+      expect(res).toEqual({ success: true, ...serviceResult })
+    })
+  })
+
+  describe('bookSession', () => {
+    it('delegates to bookSessionByMember and wraps success', async () => {
+      const serviceResult = { data: { sessionId: '10' } }
+      ;(mockService.bookSessionByMember as jest.Mock).mockResolvedValue(serviceResult)
+      const dto = { startTime: '2026-08-18T09:00:00.000Z', endTime: '2026-08-18T10:00:00.000Z' }
+      const res = await ctrl.bookSession(dto, memberUser)
+      expect(mockService.bookSessionByMember).toHaveBeenCalledWith(dto, ctx(memberUser))
+      expect(res).toEqual({ success: true, ...serviceResult })
+    })
+  })
+
+  describe('cancelBooking', () => {
+    it('delegates to cancelBookingByMember with BigInt id and caller context', async () => {
+      const serviceResult = { success: true, message: 'Cancelled' }
+      ;(mockService.cancelBookingByMember as jest.Mock).mockResolvedValue(serviceResult)
+      const dto = { reason: 'Busy' }
+      const res = await ctrl.cancelBooking(10, dto, memberUser)
+      expect(mockService.cancelBookingByMember).toHaveBeenCalledWith(10n, dto, ctx(memberUser))
+      expect(res).toEqual(serviceResult)
     })
   })
 

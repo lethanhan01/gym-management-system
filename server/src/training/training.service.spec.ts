@@ -118,7 +118,7 @@ function makeCaller(overrides: object = {}) {
 // Mocks
 // ---------------------------------------------------------------------------
 
-const mockPrisma = {
+const mockPrisma: any = {
   trainingSession: {
     findFirst: jest.fn(),
     findMany: jest.fn(),
@@ -131,6 +131,7 @@ const mockPrisma = {
   },
   gymRoom: {
     findFirst: jest.fn(),
+    findMany: jest.fn(),
   },
   staff: {
     findFirst: jest.fn(),
@@ -157,6 +158,7 @@ const mockPrisma = {
     create: jest.fn(),
     update: jest.fn(),
   },
+  $transaction: jest.fn((cb: any) => (typeof cb === 'function' ? cb(mockPrisma) : Promise.all(cb))),
 }
 
 const mockAudit = {
@@ -1412,23 +1414,386 @@ describe('TrainingService', () => {
   })
 
   // -------------------------------------------------------------------------
-  // deviceAccessEvent — ATTENDANCE_ALREADY_OPEN + session update + deduped
+  // findAvailableRoom
   // -------------------------------------------------------------------------
 
-  describe('deviceAccessEvent — additional paths', () => {
-    it('delegates to deviceAccessService (additional paths covered in device-access.service.spec.ts)', async () => {
-      const body = {
-        memberIdentifier: 'MEM-ADV1',
-        occurredAt: new Date().toISOString(),
-        deviceId: 'DEVICE-ADV1',
+  describe('findAvailableRoom', () => {
+    it('returns null when no rooms exist', async () => {
+      mockPrisma.gymRoom.findMany.mockResolvedValue([])
+      const room = await service.findAvailableRoom(futureTime(30), futureTime(90))
+      expect(room).toBeNull()
+    })
+
+    it('returns first available room when some rooms are busy', async () => {
+      const room1 = { roomId: 1n, name: 'Room 1' }
+      const room2 = { roomId: 2n, name: 'Room 2' }
+      mockPrisma.gymRoom.findMany.mockResolvedValue([room1, room2])
+      mockPrisma.trainingSession.findMany.mockResolvedValue([{ roomId: 1n }])
+
+      const room = await service.findAvailableRoom(futureTime(30), futureTime(90))
+      expect(room).toEqual(room2)
+    })
+
+    it('returns null when all rooms are busy', async () => {
+      const room1 = { roomId: 1n, name: 'Room 1' }
+      mockPrisma.gymRoom.findMany.mockResolvedValue([room1])
+      mockPrisma.trainingSession.findMany.mockResolvedValue([{ roomId: 1n }])
+
+      const room = await service.findAvailableRoom(futureTime(30), futureTime(90))
+      expect(room).toBeNull()
+    })
+  })
+
+  // -------------------------------------------------------------------------
+  // getTrainerAvailability
+  // -------------------------------------------------------------------------
+
+  describe('getTrainerAvailability', () => {
+    it('throws ForbiddenException when caller memberId is not found', async () => {
+      mockPrisma.member.findFirst.mockResolvedValue(null)
+      const caller = makeCaller({ roles: ['member'], memberId: undefined })
+
+      await expect(
+        service.getTrainerAvailability({ date: '2026-08-18' }, caller)
+      ).rejects.toMatchObject({ response: expect.objectContaining({ code: 'FORBIDDEN' }) })
+    })
+
+    it('throws NotFoundException when member profile is not found', async () => {
+      mockPrisma.member.findFirst.mockResolvedValue(null)
+      const caller = makeCaller({ roles: ['member'], memberId: 10n })
+
+      await expect(
+        service.getTrainerAvailability({ date: '2026-08-18' }, caller)
+      ).rejects.toMatchObject({ response: expect.objectContaining({ code: 'NOT_FOUND' }) })
+    })
+
+    it('throws BadRequestException (NO_PRIMARY_TRAINER) when member has no primary trainer', async () => {
+      mockPrisma.member.findFirst.mockResolvedValue(makeMember({ primaryTrainerId: null }))
+      const caller = makeCaller({ roles: ['member'], memberId: 10n })
+
+      await expect(
+        service.getTrainerAvailability({ date: '2026-08-18' }, caller)
+      ).rejects.toMatchObject({
+        response: expect.objectContaining({ code: 'NO_PRIMARY_TRAINER' }),
+      })
+    })
+
+    it('returns 15 slots with availability states for assigned PT', async () => {
+      const member = {
+        memberId: 10n,
+        primaryTrainerId: 5n,
+        primaryTrainer: {
+          staffId: 5n,
+          user: { fullName: 'Coach Alex', avatarFileId: 101n },
+        },
       }
-      const expected = { data: { attendanceLogId: '10', deduped: false } }
-      mockDeviceAccessService.deviceAccessEvent.mockResolvedValue(expected)
+      mockPrisma.member.findFirst.mockResolvedValue(member)
 
-      const result = await service.deviceAccessEvent(body)
+      const futureDate = '2026-12-25'
+      // Trainer has a session at 08:00 - 09:00 (slot 2)
+      const trainerSession = {
+        startTime: new Date(`${futureDate}T08:00:00+07:00`),
+        endTime: new Date(`${futureDate}T09:00:00+07:00`),
+      }
+      // Member has a session at 10:00 - 11:00 (slot 4)
+      const memberSession = {
+        startTime: new Date(`${futureDate}T10:00:00+07:00`),
+        endTime: new Date(`${futureDate}T11:00:00+07:00`),
+      }
 
-      expect(mockDeviceAccessService.deviceAccessEvent).toHaveBeenCalledWith(body)
-      expect(result).toBe(expected)
+      mockPrisma.trainingSession.findMany
+        .mockResolvedValueOnce([trainerSession])
+        .mockResolvedValueOnce([memberSession])
+
+      const caller = makeCaller({ roles: ['member'], memberId: 10n })
+      const result = await service.getTrainerAvailability({ date: futureDate }, caller)
+
+      expect(result.date).toBe(futureDate)
+      expect(result.trainer.fullName).toBe('Coach Alex')
+      expect(result.slots).toHaveLength(15)
+
+      const slot2 = result.slots.find((s) => s.slotIndex === 3) // 08:00 is slot 3 (06:00 is 1, 07:00 is 2, 08:00 is 3)
+      expect(slot2?.available).toBe(false)
+      expect(slot2?.reason).toBe('TRAINER_BUSY')
+
+      const slot4 = result.slots.find((s) => s.slotIndex === 5) // 10:00 is slot 5
+      expect(slot4?.available).toBe(false)
+      expect(slot4?.reason).toBe('MEMBER_BUSY')
+    })
+  })
+
+  // -------------------------------------------------------------------------
+  // bookSessionByMember
+  // -------------------------------------------------------------------------
+
+  describe('bookSessionByMember', () => {
+    function makeBookingDto(overrides: object = {}) {
+      const start = new Date(Date.now() + 24 * 60 * 60 * 1000) // tomorrow
+      start.setHours(9, 0, 0, 0)
+      const end = new Date(start.getTime() + 60 * 60 * 1000)
+      return {
+        startTime: start.toISOString(),
+        endTime: end.toISOString(),
+        ...overrides,
+      }
+    }
+
+    it('throws BadRequestException (INVALID_DURATION) when duration is not 60 mins', async () => {
+      const start = futureTime(60)
+      const end = futureTime(90) // 30 mins
+      const caller = makeCaller({ roles: ['member'], memberId: 10n })
+
+      await expect(
+        service.bookSessionByMember(
+          makeBookingDto({ startTime: start.toISOString(), endTime: end.toISOString() }),
+          caller
+        )
+      ).rejects.toMatchObject({
+        response: expect.objectContaining({ code: 'INVALID_DURATION' }),
+      })
+    })
+
+    it('throws BadRequestException (INVALID_BOOKING_TIME) when booking > 7 days ahead', async () => {
+      const start = new Date(Date.now() + 8 * 24 * 60 * 60 * 1000)
+      const end = new Date(start.getTime() + 60 * 60 * 1000)
+      const caller = makeCaller({ roles: ['member'], memberId: 10n })
+
+      await expect(
+        service.bookSessionByMember(
+          makeBookingDto({ startTime: start.toISOString(), endTime: end.toISOString() }),
+          caller
+        )
+      ).rejects.toMatchObject({
+        response: expect.objectContaining({ code: 'INVALID_BOOKING_TIME' }),
+      })
+    })
+
+    it('throws BadRequestException (NO_PRIMARY_TRAINER) when member has no assigned PT', async () => {
+      mockPrisma.member.findFirst.mockResolvedValue(makeMember({ primaryTrainerId: null }))
+      const caller = makeCaller({ roles: ['member'], memberId: 10n })
+
+      await expect(
+        service.bookSessionByMember(makeBookingDto(), caller)
+      ).rejects.toMatchObject({
+        response: expect.objectContaining({ code: 'NO_PRIMARY_TRAINER' }),
+      })
+    })
+
+    it('throws BadRequestException (BOOKING_LIMIT_EXCEEDED) when member has >= 3 scheduled sessions', async () => {
+      const member = {
+        memberId: 10n,
+        primaryTrainerId: 5n,
+        primaryTrainer: { staffId: 5n, deletedAt: null },
+      }
+      mockPrisma.member.findFirst.mockResolvedValue(member)
+      mockPrisma.trainingSession.count.mockResolvedValue(3) // 3 scheduled already
+      const caller = makeCaller({ roles: ['member'], memberId: 10n })
+
+      await expect(
+        service.bookSessionByMember(makeBookingDto(), caller)
+      ).rejects.toMatchObject({
+        response: expect.objectContaining({ code: 'BOOKING_LIMIT_EXCEEDED' }),
+      })
+    })
+
+    it('throws ConflictException (MEMBER_HAS_NO_ACTIVE_SUBSCRIPTION) when no active sub', async () => {
+      const member = {
+        memberId: 10n,
+        primaryTrainerId: 5n,
+        primaryTrainer: { staffId: 5n, deletedAt: null },
+      }
+      mockPrisma.member.findFirst.mockResolvedValue(member)
+      mockPrisma.trainingSession.count.mockResolvedValue(0)
+      mockPrisma.subscription.findFirst.mockResolvedValue(null)
+      const caller = makeCaller({ roles: ['member'], memberId: 10n })
+
+      await expect(
+        service.bookSessionByMember(makeBookingDto(), caller)
+      ).rejects.toMatchObject({
+        response: expect.objectContaining({ code: 'MEMBER_HAS_NO_ACTIVE_SUBSCRIPTION' }),
+      })
+    })
+
+    it('throws ConflictException (TRAINER_TIME_OVERLAP) when trainer has overlap', async () => {
+      const member = {
+        memberId: 10n,
+        primaryTrainerId: 5n,
+        primaryTrainer: { staffId: 5n, deletedAt: null },
+      }
+      mockPrisma.member.findFirst.mockResolvedValue(member)
+      mockPrisma.trainingSession.count.mockResolvedValue(0)
+      mockPrisma.subscription.findFirst.mockResolvedValue(makeSubscription())
+      // checkOverlap for trainer findFirst -> returns existing session
+      mockPrisma.trainingSession.findFirst.mockResolvedValueOnce(makeSession({ trainerStaffId: 5n }))
+
+      const caller = makeCaller({ roles: ['member'], memberId: 10n })
+
+      await expect(
+        service.bookSessionByMember(makeBookingDto(), caller)
+      ).rejects.toMatchObject({
+        response: expect.objectContaining({ code: 'TRAINER_TIME_OVERLAP' }),
+      })
+    })
+
+    it('throws ConflictException (MEMBER_TIME_OVERLAP) when member has overlap', async () => {
+      const member = {
+        memberId: 10n,
+        primaryTrainerId: 5n,
+        primaryTrainer: { staffId: 5n, deletedAt: null },
+      }
+      mockPrisma.member.findFirst.mockResolvedValue(member)
+      mockPrisma.trainingSession.count.mockResolvedValue(0)
+      mockPrisma.subscription.findFirst.mockResolvedValue(makeSubscription())
+      // trainer overlap -> null, member overlap -> returns session
+      mockPrisma.trainingSession.findFirst
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce(makeSession({ memberId: 10n }))
+
+      const caller = makeCaller({ roles: ['member'], memberId: 10n })
+
+      await expect(
+        service.bookSessionByMember(makeBookingDto(), caller)
+      ).rejects.toMatchObject({
+        response: expect.objectContaining({ code: 'MEMBER_TIME_OVERLAP' }),
+      })
+    })
+
+    it('throws ConflictException (NO_ROOM_AVAILABLE) when all rooms are busy', async () => {
+      const member = {
+        memberId: 10n,
+        primaryTrainerId: 5n,
+        primaryTrainer: { staffId: 5n, deletedAt: null },
+      }
+      mockPrisma.member.findFirst.mockResolvedValue(member)
+      mockPrisma.trainingSession.count.mockResolvedValue(0)
+      mockPrisma.subscription.findFirst.mockResolvedValue(makeSubscription())
+      // trainer overlap -> null, member overlap -> null
+      mockPrisma.trainingSession.findFirst
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce(null)
+      // gymRoom -> 1 room, but it is busy
+      mockPrisma.gymRoom.findMany.mockResolvedValue([{ roomId: 1n, name: 'Room 1' }])
+      mockPrisma.trainingSession.findMany.mockResolvedValue([{ roomId: 1n }])
+
+      const caller = makeCaller({ roles: ['member'], memberId: 10n })
+
+      await expect(
+        service.bookSessionByMember(makeBookingDto(), caller)
+      ).rejects.toMatchObject({
+        response: expect.objectContaining({ code: 'NO_ROOM_AVAILABLE' }),
+      })
+    })
+
+    it('successfully books session, assigns available room and sends notification', async () => {
+      const member = {
+        memberId: 10n,
+        primaryTrainerId: 5n,
+        primaryTrainer: { staffId: 5n, deletedAt: null },
+      }
+      mockPrisma.member.findFirst.mockResolvedValue(member)
+      mockPrisma.trainingSession.count.mockResolvedValue(1)
+      mockPrisma.subscription.findFirst.mockResolvedValue(makeSubscription())
+      // overlaps -> null
+      mockPrisma.trainingSession.findFirst
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce(null)
+      mockPrisma.gymRoom.findMany.mockResolvedValue([{ roomId: 2n, name: 'Room 2' }])
+      mockPrisma.trainingSession.findMany.mockResolvedValue([])
+
+      const createdSession = makeSession({ roomId: 2n, trainerStaffId: 5n, memberId: 10n })
+      mockPrisma.trainingSession.create.mockResolvedValue(createdSession)
+
+      const caller = makeCaller({ roles: ['member'], memberId: 10n })
+      const result = await service.bookSessionByMember(makeBookingDto(), caller)
+
+      expect(result.data.sessionId).toBe('1')
+      expect(mockAudit.log).toHaveBeenCalledWith(
+        expect.objectContaining({ action: 'training.member_book' })
+      )
+      expect(mockNotifications.safeNotifyUser).toHaveBeenCalled()
+    })
+  })
+
+  // -------------------------------------------------------------------------
+  // cancelBookingByMember
+  // -------------------------------------------------------------------------
+
+  describe('cancelBookingByMember', () => {
+    it('throws NotFoundException when session does not exist', async () => {
+      mockPrisma.trainingSession.findFirst.mockResolvedValue(null)
+      const caller = makeCaller({ roles: ['member'], memberId: 10n })
+
+      await expect(
+        service.cancelBookingByMember(999n, { reason: 'Busy' }, caller)
+      ).rejects.toMatchObject({
+        response: expect.objectContaining({ code: 'NOT_FOUND' }),
+      })
+    })
+
+    it('throws ForbiddenException when session belongs to another member', async () => {
+      const session = makeSession({ memberId: 99n })
+      mockPrisma.trainingSession.findFirst.mockResolvedValue(session)
+      const caller = makeCaller({ roles: ['member'], memberId: 10n })
+
+      await expect(
+        service.cancelBookingByMember(1n, { reason: 'Busy' }, caller)
+      ).rejects.toMatchObject({
+        response: expect.objectContaining({ code: 'FORBIDDEN' }),
+      })
+    })
+
+    it('throws ConflictException when session is completed or cancelled', async () => {
+      const session = makeSession({ memberId: 10n, status: 'completed' })
+      mockPrisma.trainingSession.findFirst.mockResolvedValue(session)
+      const caller = makeCaller({ roles: ['member'], memberId: 10n })
+
+      await expect(
+        service.cancelBookingByMember(1n, { reason: 'Busy' }, caller)
+      ).rejects.toMatchObject({
+        response: expect.objectContaining({ code: 'SESSION_NOT_CANCELLABLE' }),
+      })
+    })
+
+    it('throws BadRequestException (LATE_CANCELLATION) when session starts in < 2 hours', async () => {
+      const session = makeSession({
+        memberId: 10n,
+        status: 'scheduled',
+        startTime: futureTime(90), // starts in 1.5 hours (< 2h)
+      })
+      mockPrisma.trainingSession.findFirst.mockResolvedValue(session)
+      const caller = makeCaller({ roles: ['member'], memberId: 10n })
+
+      await expect(
+        service.cancelBookingByMember(1n, { reason: 'Busy' }, caller)
+      ).rejects.toMatchObject({
+        response: expect.objectContaining({ code: 'LATE_CANCELLATION' }),
+      })
+    })
+
+    it('successfully cancels session when >= 2 hours and logs audit with reason', async () => {
+      const session = makeSession({
+        memberId: 10n,
+        status: 'scheduled',
+        startTime: futureTime(180), // starts in 3 hours (>= 2h)
+      })
+      mockPrisma.trainingSession.findFirst.mockResolvedValue(session)
+      mockPrisma.trainingSession.update.mockResolvedValue({
+        ...session,
+        status: 'cancelled',
+      })
+
+      const caller = makeCaller({ roles: ['member'], memberId: 10n })
+      const result = await service.cancelBookingByMember(1n, { reason: 'Family emergency' }, caller)
+
+      expect(result.success).toBe(true)
+      expect(mockAudit.log).toHaveBeenCalledWith(
+        expect.objectContaining({
+          action: 'training.member_cancel',
+          afterData: expect.objectContaining({ reason: 'Family emergency' }),
+        })
+      )
+      expect(mockNotifications.safeNotifyManyUsers).toHaveBeenCalled()
     })
   })
 })
+

@@ -27,13 +27,13 @@ function requiredPermissionCodes(): string[] {
 }
 
 describe('system RBAC catalog', () => {
-  it('contains 51 unique permissions and covers every decorated controller permission', () => {
+  it('contains 52 unique permissions and covers every decorated controller permission', () => {
     const catalogCodes = SYSTEM_PERMISSIONS.map((permission) => permission.code)
     const decoratedCodes = requiredPermissionCodes()
 
-    expect(catalogCodes).toHaveLength(51)
-    expect(new Set(catalogCodes).size).toBe(51)
-    expect(decoratedCodes).toHaveLength(48)
+    expect(catalogCodes).toHaveLength(52)
+    expect(new Set(catalogCodes).size).toBe(52)
+    expect(decoratedCodes).toHaveLength(49)
     expect(decoratedCodes.every((code) => catalogCodes.includes(code))).toBe(true)
   })
 
@@ -67,6 +67,7 @@ describe('system RBAC catalog', () => {
     )
     expect(SYSTEM_ROLE_PERMISSIONS.member).toEqual(
       expect.arrayContaining([
+        'session.book',
         'feedback.read',
         'subscription.cancel',
         'exercise.read',

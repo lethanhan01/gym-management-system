@@ -10,14 +10,17 @@ import { AuditService } from '../common/audit/audit.service'
 import { PrismaService } from '../prisma/prisma.service'
 import { AttendanceService, AttendanceRow } from './attendance.service'
 import { DeviceAccessService } from './device-access.service'
+import { CancelBookingDto } from './dto/cancel-booking.dto'
 import { CancelSessionDto } from './dto/cancel-session.dto'
 import { CheckoutDto } from './dto/checkout.dto'
+import { CreateMemberBookingDto } from './dto/create-member-booking.dto'
 import { CreateProgressDto } from './dto/create-progress.dto'
 import { CreateSessionDto } from './dto/create-session.dto'
 import { ListAttendanceLogsDto } from './dto/list-attendance.dto'
 import { ListSessionsDto } from './dto/list-sessions.dto'
 import { ManualCheckinDto } from './dto/manual-checkin.dto'
 import { QrCheckinDto } from './dto/qr-checkin.dto'
+import { TrainerAvailabilityQueryDto } from './dto/trainer-availability-query.dto'
 import { UpdateSessionDto } from './dto/update-session.dto'
 import { resolveCallerFilter } from './filters/caller-query-filter'
 import { NotificationsService } from '../notifications/notifications.service'
@@ -513,6 +516,407 @@ export class TrainingService {
     await this.notifySessionCancelled(cancelled, caller.userId)
   }
 
+  async findAvailableRoom(
+    startTime: Date,
+    endTime: Date,
+    tx?: Prisma.TransactionClient
+  ): Promise<{ roomId: bigint; name: string } | null> {
+    const client = tx ?? this.prisma
+    const allRooms = await client.gymRoom.findMany({
+      select: { roomId: true, name: true },
+      orderBy: { roomId: 'asc' },
+    })
+    if (allRooms.length === 0) return null
+
+    const busySessions = await client.trainingSession.findMany({
+      where: {
+        status: { not: TrainingSessionStatus.cancelled },
+        deletedAt: null,
+        startTime: { lt: endTime },
+        endTime: { gt: startTime },
+      },
+      select: { roomId: true },
+    })
+
+    const busyRoomIds = new Set(busySessions.map((s) => s.roomId))
+    const available = allRooms.find((r) => !busyRoomIds.has(r.roomId))
+    return available ?? null
+  }
+
+  async getTrainerAvailability(query: TrainerAvailabilityQueryDto, caller: Caller) {
+    const memberId = await this.resolveCallerMemberId(caller)
+    if (!memberId) {
+      throw new ForbiddenException({
+        success: false,
+        code: 'FORBIDDEN',
+        message: 'Khong tim thay member profile',
+      })
+    }
+
+    const member = await this.prisma.member.findFirst({
+      where: { memberId, deletedAt: null },
+      select: {
+        memberId: true,
+        primaryTrainerId: true,
+        primaryTrainer: {
+          select: {
+            staffId: true,
+            user: {
+              select: {
+                fullName: true,
+                avatarFileId: true,
+              },
+            },
+          },
+        },
+      },
+    })
+
+    if (!member) {
+      throw new NotFoundException({
+        success: false,
+        code: 'NOT_FOUND',
+        message: 'Member khong ton tai',
+      })
+    }
+
+    if (!member.primaryTrainerId || !member.primaryTrainer) {
+      throw new BadRequestException({
+        success: false,
+        code: 'NO_PRIMARY_TRAINER',
+        message: 'Ban chua duoc gan PT phu trach',
+      })
+    }
+
+    const [yStr, mStr, dStr] = query.date.split('-')
+    const year = parseInt(yStr, 10)
+    const month = parseInt(mStr, 10) - 1
+    const day = parseInt(dStr, 10)
+
+    const dayStart = new Date(Date.UTC(year, month, day, 0 - 7, 0, 0, 0))
+    const dayEnd = new Date(Date.UTC(year, month, day, 24 - 7, 0, 0, 0))
+
+    const [trainerSessions, memberSessions] = await Promise.all([
+      this.prisma.trainingSession.findMany({
+        where: {
+          trainerStaffId: member.primaryTrainerId,
+          status: { not: TrainingSessionStatus.cancelled },
+          deletedAt: null,
+          startTime: { lt: dayEnd },
+          endTime: { gt: dayStart },
+        },
+        select: { startTime: true, endTime: true },
+      }),
+      this.prisma.trainingSession.findMany({
+        where: {
+          memberId: member.memberId,
+          status: { not: TrainingSessionStatus.cancelled },
+          deletedAt: null,
+          startTime: { lt: dayEnd },
+          endTime: { gt: dayStart },
+        },
+        select: { startTime: true, endTime: true },
+      }),
+    ])
+
+    const now = new Date()
+    const graceThreshold = new Date(now.getTime() + 5 * 60 * 1000)
+
+    const slots: Array<{
+      slotIndex: number
+      startTime: string
+      endTime: string
+      available: boolean
+      reason?: 'PAST_TIME' | 'TRAINER_BUSY' | 'MEMBER_BUSY'
+    }> = []
+
+    for (let hour = 6; hour < 21; hour++) {
+      const slotIndex = hour - 5
+      const slotStart = new Date(Date.UTC(year, month, day, hour - 7, 0, 0, 0))
+      const slotEnd = new Date(Date.UTC(year, month, day, hour + 1 - 7, 0, 0, 0))
+
+      let available = true
+      let reason: 'PAST_TIME' | 'TRAINER_BUSY' | 'MEMBER_BUSY' | undefined
+
+      if (slotStart <= graceThreshold) {
+        available = false
+        reason = 'PAST_TIME'
+      } else if (
+        trainerSessions.some((s) => s.startTime < slotEnd && s.endTime && s.endTime > slotStart)
+      ) {
+        available = false
+        reason = 'TRAINER_BUSY'
+      } else if (
+        memberSessions.some((s) => s.startTime < slotEnd && s.endTime && s.endTime > slotStart)
+      ) {
+        available = false
+        reason = 'MEMBER_BUSY'
+      }
+
+      slots.push({
+        slotIndex,
+        startTime: slotStart.toISOString(),
+        endTime: slotEnd.toISOString(),
+        available,
+        ...(reason ? { reason } : {}),
+      })
+    }
+
+    return {
+      date: query.date,
+      trainer: {
+        staffId: member.primaryTrainer.staffId.toString(),
+        fullName: member.primaryTrainer.user.fullName,
+        avatarFileId: member.primaryTrainer.user.avatarFileId?.toString() ?? null,
+      },
+      slots,
+    }
+  }
+
+  async bookSessionByMember(dto: CreateMemberBookingDto, caller: Caller) {
+    const memberId = await this.resolveCallerMemberId(caller)
+    if (!memberId) {
+      throw new ForbiddenException({
+        success: false,
+        code: 'FORBIDDEN',
+        message: 'Khong tim thay member profile',
+      })
+    }
+
+    const startTime = new Date(dto.startTime)
+    const endTime = new Date(dto.endTime)
+    if (isNaN(startTime.getTime()) || isNaN(endTime.getTime()) || endTime <= startTime) {
+      throw new BadRequestException({
+        success: false,
+        code: 'VALIDATION_ERROR',
+        message: 'endTime phai lon hon startTime',
+      })
+    }
+
+    const durationMs = endTime.getTime() - startTime.getTime()
+    if (durationMs !== 60 * 60 * 1000) {
+      throw new BadRequestException({
+        success: false,
+        code: 'INVALID_DURATION',
+        message: 'Thoi luong buoi tap phai dung 60 phut',
+      })
+    }
+
+    const now = new Date()
+    const minBookingTime = new Date(now.getTime() + 5 * 60 * 1000)
+    const maxBookingTime = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000)
+
+    if (startTime < minBookingTime || startTime > maxBookingTime) {
+      throw new BadRequestException({
+        success: false,
+        code: 'INVALID_BOOKING_TIME',
+        message: 'Chi duoc dat lich truoc toi da 7 ngay va it nhat 5 phut truoc gio tap',
+      })
+    }
+
+    const session = await this.prisma.$transaction(async (tx) => {
+      const member = await tx.member.findFirst({
+        where: { memberId, deletedAt: null },
+        select: {
+          memberId: true,
+          primaryTrainerId: true,
+          primaryTrainer: { select: { staffId: true, deletedAt: true } },
+        },
+      })
+
+      if (
+        !member ||
+        !member.primaryTrainerId ||
+        !member.primaryTrainer ||
+        member.primaryTrainer.deletedAt
+      ) {
+        throw new BadRequestException({
+          success: false,
+          code: 'NO_PRIMARY_TRAINER',
+          message: 'Ban chua duoc gan PT phu trach hoac PT khong ton tai',
+        })
+      }
+
+      const scheduledCount = await tx.trainingSession.count({
+        where: {
+          memberId,
+          status: TrainingSessionStatus.scheduled,
+          deletedAt: null,
+          startTime: { gte: now },
+        },
+      })
+      if (scheduledCount >= 3) {
+        throw new BadRequestException({
+          success: false,
+          code: 'BOOKING_LIMIT_EXCEEDED',
+          message: 'Ban chi duoc phep co toi da 3 lich tap dang cho dien ra',
+        })
+      }
+
+      const sessionDate = new Date(
+        Date.UTC(startTime.getUTCFullYear(), startTime.getUTCMonth(), startTime.getUTCDate())
+      )
+      const activeSub = await tx.subscription.findFirst({
+        where: {
+          memberId,
+          status: 'active',
+          deletedAt: null,
+          startDate: { lte: sessionDate },
+          endDate: { gte: sessionDate },
+        },
+      })
+      if (!activeSub) {
+        throw new ConflictException({
+          success: false,
+          code: 'MEMBER_HAS_NO_ACTIVE_SUBSCRIPTION',
+          message: 'Member khong co subscription active tai ngay session',
+        })
+      }
+
+      await this.checkOverlap(
+        null,
+        member.primaryTrainerId,
+        startTime,
+        endTime,
+        'TRAINER_TIME_OVERLAP',
+        undefined,
+        undefined,
+        tx
+      )
+
+      await this.checkOverlap(
+        null,
+        null,
+        startTime,
+        endTime,
+        'MEMBER_TIME_OVERLAP',
+        undefined,
+        memberId,
+        tx
+      )
+
+      const availableRoom = await this.findAvailableRoom(startTime, endTime, tx)
+      if (!availableRoom) {
+        throw new ConflictException({
+          success: false,
+          code: 'NO_ROOM_AVAILABLE',
+          message: 'Khong con phong tap nao trong trong khung gio nay',
+        })
+      }
+
+      const planLink = await this.resolveSessionPlanLink(
+        dto.assignmentId,
+        dto.planDayId,
+        memberId,
+        false,
+        tx
+      )
+
+      const created = await tx.trainingSession.create({
+        data: {
+          memberId,
+          trainerStaffId: member.primaryTrainerId,
+          roomId: availableRoom.roomId,
+          assignmentId: planLink?.assignmentId ?? null,
+          planDayId: planLink?.planDayId ?? null,
+          startTime,
+          endTime,
+          status: TrainingSessionStatus.scheduled,
+        },
+        include: SESSION_SUMMARY_INCLUDE,
+      })
+
+      return created
+    })
+
+    await this.audit.log({
+      actorUserId: caller.userId,
+      action: 'training.member_book',
+      resourceType: 'training_session',
+      resourceId: session.sessionId.toString(),
+      afterData: this.serializeSession(session) as unknown as Record<string, unknown>,
+    })
+
+    await this.notifySessionCreated(session, caller.userId)
+
+    return { data: this.serializeSession(session) }
+  }
+
+  async cancelBookingByMember(id: bigint, dto: CancelBookingDto, caller: Caller) {
+    const memberId = await this.resolveCallerMemberId(caller)
+    if (!memberId) {
+      throw new ForbiddenException({
+        success: false,
+        code: 'FORBIDDEN',
+        message: 'Khong tim thay member profile',
+      })
+    }
+
+    const session = await this.prisma.trainingSession.findFirst({
+      where: { sessionId: id, deletedAt: null },
+      include: SESSION_SUMMARY_INCLUDE,
+    })
+    if (!session) {
+      throw new NotFoundException({
+        success: false,
+        code: 'NOT_FOUND',
+        message: 'Session khong ton tai',
+      })
+    }
+
+    if (session.memberId !== memberId) {
+      throw new ForbiddenException({
+        success: false,
+        code: 'FORBIDDEN',
+        message: 'Khong co quyen huy session cua nguoi khac',
+      })
+    }
+
+    if (session.status !== TrainingSessionStatus.scheduled) {
+      throw new ConflictException({
+        success: false,
+        code: 'SESSION_NOT_CANCELLABLE',
+        message: 'Chi co the huy buoi tap dang o trang thai scheduled',
+      })
+    }
+
+    const now = Date.now()
+    if (session.startTime.getTime() - now < 2 * 60 * 60 * 1000) {
+      throw new BadRequestException({
+        success: false,
+        code: 'LATE_CANCELLATION',
+        message:
+          'Chi duoc phep huy truoc gio tap toi thieu 2 tieng. Vui long lien he truc tiep voi PT de duoc ho tro.',
+      })
+    }
+
+    const cancelled = await this.prisma.trainingSession.update({
+      where: { sessionId: id },
+      data: { status: TrainingSessionStatus.cancelled },
+      include: SESSION_SUMMARY_INCLUDE,
+    })
+
+    await this.audit.log({
+      actorUserId: caller.userId,
+      action: 'training.member_cancel',
+      resourceType: 'training_session',
+      resourceId: id.toString(),
+      beforeData: this.serializeSession(session) as unknown as Record<string, unknown>,
+      afterData: {
+        ...this.serializeSession(cancelled),
+        reason: dto.reason,
+        cancelledBy: caller.userId.toString(),
+      } as unknown as Record<string, unknown>,
+    })
+
+    await this.notifySessionCancelled(cancelled, caller.userId)
+
+    return {
+      success: true,
+      message: 'Da huy lich tap thanh cong',
+    }
+  }
+
   async updateSessionStatus(id: bigint, status: 'in_progress' | 'completed', caller: Caller) {
     const session = await this.prisma.trainingSession.findFirst({
       where: { sessionId: id, deletedAt: null },
@@ -908,8 +1312,10 @@ export class TrainingService {
     assignmentIdValue: string | undefined,
     planDayIdValue: string | undefined,
     memberId: bigint,
-    required: boolean
+    required: boolean,
+    tx?: Prisma.TransactionClient
   ): Promise<{ assignmentId: bigint; planDayId: bigint } | null> {
+    const client = tx ?? this.prisma
     if (!assignmentIdValue && !planDayIdValue) {
       if (required) {
         throw new BadRequestException({
@@ -931,7 +1337,7 @@ export class TrainingService {
 
     const assignmentId = this.parseBigIntField(assignmentIdValue, 'assignmentId')
     const planDayId = this.parseBigIntField(planDayIdValue, 'planDayId')
-    const assignment = await this.prisma.memberWorkoutPlan.findFirst({
+    const assignment = await client.memberWorkoutPlan.findFirst({
       where: {
         assignmentId,
         memberId,
@@ -951,7 +1357,7 @@ export class TrainingService {
       })
     }
 
-    const planDay = await this.prisma.workoutPlanDay.findFirst({
+    const planDay = await client.workoutPlanDay.findFirst({
       where: {
         planDayId,
         planId: assignment.planId,
@@ -976,8 +1382,11 @@ export class TrainingService {
     startTime: Date,
     endTime: Date,
     errorCode: string,
-    excludeId?: bigint
+    excludeId?: bigint,
+    memberId?: bigint,
+    tx?: Prisma.TransactionClient
   ) {
+    const client = tx ?? this.prisma
     const where: Prisma.TrainingSessionWhereInput = {
       status: { not: TrainingSessionStatus.cancelled },
       deletedAt: null,
@@ -986,13 +1395,15 @@ export class TrainingService {
     }
     if (roomId) where.roomId = roomId
     if (trainerStaffId) where.trainerStaffId = trainerStaffId
+    if (memberId) where.memberId = memberId
     if (excludeId) where.sessionId = { not: excludeId }
 
-    const overlap = await this.prisma.trainingSession.findFirst({
+    const overlap = await client.trainingSession.findFirst({
       where,
       include: {
         room: { select: { name: true } },
         trainer: { select: { user: { select: { fullName: true } } } },
+        member: { select: { user: { select: { fullName: true } } } },
       },
     })
     if (overlap) {
@@ -1012,10 +1423,12 @@ export class TrainingService {
       const e = fmtTime(overlap.endTime)
       const day = fmtDate(overlap.startTime)
 
-      const message =
-        errorCode === 'ROOM_TIME_OVERLAP'
-          ? `Phong "${overlap.room?.name ?? ''}" da co buoi tap vao ${day} luc ${s}–${e}`
-          : `PT "${overlap.trainer?.user?.fullName ?? ''}" da co buoi tap vao ${day} luc ${s}–${e}`
+      let message = `PT "${overlap.trainer?.user?.fullName ?? ''}" da co buoi tap vao ${day} luc ${s}–${e}`
+      if (errorCode === 'ROOM_TIME_OVERLAP') {
+        message = `Phong "${overlap.room?.name ?? ''}" da co buoi tap vao ${day} luc ${s}–${e}`
+      } else if (errorCode === 'MEMBER_TIME_OVERLAP') {
+        message = `Ban da co buoi tap khac vao ${day} luc ${s}–${e}`
+      }
 
       throw new ConflictException({
         success: false,
