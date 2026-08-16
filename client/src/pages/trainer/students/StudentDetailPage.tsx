@@ -281,6 +281,42 @@ export default function StudentDetailPage() {
               <p className="mb-4 text-sm rogym-text-secondary">
                 {assignment.plan?.description ?? t('students.detail.plan.noDescription')}
               </p>
+
+              {assignment.progress && (
+                <div className="mb-4 rounded-xl border border-white/5 bg-white/[0.03] p-3.5">
+                  <div className="mb-2 flex items-center justify-between text-xs">
+                    <span className="font-medium text-white/80">
+                      {t('students.detail.plan.progressLabel')}
+                    </span>
+                    <span className="font-bold text-teal-400">
+                      {assignment.progress.percentage}%
+                    </span>
+                  </div>
+                  <div className="h-2 w-full overflow-hidden rounded-full bg-white/10">
+                    <div
+                      className="h-full rounded-full bg-teal-400 transition-all duration-500"
+                      style={{
+                        width: `${Math.min(100, Math.max(0, assignment.progress.percentage))}%`,
+                      }}
+                    />
+                  </div>
+                  <div className="mt-2 flex items-center justify-between text-[11px] rogym-text-dim">
+                    <span>
+                      {t('students.detail.plan.progressSets', {
+                        completed: assignment.progress.completedSets,
+                        total: assignment.progress.totalTargetSets,
+                      })}
+                    </span>
+                    <span>
+                      {t('students.detail.plan.progressDays', {
+                        completed: assignment.progress.completedDays,
+                        total: assignment.progress.totalDays,
+                      })}
+                    </span>
+                  </div>
+                </div>
+              )}
+
               <Button
                 variant="text"
                 className="text-xs"
@@ -437,6 +473,56 @@ export default function StudentDetailPage() {
                   )}
                 </div>
               </div>
+
+              {activeAssignments[0]?.progress && (
+                <div className="mt-5 rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                  <div className="mb-2 flex items-center justify-between">
+                    <span className="text-sm font-semibold text-white">
+                      {t('students.detail.workout.progressTitle')}
+                    </span>
+                    <span className="text-base font-bold text-teal-400">
+                      {activeAssignments[0].progress.percentage}%
+                    </span>
+                  </div>
+                  <div className="h-2.5 w-full overflow-hidden rounded-full bg-white/10">
+                    <div
+                      className="h-full rounded-full bg-teal-400 transition-all duration-500"
+                      style={{
+                        width: `${Math.min(100, Math.max(0, activeAssignments[0].progress.percentage))}%`,
+                      }}
+                    />
+                  </div>
+                  <div className="mt-3 grid grid-cols-3 gap-2 text-center text-xs">
+                    <div className="rounded-lg bg-black/20 p-2">
+                      <p className="text-[11px] rogym-text-dim">Sets</p>
+                      <p className="mt-0.5 font-bold text-white">
+                        {t('students.detail.workout.progressSets', {
+                          completed: activeAssignments[0].progress.completedSets,
+                          total: activeAssignments[0].progress.totalTargetSets,
+                        })}
+                      </p>
+                    </div>
+                    <div className="rounded-lg bg-black/20 p-2">
+                      <p className="text-[11px] rogym-text-dim">Days</p>
+                      <p className="mt-0.5 font-bold text-white">
+                        {t('students.detail.workout.progressDays', {
+                          completed: activeAssignments[0].progress.completedDays,
+                          total: activeAssignments[0].progress.totalDays,
+                        })}
+                      </p>
+                    </div>
+                    <div className="rounded-lg bg-black/20 p-2">
+                      <p className="text-[11px] rogym-text-dim">Sessions</p>
+                      <p className="mt-0.5 font-bold text-white">
+                        {t('students.detail.workout.progressSessions', {
+                          count: activeAssignments[0].progress.totalSessionsLogged,
+                        })}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <div className="mt-6 grid gap-4 lg:grid-cols-2">
                 {activePlan.days?.map((day) => (
                   <div

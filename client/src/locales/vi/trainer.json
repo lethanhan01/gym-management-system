@@ -190,7 +190,11 @@
         "ptAssigned": "PT gán",
         "personal": "Plan cá nhân",
         "notFound": "Giáo án không tìm thấy",
-        "noDescription": "Không có mô tả"
+        "noDescription": "Không có mô tả",
+        "progressLabel": "Tiến độ hoàn thành",
+        "progressSets": "{{completed}} / {{total}} sets",
+        "progressDays": "{{completed}} / {{total}} ngày",
+        "progressSessions": "{{count}} buổi đã log"
       },
       "progress": {
         "title": "Tiến độ",
@@ -215,7 +219,11 @@
         "unassign": "Gỡ gán",
         "historyTitle": "Lịch sử gán giáo án",
         "detail": "Chi tiết",
-        "startedOn": "Bắt đầu {{date}}"
+        "startedOn": "Bắt đầu {{date}}",
+        "progressTitle": "Tiến độ hoàn thành giáo án",
+        "progressSets": "{{completed}} / {{total}} sets hoàn thành",
+        "progressDays": "{{completed}} / {{total}} ngày đã tập",
+        "progressSessions": "{{count}} buổi tập đã thực hiện"
       },
       "assignModal": {
         "title": "Gán giáo án",

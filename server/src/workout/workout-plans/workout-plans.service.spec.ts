@@ -649,7 +649,7 @@ describe('WorkoutPlansService', () => {
   // -------------------------------------------------------------------------
 
   describe('listAssignments', () => {
-    it('owner: returns assignments for given member', async () => {
+    it('owner: returns assignments for given member with progress', async () => {
       const assignment = {
         assignmentId: 100n,
         memberId: 2n,
@@ -665,8 +665,32 @@ describe('WorkoutPlansService', () => {
           name: 'My Plan',
           description: null,
           status: WorkoutPlanStatus.active,
-          days: [],
+          days: [
+            {
+              planDayId: 10n,
+              weekNumber: 1,
+              dayOfWeek: 1,
+              dayNumber: 1,
+              name: 'Day 1',
+              exercises: [{ planExerciseId: 101n, targetSets: 4 }],
+            },
+            {
+              planDayId: 11n,
+              weekNumber: 1,
+              dayOfWeek: 2,
+              dayNumber: 2,
+              name: 'Day 2',
+              exercises: [{ planExerciseId: 102n, targetSets: 4 }],
+            },
+          ],
         },
+        logs: [
+          {
+            logId: 501n,
+            planDayId: 10n,
+            sets: [{ completed: true }, { completed: true }, { completed: true }, { completed: true }],
+          },
+        ],
       }
       mockPrisma.memberWorkoutPlan.findMany.mockResolvedValue([assignment])
       const caller = makeOwner()
@@ -676,6 +700,14 @@ describe('WorkoutPlansService', () => {
       expect(result.data).toHaveLength(1)
       expect(result.data[0].assignmentId).toBe('100')
       expect(result.data[0].planId).toBe('1')
+      expect(result.data[0].progress).toEqual({
+        completedSets: 4,
+        totalTargetSets: 8,
+        percentage: 50,
+        completedDays: 1,
+        totalDays: 2,
+        totalSessionsLogged: 1,
+      })
     })
 
     it('member only: throws ForbiddenException when viewing other member assignments', async () => {

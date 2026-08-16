@@ -1,7 +1,8 @@
 import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import type { TFunction } from 'i18next'
 import { useTranslation } from 'react-i18next'
-import { Scale, Activity } from 'lucide-react'
+import { Scale, Activity, Dumbbell, Play } from 'lucide-react'
 import {
   MemberCard,
   MemberStatCard,
@@ -12,9 +13,10 @@ import {
 } from '@/components/MemberUI'
 import { trainingService, type MemberProgress } from '@/services/training.service'
 import { memberService } from '@/services/member.service'
+import workoutService, { type WorkoutAssignmentSummary } from '@/services/workout.service'
 import { useAuthStore } from '@/stores/authStore'
 import { getApiError } from '@/lib/api-error'
-import { Button, FormField, Input } from '@/components/ui'
+import { Badge, Button, FormField, Input } from '@/components/ui'
 import { PageLoader } from '@/components/shared/Spinner'
 
 const MemberWeightChart = lazy(() => import('@/components/charts/MemberWeightChart'))
@@ -146,6 +148,7 @@ function SelfReportForm({ onSuccess, t }: { onSuccess: () => void; t: TFunction<
 
 export default function ProgressPage() {
   const { t } = useTranslation('member')
+  const navigate = useNavigate()
   const memberId = useAuthStore((state) => state.user?.memberId)
 
   const RANGES = useMemo(
@@ -158,6 +161,7 @@ export default function ProgressPage() {
     [t]
   )
   const [data, setData] = useState<MemberProgress[]>([])
+  const [activeAssignment, setActiveAssignment] = useState<WorkoutAssignmentSummary | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [rangeIdx, setRangeIdx] = useState(3)
@@ -171,7 +175,14 @@ export default function ProgressPage() {
     setLoading(true)
     setError(null)
     try {
-      setData(await trainingService.listProgress(String(memberId)))
+      const [progressData, assignmentData] = await Promise.all([
+        trainingService.listProgress(String(memberId)),
+        workoutService.getAssignments(String(memberId), { status: 'active' }).catch(() => []),
+      ])
+      setData(progressData)
+      const ptAssigned = assignmentData.find((a) => a.status === 'active' && !!a.assignedByStaffId)
+      const active = ptAssigned || assignmentData.find((a) => a.status === 'active') || null
+      setActiveAssignment(active)
     } catch (err) {
       setError(getApiError(err, t('progress.errorLoad')))
     } finally {
@@ -230,10 +241,101 @@ export default function ProgressPage() {
         <MemberSkeleton rows={4} />
       ) : error ? (
         <MemberErrorState message={error} onRetry={loadProgress} />
-      ) : data.length === 0 ? (
+      ) : data.length === 0 && !activeAssignment ? (
         <>{!showForm && <SelfReportForm onSuccess={handleFormSuccess} t={t} />}</>
       ) : (
         <div className="space-y-5">
+          {/* Workout Plan Progress Card */}
+          {activeAssignment && activeAssignment.progress && (
+            <MemberCard variant="compact" className="p-5 border-[var(--rogym-green)]/20">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex items-start gap-3 min-w-0 flex-1">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[var(--rogym-green)]/10 text-[var(--rogym-green)]">
+                    <Dumbbell size={20} />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <Badge tone={activeAssignment.assignedByStaffId ? 'success' : 'accent'} size="xs">
+                        {activeAssignment.assignedByStaffId
+                          ? t('workout.myPlan.sourceTrainer')
+                          : t('workout.myPlan.sourcePersonal')}
+                      </Badge>
+                      <h3 className="text-base font-bold text-white truncate">
+                        {activeAssignment.plan?.name ?? t('progress.activePlanTitle')}
+                      </h3>
+                    </div>
+                    <p className="mt-1 text-xs rogym-text-dim">
+                      {t('progress.planProgressSection')}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 shrink-0 flex-wrap">
+                  <Button
+                    variant="outline-white"
+                    size="xs"
+                    onClick={() => navigate('/member/workout/plan')}
+                  >
+                    {t('progress.buttonGoToPlan')}
+                  </Button>
+                  <Button
+                    variant="primary"
+                    size="xs"
+                    leftIcon={<Play size={13} />}
+                    onClick={() => navigate('/member/workout/create-session')}
+                  >
+                    {t('progress.buttonStartWorkout')}
+                  </Button>
+                </div>
+              </div>
+
+              <div className="mt-4 pt-3 border-t border-white/5">
+                <div className="flex items-center justify-between text-xs mb-2">
+                  <span className="text-white/80 font-medium">{t('workout.myPlan.progressLabel')}</span>
+                  <span className="text-sm font-bold text-[var(--rogym-green)]">
+                    {activeAssignment.progress.percentage}%
+                  </span>
+                </div>
+                <div className="h-2.5 w-full overflow-hidden rounded-full bg-white/10">
+                  <div
+                    className="h-full rounded-full bg-[var(--rogym-green)] transition-all duration-500"
+                    style={{
+                      width: `${Math.min(100, Math.max(0, activeAssignment.progress.percentage))}%`,
+                    }}
+                  />
+                </div>
+                <div className="mt-3 grid grid-cols-3 gap-2 text-center text-xs">
+                  <div className="rounded-lg bg-white/[0.03] p-2">
+                    <p className="text-[11px] rogym-text-dim">{t('workout.myPlan.unitExercises')}</p>
+                    <p className="mt-0.5 font-bold text-white">
+                      {t('progress.progressSets', {
+                        completed: activeAssignment.progress.completedSets,
+                        total: activeAssignment.progress.totalTargetSets,
+                      })}
+                    </p>
+                  </div>
+                  <div className="rounded-lg bg-white/[0.03] p-2">
+                    <p className="text-[11px] rogym-text-dim">{t('workout.myPlan.unitDays')}</p>
+                    <p className="mt-0.5 font-bold text-white">
+                      {t('progress.progressDays', {
+                        completed: activeAssignment.progress.completedDays,
+                        total: activeAssignment.progress.totalDays,
+                      })}
+                    </p>
+                  </div>
+                  <div className="rounded-lg bg-white/[0.03] p-2">
+                    <p className="text-[11px] rogym-text-dim">Sessions</p>
+                    <p className="mt-0.5 font-bold text-white">
+                      {t('progress.progressSessions', {
+                        count: activeAssignment.progress.totalSessionsLogged,
+                      })}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </MemberCard>
+          )}
+
           {/* Stat cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <MemberStatCard

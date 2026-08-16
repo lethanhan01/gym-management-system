@@ -156,6 +156,35 @@ function PlanCard({
         </div>
       </div>
 
+      {assignment.progress && (
+        <div className="mt-4 rounded-xl border border-white/5 bg-white/[0.03] p-3.5">
+          <div className="mb-2 flex items-center justify-between text-xs">
+            <span className="font-medium text-white/80">{t('workout.myPlan.progressLabel')}</span>
+            <span className="font-bold text-[var(--rogym-green)]">{assignment.progress.percentage}%</span>
+          </div>
+          <div className="h-2 w-full overflow-hidden rounded-full bg-white/10">
+            <div
+              className="h-full rounded-full bg-[var(--rogym-green)] transition-all duration-500"
+              style={{ width: `${Math.min(100, Math.max(0, assignment.progress.percentage))}%` }}
+            />
+          </div>
+          <div className="mt-2 flex items-center justify-between text-[11px] rogym-text-dim">
+            <span>
+              {t('workout.myPlan.progressSets', {
+                completed: assignment.progress.completedSets,
+                total: assignment.progress.totalTargetSets,
+              })}
+            </span>
+            <span>
+              {t('workout.myPlan.progressDays', {
+                completed: assignment.progress.completedDays,
+                total: assignment.progress.totalDays,
+              })}
+            </span>
+          </div>
+        </div>
+      )}
+
       <Button
         variant="text-accent"
         size="xs"

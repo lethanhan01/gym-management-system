@@ -544,8 +544,25 @@ export class WorkoutPlansService {
                 dayOfWeek: true,
                 dayNumber: true,
                 name: true,
+                exercises: {
+                  select: {
+                    planExerciseId: true,
+                    targetSets: true,
+                  },
+                },
               },
               orderBy: { dayNumber: 'asc' } as const,
+            },
+          },
+        },
+        logs: {
+          select: {
+            logId: true,
+            planDayId: true,
+            sets: {
+              select: {
+                completed: true,
+              },
             },
           },
         },
@@ -553,32 +570,65 @@ export class WorkoutPlansService {
     })
 
     return {
-      data: data.map((a) => ({
-        assignmentId: a.assignmentId.toString(),
-        memberId: a.memberId.toString(),
-        planId: a.planId.toString(),
-        assignedByStaffId: a.assignedByStaffId?.toString() ?? null,
-        startDate: a.startDate,
-        status: a.status,
-        endedAt: a.endedAt,
-        notes: a.notes,
-        createdAt: a.createdAt,
-        plan: a.plan
-          ? {
-              planId: a.plan.planId.toString(),
-              name: a.plan.name,
-              description: a.plan.description,
-              status: a.plan.status,
-              days: a.plan.days.map((d) => ({
-                planDayId: d.planDayId.toString(),
-                weekNumber: d.weekNumber,
-                dayOfWeek: d.dayOfWeek,
-                dayNumber: d.dayNumber,
-                name: d.name,
-              })),
-            }
-          : null,
-      })),
+      data: data.map((a) => {
+        const totalTargetSets = a.plan?.days
+          ? a.plan.days.reduce(
+              (acc, day) =>
+                acc + (day.exercises ?? []).reduce((s, ex) => s + (ex.targetSets || 0), 0),
+              0
+            )
+          : 0
+        const completedSets = a.logs
+          ? a.logs.reduce(
+              (acc, log) => acc + (log.sets ?? []).filter((s) => s.completed).length,
+              0
+            )
+          : 0
+        const percentage =
+          totalTargetSets > 0
+            ? Math.min(100, Math.round((completedSets / totalTargetSets) * 100))
+            : 0
+        const completedDays = a.logs
+          ? new Set(a.logs.map((l) => l.planDayId.toString())).size
+          : 0
+        const totalDays = a.plan?.days?.length ?? 0
+        const totalSessionsLogged = a.logs?.length ?? 0
+
+        return {
+          assignmentId: a.assignmentId.toString(),
+          memberId: a.memberId.toString(),
+          planId: a.planId.toString(),
+          assignedByStaffId: a.assignedByStaffId?.toString() ?? null,
+          startDate: a.startDate,
+          status: a.status,
+          endedAt: a.endedAt,
+          notes: a.notes,
+          createdAt: a.createdAt,
+          progress: {
+            completedSets,
+            totalTargetSets,
+            percentage,
+            completedDays,
+            totalDays,
+            totalSessionsLogged,
+          },
+          plan: a.plan
+            ? {
+                planId: a.plan.planId.toString(),
+                name: a.plan.name,
+                description: a.plan.description,
+                status: a.plan.status,
+                days: a.plan.days.map((d) => ({
+                  planDayId: d.planDayId.toString(),
+                  weekNumber: d.weekNumber,
+                  dayOfWeek: d.dayOfWeek,
+                  dayNumber: d.dayNumber,
+                  name: d.name,
+                })),
+              }
+            : null,
+        }
+      }),
     }
   }
 
@@ -714,20 +764,70 @@ export class WorkoutPlansService {
       orderBy: { createdAt: 'desc' },
       include: {
         member: { select: { memberId: true, user: { select: { fullName: true } } } },
+        plan: {
+          select: {
+            days: {
+              select: {
+                planDayId: true,
+                exercises: { select: { targetSets: true } },
+              },
+            },
+          },
+        },
+        logs: {
+          select: {
+            logId: true,
+            planDayId: true,
+            sets: { select: { completed: true } },
+          },
+        },
       },
     })
 
-    return assignments.map((a) => ({
-      assignmentId: a.assignmentId.toString(),
-      memberId: a.memberId.toString(),
-      memberName: a.member.user.fullName,
-      planId: planId.toString(),
-      startDate: a.startDate,
-      status: a.status,
-      endedAt: a.endedAt,
-      notes: a.notes,
-      createdAt: a.createdAt,
-    }))
+    return assignments.map((a) => {
+      const totalTargetSets = a.plan?.days
+        ? a.plan.days.reduce(
+            (acc, day) =>
+              acc + (day.exercises ?? []).reduce((s, ex) => s + (ex.targetSets || 0), 0),
+            0
+          )
+        : 0
+      const completedSets = a.logs
+        ? a.logs.reduce(
+            (acc, log) => acc + (log.sets ?? []).filter((s) => s.completed).length,
+            0
+          )
+        : 0
+      const percentage =
+        totalTargetSets > 0
+          ? Math.min(100, Math.round((completedSets / totalTargetSets) * 100))
+          : 0
+      const completedDays = a.logs
+        ? new Set(a.logs.map((l) => l.planDayId.toString())).size
+        : 0
+      const totalDays = a.plan?.days?.length ?? 0
+      const totalSessionsLogged = a.logs?.length ?? 0
+
+      return {
+        assignmentId: a.assignmentId.toString(),
+        memberId: a.memberId.toString(),
+        memberName: a.member.user.fullName,
+        planId: planId.toString(),
+        startDate: a.startDate,
+        status: a.status,
+        endedAt: a.endedAt,
+        notes: a.notes,
+        createdAt: a.createdAt,
+        progress: {
+          completedSets,
+          totalTargetSets,
+          percentage,
+          completedDays,
+          totalDays,
+          totalSessionsLogged,
+        },
+      }
+    })
   }
 
   async unassignMember(assignmentId: bigint, user: AuthenticatedUser) {

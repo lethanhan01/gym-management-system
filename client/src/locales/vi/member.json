@@ -500,7 +500,15 @@
       "obese": "Béo phì"
     },
     "rangeAll": "Tất cả",
-    "weightLabel": "Cân nặng"
+    "weightLabel": "Cân nặng",
+    "planProgressSection": "Tiến độ kế hoạch tập luyện",
+    "activePlanTitle": "Kế hoạch đang tập",
+    "noActivePlan": "Chưa có kế hoạch tập luyện đang kích hoạt",
+    "buttonGoToPlan": "Xem kế hoạch",
+    "buttonStartWorkout": "Tiếp tục tập",
+    "progressSets": "{{completed}} / {{total}} set",
+    "progressDays": "{{completed}} / {{total}} ngày",
+    "progressSessions": "{{count}} buổi đã log"
   },
   "workout": {
     "myPlan": {
@@ -519,6 +527,9 @@
       "buttonCreateNow": "Tạo ngay",
       "sourceTrainer": "PT",
       "sourcePersonal": "Cá nhân",
+      "progressLabel": "Tiến độ hoàn thành",
+      "progressSets": "{{completed}} / {{total}} set",
+      "progressDays": "{{completed}} / {{total}} ngày",
       "unitDays": "ngày",
       "unitExercises": "bài tập",
       "unitMinPerDay": "phút/ngày (ước tính)",

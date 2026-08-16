@@ -500,7 +500,15 @@
       "obese": "肥満"
     },
     "rangeAll": "すべて",
-    "weightLabel": "体重"
+    "weightLabel": "体重",
+    "planProgressSection": "トレーニングプラン進捗",
+    "activePlanTitle": "現在のプラン",
+    "noActivePlan": "現在アクティブなプランはありません",
+    "buttonGoToPlan": "プランを見る",
+    "buttonStartWorkout": "トレーニングを続ける",
+    "progressSets": "{{completed}} / {{total}} セット",
+    "progressDays": "{{completed}} / {{total}} 日",
+    "progressSessions": "{{count}} 回記録済み"
   },
   "workout": {
     "myPlan": {
@@ -519,6 +527,9 @@
       "buttonCreateNow": "今すぐ作成",
       "sourceTrainer": "PT",
       "sourcePersonal": "個人",
+      "progressLabel": "進捗状況",
+      "progressSets": "{{completed}} / {{total}} セット",
+      "progressDays": "{{completed}} / {{total}} 日",
       "unitDays": "日",
       "unitExercises": "エクササイズ",
       "unitMinPerDay": "分/日（推定）",
