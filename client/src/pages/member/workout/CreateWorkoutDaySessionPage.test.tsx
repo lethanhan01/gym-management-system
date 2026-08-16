@@ -78,8 +78,20 @@ describe('CreateWorkoutDaySessionPage', () => {
     expect(screen.getByLabelText('Nghỉ 45 giây')).toBeVisible()
 
     fireEvent.click(screen.getByRole('button', { name: 'Bắt đầu buổi tập' }))
-    expect(await screen.findByRole('button', { name: 'Dừng buổi tập' })).toBeVisible()
-    expect(screen.getByText('02:45')).toBeVisible()
+    const stopButtons = await screen.findAllByRole('button', { name: 'Dừng buổi tập' })
+    expect(stopButtons.length).toBeGreaterThanOrEqual(1)
+    expect(screen.getAllByText('02:45')[0]).toBeVisible()
+    expect(screen.getByText('Đang thực hiện buổi tập')).toBeVisible()
+
+    // Test minimizing focus modal
+    fireEvent.click(screen.getByRole('button', { name: 'Thu nhỏ' }))
+    expect(screen.queryByText('Đang thực hiện buổi tập')).toBeNull()
+    expect(screen.getByRole('button', { name: 'Mở bảng tập luyện' })).toBeVisible()
+
+    // Reopen modal
+    fireEvent.click(screen.getByRole('button', { name: 'Mở bảng tập luyện' }))
+    expect(screen.getByText('Đang thực hiện buổi tập')).toBeVisible()
+
     fireEvent.click(screen.getByRole('button', { name: 'Quay lại chọn ngày tập' }))
     expect(screen.getByText('Dừng buổi tập?')).toBeVisible()
     fireEvent.click(screen.getByRole('button', { name: 'Dừng và rời đi' }))

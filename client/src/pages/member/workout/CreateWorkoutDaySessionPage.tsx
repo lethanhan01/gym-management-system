@@ -1,7 +1,7 @@
 import { Fragment, useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { ArrowLeft, CheckCircle2, Clock, Pause, Play, RotateCcw } from 'lucide-react'
+import { ArrowLeft, CheckCircle2, Clock, Maximize2, Pause, Play, RotateCcw } from 'lucide-react'
 import { Button, Modal } from '@/components/ui'
 import {
   MemberCard,
@@ -15,6 +15,7 @@ import workoutService, { type WorkoutAssignmentSummary, type WorkoutPlanDay } fr
 import { trainingService } from '@/services/training.service'
 import { useAuthStore } from '@/stores/authStore'
 import { useWorkoutSessionControlStore } from '@/stores/workoutSessionControlStore'
+import { WorkoutFocusModal } from './create-session/WorkoutFocusModal'
 import {
   clearSessionDraft, clearSessionRuntime, loadSessionDraft, loadSessionRuntime, saveSessionRuntime,
   type SessionTimerRuntime,
@@ -102,6 +103,8 @@ export default function CreateWorkoutDaySessionPage() {
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [status, setStatus] = useState<TimerStatus>('idle')
   const [runtime, setRuntime] = useState<SessionTimerRuntime | null>(null)
+  const [isFocusModalOpen, setIsFocusModalOpen] = useState(false)
+  const [celebrationSeconds, setCelebrationSeconds] = useState<number | null>(null)
   const [leaveTarget, setLeaveTarget] = useState<string | null>(null)
   const runtimeRef = useRef<SessionTimerRuntime | null>(null)
   const deadlineRef = useRef<number | null>(null)
@@ -191,7 +194,8 @@ export default function CreateWorkoutDaySessionPage() {
       clearSessionRuntime(memberId, loaded.day, loaded.assignment, sessionId)
       runtimeRef.current = null
       setRuntime(null)
-      setStatus('completed')
+      setCelebrationSeconds(5)
+      setIsFocusModalOpen(true)
     } catch (caught) {
       const failed = { ...saving, status: 'save-error' as const }
       setSubmitError(getApiError(caught, t('workout.createSession.errorSave')))
@@ -251,6 +255,30 @@ export default function CreateWorkoutDaySessionPage() {
     cardRefs.current.get(segment.planExerciseId)?.scrollIntoView({ behavior: reducedMotion ? 'auto' : 'smooth', block: 'start' })
   }, [runtime?.segmentIndex, runtime?.segments])
 
+  useEffect(() => {
+    if (celebrationSeconds === null) return
+    if (celebrationSeconds <= 0) {
+      setCelebrationSeconds(null)
+      setIsFocusModalOpen(false)
+      setStatus('completed')
+      return
+    }
+    const timer = window.setTimeout(() => {
+      setCelebrationSeconds((prev) => (prev !== null ? prev - 1 : null))
+    }, 1000)
+    return () => window.clearTimeout(timer)
+  }, [celebrationSeconds])
+
+  const handleCloseFocusModal = useCallback(() => {
+    if (celebrationSeconds !== null) {
+      setCelebrationSeconds(null)
+      setIsFocusModalOpen(false)
+      setStatus('completed')
+    } else {
+      setIsFocusModalOpen(false)
+    }
+  }, [celebrationSeconds])
+
   const startTimer = useCallback(() => {
     if (!loaded) return
     const timeline = buildSessionTimeline(loaded.day, loaded.config)
@@ -267,6 +295,7 @@ export default function CreateWorkoutDaySessionPage() {
     previousExerciseRef.current = null
     setStatus('running')
     persistRuntime(started)
+    setIsFocusModalOpen(true)
   }, [loaded, persistRuntime, t])
 
   const resumeTimer = useCallback(() => {
@@ -276,6 +305,7 @@ export default function CreateWorkoutDaySessionPage() {
     const resumed = { ...current, status: 'running' as const }
     setStatus('running')
     persistRuntime(resumed)
+    setIsFocusModalOpen(true)
   }, [persistRuntime])
 
   const retrySave = useCallback(() => {
@@ -351,47 +381,55 @@ export default function CreateWorkoutDaySessionPage() {
         {t('workout.createSession.buttonBackToDays')}
       </Button>
       {runtime && (
-        <div className="mb-4 rounded-2xl border border-cyan-300/20 bg-cyan-400/10 px-5 py-4 text-center">
-          <p className="text-xs uppercase tracking-wider rogym-sx-5e5c39ab">{t('workout.createSession.timeRemaining')}</p>
-          <p className="mt-1 text-3xl font-bold tabular-nums text-white" aria-live="polite">{formatTimer(runtime.totalRemainingSec)}</p>
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-cyan-300/20 bg-cyan-400/10 px-5 py-4">
+          <div>
+            <p className="text-xs uppercase tracking-wider rogym-sx-5e5c39ab">{t('workout.createSession.timeRemaining')}</p>
+            <p className="mt-1 text-3xl font-bold tabular-nums text-white" aria-live="polite">{formatTimer(runtime.totalRemainingSec)}</p>
+          </div>
+          <Button
+            variant="primary"
+            size="sm"
+            onClick={() => setIsFocusModalOpen(true)}
+            leftIcon={<Maximize2 size={15} />}
+          >
+            {t('workout.createSession.focusOpenModal')}
+          </Button>
         </div>
       )}
-      <MemberCard variant="compact" className="overflow-hidden">
-        <div className="space-y-3 px-5 pb-4 pt-5">
-          {exercises.map((exercise, exerciseIndex) => {
-            const cardio = exercise.exercise?.bodyPart?.name?.trim().toLowerCase() === 'cardio'
-            const config = (runtime?.config ?? loaded.config)[exercise.planExerciseId]
-            const sets = config?.sets ?? []
-            return (
-              <div key={exercise.planExerciseId} ref={(node) => { if (node) cardRefs.current.set(exercise.planExerciseId, node); else cardRefs.current.delete(exercise.planExerciseId) }} className="rogym-sx-46079668">
-                <div className="flex items-center gap-3 px-4 py-3 rogym-sx-dd0d9e7c"><div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-xs font-bold rogym-sx-252b3c13">{exerciseIndex + 1}</div><div className="min-w-0 flex-1"><p className="text-sm font-semibold text-white">{exercise.exercise?.name ?? t('workout.session.defaultExerciseName')}</p><p className="text-xs rogym-sx-5e5c39ab">{t('workout.createSession.configuredSets', { count: sets.length })}</p></div></div>
-                <div className="p-4"><div className="mb-2 grid grid-cols-[40px_1fr_1fr] gap-2 text-xs font-medium uppercase rogym-sx-5e5c39ab"><span>Set</span><span>{cardio ? t('workout.createSession.unitSeconds') : 'Reps'}</span><span>Kg</span></div><div className="space-y-2">
-                  {sets.map((set, setIndex) => {
-                    const setSegmentIndex = runtime?.segments.findIndex((segment) => segment.kind === 'set' && segment.planExerciseId === exercise.planExerciseId && segment.setIndex === setIndex) ?? -1
-                    const isActive = activeSegment?.kind === 'set' && activeSegment.planExerciseId === exercise.planExerciseId && activeSegment.setIndex === setIndex
-                    const isCompleted = runtime !== null && setSegmentIndex >= 0 && setSegmentIndex < runtime.segmentIndex
-                    const nextSegment = runtime?.segments[setSegmentIndex + 1]
-                    const upcomingConfig = setIndex < sets.length - 1
-                      ? config
-                      : (runtime?.config ?? loaded.config)[exercises[exerciseIndex + 1]?.planExerciseId]
-                    const initialRest = setIndex < sets.length - 1 || exerciseIndex < exercises.length - 1
-                      ? Math.max(0, upcomingConfig?.restSeconds ?? 0)
-                      : 0
-                    const displayRest = nextSegment?.kind === 'rest'
-                      ? nextSegment
-                      : (!runtime && initialRest > 0 ? { kind: 'rest' as const, durationSec: initialRest, planExerciseId: exercise.planExerciseId, setIndex } : undefined)
-                    const isRestAfter = !!displayRest
-                    const restActive = isRestAfter && runtime?.segmentIndex === setSegmentIndex + 1
-                    const restCompleted = isRestAfter && (runtime?.segmentIndex ?? -1) > setSegmentIndex + 1
-                    return <Fragment key={setIndex}><div className={`grid grid-cols-[40px_1fr_1fr] items-center gap-2 rounded-lg p-2 text-sm ${isActive ? 'bg-cyan-400/15 ring-1 ring-cyan-300/40' : 'bg-white/[0.03]'} ${isCompleted ? 'opacity-55' : ''}`}><span className="rogym-workout-set-index font-medium">{setIndex + 1}</span><span className="text-white">{cardio ? set.actualDurationSec : set.actualReps || '—'}{isActive && <span className="ml-2 text-xs text-cyan-200">{formatTimer(runtime?.segmentRemainingSec ?? 0)}</span>}</span><span className="text-white">{set.actualWeightKg || '—'}</span>{isActive && activeSegment && <div className="col-span-3 mt-1 h-1 overflow-hidden rounded bg-white/10"><div className="h-full bg-cyan-300 transition-[width] duration-200 motion-reduce:transition-none" style={{ width: `${Math.max(0, Math.min(100, ((runtime?.segmentRemainingSec ?? 0) / activeSegment.durationSec) * 100))}%` }} /></div>}</div>{isRestAfter && displayRest && <RestBreak segment={displayRest} active={!!restActive} completed={!!restCompleted} remainingSec={restActive ? runtime?.segmentRemainingSec ?? 0 : displayRest.durationSec} />}</Fragment>
-                  })}
-                </div></div>
-              </div>
-            )
-          })}
-        </div>
-        {submitError && <p className="px-5 pb-2 text-center text-xs text-red-300">{submitError}</p>}
-        <div className="rogym-sx-8553bf9e hidden md:flex items-center justify-end gap-3 px-5 py-4">
+      <div className="space-y-4 pb-20 md:pb-6">
+        {exercises.map((exercise, exerciseIndex) => {
+          const cardio = exercise.exercise?.bodyPart?.name?.trim().toLowerCase() === 'cardio'
+          const config = (runtime?.config ?? loaded.config)[exercise.planExerciseId]
+          const sets = config?.sets ?? []
+          return (
+            <div key={exercise.planExerciseId} ref={(node) => { if (node) cardRefs.current.set(exercise.planExerciseId, node); else cardRefs.current.delete(exercise.planExerciseId) }} className="rogym-sx-46079668">
+              <div className="flex items-center gap-3 px-4 py-3 rogym-sx-dd0d9e7c"><div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-xs font-bold rogym-sx-252b3c13">{exerciseIndex + 1}</div><div className="min-w-0 flex-1"><p className="text-sm font-semibold text-white">{exercise.exercise?.name ?? t('workout.session.defaultExerciseName')}</p><p className="text-xs rogym-sx-5e5c39ab">{t('workout.createSession.configuredSets', { count: sets.length })}</p></div></div>
+              <div className="p-4"><div className="mb-2 grid grid-cols-[40px_1fr_1fr] gap-2 text-xs font-medium uppercase rogym-sx-5e5c39ab"><span>Set</span><span>{cardio ? t('workout.createSession.unitSeconds') : 'Reps'}</span><span>Kg</span></div><div className="space-y-2">
+                {sets.map((set, setIndex) => {
+                  const setSegmentIndex = runtime?.segments.findIndex((segment) => segment.kind === 'set' && segment.planExerciseId === exercise.planExerciseId && segment.setIndex === setIndex) ?? -1
+                  const isActive = activeSegment?.kind === 'set' && activeSegment.planExerciseId === exercise.planExerciseId && activeSegment.setIndex === setIndex
+                  const isCompleted = runtime !== null && setSegmentIndex >= 0 && setSegmentIndex < runtime.segmentIndex
+                  const nextSegment = runtime?.segments[setSegmentIndex + 1]
+                  const upcomingConfig = setIndex < sets.length - 1
+                    ? config
+                    : (runtime?.config ?? loaded.config)[exercises[exerciseIndex + 1]?.planExerciseId]
+                  const initialRest = setIndex < sets.length - 1 || exerciseIndex < exercises.length - 1
+                    ? Math.max(0, upcomingConfig?.restSeconds ?? 0)
+                    : 0
+                  const displayRest = nextSegment?.kind === 'rest'
+                    ? nextSegment
+                    : (!runtime && initialRest > 0 ? { kind: 'rest' as const, durationSec: initialRest, planExerciseId: exercise.planExerciseId, setIndex } : undefined)
+                  const isRestAfter = !!displayRest
+                  const restActive = isRestAfter && runtime?.segmentIndex === setSegmentIndex + 1
+                  const restCompleted = isRestAfter && (runtime?.segmentIndex ?? -1) > setSegmentIndex + 1
+                  return <Fragment key={setIndex}><div className={`grid grid-cols-[40px_1fr_1fr] items-center gap-2 rounded-lg p-2 text-sm ${isActive ? 'bg-cyan-400/15 ring-1 ring-cyan-300/40' : 'bg-white/[0.03]'} ${isCompleted ? 'opacity-55' : ''}`}><span className="rogym-workout-set-index font-medium">{setIndex + 1}</span><span className="text-white">{cardio ? set.actualDurationSec : set.actualReps || '—'}{isActive && <span className="ml-2 text-xs text-cyan-200">{formatTimer(runtime?.segmentRemainingSec ?? 0)}</span>}</span><span className="text-white">{set.actualWeightKg || '—'}</span>{isActive && activeSegment && <div className="col-span-3 mt-1 h-1 overflow-hidden rounded bg-white/10"><div className="h-full bg-cyan-300 transition-[width] duration-200 motion-reduce:transition-none" style={{ width: `${Math.max(0, Math.min(100, ((runtime?.segmentRemainingSec ?? 0) / activeSegment.durationSec) * 100))}%` }} /></div>}</div>{isRestAfter && displayRest && <RestBreak segment={displayRest} active={!!restActive} completed={!!restCompleted} remainingSec={restActive ? runtime?.segmentRemainingSec ?? 0 : displayRest.durationSec} />}</Fragment>
+                })}
+              </div></div>
+            </div>
+          )
+        })}
+        {submitError && <p className="pt-2 text-center text-xs text-red-300">{submitError}</p>}
+        <div className="hidden md:flex items-center justify-end gap-3 pt-2">
           {status === 'idle' && (
             <Button variant="primary" onClick={startTimer} leftIcon={<Play size={15} />}>
               {t('workout.createSession.buttonStartWorkout')}
@@ -422,7 +460,17 @@ export default function CreateWorkoutDaySessionPage() {
             </Button>
           )}
         </div>
-      </MemberCard>
+      </div>
+      <WorkoutFocusModal
+        open={isFocusModalOpen}
+        onClose={handleCloseFocusModal}
+        runtime={runtime}
+        status={status}
+        day={loaded.day}
+        onPause={pauseTimer}
+        onResume={resumeTimer}
+        celebrationSeconds={celebrationSeconds}
+      />
       <Modal
         open={leaveTarget !== null}
         title={t('workout.createSession.leaveTimerTitle')}
