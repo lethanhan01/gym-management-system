@@ -204,7 +204,9 @@ const session = await trainingSessionService.getSession(sessionId)
   const pauseTimer = useCallback(() => {
     const current = runtimeRef.current
     if (!current || current.status !== 'running') return
-    const reduced = reduceRunningRuntime(current, Date.now(), deadlineRef.current ?? Date.now())
+    const now = Date.now()
+    const currentDeadline = deadlineRef.current ?? (now + current.segmentRemainingSec * 1000)
+    const reduced = reduceRunningRuntime(current, now, currentDeadline)
     const paused = { ...reduced.runtime, status: 'paused' as const }
     deadlineRef.current = null
     setStatus('paused')
@@ -215,11 +217,15 @@ const session = await trainingSessionService.getSession(sessionId)
     if (status !== 'running') return
     const initialRuntime = runtimeRef.current
     if (!initialRuntime) return
-    if (deadlineRef.current === null) deadlineRef.current = Date.now() + initialRuntime.segmentRemainingSec * 1000
+    if (deadlineRef.current === null) {
+      deadlineRef.current = Date.now() + initialRuntime.segmentRemainingSec * 1000
+    }
     const tick = () => {
       const current = runtimeRef.current
       if (!current || current.status !== 'running') return
-      const reduced = reduceRunningRuntime(current, Date.now(), deadlineRef.current ?? Date.now())
+      const now = Date.now()
+      const currentDeadline = deadlineRef.current ?? (now + current.segmentRemainingSec * 1000)
+      const reduced = reduceRunningRuntime(current, now, currentDeadline)
       deadlineRef.current = reduced.deadline
       if (reduced.complete) {
         const completed = { ...reduced.runtime, status: 'saving' as const, loggedAt: new Date().toISOString() }
@@ -235,13 +241,22 @@ const session = await trainingSessionService.getSession(sessionId)
     return () => window.clearInterval(interval)
   }, [persistRuntime, saveLog, status])
 
+  const pauseTimerRef = useRef(pauseTimer)
   useEffect(() => {
-    const onPageHide = () => pauseTimer()
-    window.addEventListener('pagehide', onPageHide)
-    return () => window.removeEventListener('pagehide', onPageHide)
+    pauseTimerRef.current = pauseTimer
   }, [pauseTimer])
 
-  useEffect(() => () => pauseTimer(), [pauseTimer])
+  useEffect(() => {
+    const onPageHide = () => pauseTimerRef.current()
+    window.addEventListener('pagehide', onPageHide)
+    return () => window.removeEventListener('pagehide', onPageHide)
+  }, [])
+
+  useEffect(() => {
+    return () => {
+      pauseTimerRef.current()
+    }
+  }, [])
 
   useEffect(() => {
     const segment = runtime?.segments[runtime.segmentIndex]
@@ -288,6 +303,7 @@ const session = await trainingSessionService.getSession(sessionId)
       segmentRemainingSec: timeline.segments[0].durationSec, totalRemainingSec: timeline.totalSeconds,
       completionKey: createCompletionKey(), loggedAt: null,
     }
+    deadlineRef.current = Date.now() + started.segmentRemainingSec * 1000
     setSubmitError(null)
     previousExerciseRef.current = null
     setStatus('running')
@@ -300,6 +316,7 @@ const session = await trainingSessionService.getSession(sessionId)
     if (!current) return
     setSubmitError(null)
     const resumed = { ...current, status: 'running' as const }
+    deadlineRef.current = Date.now() + resumed.segmentRemainingSec * 1000
     setStatus('running')
     persistRuntime(resumed)
     setIsFocusModalOpen(true)
