@@ -36,11 +36,11 @@ export function ConfirmDialog({
   const effectiveCancelLabel = cancelLabel ?? t('button.cancel', 'Hủy')
 
   const defaultIcon = isDanger ? (
-    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-red-500/10 text-red-400">
+    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-red-500/10 text-red-400">
       <AlertTriangle size={24} />
     </div>
   ) : (
-    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[rgba(66,224,158,0.12)] text-[var(--rogym-teal)]">
+    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[rgba(66,224,158,0.12)] text-[var(--rogym-teal)]">
       <Info size={24} />
     </div>
   )

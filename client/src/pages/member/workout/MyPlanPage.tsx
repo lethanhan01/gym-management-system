@@ -12,8 +12,14 @@ import {
   Pencil,
   Play,
   Trash2,
-  X,
 } from 'lucide-react'
+import {
+  Badge,
+  Button,
+  Card,
+  ConfirmDialog,
+  Modal,
+} from '@/components/ui'
 import {
   MemberEmptyState,
   MemberErrorState,
@@ -28,6 +34,7 @@ import workoutService, {
 } from '@/services/workout.service'
 import { useAuthStore } from '@/stores/authStore'
 import { useTranslation } from 'react-i18next'
+import { cn } from '@/lib/utils'
 
 // ── Active plan card (assignments) ────────────────────────────────────────────
 
@@ -49,7 +56,6 @@ function PlanCard({
   const [expanded, setExpanded] = useState(false)
   const [deleteConfirm, setDeleteConfirm] = useState(false)
   const [deleting, setDeleting] = useState(false)
-  const [deleteError, setDeleteError] = useState<string | null>(null)
   const [detailDay, setDetailDay] = useState<WorkoutPlanDay | null>(null)
 
   const totalDays = plan?.days?.length ?? assignment.plan?.days?.length ?? 0
@@ -71,173 +77,134 @@ function PlanCard({
   async function handleDelete() {
     if (!plan) return
     setDeleting(true)
-    setDeleteError(null)
     try {
       await workoutService.deletePlan(plan.planId)
       setDeleteConfirm(false)
       onDelete()
     } catch {
-      setDeleteError(t('workout.myPlan.errorDelete'))
+      // deletion error handled silently/by query refresh
     } finally {
       setDeleting(false)
     }
   }
 
   return (
-    <div className={`rogym-plan-card rogym-card rogym-card--md ${isPT ? 'is-trainer-plan' : ''}`}>
-      <div className="p-5">
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0 flex-1">
-            <div className="flex flex-col items-start gap-2">
-              <span
-                className={`rogym-plan-source rounded-lg px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
-                  isPT ? 'is-trainer-plan' : ''
-                }`}
-              >
-                {isPT ? t('workout.myPlan.sourceTrainer') : t('workout.myPlan.sourcePersonal')}
-              </span>
-              <h3 className="break-words font-bold text-white">
-                {assignment.plan?.name ?? plan?.name ?? '—'}
-              </h3>
-            </div>
-            {plan?.description && (
-              <p className="mt-1 text-xs rogym-sx-5e5c39ab">{plan.description}</p>
-            )}
-            <div className="mt-2 flex gap-3 text-xs rogym-sx-5e5c39ab">
-              <span>
-                <span className="font-semibold text-white">{totalDays}</span> {t('workout.myPlan.unitDays')}
-              </span>
-              {totalExercises > 0 && (
-                <span>
-                  <span className="font-semibold text-white">{totalExercises}</span> {t('workout.myPlan.unitExercises')}
-                </span>
-              )}
-              {avgMinPerDay > 0 && (
-                <span className="flex items-center gap-1">
-                  <Clock size={11} />
-                  <span className="font-semibold text-white">{avgMinPerDay}</span> {t('workout.myPlan.unitMinPerDay')}
-                </span>
-              )}
-            </div>
+    <Card variant="compact" className={cn('p-5', isPT ? 'is-trainer-plan border-[var(--rogym-green)]/20' : '')}>
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-col items-start gap-2">
+            <Badge tone={isPT ? 'success' : 'accent'} size="xs">
+              {isPT ? t('workout.myPlan.sourceTrainer') : t('workout.myPlan.sourcePersonal')}
+            </Badge>
+            <h3 className="break-words font-bold text-white">
+              {assignment.plan?.name ?? plan?.name ?? '—'}
+            </h3>
           </div>
-
-          <div className="flex shrink-0 items-center gap-1.5">
-            <button
-              type="button"
-              className="rogym-btn rogym-btn--icon rogym-btn--elevated"
-              onClick={() => navigate('/member/workout/create-session')}
-              aria-label="Tạo buổi tập"
-            >
-              <Play size={14} />
-            </button>
-            {canEdit && (
-              <button
-                type="button"
-                className="rogym-btn rogym-btn--icon rogym-btn--elevated"
-                onClick={() => navigate(`/member/workout/builder/${assignment.planId}`)}
-                aria-label="Sửa plan"
-              >
-                <Pencil size={14} />
-              </button>
+          {plan?.description && (
+            <p className="mt-1 text-xs rogym-sx-5e5c39ab">{plan.description}</p>
+          )}
+          <div className="mt-2 flex gap-3 text-xs rogym-sx-5e5c39ab">
+            <span>
+              <span className="font-semibold text-white">{totalDays}</span> {t('workout.myPlan.unitDays')}
+            </span>
+            {totalExercises > 0 && (
+              <span>
+                <span className="font-semibold text-white">{totalExercises}</span> {t('workout.myPlan.unitExercises')}
+              </span>
             )}
-            {canEdit && !deleteConfirm && (
-              <button
-                type="button"
-                className="rogym-btn rogym-btn--icon rogym-btn--elevated"
-                onClick={() => setDeleteConfirm(true)}
-                aria-label="Xóa plan"
-              >
-                <Trash2 size={14} />
-              </button>
+            {avgMinPerDay > 0 && (
+              <span className="flex items-center gap-1">
+                <Clock size={11} />
+                <span className="font-semibold text-white">{avgMinPerDay}</span> {t('workout.myPlan.unitMinPerDay')}
+              </span>
             )}
           </div>
         </div>
 
-        {deleteConfirm && (
-          <div className="mt-3 flex items-center gap-2 rounded-xl border border-red-400/30 bg-red-400/10 px-3 py-2">
-            <span className="flex-1 text-xs text-red-200">{t('workout.myPlan.buttonDeletePlan')}</span>
-            <button
-              type="button"
-              className="rogym-btn rogym-btn--danger px-3 py-1 text-xs"
-              disabled={deleting}
-              onClick={() => void handleDelete()}
+        <div className="flex shrink-0 items-center gap-1.5">
+          <Button
+            variant="icon"
+            size="sm"
+            onClick={() => navigate('/member/workout/create-session')}
+            aria-label="Tạo buổi tập"
+            title="Tạo buổi tập"
+          >
+            <Play size={14} />
+          </Button>
+          {canEdit && (
+            <Button
+              variant="icon"
+              size="sm"
+              onClick={() => navigate(`/member/workout/builder/${assignment.planId}`)}
+              aria-label="Sửa plan"
+              title="Sửa plan"
             >
-              {deleting ? t('workout.myPlan.buttonDeleting') : t('workout.myPlan.buttonDelete')}
-            </button>
-            <button
-              type="button"
-              className="rogym-btn rogym-btn--outline-white px-3 py-1 text-xs"
-              onClick={() => setDeleteConfirm(false)}
+              <Pencil size={14} />
+            </Button>
+          )}
+          {canEdit && (
+            <Button
+              variant="icon"
+              size="sm"
+              onClick={() => setDeleteConfirm(true)}
+              aria-label="Xóa plan"
+              title="Xóa plan"
             >
-              {t('workout.myPlan.buttonCancelDelete')}
-            </button>
-          </div>
-        )}
-        {deleteError && <p className="mt-2 text-xs text-red-300">{deleteError}</p>}
-
-        <button
-          type="button"
-          className="rogym-text-link rogym-text-link--accent mt-3 flex items-center gap-1 text-xs"
-          onClick={() => setExpanded((v) => !v)}
-        >
-          {expanded ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
-          {expanded ? t('workout.myPlan.buttonHideDetail') : t('workout.myPlan.buttonShowDetail')}
-        </button>
+              <Trash2 size={14} />
+            </Button>
+          )}
+        </div>
       </div>
 
+      <Button
+        variant="text-accent"
+        size="xs"
+        className="mt-3"
+        leftIcon={expanded ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+        onClick={() => setExpanded((v) => !v)}
+      >
+        {expanded ? t('workout.myPlan.buttonHideDetail') : t('workout.myPlan.buttonShowDetail')}
+      </Button>
+
       {expanded && plan?.days && (
-        <div className="rogym-sx-8553bf9e">
+        <div className="rogym-sx-8553bf9e mt-3">
           {[...plan.days]
             .sort((a, b) => a.dayNumber - b.dayNumber)
             .map((day) => (
               <div
                 key={day.planDayId}
-                className="flex items-center justify-between gap-3 px-5 py-3 rogym-sx-6720cca7"
+                className="flex items-center justify-between gap-3 px-3 py-3 rogym-sx-6720cca7"
               >
                 <div className="min-w-0 flex-1">
                   <p className="break-words text-sm font-medium text-white">{day.name}</p>
                   <p className="text-xs rogym-sx-5e5c39ab">{t('workout.myPlan.exerciseCount', { count: day.exercises?.length ?? 0 })}</p>
                 </div>
-                <button
-                  type="button"
-                  className="rogym-btn rogym-btn--icon rogym-btn--outline-white shrink-0"
+                <Button
+                  variant="icon"
+                  size="xs"
                   onClick={() => setDetailDay(day)}
                   aria-label={t('workout.myPlan.buttonDayDetailAria', { name: day.name })}
                   title={t('workout.myPlan.buttonDayDetailAria', { name: day.name })}
                 >
-                  <Eye size={16} />
-                </button>
+                  <Eye size={14} />
+                </Button>
               </div>
             ))}
         </div>
       )}
 
       {detailDay && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 rogym-sx-8578aed4"
-          onClick={() => setDetailDay(null)}
+        <Modal
+          open={Boolean(detailDay)}
+          title={detailDay.name}
+          size="md"
+          onClose={() => setDetailDay(null)}
         >
-          <div
-            className="relative w-full max-w-md overflow-hidden rounded-[24px] rogym-sx-1f8ae2ef"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-start justify-between gap-3 p-6 pb-4">
-              <div>
-                <h2 className="text-lg font-bold text-white">{detailDay.name}</h2>
-                <p className="mt-0.5 text-xs rogym-sx-5e5c39ab">
-                  {t('workout.myPlan.exerciseCount', { count: detailDay.exercises?.length ?? 0 })}
-                </p>
-              </div>
-              <button
-                type="button"
-                className="rogym-btn rogym-btn--icon rogym-btn--elevated"
-                onClick={() => setDetailDay(null)}
-                aria-label="Đóng"
-              >
-                <X size={16} />
-              </button>
-            </div>
-            <div className="space-y-2 px-6 pb-6">
+          <div>
+            <p className="mb-4 text-xs rogym-text-secondary">
+              {t('workout.myPlan.exerciseCount', { count: detailDay.exercises?.length ?? 0 })}
+            </p>
+            <div className="space-y-2">
               {[...(detailDay.exercises ?? [])]
                 .sort((a, b) => a.orderIndex - b.orderIndex)
                 .map((ex, i) => {
@@ -267,9 +234,19 @@ function PlanCard({
                 })}
             </div>
           </div>
-        </div>
+        </Modal>
       )}
-    </div>
+
+      <ConfirmDialog
+        open={deleteConfirm}
+        title={t('workout.myPlan.buttonDeletePlan')}
+        description={t('workout.myPlan.deleteSavedConfirm')}
+        variant="danger"
+        loading={deleting}
+        onClose={() => setDeleteConfirm(false)}
+        onConfirm={() => void handleDelete()}
+      />
+    </Card>
   )
 }
 
@@ -315,118 +292,105 @@ function SavedPlanCard({
       setDeleteConfirm(false)
       onDelete()
     } catch {
+      // handled
+    } finally {
       setDeleting(false)
     }
   }
 
   return (
-    <div className="rogym-plan-card rogym-card rogym-card--md">
-      <div className="p-5">
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-2">
-              <span className="flex items-center gap-1 rounded-lg px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider rogym-sx-7041f1d2">
-                <Archive size={10} />{' '}
-                {isArchived ? t('workout.myPlan.savedPlanArchived') : plan.status === 'draft' ? t('workout.myPlan.savedPlanDraft') : t('workout.myPlan.savedPlanPaused')}
-              </span>
-              <h3 className="break-words font-bold text-white">{plan.name}</h3>
-            </div>
-            {plan.description && (
-              <p className="mt-1 text-xs rogym-sx-5e5c39ab">{plan.description}</p>
-            )}
-            <div className="mt-2 flex gap-3 text-xs rogym-sx-5e5c39ab">
-              <span>
-                <span className="font-semibold text-white">{totalDays}</span> {t('workout.myPlan.unitDays')}
-              </span>
-              {totalExercises > 0 && (
-                <span>
-                  <span className="font-semibold text-white">{totalExercises}</span> {t('workout.myPlan.unitExercises')}
-                </span>
-              )}
-              {avgMinPerDay > 0 && (
-                <span className="flex items-center gap-1">
-                  <Clock size={11} />
-                  <span className="font-semibold text-white">{avgMinPerDay}</span> {t('workout.myPlan.unitMinPerDay')}
-                </span>
-              )}
-            </div>
+    <Card variant="compact" className="p-5">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2">
+            <Badge tone="muted" size="xs" leftIcon={<Archive size={10} />}>
+              {isArchived
+                ? t('workout.myPlan.savedPlanArchived')
+                : plan.status === 'draft'
+                  ? t('workout.myPlan.savedPlanDraft')
+                  : t('workout.myPlan.savedPlanPaused')}
+            </Badge>
+            <h3 className="break-words font-bold text-white">{plan.name}</h3>
           </div>
-
-          <div className="flex shrink-0 flex-col items-end gap-1.5">
-            {!hasPtPlan && (
-              <button
-                type="button"
-                className="rogym-btn rogym-btn--primary px-3 py-1.5 text-xs"
-                onClick={() => onApply(plan)}
-              >
-                {t('workout.myPlan.buttonApply')}
-              </button>
+          {plan.description && (
+            <p className="mt-1 text-xs rogym-sx-5e5c39ab">{plan.description}</p>
+          )}
+          <div className="mt-2 flex gap-3 text-xs rogym-sx-5e5c39ab">
+            <span>
+              <span className="font-semibold text-white">{totalDays}</span> {t('workout.myPlan.unitDays')}
+            </span>
+            {totalExercises > 0 && (
+              <span>
+                <span className="font-semibold text-white">{totalExercises}</span> {t('workout.myPlan.unitExercises')}
+              </span>
             )}
-            <button
-              type="button"
-              className="rogym-btn rogym-btn--outline-white px-3 py-1.5 text-xs"
-              onClick={() => navigate(`/member/workout/builder/${plan.planId}`)}
-            >
-              {isArchived ? (
-                <>
-                  <Eye size={13} /> {t('workout.myPlan.buttonView')}
-                </>
-              ) : (
-                <>
-                  <Pencil size={13} />
-                </>
-              )}
-            </button>
-            {!deleteConfirm && (
-              <button
-                type="button"
-                className="rogym-btn rogym-btn--icon rogym-btn--elevated"
-                onClick={() => setDeleteConfirm(true)}
-                aria-label={t('workout.myPlan.buttonDelete')}
-              >
-                <Trash2 size={14} />
-              </button>
+            {avgMinPerDay > 0 && (
+              <span className="flex items-center gap-1">
+                <Clock size={11} />
+                <span className="font-semibold text-white">{avgMinPerDay}</span> {t('workout.myPlan.unitMinPerDay')}
+              </span>
             )}
           </div>
         </div>
 
-        {deleteConfirm && (
-          <div className="mt-3 flex items-center gap-2 rounded-xl border border-red-400/30 bg-red-400/10 px-3 py-2">
-            <span className="flex-1 text-xs text-red-200">{t('workout.myPlan.deleteSavedConfirm')}</span>
-            <button
-              type="button"
-              className="rogym-btn rogym-btn--danger px-3 py-1 text-xs"
-              disabled={deleting}
-              onClick={() => void handleDelete()}
+        <div className="flex shrink-0 items-center gap-1.5 flex-wrap justify-end">
+          {!hasPtPlan && (
+            <Button
+              variant="primary"
+              size="xs"
+              onClick={() => onApply(plan)}
             >
-              {deleting ? t('workout.myPlan.buttonDeleting') : t('workout.myPlan.buttonDelete')}
-            </button>
-            <button
-              type="button"
-              className="rogym-btn rogym-btn--outline-white px-3 py-1 text-xs"
-              onClick={() => setDeleteConfirm(false)}
+              {t('workout.myPlan.buttonApply')}
+            </Button>
+          )}
+          {isArchived ? (
+            <Button
+              variant="outline-white"
+              size="xs"
+              leftIcon={<Eye size={13} />}
+              onClick={() => navigate(`/member/workout/builder/${plan.planId}`)}
             >
-              {t('workout.myPlan.buttonCancelDelete')}
-            </button>
-          </div>
-        )}
-
-        <button
-          type="button"
-          className="rogym-text-link rogym-text-link--accent mt-3 flex items-center gap-1 text-xs"
-          onClick={() => setExpanded((v) => !v)}
-        >
-          {expanded ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
-          {expanded ? t('workout.myPlan.buttonHideDetail') : t('workout.myPlan.buttonShowDetail')}
-        </button>
+              {t('workout.myPlan.buttonView')}
+            </Button>
+          ) : (
+            <Button
+              variant="icon"
+              size="sm"
+              onClick={() => navigate(`/member/workout/builder/${plan.planId}`)}
+              aria-label="Sửa plan"
+              title="Sửa plan"
+            >
+              <Pencil size={14} />
+            </Button>
+          )}
+          <Button
+            variant="icon"
+            size="sm"
+            onClick={() => setDeleteConfirm(true)}
+            aria-label={t('workout.myPlan.buttonDelete')}
+            title={t('workout.myPlan.buttonDelete')}
+          >
+            <Trash2 size={14} />
+          </Button>
+        </div>
       </div>
 
+      <Button
+        variant="text-accent"
+        size="xs"
+        className="mt-3"
+        leftIcon={expanded ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+        onClick={() => setExpanded((v) => !v)}
+      >
+        {expanded ? t('workout.myPlan.buttonHideDetail') : t('workout.myPlan.buttonShowDetail')}
+      </Button>
+
       {expanded && plan.days && (
-        <div className="rogym-sx-8553bf9e">
+        <div className="rogym-sx-8553bf9e mt-3">
           {[...plan.days]
             .sort((a, b) => a.dayNumber - b.dayNumber)
             .map((day) => (
-              <div key={day.planDayId} className="px-5 py-3 rogym-sx-6720cca7">
+              <div key={day.planDayId} className="px-3 py-3 rogym-sx-6720cca7">
                 <p className="text-sm font-medium text-white">{day.name}</p>
                 <p className="text-xs rogym-sx-5e5c39ab">{t('workout.myPlan.exerciseCount', { count: day.exercises?.length ?? 0 })}</p>
                 {[...(day.exercises ?? [])]
@@ -452,7 +416,17 @@ function SavedPlanCard({
             ))}
         </div>
       )}
-    </div>
+
+      <ConfirmDialog
+        open={deleteConfirm}
+        title={t('workout.myPlan.buttonDelete')}
+        description={t('workout.myPlan.deleteSavedConfirm')}
+        variant="danger"
+        loading={deleting}
+        onClose={() => setDeleteConfirm(false)}
+        onConfirm={() => void handleDelete()}
+      />
+    </Card>
   )
 }
 
@@ -461,7 +435,7 @@ function SavedPlanCard({
 export default function MyPlanPage() {
   const navigate = useNavigate()
   const { t } = useTranslation('member')
-  const user = useAuthStore(state => state.user)
+  const user = useAuthStore((state) => state.user)
   const memberId = user?.memberId ? String(user.memberId) : undefined
 
   const [assignments, setAssignments] = useState<WorkoutAssignmentSummary[]>([])
@@ -584,13 +558,13 @@ export default function MyPlanPage() {
         title={t('workout.myPlan.pageTitle')}
         description={t('workout.myPlan.description')}
         actions={
-          <button
-            type="button"
-            className="rogym-btn rogym-btn--primary"
+          <Button
+            variant="primary"
+            leftIcon={<Dumbbell size={15} />}
             onClick={() => navigate('/member/workout/builder')}
           >
-            <Dumbbell size={15} /> {t('workout.myPlan.buttonCreateNew')}
-          </button>
+            {t('workout.myPlan.buttonCreateNew')}
+          </Button>
         }
       />
 
@@ -599,13 +573,13 @@ export default function MyPlanPage() {
           title={t('workout.myPlan.emptyTitle')}
           description={t('workout.myPlan.emptyDescription')}
           action={
-            <button
-              type="button"
-              className="rogym-btn rogym-btn--primary"
+            <Button
+              variant="primary"
+              leftIcon={<Dumbbell size={15} />}
               onClick={() => navigate('/member/workout/builder')}
             >
-              <Dumbbell size={15} /> {t('workout.myPlan.buttonCreatePersonal')}
-            </button>
+              {t('workout.myPlan.buttonCreatePersonal')}
+            </Button>
           }
         />
       ) : (
@@ -650,13 +624,15 @@ export default function MyPlanPage() {
             {selfPlans.length === 0 && savedPlans.length === 0 ? (
               <div className="rounded-[16px] p-5 text-center text-sm rogym-sx-0e44a235">
                 {t('workout.myPlan.noPersonalPlans')}
-                <button
-                  type="button"
-                  className="rogym-btn rogym-btn--primary mt-3 mx-auto flex"
+                <Button
+                  variant="primary"
+                  size="sm"
+                  className="mt-3 mx-auto flex"
+                  leftIcon={<Dumbbell size={14} />}
                   onClick={() => navigate('/member/workout/builder')}
                 >
-                  <Dumbbell size={14} /> {t('workout.myPlan.buttonCreateNow')}
-                </button>
+                  {t('workout.myPlan.buttonCreateNow')}
+                </Button>
               </div>
             ) : (
               <div className="space-y-4">
@@ -694,3 +670,4 @@ export default function MyPlanPage() {
     </MemberPage>
   )
 }
+

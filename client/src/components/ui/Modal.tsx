@@ -1,6 +1,7 @@
 import { X } from 'lucide-react'
 import { type ReactNode, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
+import { Button } from './Button'
 
 type ModalSize = 'sm' | 'md' | 'lg' | 'xl' | '2xl'
 
@@ -43,20 +44,20 @@ export function Modal({ open, title, children, onClose, footer, size = 'xl' }: M
     >
       {/* w-[90vw] ngăn modal chạm sát cạnh màn hình nhỏ; md:w-full trở lại full-width bên trong backdrop p-4 */}
       <div
-        className={`max-h-[90vh] w-[90vw] md:w-full ${SIZE_CLASS[size]} overflow-y-auto rounded-2xl border border-white/10 bg-[var(--rogym-bg-card)] shadow-2xl`}
+        className={`max-h-[90vh] w-[90vw] md:w-full ${SIZE_CLASS[size]} overflow-y-auto rounded-2xl border border-[var(--rogym-border-teal-dim)] bg-[var(--rogym-bg-card)] shadow-[var(--rogym-shadow-glass)]`}
       >
         <div className="flex items-center justify-between border-b border-white/5 px-6 py-4">
           <h2 id="modal-title" className="text-lg font-bold text-white">
             {title}
           </h2>
-          <button
-            type="button"
-            className="rogym-btn rogym-btn--icon rogym-btn--elevated"
+          <Button
+            variant="icon"
+            size="sm"
             onClick={onClose}
             aria-label={t('button.close')}
           >
-            <X size={17} />
-          </button>
+            <X size={16} />
+          </Button>
         </div>
         <div className="p-6">{children}</div>
         {footer && (
@@ -66,3 +67,4 @@ export function Modal({ open, title, children, onClose, footer, size = 'xl' }: M
     </div>
   )
 }
+
