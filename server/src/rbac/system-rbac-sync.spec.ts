@@ -213,7 +213,7 @@ describe('synchronizeSystemRbac', () => {
     const first = await synchronizeSystemRbac(memory.prisma)
     const second = await synchronizeSystemRbac(memory.prisma)
 
-    expect(first.permissions).toEqual({ created: 51, metadataUpdated: 0, unchanged: 0, removed: 0 })
+    expect(first.permissions).toEqual({ created: 52, metadataUpdated: 0, unchanged: 0, removed: 0 })
     expect(first.groups).toEqual({ created: 4, reactivated: 0, metadataUpdated: 0, unchanged: 0 })
     expect(first.assignments).toEqual({
       desired: expectedAssignments,
@@ -224,7 +224,7 @@ describe('synchronizeSystemRbac', () => {
     expect(second.permissions).toEqual({
       created: 0,
       metadataUpdated: 0,
-      unchanged: 51,
+      unchanged: 52,
       removed: 0,
     })
     expect(second.groups).toEqual({ created: 0, reactivated: 0, metadataUpdated: 0, unchanged: 4 })
@@ -234,7 +234,7 @@ describe('synchronizeSystemRbac', () => {
       skipped: expectedAssignments,
       removed: 0,
     })
-    expect(memory.permissions.size).toBe(51)
+    expect(memory.permissions.size).toBe(52)
     expect(memory.groups.size).toBe(4)
     expect(memory.assignments.size).toBe(expectedAssignments)
     expect(Object.values(memory.deletes).every((spy) => spy.mock.calls.length === 0)).toBe(true)
@@ -341,20 +341,20 @@ describe('synchronizeSystemRbac', () => {
     expect(first.permissions).toEqual({
       created: 13,
       metadataUpdated: 0,
-      unchanged: 38,
+      unchanged: 39,
       removed: 1,
     })
-    expect(first.assignments).toEqual({ desired: 124, created: 36, skipped: 88, removed: 2 })
+    expect(first.assignments).toEqual({ desired: 126, created: 36, skipped: 90, removed: 2 })
     expect(second.permissions).toEqual({
       created: 0,
       metadataUpdated: 0,
-      unchanged: 51,
+      unchanged: 52,
       removed: 0,
     })
-    expect(second.assignments).toEqual({ desired: 124, created: 0, skipped: 124, removed: 0 })
+    expect(second.assignments).toEqual({ desired: 126, created: 0, skipped: 126, removed: 0 })
     expect(memory.permissions.has('notification.send')).toBe(false)
-    expect(memory.permissions.size).toBe(51)
-    expect(memory.assignments.size).toBe(124)
+    expect(memory.permissions.size).toBe(52)
+    expect(memory.assignments.size).toBe(126)
   })
 
   it('refuses cleanup before changing data when a custom group uses notification.send', async () => {

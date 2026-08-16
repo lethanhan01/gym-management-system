@@ -567,7 +567,7 @@ export default function MemberDashboardPage() {
     if ((location.state as { paymentSuccess?: boolean } | null)?.paymentSuccess) {
       toast.success(t('dashboard.paymentSuccess'))
     }
-  }, [location.state])
+  }, [location.state, t])
 
   useEffect(() => {
     const memberId = user?.memberId

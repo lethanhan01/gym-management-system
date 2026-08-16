@@ -7,7 +7,7 @@ import {
   User,
   AlertCircle,
 } from 'lucide-react'
-import { Button, Modal } from '@/components/ui'
+import { Button, Modal, Select } from '@/components/ui'
 import { toast } from '@/lib/toast'
 import { getApiError, getApiErrorCode } from '@/lib/api-error'
 import {
@@ -77,14 +77,16 @@ export function BookPtSessionModal({
   } | null>(null)
   const [selectedPlanDayId, setSelectedPlanDayId] = useState<string>('')
 
+  const memberId = user?.memberId
+
   // Load member active workout plan
   useEffect(() => {
-    if (!open || !user?.memberId) return
+    if (!open || !memberId) return
     let isMounted = true
 
     async function loadActivePlan() {
       try {
-        const assignments = await workoutService.getAssignments(user!.memberId!, {
+        const assignments = await workoutService.getAssignments(memberId!, {
           status: 'active',
           limit: 1,
         })
@@ -106,7 +108,7 @@ export function BookPtSessionModal({
     return () => {
       isMounted = false
     }
-  }, [open, user?.memberId])
+  }, [open, memberId])
 
   // Load trainer availability
   const fetchAvailability = useCallback(async (dateStr: string) => {
@@ -351,10 +353,10 @@ export function BookPtSessionModal({
             <p className="text-xs text-white/50 truncate">
               {activePlan.plan.name}
             </p>
-            <select
+            <Select
               value={selectedPlanDayId}
-              onChange={(e) => setSelectedPlanDayId(e.target.value)}
-              className="w-full rounded-xl border border-white/15 bg-[#0e1e17] px-3 py-2 text-sm text-white focus:border-[var(--rogym-accent)] focus:outline-none"
+              onValueChange={(val) => setSelectedPlanDayId(val)}
+              className="w-full"
             >
               <option value="">{t('workout.schedule.booking.noPlanSelected')}</option>
               {activePlan.plan.days.map((day) => (
@@ -362,7 +364,7 @@ export function BookPtSessionModal({
                   {day.name || `Ngày ${day.dayNumber} · Tuần ${day.weekNumber}`}
                 </option>
               ))}
-            </select>
+            </Select>
           </div>
         ) : null}
       </div>

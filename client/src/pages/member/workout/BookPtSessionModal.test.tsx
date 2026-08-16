@@ -116,7 +116,7 @@ describe('BookPtSessionModal', () => {
     fireEvent.click(availableSlotBtn!)
 
     // Submit booking
-    const submitBtn = screen.getByRole('button', { name: /Xác nhận đặt lịch/i })
+    const submitBtn = screen.getByRole('button', { name: /Xác nhận/i })
     expect(submitBtn).toBeEnabled()
     fireEvent.click(submitBtn)
 
@@ -134,7 +134,7 @@ describe('BookPtSessionModal', () => {
   })
 
   it('displays friendly message when member has no primary trainer', async () => {
-    const error: any = Object.assign(new Error('No primary trainer'), {
+    const error = Object.assign(new Error('No primary trainer'), {
       isAxiosError: true,
       response: { data: { code: 'NO_PRIMARY_TRAINER' } },
     })

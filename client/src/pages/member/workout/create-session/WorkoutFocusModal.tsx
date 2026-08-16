@@ -15,7 +15,7 @@ import type { WorkoutPlanDay } from '@/services/workout.service'
 import type { SessionTimerRuntime } from './sessionDraft'
 import { formatTimer } from './sessionTimer'
 
-export function parseInstructions(input: unknown): string[] {
+function parseInstructions(input: unknown): string[] {
   if (!input) return []
   if (Array.isArray(input)) {
     return input.map((item) => String(item).trim()).filter(Boolean)

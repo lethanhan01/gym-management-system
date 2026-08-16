@@ -88,7 +88,10 @@
     "collectCoverageFrom": [
       "**/*.(t|j)s",
       "!**/*.spec.ts",
-      "!**/node_modules/**"
+      "!**/node_modules/**",
+      "!**/main.ts",
+      "!**/*.module.ts",
+      "!**/swagger/**"
     ],
     "coverageDirectory": "../coverage",
     "coverageReporters": [
