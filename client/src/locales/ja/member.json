@@ -673,6 +673,7 @@
       "buttonStartWorkout": "トレーニング開始",
       "buttonStopWorkout": "セッション停止",
       "buttonResumeWorkout": "セッション再開",
+      "buttonSkipRest": "休憩をスキップ",
       "buttonRetrySave": "保存を再試行",
       "timeRemaining": "残り時間",
       "restRemaining": "休憩残り {{seconds}} 秒",

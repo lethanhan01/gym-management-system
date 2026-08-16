@@ -84,6 +84,7 @@ describe('WorkoutFocusModal', () => {
         day={mockDay}
         onPause={onPause}
         onResume={vi.fn()}
+        onSkipRest={vi.fn()}
         celebrationSeconds={null}
       />
     )
@@ -102,13 +103,15 @@ describe('WorkoutFocusModal', () => {
     expect(onClose).toHaveBeenCalled()
   })
 
-  it('renders rest segment with countdown and next set preview', () => {
+  it('renders rest segment with countdown, pause and skip rest buttons', () => {
     const restRuntime: SessionTimerRuntime = {
       ...mockRuntime,
       segmentIndex: 1,
       segmentRemainingSec: 25,
       totalRemainingSec: 90,
     }
+    const onSkipRest = vi.fn()
+    const onPause = vi.fn()
 
     render(
       <WorkoutFocusModal
@@ -117,8 +120,9 @@ describe('WorkoutFocusModal', () => {
         runtime={restRuntime}
         status="running"
         day={mockDay}
-        onPause={vi.fn()}
+        onPause={onPause}
         onResume={vi.fn()}
+        onSkipRest={onSkipRest}
         celebrationSeconds={null}
       />
     )
@@ -126,6 +130,12 @@ describe('WorkoutFocusModal', () => {
     expect(screen.getByText('Nghỉ giữa hiệp')).toBeVisible()
     expect(screen.getByText('00:25')).toBeVisible()
     expect(screen.getByText('Thời gian nghỉ')).toBeVisible()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Dừng buổi tập' }))
+    expect(onPause).toHaveBeenCalled()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Bỏ qua nghỉ' }))
+    expect(onSkipRest).toHaveBeenCalled()
   })
 
   it('renders celebration screen when celebrationSeconds is active', () => {
@@ -140,6 +150,7 @@ describe('WorkoutFocusModal', () => {
         day={mockDay}
         onPause={vi.fn()}
         onResume={vi.fn()}
+        onSkipRest={vi.fn()}
         celebrationSeconds={4}
       />
     )
@@ -175,6 +186,7 @@ describe('WorkoutFocusModal', () => {
         day={jsonInstructionsDay}
         onPause={vi.fn()}
         onResume={vi.fn()}
+        onSkipRest={vi.fn()}
         celebrationSeconds={null}
       />
     )
@@ -206,6 +218,7 @@ describe('WorkoutFocusModal', () => {
         day={textInstructionsDay}
         onPause={vi.fn()}
         onResume={vi.fn()}
+        onSkipRest={vi.fn()}
         celebrationSeconds={null}
       />
     )
@@ -235,6 +248,7 @@ describe('WorkoutFocusModal', () => {
         day={nullInstructionsDay}
         onPause={vi.fn()}
         onResume={vi.fn()}
+        onSkipRest={vi.fn()}
         celebrationSeconds={null}
       />
     )

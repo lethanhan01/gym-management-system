@@ -3,6 +3,7 @@ import {
   CheckCircle2,
   Clock,
   Dumbbell,
+  FastForward,
   Minimize2,
   Pause,
   Play,
@@ -45,6 +46,7 @@ interface WorkoutFocusModalProps {
   day: WorkoutPlanDay
   onPause: () => void
   onResume: () => void
+  onSkipRest: () => void
   celebrationSeconds: number | null
 }
 
@@ -56,6 +58,7 @@ export function WorkoutFocusModal({
   day,
   onPause,
   onResume,
+  onSkipRest,
   celebrationSeconds,
 }: WorkoutFocusModalProps) {
   const { t } = useTranslation('member')
@@ -142,40 +145,16 @@ export function WorkoutFocusModal({
       title={t('workout.createSession.focusModalTitle')}
       onClose={onClose}
       size="xl"
-      footer={
-        <div className="flex w-full items-center justify-between gap-3">
-          <Button
-            variant="outline-white"
-            size="sm"
-            onClick={onClose}
-            leftIcon={<Minimize2 size={15} />}
-          >
-            {t('workout.createSession.focusMinimize')}
-          </Button>
-
-          <div className="flex items-center gap-2">
-            {isRunning && (
-              <Button
-                variant="primary"
-                size="sm"
-                onClick={onPause}
-                leftIcon={<Pause size={15} />}
-              >
-                {t('workout.createSession.buttonStopWorkout')}
-              </Button>
-            )}
-            {isPaused && (
-              <Button
-                variant="primary"
-                size="sm"
-                onClick={onResume}
-                leftIcon={<Play size={15} />}
-              >
-                {t('workout.createSession.buttonResumeWorkout')}
-              </Button>
-            )}
-          </div>
-        </div>
+      headerActions={
+        <Button
+          variant="icon"
+          size="sm"
+          onClick={onClose}
+          aria-label={t('workout.createSession.focusMinimize')}
+          title={t('workout.createSession.focusMinimize')}
+        >
+          <Minimize2 size={16} />
+        </Button>
       }
     >
       <div className="space-y-5">
@@ -242,6 +221,40 @@ export function WorkoutFocusModal({
               />
             </div>
 
+            {/* Controls right under countdown */}
+            <div className="mb-4 flex flex-wrap items-center justify-center gap-3">
+              {isRunning && (
+                <Button
+                  variant="outline-white"
+                  size="sm"
+                  className="border-amber-400/40 bg-amber-400/15 text-amber-200 hover:bg-amber-400/25 hover:text-white"
+                  onClick={onPause}
+                  leftIcon={<Pause size={15} />}
+                >
+                  {t('workout.createSession.buttonStopWorkout')}
+                </Button>
+              )}
+              {isPaused && (
+                <Button
+                  variant="outline-white"
+                  size="sm"
+                  className="border-amber-400/40 bg-amber-400/15 text-amber-200 hover:bg-amber-400/25 hover:text-white"
+                  onClick={onResume}
+                  leftIcon={<Play size={15} />}
+                >
+                  {t('workout.createSession.buttonResumeWorkout')}
+                </Button>
+              )}
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={onSkipRest}
+                leftIcon={<FastForward size={15} />}
+              >
+                {t('workout.createSession.buttonSkipRest')}
+              </Button>
+            </div>
+
             {nextSegment && (
               <p className="text-sm text-amber-200/80">
                 {t('workout.createSession.focusNextSet', {
@@ -282,6 +295,30 @@ export function WorkoutFocusModal({
                 className="h-full bg-cyan-300 transition-[width] duration-200 motion-reduce:transition-none"
                 style={{ width: `${segmentProgress}%` }}
               />
+            </div>
+
+            {/* Controls right under countdown */}
+            <div className="mt-4 flex items-center justify-center gap-3">
+              {isRunning && (
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={onPause}
+                  leftIcon={<Pause size={15} />}
+                >
+                  {t('workout.createSession.buttonStopWorkout')}
+                </Button>
+              )}
+              {isPaused && (
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={onResume}
+                  leftIcon={<Play size={15} />}
+                >
+                  {t('workout.createSession.buttonResumeWorkout')}
+                </Button>
+              )}
             </div>
           </div>
         )}

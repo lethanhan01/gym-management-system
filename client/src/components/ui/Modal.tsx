@@ -19,10 +19,11 @@ interface ModalProps {
   children: ReactNode
   onClose: () => void
   footer?: ReactNode
+  headerActions?: ReactNode
   size?: ModalSize
 }
 
-export function Modal({ open, title, children, onClose, footer, size = 'xl' }: ModalProps) {
+export function Modal({ open, title, children, onClose, footer, headerActions, size = 'xl' }: ModalProps) {
   const { t } = useTranslation('common')
   useEffect(() => {
     if (!open) return
@@ -50,14 +51,17 @@ export function Modal({ open, title, children, onClose, footer, size = 'xl' }: M
           <h2 id="modal-title" className="text-lg font-bold text-white">
             {title}
           </h2>
-          <Button
-            variant="icon"
-            size="sm"
-            onClick={onClose}
-            aria-label={t('button.close')}
-          >
-            <X size={16} />
-          </Button>
+          <div className="flex items-center gap-1.5">
+            {headerActions}
+            <Button
+              variant="icon"
+              size="sm"
+              onClick={onClose}
+              aria-label={t('button.close')}
+            >
+              <X size={16} />
+            </Button>
+          </div>
         </div>
         <div className="p-6">{children}</div>
         {footer && (

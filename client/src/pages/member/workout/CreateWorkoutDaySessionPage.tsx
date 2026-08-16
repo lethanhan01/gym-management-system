@@ -67,18 +67,15 @@ function reduceRunningRuntime(runtime: SessionTimerRuntime, now: number, deadlin
   }
 }
 
-function RestBreak({ segment, active, completed, remainingSec }: { segment: TimerSegment; active: boolean; completed: boolean; remainingSec: number }) {
+function RestBreak({ segment, active, completed }: { segment: TimerSegment; active: boolean; completed: boolean }) {
   const { t } = useTranslation('member')
-  const label = active
-    ? t('workout.createSession.restRemaining', { seconds: remainingSec })
-    : t('workout.createSession.restBreak', { seconds: segment.durationSec })
+  const label = t('workout.createSession.restBreak', { seconds: segment.durationSec })
   return (
     <div className={`my-3 rounded-lg px-3 py-2 ${active ? 'bg-amber-400/15 ring-1 ring-amber-300/30' : 'bg-white/[0.04]'} ${completed ? 'opacity-55' : ''}`} aria-label={label}>
       <div className="flex items-center justify-between text-xs rogym-sx-5e5c39ab">
-        <span>{active ? t('workout.createSession.restRunning', { seconds: remainingSec }) : label}</span>
+        <span>{label}</span>
         <Clock size={13} aria-hidden="true" />
       </div>
-      {active && <div className="mt-2 h-1 overflow-hidden rounded bg-white/10"><div className="h-full bg-amber-300 transition-[width] duration-200 motion-reduce:transition-none" style={{ width: `${Math.max(0, Math.min(100, (remainingSec / segment.durationSec) * 100))}%` }} /></div>}
     </div>
   )
 }
@@ -312,6 +309,50 @@ export default function CreateWorkoutDaySessionPage() {
     if (runtimeRef.current) void saveLog(runtimeRef.current)
   }, [saveLog])
 
+  const skipRest = useCallback(() => {
+    const current = runtimeRef.current
+    if (!current) return
+    const currentSegment = current.segments[current.segmentIndex]
+    if (!currentSegment || currentSegment.kind !== 'rest') return
+
+    const nextIndex = current.segmentIndex + 1
+    if (nextIndex >= current.segments.length) {
+      const completed: SessionTimerRuntime = {
+        ...current,
+        segmentIndex: nextIndex,
+        segmentRemainingSec: 0,
+        totalRemainingSec: 0,
+        status: 'saving',
+        loggedAt: new Date().toISOString(),
+      }
+      setStatus('saving')
+      persistRuntime(completed)
+      void saveLog(completed)
+      return
+    }
+
+    const nextSegment = current.segments[nextIndex]
+    const followingSeconds = current.segments
+      .slice(nextIndex + 1)
+      .reduce((sum, segment) => sum + segment.durationSec, 0)
+    const nextTotalRemainingSec = nextSegment.durationSec + followingSeconds
+
+    if (current.status === 'running') {
+      deadlineRef.current = Date.now() + nextSegment.durationSec * 1000
+    } else {
+      deadlineRef.current = null
+    }
+
+    const updated: SessionTimerRuntime = {
+      ...current,
+      segmentIndex: nextIndex,
+      segmentRemainingSec: nextSegment.durationSec,
+      totalRemainingSec: nextTotalRemainingSec,
+    }
+
+    persistRuntime(updated)
+  }, [persistRuntime, saveLog])
+
   useEffect(() => {
     if (!loaded) {
       setControls(null)
@@ -422,7 +463,26 @@ export default function CreateWorkoutDaySessionPage() {
                   const isRestAfter = !!displayRest
                   const restActive = isRestAfter && runtime?.segmentIndex === setSegmentIndex + 1
                   const restCompleted = isRestAfter && (runtime?.segmentIndex ?? -1) > setSegmentIndex + 1
-                  return <Fragment key={setIndex}><div className={`grid grid-cols-[40px_1fr_1fr] items-center gap-2 rounded-lg p-2 text-sm ${isActive ? 'bg-cyan-400/15 ring-1 ring-cyan-300/40' : 'bg-white/[0.03]'} ${isCompleted ? 'opacity-55' : ''}`}><span className="rogym-workout-set-index font-medium">{setIndex + 1}</span><span className="text-white">{cardio ? set.actualDurationSec : set.actualReps || '—'}{isActive && <span className="ml-2 text-xs text-cyan-200">{formatTimer(runtime?.segmentRemainingSec ?? 0)}</span>}</span><span className="text-white">{set.actualWeightKg || '—'}</span>{isActive && activeSegment && <div className="col-span-3 mt-1 h-1 overflow-hidden rounded bg-white/10"><div className="h-full bg-cyan-300 transition-[width] duration-200 motion-reduce:transition-none" style={{ width: `${Math.max(0, Math.min(100, ((runtime?.segmentRemainingSec ?? 0) / activeSegment.durationSec) * 100))}%` }} /></div>}</div>{isRestAfter && displayRest && <RestBreak segment={displayRest} active={!!restActive} completed={!!restCompleted} remainingSec={restActive ? runtime?.segmentRemainingSec ?? 0 : displayRest.durationSec} />}</Fragment>
+                  return (
+                    <Fragment key={setIndex}>
+                      <div
+                        className={`grid grid-cols-[40px_1fr_1fr] items-center gap-2 rounded-lg p-2 text-sm ${
+                          isActive ? 'bg-cyan-400/15 ring-1 ring-cyan-300/40' : 'bg-white/[0.03]'
+                        } ${isCompleted ? 'opacity-55' : ''}`}
+                      >
+                        <span className="rogym-workout-set-index font-medium">{setIndex + 1}</span>
+                        <span className="text-white">{cardio ? set.actualDurationSec : set.actualReps || '—'}</span>
+                        <span className="text-white">{set.actualWeightKg || '—'}</span>
+                      </div>
+                      {isRestAfter && displayRest && (
+                        <RestBreak
+                          segment={displayRest}
+                          active={!!restActive}
+                          completed={!!restCompleted}
+                        />
+                      )}
+                    </Fragment>
+                  )
                 })}
               </div></div>
             </div>
@@ -469,6 +529,7 @@ export default function CreateWorkoutDaySessionPage() {
         day={loaded.day}
         onPause={pauseTimer}
         onResume={resumeTimer}
+        onSkipRest={skipRest}
         celebrationSeconds={celebrationSeconds}
       />
       <Modal

@@ -690,6 +690,7 @@
         "buttonStartWorkout": "Bắt đầu buổi tập",
         "buttonStopWorkout": "Dừng buổi tập",
         "buttonResumeWorkout": "Tiếp tục buổi tập",
+        "buttonSkipRest": "Bỏ qua nghỉ",
         "buttonRetrySave": "Thử lưu lại",
         "timeRemaining": "Thời gian còn lại",
         "restRemaining": "Nghỉ còn {{seconds}} giây",
