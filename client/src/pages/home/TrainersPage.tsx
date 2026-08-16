@@ -1,6 +1,12 @@
-import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import HomeNavbar from '@/components/home/HomeNavbar'
+import {
+  Card,
+  CardTitle,
+  CardDescription,
+  Badge,
+  ButtonLink,
+} from '@/components/ui'
 
 export default function TrainersPage() {
   const { t } = useTranslation('home')
@@ -38,28 +44,45 @@ export default function TrainersPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {trainers.map((c) => (
-            <div key={c.n} className="rounded-[40px] border border-white/10 bg-white/5 p-7">
-              <div className="text-lg font-bold">{c.n}</div>
-              <div className="text-sm font-semibold uppercase tracking-widest text-[#42e09e] mt-1">
-                {c.r}
+            <Card
+              key={c.n}
+              variant="glass"
+              padding="lg"
+              className="rounded-[40px] border border-white/10 bg-white/5 transition-all duration-300 hover:-translate-y-1.5 hover:border-[var(--rogym-teal)]/40 hover:shadow-[0_12px_32px_rgba(0,0,0,0.35)] flex flex-col justify-start"
+            >
+              <CardTitle size="lg" className="font-bold text-white tracking-wide">
+                {c.n}
+              </CardTitle>
+              <div className="mt-2.5">
+                <Badge tone="accent" size="sm" className="font-bold tracking-widest uppercase">
+                  {c.r}
+                </Badge>
               </div>
-              <div className="mt-3 text-white/70">{c.b}</div>
-            </div>
+              <CardDescription className="mt-4 text-white/70 leading-relaxed text-sm">
+                {c.b}
+              </CardDescription>
+            </Card>
           ))}
         </div>
 
         <div className="mt-12 flex gap-4 flex-wrap">
-          <Link
+          <ButtonLink
             to="/member/choose-trainer"
-            className="rogym-btn rogym-btn--primary rogym-btn--hero"
+            variant="primary"
+            size="hero"
           >
-            <span>{t('trainers.chooseBtn')}</span>
-          </Link>
-          <Link to="/contact" className="rogym-btn rogym-btn--hero rogym-btn--outline-white">
-            <span>{t('trainers.contactBtn')}</span>
-          </Link>
+            {t('trainers.chooseBtn')}
+          </ButtonLink>
+          <ButtonLink
+            to="/contact"
+            variant="outline-white"
+            size="hero"
+          >
+            {t('trainers.contactBtn')}
+          </ButtonLink>
         </div>
       </div>
     </div>
   )
 }
+

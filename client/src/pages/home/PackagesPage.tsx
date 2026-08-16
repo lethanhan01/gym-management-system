@@ -1,6 +1,8 @@
-import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { Check } from 'lucide-react'
 import HomeNavbar from '@/components/home/HomeNavbar'
+import { Card, Badge, ButtonLink } from '@/components/ui'
+import { cn } from '@/lib/utils'
 
 export default function PackagesPage() {
   const { t } = useTranslation('home')
@@ -53,41 +55,63 @@ export default function PackagesPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {packages.map((p) => (
-            <div
+            <Card
               key={p.tier}
-              className={`rounded-[40px] border border-white/10 bg-white/5 p-8 ${p.hot ? 'ring-1 ring-[#42e09e]' : ''}`}
+              variant="glass"
+              padding="lg"
+              className={cn(
+                'rounded-[40px] border border-white/10 bg-white/5 flex flex-col justify-between transition-all duration-300 hover:-translate-y-1.5 hover:shadow-[0_12px_32px_rgba(0,0,0,0.4)]',
+                p.hot && 'border-[var(--rogym-teal)] ring-1 ring-[var(--rogym-teal)]/40 bg-[var(--rogym-teal)]/[0.04]'
+              )}
             >
-              <div className="text-xs font-bold uppercase tracking-[0.25em] text-white/70">
-                {p.tier}
+              <div>
+                <div className="flex items-center justify-between gap-2">
+                  <Badge
+                    tone={p.hot ? 'accent' : 'muted'}
+                    size="sm"
+                    className="tracking-[0.2em] uppercase font-bold"
+                  >
+                    {p.tier}
+                  </Badge>
+                  {p.hot && (
+                    <Badge tone="primary" size="xs" className="tracking-wider uppercase">
+                      {t('packages.popular', { defaultValue: 'PHỔ BIẾN' })}
+                    </Badge>
+                  )}
+                </div>
+
+                <div className="mt-5 flex items-baseline gap-2">
+                  <span className="text-4xl font-extrabold text-white tracking-tight">{p.price}</span>
+                  <span className="text-sm text-white/60 font-medium">{t('packages.perMonth')}</span>
+                </div>
+
+                <div className="mt-8 space-y-3.5">
+                  {p.f.map((x) => (
+                    <div key={x} className="flex items-start gap-3">
+                      <div className="w-5 h-5 rounded-full bg-[var(--rogym-teal)]/15 border border-[var(--rogym-teal)]/40 flex items-center justify-center shrink-0 mt-0.5 text-[var(--rogym-teal)]">
+                        <Check size={12} strokeWidth={2.5} />
+                      </div>
+                      <span className="text-sm text-white/75 leading-relaxed">{x}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
-              <div className="mt-4 flex items-baseline gap-2">
-                <div className="text-3xl font-extrabold">{p.price}</div>
-                <div className="text-white/60">{t('packages.perMonth')}</div>
-              </div>
-              <div className="mt-6 space-y-3">
-                {p.f.map((x) => (
-                  <div key={x} className="flex items-start gap-3">
-                    <div className="w-2.5 h-2.5 rounded-full bg-[#42e09e] mt-2" />
-                    <div className="text-white/70">{x}</div>
-                  </div>
-                ))}
-              </div>
-              <div className="mt-8">
-                <Link
+
+              <div className="mt-10">
+                <ButtonLink
                   to="/member/subscription/setup"
-                  className={
-                    p.hot
-                      ? 'rogym-btn rogym-btn--wide rogym-btn--dark'
-                      : 'rogym-btn rogym-btn--wide rogym-btn--outline-white'
-                  }
+                  variant={p.hot ? 'dark' : 'outline-white'}
+                  size="wide"
+                  fullWidth
                 >
-                  <span>{t('packages.registerBtn')}</span>
-                </Link>
+                  {t('packages.registerBtn')}
+                </ButtonLink>
               </div>
-            </div>
+            </Card>
           ))}
         </div>
       </div>
     </div>
   )
 }
+
