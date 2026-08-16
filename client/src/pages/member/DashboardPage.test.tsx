@@ -14,11 +14,6 @@ import { makeSubscription } from '@/test/subscriptionFactory'
 
 const toastSuccessMock = vi.hoisted(() => vi.fn())
 
-vi.mock('@/components/MemberUI', () => ({
-  MemberPage: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  MemberPageHeader: ({ title }: { title: React.ReactNode }) => <header>{title}</header>,
-}))
-
 vi.mock('@/services/subscription.service', async () => {
   const actual = await vi.importActual<typeof import('@/services/subscription.service')>(
     '@/services/subscription.service'

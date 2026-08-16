@@ -321,37 +321,86 @@ Bộ 3 component kết hợp tạo nên thanh công cụ danh sách dữ liệu:
 
 ---
 
-### 9. Thẻ Chứa & Thống Kê (Card & StatCard)
+### 9. Thẻ Chứa & Thống Kê (Card Enterprise Suite & StatCard)
 
 #### 🎯 Vai trò & Phân biệt
 - **`Card Family`** ([`Card.tsx`](file:///c:/Users/An/Documents/IT4549-ITSS/gym-management-system/client/src/components/ui/Card.tsx)):
-  - Gồm bộ: `Card`, `CardHeader`, `CardTitle`, `CardDescription`, `CardContent`, `CardFooter`.
-  - Variants: `default`, `compact`, `interactive` (có hover nổi 3D), `glass` (kính mờ), `bordered`.
+  - **Bộ subcomponent**: `Card`, `CardHeader`, `CardTitle`, `CardDescription`, `CardMedia`, `CardContent`, `CardFooter`, `CardRibbon`, `CardSkeleton`.
+  - **Variants**:
+    - `default`: Nền card tiêu chuẩn RoGym với viền teal mờ (`border-teal/20`).
+    - `compact`: Nền card bo tròn thu gọn (`rounded-2xl`).
+    - `interactive`: Hiệu ứng hover nổi 3D, đổ bóng và sáng viền, hỗ trợ keyboard a11y (Enter/Space) và click.
+    - `glass`: Hiệu ứng kính mờ (backdrop blur), mờ trong suốt.
+    - `bordered`: Viền nổi bật cho bảng giá hoặc phần tử cần nhấn mạnh.
+    - `elevated`: Nền đổ bóng nhiều lớp cao cấp.
+    - `accent`: Nền dạ quang/nhấn nhá với dải gradient ngọc bích (thường dùng cho bài tập/gói PT).
+    - `warning` / `danger`: Trạng thái cảnh báo hết hạn hoặc hủy gói.
+  - **Responsive Padding**:
+    - `none` (`p-0`): Dành cho Card có ảnh tràn viền hoặc header accordion riêng.
+    - `xs` (`p-2.5 sm:p-3`): Thẻ nhỏ, chip hoặc badge container.
+    - `sm` (`p-3.5 sm:p-4 md:p-5`): Thẻ compact dashboard, history log.
+    - `md` (`p-4 sm:p-5 md:p-6` - Mặc định): Kích thước tiêu chuẩn.
+    - `lg` (`p-5 sm:p-6 md:p-8`): Thẻ lớn nổi bật hoặc trang pricing.
+  - **Polymorphism & Routing**:
+    - Thuộc tính `as`: `'div' | 'article' | 'section' | 'li' | 'aside'` chuẩn Semantic HTML5.
+    - Truyền `to="/..."` tự động chuyển thành `<Link>` của React Router.
+    - Truyền `href="http..."` tự động chuyển thành thẻ `<a>` kèm `rel="noreferrer noopener"`.
+  - **Media & Ribbon**:
+    - `<CardMedia src="..." aspectRatio="16/9 | 4/3 | 1/1 | 21/9" zoomOnHover overlayContent={...} badge={...} />` cho thumbnail bài tập, hình ảnh gói tập.
+    - `<CardRibbon tone="accent | danger | warning | gold">HOT</CardRibbon>` nhãn góc ribbon nổi bật.
+  - **Domain Aliases**:
+    - `MemberCard`, `TrainerCard`, `StaffCard`, `OwnerCard` được re-export đồng bộ tại `MemberUI.tsx`, `TrainerUI.tsx`, `StaffUI.tsx`, `OwnerUI.tsx`.
 - **`StatCard`** ([`StatCard.tsx`](file:///c:/Users/An/Documents/IT4549-ITSS/gym-management-system/client/src/components/ui/StatCard.tsx)):
   - Thẻ hiển thị chỉ số thống kê (KPI/Metrics) trên Dashboard.
-  - Tích hợp sẵn icon nổi bật, badge xu hướng (`trend`), skeleton loading (`loading`), và biến thành link điều hướng khi truyền prop `to`.
+  - Tích hợp sẵn icon nổi bật, badge xu hướng (`trend`), skeleton loading (`loading`), và biến thành link điều hướng khi truyền prop `to` hoặc `onClick`.
 
 #### 💡 Ví dụ sử dụng:
 ```tsx
-// Card nội dung tương tác
-<Card variant="interactive" onClick={() => navigate(`/exercises/${id}`)}>
-  <CardHeader actions={<Badge tone="accent">Cơ ngực</Badge>}>
-    <CardTitle>Bench Press</CardTitle>
-    <CardDescription>Bài tập đẩy ngực ngang</CardDescription>
-  </CardHeader>
-  <CardContent>
-    <p className="text-sm">3 sets x 12 reps</p>
+// 1. Thẻ bài tập / Domain Card đa năng (Exercise Card)
+<Card as="article" variant="interactive" padding="none" to={`/member/exercises/${id}`}>
+  <CardMedia
+    src={exercise.thumbnailUrl}
+    alt={exercise.name}
+    aspectRatio="16/9"
+    zoomOnHover
+    badge={<Badge tone="accent">{exercise.bodyPart}</Badge>}
+  />
+  <CardContent className="p-4 space-y-2">
+    <CardTitle size="md" truncate>{exercise.name}</CardTitle>
+    <CardDescription lineClamp={2}>{exercise.description}</CardDescription>
   </CardContent>
+  <CardFooter bordered responsiveStack align="between" className="px-4 py-3">
+    <span className="text-xs text-white/50">{exercise.equipment}</span>
+    <Button variant="primary" size="sm">Bắt đầu tập</Button>
+  </CardFooter>
 </Card>
 
-// StatCard chỉ số Dashboard
+// 2. Thẻ hiển thị gói tập có Ribbon
+<Card variant="accent" padding="md" className="relative">
+  <CardRibbon tone="accent">PHỔ BIẾN NHẤT</CardRibbon>
+  <CardHeader
+    eyebrow="Gói tập 6 tháng"
+    actions={<StatusBadge status="active" label="Đang hoạt động" />}
+  >
+    <CardTitle size="lg">Platinum VIP</CardTitle>
+    <CardDescription>Bao gồm Huấn Luyện Viên Cá Nhân 1-1</CardDescription>
+  </CardHeader>
+  <CardContent>
+    <p className="text-2xl font-bold text-teal-300">1,500,000 ₫</p>
+  </CardContent>
+  <CardFooter>
+    <Button variant="primary" className="w-full">Gia hạn ngay</Button>
+  </CardFooter>
+</Card>
+
+// 3. StatCard chỉ số Dashboard
 <StatCard
   icon={<Users size={20} />}
   label="Tổng số hội viên"
   value="1,248"
   hint="Tăng trưởng so với tháng trước"
   trend={{ value: '8.4%', isPositive: true }}
-  to="/admin/members"
+  to="/owner/members"
 />
 ```
 

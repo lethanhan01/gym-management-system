@@ -8,14 +8,22 @@ import type {
   ExerciseMuscle,
   ExerciseEquipment,
 } from '@/services/workout.service'
-import { FilterDropdown, type FilterDropdownSize, Select } from '@/components/ui'
-import { cn } from '@/lib/utils'
+import {
+  Card,
+  CardDescription,
+  CardMedia,
+  CardTitle,
+  FilterDropdown,
+  Select,
+  type CardAspectRatio,
+  type FilterDropdownSize,
+} from '@/components/ui'
 
 export const ExerciseCard = memo(function ExerciseCard({
   exercise,
   action,
   onClick,
-  imageAspect = 'aspect-[6/4]',
+  imageAspect = '6/4',
 }: {
   exercise: Exercise
   action?: ReactNode
@@ -23,48 +31,56 @@ export const ExerciseCard = memo(function ExerciseCard({
   imageAspect?: string
 }) {
   const { t } = useTranslation('member')
+  const aspect = (imageAspect.replace('aspect-[', '').replace(']', '') || '6/4') as CardAspectRatio
+
   return (
-    <article
-      className={cn(
-        'rogym-card rogym-card--compact flex flex-col overflow-hidden',
-        onClick && 'cursor-pointer transition-all duration-200 hover:-translate-y-0.5 hover:shadow-xl',
-      )}
+    <Card
+      as="article"
+      variant={onClick ? 'interactive' : 'compact'}
+      padding="none"
       onClick={onClick}
+      className="flex flex-col overflow-hidden"
     >
-      <div className={cn(imageAspect, 'overflow-hidden border-b border-white/5 bg-black/20')}>
-        {exercise.imageUrl ? (
-          <img
-            src={exercise.imageUrl}
-            alt={t('workout.exercises.imageAlt', { name: exercise.name })}
-            className="h-full w-full object-cover transition duration-300 hover:scale-[1.03]"
-            loading="lazy"
-          />
-        ) : (
+      <CardMedia
+        src={exercise.imageUrl ?? undefined}
+        alt={t('workout.exercises.imageAlt', { name: exercise.name })}
+        aspectRatio={
+          aspect === '6/4' || aspect === '16/9' || aspect === '4/3' || aspect === '1/1' || aspect === '21/9'
+            ? aspect
+            : '6/4'
+        }
+      >
+        {!exercise.imageUrl && (
           <div className="flex h-full items-center justify-center rogym-text-dim">
             <ImageIcon size={32} />
           </div>
         )}
-      </div>
+      </CardMedia>
+
       <div className="flex flex-1 flex-col p-5">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <h2 className="font-semibold text-white">{exercise.name}</h2>
+            <CardTitle size="md" as="h2">
+              {exercise.name}
+            </CardTitle>
             <p className="mt-1 text-xs uppercase tracking-wider rogym-text-dim">
               {exercise.targetMuscle?.name ?? '—'}
             </p>
           </div>
           {action}
         </div>
+
         <div className="mt-4 flex-1">
-          <p className="text-sm leading-6 rogym-text-secondary">
+          <CardDescription lineClamp={3}>
             {exercise.description ?? t('workout.exercises.noDescription')}
-          </p>
+          </CardDescription>
           {exercise.instructions && exercise.instructions.length > 0 && (
             <p className="mt-2 text-sm leading-5 rogym-text-dim line-clamp-2">
               {exercise.instructions.join(' ')}
             </p>
           )}
         </div>
+
         <div className="mt-5 grid grid-cols-2 gap-3 border-t border-white/5 pt-4 text-xs">
           <div>
             <span className="rogym-text-dim">{t('workout.exercises.fieldBodyPart', 'Body Part')}</span>
@@ -76,7 +92,7 @@ export const ExerciseCard = memo(function ExerciseCard({
           </div>
         </div>
       </div>
-    </article>
+    </Card>
   )
 })
 

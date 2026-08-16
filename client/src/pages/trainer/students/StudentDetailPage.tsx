@@ -19,6 +19,7 @@ import workoutService, {
 } from '@/services/workout.service'
 import {
   SubmitButton,
+  TrainerCard,
   TrainerEmptyState,
   TrainerErrorState,
   TrainerModal,
@@ -28,6 +29,7 @@ import {
   TrainerSkeleton,
   TrainerStatusBadge,
 } from '@/components/TrainerUI'
+import { CardTitle } from '@/components/ui'
 import { PageLoader } from '@/components/shared/Spinner'
 
 type Tab = 'overview' | 'sessions' | 'workout'
@@ -226,17 +228,17 @@ export default function StudentDetailPage() {
 
       {tab === 'overview' && (
         <div className="grid gap-5 lg:grid-cols-2">
-          <section className="rogym-card rogym-card--compact p-6">
-            <h2 className="mb-5 text-lg font-bold text-white">{t('students.detail.profile.title')}</h2>
+          <TrainerCard as="section" variant="compact" padding="md">
+            <CardTitle as="h2" size="md" className="mb-5">{t('students.detail.profile.title')}</CardTitle>
             <Info label={t('students.detail.profile.memberCode')} value={student.memberCode} />
             <Info label={t('students.detail.profile.email')} value={student.email} />
             <Info label={t('students.detail.profile.phone')} value={student.phone ?? t('students.detail.profile.noPhone')} />
             <Info label={t('students.detail.profile.dob')} value={formatDate(student.dateOfBirth)} />
             <Info label={t('students.detail.profile.address')} value={student.address ?? t('students.detail.profile.noAddress')} />
-          </section>
+          </TrainerCard>
 
-          <section className="rogym-card rogym-card--compact p-6">
-            <h2 className="mb-5 text-lg font-bold text-white">{t('students.detail.training.title')}</h2>
+          <TrainerCard as="section" variant="compact" padding="md">
+            <CardTitle as="h2" size="md" className="mb-5">{t('students.detail.training.title')}</CardTitle>
             <Info
               label={t('students.detail.training.currentPackage')}
               value={activeSubscription?.packageName ?? t('students.detail.training.noPackage')}
@@ -252,12 +254,15 @@ export default function StudentDetailPage() {
               }
             />
             <Info label={t('students.detail.training.goal')} value={latestProgress?.goal ?? t('students.detail.training.noGoal')} />
-          </section>
+          </TrainerCard>
 
           {activeAssignments.map((assignment) => (
-            <section
+            <TrainerCard
+              as="section"
               key={assignment.assignmentId}
-              className="rogym-card rogym-card--compact relative p-6 lg:col-span-2"
+              variant={assignment.assignedByStaffId ? 'accent' : 'compact'}
+              padding="md"
+              className="relative lg:col-span-2"
             >
               <span
                 className={`absolute right-5 top-5 rounded-full border px-3 py-1 text-xs font-medium ${
@@ -270,9 +275,9 @@ export default function StudentDetailPage() {
                   ? t('students.detail.plan.ptAssigned')
                   : t('students.detail.plan.personal')}
               </span>
-              <h2 className="mb-2 pr-28 text-lg font-bold text-white">
+              <CardTitle as="h2" size="md" className="mb-2 pr-28">
                 {assignment.plan?.name ?? t('students.detail.plan.notFound')}
-              </h2>
+              </CardTitle>
               <p className="mb-4 text-sm rogym-text-secondary">
                 {assignment.plan?.description ?? t('students.detail.plan.noDescription')}
               </p>
@@ -283,12 +288,12 @@ export default function StudentDetailPage() {
               >
                 {t('students.detail.workout.detail')}
               </Button>
-            </section>
+            </TrainerCard>
           ))}
 
-          <section className="rogym-card rogym-card--compact p-5 lg:col-span-2">
+          <TrainerCard as="section" variant="compact" padding="md" className="lg:col-span-2">
             <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-lg font-bold text-white">{t('students.detail.progress.title')}</h2>
+              <CardTitle as="h2" size="md">{t('students.detail.progress.title')}</CardTitle>
               <ButtonLink
                 variant="primary"
                 to={`/trainer/students/${id}/progress`}
@@ -305,11 +310,11 @@ export default function StudentDetailPage() {
                 </Suspense>
               </div>
             )}
-          </section>
+          </TrainerCard>
 
           {progress.length > 0 && (
-            <section className="rogym-card rogym-card--compact p-5 lg:col-span-2">
-              <h2 className="mb-4 text-base font-bold text-white">{t('students.detail.progress.historyTitle')}</h2>
+            <TrainerCard as="section" variant="compact" padding="md" className="lg:col-span-2">
+              <CardTitle as="h2" size="md" className="mb-4">{t('students.detail.progress.historyTitle')}</CardTitle>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
@@ -342,7 +347,7 @@ export default function StudentDetailPage() {
                   </tbody>
                 </table>
               </div>
-            </section>
+            </TrainerCard>
           )}
         </div>
       )}

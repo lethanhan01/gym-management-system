@@ -4,15 +4,16 @@ import { useTranslation } from 'react-i18next'
 import { ChevronDown, ChevronUp, Dumbbell } from 'lucide-react'
 import { Select } from '@/components/ui'
 import {
+  MemberCard,
   MemberEmptyState,
   MemberErrorState,
   MemberPage,
   MemberPageHeader,
   MemberSkeleton,
+  MemberStatCard,
 } from '@/components/MemberUI'
 import workoutService, { type WorkoutLog, type WorkoutLogSet } from '@/services/workout.service'
 import { useAuthStore } from '@/stores/authStore'
-
 
 function todayYM() {
   const d = new Date()
@@ -34,17 +35,6 @@ function completedSets(log: WorkoutLog): number {
 
 function totalSets(log: WorkoutLog): number {
   return log.sets?.length ?? 0
-}
-
-function StatCard({ label, value, tone = 'success' }: { label: string; value: string; tone?: string }) {
-  return (
-    <div className="rogym-card rogym-card--md rogym-sx-55a35f1d" >
-      <p className="rogym-tone-text text-xs font-semibold uppercase tracking-[0.12em]" data-tone={tone}>
-        {label}
-      </p>
-      <p className="mt-2 text-2xl font-bold text-white">{value}</p>
-    </div>
-  )
 }
 
 function MiniProgressBar({ done, total }: { done: number; total: number }) {
@@ -179,14 +169,26 @@ export default function WorkoutHistoryPage() {
 
       {/* KPI row */}
       <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-        <StatCard label={t('workout.history.statTotalSessions')} value={loading ? '—' : String(logs.length)} />
-        <StatCard
+        <MemberStatCard
+          icon={<Dumbbell size={18} />}
+          label={t('workout.history.statTotalSessions')}
+          value={loading ? '—' : String(logs.length)}
+        />
+        <MemberStatCard
+          icon={<Dumbbell size={18} />}
           label={t('workout.history.statThisMonth')}
           value={loading ? '—' : String(currentMonthLogs)}
-          tone="warning"
         />
-        <StatCard label={t('workout.history.statTopExercise')} value={loading ? '—' : topExercise} />
-        <StatCard label={t('workout.history.statSetsCompleted')} value={loading ? '—' : String(totalSetsCompleted)} />
+        <MemberStatCard
+          icon={<Dumbbell size={18} />}
+          label={t('workout.history.statTopExercise')}
+          value={loading ? '—' : topExercise}
+        />
+        <MemberStatCard
+          icon={<Dumbbell size={18} />}
+          label={t('workout.history.statSetsCompleted')}
+          value={loading ? '—' : String(totalSetsCompleted)}
+        />
       </div>
 
       {/* Filter */}
@@ -228,10 +230,11 @@ export default function WorkoutHistoryPage() {
             const exercises = groupSetsByExercise(log.sets ?? [], t)
 
             return (
-              <div
+              <MemberCard
+                as="article"
                 key={log.logId}
-                className="rogym-card rogym-card--compact rogym-sx-3f1e9a27"
-                
+                variant="compact"
+                padding="none"
               >
                 {/* Log header */}
                 <div
@@ -241,7 +244,6 @@ export default function WorkoutHistoryPage() {
                   <div className="flex items-center gap-3">
                     <div
                       className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl rogym-sx-252b3c13"
-                      
                     >
                       <Dumbbell size={18} />
                     </div>
@@ -269,7 +271,6 @@ export default function WorkoutHistoryPage() {
                 {expanded && (
                   <div
                     className="px-4 pb-4 rogym-sx-8553bf9e"
-                    
                   >
                     {exercises.length === 0 ? (
                       <p className="py-3 text-sm rogym-sx-5e5c39ab" >
@@ -282,7 +283,6 @@ export default function WorkoutHistoryPage() {
                           {/* Column headers */}
                           <div
                             className="grid gap-2 pb-1 text-xs font-medium uppercase rogym-sx-55da34ac"
-                            
                           >
                             <span>#</span>
                             <span>Target</span>
@@ -304,7 +304,7 @@ export default function WorkoutHistoryPage() {
                     )}
                   </div>
                 )}
-              </div>
+              </MemberCard>
             )
           })}
         </div>

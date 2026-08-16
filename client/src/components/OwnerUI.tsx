@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import {
   Button,
+  Card,
   Modal,
   StatCard,
   StatusBadge,
@@ -20,6 +21,7 @@ export { Select as OwnerSelect } from '@/components/ui'
 export { OwnerDateRangeFilter } from '@/components/shared/OwnerDateRangeFilter'
 export { Pagination as OwnerPagination } from '@/components/ui'
 
+export const OwnerCard = Card
 export const OwnerStatCard = StatCard
 export { Modal as OwnerModal }
 export { SearchInput as OwnerSearchInput }

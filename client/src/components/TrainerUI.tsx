@@ -1,7 +1,8 @@
-import { type ReactNode } from 'react'
+import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   Button,
+  Card,
   Modal,
   StatCard,
   StatusBadge,
@@ -20,6 +21,7 @@ export {
   SearchInput as TrainerSearchInput,
 } from '@/components/ui'
 
+export const TrainerCard = Card
 export const TrainerStatCard = StatCard
 export const TrainerModal = Modal
 export const TrainerSelect = Select

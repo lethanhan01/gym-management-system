@@ -1,6 +1,7 @@
-import { type ReactNode } from 'react'
+import type { ReactNode } from 'react'
 import {
   Button,
+  Card,
   Modal,
   StatCard,
   StatusBadge,
@@ -18,6 +19,7 @@ export {
   SearchInput as StaffSearchInput,
 } from '@/components/ui'
 
+export const StaffCard = Card
 export const StaffStatCard = StatCard
 export const StaffModal = Modal
 export const StaffSelect = Select

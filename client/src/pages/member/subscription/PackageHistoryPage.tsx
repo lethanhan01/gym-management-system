@@ -5,28 +5,27 @@ import { PackageSearch, ReceiptText, ChevronLeft, ChevronRight, ArrowUpDown } fr
 import subscriptionService, { type Subscription } from '@/services/subscription.service'
 import paymentService, { type Payment } from '@/services/payment.service'
 import { useAuthStore } from '@/stores/authStore'
-import { MemberPage, MemberPageHeader, MemberSkeleton } from '@/components/MemberUI'
+import {
+  MemberBadge,
+  MemberCard,
+  MemberPage,
+  MemberPageHeader,
+  MemberSkeleton,
+} from '@/components/MemberUI'
+import { CardTitle } from '@/components/ui'
 import { Button } from '@/components/ui/Button'
 import { getPaymentMethodLabel } from '@/components/payment/payment-method-data'
 import { formatVnd } from '@/lib/currency'
 import { formatDate } from '@/lib/date'
 
-function Badge({ label, tone = 'muted' }: { label: string; tone?: string }) {
-  return (
-    <span className="rogym-tone-badge" data-tone={tone}>
-      {label}
-    </span>
-  )
-}
-
-const SUB_STATUS: Record<string, { label: string; tone: string }> = {
+const SUB_STATUS: Record<string, { label: string; tone: 'success' | 'warning' | 'muted' | 'danger' }> = {
   active:    { label: 'Đang hoạt động', tone: 'success' },
   pending:   { label: 'Chờ kích hoạt',  tone: 'warning' },
   expired:   { label: 'Đã hết hạn',     tone: 'muted' },
   cancelled: { label: 'Đã huỷ',         tone: 'danger' },
 }
 
-const PAY_STATUS: Record<string, { label: string; tone: string }> = {
+const PAY_STATUS: Record<string, { label: string; tone: 'success' | 'danger' | 'muted' }> = {
   success: { label: 'Thành công', tone: 'success' },
   failed:  { label: 'Thất bại',   tone: 'danger' },
 }
@@ -110,61 +109,64 @@ function Pagination({ page, total, onChange }: { page: number; total: number; on
   )
 }
 
+const METHOD_OPTIONS = [
+  { value: 'all', label: 'Tất cả PT' },
+  { value: 'vietqr', label: 'VietQR' },
+  { value: 'cash', label: 'Tiền mặt' },
+  { value: 'card', label: 'Thẻ' },
+]
+
+const STATUS_OPTIONS = [
+  { value: 'all', label: 'Tất cả trạng thái' },
+  { value: 'success', label: 'Thành công' },
+  { value: 'failed', label: 'Thất bại' },
+]
+
 export default function PackageHistoryPage() {
   const { t } = useTranslation('member')
-  const [activeTab, setActiveTab]   = useState<'subscriptions' | 'payments'>('subscriptions')
-  const [subs, setSubs]             = useState<Subscription[]>([])
-  const [payments, setPayments]     = useState<Payment[]>([])
-  const [loadingSubs, setLoadingSubs]   = useState(true)
-  const [loadingPays, setLoadingPays]   = useState(false)
-  const [paysLoaded, setPaysLoaded]     = useState(false)
-  const [page, setPage]             = useState(1)
-  const [subPage, setSubPage]       = useState(1)
-  const [methodFilter, setMethodFilter] = useState<'all' | 'cash' | 'bank_card' | 'ewallet'>('all')
-  const [statusFilter, setStatusFilter] = useState<'all' | 'success' | 'failed'>('all')
-  const [sortDir, setSortDir]       = useState<'desc' | 'asc'>('desc')
-
   const navigate = useNavigate()
   const user = useAuthStore(state => state.user)
-  const clearAuth = useAuthStore(state => state.clearAuth)
+
+  const [activeTab, setActiveTab] = useState<'subscriptions' | 'payments'>('subscriptions')
+  const [subs, setSubs] = useState<Subscription[]>([])
+  const [payments, setPayments] = useState<Payment[]>([])
+  const [loadingSubs, setLoadingSubs] = useState(true)
+  const [loadingPays, setLoadingPays] = useState(true)
+
+  /* Payments filters */
+  const [methodFilter, setMethodFilter] = useState('all')
+  const [statusFilter, setStatusFilter] = useState('all')
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc')
+  const [page, setPage] = useState(1)
+  const [subPage, setSubPage] = useState(1)
 
   useEffect(() => {
     if (!user?.memberId) return
-    subscriptionService.getByMember(user.memberId)
-      .then(data => setSubs(data.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())))
-      .catch(err => {
-        if (err?.response?.status === 401) { clearAuth(); navigate('/login') }
-      })
-      .finally(() => setLoadingSubs(false))
-  }, [user?.memberId, navigate, clearAuth])
+    const memberId = user.memberId
 
-  function loadPayments() {
-    if (paysLoaded || !user?.memberId) return
-    setLoadingPays(true)
-    paymentService.listByMember(user.memberId)
-      .then(data => { setPayments(data); setPaysLoaded(true) })
+    subscriptionService
+      .getByMember(memberId)
+      .then(res => {
+        const sorted = res.sort(
+          (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        )
+        setSubs(sorted)
+      })
+      .catch(() => {})
+      .finally(() => setLoadingSubs(false))
+
+    paymentService
+      .listByMember(memberId)
+      .then(res => setPayments(res))
       .catch(() => {})
       .finally(() => setLoadingPays(false))
-  }
+  }, [user?.memberId])
 
   function handleTabChange(tab: 'subscriptions' | 'payments') {
     setActiveTab(tab)
     setPage(1)
     setSubPage(1)
-    if (tab === 'payments') loadPayments()
   }
-
-  const METHOD_OPTIONS = [
-    { value: 'all' as const, label: t('subscription.history.methodAll') },
-    { value: 'cash' as const, label: t('subscription.history.methodCash') },
-    { value: 'bank_card' as const, label: t('subscription.history.methodBankCard') },
-    { value: 'ewallet' as const, label: t('subscription.history.methodEwallet') },
-  ]
-  const STATUS_OPTIONS = [
-    { value: 'all' as const, label: t('subscription.history.statusAll') },
-    { value: 'success' as const, label: t('subscription.history.statusSuccess') },
-    { value: 'failed' as const, label: t('subscription.history.statusFailed') },
-  ]
 
   const filteredPayments = payments
     .filter(p => {
@@ -227,15 +229,16 @@ export default function PackageHistoryPage() {
                 const st = SUB_STATUS[sub.status] ?? { label: sub.status, tone: 'muted' }
                 const statusLabel = t(`subscription.history.statusLabel.${sub.status}`, { defaultValue: st.label })
                 return (
-                  <div
+                  <MemberCard
                     key={sub.subscriptionId}
-                    className="rogym-card rogym-card--compact px-5 py-4"
+                    variant="compact"
+                    padding="sm"
                   >
                     <div className="flex items-start justify-between">
                       <div>
-                        <p className="text-base font-bold text-white mb-1.5 rogym-sx-d63063a8" >
+                        <CardTitle size="sm" as="p" className="mb-1.5 rogym-sx-d63063a8">
                           {sub.packageName ?? t('subscription.history.packageFallback')}
-                        </p>
+                        </CardTitle>
                         <p className="text-sm rogym-text-secondary">
                           {formatDate(sub.startDate)} → {formatDate(sub.endDate)}
                         </p>
@@ -243,9 +246,9 @@ export default function PackageHistoryPage() {
                           <p className="text-xs text-red-400 mt-1">{t('subscription.history.cancelledAt', { date: formatDate(sub.cancelledAt) })}</p>
                         )}
                       </div>
-                      <Badge label={statusLabel} tone={st.tone} />
+                      <MemberBadge tone={st.tone}>{statusLabel}</MemberBadge>
                     </div>
-                  </div>
+                  </MemberCard>
                 )
               })}
             </div>
@@ -302,7 +305,7 @@ export default function PackageHistoryPage() {
                       <span className="rogym-text-secondary truncate">{p.packageName ?? '—'}</span>
                       <span className="rogym-text-secondary">{getPaymentMethodLabel(p.method, true)}</span>
                       <span className="font-semibold rogym-sx-b2fbf853" >{formatVnd(p.amount)}</span>
-                      <Badge label={payStatusLabel} tone={ps.tone} />
+                      <MemberBadge tone={ps.tone}>{payStatusLabel}</MemberBadge>
                     </div>
                   )
                 })}

@@ -1,4 +1,4 @@
-import { memo, useCallback, useEffect, useMemo, useState, type ElementType } from 'react'
+import { memo, useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { Button } from '@/components/ui/Button'
 import { useTranslation } from 'react-i18next'
@@ -24,7 +24,15 @@ import { trainingService, type TrainingSession } from '@/services/training.servi
 import { memberService, type MemberProgress, type MemberProfile } from '@/services/member.service'
 import { feedbackService, type Feedback } from '@/services/feedback.service'
 import api from '@/services/api'
-import { MemberPage, MemberPageHeader } from '@/components/MemberUI'
+import {
+  MemberBadge,
+  MemberCard,
+  MemberPage,
+  MemberPageHeader,
+  MemberStatCard,
+  MemberStatusBadge,
+} from '@/components/MemberUI'
+import type { BadgeTone } from '@/components/ui'
 import { hasActiveSubscription, isSubscriptionActive } from '@/lib/subscription'
 import { getApiError } from '@/lib/api-error'
 import { toast } from '@/lib/toast'
@@ -85,27 +93,19 @@ const ErrorWidget = memo(function ErrorWidget({
   )
 })
 
-const Badge = memo(function Badge({ label, tone = 'muted' }: { label: string; tone?: string }) {
-  return (
-    <span className="rogym-tone-badge" data-tone={tone}>
-      {label}
-    </span>
-  )
-})
-
-const SUB_STATUS_TONE: Record<string, string> = {
+const SUB_STATUS_TONE: Record<string, BadgeTone> = {
   active: 'success',
   pending: 'warning',
   expired: 'danger',
   cancelled: 'muted',
 }
-const SESSION_STATUS_TONE: Record<string, string> = {
+const SESSION_STATUS_TONE: Record<string, BadgeTone> = {
   scheduled: 'info',
   in_progress: 'warning',
   completed: 'success',
   cancelled: 'danger',
 }
-const FEEDBACK_TYPE_TONE: Record<string, string> = {
+const FEEDBACK_TYPE_TONE: Record<string, BadgeTone> = {
   staff: 'purple',
   equipment: 'warning',
   service: 'info',
@@ -146,19 +146,19 @@ const PtInfoCard = memo(function PtInfoCard({
 
   if (activePlanIncludesPt === false) {
     return (
-      <div className="rogym-card rogym-card--compact p-5 flex flex-col items-center gap-3 text-center">
+      <MemberCard variant="compact" padding="sm" className="flex flex-col items-center gap-3 text-center">
         <div className="flex h-14 w-14 items-center justify-center rounded-full bg-white/5 rogym-text-dim">
           <User size={24} />
         </div>
         <p className="text-sm font-medium text-white">{t('dashboard.pt.sectionTitle')}</p>
         <p className="text-xs rogym-text-secondary">{t('dashboard.pt.noPackagePt')}</p>
-      </div>
+      </MemberCard>
     )
   }
 
   if (!trainerName) {
     return (
-      <div className="rogym-card rogym-card--compact p-5 flex flex-col items-center gap-3 text-center">
+      <MemberCard variant="compact" padding="sm" className="flex flex-col items-center gap-3 text-center">
         <div className="flex h-14 w-14 items-center justify-center rounded-full bg-white/5 rogym-text-dim">
           <User size={24} />
         </div>
@@ -173,12 +173,12 @@ const PtInfoCard = memo(function PtInfoCard({
         >
           {t('dashboard.pt.chooseTrainer')}
         </Button>
-      </div>
+      </MemberCard>
     )
   }
 
   return (
-    <div className="rogym-card rogym-card--compact p-5 flex flex-col gap-4">
+    <MemberCard variant="compact" padding="sm" className="flex flex-col gap-4">
       <div className="rogym-eyebrow">{t('dashboard.pt.sectionTitle')}</div>
       {/* Avatar */}
       <div className="flex flex-col items-center gap-3 pt-1">
@@ -222,7 +222,7 @@ const PtInfoCard = memo(function PtInfoCard({
           {t('dashboard.pt.cancelTrainer')}
         </Button>
       </div>
-    </div>
+    </MemberCard>
   )
 })
 
@@ -247,10 +247,10 @@ const SubscriptionCard = memo(function SubscriptionCard({
 
   if (!subscription) {
     return (
-      <div className="rogym-card rogym-card--compact p-6 flex flex-col gap-3">
+      <MemberCard variant="compact" padding="md" className="flex flex-col gap-3">
         <div className="flex items-center gap-2">
           <span className="text-base font-bold text-white">{t('dashboard.subscription.sectionTitle')}</span>
-          <Badge label={t('dashboard.subscription.noPackage')} />
+          <MemberBadge tone="muted">{t('dashboard.subscription.noPackage')}</MemberBadge>
         </div>
         <p className="text-sm rogym-text-secondary">
           {t('dashboard.subscription.noPackageDesc')}
@@ -262,7 +262,7 @@ const SubscriptionCard = memo(function SubscriptionCard({
         >
           {t('dashboard.subscription.choosePlan')}
         </Button>
-      </div>
+      </MemberCard>
     )
   }
 
@@ -276,12 +276,13 @@ const SubscriptionCard = memo(function SubscriptionCard({
   const daysUsed = Math.max(0, totalDays - daysLeft)
   const pct = Math.min(100, Math.max(0, Math.round((daysUsed / totalDays) * 100)))
   return (
-    <div className="rogym-card rogym-card--compact p-6 flex flex-col gap-4">
+    <MemberCard variant="compact" padding="md" className="flex flex-col gap-4">
       <div className="flex items-center gap-3 flex-wrap">
         <span className="rogym-sx-3c31803f">
           {packageName || subscription.packageName || t('dashboard.subscription.sectionTitle')}
         </span>
-        <Badge
+        <MemberStatusBadge
+          status={subscription.status}
           label={t('dashboard.subStatusLabel.' + subscription.status, subscription.status)}
           tone={SUB_STATUS_TONE[subscription.status]}
         />
@@ -334,38 +335,7 @@ const SubscriptionCard = memo(function SubscriptionCard({
           {t('dashboard.subscription.viewDetail')}
         </Button>
       </div>
-    </div>
-  )
-})
-
-/* ── Stats row ── */
-const StatCard = memo(function StatCard({
-  icon: Icon,
-  label,
-  value,
-  unit,
-  onClick,
-}: {
-  icon: ElementType
-  label: string
-  value: string | number
-  unit?: string
-  onClick?: () => void
-}) {
-  return (
-    <div
-      className={`rogym-card rogym-card--compact flex flex-col gap-2 p-4 transition-colors${onClick ? ' cursor-pointer hover:bg-white/[0.07]' : ''}`}
-      onClick={onClick}
-    >
-      <div className="flex items-center gap-2">
-        <Icon size={16} color={T} />
-        <span className="text-xs rogym-text-secondary">{label}</span>
-      </div>
-      <div className="rogym-sx-b170d9f3">
-        {value}
-        {unit && <span className="text-sm rogym-text-secondary ml-1">{unit}</span>}
-      </div>
-    </div>
+    </MemberCard>
   )
 })
 
@@ -385,7 +355,7 @@ const SessionsWidget = memo(function SessionsWidget({
   if (error) return <ErrorWidget />
 
   return (
-    <div className="rogym-card rogym-card--compact p-5 flex flex-col gap-3">
+    <MemberCard variant="compact" padding="sm" className="flex flex-col gap-3">
       <div className="flex items-center justify-between">
         <span className="text-base font-bold text-white">{t('dashboard.sessions.widgetTitle')}</span>
         <Button
@@ -421,7 +391,8 @@ const SessionsWidget = memo(function SessionsWidget({
                   )}
                 </div>
               </div>
-              <Badge
+              <MemberStatusBadge
+                status={s.status}
                 label={t('dashboard.sessionStatusLabel.' + s.status, s.status)}
                 tone={SESSION_STATUS_TONE[s.status]}
               />
@@ -429,7 +400,7 @@ const SessionsWidget = memo(function SessionsWidget({
           ))}
         </div>
       )}
-    </div>
+    </MemberCard>
   )
 })
 
@@ -449,7 +420,7 @@ const WorkoutWidget = memo(function WorkoutWidget({
   if (error) return <ErrorWidget />
 
   return (
-    <div className="rogym-card rogym-card--compact p-5 flex flex-col gap-3">
+    <MemberCard variant="compact" padding="sm" className="flex flex-col gap-3">
       <div className="flex items-center justify-between">
         <span className="text-base font-bold text-white">{t('dashboard.workoutPlan.widgetTitle')}</span>
         <Button
@@ -475,7 +446,7 @@ const WorkoutWidget = memo(function WorkoutWidget({
           </div>
         </div>
       )}
-    </div>
+    </MemberCard>
   )
 })
 
@@ -495,7 +466,7 @@ const FeedbackWidget = memo(function FeedbackWidget({
   if (error) return <ErrorWidget />
 
   return (
-    <div className="rogym-card rogym-card--compact p-5 flex flex-col gap-3">
+    <MemberCard variant="compact" padding="sm" className="flex flex-col gap-3">
       <div className="flex items-center justify-between">
         <span className="text-base font-bold text-white">{t('dashboard.feedbackWidget.widgetTitle')}</span>
         <Button
@@ -520,12 +491,10 @@ const FeedbackWidget = memo(function FeedbackWidget({
             >
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">
-                  <Badge
-                    label={t('dashboard.feedbackTypeLabel.' + fb.feedbackType, fb.feedbackType)}
-                    tone={FEEDBACK_TYPE_TONE[fb.feedbackType]}
-                  />
-                  <Badge
-                    label={t('dashboard.feedbackStatusLabel.' + fb.status, fb.status)}
+                  <MemberBadge tone={FEEDBACK_TYPE_TONE[fb.feedbackType]}>
+                    {t('dashboard.feedbackTypeLabel.' + fb.feedbackType, fb.feedbackType)}
+                  </MemberBadge>
+                  <MemberBadge
                     tone={
                       fb.status === 'resolved'
                         ? 'success'
@@ -535,7 +504,9 @@ const FeedbackWidget = memo(function FeedbackWidget({
                             ? 'warning'
                             : 'info'
                     }
-                  />
+                  >
+                    {t('dashboard.feedbackStatusLabel.' + fb.status, fb.status)}
+                  </MemberBadge>
                 </div>
                 <p className="text-xs rogym-text-secondary line-clamp-1">{fb.content}</p>
               </div>
@@ -543,7 +514,7 @@ const FeedbackWidget = memo(function FeedbackWidget({
           ))}
         </div>
       )}
-    </div>
+    </MemberCard>
   )
 })
 
@@ -750,32 +721,31 @@ export default function MemberDashboardPage() {
               </>
             ) : (
               <>
-                <StatCard
-                  icon={Dumbbell}
+                <MemberStatCard
+                  icon={<Dumbbell size={18} />}
                   label={t('dashboard.stats.sessionsThisMonth')}
                   value={sessionsThisMonth}
-                  unit={t('dashboard.stats.unitSession')}
-                  onClick={() => navigate('/member/workout/sessions')}
+                  hint={t('dashboard.stats.unitSession')}
+                  to="/member/workout/sessions"
                 />
-                <StatCard
-                  icon={CheckSquare}
+                <MemberStatCard
+                  icon={<CheckSquare size={18} />}
                   label={t('dashboard.stats.checkInsThisMonth')}
                   value={sessionsThisMonth}
-                  unit={t('dashboard.stats.unitTimes')}
-                  onClick={() => navigate('/member/attendance')}
+                  hint={t('dashboard.stats.unitTimes')}
+                  to="/member/attendance"
                 />
-                <StatCard
-                  icon={Scale}
+                <MemberStatCard
+                  icon={<Scale size={18} />}
                   label={t('dashboard.stats.currentWeight')}
-                  value={progress?.weight ?? '—'}
-                  unit={progress ? t('dashboard.stats.unitKg') : ''}
-                  onClick={() => navigate('/member/progress')}
+                  value={progress?.weight ? `${Number(progress.weight).toFixed(1)} kg` : '—'}
+                  to="/member/progress"
                 />
-                <StatCard
-                  icon={Activity}
+                <MemberStatCard
+                  icon={<Activity size={18} />}
                   label="BMI"
-                  value={progress?.bmi ?? '—'}
-                  onClick={() => navigate('/member/progress')}
+                  value={progress?.bmi ? Number(progress.bmi).toFixed(1) : '—'}
+                  to="/member/progress"
                 />
               </>
             )}
