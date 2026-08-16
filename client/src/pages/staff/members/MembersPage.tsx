@@ -10,7 +10,7 @@ import {
   Page,
   PageHeader,
   Card,
-  SearchInput,
+  SearchToolbar,
   Select,
   ResponsiveTable,
   ButtonLink,
@@ -134,32 +134,36 @@ export default function MembersPage() {
       <StaffHeader total={memberTotal} />
 
       {/* Filters */}
-      <Card variant="compact" className="grid gap-3 p-4 md:grid-cols-[1fr_180px_180px]">
-        <SearchInput
-          value={searchParams.get('search') ?? ''}
-          onChange={handleSearchChange}
-          placeholder={t('members.list.searchPlaceholder')}
-        />
-        <Select
-          value={memberStatus}
-          onValueChange={(v) => updateParam('status', v)}
-          ariaLabel={t('members.list.filterByStatus')}
-        >
-          <option value="">{t('members.list.filterByStatus')}</option>
-          <option value="active">{t('members.list.statusActive')}</option>
-          <option value="pending_verification">{t('members.list.statusPendingVerification')}</option>
-          <option value="locked">{t('members.list.statusLocked')}</option>
-        </Select>
-        <Select
-          value={memberSubStatus}
-          onValueChange={(v) => updateParam('subStatus', v)}
-          ariaLabel={t('members.list.filterBySubStatus')}
-        >
-          <option value="">{t('members.list.filterBySubStatus')}</option>
-          <option value="active">{t('members.list.subStatusActive')}</option>
-          <option value="expired">{t('members.list.subStatusExpired')}</option>
-        </Select>
-      </Card>
+      <SearchToolbar
+        value={searchParams.get('search') ?? ''}
+        onChange={handleSearchChange}
+        placeholder={t('members.list.searchPlaceholder')}
+        filters={
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+            <Select
+              className="w-full sm:w-[180px]"
+              value={memberStatus}
+              onValueChange={(v) => updateParam('status', v)}
+              ariaLabel={t('members.list.filterByStatus')}
+            >
+              <option value="">{t('members.list.filterByStatus')}</option>
+              <option value="active">{t('members.list.statusActive')}</option>
+              <option value="pending_verification">{t('members.list.statusPendingVerification')}</option>
+              <option value="locked">{t('members.list.statusLocked')}</option>
+            </Select>
+            <Select
+              className="w-full sm:w-[180px]"
+              value={memberSubStatus}
+              onValueChange={(v) => updateParam('subStatus', v)}
+              ariaLabel={t('members.list.filterBySubStatus')}
+            >
+              <option value="">{t('members.list.filterBySubStatus')}</option>
+              <option value="active">{t('members.list.subStatusActive')}</option>
+              <option value="expired">{t('members.list.subStatusExpired')}</option>
+            </Select>
+          </div>
+        }
+      />
 
       {/* Data Table */}
       <ResponsiveTable

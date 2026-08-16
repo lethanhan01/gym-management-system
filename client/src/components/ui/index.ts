@@ -50,8 +50,14 @@ export {
 export { Select, type SelectProps, type SelectOptionProps } from './Select'
 export { DatePickerInput, type DatePickerInputProps } from './DatePickerInput'
 export { DateTimePickerInput, type DateTimePickerInputProps } from './DateTimePickerInput'
-export { FilterDropdown, type FilterDropdownProps } from './FilterDropdown'
+export { FilterDropdown, type FilterDropdownProps, type FilterDropdownSize } from './FilterDropdown'
 export { SearchInput, type SearchInputProps } from './SearchInput'
+export {
+  SearchToolbar,
+  type SearchToolbarProps,
+  type SearchToolbarVariant,
+  type SearchToolbarLayout,
+} from './SearchToolbar'
 export {
   Card,
   CardHeader,

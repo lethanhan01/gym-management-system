@@ -14,6 +14,8 @@ export {
   PageErrorState as StaffErrorState,
   PageHeader as StaffPageHeader,
   PageSkeleton as StaffSkeleton,
+  SearchToolbar as StaffSearchToolbar,
+  SearchInput as StaffSearchInput,
 } from '@/components/ui'
 
 export const StaffStatCard = StatCard

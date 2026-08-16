@@ -8,8 +8,7 @@ import { facilityService, type Equipment, type GymRoom } from '@/services/facili
 import {
   Page,
   PageHeader,
-  Card,
-  SearchInput,
+  SearchToolbar,
   Select,
   ResponsiveTable,
   Button,
@@ -285,24 +284,25 @@ export default function EquipmentPage() {
       />
 
       {/* Filters */}
-      <Card variant="compact" className="grid gap-3 p-4 md:grid-cols-[1fr_200px]">
-        <SearchInput
-          value={search}
-          onChange={handleSearchChange}
-          placeholder={t('equipment.searchPlaceholder')}
-        />
-        <Select
-          value={statusFilter}
-          onValueChange={(value) => updateParam('status', value)}
-          ariaLabel={t('equipment.filterByStatus')}
-        >
-          {STATUS_FILTER_OPTIONS.map((opt) => (
-            <option key={opt.value} value={opt.value}>
-              {opt.label}
-            </option>
-          ))}
-        </Select>
-      </Card>
+      <SearchToolbar
+        value={search}
+        onChange={handleSearchChange}
+        placeholder={t('equipment.searchPlaceholder')}
+        filters={
+          <Select
+            className="w-full sm:w-[200px]"
+            value={statusFilter}
+            onValueChange={(value) => updateParam('status', value)}
+            ariaLabel={t('equipment.filterByStatus')}
+          >
+            {STATUS_FILTER_OPTIONS.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </Select>
+        }
+      />
 
       {/* Data Table */}
       <ResponsiveTable

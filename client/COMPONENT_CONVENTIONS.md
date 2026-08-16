@@ -291,3 +291,15 @@ Mọi component mới hoặc được sửa đổi đều phải vượt qua 12 
 | **Giai đoạn 2** | `Select`, `FilterDropdown`, `DatePickerInput`, `DateTimePickerInput`, `LanguageSwitcher` | Popover viewport protection trên mobile, Radix touch item height, clean calendar picker. |
 | **Giai đoạn 3** | `Card`, `Modal`, `ConfirmDialog`, `Table`, `ResponsiveTable`, `Pagination`, `PageUI` | Full screen/bottom sheet trên mobile, sticky header tables, responsive card view. |
 | **Giai đoạn 4** | `PackagePicker`, `MemberUI`, `TrainerUI`, `StaffUI`, `OwnerUI`, Domain UI components | Đồng bộ role facades, package cards, and business workflow components. |
+
+---
+
+## 5. Quy chuẩn Bắt buộc về Thanh Tìm kiếm (Search Toolbar Mandate)
+
+1. **Tuyệt đối cấm viết ad-hoc search input**:
+   - Nghiêm cấm viết markup thủ công `<div className="relative..."><Search .../><input .../></div>` trên các màn hình dashboard/danh sách.
+2. **Bắt buộc dùng `SearchToolbar`**:
+   - Mọi thanh tìm kiếm có lọc hoặc action đều phải dùng `SearchToolbar` (hoặc Role UI Facade tương ứng như `MemberSearchToolbar`, `TrainerSearchToolbar`, `StaffSearchToolbar`, `OwnerSearchToolbar`).
+   - Đảm bảo chuẩn chiều cao 44px (`size="md"`), debounce tự động 300ms, nút clear, responsive flex layout (`auto` hoặc `row`), và container card đồng nhất trên toàn hệ thống.
+3. **`SearchInput` chỉ dùng cho trường hợp standalone**:
+   - Chỉ sử dụng `SearchInput` độc lập khi nhúng trong các layout form đặc thù (ví dụ: quét mã check-in trực tiếp). Mọi danh sách lọc đều phải đi qua `SearchToolbar`.

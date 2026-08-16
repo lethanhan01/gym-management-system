@@ -16,6 +16,8 @@ export {
   PageErrorState as TrainerErrorState,
   PageHeader as TrainerPageHeader,
   PageSkeleton as TrainerSkeleton,
+  SearchToolbar as TrainerSearchToolbar,
+  SearchInput as TrainerSearchInput,
 } from '@/components/ui'
 
 export const TrainerStatCard = StatCard

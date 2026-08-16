@@ -1,7 +1,7 @@
 import { FormEvent, useCallback, useEffect, useState, useMemo } from 'react'
 import { Button } from '@/components/ui/Button'
 import { useTranslation } from 'react-i18next'
-import { Pencil, Plus, Search, X } from 'lucide-react'
+import { Pencil, Plus, X } from 'lucide-react'
 import { getApiError } from '@/lib/api-error'
 import workoutService, {
   type Exercise,
@@ -18,6 +18,7 @@ import {
   TrainerModal,
   TrainerPage,
   TrainerPageHeader,
+  TrainerSearchToolbar,
   TrainerSelect,
   TrainerSkeleton,
 } from '@/components/TrainerUI'
@@ -170,51 +171,46 @@ export default function ExercisesPage() {
           </Button>
         }
       />
-      <div className="rogym-card rogym-card--compact flex items-center gap-3 p-4">
-        <div className="relative min-w-0 flex-1">
-          <Search
-            className="absolute left-3 top-1/2 -translate-y-1/2 rogym-text-dim"
-            size={17}
-          />
-          <input
-            className="rogym-input pl-10"
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            placeholder={t('exercises.searchPlaceholder')}
-          />
-        </div>
-        <ExerciseFilterDropdown
-          open={filterOpen}
-          onOpenChange={(open) => {
-            if (open) {
-              setDraftBodyPartId(bodyPartId)
-              setDraftTargetMuscleId(targetMuscleId)
-              setDraftEquipmentId(equipmentId)
-              setFilterOpen(true)
-            } else {
+      <TrainerSearchToolbar
+        value={search}
+        onChange={setSearch}
+        placeholder={t('exercises.searchPlaceholder')}
+        layout="row"
+        filters={
+          <ExerciseFilterDropdown
+            open={filterOpen}
+            onOpenChange={(open) => {
+              if (open) {
+                setDraftBodyPartId(bodyPartId)
+                setDraftTargetMuscleId(targetMuscleId)
+                setDraftEquipmentId(equipmentId)
+                setFilterOpen(true)
+              } else {
+                setFilterOpen(false)
+              }
+            }}
+            activeCount={activeCount}
+            bodyPartId={draftBodyPartId !== '' ? draftBodyPartId : undefined}
+            targetMuscleId={draftTargetMuscleId !== '' ? draftTargetMuscleId : undefined}
+            equipmentId={draftEquipmentId !== '' ? draftEquipmentId : undefined}
+            bodyParts={bodyParts}
+            muscles={muscles}
+            equipments={equipments}
+            onChange={(fields) => {
+              if ('bodyPartId' in fields) setDraftBodyPartId(fields.bodyPartId ?? '')
+              if ('targetMuscleId' in fields)
+                setDraftTargetMuscleId(fields.targetMuscleId ?? '')
+              if ('equipmentId' in fields) setDraftEquipmentId(fields.equipmentId ?? '')
+            }}
+            onApply={() => {
+              setBodyPartId(draftBodyPartId)
+              setTargetMuscleId(draftTargetMuscleId)
+              setEquipmentId(draftEquipmentId)
               setFilterOpen(false)
-            }
-          }}
-          activeCount={activeCount}
-          bodyPartId={draftBodyPartId !== '' ? draftBodyPartId : undefined}
-          targetMuscleId={draftTargetMuscleId !== '' ? draftTargetMuscleId : undefined}
-          equipmentId={draftEquipmentId !== '' ? draftEquipmentId : undefined}
-          bodyParts={bodyParts}
-          muscles={muscles}
-          equipments={equipments}
-          onChange={(fields) => {
-            if ('bodyPartId' in fields) setDraftBodyPartId(fields.bodyPartId ?? '')
-            if ('targetMuscleId' in fields) setDraftTargetMuscleId(fields.targetMuscleId ?? '')
-            if ('equipmentId' in fields) setDraftEquipmentId(fields.equipmentId ?? '')
-          }}
-          onApply={() => {
-            setBodyPartId(draftBodyPartId)
-            setTargetMuscleId(draftTargetMuscleId)
-            setEquipmentId(draftEquipmentId)
-            setFilterOpen(false)
-          }}
-        />
-      </div>
+            }}
+          />
+        }
+      />
       {error && <TrainerErrorState message={error} onRetry={load} />}
       {loading ? (
         <TrainerSkeleton rows={6} />
@@ -358,10 +354,12 @@ export default function ExercisesPage() {
             </div>
             <Button
               variant="outline-white"
-              className="mt-2 w-full justify-center text-xs"
+              size="sm"
+              leftIcon={<Plus size={14} />}
+              className="mt-2 w-full justify-center"
               onClick={() => setInstructions([...instructions, ''])}
             >
-              <Plus size={14} /> Add Step
+              Add Step
             </Button>
           </div>
           <label className="block space-y-2">

@@ -28,7 +28,7 @@ import {
   PageEmptyState,
   PageErrorState,
   Card,
-  SearchInput,
+  SearchToolbar,
   Select,
   FilterDropdown,
   Button,
@@ -220,47 +220,47 @@ export default function WorkoutPlansPage() {
           </Button>
         }
       />
-      <Card variant="compact" className="flex items-center gap-3 p-4">
-        <SearchInput
-          value={search}
-          onChange={setSearch}
-          placeholder={t('plans.workout.searchPlaceholder')}
-          className="min-w-0 flex-1"
-        />
-        <FilterDropdown
-          open={filterOpen}
-          onOpenChange={(open) => {
-            if (open) {
-              setDraftStatus(status)
-              setFilterOpen(true)
-            } else {
+      <SearchToolbar
+        value={search}
+        onChange={setSearch}
+        placeholder={t('plans.workout.searchPlaceholder')}
+        layout="row"
+        filters={
+          <FilterDropdown
+            open={filterOpen}
+            onOpenChange={(open) => {
+              if (open) {
+                setDraftStatus(status)
+                setFilterOpen(true)
+              } else {
+                setFilterOpen(false)
+              }
+            }}
+            activeCount={activeCount}
+            onApply={() => {
+              setStatus(draftStatus)
               setFilterOpen(false)
-            }
-          }}
-          activeCount={activeCount}
-          onApply={() => {
-            setStatus(draftStatus)
-            setFilterOpen(false)
-          }}
-          onClear={() => {
-            setDraftStatus('')
-            setStatus('')
-            setFilterOpen(false)
-          }}
-          title={t('plans.workout.filterTitle', 'Bộ lọc')}
-        >
-          <div>
-            <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-white/80">
-              {t('plans.workout.fieldStatus', 'Trạng thái')}
-            </p>
-            <Select value={draftStatus} onValueChange={setDraftStatus}>
-              <option value="">{t('plans.workout.allStatuses')}</option>
-              <option value="active">{t('plans.workout.statusActive')}</option>
-              <option value="archived">{t('plans.workout.statusArchived')}</option>
-            </Select>
-          </div>
-        </FilterDropdown>
-      </Card>
+            }}
+            onClear={() => {
+              setDraftStatus('')
+              setStatus('')
+              setFilterOpen(false)
+            }}
+            title={t('plans.workout.filterTitle', 'Bộ lọc')}
+          >
+            <div>
+              <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-white/80">
+                {t('plans.workout.fieldStatus', 'Trạng thái')}
+              </p>
+              <Select value={draftStatus} onValueChange={setDraftStatus}>
+                <option value="">{t('plans.workout.allStatuses')}</option>
+                <option value="active">{t('plans.workout.statusActive')}</option>
+                <option value="archived">{t('plans.workout.statusArchived')}</option>
+              </Select>
+            </div>
+          </FilterDropdown>
+        }
+      />
 
       {error && <PageErrorState message={error} onRetry={reload} />}
 

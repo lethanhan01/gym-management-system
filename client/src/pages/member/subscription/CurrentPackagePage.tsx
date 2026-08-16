@@ -30,7 +30,7 @@ import {
   Badge,
   Modal,
   ConfirmDialog,
-  SearchInput,
+  SearchToolbar,
   type BadgeTone,
 } from '@/components/ui'
 import { getPaymentMethodLabel } from '@/components/payment/payment-method-data'
@@ -440,36 +440,37 @@ export default function CurrentPackagePage() {
       >
         <div className="space-y-4">
           {/* Search + PT toggle */}
-          <div className="flex gap-2">
-            <SearchInput
-              placeholder={t('subscription.current.packageModal.searchPlaceholder')}
-              value={pkgSearch}
-              onChange={setPkgSearch}
-              className="flex-1"
-            />
-            <Button
-              type="button"
-              variant={pkgPtFilter === 'pt' ? 'primary' : 'outline-white'}
-              size="compact"
-              onClick={() =>
-                setPkgPtFilter((f) => (f === 'all' ? 'pt' : f === 'pt' ? 'no-pt' : 'all'))
-              }
-            >
-              {pkgPtFilter === 'pt' ? (
-                <span className="flex items-center gap-1">
-                  <Users size={12} /> Có PT
-                </span>
-              ) : pkgPtFilter === 'no-pt' ? (
-                <span className="flex items-center gap-1">
-                  <UserX size={12} /> Không PT
-                </span>
-              ) : (
-                <span className="flex items-center gap-1">
-                  <ArrowUpDown size={12} /> Lọc PT
-                </span>
-              )}
-            </Button>
-          </div>
+          <SearchToolbar
+            variant="plain"
+            layout="row"
+            placeholder={t('subscription.current.packageModal.searchPlaceholder')}
+            value={pkgSearch}
+            onChange={setPkgSearch}
+            filters={
+              <Button
+                type="button"
+                variant={pkgPtFilter === 'pt' ? 'primary' : 'outline-white'}
+                size="compact"
+                onClick={() =>
+                  setPkgPtFilter((f) => (f === 'all' ? 'pt' : f === 'pt' ? 'no-pt' : 'all'))
+                }
+              >
+                {pkgPtFilter === 'pt' ? (
+                  <span className="flex items-center gap-1">
+                    <Users size={12} /> Có PT
+                  </span>
+                ) : pkgPtFilter === 'no-pt' ? (
+                  <span className="flex items-center gap-1">
+                    <UserX size={12} /> Không PT
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-1">
+                    <ArrowUpDown size={12} /> Lọc PT
+                  </span>
+                )}
+              </Button>
+            }
+          />
 
           {/* Sort row */}
           <div className="flex items-center gap-2">

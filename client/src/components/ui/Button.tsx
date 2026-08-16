@@ -177,8 +177,9 @@ export function ButtonContent({
         {effectiveContent && (
           <span
             className={cn(
+              'inline-flex items-center justify-center min-w-0',
               truncate && 'truncate',
-              responsiveIconOnly && 'hidden sm:inline'
+              responsiveIconOnly && 'hidden sm:inline-flex'
             )}
           >
             {effectiveContent}
@@ -191,15 +192,16 @@ export function ButtonContent({
   return (
     <>
       {leftIcon && (
-        <span className="inline-flex shrink-0 items-center" aria-hidden="true">
+        <span className="inline-flex shrink-0 items-center justify-center" aria-hidden="true">
           {leftIcon}
         </span>
       )}
       {children && (
         <span
           className={cn(
+            'inline-flex items-center justify-center gap-1.5 min-w-0',
             truncate && 'truncate',
-            responsiveIconOnly && leftIcon && 'hidden sm:inline'
+            responsiveIconOnly && leftIcon && 'hidden sm:inline-flex'
           )}
         >
           {children}
@@ -208,7 +210,7 @@ export function ButtonContent({
       {rightIcon && (
         <span
           className={cn(
-            'inline-flex shrink-0 items-center',
+            'inline-flex shrink-0 items-center justify-center',
             responsiveIconOnly && 'hidden sm:inline-flex'
           )}
           aria-hidden="true"

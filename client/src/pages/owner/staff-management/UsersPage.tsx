@@ -13,8 +13,7 @@ import { useAuthStore } from '@/stores/authStore'
 import {
   Page,
   PageHeader,
-  Card,
-  SearchInput,
+  SearchToolbar,
   Select,
   ResponsiveTable,
   Button,
@@ -218,28 +217,39 @@ export default function UsersPage() {
       />
 
       {/* Filters */}
-      <Card variant="compact" className="grid gap-3 p-4 md:grid-cols-[1fr_180px_180px]">
-        <SearchInput
-          value={search}
-          onChange={handleFilterChange(setSearch)}
-          placeholder={t('staffManagement.users.searchPlaceholder')}
-        />
-        <Select value={position} onValueChange={handleFilterChange(setPosition)}>
-          <option value="">{t('staffManagement.users.positions.all')}</option>
-          <option value="staff">{t('staffManagement.users.positions.staff')}</option>
-          <option value="trainer">{t('staffManagement.users.positions.trainer')}</option>
-          <option value="owner">{t('staffManagement.users.positions.owner')}</option>
-        </Select>
-        <Select value={status} onValueChange={handleFilterChange(setStatus)} required>
-          <option value="">{t('staffManagement.users.statusFilter.all')}</option>
-          <option value="active">{t('usersOverview.userStatus.active')}</option>
-          <option value="pending_verification">
-            {t('usersOverview.userStatus.pendingVerification')}
-          </option>
-          <option value="locked">{t('usersOverview.userStatus.locked')}</option>
-          <option value="deleted">{t('usersOverview.userStatus.deleted')}</option>
-        </Select>
-      </Card>
+      <SearchToolbar
+        value={search}
+        onChange={handleFilterChange(setSearch)}
+        placeholder={t('staffManagement.users.searchPlaceholder')}
+        filters={
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+            <Select
+              className="w-full sm:w-[180px]"
+              value={position}
+              onValueChange={handleFilterChange(setPosition)}
+            >
+              <option value="">{t('staffManagement.users.positions.all')}</option>
+              <option value="staff">{t('staffManagement.users.positions.staff')}</option>
+              <option value="trainer">{t('staffManagement.users.positions.trainer')}</option>
+              <option value="owner">{t('staffManagement.users.positions.owner')}</option>
+            </Select>
+            <Select
+              className="w-full sm:w-[180px]"
+              value={status}
+              onValueChange={handleFilterChange(setStatus)}
+              required
+            >
+              <option value="">{t('staffManagement.users.statusFilter.all')}</option>
+              <option value="active">{t('usersOverview.userStatus.active')}</option>
+              <option value="pending_verification">
+                {t('usersOverview.userStatus.pendingVerification')}
+              </option>
+              <option value="locked">{t('usersOverview.userStatus.locked')}</option>
+              <option value="deleted">{t('usersOverview.userStatus.deleted')}</option>
+            </Select>
+          </div>
+        }
+      />
 
       {/* Table */}
       <ResponsiveTable

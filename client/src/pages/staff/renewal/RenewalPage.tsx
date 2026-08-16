@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { AlertTriangle, Check, ChevronRight, RotateCcw, Search, UserRound } from 'lucide-react'
+import { AlertTriangle, Check, ChevronRight, RotateCcw, UserRound } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { getApiError } from '@/lib/api-error'
 import { formatDate } from '@/lib/date'
@@ -14,6 +14,7 @@ import {
   StaffErrorState,
   StaffPage,
   StaffPageHeader,
+  StaffSearchToolbar,
   StaffSkeleton,
   StaffStatusBadge,
 } from '@/components/StaffUI'
@@ -143,41 +144,37 @@ function SelectMemberStep({ onSelect }: { onSelect: (m: TrainerStudentSummary) =
 
   return (
     <div className="space-y-4">
-      {/* Search + filter chips — one row */}
-      <div className="rogym-card rogym-card--compact p-4 flex flex-wrap items-center gap-3">
-        <div className="relative flex-1 min-w-48">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 rogym-text-dim" size={16} />
-          <input
-            className="rogym-input pl-9 h-9 text-sm"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && applySearch()}
-            placeholder={t('renewal.searchPlaceholder')}
-          />
-        </div>
-
-        <div className="flex items-center gap-1.5 flex-wrap">
-          {STATUS_FILTERS.map((f) => (
-            <button
-              key={f.value}
-              type="button"
-              onClick={() => changeStatus(f.value)}
-              className={[
-                'rounded-lg px-3 py-1.5 text-xs font-medium transition-colors border',
-                statusFilter === f.value
-                  ? 'bg-[var(--rogym-green)] border-[var(--rogym-green)] text-white'
-                  : 'border-white/15 rogym-text-secondary hover:border-white/30 hover:text-white',
-              ].join(' ')}
-            >
-              {f.label}
-            </button>
-          ))}
-        </div>
-
-        <button type="button" className="rogym-btn rogym-btn--primary h-9 px-4 text-sm" onClick={applySearch}>
-          {t('renewal.search')}
-        </button>
-      </div>
+      {/* Search + filter chips */}
+      <StaffSearchToolbar
+        value={search}
+        onChange={setSearch}
+        onSearch={applySearch}
+        placeholder={t('renewal.searchPlaceholder')}
+        filters={
+          <div className="flex items-center gap-1.5 flex-wrap">
+            {STATUS_FILTERS.map((f) => (
+              <button
+                key={f.value}
+                type="button"
+                onClick={() => changeStatus(f.value)}
+                className={[
+                  'rounded-lg px-3 py-1.5 text-xs font-medium transition-colors border',
+                  statusFilter === f.value
+                    ? 'bg-[var(--rogym-green)] border-[var(--rogym-green)] text-white'
+                    : 'border-white/15 rogym-text-secondary hover:border-white/30 hover:text-white',
+                ].join(' ')}
+              >
+                {f.label}
+              </button>
+            ))}
+          </div>
+        }
+        actions={
+          <button type="button" className="rogym-btn rogym-btn--primary h-11 px-4 text-sm" onClick={applySearch}>
+            {t('renewal.search')}
+          </button>
+        }
+      />
 
       {loading ? (
         <StaffSkeleton rows={5} />

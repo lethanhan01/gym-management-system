@@ -9,7 +9,7 @@ import {
   OwnerPageHeader,
   OwnerSkeleton,
   OwnerSelect,
-  OwnerSearchInput,
+  OwnerSearchToolbar,
 } from '@/components/OwnerUI'
 
 const ACTION_COLOR: Record<string, string> = {
@@ -111,25 +111,24 @@ export default function PermissionsPage() {
       />
 
       {/* Filters */}
-      <div className="flex flex-wrap gap-3">
-        <OwnerSearchInput
-          value={search}
-          onChange={setSearch}
-          placeholder={t('rbac.permissions.searchPlaceholder')}
-          className="flex-1 min-w-[200px]"
-        />
-        <OwnerSelect
-          value={resource}
-          onValueChange={setResource}
-          className="rogym-select min-w-[160px]"
-        >
-          {RESOURCES.map((r) => (
-            <option key={r.value} value={r.value}>
-              {r.label}
-            </option>
-          ))}
-        </OwnerSelect>
-      </div>
+      <OwnerSearchToolbar
+        value={search}
+        onChange={setSearch}
+        placeholder={t('rbac.permissions.searchPlaceholder')}
+        filters={
+          <OwnerSelect
+            value={resource}
+            onValueChange={setResource}
+            className="w-full sm:w-[160px]"
+          >
+            {RESOURCES.map((r) => (
+              <option key={r.value} value={r.value}>
+                {r.label}
+              </option>
+            ))}
+          </OwnerSelect>
+        }
+      />
 
       {loading ? (
         <OwnerSkeleton rows={8} />

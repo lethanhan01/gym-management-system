@@ -8,7 +8,7 @@ import type {
   ExerciseMuscle,
   ExerciseEquipment,
 } from '@/services/workout.service'
-import { FilterDropdown, Select } from '@/components/ui'
+import { FilterDropdown, type FilterDropdownSize, Select } from '@/components/ui'
 import { cn } from '@/lib/utils'
 
 export const ExerciseCard = memo(function ExerciseCard({
@@ -92,6 +92,8 @@ export const ExerciseFilterDropdown = memo(function ExerciseFilterDropdown({
   equipments,
   onChange,
   onApply,
+  size,
+  className,
 }: {
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -104,6 +106,8 @@ export const ExerciseFilterDropdown = memo(function ExerciseFilterDropdown({
   equipments: ExerciseEquipment[]
   onChange: (fields: { bodyPartId?: number; targetMuscleId?: number; equipmentId?: number }) => void
   onApply: () => void
+  size?: FilterDropdownSize
+  className?: string
 }) {
   const { t } = useTranslation('member')
   return (
@@ -113,6 +117,8 @@ export const ExerciseFilterDropdown = memo(function ExerciseFilterDropdown({
       activeCount={activeCount}
       title={t('workout.exercises.filterTitle')}
       onApply={onApply}
+      size={size}
+      className={className}
     >
       <div>
         <p className="rogym-field-label mb-2">{t('workout.exercises.fieldBodyPart', 'Body Part')}</p>

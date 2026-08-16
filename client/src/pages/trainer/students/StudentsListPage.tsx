@@ -9,7 +9,7 @@ import {
   Page,
   PageHeader,
   Card,
-  SearchInput,
+  SearchToolbar,
   Select,
   FilterDropdown,
   ResponsiveTable,
@@ -118,51 +118,51 @@ export default function StudentsListPage() {
         description={t('students.list.description', { total })}
       />
 
-      <Card variant="compact" className="flex items-center gap-3 p-4">
-        <SearchInput
-          value={search}
-          onChange={handleSearchChange}
-          placeholder={t('students.list.searchPlaceholder')}
-          className="min-w-0 flex-1"
-        />
-        <FilterDropdown
-          open={filterOpen}
-          onOpenChange={(open) => {
-            if (open) {
-              setDraftStatus(status)
-              setFilterOpen(true)
-            } else {
+      <SearchToolbar
+        value={search}
+        onChange={handleSearchChange}
+        placeholder={t('students.list.searchPlaceholder')}
+        layout="row"
+        filters={
+          <FilterDropdown
+            open={filterOpen}
+            onOpenChange={(open) => {
+              if (open) {
+                setDraftStatus(status)
+                setFilterOpen(true)
+              } else {
+                setFilterOpen(false)
+              }
+            }}
+            activeCount={status ? 1 : 0}
+            onApply={() => {
+              updateParam('status', draftStatus)
               setFilterOpen(false)
-            }
-          }}
-          activeCount={status ? 1 : 0}
-          onApply={() => {
-            updateParam('status', draftStatus)
-            setFilterOpen(false)
-          }}
-          onClear={() => {
-            setDraftStatus('')
-            updateParam('status', '')
-            setFilterOpen(false)
-          }}
-          title={t('students.list.filterTitle', 'Bộ lọc')}
-        >
-          <div>
-            <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-white/80">
-              {t('students.list.colStatus')}
-            </p>
-            <Select
-              value={draftStatus}
-              onValueChange={setDraftStatus}
-            >
-              <option value="">{t('students.list.allStatuses')}</option>
-              <option value="active">{t('students.list.statusActive')}</option>
-              <option value="pending_verification">{t('students.list.statusPending')}</option>
-              <option value="locked">{t('students.list.statusLocked')}</option>
-            </Select>
-          </div>
-        </FilterDropdown>
-      </Card>
+            }}
+            onClear={() => {
+              setDraftStatus('')
+              updateParam('status', '')
+              setFilterOpen(false)
+            }}
+            title={t('students.list.filterTitle', 'Bộ lọc')}
+          >
+            <div>
+              <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-white/80">
+                {t('students.list.colStatus')}
+              </p>
+              <Select
+                value={draftStatus}
+                onValueChange={setDraftStatus}
+              >
+                <option value="">{t('students.list.allStatuses')}</option>
+                <option value="active">{t('students.list.statusActive')}</option>
+                <option value="pending_verification">{t('students.list.statusPending')}</option>
+                <option value="locked">{t('students.list.statusLocked')}</option>
+              </Select>
+            </div>
+          </FilterDropdown>
+        }
+      />
 
       <ResponsiveTable
         columns={columns}

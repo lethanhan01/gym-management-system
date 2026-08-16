@@ -124,7 +124,8 @@ import { Button, Modal, SearchInput, StatCard, StatusBadge } from '@/components/
 | --- | --- | --- |
 | `Button` | `variant?`, `loading?`, `wide?` + HTMLButtonElement attrs | Wrapper `.rogym-btn` với loading spinner, forwardRef |
 | `Modal` | `open`, `title`, `onClose`, `children`, `footer?` | Dialog với Escape key, role="dialog", aria-modal |
-| `SearchInput` | `value`, `onChange`, `placeholder?`, `debounceMs?`, `aria-label?` | Input tìm kiếm với debounce và nút clear |
+| `SearchToolbar` | `value`, `onChange`, `filters?`, `actions?`, `variant?` | Thanh tìm kiếm chuẩn bọc card, debounce, responsive |
+| `SearchInput` | `value`, `onChange`, `placeholder?`, `debounceMs?`, `aria-label?` | Input tìm kiếm độc lập với debounce và nút clear |
 | `StatCard` | `icon`, `label`, `value`, `hint?`, `accent?` | Metric card với icon, số, nhãn |
 | `StatusBadge` | `status: string`, `tone: StatusTone` | Badge inline tone-based |
 
@@ -217,7 +218,41 @@ không nằm trong role-specific context.
 Modal tự đóng khi nhấn Escape. `footer` là optional; nếu bỏ qua, không render
 footer bar.
 
-### 3.4. `SearchInput`
+### 3.4. `SearchToolbar` và `SearchInput`
+
+> **QUY CHUẨN BẮT BUỘC (MANDATORY)**:
+> Tuyệt đối **không tự viết markup HTML `<input>` + `<Search>` thủ công** cho các thanh tìm kiếm trên trang. Mọi màn hình có thanh tìm kiếm / thanh lọc **bắt buộc** phải sử dụng `SearchToolbar` (hoặc facade tương ứng như `MemberSearchToolbar`, `TrainerSearchToolbar`, `StaffSearchToolbar`, `OwnerSearchToolbar`) để đảm bảo tính đồng bộ 100% về chiều cao chuẩn 44px, bo góc, debounce và responsive.
+
+#### SearchToolbar (Thanh tìm kiếm & lọc chuẩn)
+
+```tsx
+import { SearchToolbar } from '@/components/ui'
+// Hoặc qua Facade theo Role:
+// import { MemberSearchToolbar } from '@/components/MemberUI'
+// import { TrainerSearchToolbar } from '@/components/TrainerUI'
+
+<SearchToolbar
+  value={search}
+  onChange={setSearch}
+  placeholder="Tìm theo tên, nhóm cơ, dụng cụ..."
+  filters={<FilterDropdown ... />}
+  actions={<Button variant="primary">Thêm mới</Button>}
+/>
+```
+
+**Props chính của `SearchToolbar`**:
+- `value`, `onChange`: Giá trị controlled và hàm cập nhật (tự động debounce 300ms).
+- `onSearch?`: Callback khi nhấn phím Enter.
+- `placeholder?`: Nhãn gợi ý ô tìm kiếm.
+- `filters?`: Slot chèn bộ lọc (`FilterDropdown`, `ExerciseFilterDropdown`, `Select`...).
+- `actions?`: Slot chèn nút hành động phụ (nút Thêm mới, xuất báo cáo...).
+- `variant?`: `'card'` (mặc định - nền card bo góc chuẩn), `'compact'`, `'plain'` (không bọc card, dùng trong modal hoặc header).
+- `layout?`: `'auto'` (mặc định - cột trên mobile, dòng trên desktop), `'row'` (luôn cùng 1 hàng).
+- `size?`: `'sm' | 'md' | 'lg'` (mặc định `'md'` - chiều cao 44px).
+
+#### SearchInput (Ô tìm kiếm độc lập)
+
+Dùng khi cần một ô input tìm kiếm độc lập không cần container card bao ngoài:
 
 ```tsx
 const [search, setSearch] = useState('')

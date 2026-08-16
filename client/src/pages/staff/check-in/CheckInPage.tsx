@@ -1,7 +1,7 @@
 import { FormEvent, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { QRCodeCanvas } from 'qrcode.react'
-import { CheckCircle2, LogIn, QrCode, RefreshCcw, Search } from 'lucide-react'
+import { CheckCircle2, LogIn, QrCode, RefreshCcw } from 'lucide-react'
 import { getApiError, getApiErrorCode } from '@/lib/api-error'
 import { formatDate, formatTime, todayInput, startOfLocalDayIso, endOfLocalDayIso } from '@/lib/date'
 import { trainingService, type AttendanceLog, type QrTokenResponse } from '@/services/training.service'
@@ -10,6 +10,7 @@ import {
   StaffErrorState,
   StaffPage,
   StaffPageHeader,
+  StaffSearchInput,
   StaffSkeleton,
   StaffStatusBadge,
   SubmitButton,
@@ -123,20 +124,13 @@ export default function CheckInPage() {
             <form className="space-y-4" onSubmit={handleCheckin}>
               <label className="block space-y-2">
                 <span className="rogym-field-label">{t('checkIn.memberCode')}</span>
-                <div className="relative">
-                  <Search
-                    className="absolute left-3 top-1/2 -translate-y-1/2 rogym-text-dim"
-                    size={17}
-                  />
-                  <input
-                    className="rogym-input pl-10 uppercase"
-                    value={memberCode}
-                    onChange={(event) => setMemberCode(event.target.value)}
-                    placeholder={t('checkIn.memberCodePlaceholder')}
-                    autoComplete="off"
-                    autoFocus
-                  />
-                </div>
+                <StaffSearchInput
+                  value={memberCode}
+                  onChange={(val) => setMemberCode(val.toUpperCase())}
+                  placeholder={t('checkIn.memberCodePlaceholder')}
+                  debounceMs={0}
+                  autoFocus
+                />
               </label>
               <SubmitButton loading={checking} disabled={!memberCode.trim()}>
                 <LogIn size={16} /> Check-in

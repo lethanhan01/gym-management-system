@@ -14,7 +14,7 @@ import {
   Page,
   PageHeader,
   Card,
-  SearchInput,
+  SearchToolbar,
   Select,
   ResponsiveTable,
   Button,
@@ -274,34 +274,38 @@ export default function EquipmentPage() {
         description={t('equipment.descriptionWithTotal', { total })}
       />
 
-      <Card variant="compact" className="grid gap-3 p-4 md:grid-cols-[1fr_180px_180px]">
-        <SearchInput
-          value={searchParams.get('search') ?? ''}
-          onChange={handleSearchChange}
-          placeholder={t('equipment.searchPlaceholder')}
-        />
-        <Select
-          value={statusFilter}
-          onValueChange={(value) => updateParam('status', value)}
-          ariaLabel={t('equipment.filterByStatus')}
-        >
-          {STATUS_OPTIONS.map((opt) => (
-            <option key={opt.value} value={opt.value}>
-              {opt.label}
-            </option>
-          ))}
-        </Select>
-        <Select
-          value={roomId}
-          onValueChange={(value) => updateParam('roomId', value)}
-          ariaLabel={t('equipment.filterByRoom')}
-        >
-          <option value="">{t('equipment.allRooms')}</option>
-          {rooms.map((r) => (
-            <option key={r.roomId} value={r.roomId}>{r.name}</option>
-          ))}
-        </Select>
-      </Card>
+      <SearchToolbar
+        value={searchParams.get('search') ?? ''}
+        onChange={handleSearchChange}
+        placeholder={t('equipment.searchPlaceholder')}
+        filters={
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+            <Select
+              className="w-full sm:w-[180px]"
+              value={statusFilter}
+              onValueChange={(value) => updateParam('status', value)}
+              ariaLabel={t('equipment.filterByStatus')}
+            >
+              {STATUS_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </Select>
+            <Select
+              className="w-full sm:w-[180px]"
+              value={roomId}
+              onValueChange={(value) => updateParam('roomId', value)}
+              ariaLabel={t('equipment.filterByRoom')}
+            >
+              <option value="">{t('equipment.allRooms')}</option>
+              {rooms.map((r) => (
+                <option key={r.roomId} value={r.roomId}>{r.name}</option>
+              ))}
+            </Select>
+          </div>
+        }
+      />
 
       <ResponsiveTable
         columns={columns}

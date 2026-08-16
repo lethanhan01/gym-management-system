@@ -23,6 +23,7 @@ export { Pagination as OwnerPagination } from '@/components/ui'
 export const OwnerStatCard = StatCard
 export { Modal as OwnerModal }
 export { SearchInput as OwnerSearchInput }
+export { SearchToolbar as OwnerSearchToolbar } from '@/components/ui'
 
 export function OwnerBadge({ label, color }: { label: string; color: string }) {
   return (

@@ -13,8 +13,7 @@ import packageService, {
 import {
   Page,
   PageHeader,
-  Card,
-  SearchInput,
+  SearchToolbar,
   Select,
   ResponsiveTable,
   Button,
@@ -392,26 +391,25 @@ export default function PackagesPage() {
       />
 
       {/* Filters */}
-      <Card variant="compact" className="flex flex-wrap gap-3 p-4">
-        <SearchInput
-          value={search}
-          onChange={(v) => handleFilterChange(setSearch, v)}
-          placeholder={t('packages.searchPlaceholder')}
-          className="min-w-[200px] flex-1"
-        />
-        <Select
-          value={statusFilter ?? 'active'}
-          onValueChange={(value) => {
-            setStatusFilter(value as ListPackagesParams['status'])
-            setPage(1)
-          }}
-          className="min-w-[160px]"
-          required
-        >
-          <option value="active">{t('packages.status.active')}</option>
-          <option value="inactive">{t('packages.status.inactive')}</option>
-        </Select>
-      </Card>
+      <SearchToolbar
+        value={search}
+        onChange={(v) => handleFilterChange(setSearch, v)}
+        placeholder={t('packages.searchPlaceholder')}
+        filters={
+          <Select
+            value={statusFilter ?? 'active'}
+            onValueChange={(value) => {
+              setStatusFilter(value as ListPackagesParams['status'])
+              setPage(1)
+            }}
+            className="w-full sm:w-[160px]"
+            required
+          >
+            <option value="active">{t('packages.status.active')}</option>
+            <option value="inactive">{t('packages.status.inactive')}</option>
+          </Select>
+        }
+      />
 
       {/* Data Table */}
       <ResponsiveTable

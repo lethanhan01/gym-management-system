@@ -11,7 +11,7 @@ import {
   Page,
   PageHeader,
   Card,
-  SearchInput,
+  SearchToolbar,
   Select,
   ResponsiveTable,
   Button,
@@ -249,53 +249,56 @@ export default function UsersOverviewPage() {
       </div>
 
       {/* Filters */}
-      <Card variant="compact" className="grid gap-3 p-4 md:grid-cols-[1fr_180px_180px]">
-        <SearchInput
-          value={searchParams.get('search') ?? ''}
-          onChange={handleSearchChange}
-          placeholder={
-            tab === 'members'
-              ? t('usersOverview.filter.searchMember')
-              : t('usersOverview.filter.searchStaff')
-          }
-        />
-        {tab === 'members' ? (
-          <>
+      <SearchToolbar
+        value={searchParams.get('search') ?? ''}
+        onChange={handleSearchChange}
+        placeholder={
+          tab === 'members'
+            ? t('usersOverview.filter.searchMember')
+            : t('usersOverview.filter.searchStaff')
+        }
+        filters={
+          tab === 'members' ? (
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+              <Select
+                className="w-full sm:w-[180px]"
+                value={memberStatus}
+                onValueChange={(v) => updateParam('status', v)}
+                ariaLabel={t('usersOverview.memberStatus.all')}
+              >
+                <option value="">{t('usersOverview.memberStatus.all')}</option>
+                <option value="active">{t('usersOverview.memberStatus.active')}</option>
+                <option value="pending_verification">
+                  {t('usersOverview.memberStatus.pendingVerification')}
+                </option>
+                <option value="locked">{t('usersOverview.memberStatus.locked')}</option>
+              </Select>
+              <Select
+                className="w-full sm:w-[180px]"
+                value={memberSubStatus}
+                onValueChange={(v) => updateParam('subStatus', v)}
+                ariaLabel={t('usersOverview.packageStatus.all')}
+              >
+                <option value="">{t('usersOverview.packageStatus.all')}</option>
+                <option value="active">{t('usersOverview.packageStatus.active')}</option>
+                <option value="expired">{t('usersOverview.packageStatus.expired')}</option>
+              </Select>
+            </div>
+          ) : (
             <Select
-              value={memberStatus}
-              onValueChange={(v) => updateParam('status', v)}
-              ariaLabel={t('usersOverview.memberStatus.all')}
+              className="w-full sm:w-[180px]"
+              value={staffPosition}
+              onValueChange={(v) => updateParam('position', v)}
+              ariaLabel={t('usersOverview.filter.position')}
             >
-              <option value="">{t('usersOverview.memberStatus.all')}</option>
-              <option value="active">{t('usersOverview.memberStatus.active')}</option>
-              <option value="pending_verification">
-                {t('usersOverview.memberStatus.pendingVerification')}
-              </option>
-              <option value="locked">{t('usersOverview.memberStatus.locked')}</option>
+              <option value="">{t('usersOverview.filter.position')}</option>
+              <option value="trainer">{t('usersOverview.positions.trainer')}</option>
+              <option value="staff">{t('usersOverview.positions.staff')}</option>
+              <option value="owner">{t('usersOverview.positions.owner')}</option>
             </Select>
-            <Select
-              value={memberSubStatus}
-              onValueChange={(v) => updateParam('subStatus', v)}
-              ariaLabel={t('usersOverview.packageStatus.all')}
-            >
-              <option value="">{t('usersOverview.packageStatus.all')}</option>
-              <option value="active">{t('usersOverview.packageStatus.active')}</option>
-              <option value="expired">{t('usersOverview.packageStatus.expired')}</option>
-            </Select>
-          </>
-        ) : (
-          <Select
-            value={staffPosition}
-            onValueChange={(v) => updateParam('position', v)}
-            ariaLabel={t('usersOverview.filter.position')}
-          >
-            <option value="">{t('usersOverview.filter.position')}</option>
-            <option value="trainer">{t('usersOverview.positions.trainer')}</option>
-            <option value="staff">{t('usersOverview.positions.staff')}</option>
-            <option value="owner">{t('usersOverview.positions.owner')}</option>
-          </Select>
-        )}
-      </Card>
+          )
+        }
+      />
 
       {tab === 'members' ? (
         <ResponsiveTable

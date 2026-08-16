@@ -11,7 +11,6 @@ import {
   Dumbbell,
   Lock,
   Plus,
-  Search,
   Trash2,
   X,
   Zap,
@@ -21,6 +20,7 @@ import {
   MemberErrorState,
   MemberPage,
   MemberPageHeader,
+  MemberSearchToolbar,
   MemberSkeleton,
 } from '@/components/MemberUI'
 import { toast } from '@/lib/toast'
@@ -957,52 +957,47 @@ function AddExerciseForm({
     >
       <div className="space-y-2">
         <span className="rogym-field-label block">{t('workout.planBuilder.addExercise.title')}</span>
-        <div className="relative flex gap-2">
-          <div className="relative flex-1">
-            <Search
-              className="absolute left-3 top-1/2 -translate-y-1/2 rogym-sx-5e5c39ab"
-              size={13}
-            />
-            <input
-              className="rogym-input py-2 pl-9 text-sm"
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              placeholder={t('workout.planBuilder.addExercise.searchPlaceholder')}
-            />
-          </div>
-          <ExerciseFilterDropdown
-            open={filterOpen}
-            onOpenChange={(open) => {
-              if (open) {
-                setDraftBodyPartId(bodyPartId)
-                setDraftTargetMuscleId(targetMuscleId)
-                setDraftEquipmentId(equipmentId)
-                setFilterOpen(true)
-              } else {
+        <MemberSearchToolbar
+          variant="plain"
+          layout="row"
+          value={search}
+          onChange={setSearch}
+          placeholder={t('workout.planBuilder.addExercise.searchPlaceholder')}
+          filters={
+            <ExerciseFilterDropdown
+              open={filterOpen}
+              onOpenChange={(open) => {
+                if (open) {
+                  setDraftBodyPartId(bodyPartId)
+                  setDraftTargetMuscleId(targetMuscleId)
+                  setDraftEquipmentId(equipmentId)
+                  setFilterOpen(true)
+                } else {
+                  setFilterOpen(false)
+                }
+              }}
+              activeCount={activeFilterCount}
+              bodyPartId={draftBodyPartId}
+              targetMuscleId={draftTargetMuscleId}
+              equipmentId={draftEquipmentId}
+              bodyParts={bodyParts}
+              muscles={muscles}
+              equipments={equipments}
+              onChange={(fields) => {
+                if ('bodyPartId' in fields) setDraftBodyPartId(fields.bodyPartId)
+                if ('targetMuscleId' in fields) setDraftTargetMuscleId(fields.targetMuscleId)
+                if ('equipmentId' in fields) setDraftEquipmentId(fields.equipmentId)
+              }}
+              onApply={() => {
+                setBodyPartId(draftBodyPartId)
+                setTargetMuscleId(draftTargetMuscleId)
+                setEquipmentId(draftEquipmentId)
+                setExerciseId('')
                 setFilterOpen(false)
-              }
-            }}
-            activeCount={activeFilterCount}
-            bodyPartId={draftBodyPartId}
-            targetMuscleId={draftTargetMuscleId}
-            equipmentId={draftEquipmentId}
-            bodyParts={bodyParts}
-            muscles={muscles}
-            equipments={equipments}
-            onChange={(fields) => {
-              if ('bodyPartId' in fields) setDraftBodyPartId(fields.bodyPartId)
-              if ('targetMuscleId' in fields) setDraftTargetMuscleId(fields.targetMuscleId)
-              if ('equipmentId' in fields) setDraftEquipmentId(fields.equipmentId)
-            }}
-            onApply={() => {
-              setBodyPartId(draftBodyPartId)
-              setTargetMuscleId(draftTargetMuscleId)
-              setEquipmentId(draftEquipmentId)
-              setExerciseId('')
-              setFilterOpen(false)
-            }}
-          />
-        </div>
+              }}
+            />
+          }
+        />
         <div className="max-h-44 overflow-y-auto rounded-xl rogym-sx-9ff6a44e">
           {filteredExercises.length === 0 ? (
             <p className="py-4 text-center text-xs rogym-sx-5e5c39ab">{t('workout.planBuilder.addExercise.notFound')}</p>

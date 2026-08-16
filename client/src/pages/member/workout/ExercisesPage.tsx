@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { Dumbbell, Search, X } from 'lucide-react'
+import { Dumbbell, X } from 'lucide-react'
 import {
   MemberEmptyState,
   MemberErrorState,
   MemberPage,
   MemberPageHeader,
+  MemberSearchToolbar,
   MemberSkeleton,
 } from '@/components/MemberUI'
 import workoutService, {
@@ -127,42 +128,34 @@ export default function MemberExercisesPage() {
       />
 
       {/* Search + filter */}
-      <div className="flex items-center gap-3 rogym-sx-d9d481c1">
-        <div className="relative min-w-0 flex-1">
-          <Search
-            className="absolute left-3 top-1/2 -translate-y-1/2 rogym-sx-5e5c39ab"
-            size={15}
+      <MemberSearchToolbar
+        value={search}
+        onChange={setSearch}
+        placeholder={t('workout.exercises.searchPlaceholder')}
+        layout="row"
+        filters={
+          <ExerciseFilterDropdown
+            open={showPopup}
+            onOpenChange={(open) => {
+              if (open) openPopup()
+              else setShowPopup(false)
+            }}
+            activeCount={activeCount}
+            bodyPartId={draftBodyPartId}
+            targetMuscleId={draftTargetMuscleId}
+            equipmentId={draftEquipmentId}
+            bodyParts={bodyParts}
+            muscles={muscles}
+            equipments={equipments}
+            onChange={(fields) => {
+              if ('bodyPartId' in fields) setDraftBodyPartId(fields.bodyPartId)
+              if ('targetMuscleId' in fields) setDraftTargetMuscleId(fields.targetMuscleId)
+              if ('equipmentId' in fields) setDraftEquipmentId(fields.equipmentId)
+            }}
+            onApply={applyFilter}
           />
-          <input
-            className="rogym-input pl-9"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder={t('workout.exercises.searchPlaceholder')}
-          />
-        </div>
-
-        {/* Filter button + popup */}
-        <ExerciseFilterDropdown
-          open={showPopup}
-          onOpenChange={(open) => {
-            if (open) openPopup()
-            else setShowPopup(false)
-          }}
-          activeCount={activeCount}
-          bodyPartId={draftBodyPartId}
-          targetMuscleId={draftTargetMuscleId}
-          equipmentId={draftEquipmentId}
-          bodyParts={bodyParts}
-          muscles={muscles}
-          equipments={equipments}
-          onChange={(fields) => {
-            if ('bodyPartId' in fields) setDraftBodyPartId(fields.bodyPartId)
-            if ('targetMuscleId' in fields) setDraftTargetMuscleId(fields.targetMuscleId)
-            if ('equipmentId' in fields) setDraftEquipmentId(fields.equipmentId)
-          }}
-          onApply={applyFilter}
-        />
-      </div>
+        }
+      />
 
       {error && <MemberErrorState message={error} onRetry={load} />}
 
