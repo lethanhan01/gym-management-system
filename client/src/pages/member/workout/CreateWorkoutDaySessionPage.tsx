@@ -14,6 +14,7 @@ import { getApiError } from '@/lib/api-error'
 import workoutService, { type WorkoutAssignmentSummary, type WorkoutPlanDay } from '@/services/workout.service'
 import { trainingService } from '@/services/training.service'
 import { useAuthStore } from '@/stores/authStore'
+import { useWorkoutSessionControlStore } from '@/stores/workoutSessionControlStore'
 import {
   clearSessionDraft, clearSessionRuntime, loadSessionDraft, loadSessionRuntime, saveSessionRuntime,
   type SessionTimerRuntime,
@@ -87,6 +88,7 @@ export default function CreateWorkoutDaySessionPage() {
   const { planDayId } = useParams()
   const [searchParams] = useSearchParams()
   const user = useAuthStore((state) => state.user)
+  const setControls = useWorkoutSessionControlStore((state) => state.setControls)
   const memberId = user?.memberId ? String(user.memberId) : null
   const assignmentId = searchParams.get('assignmentId')
   const requestedSessionId = searchParams.get('sessionId')
@@ -249,7 +251,7 @@ export default function CreateWorkoutDaySessionPage() {
     cardRefs.current.get(segment.planExerciseId)?.scrollIntoView({ behavior: reducedMotion ? 'auto' : 'smooth', block: 'start' })
   }, [runtime?.segmentIndex, runtime?.segments])
 
-  function startTimer() {
+  const startTimer = useCallback(() => {
     if (!loaded) return
     const timeline = buildSessionTimeline(loaded.day, loaded.config)
     if (timeline.segments.length === 0) {
@@ -265,16 +267,37 @@ export default function CreateWorkoutDaySessionPage() {
     previousExerciseRef.current = null
     setStatus('running')
     persistRuntime(started)
-  }
+  }, [loaded, persistRuntime, t])
 
-  function resumeTimer() {
+  const resumeTimer = useCallback(() => {
     const current = runtimeRef.current
     if (!current) return
     setSubmitError(null)
     const resumed = { ...current, status: 'running' as const }
     setStatus('running')
     persistRuntime(resumed)
-  }
+  }, [persistRuntime])
+
+  const retrySave = useCallback(() => {
+    if (runtimeRef.current) void saveLog(runtimeRef.current)
+  }, [saveLog])
+
+  useEffect(() => {
+    if (!loaded) {
+      setControls(null)
+      return
+    }
+    setControls({
+      status,
+      startTimer,
+      pauseTimer,
+      resumeTimer,
+      retrySave,
+    })
+    return () => {
+      setControls(null)
+    }
+  }, [loaded, pauseTimer, resumeTimer, retrySave, setControls, startTimer, status])
 
   function requestLeave(target: string) {
     if (status === 'running') setLeaveTarget(target)
@@ -368,7 +391,7 @@ export default function CreateWorkoutDaySessionPage() {
           })}
         </div>
         {submitError && <p className="px-5 pb-2 text-center text-xs text-red-300">{submitError}</p>}
-        <div className="rogym-sx-8553bf9e flex items-center justify-end gap-3 px-5 py-4">
+        <div className="rogym-sx-8553bf9e hidden md:flex items-center justify-end gap-3 px-5 py-4">
           {status === 'idle' && (
             <Button variant="primary" onClick={startTimer} leftIcon={<Play size={15} />}>
               {t('workout.createSession.buttonStartWorkout')}
