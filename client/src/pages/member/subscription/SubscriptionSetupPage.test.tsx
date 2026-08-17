@@ -8,10 +8,6 @@ import { useAuthStore } from '@/stores/authStore'
 import { useSubscriptionStore } from '@/stores/subscriptionStore'
 import { makeSubscription } from '@/test/subscriptionFactory'
 
-vi.mock('@/components/MemberUI', () => ({
-  MemberPage: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  MemberPageHeader: ({ title }: { title: string }) => <h1>{title}</h1>,
-}))
 
 vi.mock('@/components/PackagePicker', () => ({
   PackagePicker: ({ packages }: { packages: Package[] }) => (

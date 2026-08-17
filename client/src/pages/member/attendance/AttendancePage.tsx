@@ -3,15 +3,18 @@ import { useTranslation } from 'react-i18next'
 import { ChevronLeft, ChevronRight, Clock } from 'lucide-react'
 import { attendanceService, type AttendanceLog } from '@/services/attendance.service'
 import {
-  MemberBadge,
-  MemberCard,
-  MemberEmptyState,
-  MemberErrorState,
-  MemberPage,
-  MemberPageHeader,
-  MemberSkeleton,
-} from '@/components/MemberUI'
-import { Button, DatePickerInput, type BadgeTone } from '@/components/ui'
+  Badge,
+  Button,
+  Card,
+  DatePickerInput,
+  Page,
+  PageEmptyState,
+  PageErrorState,
+  PageHeader,
+  PageSkeleton,
+  Skeleton,
+  type BadgeTone,
+} from '@/components/ui'
 import { getApiError } from '@/lib/api-error'
 import { useAuthStore } from '@/stores/authStore'
 
@@ -43,7 +46,6 @@ function fmtMonthYear(d: Date, locale: string) {
 }
 
 function getDowLabels(locale: string): string[] {
-  // Generate Mon-Sun abbreviated day names using Intl, starting from Monday
   const base = new Date(2024, 0, 1) // Monday 1 Jan 2024
   return Array.from({ length: 7 }, (_, i) => {
     const d = new Date(base)
@@ -163,9 +165,9 @@ function AttendanceCalendarView({
   const today = todayKey()
 
   return (
-    <MemberCard variant="compact" className="p-5">
+    <Card as="article" variant="compact" className="p-5">
       {/* Month navigation */}
-      <div className="mb-4 flex items-center justify-between">
+      <header className="mb-4 flex items-center justify-between">
         <Button
           variant="icon"
           size="sm"
@@ -183,7 +185,7 @@ function AttendanceCalendarView({
         >
           <ChevronRight size={16} />
         </Button>
-      </div>
+      </header>
 
       {/* DOW header */}
       <div className="mb-1 grid grid-cols-7">
@@ -238,7 +240,7 @@ function AttendanceCalendarView({
           </div>
         ))}
       </div>
-    </MemberCard>
+    </Card>
   )
 }
 
@@ -269,8 +271,8 @@ function AttendanceListSidebar({
     qr: { label: t('attendance.methodLabel.qr'), tone: 'muted' },
   }
   return (
-    <div className="space-y-5">
-      <MemberCard variant="compact" className="p-5">
+    <aside className="space-y-5">
+      <Card as="article" variant="compact" className="p-5">
         {/* Date range pickers */}
         <div className="mb-4 flex items-center gap-2 px-1">
           <div className="flex-1 min-w-0">
@@ -297,7 +299,7 @@ function AttendanceListSidebar({
         {loading ? (
           <div className="space-y-2">
             {[0, 1, 2, 3].map((i) => (
-              <div key={i} className="h-14 animate-pulse rounded-xl bg-white/5" />
+              <Skeleton key={i} height={56} rounded="xl" />
             ))}
           </div>
         ) : error ? (
@@ -305,7 +307,7 @@ function AttendanceListSidebar({
             <p className="text-center text-sm rogym-sx-5e5c39ab">{error}</p>
           </div>
         ) : logs.length === 0 ? (
-          <MemberEmptyState
+          <PageEmptyState
             title={t('attendance.noData')}
           />
         ) : (
@@ -329,16 +331,16 @@ function AttendanceListSidebar({
                       </p>
                     </div>
                   </div>
-                  <MemberBadge tone={method.tone}>
+                  <Badge tone={method.tone}>
                     {method.label}
-                  </MemberBadge>
+                  </Badge>
                 </div>
               )
             })}
           </div>
         )}
-      </MemberCard>
-    </div>
+      </Card>
+    </aside>
   )
 }
 
@@ -377,7 +379,7 @@ export default function AttendancePage() {
     setCalError(null)
     const fromISO = toISODate(new Date(calMonth.getFullYear(), calMonth.getMonth(), 1))
     const toISO = toISODate(new Date(calMonth.getFullYear(), calMonth.getMonth() + 1, 0))
-attendanceService
+    attendanceService
       .getAttendance({ memberId, from: fromISO, to: toISO, pageSize: 100 })
       .then((res) => setCalLogs(res.data))
       .catch((err) => setCalError(getApiError(err, t('attendance.errorCalendar'))))
@@ -395,7 +397,7 @@ attendanceService
     }
     setListLoading(true)
     setListError(null)
-attendanceService
+    attendanceService
       .getAttendance({ memberId, from, to, pageSize: 100 })
       .then((res) => {
         const sorted = [...res.data].sort(
@@ -418,7 +420,6 @@ attendanceService
     setCalMonth((m) => new Date(m.getFullYear(), m.getMonth() + 1, 1))
   }
 
-  // Tính METHOD_LABEL cho inline mobile card list (dùng lại logic từ AttendanceListSidebar)
   const METHOD_LABEL_MOBILE: Record<string, { label: string; tone: BadgeTone }> = {
     realtime: { label: t('attendance.methodLabel.realtime'), tone: 'info' },
     manual: { label: t('attendance.methodLabel.manual'), tone: 'warning' },
@@ -426,28 +427,30 @@ attendanceService
   }
 
   return (
-    <MemberPage>
-      <MemberPageHeader
+    <Page>
+      <PageHeader
         eyebrow={t('attendance.eyebrow')}
         title={t('attendance.title')}
         description={t('attendance.description')}
       />
 
       {/* Desktop: calendar + sidebar nằm ngang */}
-      <div className="hidden lg:grid gap-5 lg:grid-cols-[65fr_35fr]">
-        {calLoading ? (
-          <MemberSkeleton rows={5} />
-        ) : calError ? (
-          <MemberErrorState message={calError} onRetry={loadCalLogs} />
-        ) : (
-          <AttendanceCalendarView
-            logs={calLogs}
-            month={calMonth}
-            locale={i18n.language}
-            onPrevMonth={prevMonth}
-            onNextMonth={nextMonth}
-          />
-        )}
+      <main className="hidden lg:grid gap-5 lg:grid-cols-[65fr_35fr]">
+        <section aria-label="Calendar View">
+          {calLoading ? (
+            <PageSkeleton rows={5} />
+          ) : calError ? (
+            <PageErrorState message={calError} onRetry={loadCalLogs} />
+          ) : (
+            <AttendanceCalendarView
+              logs={calLogs}
+              month={calMonth}
+              locale={i18n.language}
+              onPrevMonth={prevMonth}
+              onNextMonth={nextMonth}
+            />
+          )}
+        </section>
         <AttendanceListSidebar
           logs={listLogs}
           from={from}
@@ -457,29 +460,31 @@ attendanceService
           loading={listLoading}
           error={listError}
         />
-      </div>
+      </main>
 
       {/* Mobile: calendar stack trên, card list stack dưới */}
-      <div className="lg:hidden space-y-5">
-        {calLoading ? (
-          <MemberSkeleton rows={5} />
-        ) : calError ? (
-          <MemberErrorState message={calError} onRetry={loadCalLogs} />
-        ) : (
-          <AttendanceCalendarView
-            logs={calLogs}
-            month={calMonth}
-            locale={i18n.language}
-            onPrevMonth={prevMonth}
-            onNextMonth={nextMonth}
-          />
-        )}
+      <main className="lg:hidden space-y-5">
+        <section aria-label="Calendar View">
+          {calLoading ? (
+            <PageSkeleton rows={5} />
+          ) : calError ? (
+            <PageErrorState message={calError} onRetry={loadCalLogs} />
+          ) : (
+            <AttendanceCalendarView
+              logs={calLogs}
+              month={calMonth}
+              locale={i18n.language}
+              onPrevMonth={prevMonth}
+              onNextMonth={nextMonth}
+            />
+          )}
+        </section>
 
         {/* Mobile: card list — cùng tháng với calendar, tự cập nhật khi navigate tháng */}
         {!calLoading && !calError && (
-          <div className="space-y-2">
+          <section aria-label="Attendance List" className="space-y-2">
             {calLogs.length === 0 ? (
-              <MemberEmptyState
+              <PageEmptyState
                 title={t('attendance.noData')}
               />
             ) : (
@@ -488,8 +493,10 @@ attendanceService
                 .map((log) => {
                   const method = METHOD_LABEL_MOBILE[log.method] ?? { label: log.method, tone: 'muted' as BadgeTone }
                   return (
-                    <div
+                    <Card
+                      as="article"
                       key={log.attendanceId}
+                      variant="compact"
                       className="flex items-center justify-between gap-3 rounded-xl px-4 py-3 rogym-sx-a15e2a7c"
                     >
                       <div className="flex items-center gap-3">
@@ -504,16 +511,17 @@ attendanceService
                           </p>
                         </div>
                       </div>
-                      <MemberBadge tone={method.tone}>
+                      <Badge tone={method.tone}>
                         {method.label}
-                      </MemberBadge>
-                    </div>
+                      </Badge>
+                    </Card>
                   )
                 })
             )}
-          </div>
+          </section>
         )}
-      </div>
-    </MemberPage>
+      </main>
+    </Page>
   )
 }
+

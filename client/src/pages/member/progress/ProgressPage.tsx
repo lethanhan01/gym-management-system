@@ -4,19 +4,24 @@ import type { TFunction } from 'i18next'
 import { useTranslation } from 'react-i18next'
 import { Scale, Activity, Dumbbell, Play } from 'lucide-react'
 import {
-  MemberCard,
-  MemberStatCard,
-  MemberPage,
-  MemberPageHeader,
-  MemberSkeleton,
-  MemberErrorState,
-} from '@/components/MemberUI'
+  Alert,
+  Badge,
+  Button,
+  Card,
+  FormField,
+  Input,
+  Page,
+  PageErrorState,
+  PageHeader,
+  PageSkeleton,
+  ProgressBar,
+  StatCard,
+} from '@/components/ui'
 import { memberProgressService, type MemberProgress } from '@/services/member-progress.service'
 import { memberService } from '@/services/member.service'
 import workoutService, { type WorkoutAssignmentSummary } from '@/services/workout.service'
 import { useAuthStore } from '@/stores/authStore'
 import { getApiError } from '@/lib/api-error'
-import { Badge, Button, FormField, Input } from '@/components/ui'
 import { PageLoader } from '@/components/shared/Spinner'
 
 const MemberWeightChart = lazy(() => import('@/components/charts/MemberWeightChart'))
@@ -90,12 +95,12 @@ function SelfReportForm({ onSuccess, t }: { onSuccess: () => void; t: TFunction<
   }
 
   return (
-    <MemberCard variant="compact" className="p-5">
+    <Card as="article" variant="compact" className="p-5">
       <p className="text-sm font-semibold text-white mb-4">{t('progress.form.title')}</p>
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         {/* trên mobile hiển thị 1 cột, từ sm trở lên 2 cột */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <FormField label={t('progress.form.fieldWeight')}>
+          <FormField label={t('progress.form.fieldWeight')} required>
             <Input
               type="number"
               step="0.1"
@@ -122,14 +127,14 @@ function SelfReportForm({ onSuccess, t }: { onSuccess: () => void; t: TFunction<
 
         {previewBmi != null && (
           <div className="flex items-center gap-2 text-sm">
-            <span className="rogym-sx-d88f932f">{t('progress.form.bmiPreview')}</span>
+            <span className="rogym-text-dim">{t('progress.form.bmiPreview')}</span>
             <span className="rogym-tone-text font-semibold" data-tone={bmiTone(previewBmi)}>
               {previewBmi.toFixed(1)} — {bmiLabel(previewBmi, t)}
             </span>
           </div>
         )}
 
-        {error && <p className="text-xs text-red-400">{error}</p>}
+        {error && <Alert tone="error" description={error} />}
 
         <Button
           type="submit"
@@ -142,7 +147,7 @@ function SelfReportForm({ onSuccess, t }: { onSuccess: () => void; t: TFunction<
           {t('progress.form.buttonSave')}
         </Button>
       </form>
-    </MemberCard>
+    </Card>
   )
 }
 
@@ -176,7 +181,7 @@ export default function ProgressPage() {
     setError(null)
     try {
       const [progressData, assignmentData] = await Promise.all([
-memberProgressService.listProgress(String(memberId)),
+        memberProgressService.listProgress(String(memberId)),
         workoutService.getAssignments(String(memberId), { status: 'active' }).catch(() => []),
       ])
       setData(progressData)
@@ -218,8 +223,8 @@ memberProgressService.listProgress(String(memberId)),
   )
 
   return (
-    <MemberPage>
-      <MemberPageHeader
+    <Page>
+      <PageHeader
         eyebrow={t('progress.eyebrow')}
         title={t('progress.pageTitle')}
         description={t('progress.description')}
@@ -238,16 +243,16 @@ memberProgressService.listProgress(String(memberId)),
       {showForm && <SelfReportForm onSuccess={handleFormSuccess} t={t} />}
 
       {loading ? (
-        <MemberSkeleton rows={4} />
+        <PageSkeleton rows={4} />
       ) : error ? (
-        <MemberErrorState message={error} onRetry={loadProgress} />
+        <PageErrorState message={error} onRetry={loadProgress} />
       ) : data.length === 0 && !activeAssignment ? (
         <>{!showForm && <SelfReportForm onSuccess={handleFormSuccess} t={t} />}</>
       ) : (
-        <div className="space-y-5">
+        <main className="space-y-5">
           {/* Workout Plan Progress Card */}
           {activeAssignment && activeAssignment.progress && (
-            <MemberCard variant="compact" className="p-5 border-[var(--rogym-green)]/20">
+            <Card as="article" variant="compact" className="p-5 border-[var(--rogym-green)]/20">
               <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex items-start gap-3 min-w-0 flex-1">
                   <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[var(--rogym-green)]/10 text-[var(--rogym-green)]">
@@ -296,14 +301,12 @@ memberProgressService.listProgress(String(memberId)),
                     {activeAssignment.progress.percentage}%
                   </span>
                 </div>
-                <div className="h-2.5 w-full overflow-hidden rounded-full bg-white/10">
-                  <div
-                    className="h-full rounded-full bg-[var(--rogym-green)] transition-all duration-500"
-                    style={{
-                      width: `${Math.min(100, Math.max(0, activeAssignment.progress.percentage))}%`,
-                    }}
-                  />
-                </div>
+                <ProgressBar
+                  value={activeAssignment.progress.percentage}
+                  tone="primary"
+                  size="md"
+                />
+
                 <div className="mt-3 grid grid-cols-3 gap-2 text-center text-xs">
                   <div className="rounded-lg bg-white/[0.03] p-2">
                     <p className="text-[11px] rogym-text-dim">{t('workout.myPlan.unitExercises')}</p>
@@ -333,33 +336,34 @@ memberProgressService.listProgress(String(memberId)),
                   </div>
                 </div>
               </div>
-            </MemberCard>
+            </Card>
           )}
 
           {/* Stat cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <MemberStatCard
+          <section aria-label="Body stats" className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <StatCard
               icon={<Scale size={20} />}
               label={t('progress.statCurrentWeight')}
-              value={latest.weight != null ? `${latest.weight} kg` : '—'}
-              hint={t('progress.recordedAt', { date: fmtDate(latest.recordedAt) })}
+              value={latest?.weight != null ? `${latest.weight} kg` : '—'}
+              hint={latest?.recordedAt ? t('progress.recordedAt', { date: fmtDate(latest.recordedAt) }) : undefined}
             />
-            <MemberStatCard
+            <StatCard
               icon={<Activity size={20} />}
               label={t('progress.statCurrentBmi')}
-              value={latest.bmi != null ? latest.bmi.toFixed(1) : '—'}
-              hint={latest.bmi != null ? bmiLabel(latest.bmi, t) : undefined}
+              value={latest?.bmi != null ? latest.bmi.toFixed(1) : '—'}
+              hint={latest?.bmi != null ? bmiLabel(latest.bmi, t) : undefined}
             />
-          </div>
+          </section>
 
           {/* Chart */}
-          <MemberCard variant="compact" className="p-5">
-            <div className="mb-4 flex items-center justify-between">
+          <Card as="article" variant="compact" className="p-5">
+            <header className="mb-4 flex items-center justify-between">
               <p className="text-sm font-semibold text-white">{t('progress.chartTitle')}</p>
               <div className="flex gap-1">
                 {RANGES.map((r, i) => (
                   <button
                     key={r.label}
+                    type="button"
                     onClick={() => setRangeIdx(i)}
                     className={`rogym-range-chip rounded-full px-3 py-1 text-xs font-medium transition-colors ${
                       rangeIdx === i ? 'is-active' : ''
@@ -369,7 +373,7 @@ memberProgressService.listProgress(String(memberId)),
                   </button>
                 ))}
               </div>
-            </div>
+            </header>
             {chartData.length < 2 ? (
               <p className="py-8 text-center text-sm rogym-sx-d88f932f">
                 {t('progress.chartNeedMoreData')}
@@ -379,12 +383,14 @@ memberProgressService.listProgress(String(memberId)),
                 <MemberWeightChart data={chartData} />
               </Suspense>
             )}
-          </MemberCard>
+          </Card>
 
           {/* History */}
-          <MemberCard variant="compact" className="p-5">
-            <p className="mb-4 text-sm font-semibold text-white">{t('progress.historyTitle')}</p>
-            <div>
+          <Card as="article" variant="compact" className="p-5">
+            <header className="mb-4">
+              <h3 className="text-sm font-semibold text-white">{t('progress.historyTitle')}</h3>
+            </header>
+            <div className="divide-y divide-white/5">
               {filtered.map((entry) => (
                 <div
                   key={entry.progressId}
@@ -415,9 +421,10 @@ memberProgressService.listProgress(String(memberId)),
                 </div>
               ))}
             </div>
-          </MemberCard>
-        </div>
+          </Card>
+        </main>
       )}
-    </MemberPage>
+    </Page>
   )
 }
+

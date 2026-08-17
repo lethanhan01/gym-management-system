@@ -23,14 +23,13 @@ import {
   CardHeader,
   CardTitle,
   CardDescription,
+  Page,
+  PageHeader,
+  PageSkeleton,
+  PageErrorState,
+  SearchToolbar,
 } from '@/components/ui'
-import {
-  MemberErrorState,
-  MemberPage,
-  MemberPageHeader,
-  MemberSearchToolbar,
-  MemberSkeleton,
-} from '@/components/MemberUI'
+
 import { toast } from '@/lib/toast'
 import { getApiError, getApiErrorCode } from '@/lib/api-error'
 import workoutService, {
@@ -494,16 +493,16 @@ export default function MemberPlanBuilderPage() {
   // ─── Edit mode: loading / not-found guards ───────────────────────────
   if (isEditMode && loadingPlan) {
     return (
-      <MemberPage>
-        <MemberPageHeader eyebrow={t('workout.planBuilder.builderEyebrow')} title={t('workout.planBuilder.editTitle')} />
-        <MemberSkeleton rows={5} />
-      </MemberPage>
+      <Page>
+        <PageHeader eyebrow={t('workout.planBuilder.builderEyebrow')} title={t('workout.planBuilder.editTitle')} />
+        <PageSkeleton rows={5} />
+      </Page>
     )
   }
   if (isEditMode && !plan) {
     return (
-      <MemberPage>
-        <MemberPageHeader
+      <Page>
+        <PageHeader
           eyebrow={t('workout.planBuilder.builderEyebrow')}
           title={t('workout.planBuilder.editTitle')}
           actions={
@@ -517,16 +516,17 @@ export default function MemberPlanBuilderPage() {
             </Button>
           }
         />
-        <MemberErrorState message={error ?? t('workout.planBuilder.notFound')} />
-      </MemberPage>
+        <PageErrorState message={error ?? t('workout.planBuilder.notFound')} />
+      </Page>
     )
   }
+
 
   // ─── Phase: enter name ───────────────────────────────────────────────
   if (phase === 'name') {
     return (
-      <MemberPage>
-        <MemberPageHeader
+      <Page>
+        <PageHeader
           eyebrow={t('workout.planBuilder.eyebrow')}
           title={t('workout.planBuilder.title')}
           description={t('workout.planBuilder.namePhaseDesc')}
@@ -599,7 +599,7 @@ export default function MemberPlanBuilderPage() {
             </span>
           </div>
           {loadingSuggested ? (
-            <MemberSkeleton rows={2} />
+            <PageSkeleton rows={2} />
           ) : suggestedPlans.length === 0 ? (
             <div className="rounded-[16px] p-5 text-center text-sm rogym-sx-0e44a235">
               <Dumbbell size={28} className="mx-auto mb-2 rogym-sx-ed519d00" />
@@ -643,14 +643,16 @@ export default function MemberPlanBuilderPage() {
             </div>
           </div>
         )}
-      </MemberPage>
+      </Page>
     )
   }
 
+
+
   // ─── Phase: build plan ───────────────────────────────────────────────
   return (
-    <MemberPage>
-      <MemberPageHeader
+    <Page>
+      <PageHeader
         eyebrow={t('workout.planBuilder.builderEyebrow')}
         title={plan?.name ?? t('workout.session.defaultPlanName')}
         description={
@@ -672,7 +674,7 @@ export default function MemberPlanBuilderPage() {
         }
       />
 
-      {error && <MemberErrorState message={error} />}
+      {error && <PageErrorState message={error} />}
 
       {readonly && (
         <div className="flex items-center gap-3 rounded-2xl border border-amber-400/20 bg-amber-400/10 p-4 text-sm text-amber-100">
@@ -692,8 +694,9 @@ export default function MemberPlanBuilderPage() {
 
       {/* Days */}
       {loadingExercises ? (
-        <MemberSkeleton rows={3} />
+        <PageSkeleton rows={3} />
       ) : (
+
         <div className="space-y-3">
           {sortedDays.map((day) => (
             <div key={day.planDayId} className="rogym-sx-013ea4c1">
@@ -902,7 +905,7 @@ export default function MemberPlanBuilderPage() {
 
       {/* Mobile reserves room for the tallest action-bar state above the bottom navigation. */}
       <div className="h-[calc(var(--rogym-bottom-nav-height)+var(--rogym-bottom-nav-center-action-clearance)+env(safe-area-inset-bottom,0px)+18rem)] md:h-20" />
-    </MemberPage>
+    </Page>
   )
 }
 
@@ -981,7 +984,7 @@ function AddExerciseForm({
     >
       <div className="space-y-2">
         <span className="rogym-field-label block">{t('workout.planBuilder.addExercise.title')}</span>
-        <MemberSearchToolbar
+        <SearchToolbar
           variant="plain"
           layout="row"
           value={search}
@@ -994,6 +997,7 @@ function AddExerciseForm({
                 if (open) {
                   setDraftBodyPartId(bodyPartId)
                   setDraftTargetMuscleId(targetMuscleId)
+
                   setDraftEquipmentId(equipmentId)
                   setFilterOpen(true)
                 } else {

@@ -1,6 +1,6 @@
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { MemberPage, MemberPageHeader } from '@/components/MemberUI'
+import { Alert, Page, PageHeader } from '@/components/ui'
 import { SessionConfigModal } from './create-session/SessionConfigModal'
 import { useCreateWorkoutSession } from './create-session/useCreateWorkoutSession'
 import { WorkoutPlanList } from './create-session/WorkoutPlanList'
@@ -25,18 +25,16 @@ export default function CreateWorkoutSessionPage() {
   } = useCreateWorkoutSession(searchParams.get('sessionId'))
 
   return (
-    <MemberPage>
-      <MemberPageHeader
+    <Page>
+      <PageHeader
         eyebrow={t('workout.createSession.eyebrow')}
         title={t('workout.createSession.title')}
         description={t('workout.createSession.description')}
       />
       {preselectionNotice && (
-        <div className="mb-5 rounded-xl p-4 text-sm rogym-sx-a15e2a7c" role="status">
-          {preselectionNotice}
-        </div>
+        <Alert tone="info" description={preselectionNotice} role="status" className="mb-5" />
       )}
-      <div className="space-y-4">
+      <main className="space-y-4">
         <WorkoutPlanList
           assignments={assignments}
           fullPlans={fullPlans}
@@ -47,7 +45,7 @@ export default function CreateWorkoutSessionPage() {
           onStartDay={startDay}
           onEditDay={openSessionConfig}
         />
-      </div>
+      </main>
       {configTarget && (
         <SessionConfigModal
           key={`${configTarget.assignment.assignmentId}:${configTarget.day.planDayId}`}
@@ -57,6 +55,7 @@ export default function CreateWorkoutSessionPage() {
           onSave={saveSessionConfig}
         />
       )}
-    </MemberPage>
+    </Page>
   )
 }
+

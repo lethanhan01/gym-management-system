@@ -2,14 +2,16 @@ import { Fragment, useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { ArrowLeft, CheckCircle2, Clock, Maximize2, Pause, Play, RotateCcw } from 'lucide-react'
-import { Button, Modal } from '@/components/ui'
 import {
-  MemberCard,
-  MemberErrorState,
-  MemberPage,
-  MemberPageHeader,
-  MemberSkeleton,
-} from '@/components/MemberUI'
+  Alert,
+  Button,
+  Card,
+  Modal,
+  Page,
+  PageErrorState,
+  PageHeader,
+  PageSkeleton,
+} from '@/components/ui'
 import { getApiError } from '@/lib/api-error'
 import workoutService, { type WorkoutAssignmentSummary, type WorkoutPlanDay } from '@/services/workout.service'
 import { trainingSessionService } from '@/services/training-session.service'
@@ -41,11 +43,6 @@ function toOptionalNumber(value: string) {
   if (value.trim() === '') return undefined
   const number = Number(value)
   return Number.isFinite(number) && number >= 0 ? number : undefined
-}
-
-function isMobile() {
-  return typeof window !== 'undefined' && typeof window.matchMedia === 'function'
-    && window.matchMedia('(max-width: 767px)').matches
 }
 
 function reduceRunningRuntime(runtime: SessionTimerRuntime, now: number, deadline: number) {
@@ -105,8 +102,7 @@ export default function CreateWorkoutDaySessionPage() {
   const [leaveTarget, setLeaveTarget] = useState<string | null>(null)
   const runtimeRef = useRef<SessionTimerRuntime | null>(null)
   const deadlineRef = useRef<number | null>(null)
-  const cardRefs = useRef(new Map<string, HTMLDivElement>())
-  const previousExerciseRef = useRef<string | null>(null)
+  const cardRefs = useRef(new Map<string, HTMLElement>())
 
   const persistRuntime = useCallback((next: SessionTimerRuntime) => {
     runtimeRef.current = next
@@ -130,7 +126,7 @@ export default function CreateWorkoutDaySessionPage() {
         return
       }
       if (sessionId) {
-const session = await trainingSessionService.getSession(sessionId)
+        const session = await trainingSessionService.getSession(sessionId)
         if (session.assignmentId !== assignmentId || session.planDayId !== planDayId) {
           setError(t('workout.createSession.invalidDayLink'))
           return
@@ -150,27 +146,35 @@ const session = await trainingSessionService.getSession(sessionId)
         runtimeRef.current = recovered
         setRuntime(recovered)
         setStatus(recovered.status)
+        if (recovered.status === 'running') {
+          deadlineRef.current = Date.now() + recovered.segmentRemainingSec * 1000
+        }
       } else {
         runtimeRef.current = null
         setRuntime(null)
         setStatus('idle')
       }
-    } catch (caught) {
-      setError(getApiError(caught, t('workout.createSession.errorLoad')))
+    } catch (err: unknown) {
+      setError(getApiError(err, t('workout.createSession.errorLoad')))
     } finally {
       setLoading(false)
     }
   }, [assignmentId, memberId, planDayId, queryIsValid, sessionId, t])
 
-  useEffect(() => { void load() }, [load])
+  useEffect(() => {
+    void load()
+  }, [load])
 
   const saveLog = useCallback(async (source: SessionTimerRuntime) => {
     if (!loaded || !memberId) return
     const exercises = [...(loaded.day.exercises ?? [])].sort((a, b) => a.orderIndex - b.orderIndex)
     const sets = exercises.flatMap((exercise) => (source.config[exercise.planExerciseId]?.sets ?? []).map((set, index) => ({
-      planExerciseId: Number(exercise.planExerciseId), setNumber: index + 1,
-      actualReps: toOptionalNumber(set.actualReps), actualWeightKg: toOptionalNumber(set.actualWeightKg),
-      actualDurationSec: toOptionalNumber(set.actualDurationSec), completed: true,
+      planExerciseId: Number(exercise.planExerciseId),
+      setNumber: index + 1,
+      actualReps: toOptionalNumber(set.actualReps),
+      actualWeightKg: toOptionalNumber(set.actualWeightKg),
+      actualDurationSec: toOptionalNumber(set.actualDurationSec),
+      completed: true,
     })))
     if (sets.length === 0) {
       setSubmitError(t('workout.createSession.emptyConfiguredSets'))
@@ -183,9 +187,12 @@ const session = await trainingSessionService.getSession(sessionId)
     persistRuntime(saving)
     try {
       await workoutService.createLog({
-        assignmentId: Number(loaded.assignment.assignmentId), planDayId: Number(loaded.day.planDayId),
-        loggedAt: saving.loggedAt, durationMin: Math.ceil(source.segments.reduce((sum, segment) => sum + segment.durationSec, 0) / 60),
-        clientCompletionKey: saving.completionKey, sets,
+        assignmentId: Number(loaded.assignment.assignmentId),
+        planDayId: Number(loaded.day.planDayId),
+        loggedAt: saving.loggedAt,
+        durationMin: Math.ceil(source.segments.reduce((sum, segment) => sum + segment.durationSec, 0) / 60),
+        clientCompletionKey: saving.completionKey,
+        sets,
       })
       clearSessionDraft(memberId, loaded.day, loaded.assignment, sessionId)
       clearSessionRuntime(memberId, loaded.day, loaded.assignment, sessionId)
@@ -201,95 +208,32 @@ const session = await trainingSessionService.getSession(sessionId)
     }
   }, [loaded, memberId, persistRuntime, sessionId, t])
 
-  const pauseTimer = useCallback(() => {
-    const current = runtimeRef.current
-    if (!current || current.status !== 'running') return
-    const now = Date.now()
-    const currentDeadline = deadlineRef.current ?? (now + current.segmentRemainingSec * 1000)
-    const reduced = reduceRunningRuntime(current, now, currentDeadline)
-    const paused = { ...reduced.runtime, status: 'paused' as const }
+  const handleTimelineComplete = useCallback((completedRuntime: SessionTimerRuntime) => {
     deadlineRef.current = null
-    setStatus('paused')
-    persistRuntime(paused)
-  }, [persistRuntime])
+    void saveLog(completedRuntime)
+  }, [saveLog])
 
   useEffect(() => {
     if (status !== 'running') return
-    const initialRuntime = runtimeRef.current
-    if (!initialRuntime) return
-    if (deadlineRef.current === null) {
-      deadlineRef.current = Date.now() + initialRuntime.segmentRemainingSec * 1000
-    }
-    const tick = () => {
+    const interval = window.setInterval(() => {
       const current = runtimeRef.current
-      if (!current || current.status !== 'running') return
-      const now = Date.now()
-      const currentDeadline = deadlineRef.current ?? (now + current.segmentRemainingSec * 1000)
-      const reduced = reduceRunningRuntime(current, now, currentDeadline)
-      deadlineRef.current = reduced.deadline
+      const deadline = deadlineRef.current
+      if (!current || deadline === null) return
+      const reduced = reduceRunningRuntime(current, Date.now(), deadline)
       if (reduced.complete) {
-        const completed = { ...reduced.runtime, status: 'saving' as const, loggedAt: new Date().toISOString() }
-        setStatus('saving')
-        persistRuntime(completed)
-        void saveLog(completed)
-      } else {
+        window.clearInterval(interval)
         persistRuntime(reduced.runtime)
+        handleTimelineComplete(reduced.runtime)
+        return
       }
-    }
-    tick()
-    const interval = window.setInterval(tick, 250)
-    return () => window.clearInterval(interval)
-  }, [persistRuntime, saveLog, status])
+      deadlineRef.current = reduced.deadline
+      persistRuntime(reduced.runtime)
+    }, 250)
 
-  const pauseTimerRef = useRef(pauseTimer)
-  useEffect(() => {
-    pauseTimerRef.current = pauseTimer
-  }, [pauseTimer])
-
-  useEffect(() => {
-    const onPageHide = () => pauseTimerRef.current()
-    window.addEventListener('pagehide', onPageHide)
-    return () => window.removeEventListener('pagehide', onPageHide)
-  }, [])
-
-  useEffect(() => {
     return () => {
-      pauseTimerRef.current()
+      window.clearInterval(interval)
     }
-  }, [])
-
-  useEffect(() => {
-    const segment = runtime?.segments[runtime.segmentIndex]
-    if (!segment || segment.kind !== 'set' || !isMobile() || previousExerciseRef.current === segment.planExerciseId) return
-    previousExerciseRef.current = segment.planExerciseId
-    const reducedMotion = typeof window.matchMedia === 'function'
-      && window.matchMedia('(prefers-reduced-motion: reduce)').matches
-    cardRefs.current.get(segment.planExerciseId)?.scrollIntoView({ behavior: reducedMotion ? 'auto' : 'smooth', block: 'start' })
-  }, [runtime?.segmentIndex, runtime?.segments])
-
-  useEffect(() => {
-    if (celebrationSeconds === null) return
-    if (celebrationSeconds <= 0) {
-      setCelebrationSeconds(null)
-      setIsFocusModalOpen(false)
-      setStatus('completed')
-      return
-    }
-    const timer = window.setTimeout(() => {
-      setCelebrationSeconds((prev) => (prev !== null ? prev - 1 : null))
-    }, 1000)
-    return () => window.clearTimeout(timer)
-  }, [celebrationSeconds])
-
-  const handleCloseFocusModal = useCallback(() => {
-    if (celebrationSeconds !== null) {
-      setCelebrationSeconds(null)
-      setIsFocusModalOpen(false)
-      setStatus('completed')
-    } else {
-      setIsFocusModalOpen(false)
-    }
-  }, [celebrationSeconds])
+  }, [handleTimelineComplete, persistRuntime, status])
 
   const startTimer = useCallback(() => {
     if (!loaded) return
@@ -299,52 +243,64 @@ const session = await trainingSessionService.getSession(sessionId)
       return
     }
     const started: SessionTimerRuntime = {
-      version: 1, status: 'running', segments: timeline.segments, config: timeline.config, segmentIndex: 0,
-      segmentRemainingSec: timeline.segments[0].durationSec, totalRemainingSec: timeline.totalSeconds,
-      completionKey: createCompletionKey(), loggedAt: null,
+      version: 1,
+      status: 'running',
+      segments: timeline.segments,
+      config: timeline.config,
+      segmentIndex: 0,
+      segmentRemainingSec: timeline.segments[0].durationSec,
+      totalRemainingSec: timeline.totalSeconds,
+      completionKey: createCompletionKey(),
+      loggedAt: null,
     }
     deadlineRef.current = Date.now() + started.segmentRemainingSec * 1000
     setSubmitError(null)
-    previousExerciseRef.current = null
     setStatus('running')
     persistRuntime(started)
     setIsFocusModalOpen(true)
   }, [loaded, persistRuntime, t])
 
+  const pauseTimer = useCallback(() => {
+    const current = runtimeRef.current
+    if (!current || current.status !== 'running') return
+    deadlineRef.current = null
+    setStatus('paused')
+    persistRuntime({ ...current, status: 'paused' })
+  }, [persistRuntime])
+
   const resumeTimer = useCallback(() => {
     const current = runtimeRef.current
-    if (!current) return
-    setSubmitError(null)
-    const resumed = { ...current, status: 'running' as const }
-    deadlineRef.current = Date.now() + resumed.segmentRemainingSec * 1000
+    if (!current || current.status !== 'paused') return
+    deadlineRef.current = Date.now() + current.segmentRemainingSec * 1000
     setStatus('running')
-    persistRuntime(resumed)
-    setIsFocusModalOpen(true)
+    persistRuntime({ ...current, status: 'running' })
   }, [persistRuntime])
 
   const retrySave = useCallback(() => {
     if (runtimeRef.current) void saveLog(runtimeRef.current)
   }, [saveLog])
 
+  const handleCloseFocusModal = useCallback(() => {
+    setIsFocusModalOpen(false)
+  }, [])
+
   const skipRest = useCallback(() => {
     const current = runtimeRef.current
     if (!current) return
-    const currentSegment = current.segments[current.segmentIndex]
-    if (!currentSegment || currentSegment.kind !== 'rest') return
+    const activeSegment = current.segments[current.segmentIndex]
+    if (activeSegment?.kind !== 'rest') return
 
     const nextIndex = current.segmentIndex + 1
     if (nextIndex >= current.segments.length) {
-      const completed: SessionTimerRuntime = {
+      const finished: SessionTimerRuntime = {
         ...current,
         segmentIndex: nextIndex,
         segmentRemainingSec: 0,
         totalRemainingSec: 0,
-        status: 'saving',
-        loggedAt: new Date().toISOString(),
       }
-      setStatus('saving')
-      persistRuntime(completed)
-      void saveLog(completed)
+      deadlineRef.current = null
+      persistRuntime(finished)
+      void saveLog(finished)
       return
     }
 
@@ -399,17 +355,17 @@ const session = await trainingSessionService.getSession(sessionId)
     if (target) navigate(target)
   }
 
-  if (loading) return <MemberPage><MemberSkeleton rows={5} /></MemberPage>
+  if (loading) return <Page><PageSkeleton rows={5} /></Page>
   if (error || !loaded) {
-    return <MemberPage><MemberErrorState message={error ?? t('workout.createSession.invalidDayLink')} onRetry={load} /></MemberPage>
+    return <Page><PageErrorState message={error ?? t('workout.createSession.invalidDayLink')} onRetry={load} /></Page>
   }
   const exercises = [...(loaded.day.exercises ?? [])].sort((a, b) => a.orderIndex - b.orderIndex)
   const activeSegment = runtime?.segments[runtime.segmentIndex]
 
   if (status === 'completed') {
     return (
-      <MemberPage>
-        <MemberCard variant="compact" className="flex min-h-[300px] flex-col items-center justify-center gap-4 p-8 text-center">
+      <Page>
+        <Card as="article" variant="compact" className="flex min-h-[300px] flex-col items-center justify-center gap-4 p-8 text-center">
           <CheckCircle2 size={48} className="rogym-sx-b2fbf853" />
           <h2 className="text-xl font-bold text-white">{t('workout.createSession.completedTitle')}</h2>
           <p className="text-sm rogym-sx-d88f932f">{t('workout.createSession.completedDesc')}</p>
@@ -421,14 +377,14 @@ const session = await trainingSessionService.getSession(sessionId)
               {t('workout.createSession.buttonViewHistory')}
             </Button>
           </div>
-        </MemberCard>
-      </MemberPage>
+        </Card>
+      </Page>
     )
   }
 
   return (
-    <MemberPage>
-      <MemberPageHeader eyebrow={loaded.planName} title={loaded.day.name} description={t('workout.session.descriptionDay', { day: loaded.day.dayNumber, count: exercises.length })} />
+    <Page>
+      <PageHeader eyebrow={loaded.planName} title={loaded.day.name} description={t('workout.session.descriptionDay', { day: loaded.day.dayNumber, count: exercises.length })} />
       <Button
         variant="outline-white"
         size="sm"
@@ -454,13 +410,13 @@ const session = await trainingSessionService.getSession(sessionId)
           </Button>
         </div>
       )}
-      <div className="space-y-4 pb-20 md:pb-6">
+      <main className="space-y-4 pb-20 md:pb-6">
         {exercises.map((exercise, exerciseIndex) => {
           const cardio = exercise.exercise?.bodyPart?.name?.trim().toLowerCase() === 'cardio'
           const config = (runtime?.config ?? loaded.config)[exercise.planExerciseId]
           const sets = config?.sets ?? []
           return (
-            <div key={exercise.planExerciseId} ref={(node) => { if (node) cardRefs.current.set(exercise.planExerciseId, node); else cardRefs.current.delete(exercise.planExerciseId) }} className="rogym-sx-46079668">
+            <Card as="article" key={exercise.planExerciseId} ref={(node) => { if (node) cardRefs.current.set(exercise.planExerciseId, node); else cardRefs.current.delete(exercise.planExerciseId) }} className="rogym-sx-46079668" variant="compact" padding="none">
               <div className="flex items-center gap-3 px-4 py-3 rogym-sx-dd0d9e7c"><div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-xs font-bold rogym-sx-252b3c13">{exerciseIndex + 1}</div><div className="min-w-0 flex-1"><p className="text-sm font-semibold text-white">{exercise.exercise?.name ?? t('workout.session.defaultExerciseName')}</p><p className="text-xs rogym-sx-5e5c39ab">{t('workout.createSession.configuredSets', { count: sets.length })}</p></div></div>
               <div className="p-4"><div className="mb-2 grid grid-cols-[40px_1fr_1fr] gap-2 text-xs font-medium uppercase rogym-sx-5e5c39ab"><span>Set</span><span>{cardio ? t('workout.createSession.unitSeconds') : 'Reps'}</span><span>Kg</span></div><div className="space-y-2">
                 {sets.map((set, setIndex) => {
@@ -502,10 +458,10 @@ const session = await trainingSessionService.getSession(sessionId)
                   )
                 })}
               </div></div>
-            </div>
+            </Card>
           )
         })}
-        {submitError && <p className="pt-2 text-center text-xs text-red-300">{submitError}</p>}
+        {submitError && <Alert tone="error" description={submitError} className="pt-2 text-center" />}
         <div className="hidden md:flex items-center justify-end gap-3 pt-2">
           {status === 'idle' && (
             <Button variant="primary" onClick={startTimer} leftIcon={<Play size={15} />}>
@@ -537,7 +493,7 @@ const session = await trainingSessionService.getSession(sessionId)
             </Button>
           )}
         </div>
-      </div>
+      </main>
       <WorkoutFocusModal
         open={isFocusModalOpen}
         onClose={handleCloseFocusModal}
@@ -566,6 +522,6 @@ const session = await trainingSessionService.getSession(sessionId)
       >
         <p className="text-sm rogym-sx-d88f932f">{t('workout.createSession.leaveTimerDescription')}</p>
       </Modal>
-    </MemberPage>
+    </Page>
   )
 }

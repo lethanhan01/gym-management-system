@@ -4,7 +4,7 @@ import { useParams, useSearchParams } from 'react-router-dom'
 import { Button, ButtonLink } from '@/components/ui/Button'
 import { ArrowLeft, CalendarPlus, ClipboardList, Plus, TrendingUp } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { DatePickerInput } from '@/components/ui'
+import { DatePickerInput, TabsBar, ProgressBar, CardTitle } from '@/components/ui'
 import { getApiError } from '@/lib/api-error'
 import { formatDate, formatDateTime, todayInput } from '@/lib/date'
 import {
@@ -29,7 +29,6 @@ import {
   TrainerSkeleton,
   TrainerStatusBadge,
 } from '@/components/TrainerUI'
-import { CardTitle } from '@/components/ui'
 import { PageLoader } from '@/components/shared/Spinner'
 
 type Tab = 'overview' | 'sessions' | 'workout'
@@ -207,24 +206,17 @@ trainingSessionService.getSessions({ memberId: id, pageSize: 100, sort: 'start_t
       />
       {error && <TrainerErrorState message={error} onRetry={load} />}
 
-      <div className="flex gap-2 overflow-x-auto border-b border-white/5 pb-3">
-        {(
-          [
-            ['overview', t('students.detail.tabs.overview')],
-            ['sessions', t('students.detail.tabs.sessions')],
-            ['workout', t('students.detail.tabs.workout')],
-          ] as Array<[Tab, string]>
-        ).map(([key, label]) => (
-          <Button
-            key={key}
-            variant={tab === key ? 'primary' : 'outline-white'}
-            className="whitespace-nowrap"
-            onClick={() => selectTab(key)}
-          >
-            {label}
-          </Button>
-        ))}
-      </div>
+      <TabsBar
+        items={[
+          { value: 'overview', label: t('students.detail.tabs.overview') },
+          { value: 'sessions', label: t('students.detail.tabs.sessions') },
+          { value: 'workout', label: t('students.detail.tabs.workout') },
+        ]}
+        value={tab}
+        onChange={(v) => selectTab(v as Tab)}
+        variant="pills"
+        aria-label={t('students.detail.tabs.overview')}
+      />
 
       {tab === 'overview' && (
         <div className="grid gap-5 lg:grid-cols-2">
@@ -284,22 +276,13 @@ trainingSessionService.getSessions({ memberId: id, pageSize: 100, sort: 'start_t
 
               {assignment.progress && (
                 <div className="mb-4 rounded-xl border border-white/5 bg-white/[0.03] p-3.5">
-                  <div className="mb-2 flex items-center justify-between text-xs">
-                    <span className="font-medium text-white/80">
-                      {t('students.detail.plan.progressLabel')}
-                    </span>
-                    <span className="font-bold text-teal-400">
-                      {assignment.progress.percentage}%
-                    </span>
-                  </div>
-                  <div className="h-2 w-full overflow-hidden rounded-full bg-white/10">
-                    <div
-                      className="h-full rounded-full bg-teal-400 transition-all duration-500"
-                      style={{
-                        width: `${Math.min(100, Math.max(0, assignment.progress.percentage))}%`,
-                      }}
-                    />
-                  </div>
+                  <ProgressBar
+                    value={assignment.progress.percentage}
+                    label={t('students.detail.plan.progressLabel')}
+                    showValue
+                    tone="cyan"
+                    size="sm"
+                  />
                   <div className="mt-2 flex items-center justify-between text-[11px] rogym-text-dim">
                     <span>
                       {t('students.detail.plan.progressSets', {
@@ -476,22 +459,13 @@ trainingSessionService.getSessions({ memberId: id, pageSize: 100, sort: 'start_t
 
               {activeAssignments[0]?.progress && (
                 <div className="mt-5 rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-                  <div className="mb-2 flex items-center justify-between">
-                    <span className="text-sm font-semibold text-white">
-                      {t('students.detail.workout.progressTitle')}
-                    </span>
-                    <span className="text-base font-bold text-teal-400">
-                      {activeAssignments[0].progress.percentage}%
-                    </span>
-                  </div>
-                  <div className="h-2.5 w-full overflow-hidden rounded-full bg-white/10">
-                    <div
-                      className="h-full rounded-full bg-teal-400 transition-all duration-500"
-                      style={{
-                        width: `${Math.min(100, Math.max(0, activeAssignments[0].progress.percentage))}%`,
-                      }}
-                    />
-                  </div>
+                  <ProgressBar
+                    value={activeAssignments[0].progress.percentage}
+                    label={t('students.detail.workout.progressTitle')}
+                    showValue
+                    tone="cyan"
+                    size="md"
+                  />
                   <div className="mt-3 grid grid-cols-3 gap-2 text-center text-xs">
                     <div className="rounded-lg bg-black/20 p-2">
                       <p className="text-[11px] rogym-text-dim">Sets</p>

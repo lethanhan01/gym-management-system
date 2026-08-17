@@ -2,16 +2,17 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { TFunction } from 'i18next'
 import { useTranslation } from 'react-i18next'
 import { ChevronDown, ChevronUp, Dumbbell } from 'lucide-react'
-import { Select } from '@/components/ui'
 import {
-  MemberCard,
-  MemberEmptyState,
-  MemberErrorState,
-  MemberPage,
-  MemberPageHeader,
-  MemberSkeleton,
-  MemberStatCard,
-} from '@/components/MemberUI'
+  Card,
+  Page,
+  PageEmptyState,
+  PageErrorState,
+  PageHeader,
+  PageSkeleton,
+  ProgressBar,
+  Select,
+  StatCard,
+} from '@/components/ui'
 import workoutService, { type WorkoutLog, type WorkoutLogSet } from '@/services/workout.service'
 import { useAuthStore } from '@/stores/authStore'
 
@@ -40,9 +41,10 @@ function totalSets(log: WorkoutLog): number {
 function MiniProgressBar({ done, total }: { done: number; total: number }) {
   const pct = total > 0 ? Math.round((done / total) * 100) : 0
   return (
-    <progress className="rogym-mini-progress mt-2" max={100} value={pct} aria-label={`${pct}% set hoàn thành`} />
+    <ProgressBar value={pct} tone="primary" size="xs" className="mt-1 w-20" aria-label={`${pct}% set hoàn thành`} />
   )
 }
+
 
 function SetComparison({ set }: { set: WorkoutLogSet }) {
   const ex = set.planExercise
@@ -67,7 +69,6 @@ function SetComparison({ set }: { set: WorkoutLogSet }) {
   return (
     <div
       className="grid gap-2 py-2 text-xs rogym-sx-8dfe0cf6"
-      
     >
       <span className="rogym-sx-5e5c39ab">{set.setNumber}</span>
       <span>{targetVal}</span>
@@ -160,156 +161,155 @@ export default function WorkoutHistoryPage() {
   }
 
   return (
-    <MemberPage>
-      <MemberPageHeader
+    <Page>
+      <PageHeader
         eyebrow={t('workout.history.eyebrow')}
         title={t('workout.history.title')}
         description={t('workout.history.description')}
       />
 
-      {/* KPI row */}
-      <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-        <MemberStatCard
-          icon={<Dumbbell size={18} />}
-          label={t('workout.history.statTotalSessions')}
-          value={loading ? '—' : String(logs.length)}
-        />
-        <MemberStatCard
-          icon={<Dumbbell size={18} />}
-          label={t('workout.history.statThisMonth')}
-          value={loading ? '—' : String(currentMonthLogs)}
-        />
-        <MemberStatCard
-          icon={<Dumbbell size={18} />}
-          label={t('workout.history.statTopExercise')}
-          value={loading ? '—' : topExercise}
-        />
-        <MemberStatCard
-          icon={<Dumbbell size={18} />}
-          label={t('workout.history.statSetsCompleted')}
-          value={loading ? '—' : String(totalSetsCompleted)}
-        />
-      </div>
+      <main className="space-y-6">
+        {/* KPI row */}
+        <section aria-label="Workout history KPIs" className="grid grid-cols-2 gap-4 md:grid-cols-4">
+          <StatCard
+            icon={<Dumbbell size={18} />}
+            label={t('workout.history.statTotalSessions')}
+            value={loading ? '—' : String(logs.length)}
+          />
+          <StatCard
+            icon={<Dumbbell size={18} />}
+            label={t('workout.history.statThisMonth')}
+            value={loading ? '—' : String(currentMonthLogs)}
+          />
+          <StatCard
+            icon={<Dumbbell size={18} />}
+            label={t('workout.history.statTopExercise')}
+            value={loading ? '—' : topExercise}
+          />
+          <StatCard
+            icon={<Dumbbell size={18} />}
+            label={t('workout.history.statSetsCompleted')}
+            value={loading ? '—' : String(totalSetsCompleted)}
+          />
+        </section>
 
-      {/* Filter */}
-      <div
-        
-        className="flex items-center gap-3 rogym-sx-58e694fd"
-      >
-        <label className="text-sm font-medium rogym-sx-d88f932f" >
-          {t('workout.history.filterLabel')}
-        </label>
-        <Select value={filterMonth} onValueChange={setFilterMonth} className="min-w-[160px]">
-          {monthOptions.map((opt) => (
-            <option key={opt.value} value={opt.value}>
-              {opt.label}
-            </option>
-          ))}
-        </Select>
-      </div>
-
-      {error && <MemberErrorState message={error} onRetry={load} />}
-
-      {loading ? (
-        <MemberSkeleton rows={5} />
-      ) : filtered.length === 0 ? (
-        <MemberEmptyState
-          title={t('workout.history.emptyNoSessions')}
-          description={
-            filterMonth
-              ? t('workout.history.emptyThisMonth')
-              : t('workout.history.emptyAllTime')
-          }
-        />
-      ) : (
-        <div className="space-y-3">
-          {filtered.map((log) => {
-            const expanded = expandedLogs.has(log.logId)
-            const done = completedSets(log)
-            const total = totalSets(log)
-            const exercises = groupSetsByExercise(log.sets ?? [], t)
-
-            return (
-              <MemberCard
-                as="article"
-                key={log.logId}
-                variant="compact"
-                padding="none"
-              >
-                {/* Log header */}
-                <div
-                  className="flex cursor-pointer items-center justify-between p-4"
-                  onClick={() => toggleLog(log.logId)}
-                >
-                  <div className="flex items-center gap-3">
-                    <div
-                      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl rogym-sx-252b3c13"
-                    >
-                      <Dumbbell size={18} />
-                    </div>
-                    <div>
-                      <p className="font-semibold text-white">{log.planDay?.name ?? t('workout.history.defaultSessionName')}</p>
-                      <p className="text-xs rogym-sx-5e5c39ab" >
-                        {fmtDate(log.loggedAt)}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <div className="text-right">
-                      <p className="text-xs font-medium text-white">
-                        {done}/{total} set
-                      </p>
-                      <MiniProgressBar done={done} total={total} />
-                    </div>
-                    <span className="rogym-sx-5e5c39ab">
-                      {expanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Detail */}
-                {expanded && (
-                  <div
-                    className="px-4 pb-4 rogym-sx-8553bf9e"
-                  >
-                    {exercises.length === 0 ? (
-                      <p className="py-3 text-sm rogym-sx-5e5c39ab" >
-                        {t('workout.history.noSetData')}
-                      </p>
-                    ) : (
-                      exercises.map((group) => (
-                        <div key={group.name} className="mt-4">
-                          <p className="mb-2 text-sm font-semibold text-white">{group.name}</p>
-                          {/* Column headers */}
-                          <div
-                            className="grid gap-2 pb-1 text-xs font-medium uppercase rogym-sx-55da34ac"
-                          >
-                            <span>#</span>
-                            <span>Target</span>
-                            <span>{t('workout.history.columnActual')}</span>
-                            <span>KG target</span>
-                            <span>KG thực</span>
-                            <span />
-                          </div>
-                          {group.sets.map((s) => (
-                            <SetComparison key={s.logSetId} set={s} />
-                          ))}
-                        </div>
-                      ))
-                    )}
-                    {log.notes && (
-                      <p className="mt-3 text-xs rogym-sx-5e5c39ab" >
-                        {t('workout.history.notes', { notes: log.notes })}
-                      </p>
-                    )}
-                  </div>
-                )}
-              </MemberCard>
-            )
-          })}
+        {/* Filter */}
+        <div className="flex items-center gap-3 rogym-sx-58e694fd">
+          <label className="text-sm font-medium rogym-sx-d88f932f">
+            {t('workout.history.filterLabel')}
+          </label>
+          <Select value={filterMonth} onValueChange={setFilterMonth} className="min-w-[160px]">
+            {monthOptions.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </Select>
         </div>
-      )}
-    </MemberPage>
+
+        {error && <PageErrorState message={error} onRetry={load} />}
+
+        {loading ? (
+          <PageSkeleton rows={5} />
+        ) : filtered.length === 0 ? (
+          <PageEmptyState
+            title={t('workout.history.emptyNoSessions')}
+            description={
+              filterMonth
+                ? t('workout.history.emptyThisMonth')
+                : t('workout.history.emptyAllTime')
+            }
+          />
+        ) : (
+          <section aria-label={t('workout.history.title')} className="space-y-3">
+            {filtered.map((log) => {
+              const expanded = expandedLogs.has(log.logId)
+              const done = completedSets(log)
+              const total = totalSets(log)
+              const exercises = groupSetsByExercise(log.sets ?? [], t)
+
+              return (
+                <Card
+                  as="article"
+                  key={log.logId}
+                  variant="compact"
+                  padding="none"
+                >
+                  {/* Log header */}
+                  <header
+                    className="flex cursor-pointer items-center justify-between p-4"
+                    onClick={() => toggleLog(log.logId)}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div
+                        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl rogym-sx-252b3c13"
+                      >
+                        <Dumbbell size={18} />
+                      </div>
+                      <div>
+                        <p className="font-semibold text-white">{log.planDay?.name ?? t('workout.history.defaultSessionName')}</p>
+                        <p className="text-xs rogym-sx-5e5c39ab">
+                          {fmtDate(log.loggedAt)}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <div className="text-right">
+                        <p className="text-xs font-medium text-white">
+                          {done}/{total} set
+                        </p>
+                        <MiniProgressBar done={done} total={total} />
+                      </div>
+                      <span className="rogym-sx-5e5c39ab">
+                        {expanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+                      </span>
+                    </div>
+                  </header>
+
+                  {/* Detail */}
+                  {expanded && (
+                    <div
+                      className="px-4 pb-4 rogym-sx-8553bf9e"
+                    >
+                      {exercises.length === 0 ? (
+                        <p className="py-3 text-sm rogym-sx-5e5c39ab">
+                          {t('workout.history.noSetData')}
+                        </p>
+                      ) : (
+                        exercises.map((group) => (
+                          <div key={group.name} className="mt-4">
+                            <p className="mb-2 text-sm font-semibold text-white">{group.name}</p>
+                            {/* Column headers */}
+                            <div
+                              className="grid gap-2 pb-1 text-xs font-medium uppercase rogym-sx-55da34ac"
+                            >
+                              <span>#</span>
+                              <span>Target</span>
+                              <span>{t('workout.history.columnActual')}</span>
+                              <span>KG target</span>
+                              <span>KG thực</span>
+                              <span />
+                            </div>
+                            {group.sets.map((s) => (
+                              <SetComparison key={s.logSetId} set={s} />
+                            ))}
+                          </div>
+                        ))
+                      )}
+                      {log.notes && (
+                        <p className="mt-3 text-xs rogym-sx-5e5c39ab">
+                          {t('workout.history.notes', { notes: log.notes })}
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </Card>
+              )
+            })}
+          </section>
+        )}
+      </main>
+    </Page>
   )
 }
 
@@ -326,3 +326,4 @@ function groupSetsByExercise(
   }
   return [...map.values()]
 }
+

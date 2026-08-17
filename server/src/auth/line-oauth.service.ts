@@ -8,7 +8,7 @@ import {
 } from '@nestjs/common'
 import { JwtService } from '@nestjs/jwt'
 import { ConfigService } from '@nestjs/config'
-import { UserStatus } from '@prisma/client'
+import { Prisma, User, UserStatus } from '@prisma/client'
 import { PrismaService } from '../prisma/prisma.service'
 import { UsersService, UserWithRoles } from './users.service'
 import { AuditService } from '../common/audit/audit.service'
@@ -49,22 +49,39 @@ export class LineOAuthService {
 
     // 1. Tim theo lineId
     let user = await this.users.findByLineIdWithRoles(profile.sub)
+    if (!user) {
+      await this.throwIfDeleted(
+        await this.users.findByLineIdIncludingDeleted(profile.sub),
+        'line_id',
+        ctx
+      )
+    }
+    if (user && profile.email) {
+      await this.throwIfDeleted(
+        await this.users.findByEmailIncludingDeleted(profile.email),
+        'email',
+        ctx
+      )
+    }
 
     // 2. Link theo email neu chua co lineId
     if (!user && profile.email) {
       const byEmail = await this.users.findByEmailWithRoles(profile.email)
+      if (!byEmail) {
+        await this.throwIfDeleted(
+          await this.users.findByEmailIncludingDeleted(profile.email),
+          'email',
+          ctx
+        )
+      }
       if (byEmail) {
-        await this.prisma.user.update({
-          where: { userId: byEmail.userId },
-          data: { lineId: profile.sub },
-        })
-        user = { ...byEmail, lineId: profile.sub }
+        user = await this.linkExistingUser(byEmail, profile, ctx)
       }
     }
 
     // 3. Tao moi neu chua co tai khoan
     if (!user) {
-      user = await this.createMemberFromLine(profile)
+      user = await this.createMemberFromLine(profile, ctx)
     }
 
     // 4. LINE login chi danh cho member
@@ -145,17 +162,27 @@ export class LineOAuthService {
 
     const existing = await this.users.findByLineIdWithRoles(profile.sub)
     if (existing && existing.userId !== userId) {
-      throw new ConflictException({
-        success: false,
-        code: 'LINE_ALREADY_LINKED',
-        message: 'Tài khoản LINE này đã liên kết với người dùng khác',
-      })
+      throw this.lineAlreadyLinked()
+    }
+    if (!existing) {
+      const includingDeleted = await this.users.findByLineIdIncludingDeleted(profile.sub)
+      await this.throwIfDeleted(includingDeleted, 'line_id', {})
+      if (includingDeleted && includingDeleted.userId !== userId) throw this.lineAlreadyLinked()
     }
 
-    await this.prisma.user.update({
-      where: { userId },
-      data: { lineId: profile.sub },
-    })
+    try {
+      await this.prisma.user.update({
+        where: { userId },
+        data: { lineId: profile.sub },
+      })
+    } catch (err) {
+      if (!this.hasUniqueTarget(err, 'line')) throw err
+
+      const conflicting = await this.users.findByLineIdIncludingDeleted(profile.sub)
+      await this.throwIfDeleted(conflicting, 'line_id', {})
+      if (conflicting && conflicting.userId !== userId) throw this.lineAlreadyLinked()
+      throw err
+    }
 
     this.logger.log(`User ${userId} linked LINE account: ${profile.sub}`)
     return { lineName: profile.name }
@@ -239,7 +266,10 @@ export class LineOAuthService {
     }
   }
 
-  private async createMemberFromLine(profile: LineProfile): Promise<UserWithRoles> {
+  private async createMemberFromLine(
+    profile: LineProfile,
+    ctx: RequestContext
+  ): Promise<UserWithRoles> {
     const memberCode = await this.generateLineMemberCode()
     const email = profile.email ?? `line_${profile.sub}@line.local`
 
@@ -263,17 +293,136 @@ export class LineOAuthService {
         return { ...user, roles: ['member' as const] }
       })
     } catch (err) {
-      // Race condition: concurrent request tao cung user (trung email hoac lineId)
-      if ((err as { code?: string }).code === 'P2002') {
-        if (profile.email) {
-          const byEmail = await this.users.findByEmailWithRoles(profile.email)
-          if (byEmail) return byEmail
-        }
-        const byLineId = await this.users.findByLineIdWithRoles(profile.sub)
-        if (byLineId) return byLineId
-      }
-      throw err
+      return this.resolveCreateConflict(profile, ctx, err)
     }
+  }
+
+  private async linkExistingUser(
+    user: UserWithRoles,
+    profile: LineProfile,
+    ctx: RequestContext
+  ): Promise<UserWithRoles> {
+    try {
+      await this.prisma.user.update({
+        where: { userId: user.userId },
+        data: { lineId: profile.sub },
+      })
+    } catch (err) {
+      if (!this.hasUniqueTarget(err, 'line')) throw err
+
+      const existing = await this.users.findByLineIdIncludingDeleted(profile.sub)
+      await this.throwIfDeleted(existing, 'line_id', ctx)
+      throw this.lineAlreadyLinked()
+    }
+
+    this.logger.log(`LINE login linked existing account userId=${user.userId}`)
+    await this.audit.log({
+      actorUserId: user.userId,
+      action: 'auth.line-login',
+      resourceType: 'auth',
+      resourceId: user.userId.toString(),
+      afterData: { linked_existing_account: true },
+      ipAddress: ctx.ip,
+      userAgent: ctx.userAgent,
+    })
+    return { ...user, lineId: profile.sub }
+  }
+
+  private async resolveCreateConflict(
+    profile: LineProfile,
+    ctx: RequestContext,
+    err: unknown
+  ): Promise<UserWithRoles> {
+    if (!this.isP2002(err)) throw err
+
+    if (this.hasUniqueTarget(err, 'line')) {
+      const byLineId = await this.users.findByLineIdWithRoles(profile.sub)
+      if (byLineId && this.sameEmail(byLineId, profile)) {
+        return this.logUniqueConflictRetry(byLineId, 'line_id', ctx)
+      }
+      await this.throwIfDeleted(
+        await this.users.findByLineIdIncludingDeleted(profile.sub),
+        'line_id',
+        ctx
+      )
+      throw this.lineAlreadyLinked()
+    }
+
+    if (profile.email && this.hasUniqueTarget(err, 'email')) {
+      const byEmail = await this.users.findByEmailWithRoles(profile.email)
+      if (byEmail) return this.logUniqueConflictRetry(byEmail, 'email', ctx)
+      await this.throwIfDeleted(
+        await this.users.findByEmailIncludingDeleted(profile.email),
+        'email',
+        ctx
+      )
+    }
+
+    throw err
+  }
+
+  private async logUniqueConflictRetry(
+    user: UserWithRoles,
+    target: 'email' | 'line_id',
+    ctx: RequestContext
+  ): Promise<UserWithRoles> {
+    this.logger.log(`LINE login retried after unique conflict target=${target}`)
+    await this.audit.log({
+      actorUserId: user.userId,
+      action: 'auth.line-login',
+      resourceType: 'auth',
+      resourceId: user.userId.toString(),
+      afterData: { unique_conflict_retry: target },
+      ipAddress: ctx.ip,
+      userAgent: ctx.userAgent,
+    })
+    return user
+  }
+
+  private async throwIfDeleted(
+    user: User | null,
+    target: 'email' | 'line_id',
+    ctx: RequestContext
+  ): Promise<void> {
+    if (!user?.deletedAt) return
+
+    this.logger.warn(`LINE login blocked by soft-deleted account target=${target}`)
+    await this.audit.log({
+      action: 'auth.line-login',
+      resourceType: 'auth',
+      resourceId: user.userId.toString(),
+      afterData: { success: false, reason: 'soft_deleted_account_conflict', target },
+      ipAddress: ctx.ip,
+      userAgent: ctx.userAgent,
+    })
+    throw new ConflictException({
+      success: false,
+      code: 'ACCOUNT_DELETED',
+      message: 'Tài khoản này đã bị ngừng hoạt động. Vui lòng liên hệ hỗ trợ.',
+    })
+  }
+
+  private isP2002(err: unknown): boolean {
+    return (err as { code?: string } | undefined)?.code === 'P2002'
+  }
+
+  private hasUniqueTarget(err: unknown, field: 'email' | 'line'): boolean {
+    const target = (err as Prisma.PrismaClientKnownRequestError | undefined)?.meta?.target
+    const values = Array.isArray(target) ? target : target ? [target] : []
+    return values.some((value) => String(value).toLowerCase().includes(field))
+  }
+
+  private sameEmail(user: UserWithRoles, profile: LineProfile): boolean {
+    const email = profile.email ?? `line_${profile.sub}@line.local`
+    return (user.emailNormalized ?? user.email).trim().toLowerCase() === email.trim().toLowerCase()
+  }
+
+  private lineAlreadyLinked(): ConflictException {
+    return new ConflictException({
+      success: false,
+      code: 'LINE_ALREADY_LINKED',
+      message: 'Tài khoản LINE này đã liên kết với người dùng khác',
+    })
   }
 
   private async generateLineMemberCode(): Promise<string> {

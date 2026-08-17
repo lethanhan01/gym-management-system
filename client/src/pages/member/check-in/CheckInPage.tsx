@@ -2,16 +2,18 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { BrowserQRCodeReader, type IScannerControls } from '@zxing/browser'
 import { CheckCircle2, History, RefreshCcw } from 'lucide-react'
-import { Button, ButtonLink, Modal } from '@/components/ui'
+import {
+  Button,
+  ButtonLink,
+  Card,
+  Modal,
+  Page,
+  PageErrorState,
+  PageHeader,
+} from '@/components/ui'
 import { getApiError, getApiErrorCode } from '@/lib/api-error'
 import { formatTime } from '@/lib/date'
 import { attendanceService, type AttendanceLog } from '@/services/attendance.service'
-import {
-  MemberCard,
-  MemberErrorState,
-  MemberPage,
-  MemberPageHeader,
-} from '@/components/MemberUI'
 
 type ScanState = 'idle' | 'starting' | 'scanning' | 'blocked' | 'stopped'
 
@@ -52,7 +54,7 @@ export default function CheckInPage() {
       setSuccessOverlayOpen(false)
       stopScanner()
       try {
-const log = await attendanceService.qrCheckin(normalized)
+        const log = await attendanceService.qrCheckin(normalized)
         setLastLog(log)
         setSuccessOverlayOpen(true)
       } catch (err) {
@@ -65,9 +67,9 @@ const log = await attendanceService.qrCheckin(normalized)
               ? t('qrCheckIn.errorInvalid')
               : code === 'QR_CHECKIN_ALREADY_TODAY'
                 ? t('qrCheckIn.errorAlreadyCheckedIn')
-              : code === 'MEMBER_NO_ACTIVE_SUBSCRIPTION'
-                ? t('qrCheckIn.errorNoSub')
-                : getApiError(err, t('qrCheckIn.errorDefault'))
+                : code === 'MEMBER_NO_ACTIVE_SUBSCRIPTION'
+                  ? t('qrCheckIn.errorNoSub')
+                  : getApiError(err, t('qrCheckIn.errorDefault'))
         setError(message)
         submittedRef.current = false
       } finally {
@@ -130,15 +132,15 @@ const log = await attendanceService.qrCheckin(normalized)
   }
 
   return (
-    <MemberPage>
-      <MemberPageHeader
+    <Page>
+      <PageHeader
         eyebrow={t('qrCheckIn.eyebrow')}
         title={t('qrCheckIn.title')}
         description={t('qrCheckIn.description')}
       />
 
-      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
-        <MemberCard variant="compact" padding="none" className="overflow-hidden">
+      <main className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
+        <Card as="article" variant="compact" padding="none" className="overflow-hidden">
           <div className="relative aspect-[4/3] min-h-[280px] overflow-hidden bg-black">
             <video
               ref={videoRef}
@@ -161,7 +163,7 @@ const log = await attendanceService.qrCheckin(normalized)
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3 p-5">
+          <footer className="flex flex-wrap items-center gap-3 p-5">
             <Button
               type="button"
               variant="primary"
@@ -179,16 +181,16 @@ const log = await attendanceService.qrCheckin(normalized)
             >
               {t('qrCheckIn.viewHistory')}
             </ButtonLink>
-          </div>
-        </MemberCard>
+          </footer>
+        </Card>
 
-        <div className="space-y-5">
+        <aside className="space-y-5">
           {lastLog && (
-            <MemberCard variant="compact" className="hidden border-[rgba(6,195,132,0.3)] p-6 md:block">
-              <div className="mb-4 flex items-center gap-3 rogym-text-accent">
+            <Card as="article" variant="compact" className="hidden border-[rgba(6,195,132,0.3)] p-6 md:block">
+              <header className="mb-4 flex items-center gap-3 rogym-text-accent">
                 <CheckCircle2 size={24} />
                 <span className="font-bold">{t('qrCheckIn.successTitle')}</span>
-              </div>
+              </header>
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between gap-4">
                   <span className="rogym-text-dim">{t('qrCheckIn.member')}</span>
@@ -199,12 +201,12 @@ const log = await attendanceService.qrCheckin(normalized)
                   <span className="text-white">{formatTime(lastLog.startTime)}</span>
                 </div>
               </div>
-            </MemberCard>
+            </Card>
           )}
 
-          {error && <MemberErrorState message={error} onRetry={handleScanAgain} />}
-        </div>
-      </div>
+          {error && <PageErrorState message={error} onRetry={handleScanAgain} />}
+        </aside>
+      </main>
 
       {lastLog && (
         <Modal
@@ -236,6 +238,7 @@ const log = await attendanceService.qrCheckin(normalized)
           </div>
         </Modal>
       )}
-    </MemberPage>
+    </Page>
   )
 }
+

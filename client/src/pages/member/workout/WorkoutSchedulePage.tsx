@@ -20,13 +20,17 @@ import {
 import { BookPtSessionModal } from './BookPtSessionModal'
 import { CancelPtBookingModal } from './CancelPtBookingModal'
 import {
-  MemberCard,
-  MemberErrorState,
-  MemberPage,
-  MemberPageHeader,
-  MemberSkeleton,
-} from '@/components/MemberUI'
-import { Button, Modal } from '@/components/ui'
+  Button,
+  Card,
+  Modal,
+  Page,
+  PageErrorState,
+  PageHeader,
+  PageSkeleton,
+} from '@/components/ui'
+
+
+
 import { getApiError } from '@/lib/api-error'
 
 // ── Format helpers ─────────────────────────────────────────────────────────────
@@ -441,7 +445,7 @@ function CalendarView({
   }, [])
 
   return (
-    <MemberCard variant="compact" className="p-3.5 sm:p-5">
+    <Card as="article" variant="compact" className="p-3.5 sm:p-5">
       {/* Legend & Header controls */}
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3 text-xs rogym-sx-5e5c39ab">
         <div className="flex flex-wrap items-center gap-3 sm:gap-4">
@@ -531,8 +535,9 @@ function CalendarView({
         locale={locale}
         onSelectSession={onSelect}
       />
-    </MemberCard>
+    </Card>
   )
+
 }
 
 // ── Sidebar lists ──────────────────────────────────────────────────────────────
@@ -662,27 +667,27 @@ function SessionSidebar({
           </div>
         </button>
       ) : (
-        <MemberCard variant="compact" className="flex flex-col items-center justify-center gap-3 p-6 text-center">
+        <Card as="article" variant="compact" className="flex flex-col items-center justify-center gap-3 p-6 text-center">
           <CalendarX size={32} className="rogym-sx-ed519d00" />
           <p className="text-sm font-medium text-white">{t('workout.schedule.noUpcoming')}</p>
           <p className="text-xs rogym-sx-5e5c39ab">{t('workout.schedule.noUpcomingHint')}</p>
-        </MemberCard>
+        </Card>
       )}
 
       {/* Upcoming rest */}
       {upcomingRest.length > 0 && (
-        <MemberCard as="section" variant="compact" className="p-5">
+        <Card as="section" variant="compact" className="p-5">
           <h2 className="mb-3 text-sm font-bold text-white">{t('workout.schedule.sectionUpcoming')}</h2>
           <div className="space-y-2">
             {upcomingRest.map((s) => (
               <UpcomingRow key={s.sessionId} session={s} onSelect={onSelect} />
             ))}
           </div>
-        </MemberCard>
+        </Card>
       )}
 
       {/* Past */}
-      <MemberCard as="section" variant="compact" className="p-5">
+      <Card as="section" variant="compact" className="p-5">
         <h2 className="mb-3 text-sm font-bold text-white">{t('workout.schedule.sectionCompleted')}</h2>
         {past.length === 0 ? (
           <div className="flex flex-col items-center gap-2 py-6">
@@ -696,9 +701,10 @@ function SessionSidebar({
             ))}
           </div>
         )}
-      </MemberCard>
+      </Card>
     </div>
   )
+
 }
 
 function SessionDetailModal({
@@ -751,10 +757,11 @@ function SessionDetailModal({
           <h3 className="text-base font-bold text-white -mt-1 mb-2">{session.planDay.name}</h3>
         )}
         {loading ? (
-          <MemberSkeleton rows={4} />
+          <PageSkeleton rows={4} />
         ) : error ? (
-          <MemberErrorState message={error} />
+          <PageErrorState message={error} />
         ) : session ? (
+
           <>
             <div className="grid gap-3 text-sm md:grid-cols-2">
               <div className="rounded-xl p-4 rogym-sx-a15e2a7c">
@@ -950,23 +957,23 @@ export default function WorkoutSchedulePage() {
 
   if (loading)
     return (
-      <MemberPage>
-        <MemberPageHeader eyebrow={t('workout.schedule.eyebrow')} title={t('workout.schedule.pageTitle')} />
-        <MemberSkeleton rows={5} />
-      </MemberPage>
+      <Page>
+        <PageHeader eyebrow={t('workout.schedule.eyebrow')} title={t('workout.schedule.pageTitle')} />
+        <PageSkeleton rows={5} />
+      </Page>
     )
 
   if (error)
     return (
-      <MemberPage>
-        <MemberPageHeader eyebrow={t('workout.schedule.eyebrow')} title={t('workout.schedule.pageTitle')} />
-        <MemberErrorState message={error} onRetry={loadSessions} />
-      </MemberPage>
+      <Page>
+        <PageHeader eyebrow={t('workout.schedule.eyebrow')} title={t('workout.schedule.pageTitle')} />
+        <PageErrorState message={error} onRetry={loadSessions} />
+      </Page>
     )
 
   return (
-    <MemberPage>
-      <MemberPageHeader
+    <Page>
+      <PageHeader
         eyebrow={t('workout.schedule.eyebrow')}
         title={t('workout.schedule.pageTitle')}
         description={t('workout.schedule.description')}
@@ -981,10 +988,10 @@ export default function WorkoutSchedulePage() {
           </Button>
         }
       />
-      <div className="grid gap-5 lg:grid-cols-[65fr_35fr]">
+      <main className="grid gap-5 lg:grid-cols-[65fr_35fr]">
         <CalendarView sessions={all} onSelect={handleSelectSession} />
         <SessionSidebar upcoming={upcoming} past={past} onSelect={handleSelectSession} />
-      </div>
+      </main>
       {selectedSessionId && (
         <SessionDetailModal
           session={sessionDetail}
@@ -1012,6 +1019,7 @@ export default function WorkoutSchedulePage() {
           loadSessions()
         }}
       />
-    </MemberPage>
+    </Page>
   )
 }
+

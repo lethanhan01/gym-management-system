@@ -3,14 +3,15 @@ import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Dumbbell } from 'lucide-react'
 import {
-  MemberEmptyState,
-  MemberErrorState,
-  MemberPage,
-  MemberPageHeader,
-  MemberSearchToolbar,
-  MemberSkeleton,
-} from '@/components/MemberUI'
-import { Button, Modal } from '@/components/ui'
+  Button,
+  Modal,
+  Page,
+  PageEmptyState,
+  PageErrorState,
+  PageHeader,
+  PageSkeleton,
+  SearchToolbar,
+} from '@/components/ui'
 import workoutService, {
   type Exercise,
   type ExerciseBodyPart,
@@ -112,8 +113,8 @@ export default function MemberExercisesPage() {
   }
 
   return (
-    <MemberPage>
-      <MemberPageHeader
+    <Page>
+      <PageHeader
         eyebrow={t('workout.exercises.eyebrow')}
         title={t('workout.exercises.pageTitle')}
         description={t('workout.exercises.description')}
@@ -128,56 +129,59 @@ export default function MemberExercisesPage() {
         }
       />
 
-      {/* Search + filter */}
-      <MemberSearchToolbar
-        value={search}
-        onChange={setSearch}
-        placeholder={t('workout.exercises.searchPlaceholder')}
-        layout="row"
-        filters={
-          <ExerciseFilterDropdown
-            open={showPopup}
-            onOpenChange={(open) => {
-              if (open) openPopup()
-              else setShowPopup(false)
-            }}
-            activeCount={activeCount}
-            bodyPartId={draftBodyPartId}
-            targetMuscleId={draftTargetMuscleId}
-            equipmentId={draftEquipmentId}
-            bodyParts={bodyParts}
-            muscles={muscles}
-            equipments={equipments}
-            onChange={(fields) => {
-              if ('bodyPartId' in fields) setDraftBodyPartId(fields.bodyPartId)
-              if ('targetMuscleId' in fields) setDraftTargetMuscleId(fields.targetMuscleId)
-              if ('equipmentId' in fields) setDraftEquipmentId(fields.equipmentId)
-            }}
-            onApply={applyFilter}
-          />
-        }
-      />
-
-      {error && <MemberErrorState message={error} onRetry={load} />}
-
-      {loading ? (
-        <MemberSkeleton rows={6} />
-      ) : filtered.length === 0 ? (
-        <MemberEmptyState
-          title={t('workout.exercises.emptyTitle')}
-          description={t('workout.exercises.emptyDescription')}
-        />
-      ) : (
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {filtered.map((exercise) => (
-            <ExerciseCard
-              key={exercise.exerciseId}
-              exercise={exercise}
-              onClick={() => setDetail(exercise)}
+      <main className="space-y-6">
+        {/* Search + filter */}
+        <SearchToolbar
+          value={search}
+          onChange={setSearch}
+          placeholder={t('workout.exercises.searchPlaceholder')}
+          layout="row"
+          filters={
+            <ExerciseFilterDropdown
+              open={showPopup}
+              onOpenChange={(open) => {
+                if (open) openPopup()
+                else setShowPopup(false)
+              }}
+              activeCount={activeCount}
+              bodyPartId={draftBodyPartId}
+              targetMuscleId={draftTargetMuscleId}
+              equipmentId={draftEquipmentId}
+              bodyParts={bodyParts}
+              muscles={muscles}
+              equipments={equipments}
+              onChange={(fields) => {
+                if ('bodyPartId' in fields) setDraftBodyPartId(fields.bodyPartId)
+                if ('targetMuscleId' in fields) setDraftTargetMuscleId(fields.targetMuscleId)
+                if ('equipmentId' in fields) setDraftEquipmentId(fields.equipmentId)
+              }}
+              onApply={applyFilter}
             />
-          ))}
-        </div>
-      )}
+          }
+        />
+
+        {error && <PageErrorState message={error} onRetry={load} />}
+
+        {loading ? (
+          <PageSkeleton rows={6} />
+        ) : filtered.length === 0 ? (
+          <PageEmptyState
+            title={t('workout.exercises.emptyTitle')}
+            description={t('workout.exercises.emptyDescription')}
+          />
+        ) : (
+          <section aria-label={t('workout.exercises.pageTitle')} className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {filtered.map((exercise) => (
+              <ExerciseCard
+                key={exercise.exerciseId}
+                exercise={exercise}
+                onClick={() => setDetail(exercise)}
+              />
+            ))}
+          </section>
+        )}
+      </main>
+
 
       {/* Detail modal */}
       {detail && (
@@ -249,6 +253,6 @@ export default function MemberExercisesPage() {
           </div>
         </Modal>
       )}
-    </MemberPage>
+    </Page>
   )
 }

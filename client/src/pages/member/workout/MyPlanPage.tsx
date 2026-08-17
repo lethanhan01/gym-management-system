@@ -19,14 +19,13 @@ import {
   Card,
   ConfirmDialog,
   Modal,
+  Page,
+  PageEmptyState,
+  PageErrorState,
+  PageHeader,
+  PageSkeleton,
 } from '@/components/ui'
-import {
-  MemberEmptyState,
-  MemberErrorState,
-  MemberPage,
-  MemberPageHeader,
-  MemberSkeleton,
-} from '@/components/MemberUI'
+
 import workoutService, {
   type WorkoutAssignmentSummary,
   type WorkoutPlan,
@@ -564,25 +563,25 @@ export default function MyPlanPage() {
 
   if (loading)
     return (
-      <MemberPage>
-        <MemberPageHeader eyebrow={t('workout.myPlan.eyebrow')} title={t('workout.myPlan.pageTitle')} />
-        <MemberSkeleton rows={6} />
-      </MemberPage>
+      <Page>
+        <PageHeader eyebrow={t('workout.myPlan.eyebrow')} title={t('workout.myPlan.pageTitle')} />
+        <PageSkeleton rows={6} />
+      </Page>
     )
 
   if (error)
     return (
-      <MemberPage>
-        <MemberPageHeader eyebrow={t('workout.myPlan.eyebrow')} title={t('workout.myPlan.pageTitle')} />
-        <MemberErrorState message={error} onRetry={load} />
-      </MemberPage>
+      <Page>
+        <PageHeader eyebrow={t('workout.myPlan.eyebrow')} title={t('workout.myPlan.pageTitle')} />
+        <PageErrorState message={error} onRetry={load} />
+      </Page>
     )
 
   const hasAnything = activeAssignments.length > 0 || savedPlans.length > 0
 
   return (
-    <MemberPage>
-      <MemberPageHeader
+    <Page>
+      <PageHeader
         eyebrow={t('workout.myPlan.eyebrow')}
         title={t('workout.myPlan.pageTitle')}
         description={t('workout.myPlan.description')}
@@ -598,7 +597,7 @@ export default function MyPlanPage() {
       />
 
       {!hasAnything ? (
-        <MemberEmptyState
+        <PageEmptyState
           title={t('workout.myPlan.emptyTitle')}
           description={t('workout.myPlan.emptyDescription')}
           action={
@@ -612,7 +611,7 @@ export default function MyPlanPage() {
           }
         />
       ) : (
-        <div className="grid gap-6 xl:grid-cols-2">
+        <main className="grid gap-6 xl:grid-cols-2">
           {/* PT assigned */}
           <section>
             <div className="mb-3 flex items-center gap-2">
@@ -694,9 +693,10 @@ export default function MyPlanPage() {
               </div>
             )}
           </section>
-        </div>
+        </main>
       )}
-    </MemberPage>
+    </Page>
   )
 }
+
 

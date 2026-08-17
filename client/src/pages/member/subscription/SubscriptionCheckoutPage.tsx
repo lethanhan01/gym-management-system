@@ -23,15 +23,18 @@ import {
   type PaymentMethodOption,
 } from '@/components/payment/payment-method-data'
 import { PaymentMethodIcon } from '@/components/payment/payment-methods'
-import { Button, Checkbox, FormField, Input } from '@/components/ui'
 import {
-  MemberBadge,
-  MemberCard,
-  MemberEmptyState,
-  MemberPage,
-  MemberPageHeader,
-  MemberSkeleton,
-} from '@/components/MemberUI'
+  Badge,
+  Button,
+  Card,
+  Checkbox,
+  FormField,
+  Input,
+  Page,
+  PageEmptyState,
+  PageHeader,
+  PageSkeleton,
+} from '@/components/ui'
 import { toast } from '@/lib/toast'
 
 interface PayState {
@@ -223,8 +226,8 @@ export default function SubscriptionCheckoutPage({ mode }: { mode: 'buy' | 'rene
   }
 
   return (
-    <MemberPage>
-      <MemberPageHeader
+    <Page>
+      <PageHeader
         eyebrow="Thanh toán"
         title={mode === 'renew' ? t('subscription.checkout.titleRenew') : t('subscription.checkout.title')}
         actions={
@@ -240,7 +243,7 @@ export default function SubscriptionCheckoutPage({ mode }: { mode: 'buy' | 'rene
       />
 
       {/* Order summary bar */}
-      <MemberCard variant="compact" className="px-5 py-4 mb-6 flex items-center justify-between">
+      <Card as="section" variant="compact" className="px-5 py-4 mb-6 flex items-center justify-between">
         <div>
           <p className="rogym-sx-780e0fa6">{mode === 'renew' ? t('subscription.checkout.orderRenew') : t('subscription.checkout.orderBuy')}</p>
           <p className="rogym-sx-668e18f3">{state.packageName}</p>
@@ -249,11 +252,11 @@ export default function SubscriptionCheckoutPage({ mode }: { mode: 'buy' | 'rene
           </p>
         </div>
         <p className="rogym-sx-04751e92">{formatVnd(state.price)}</p>
-      </MemberCard>
+      </Card>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <main className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Card left: payment info */}
-        <MemberCard variant="compact" className="p-6 flex flex-col gap-4">
+        <Card as="article" variant="compact" className="p-6 flex flex-col gap-4">
           <h3 className="text-base font-bold text-white">{t('subscription.checkout.paymentInfoTitle')}</h3>
 
           <div className="flex flex-col gap-2">
@@ -345,17 +348,17 @@ export default function SubscriptionCheckoutPage({ mode }: { mode: 'buy' | 'rene
               ? t('subscription.checkout.buttonConfirmRenew')
               : t('subscription.checkout.buttonConfirmPay', { price: formatVnd(state.price) })}
           </Button>
-        </MemberCard>
+        </Card>
 
         {/* Card right: saved accounts */}
-        <MemberCard variant="compact" className="p-6 flex flex-col gap-3">
+        <Card as="aside" variant="compact" className="p-6 flex flex-col gap-3">
           <h3 className="text-base font-bold text-white">{t('subscription.checkout.savedAccountsTitle')}</h3>
           <p className="rogym-sx-61bc6441">{t('subscription.checkout.savedAccountsHint')}</p>
 
           {accountsLoading ? (
-            <MemberSkeleton rows={2} />
+            <PageSkeleton rows={2} />
           ) : accounts.length === 0 ? (
-            <MemberEmptyState
+            <PageEmptyState
               title={t('subscription.checkout.noSavedAccounts')}
               description={t('subscription.checkout.noSavedAccountsHint')}
             />
@@ -373,9 +376,9 @@ export default function SubscriptionCheckoutPage({ mode }: { mode: 'buy' | 'rene
                           {acc.label || acc.provider || getPaymentMethodLabel(acc.type)}
                         </p>
                         {acc.isDefault && (
-                          <MemberBadge tone="success" size="xs">
+                          <Badge tone="success" size="xs">
                             {t('subscription.checkout.defaultBadge')}
-                          </MemberBadge>
+                          </Badge>
                         )}
                       </div>
                       {acc.accountRef && (
@@ -396,8 +399,9 @@ export default function SubscriptionCheckoutPage({ mode }: { mode: 'buy' | 'rene
               ))}
             </div>
           )}
-        </MemberCard>
-      </div>
-    </MemberPage>
+        </Card>
+      </main>
+    </Page>
   )
 }
+

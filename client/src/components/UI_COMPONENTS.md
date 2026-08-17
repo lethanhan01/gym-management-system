@@ -535,6 +535,250 @@ export function MembersPage() {
 
 ---
 
+### 15. Nhóm Điều Hướng Tab (Tabs Suite - [`Tabs.tsx`](file:///c:/Users/An/Documents/IT4549-ITSS/gym-management-system/client/src/components/ui/Tabs.tsx))
+
+#### 🎯 Vai trò & Đặc điểm
+- Chuẩn hóa điều hướng nội dung theo tab trên cùng một trang, thay thế toàn bộ việc tự viết `flex container` và chuyển đổi state giữa các `Button`.
+- Hỗ trợ cả 2 mô hình: **Compound Components** (`Tabs`, `TabsList`, `TabsTrigger`, `TabsContent`) và **Data-driven Helper** (`TabsBar`).
+- Hỗ trợ đầy đủ a11y (`role="tablist"`, `role="tab"`, `role="tabpanel"`, `aria-selected`, `aria-controls`, phím Enter/Space/Arrow).
+
+#### 🎨 Biến thể (Variants) & Kích thước (Sizes)
+- `variant`:
+  - `pills` (Mặc định): Nút hình viên thuốc bo tròn trên nền đen mờ, tab active phát sáng xanh `var(--rogym-tone,#06c384)` chữ đen đậm.
+  - `segmented`: Thanh chia đoạn kính mờ cyberpunk bo góc 12px, tab active viền sáng và nền xanh ngọc 15%.
+  - `underline`: Thanh viền gạch chân hiện đại, tab active có đường line sáng rực dưới chân.
+- `size`: `sm` (32px), `md` (40px - mặc định), `lg` (46px).
+
+#### 💡 Ví dụ sử dụng:
+```tsx
+import { Tabs, TabsList, TabsTrigger, TabsContent, TabsBar } from '@/components/ui'
+
+// Cách 1: Compound Components
+<Tabs value={currentTab} onValueChange={setCurrentTab} variant="pills">
+  <TabsList aria-label="Student details">
+    <TabsTrigger value="overview" badge="Mới">Tổng quan</TabsTrigger>
+    <TabsTrigger value="sessions">Buổi tập</TabsTrigger>
+    <TabsTrigger value="workout">Giáo án</TabsTrigger>
+  </TabsList>
+  <TabsContent value="overview">
+    <OverviewPanel />
+  </TabsContent>
+  <TabsContent value="sessions">
+    <SessionsList />
+  </TabsContent>
+  <TabsContent value="workout">
+    <WorkoutPanel />
+  </TabsContent>
+</Tabs>
+
+// Cách 2: Data-driven TabsBar (dùng nhanh cho URL query tabs)
+<TabsBar
+  items={[
+    { value: 'members', label: 'Hội viên', badge: 120 },
+    { value: 'staff', label: 'Nhân viên', badge: 14 }
+  ]}
+  value={tab}
+  onChange={setTab}
+  variant="segmented"
+/>
+```
+
+---
+
+### 16. Hộp Thông Báo & Cảnh Báo (Alert Suite - [`Alert.tsx`](file:///c:/Users/An/Documents/IT4549-ITSS/gym-management-system/client/src/components/ui/Alert.tsx))
+
+#### 🎯 Vai trò & Đặc điểm
+- Hiển thị các thông báo ngữ cảnh trong biểu mẫu, widget dữ liệu, cảnh báo tài khoản hoặc thông báo hệ thống.
+- Tự động gắn icon phù hợp theo tone màu, tích hợp sẵn nút đóng `onClose` và slot nút hành động `action`.
+
+#### 🎨 Biến thể & Tones
+- `tone`:
+  - `error`: Báo lỗi màu đỏ tươi (`role="alert"`), icon `AlertCircle`.
+  - `warning`: Cảnh báo màu vàng cam hổ phách, icon `AlertTriangle`.
+  - `info`: Thông tin hỗ trợ màu xanh dương, icon `Info`.
+  - `success`: Thành công màu xanh ngọc lục bảo RoGym, icon `CheckCircle2`.
+  - `neutral`: Trung tính màu xám kim loại gym.
+- `variant`: `subtle` (Mặc định kính mờ), `outline` (Viền sáng), `filled` (Nền tối đặc).
+
+#### 💡 Ví dụ sử dụng:
+```tsx
+import { Alert, AlertTitle, AlertDescription, Button } from '@/components/ui'
+
+<Alert
+  tone="error"
+  title="Không thể lưu dữ liệu"
+  description="Mã thiết bị đã tồn tại trên hệ thống. Vui lòng kiểm tra lại."
+  onClose={() => setError(null)}
+  action={
+    <Button size="compact" variant="danger" onClick={handleRetry}>
+      Thử lại ngay
+    </Button>
+  }
+/>
+```
+
+---
+
+### 17. Thanh Tiến Độ (ProgressBar - [`ProgressBar.tsx`](file:///c:/Users/An/Documents/IT4549-ITSS/gym-management-system/client/src/components/ui/ProgressBar.tsx))
+
+#### 🎯 Vai trò & Đặc điểm
+- Trực quan hóa tiến độ hoàn thành giáo án, phần trăm buổi tập đã thực hiện, chỉ số cơ thể, hoặc doanh thu mục tiêu.
+- Chuẩn a11y `role="progressbar"` kèm các thuộc tính `aria-valuenow`, `aria-valuemin`, `aria-valuemax`.
+
+#### ⚙️ Bảng Props (`ProgressBarProps`)
+| Prop | Kiểu dữ liệu | Mặc định | Ý nghĩa |
+| :--- | :--- | :--- | :--- |
+| `value` | `number` | **Bắt buộc** | Giá trị hiện tại (tự động clamp trong khoảng `0` đến `max`) |
+| `max` | `number` | `100` | Giá trị tối đa |
+| `tone` | `'primary' \| 'cyan' \| 'success' \| 'warning' \| 'danger' \| 'purple'` | `'primary'` | Tone màu thanh tiến độ |
+| `size` | `'xs' \| 'sm' \| 'md' \| 'lg' \| 'xl'` | `'md'` | Chiều cao thanh (từ 4px đến 20px) |
+| `label` | `ReactNode` | `undefined` | Nhãn tiêu đề bên trái |
+| `hint` | `ReactNode` | `undefined` | Chú thích phụ bên phải |
+| `showValue` | `boolean` | `false` | Hiển thị phần trăm hoặc giá trị định dạng |
+| `valueFormatter`| `(value, pct) => ReactNode` | `undefined` | Hàm format giá trị tùy chỉnh |
+| `animated` | `boolean` | `false` | Bật hiệu ứng nhấp nháy xung nhịp |
+| `striped` | `boolean` | `false` | Bật hoa văn sọc chéo cyberpunk |
+
+#### 💡 Ví dụ sử dụng:
+```tsx
+import { ProgressBar } from '@/components/ui'
+
+<ProgressBar
+  value={8}
+  max={12}
+  label="Tiến độ lộ trình tăng cơ"
+  hint="Còn 4 buổi"
+  showValue
+  valueFormatter={(v, pct) => `${v}/12 buổi (${pct}%)`}
+  tone="primary"
+  size="md"
+  striped
+/>
+```
+
+---
+
+### 18. Ảnh Đại Diện Hội Viên & Nhân Viên (Avatar Suite - [`Avatar.tsx`](file:///c:/Users/An/Documents/IT4549-ITSS/gym-management-system/client/src/components/ui/Avatar.tsx))
+
+#### 🎯 Vai trò & Đặc điểm
+- Hiển thị ảnh đại diện của khách hàng, HLV cá nhân, nhân viên lễ tân và quản trị viên.
+- **Tự động trích xuất chữ cái viết tắt (Initials)** từ họ tên và tự sinh màu nền hài hòa theo giải thuật hash chuỗi khi người dùng chưa tải ảnh hoặc ảnh bị lỗi mạng (`onError`).
+- Hỗ trợ huy hiệu trạng thái hoạt động (`status`: `online`, `busy`, `away`, `offline`).
+- Cung cấp component `<AvatarGroup>` để hiển thị danh sách hội viên/HLV chồng lớp kèm số đếm `+N`.
+
+#### 💡 Ví dụ sử dụng:
+```tsx
+import { Avatar, AvatarGroup } from '@/components/ui'
+
+// Avatar đơn lẻ có status và auto initials
+<Avatar
+  src={member.avatarUrl}
+  name="Lê Thành An"
+  size="lg"
+  status="online"
+  tone="auto"
+/>
+
+// Danh sách HLV ca trực (Avatar Group)
+<AvatarGroup max={3} size="md">
+  <Avatar name="Phạm Yến Nhi" src="/pt1.jpg" />
+  <Avatar name="Trịnh Văn Minh" src="/pt2.jpg" />
+  <Avatar name="Lê Thành An" src="/pt3.jpg" />
+  <Avatar name="Trần Hoàng" />
+  <Avatar name="Nguyễn Nam" />
+</AvatarGroup>
+```
+
+---
+
+### 19. Menu Co Giãn (Accordion Suite - [`Accordion.tsx`](file:///c:/Users/An/Documents/IT4549-ITSS/gym-management-system/client/src/components/ui/Accordion.tsx))
+
+#### 🎯 Vai trò & Đặc điểm
+- Gom nhóm và mở rộng nội dung chi tiết theo từng bài tập, nhóm cơ, lịch sử tập, câu hỏi thường gặp FAQ.
+- Thay thế hoàn toàn việc quản lý thủ công biến state `expanded` và toggle icon `<ChevronUp /> / <ChevronDown />`.
+- Hỗ trợ chế độ mở đơn (`type="single"`) hoặc mở đồng thời nhiều mục (`type="multiple"`).
+
+#### 💡 Ví dụ sử dụng:
+```tsx
+import { Accordion, AccordionItem, AccordionTrigger, AccordionContent, AccordionGroup } from '@/components/ui'
+import { Dumbbell } from 'lucide-react'
+
+// Cách 1: Compound Components
+<Accordion type="single" defaultValue="day-1" variant="card">
+  <AccordionItem value="day-1">
+    <AccordionTrigger leftIcon={<Dumbbell size={18} />} badge="4 bài tập">
+      Buổi 1: Ngực & Tay Sau (Chest & Triceps)
+    </AccordionTrigger>
+    <AccordionContent>
+      <ExerciseList exercises={day1Exercises} />
+    </AccordionContent>
+  </AccordionItem>
+</Accordion>
+
+// Cách 2: Data-driven AccordionGroup
+<AccordionGroup
+  type="multiple"
+  items={faqList.map(faq => ({
+    value: faq.id,
+    title: faq.question,
+    content: faq.answer,
+  }))}
+/>
+```
+
+---
+
+### 20. Trình Hướng Dẫn Từng Bước (Stepper - [`Stepper.tsx`](file:///c:/Users/An/Documents/IT4549-ITSS/gym-management-system/client/src/components/ui/Stepper.tsx))
+
+#### 🎯 Vai trò & Đặc điểm
+- Hướng dẫn trực quan quy trình nhiều bước cho các luồng nghiệp vụ phức tạp: Đăng ký hội viên mới, Gia hạn gói tập, Thiết lập hợp đồng PT, Thanh toán đơn hàng.
+- Tự động đánh dấu bước đã hoàn thành (icon tích xanh), bước hiện tại (vòng tròn sáng viền ngọc) và bước sắp tới.
+- Hỗ trợ cả 2 hướng hiển thị: Ngang (`horizontal`) và Dọc (`vertical`).
+
+#### 💡 Ví dụ sử dụng:
+```tsx
+import { Stepper } from '@/components/ui'
+import { User, CreditCard, CheckCircle } from 'lucide-react'
+
+<Stepper
+  activeStep={currentStep}
+  steps={[
+    { title: 'Thông tin cá nhân', description: 'Họ tên & SĐT', icon: <User size={16} /> },
+    { title: 'Chọn gói tập', description: 'Gói VIP 12 tháng', icon: <CreditCard size={16} /> },
+    { title: 'Thanh toán', description: 'Quét mã QR', icon: <CheckCircle size={16} /> },
+  ]}
+  clickable
+  onStepClick={(index) => setCurrentStep(index)}
+/>
+```
+
+---
+
+### 21. Khung Giữ Chỗ Tải Dữ Liệu Nguyên Tử (Skeleton Suite - [`Skeleton.tsx`](file:///c:/Users/An/Documents/IT4549-ITSS/gym-management-system/client/src/components/ui/Skeleton.tsx))
+
+#### 🎯 Vai trò & Đặc điểm
+- Cung cấp các khối skeleton nguyên tử để xây dựng trạng thái tải (Loading State) mượt mà cho từng widget nhỏ, thẻ hội viên, danh sách bài tập mà không cần phải viết component inline với thẻ `<div>` thô.
+- Bao gồm: `<Skeleton>` (Khối tùy biến), `<SkeletonText>` (Đoạn văn nhiều dòng có dòng cuối ngắn hơn tự nhiên), `<SkeletonCircle>` (Hình tròn cho avatar/icon).
+
+#### 💡 Ví dụ sử dụng:
+```tsx
+import { Skeleton, SkeletonText, SkeletonCircle } from '@/components/ui'
+
+// Skeleton cho Card thông tin HLV
+<div className="flex items-center gap-3 p-4 bg-white/5 rounded-2xl">
+  <SkeletonCircle size={48} />
+  <div className="flex-1 space-y-2">
+    <Skeleton height={16} width="60%" />
+    <Skeleton height={12} width="40%" />
+  </div>
+</div>
+
+// Skeleton cho đoạn mô tả
+<SkeletonText lines={3} lineHeight={14} lastLineWidth="50%" />
+```
+
+---
+
 ## III. Chi Tiết Các Component Dùng Chung (`client/src/components/shared`)
 
 Các component trong thư mục `shared` đảm nhận vai trò quản lý **Layout**, **Điều hướng (Navigation)**, **Bảo mật tuyến đường (Route Guards)**, **Hệ thống thông báo thời gian thực** và **Bộ lọc chuyên biệt theo nghiệp vụ**.
@@ -829,6 +1073,13 @@ import { OwnerDateRangeFilter } from '@/components/shared/OwnerDateRangeFilter'
 | | `ConfirmDialog` | [`ConfirmDialog.tsx`](file:///c:/Users/An/Documents/IT4549-ITSS/gym-management-system/client/src/components/ui/ConfirmDialog.tsx) |
 | **Page Layout & Utils** | `Page`, `PageHeader`, `PageSkeleton`, `PageEmptyState`, `PageErrorState` | [`PageUI.tsx`](file:///c:/Users/An/Documents/IT4549-ITSS/gym-management-system/client/src/components/ui/PageUI.tsx) |
 | | `LanguageSwitcher` | [`LanguageSwitcher.tsx`](file:///c:/Users/An/Documents/IT4549-ITSS/gym-management-system/client/src/components/ui/LanguageSwitcher.tsx) |
+| **Navigation & Tabs** | `Tabs`, `TabsList`, `TabsTrigger`, `TabsContent`, `TabsBar` | [`Tabs.tsx`](file:///c:/Users/An/Documents/IT4549-ITSS/gym-management-system/client/src/components/ui/Tabs.tsx) |
+| **Alerts & Messages** | `Alert`, `AlertTitle`, `AlertDescription` | [`Alert.tsx`](file:///c:/Users/An/Documents/IT4549-ITSS/gym-management-system/client/src/components/ui/Alert.tsx) |
+| **Progress & Metrics** | `ProgressBar` | [`ProgressBar.tsx`](file:///c:/Users/An/Documents/IT4549-ITSS/gym-management-system/client/src/components/ui/ProgressBar.tsx) |
+| **Avatars & Users** | `Avatar`, `AvatarGroup` | [`Avatar.tsx`](file:///c:/Users/An/Documents/IT4549-ITSS/gym-management-system/client/src/components/ui/Avatar.tsx) |
+| **Collapsible & FAQs** | `Accordion`, `AccordionItem`, `AccordionTrigger`, `AccordionContent`, `AccordionGroup` | [`Accordion.tsx`](file:///c:/Users/An/Documents/IT4549-ITSS/gym-management-system/client/src/components/ui/Accordion.tsx) |
+| **Wizards & Steppers** | `Stepper` | [`Stepper.tsx`](file:///c:/Users/An/Documents/IT4549-ITSS/gym-management-system/client/src/components/ui/Stepper.tsx) |
+| **Loading Skeletons** | `Skeleton`, `SkeletonText`, `SkeletonCircle` | [`Skeleton.tsx`](file:///c:/Users/An/Documents/IT4549-ITSS/gym-management-system/client/src/components/ui/Skeleton.tsx) |
 
 ---
 

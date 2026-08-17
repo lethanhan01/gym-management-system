@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import { AlertCircle, Clock, Trash2 } from 'lucide-react'
-import { Button, Modal } from '@/components/ui'
+import { Clock, Trash2 } from 'lucide-react'
+import { Alert, Button, FormField, Modal, Textarea } from '@/components/ui'
 import { toast } from '@/lib/toast'
 import { getApiError } from '@/lib/api-error'
 import { trainingSessionService, type TrainingSession } from '@/services/training-session.service'
@@ -43,7 +43,7 @@ export function CancelPtBookingModal({
 
     setLoading(true)
     try {
-await trainingSessionService.cancelBooking(session.sessionId, reason.trim())
+      await trainingSessionService.cancelBooking(session.sessionId, reason.trim())
       toast.success(t('workout.schedule.booking.cancelSuccess'))
       onSuccess()
       onClose()
@@ -104,30 +104,27 @@ await trainingSessionService.cancelBooking(session.sessionId, reason.trim())
 
         {/* < 2h Late Cancellation Warning */}
         {isLessThan2Hours ? (
-          <div className="flex items-start gap-3 rounded-xl border border-amber-500/20 bg-amber-500/10 p-3.5 text-sm text-amber-200">
-            <AlertCircle className="mt-0.5 shrink-0 text-amber-400" size={18} />
-            <p>{t('workout.schedule.booking.lateCancelWarning')}</p>
-          </div>
+          <Alert tone="warning" description={t('workout.schedule.booking.lateCancelWarning')} />
         ) : (
           /* Reason input */
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold uppercase tracking-wider text-white/70">
-              {t('workout.schedule.booking.cancelReasonPrompt')} <span className="text-rose-400">*</span>
-            </label>
-            <textarea
+          <FormField
+            label={t('workout.schedule.booking.cancelReasonPrompt')}
+            required
+          >
+            <Textarea
               rows={3}
               value={reason}
               onChange={(e) => setReason(e.target.value)}
               placeholder={t('workout.schedule.booking.cancelReasonPlaceholder')}
-              className="w-full rounded-xl border border-white/15 bg-white/[0.03] p-3 text-sm text-white placeholder:text-white/30 focus:border-rose-400 focus:outline-none"
               maxLength={255}
             />
-            <div className="flex justify-end text-[11px] text-white/40">
+            <div className="mt-1 flex justify-end text-[11px] text-white/40">
               {reason.length}/255
             </div>
-          </div>
+          </FormField>
         )}
       </div>
     </Modal>
   )
 }
+

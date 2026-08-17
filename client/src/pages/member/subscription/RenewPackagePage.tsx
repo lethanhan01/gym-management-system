@@ -4,12 +4,13 @@ import { useNavigate } from 'react-router-dom'
 import subscriptionService, { type Subscription } from '@/services/subscription.service'
 import { useAuthStore } from '@/stores/authStore'
 import {
-  MemberCard,
-  MemberPage,
-  MemberPageHeader,
-  MemberSkeleton,
-} from '@/components/MemberUI'
-import { Button } from '@/components/ui'
+  Button,
+  Card,
+  Page,
+  PageErrorState,
+  PageHeader,
+  PageSkeleton,
+} from '@/components/ui'
 import { formatDate } from '@/lib/date'
 
 function addDays(date: Date, days: number): Date {
@@ -68,8 +69,8 @@ export default function RenewPackagePage() {
       : null
 
   return (
-    <MemberPage>
-      <MemberPageHeader
+    <Page>
+      <PageHeader
         eyebrow={t('subscription.renew.eyebrow')}
         title={t('subscription.renew.title')}
         description={t('subscription.renew.description')}
@@ -84,12 +85,12 @@ export default function RenewPackagePage() {
         }
       />
       {loading ? (
-        <MemberSkeleton rows={3} />
+        <PageSkeleton rows={3} />
       ) : error ? (
-        <div className="py-16 text-center rogym-text-secondary">{error}</div>
+        <PageErrorState message={error} />
       ) : activeSub ? (
-        <div className="mx-auto flex max-w-md flex-col gap-5">
-          <MemberCard variant="compact" className="flex flex-col gap-4 p-6">
+        <main className="mx-auto flex max-w-md flex-col gap-5">
+          <Card as="article" variant="compact" className="flex flex-col gap-4 p-6">
             <h3 className="text-base font-bold text-white">
               {activeSub.packageName ?? activeSub.package?.name ?? t('subscription.renew.packageFallback')}
             </h3>
@@ -115,7 +116,7 @@ export default function RenewPackagePage() {
                   : '',
               })}
             </p>
-          </MemberCard>
+          </Card>
           <Button
             onClick={continueToPayment}
             variant="primary"
@@ -123,8 +124,9 @@ export default function RenewPackagePage() {
           >
             {t('subscription.renew.buttonPay')}
           </Button>
-        </div>
+        </main>
       ) : null}
-    </MemberPage>
+    </Page>
   )
 }
+

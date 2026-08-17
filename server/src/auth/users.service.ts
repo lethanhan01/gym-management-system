@@ -40,6 +40,14 @@ export class UsersService {
     }
   }
 
+  /** Tim user theo email, bao gom ca user da soft-delete (chi dung de phat hien collision). */
+  async findByEmailIncludingDeleted(email: string): Promise<User | null> {
+    const normalized = normalizeEmail(email)
+    return this.prisma.user.findFirst({
+      where: { OR: [{ emailNormalized: normalized }, { email: normalized }] },
+    })
+  }
+
   /** Tim user theo lineId kem danh sach role (de issue JWT cho LINE login). Khong tra user da xoa. */
   async findByLineIdWithRoles(lineId: string): Promise<UserWithRoles | null> {
     const row = await this.prisma.user.findFirst({
@@ -55,6 +63,11 @@ export class UsersService {
       ...user,
       roles: groups.map((ug) => ug.group.name as Role),
     }
+  }
+
+  /** Tim user theo LINE ID, bao gom ca user da soft-delete (chi dung de phat hien collision). */
+  async findByLineIdIncludingDeleted(lineId: string): Promise<User | null> {
+    return this.prisma.user.findFirst({ where: { lineId } })
   }
 
   /**

@@ -185,6 +185,8 @@ npm run dev               # http://localhost:5173
 
 LIFF Mock cho phép kiểm thử luồng đăng nhập và Messaging API trên máy local mà không gọi LINE. Chỉ dùng cho development; không đặt `LINE_MOCK_ENABLED=true` ở staging hoặc production.
 
+Xem [hướng dẫn LIFF Mock đầy đủ](docs/operations/liff-mock.md) để cấu hình, kiểm tra Inbox, gọi API mock, chạy test và xử lý lỗi.
+
 ```bash
 # Terminal 1 — trong server/; vẫn cần DATABASE_URL local/dev hợp lệ.
 npm run dev:line-mock

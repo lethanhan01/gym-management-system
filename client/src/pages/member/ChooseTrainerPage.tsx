@@ -1,17 +1,19 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
-import { Button } from '@/components/ui/Button'
 import { ArrowLeft } from 'lucide-react'
 import { memberService, type TrainerSummary } from '@/services/member.service'
 import {
-  MemberBadge,
-  MemberCard,
-  MemberEmptyState,
-  MemberPage,
-  MemberPageHeader,
-  MemberSkeleton,
-} from '@/components/MemberUI'
+  Alert,
+  Avatar,
+  Badge,
+  Button,
+  Card,
+  Page,
+  PageEmptyState,
+  PageHeader,
+  PageSkeleton,
+} from '@/components/ui'
 
 export default function ChooseTrainerPage() {
   const { t } = useTranslation('member')
@@ -43,8 +45,8 @@ export default function ChooseTrainerPage() {
   }
 
   return (
-    <MemberPage>
-      <MemberPageHeader
+    <Page>
+      <PageHeader
         eyebrow={t('chooseTrainer.eyebrow')}
         title={t('chooseTrainer.title')}
         description={t('chooseTrainer.description')}
@@ -61,26 +63,25 @@ export default function ChooseTrainerPage() {
       />
 
       {loading ? (
-        <MemberSkeleton rows={4} />
+        <PageSkeleton rows={4} />
       ) : error ? (
-        <MemberEmptyState
+        <PageEmptyState
           title={t('chooseTrainer.errorTitle')}
           description={t('chooseTrainer.errorDescription')}
         />
       ) : trainers.length === 0 ? (
-        <MemberEmptyState
+        <PageEmptyState
           title={t('chooseTrainer.emptyTitle')}
           description={t('chooseTrainer.emptyDescription')}
         />
       ) : (
-        <div className="flex flex-col gap-4">
+        <section className="flex flex-col gap-4">
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {trainers.map((trainer) => {
-              const initials = trainer.fullName.split(' ').map(w => w[0]).filter(Boolean).slice(-2).join('').toUpperCase()
               const isSelected = selected === trainer.staffId
               return (
-                <MemberCard
-                  as="div"
+                <Card
+                  as="article"
                   key={trainer.staffId}
                   onClick={() => setSelected(trainer.staffId)}
                   variant="interactive"
@@ -90,9 +91,7 @@ export default function ChooseTrainerPage() {
                       : 'hover:bg-white/[0.06]'
                   }`}
                 >
-                  <div className="flex items-center justify-center rounded-full shrink-0 rogym-sx-20f77b4b">
-                    <span className="rogym-sx-2e7dd58d">{initials}</span>
-                  </div>
+                  <Avatar name={trainer.fullName} size="lg" shape="circle" tone="teal" />
                   <div>
                     <h3 className="text-sm font-bold text-white">{trainer.fullName}</h3>
                     <p className="mt-1 text-xs rogym-text-secondary">
@@ -100,15 +99,15 @@ export default function ChooseTrainerPage() {
                     </p>
                   </div>
                   {isSelected && (
-                    <MemberBadge tone="success">{t('chooseTrainer.selectedBadge')}</MemberBadge>
+                    <Badge tone="success">{t('chooseTrainer.selectedBadge')}</Badge>
                   )}
-                </MemberCard>
+                </Card>
               )
             })}
           </div>
 
           {submitError && (
-            <p className="text-sm text-red-400 text-center">{submitError}</p>
+            <Alert tone="error" description={submitError} className="justify-center text-center" />
           )}
 
           <div className="flex justify-end pt-2">
@@ -122,8 +121,9 @@ export default function ChooseTrainerPage() {
               {t('chooseTrainer.buttonChoose')}
             </Button>
           </div>
-        </div>
+        </section>
       )}
-    </MemberPage>
+    </Page>
   )
 }
+

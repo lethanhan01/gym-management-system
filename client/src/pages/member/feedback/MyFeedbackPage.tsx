@@ -1,16 +1,20 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Trash2 } from 'lucide-react'
-import { Button, ButtonLink, ConfirmDialog, Pagination, type BadgeTone } from '@/components/ui'
 import {
-  MemberBadge,
-  MemberCard,
-  MemberEmptyState,
-  MemberErrorState,
-  MemberPage,
-  MemberPageHeader,
-  MemberSkeleton,
-} from '@/components/MemberUI'
+  Badge,
+  Button,
+  ButtonLink,
+  Card,
+  ConfirmDialog,
+  Page,
+  PageEmptyState,
+  PageErrorState,
+  PageHeader,
+  PageSkeleton,
+  Pagination,
+  type BadgeTone,
+} from '@/components/ui'
 import { feedbackService, type Feedback } from '@/services/feedback.service'
 import { useAuthStore } from '@/stores/authStore'
 
@@ -106,8 +110,8 @@ export default function MyFeedbackPage() {
   }
 
   return (
-    <MemberPage>
-      <MemberPageHeader
+    <Page>
+      <PageHeader
         eyebrow={t('feedback.list.eyebrow')}
         title={t('feedback.list.title')}
         description={t('feedback.list.description')}
@@ -118,114 +122,119 @@ export default function MyFeedbackPage() {
         }
       />
 
-      {/* Filter tabs */}
-      <div className="flex flex-wrap gap-2">
-        {FILTER_TABS.map(tab => {
-          const count = tab.value ? (countByStatus[tab.value] ?? 0) : feedbacks.length
-          return (
-            <button
-              key={tab.value}
-              onClick={() => switchTab(tab.value)}
-              className={`rogym-filter-chip rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
-                activeTab === tab.value ? 'is-active' : ''
-              }`}
-            >
-              {tab.label}
-              {!loading && count > 0 && (
-                <span
-                  className="rogym-filter-chip__count ml-1.5 inline-flex items-center justify-center rounded-full text-xs font-bold"
-                >
-                  {count}
-                </span>
-              )}
-            </button>
-          )
-        })}
-      </div>
+      <main className="space-y-6">
+        {/* Filter tabs */}
+        <nav aria-label="Feedback filters" className="flex flex-wrap gap-2">
+          {FILTER_TABS.map(tab => {
+            const count = tab.value ? (countByStatus[tab.value] ?? 0) : feedbacks.length
+            return (
+              <button
+                key={tab.value}
+                type="button"
+                onClick={() => switchTab(tab.value)}
+                className={`rogym-filter-chip rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
+                  activeTab === tab.value ? 'is-active' : ''
+                }`}
+              >
+                {tab.label}
+                {!loading && count > 0 && (
+                  <span
+                    className="rogym-filter-chip__count ml-1.5 inline-flex items-center justify-center rounded-full text-xs font-bold"
+                  >
+                    {count}
+                  </span>
+                )}
+              </button>
+            )
+          })}
+        </nav>
 
-      {loading ? (
-        <MemberSkeleton rows={4} />
-      ) : fetchError ? (
-        <MemberErrorState message={fetchError} onRetry={load} />
-      ) : filtered.length === 0 ? (
-        <MemberEmptyState
-          title={t('feedback.list.emptyAll')}
-          description={activeTab ? t('feedback.list.emptyFiltered') : t('feedback.list.emptyNone')}
-          action={
-            !activeTab ? (
-              <ButtonLink to="/member/feedback/send" variant="primary" size="sm">
-                {t('feedback.list.buttonSendFirst')}
-              </ButtonLink>
-            ) : undefined
-          }
-        />
-      ) : (
-        <>
-          <div className="flex flex-col gap-3">
-            {paged.map(fb => {
-              const status = STATUS_MAP[fb.status] ?? { label: fb.status, tone: 'muted' as BadgeTone }
-              const severity = SEVERITY_MAP[fb.severity] ?? { label: fb.severity, tone: 'muted' as BadgeTone }
-              return (
-                <MemberCard
-                  key={fb.feedbackId}
-                  variant="compact"
-                  className="p-4"
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex flex-wrap gap-2">
-                      <MemberBadge tone="muted">{TYPE_MAP[fb.feedbackType] ?? fb.feedbackType}</MemberBadge>
-                      <MemberBadge tone={severity.tone}>{severity.label}</MemberBadge>
-                    </div>
-                    <div className="flex items-center gap-2 shrink-0">
-                      <MemberBadge tone={status.tone}>{status.label}</MemberBadge>
-                      <Button
-                        variant="icon"
-                        size="sm"
-                        onClick={() => setDeletingId(fb.feedbackId)}
-                        title={t('feedback.list.buttonDelete')}
-                        className="rogym-sx-38202e62"
-                      >
-                        <Trash2 size={13} />
-                      </Button>
-                    </div>
-                  </div>
-
-                  <p className="mt-3 text-sm text-white rogym-sx-73cdf811">
-                    {fb.content}
-                  </p>
-
-                  <div className="mt-3 flex items-center justify-between gap-4">
-                    <p className="text-xs rogym-sx-d88f932f">{t('feedback.list.sentAt', { date: fmtDate(fb.createdAt) })}</p>
-                    {fb.status === 'resolved' && fb.response && (
-                      <p className="text-xs max-w-xs text-right rogym-sx-4331cd11">
-                        {t('feedback.list.responsePrefix', { response: fb.response })}
-                      </p>
-                    )}
-                  </div>
-                </MemberCard>
-              )
-            })}
-          </div>
-
-          <Pagination
-            page={page}
-            totalPages={totalPages}
-            onPageChange={p => { setPage(p); window.scrollTo({ top: 0, behavior: 'smooth' }) }}
+        {loading ? (
+          <PageSkeleton rows={4} />
+        ) : fetchError ? (
+          <PageErrorState message={fetchError} onRetry={load} />
+        ) : filtered.length === 0 ? (
+          <PageEmptyState
+            title={t('feedback.list.emptyAll')}
+            description={activeTab ? t('feedback.list.emptyFiltered') : t('feedback.list.emptyNone')}
+            action={
+              !activeTab ? (
+                <ButtonLink to="/member/feedback/send" variant="primary" size="sm">
+                  {t('feedback.list.buttonSendFirst')}
+                </ButtonLink>
+              ) : undefined
+            }
           />
+        ) : (
+          <section aria-label={t('feedback.list.title')} className="space-y-6">
+            <div className="flex flex-col gap-3">
+              {paged.map(fb => {
+                const status = STATUS_MAP[fb.status] ?? { label: fb.status, tone: 'muted' as BadgeTone }
+                const severity = SEVERITY_MAP[fb.severity] ?? { label: fb.severity, tone: 'muted' as BadgeTone }
+                return (
+                  <Card
+                    as="article"
+                    key={fb.feedbackId}
+                    variant="compact"
+                    className="p-4"
+                  >
+                    <header className="flex items-start justify-between gap-3">
+                      <div className="flex flex-wrap gap-2">
+                        <Badge tone="muted">{TYPE_MAP[fb.feedbackType] ?? fb.feedbackType}</Badge>
+                        <Badge tone={severity.tone}>{severity.label}</Badge>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <Badge tone={status.tone}>{status.label}</Badge>
+                        <Button
+                          variant="icon"
+                          size="sm"
+                          onClick={() => setDeletingId(fb.feedbackId)}
+                          title={t('feedback.list.buttonDelete')}
+                          className="rogym-sx-38202e62"
+                        >
+                          <Trash2 size={13} />
+                        </Button>
+                      </div>
+                    </header>
 
-          <ConfirmDialog
-            open={deletingId !== null}
-            title={t('feedback.list.buttonDelete')}
-            description={t('feedback.list.deleteConfirm')}
-            confirmLabel={t('feedback.list.buttonDelete')}
-            cancelLabel={t('feedback.list.buttonCancelDelete')}
-            variant="danger"
-            loading={deletingId ? deletingSet.has(deletingId) : false}
-            onConfirm={() => { if (deletingId) return handleDelete(deletingId) }}
-            onClose={() => setDeletingId(null)}
-          />
-        </>
-      )}
-    </MemberPage>
+                    <p className="mt-3 text-sm text-white rogym-sx-73cdf811">
+                      {fb.content}
+                    </p>
+
+                    <footer className="mt-3 flex items-center justify-between gap-4">
+                      <p className="text-xs rogym-sx-d88f932f">{t('feedback.list.sentAt', { date: fmtDate(fb.createdAt) })}</p>
+                      {fb.status === 'resolved' && fb.response && (
+                        <p className="text-xs max-w-xs text-right rogym-sx-4331cd11">
+                          {t('feedback.list.responsePrefix', { response: fb.response })}
+                        </p>
+                      )}
+                    </footer>
+                  </Card>
+                )
+              })}
+            </div>
+
+            <Pagination
+              page={page}
+              totalPages={totalPages}
+              onPageChange={p => { setPage(p); window.scrollTo({ top: 0, behavior: 'smooth' }) }}
+            />
+
+            <ConfirmDialog
+              open={deletingId !== null}
+              title={t('feedback.list.buttonDelete')}
+              description={t('feedback.list.deleteConfirm')}
+              confirmLabel={t('feedback.list.buttonDelete')}
+              cancelLabel={t('feedback.list.buttonCancelDelete')}
+              variant="danger"
+              loading={deletingId ? deletingSet.has(deletingId) : false}
+              onConfirm={() => { if (deletingId) return handleDelete(deletingId) }}
+              onClose={() => setDeletingId(null)}
+            />
+          </section>
+        )}
+      </main>
+    </Page>
   )
 }
+

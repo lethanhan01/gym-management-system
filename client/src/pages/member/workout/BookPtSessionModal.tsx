@@ -5,9 +5,8 @@ import {
   Dumbbell,
   Loader2,
   User,
-  AlertCircle,
 } from 'lucide-react'
-import { Button, Modal, Select } from '@/components/ui'
+import { Alert, Button, Modal, Select, Skeleton } from '@/components/ui'
 import { toast } from '@/lib/toast'
 import { getApiError, getApiErrorCode } from '@/lib/api-error'
 import {
@@ -220,12 +219,7 @@ export function BookPtSessionModal({
 
         {/* No Trainer Warning */}
         {noTrainer && (
-          <div className="flex items-start gap-3 rounded-xl border border-amber-500/20 bg-amber-500/10 p-3.5 text-sm text-amber-200">
-            <AlertCircle className="mt-0.5 shrink-0 text-amber-400" size={18} />
-            <div>
-              <p className="font-semibold">{t('workout.schedule.booking.noTrainer')}</p>
-            </div>
-          </div>
+          <Alert tone="warning" description={t('workout.schedule.booking.noTrainer')} />
         )}
 
         {/* Horizontal 7-day Date Picker */}
@@ -286,9 +280,10 @@ export function BookPtSessionModal({
             {loadingAvailability ? (
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 py-2">
                 {Array.from({ length: 6 }).map((_, i) => (
-                  <div
+                  <Skeleton
                     key={i}
-                    className="h-12 animate-pulse rounded-xl border border-white/5 bg-white/[0.03]"
+                    height={48}
+                    rounded="xl"
                   />
                 ))}
               </div>
@@ -371,3 +366,4 @@ export function BookPtSessionModal({
     </Modal>
   )
 }
+

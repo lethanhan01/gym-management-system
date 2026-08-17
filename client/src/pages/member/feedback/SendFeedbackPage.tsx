@@ -1,8 +1,16 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Button, ButtonLink, FormField, Textarea } from '@/components/ui'
+import {
+  Alert,
+  Button,
+  ButtonLink,
+  Card,
+  FormField,
+  Page,
+  PageHeader,
+  Textarea,
+} from '@/components/ui'
 import { CheckCircle2, Users, Wrench, Star } from 'lucide-react'
-import { MemberCard, MemberPage, MemberPageHeader } from '@/components/MemberUI'
 import { feedbackService } from '@/services/feedback.service'
 import { useAuthStore } from '@/stores/authStore'
 
@@ -54,8 +62,8 @@ export default function SendFeedbackPage() {
   }
 
   return (
-    <MemberPage>
-      <MemberPageHeader
+    <Page>
+      <PageHeader
         eyebrow={t('feedback.send.eyebrow')}
         title={t('feedback.send.title')}
         description={t('feedback.send.description')}
@@ -66,9 +74,9 @@ export default function SendFeedbackPage() {
         }
       />
 
-      <div className="max-w-2xl mx-auto">
+      <main className="max-w-2xl mx-auto">
         {success ? (
-          <MemberCard variant="compact" className="p-8 flex flex-col items-center text-center">
+          <Card as="article" variant="compact" className="p-8 flex flex-col items-center text-center">
             <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-[rgba(6,195,132,0.12)]">
               <CheckCircle2 size={32} className="rogym-text-accent" />
             </div>
@@ -76,7 +84,7 @@ export default function SendFeedbackPage() {
             <p className="mt-2 text-sm rogym-text-secondary max-w-md">
               {t('feedback.send.successDesc')}
             </p>
-            <div className="mt-8 flex flex-wrap gap-3 justify-center">
+            <footer className="mt-8 flex flex-wrap gap-3 justify-center">
               <ButtonLink
                 variant="primary"
                 to="/member/feedback"
@@ -91,10 +99,10 @@ export default function SendFeedbackPage() {
               >
                 {t('feedback.send.buttonSendAnother')}
               </Button>
-            </div>
-          </MemberCard>
+            </footer>
+          </Card>
         ) : (
-          <MemberCard variant="compact" className="p-6">
+          <Card as="article" variant="compact" className="p-6">
             <form onSubmit={handleSubmit} className="space-y-6">
               {/* Type selector */}
               <div>
@@ -138,7 +146,7 @@ export default function SendFeedbackPage() {
               </div>
 
               {/* Content */}
-              <FormField label={t('feedback.send.sectionContent')}>
+              <FormField label={t('feedback.send.sectionContent')} required>
                 <Textarea
                   rows={5}
                   value={content}
@@ -149,7 +157,7 @@ export default function SendFeedbackPage() {
               </FormField>
 
               {error && (
-                <p className="text-sm text-red-400">{error}</p>
+                <Alert tone="error" description={error} />
               )}
 
               <Button
@@ -162,9 +170,10 @@ export default function SendFeedbackPage() {
                 {t('feedback.send.buttonSubmit')}
               </Button>
             </form>
-          </MemberCard>
+          </Card>
         )}
-      </div>
-    </MemberPage>
+      </main>
+    </Page>
   )
 }
+
