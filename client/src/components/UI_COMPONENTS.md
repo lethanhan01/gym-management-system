@@ -284,7 +284,7 @@ Bộ 3 component kết hợp tạo nên thanh công cụ danh sách dữ liệu:
    - Nhấn `Enter` để search tức thì, nhấn `Escape` hoặc nút `X` để clear tìm kiếm.
 2. **`FilterDropdown`** ([`FilterDropdown.tsx`](file:///c:/Users/An/Documents/IT4549-ITSS/gym-management-system/client/src/components/ui/FilterDropdown.tsx)):
    - Nút bật menu popover chứa các bộ lọc phụ (trạng thái, chi nhánh, khoảng giá...).
-   - Hiển thị **Badge số lượng bộ lọc đang kích hoạt** (`activeCount`), có sẵn nút "Xóa lọc", "Hủy", "Lưu".
+   - Hiển thị **Badge số lượng bộ lọc đang kích hoạt** (`activeCount`), chân popup tối ưu 2 nút cân đối "Hủy" và "Lưu".
 3. **`SearchToolbar`** ([`SearchToolbar.tsx`](file:///c:/Users/An/Documents/IT4549-ITSS/gym-management-system/client/src/components/ui/SearchToolbar.tsx)):
    - Component mẹ kết hợp đồng bộ: Ô tìm kiếm + Khe cắm bộ lọc (`filters`) + Khe cắm nút hành động (`actions`).
    - Tự động chuyển đổi layout Responsive: Trên mobile xếp dọc (`flex-col`), trên desktop xếp ngang (`flex-row`).
@@ -301,7 +301,6 @@ Bộ 3 component kết hợp tạo nên thanh công cụ danh sách dữ liệu:
       onOpenChange={setFilterOpen}
       activeCount={activeFilterCount}
       onApply={handleApplyFilter}
-      onClear={handleClearFilter}
       title="Lọc hội viên"
     >
       <Select value={status} onValueChange={setStatus}>

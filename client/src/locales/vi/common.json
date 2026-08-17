@@ -101,6 +101,9 @@
     "placeholder": "Tìm kiếm...",
     "clear": "Xóa tìm kiếm"
   },
+  "filter": {
+    "title": "Bộ lọc"
+  },
   "pagination": {
     "prev": "Trước",
     "next": "Sau",

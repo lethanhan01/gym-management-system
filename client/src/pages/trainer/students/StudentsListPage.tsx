@@ -139,11 +139,6 @@ export default function StudentsListPage() {
               updateParam('status', draftStatus)
               setFilterOpen(false)
             }}
-            onClear={() => {
-              setDraftStatus('')
-              updateParam('status', '')
-              setFilterOpen(false)
-            }}
             title={t('students.list.filterTitle', 'Bộ lọc')}
           >
             <div>

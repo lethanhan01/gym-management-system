@@ -101,6 +101,9 @@
     "placeholder": "検索...",
     "clear": "検索をクリア"
   },
+  "filter": {
+    "title": "フィルター"
+  },
   "pagination": {
     "prev": "前へ",
     "next": "次へ",

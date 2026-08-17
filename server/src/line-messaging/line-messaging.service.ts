@@ -5,6 +5,10 @@ import { TrainingSessionStatus } from '@prisma/client'
 import { createHmac, timingSafeEqual } from 'crypto'
 import { NotificationsService } from '../notifications/notifications.service'
 import { PrismaService } from '../prisma/prisma.service'
+import {
+  LINE_MOCK_USER_ID,
+  LINE_MOCK_WEBHOOK_SECRET,
+} from '../line-mock/constants'
 
 type LineWebhookBody = {
   events?: LineWebhookEvent[]
@@ -32,6 +36,15 @@ type LineMessage = {
       }
     }>
   }
+}
+
+export type LineMockOutboxMessage = {
+  id: string
+  kind: 'reply' | 'push'
+  createdAt: string
+  recipient: string
+  payload: Record<string, unknown>
+  liffUrl?: string
 }
 
 type TrainingLineEvent = 'created' | 'updated' | 'cancelled' | 'reminder' | 'starting'
@@ -98,6 +111,7 @@ const LINE_MESSAGE_TEMPLATES: Record<
 @Injectable()
 export class LineMessagingService {
   private readonly logger = new Logger(LineMessagingService.name)
+  private readonly mockOutbox: LineMockOutboxMessage[] = []
 
   constructor(
     private readonly prisma: PrismaService,
@@ -124,6 +138,32 @@ export class LineMessagingService {
     const events = Array.isArray(body.events) ? body.events : []
     await Promise.all(events.map((event) => this.handleEvent(event)))
     return { data: { processedEvents: events.length, enabled: true } }
+  }
+
+  isMockEnabled() {
+    return this.config.get<string>('LINE_MOCK_ENABLED') === 'true'
+  }
+
+  getMockMessages(): LineMockOutboxMessage[] {
+    this.assertMockEnabled()
+    return [...this.mockOutbox].reverse()
+  }
+
+  clearMockMessages() {
+    this.assertMockEnabled()
+    this.mockOutbox.length = 0
+  }
+
+  async simulateMockEvent(type: 'follow' | 'unfollow') {
+    this.assertMockEnabled()
+    const event: LineWebhookEvent = {
+      type,
+      source: { type: 'user', userId: LINE_MOCK_USER_ID },
+      ...(type === 'follow' ? { replyToken: `mock-reply-${Date.now()}` } : {}),
+    }
+    const body = Buffer.from(JSON.stringify({ events: [event] }))
+    const signature = createHmac('sha256', LINE_MOCK_WEBHOOK_SECRET).update(body).digest('base64')
+    return this.handleWebhook(body, signature)
   }
 
   async safePushTrainingSessionEvent(kind: TrainingLineEvent, sessionId: bigint) {
@@ -303,6 +343,12 @@ export class LineMessagingService {
   }
 
   private buildLiffUrl(redirectPath: string) {
+    if (this.isMockEnabled()) {
+      const url = new URL('/liff', this.config.get<string>('CLIENT_URL') ?? 'http://localhost:5173')
+      url.searchParams.set('redirect', redirectPath)
+      return url.toString()
+    }
+
     const base = this.config.get<string>('LINE_LIFF_URL')
     if (!base) throw new Error('LINE_LIFF_URL is required when LINE messaging is enabled')
     const url = new URL(base)
@@ -319,6 +365,19 @@ export class LineMessagingService {
   }
 
   private async postLine(endpoint: 'reply' | 'push', body: unknown) {
+    if (this.isMockEnabled()) {
+      const payload = JSON.parse(JSON.stringify(body)) as Record<string, unknown>
+      this.mockOutbox.push({
+        id: `${Date.now()}-${this.mockOutbox.length + 1}`,
+        kind: endpoint,
+        createdAt: new Date().toISOString(),
+        recipient: this.getMockRecipient(endpoint, payload),
+        payload,
+        liffUrl: this.findLiffUrl(payload),
+      })
+      return true
+    }
+
     const token = this.config.get<string>('LINE_CHANNEL_ACCESS_TOKEN')
     if (!this.isMessagingEnabled() || !token) return false
 
@@ -340,7 +399,9 @@ export class LineMessagingService {
   }
 
   private assertValidSignature(rawBody: Buffer, signature?: string) {
-    const secret = this.config.get<string>('LINE_CHANNEL_SECRET')
+    const secret = this.isMockEnabled()
+      ? LINE_MOCK_WEBHOOK_SECRET
+      : this.config.get<string>('LINE_CHANNEL_SECRET')
     if (!secret || !signature) {
       throw new UnauthorizedException({
         success: false,
@@ -365,10 +426,11 @@ export class LineMessagingService {
   }
 
   private isMessagingEnabled() {
-    return this.config.get<string>('LINE_MESSAGING_ENABLED') === 'true'
+    return this.isMockEnabled() || this.config.get<string>('LINE_MESSAGING_ENABLED') === 'true'
   }
 
   private canPushMessages() {
+    if (this.isMockEnabled()) return true
     return (
       this.isMessagingEnabled() &&
       !!this.config.get<string>('LINE_CHANNEL_ACCESS_TOKEN') &&
@@ -404,5 +466,30 @@ export class LineMessagingService {
   private describeError(error: unknown) {
     if (error instanceof Error) return error.message
     return String(error)
+  }
+
+  private assertMockEnabled() {
+    if (!this.isMockEnabled()) {
+      throw new Error('LINE Mock is disabled')
+    }
+  }
+
+  private getMockRecipient(endpoint: 'reply' | 'push', payload: Record<string, unknown>) {
+    const key = endpoint === 'reply' ? 'replyToken' : 'to'
+    return typeof payload[key] === 'string' ? payload[key] : 'unknown'
+  }
+
+  private findLiffUrl(payload: Record<string, unknown>): string | undefined {
+    const messages = payload.messages
+    if (!Array.isArray(messages)) return undefined
+    for (const message of messages) {
+      const items = (message as { quickReply?: { items?: unknown[] } }).quickReply?.items
+      if (!Array.isArray(items)) continue
+      for (const item of items) {
+        const uri = (item as { action?: { uri?: unknown } }).action?.uri
+        if (typeof uri === 'string') return uri
+      }
+    }
+    return undefined
   }
 }

@@ -817,6 +817,7 @@
       "unitDays": "日",
       "unitExercises": "エクササイズ",
       "unitSeconds": "秒",
+      "unitMinPerDay": "分/日（推定）",
       "dayHeader": "{{n}}日目 — {{name}}",
       "exerciseCount": "{{count}}エクササイズ",
       "buttonDeleteDay": "この日を削除しますか？",

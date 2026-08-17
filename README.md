@@ -181,7 +181,24 @@ npm run dev               # http://localhost:5173
 
 > Mở 2 terminal song song: một cho `server/`, một cho `client/`. Truy cập ứng dụng tại `http://localhost:5173`.
 
-### 6.7 Script tiện ích
+### 6.7 Phát triển LIFF với môi trường Mock
+
+LIFF Mock cho phép kiểm thử luồng đăng nhập và Messaging API trên máy local mà không gọi LINE. Chỉ dùng cho development; không đặt `LINE_MOCK_ENABLED=true` ở staging hoặc production.
+
+```bash
+# Terminal 1 — trong server/; vẫn cần DATABASE_URL local/dev hợp lệ.
+npm run dev:line-mock
+
+# Terminal 2 — trong client/
+cp .env.liff-mock.example .env.liff-mock
+npm run dev:liff-mock
+```
+
+Mở `http://localhost:5173/liff` để đăng nhập bằng member mock. Mở `http://localhost:5173/dev/line-mock` để xem outbox, xóa tin nhắn, hoặc mô phỏng webhook Follow/Unfollow. Outbox chỉ sống trong bộ nhớ và mọi push/reply đều bị chặn trước khi tới LINE.
+
+LIFF Mock không thay thế kiểm thử cuối cùng trên LINE thật: login redirect, quyền cấp bởi LINE, deep link và hành vi LIFF browser vẫn phải được xác minh với LIFF channel đã cấu hình.
+
+### 6.8 Script tiện ích
 
 **`client/`**
 
@@ -198,6 +215,7 @@ npm run dev               # http://localhost:5173
 | Lệnh | Mô tả |
 |---|---|
 | `npm run dev` | `tsx watch src/index.ts` |
+| `npm run dev:line-mock` | Chạy backend local với `LINE_MOCK_ENABLED=true`, không gửi request đến LINE |
 | `npm run build` | Compile TypeScript ra `dist/` |
 | `npm start` | Chạy bản build (`node dist/index.js`) |
 | `npm run lint` | ESLint cho `src/` |

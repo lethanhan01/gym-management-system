@@ -7,6 +7,23 @@ const lineConfigBaseEnv = {
 }
 
 describe('validateConfig LINE messaging', () => {
+  it('rejects LINE Mock in production', () => {
+    expect(() =>
+      validateConfig({
+        ...lineConfigBaseEnv,
+        NODE_ENV: 'production',
+        DB_CONNECTION_MODE: 'supavisor-session',
+        LINE_MOCK_ENABLED: 'true',
+      })
+    ).toThrow('LINE_MOCK_ENABLED: must be false in production')
+  })
+
+  it('allows local LINE Mock without real messaging credentials', () => {
+    expect(
+      validateConfig({ ...lineConfigBaseEnv, LINE_MOCK_ENABLED: 'true' }).LINE_MOCK_ENABLED
+    ).toBe('true')
+  })
+
   it('defaults LINE_MESSAGE_LOCALE to vi', () => {
     const config = validateConfig({
       ...lineConfigBaseEnv,

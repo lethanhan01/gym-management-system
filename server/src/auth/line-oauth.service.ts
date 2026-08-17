@@ -14,6 +14,12 @@ import { UsersService, UserWithRoles } from './users.service'
 import { AuditService } from '../common/audit/audit.service'
 import { JwtPayload } from './types/jwt-payload.interface'
 import type { LoginResult, RequestContext } from './auth.service'
+import {
+  LINE_MOCK_ID_TOKEN,
+  LINE_MOCK_USER_EMAIL,
+  LINE_MOCK_USER_ID,
+  LINE_MOCK_USER_NAME,
+} from '../line-mock/constants'
 
 interface LineProfile {
   sub: string
@@ -164,6 +170,21 @@ export class LineOAuthService {
   }
 
   private async verifyLineToken(idToken: string): Promise<LineProfile> {
+    if (this.config.get<string>('LINE_MOCK_ENABLED') === 'true') {
+      if (idToken !== LINE_MOCK_ID_TOKEN) {
+        throw new UnauthorizedException({
+          success: false,
+          code: 'LINE_AUTH_FAILED',
+          message: 'LINE Mock ID token không hợp lệ',
+        })
+      }
+      return {
+        sub: LINE_MOCK_USER_ID,
+        name: LINE_MOCK_USER_NAME,
+        email: LINE_MOCK_USER_EMAIL,
+      }
+    }
+
     const channelId = this.config.get<string>('LINE_CHANNEL_ID')
     if (!channelId) {
       throw new UnauthorizedException({

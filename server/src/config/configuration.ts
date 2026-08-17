@@ -67,6 +67,7 @@ export class EnvironmentVariables {
 
   // LINE LIFF authentication. Required khi feature LINE login được bật.
   @IsOptional() @IsString() LINE_CHANNEL_ID?: string
+  @IsOptional() @IsBooleanString() LINE_MOCK_ENABLED: string = 'false'
 
   // LINE Messaging API. Optional v1.0 — bật bằng LINE_MESSAGING_ENABLED=true.
   @IsOptional() @IsString() LINE_CHANNEL_SECRET?: string
@@ -100,10 +101,19 @@ export function validateConfig(raw: Record<string, unknown>): EnvironmentVariabl
     throw new Error(`Invalid environment configuration:\n${detail}`)
   }
   validateDatabaseConnectionConfig(config, raw)
+  validateLineMockConfig(config)
   validateLineMessagingConfig(config)
   validateSmtpConfig(config)
   validateExerciseDbConfig(config)
   return config
+}
+
+function validateLineMockConfig(config: EnvironmentVariables) {
+  if (config.NODE_ENV === NodeEnv.Production && config.LINE_MOCK_ENABLED === 'true') {
+    throw new Error(
+      'Invalid environment configuration:\n  - LINE_MOCK_ENABLED: must be false in production'
+    )
+  }
 }
 
 function validateExerciseDbConfig(config: EnvironmentVariables) {
@@ -224,6 +234,7 @@ function validateSmtpConfig(config: EnvironmentVariables) {
 }
 
 function validateLineMessagingConfig(config: EnvironmentVariables) {
+  if (config.LINE_MOCK_ENABLED === 'true') return
   if (config.LINE_MESSAGING_ENABLED !== 'true') return
 
   const liffUrl = config.LINE_LIFF_URL?.trim() ?? ''

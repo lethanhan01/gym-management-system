@@ -241,11 +241,6 @@ export default function WorkoutPlansPage() {
               setStatus(draftStatus)
               setFilterOpen(false)
             }}
-            onClear={() => {
-              setDraftStatus('')
-              setStatus('')
-              setFilterOpen(false)
-            }}
             title={t('plans.workout.filterTitle', 'Bộ lọc')}
           >
             <div>

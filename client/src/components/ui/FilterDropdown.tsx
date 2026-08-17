@@ -43,13 +43,13 @@ export function FilterDropdown({
   activeCount = 0,
   children,
   onApply,
-  onClear,
   title,
   className,
   size = 'md',
   triggerClassName,
 }: FilterDropdownProps) {
   const { t: tc } = useTranslation('common')
+  const displayTitle = title ?? tc('filter.title', 'Bộ lọc')
   return (
     <div className={cn('relative shrink-0', className)}>
       <button
@@ -81,20 +81,11 @@ export function FilterDropdown({
         <>
           <div className="fixed inset-0 z-10" onClick={() => onOpenChange(false)} />
           <div className="absolute right-0 top-full z-20 mt-2 min-w-[260px] rounded-2xl border border-[var(--rogym-border-teal-dim)] bg-[var(--rogym-bg-card)] p-5 shadow-[0_12px_40px_rgba(0,0,0,0.6)] backdrop-blur-xl">
-            {title && <p className="mb-4 text-sm font-bold text-white">{title}</p>}
+            {displayTitle && <p className="mb-4 text-sm font-bold text-white">{displayTitle}</p>}
 
             <div className="mb-5 space-y-4">{children}</div>
 
-            <div className="flex justify-end gap-2">
-              {onClear && (
-                <Button
-                  variant="outline-white"
-                  size="compact"
-                  onClick={onClear}
-                >
-                  {tc('button.clear', 'Xóa lọc')}
-                </Button>
-              )}
+            <div className="grid grid-cols-2 gap-2">
               <Button
                 variant="outline-white"
                 size="compact"

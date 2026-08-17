@@ -817,6 +817,7 @@
       "unitDays": "ngày",
       "unitExercises": "bài tập",
       "unitSeconds": "giây",
+      "unitMinPerDay": "phút/ngày (ước tính)",
       "dayHeader": "Ngày {{n}} — {{name}}",
       "exerciseCount": "{{count}} bài tập",
       "buttonDeleteDay": "Xóa ngày này?",

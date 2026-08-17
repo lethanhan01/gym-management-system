@@ -183,6 +183,44 @@ describe('LineMessagingService', () => {
     await expect(service.safePushTrainingSessionEvent('updated', 1n)).resolves.toBe(false)
   })
 
+  it('captures mock messages locally and never calls the LINE API', async () => {
+    env.LINE_MOCK_ENABLED = 'true'
+    env.CLIENT_URL = 'http://localhost:5173'
+    mockPrisma.trainingSession.findFirst.mockResolvedValue(makeSession())
+
+    await expect(service.safePushTrainingSessionEvent('created', 1n)).resolves.toBe(true)
+
+    expect(mockFetch).not.toHaveBeenCalled()
+    expect(service.getMockMessages()).toEqual([
+      expect.objectContaining({
+        kind: 'push',
+        recipient: 'U123',
+        liffUrl:
+          'http://localhost:5173/liff?redirect=%2Fmember%2Fworkout%2Fsessions%3FsessionId%3D1',
+      }),
+    ])
+  })
+
+  it('simulates a signed follow webhook and can clear its mock outbox', async () => {
+    env.LINE_MOCK_ENABLED = 'true'
+    env.CLIENT_URL = 'http://localhost:5173'
+
+    await expect(service.simulateMockEvent('follow')).resolves.toEqual({
+      data: { processedEvents: 1, enabled: true },
+    })
+    expect(mockFetch).not.toHaveBeenCalled()
+    expect(service.getMockMessages()).toEqual([
+      expect.objectContaining({
+        kind: 'reply',
+        recipient: expect.stringMatching(/^mock-reply-/),
+        liffUrl: 'http://localhost:5173/liff?redirect=%2Fmember',
+      }),
+    ])
+
+    service.clearMockMessages()
+    expect(service.getMockMessages()).toEqual([])
+  })
+
   it('creates both in-app reminders without requiring LINE, and skips LINE when deduped', async () => {
     env.LINE_MESSAGING_ENABLED = 'false'
     mockPrisma.trainingSession.findMany.mockResolvedValue([
