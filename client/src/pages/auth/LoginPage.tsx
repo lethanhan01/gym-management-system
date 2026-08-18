@@ -53,7 +53,7 @@ export default function LoginPage() {
             suppressAuthRedirect: true,
           })
           const hasActiveSub = hasActiveSubscription(subs)
-          setAuth(user, token)
+          setAuth(user, token, 'credentials')
           setSubscriptionResolved(hasActiveSub, memberId)
           if (hasActiveSub) {
             navigate('/member', { replace: true })
@@ -83,16 +83,16 @@ export default function LoginPage() {
             return
           }
 
-          setAuth(user, token)
+          setAuth(user, token, 'credentials')
           setSubscriptionError(classifySubscriptionCheckError(subscriptionError), String(user.memberId))
           navigate('/member', { replace: true })
         }
       } else if (isMember) {
         // DashboardLayout refreshes /auth/me once and owns the missing-profile error state.
-        setAuth(user, token)
+        setAuth(user, token, 'credentials')
         navigate('/member', { replace: true })
       } else {
-        setAuth(user, token)
+        setAuth(user, token, 'credentials')
         navigate(roleRouteMap[user.roles[0]] ?? '/', { replace: true })
       }
     } catch (err) {

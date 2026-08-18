@@ -7,6 +7,12 @@ import { LINE_MOCK_ID_TOKEN, LINE_MOCK_USER_EMAIL, LINE_MOCK_USER_ID } from '../
 import { PrismaService } from '../prisma/prisma.service'
 import { AuditService } from '../common/audit/audit.service'
 import { UsersService } from './users.service'
+import { jwtVerify } from 'jose'
+
+jest.mock('jose', () => ({
+  createRemoteJWKSet: jest.fn(() => ({})),
+  jwtVerify: jest.fn(),
+}))
 
 const env: Record<string, string | undefined> = {
   LINE_MOCK_ENABLED: 'true',
@@ -47,11 +53,12 @@ const users = {
 const jwt = { signAsync: jest.fn().mockResolvedValue('app-jwt') }
 const audit = { log: jest.fn().mockResolvedValue(undefined) }
 
-describe('LineOAuthService LIFF Mock', () => {
+describe('LineOAuthService LIFF Mock & JWKS Verification', () => {
   let service: LineOAuthService
 
   beforeEach(() => {
     env.LINE_MOCK_ENABLED = 'true'
+    env.LINE_CHANNEL_ID = 'test-channel-id'
     jest.clearAllMocks()
     config.get.mockImplementation((key: string) => env[key])
     users.findByLineIdWithRoles.mockResolvedValue(user)
@@ -82,20 +89,61 @@ describe('LineOAuthService LIFF Mock', () => {
     await expect(service.lineLogin('another-token')).rejects.toBeInstanceOf(UnauthorizedException)
   })
 
-  it('does not accept the opaque mock token when mock mode is disabled', async () => {
+  it('verifies token via JWKS when mock mode is disabled', async () => {
     env.LINE_MOCK_ENABLED = 'false'
-    env.LINE_CHANNEL_ID = 'real-channel-id'
+    ;(jwtVerify as jest.Mock).mockResolvedValueOnce({
+      payload: {
+        sub: LINE_MOCK_USER_ID,
+        name: 'Real LINE Member',
+        email: 'real@line.me',
+      },
+    })
+
+    await expect(service.lineLogin('valid-real-id-token')).resolves.toMatchObject({
+      accessToken: 'app-jwt',
+      user: { userId: '1', roles: ['member'] },
+    })
+    expect(jwtVerify).toHaveBeenCalledWith(
+      'valid-real-id-token',
+      expect.anything(),
+      expect.objectContaining({
+        issuer: 'https://access.line.me',
+        audience: 'test-channel-id',
+      })
+    )
+  })
+
+  it('falls back to HTTP verify when JWKS verification fails', async () => {
+    env.LINE_MOCK_ENABLED = 'false'
+    ;(jwtVerify as jest.Mock).mockRejectedValueOnce(new Error('JWKS verification error'))
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: jest.fn().mockResolvedValue({
+        sub: LINE_MOCK_USER_ID,
+        name: 'Fallback Member',
+        email: 'fallback@line.me',
+      }),
+    }) as unknown as typeof fetch
+
+    await expect(service.lineLogin('fallback-token')).resolves.toMatchObject({
+      accessToken: 'app-jwt',
+    })
+    expect(global.fetch).toHaveBeenCalledWith(
+      'https://api.line.me/oauth2/v2.1/verify',
+      expect.objectContaining({ method: 'POST' })
+    )
+  })
+
+  it('does not accept the token when both JWKS and HTTP verify fail', async () => {
+    env.LINE_MOCK_ENABLED = 'false'
+    ;(jwtVerify as jest.Mock).mockRejectedValueOnce(new Error('JWKS signature invalid'))
     global.fetch = jest.fn().mockResolvedValue({
       ok: false,
       status: 400,
       text: jest.fn().mockResolvedValue('{}'),
     }) as unknown as typeof fetch
 
-    await expect(service.lineLogin(LINE_MOCK_ID_TOKEN)).rejects.toBeInstanceOf(UnauthorizedException)
-    expect(global.fetch).toHaveBeenCalledWith(
-      'https://api.line.me/oauth2/v2.1/verify',
-      expect.objectContaining({ method: 'POST' })
-    )
+    await expect(service.lineLogin('invalid-token')).rejects.toBeInstanceOf(UnauthorizedException)
   })
 
   it('links an active account with the same email without creating a member', async () => {

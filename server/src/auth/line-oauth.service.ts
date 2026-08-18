@@ -20,6 +20,7 @@ import {
   LINE_MOCK_USER_ID,
   LINE_MOCK_USER_NAME,
 } from '../line-mock/constants'
+import { createRemoteJWKSet, jwtVerify, type JWTPayload } from 'jose'
 
 interface LineProfile {
   sub: string
@@ -28,9 +29,22 @@ interface LineProfile {
   picture?: string
 }
 
+interface LineIdTokenPayload extends JWTPayload {
+  name?: string
+  email?: string
+  picture?: string
+}
+
 @Injectable()
 export class LineOAuthService {
   private readonly logger = new Logger(LineOAuthService.name)
+  private readonly lineJWKS = createRemoteJWKSet(
+    new URL('https://api.line.me/oauth2/v2.1/certs'),
+    {
+      cacheMaxAge: 24 * 60 * 60 * 1000,
+      cooldownDuration: 30 * 1000,
+    }
+  )
 
   constructor(
     private readonly prisma: PrismaService,
@@ -221,6 +235,34 @@ export class LineOAuthService {
       })
     }
 
+    // 1. Thu verify token offline qua JWKS cache (giam latency roundtrip)
+    try {
+      const { payload } = await jwtVerify<LineIdTokenPayload>(idToken, this.lineJWKS, {
+        issuer: 'https://access.line.me',
+        audience: channelId,
+      })
+
+      if (!payload.sub) {
+        throw new Error('LINE ID token missing subject claim')
+      }
+
+      return {
+        sub: payload.sub,
+        name: (payload.name as string | undefined) ?? 'LINE User',
+        email: payload.email as string | undefined,
+        picture: payload.picture as string | undefined,
+      }
+    } catch (jwksErr) {
+      this.logger.warn(
+        `LINE JWKS verify failed, falling back to HTTP verify: ${jwksErr instanceof Error ? jwksErr.message : String(jwksErr)}`
+      )
+    }
+
+    // 2. Fallback ve LINE verify HTTP API
+    return this.verifyLineTokenViaHttp(idToken, channelId)
+  }
+
+  private async verifyLineTokenViaHttp(idToken: string, channelId: string): Promise<LineProfile> {
     const body = new URLSearchParams({ id_token: idToken, client_id: channelId })
     let res: Response
     try {
