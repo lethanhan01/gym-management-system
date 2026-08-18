@@ -14,10 +14,10 @@ import {
   SearchToolbar,
   Select,
   ResponsiveTable,
-  Button,
   ButtonLink,
   Badge,
   StatusBadge,
+  TabsBar,
   type ColumnDef,
 } from '@/components/ui'
 
@@ -231,22 +231,17 @@ export default function UsersOverviewPage() {
       />
 
       {/* Tabs */}
-      <div className="flex gap-1 rounded-2xl border border-[var(--rogym-border-teal-dim)] bg-white/[0.025] p-1 w-fit">
-        <Button
-          variant={tab === 'members' ? 'primary' : 'text-muted'}
-          size="compact"
-          onClick={() => switchTab('members')}
-        >
-          {t('usersOverview.tabs.members')}
-        </Button>
-        <Button
-          variant={tab === 'staff' ? 'primary' : 'text-muted'}
-          size="compact"
-          onClick={() => switchTab('staff')}
-        >
-          {t('usersOverview.tabs.staff')}
-        </Button>
-      </div>
+      <TabsBar
+        items={[
+          { value: 'members', label: t('usersOverview.tabs.members'), badge: memberTotal },
+          { value: 'staff', label: t('usersOverview.tabs.staff'), badge: staffTotal },
+        ]}
+        value={tab}
+        onChange={(v) => switchTab(v as Tab)}
+        variant="segmented"
+        size="sm"
+        aria-label={t('usersOverview.title')}
+      />
 
       {/* Filters */}
       <SearchToolbar

@@ -30,6 +30,14 @@ type PlanDayOption = Pick<
   'planDayId' | 'dayNumber' | 'weekNumber' | 'dayOfWeek' | 'name'
 >
 
+type Slot = {
+  slotIndex: number
+  startTime: string
+  endTime: string
+  available: boolean
+  reason?: string
+}
+
 export default function CreateSessionPage() {
   const { t } = useTranslation('trainer')
   const { id } = useParams()
@@ -50,6 +58,13 @@ export default function CreateSessionPage() {
   const [linkedPlanDayName, setLinkedPlanDayName] = useState<string | null>(null)
   const [startTime, setStartTime] = useState('')
   const [duration, setDuration] = useState(60)
+  const [selectedDate, setSelectedDate] = useState(() => {
+    const d = new Date()
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+  })
+  const [availabilitySlots, setAvailabilitySlots] = useState<Slot[]>([])
+  const [selectedSlot, setSelectedSlot] = useState<{ startTime: string; endTime: string } | null>(null)
+  const [slotsLoading, setSlotsLoading] = useState(false)
   const [loading, setLoading] = useState(true)
   const [editBlocked, setEditBlocked] = useState(false)
   const [submitting, setSubmitting] = useState(false)
@@ -155,13 +170,45 @@ id ? trainingSessionService.getSession(id) : Promise.resolve(null),
     }
   }, [editing, memberId, t])
 
-  const endTime = useMemo(() => {
-    if (!startTime || !Number.isFinite(duration) || duration <= 0) return ''
-    const startIso = localDateTimeInputToIso(startTime)
-    if (!startIso) return ''
-    const start = new Date(startIso)
+  useEffect(() => {
+    if (editing || !memberId) {
+      setAvailabilitySlots([])
+      setSelectedSlot(null)
+      return
+    }
+
+    let active = true
+    setSlotsLoading(true)
+    setSelectedSlot(null)
+
+    trainingSessionService
+      .getTrainerAvailabilityForTrainer(selectedDate, '', memberId)
+      .then((data) => {
+        if (!active) return
+        setAvailabilitySlots(data.slots)
+      })
+      .catch(() => {
+        if (!active) return
+        setAvailabilitySlots([])
+      })
+      .finally(() => {
+        if (active) setSlotsLoading(false)
+      })
+
+    return () => { active = false }
+  }, [editing, memberId, selectedDate])
+
+  const computedStartTime = useMemo(() => {
+    if (selectedSlot) return selectedSlot.startTime
+    return localDateTimeInputToIso(startTime) || ''
+  }, [selectedSlot, startTime])
+
+  const computedEndTime = useMemo(() => {
+    if (selectedSlot) return selectedSlot.endTime
+    if (!computedStartTime || !Number.isFinite(duration) || duration <= 0) return ''
+    const start = new Date(computedStartTime)
     return new Date(start.getTime() + duration * 60000).toISOString()
-  }, [duration, startTime])
+  }, [selectedSlot, computedStartTime, duration])
 
   const selectedPlan = useMemo(
     () => plans.find((plan) => plan.planId === selectedPlanId) ?? null,
@@ -183,15 +230,14 @@ id ? trainingSessionService.getSession(id) : Promise.resolve(null),
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault()
-    const startIso = localDateTimeInputToIso(startTime)
-    if (!memberId || !roomId || !startIso || !endTime || !hasWorkoutPlanLink) return
+    if (!memberId || !roomId || !computedStartTime || !computedEndTime || !hasWorkoutPlanLink) return
     setSubmitting(true)
     setError(null)
     try {
       const payload = {
         roomId,
-        startTime: startIso,
-        endTime,
+        startTime: computedStartTime,
+        endTime: computedEndTime,
       }
       if (editing && id) {
 await trainingSessionService.updateSession(id, payload)
@@ -200,7 +246,7 @@ await trainingSessionService.updateSession(id, payload)
         if (!assignmentId) {
           const assignment = await workoutService.assignPlan(memberId, {
             planId: Number(selectedPlanId),
-            startDate: startTime.slice(0, 10),
+            startDate: selectedDate,
           })
           assignmentId = assignment.assignmentId
         }
@@ -339,35 +385,98 @@ await trainingSessionService.createSession({
             ))}
           </TrainerSelect>
         </label>
-        <div className="grid gap-4 md:grid-cols-2">
-          <div className="block space-y-2">
+        {memberId && !editing ? (
+          <div className="space-y-2">
             <span className="rogym-field-label">{t('sessions.create.fieldStartTime')}</span>
-            <DateTimePickerInput
-              value={startTime}
-              onChange={setStartTime}
-              placeholder={t('sessions.create.startTimePlaceholder')}
-              aria-label={t('sessions.create.fieldStartTime')}
-              disabled={editBlocked}
-            />
-          </div>
-          <label className="block space-y-2">
-            <span className="rogym-field-label">{t('sessions.create.fieldDuration')}</span>
             <input
+              type="date"
               className="rogym-input"
-              type="number"
-              min={15}
-              max={360}
-              step={15}
-              value={duration}
-              onChange={(event) => setDuration(Number(event.target.value))}
-              required
+              value={selectedDate}
+              onChange={(e) => setSelectedDate(e.target.value)}
+              min={new Date().toISOString().slice(0, 10)}
             />
-          </label>
-        </div>
+            {slotsLoading ? (
+              <div className="grid grid-cols-3 gap-2 py-2">
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <div key={i} className="h-12 animate-pulse rounded-xl bg-white/5" />
+                ))}
+              </div>
+            ) : availabilitySlots.length > 0 ? (
+              <div className="grid grid-cols-3 gap-2">
+                {availabilitySlots.map((slot) => {
+                  const isSelected =
+                    selectedSlot?.startTime === slot.startTime &&
+                    selectedSlot?.endTime === slot.endTime
+                  const fmt = (iso: string) =>
+                    new Date(iso).toLocaleTimeString('vi-VN', {
+                      hour: '2-digit',
+                      minute: '2-digit',
+                      hour12: false,
+                      timeZone: 'Asia/Ho_Chi_Minh',
+                    })
+                  return (
+                    <button
+                      key={slot.slotIndex}
+                      type="button"
+                      disabled={!slot.available}
+                      onClick={() => setSelectedSlot(slot)}
+                      className={`rounded-xl px-3 py-2 text-center text-sm font-semibold transition-all ${
+                        isSelected
+                          ? 'border border-[var(--rogym-accent)] bg-[var(--rogym-accent)]/20 text-white'
+                          : slot.available
+                            ? 'border border-white/10 bg-white/[0.02] text-white hover:border-[var(--rogym-accent)]/40'
+                            : 'cursor-not-allowed border border-white/5 bg-white/[0.01] text-white/25 opacity-50'
+                      }`}
+                    >
+                      {fmt(slot.startTime)} - {fmt(slot.endTime)}
+                      {!slot.available && (
+                        <span className="mt-0.5 block text-[10px] font-normal text-rose-400/80">
+                          {slot.reason === 'PAST_TIME'
+                            ? t('sessions.create.slotPast', { defaultValue: 'Qua gio' })
+                            : t('sessions.create.slotBusy', { defaultValue: 'Da dat' })}
+                        </span>
+                      )}
+                    </button>
+                  )
+                })}
+              </div>
+            ) : memberId ? (
+              <p className="text-xs text-white/50">
+                {t('sessions.create.noSlots', { defaultValue: 'Khong co khung gio nao' })}
+              </p>
+            ) : null}
+          </div>
+        ) : editing ? (
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="block space-y-2">
+              <span className="rogym-field-label">{t('sessions.create.fieldStartTime')}</span>
+              <DateTimePickerInput
+                value={startTime}
+                onChange={setStartTime}
+                placeholder={t('sessions.create.startTimePlaceholder')}
+                aria-label={t('sessions.create.fieldStartTime')}
+                disabled={editBlocked}
+              />
+            </div>
+            <label className="block space-y-2">
+              <span className="rogym-field-label">{t('sessions.create.fieldDuration')}</span>
+              <input
+                className="rogym-input"
+                type="number"
+                min={15}
+                max={360}
+                step={15}
+                value={duration}
+                onChange={(event) => setDuration(Number(event.target.value))}
+                required
+              />
+            </label>
+          </div>
+        ) : null}
         <div className="flex items-center gap-2 rounded-xl border border-white/5 bg-white/[0.03] p-4 text-sm rogym-text-secondary">
           <Clock3 size={17} className="rogym-text-accent" />
           {t('sessions.create.estimatedEnd')}{' '}
-          {endTime ? toDateTimeLocalInput(endTime).replace('T', ' ') : t('sessions.create.endUnknown')}
+          {computedEndTime ? toDateTimeLocalInput(computedEndTime).replace('T', ' ') : t('sessions.create.endUnknown')}
         </div>
         <div className="flex justify-end gap-3 border-t border-white/5 pt-5">
           <ButtonLink
@@ -382,9 +491,8 @@ await trainingSessionService.createSession({
               editBlocked ||
               !memberId ||
               !roomId ||
-              !endTime ||
-              !Number.isFinite(duration) ||
-              duration <= 0 ||
+              (!editing && !selectedSlot) ||
+              (editing && !computedEndTime) ||
               !hasWorkoutPlanLink
             }
           >

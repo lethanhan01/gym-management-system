@@ -2,12 +2,14 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ChevronDown, ChevronUp, Clock, Dumbbell, Pencil, Play } from 'lucide-react'
 import {
-  MemberCard,
-  MemberEmptyState,
-  MemberErrorState,
-  MemberSkeleton,
-} from '@/components/MemberUI'
-import { Button, CardTitle } from '@/components/ui'
+  Badge,
+  Button,
+  Card,
+  CardTitle,
+  PageEmptyState,
+  PageErrorState,
+  PageSkeleton,
+} from '@/components/ui'
 import type {
   WorkoutAssignmentSummary,
   WorkoutPlan,
@@ -43,7 +45,7 @@ function WorkoutPlanCard({
   const avgMinPerDay = totalDays > 0 ? Math.round(totalEstSec / totalDays / 60) : 0
 
   return (
-    <MemberCard
+    <Card
       as="article"
       variant={isPT ? 'accent' : 'default'}
       padding="none"
@@ -53,13 +55,9 @@ function WorkoutPlanCard({
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 flex-1">
             <div className="flex flex-col items-start gap-2">
-              <span
-                className={`rogym-plan-source rounded-lg px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
-                  isPT ? 'is-trainer-plan' : ''
-                }`}
-              >
+              <Badge tone={isPT ? 'success' : 'accent'} size="xs">
                 {isPT ? t('workout.createSession.sourceTrainer') : t('workout.createSession.sourcePersonal')}
-              </span>
+              </Badge>
               <CardTitle size="md" as="h3" className="break-words">
                 {assignment.plan?.name ?? plan?.name ?? '—'}
               </CardTitle>
@@ -133,7 +131,7 @@ function WorkoutPlanCard({
             ))}
         </div>
       )}
-    </MemberCard>
+    </Card>
   )
 }
 
@@ -158,11 +156,11 @@ export function WorkoutPlanList({
 }) {
   const { t } = useTranslation('member')
 
-  if (loading) return <MemberSkeleton rows={5} />
-  if (error) return <MemberErrorState message={error} onRetry={onRetry} />
+  if (loading) return <PageSkeleton rows={5} />
+  if (error) return <PageErrorState message={error} onRetry={onRetry} />
   if (assignments.length === 0) {
     return (
-      <MemberEmptyState
+      <PageEmptyState
         title={t('workout.createSession.emptyTitle')}
         description={t('workout.createSession.emptyDescription')}
         action={
@@ -188,3 +186,4 @@ export function WorkoutPlanList({
     </>
   )
 }
+

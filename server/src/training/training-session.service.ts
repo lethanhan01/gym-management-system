@@ -114,12 +114,21 @@ export class TrainingSessionService {
       })
     }
 
-    const graceTime = new Date(Date.now() + 5 * 60 * 1000)
-    if (startTime < graceTime) {
+    const durationMs = endTime.getTime() - startTime.getTime()
+    if (durationMs !== 60 * 60 * 1000) {
+      throw new BadRequestException({
+        success: false,
+        code: 'INVALID_DURATION',
+        message: 'Thoi luong buoi tap phai dung 60 phut',
+      })
+    }
+
+    const minBookingTime = new Date(Date.now() + 5 * 60 * 1000)
+    if (startTime < minBookingTime) {
       throw new BadRequestException({
         success: false,
         code: 'VALIDATION_ERROR',
-        message: 'startTime phai trong tuong lai hoac hien tai + grace 5 phut',
+        message: 'startTime phai nam trong tuong lai, toi thieu 5 phut',
       })
     }
 
@@ -205,6 +214,7 @@ export class TrainingSessionService {
 
     await this.scheduling.checkOverlap(roomId, null, startTime, endTime, 'ROOM_TIME_OVERLAP')
     await this.scheduling.checkOverlap(null, trainerStaffId, startTime, endTime, 'TRAINER_TIME_OVERLAP')
+    await this.scheduling.checkOverlap(null, null, startTime, endTime, 'MEMBER_TIME_OVERLAP', undefined, memberId)
 
     const planLink = await this.scheduling.resolveSessionPlanLink(
       dto.assignmentId,

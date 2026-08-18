@@ -29,6 +29,9 @@ const mockPrisma = {
     findFirst: jest.fn(),
     findMany: jest.fn(),
   },
+  subscription: {
+    findFirst: jest.fn(),
+  },
 }
 
 const defaultEnv: Record<string, unknown> = {
@@ -173,7 +176,7 @@ describe('LineMessagingService', () => {
     mockPrisma.trainingSession.findFirst.mockResolvedValue(makeSession())
     await expect(service.safePushTrainingSessionEvent('starting', 1n)).resolves.toBe(true)
     const startingBody = JSON.parse(mockFetch.mock.calls[1][1].body)
-    expect(startingBody.messages[0].text).toContain('トレーニング開始時間です。')
+    expect(startingBody.messages[0].text).toContain('トレーニングの時間です。')
   })
 
   it('returns false instead of throwing when LINE push fails unexpectedly', async () => {
@@ -181,6 +184,72 @@ describe('LineMessagingService', () => {
     mockFetch.mockRejectedValue(new Error('network down'))
 
     await expect(service.safePushTrainingSessionEvent('updated', 1n)).resolves.toBe(false)
+  })
+
+  it('captures mock messages locally and never calls the LINE API', async () => {
+    env.LINE_MOCK_ENABLED = 'true'
+    env.CLIENT_URL = 'http://localhost:5173'
+    mockPrisma.trainingSession.findFirst.mockResolvedValue(makeSession())
+
+    await expect(service.safePushTrainingSessionEvent('created', 1n)).resolves.toBe(true)
+
+    expect(mockFetch).not.toHaveBeenCalled()
+    expect(service.getMockMessages()).toEqual([
+      expect.objectContaining({
+        kind: 'push',
+        recipient: 'U123',
+        liffUrl:
+          'http://localhost:5173/liff?redirect=%2Fmember%2Fworkout%2Fsessions%3FsessionId%3D1',
+      }),
+    ])
+  })
+
+  it('simulates a signed follow webhook and can clear its mock outbox', async () => {
+    env.LINE_MOCK_ENABLED = 'true'
+    env.CLIENT_URL = 'http://localhost:5173'
+
+    await expect(service.simulateMockEvent('follow')).resolves.toEqual({
+      data: { processedEvents: 1, enabled: true },
+    })
+    expect(mockFetch).not.toHaveBeenCalled()
+    expect(service.getMockMessages()).toEqual([
+      expect.objectContaining({
+        kind: 'reply',
+        recipient: expect.stringMatching(/^mock-reply-/),
+        liffUrl: 'http://localhost:5173/liff?redirect=%2Fmember',
+      }),
+    ])
+
+    service.clearMockMessages()
+    expect(service.getMockMessages()).toEqual([])
+  })
+
+  it('creates visual Flex and Rich Menu samples only in mock mode', () => {
+    env.LINE_MOCK_ENABLED = 'true'
+    env.CLIENT_URL = 'http://localhost:5173'
+
+    service.createMockSample('flex')
+    service.createMockSample('rich-menu')
+
+    expect(service.getMockMessages()).toEqual([
+      expect.objectContaining({
+        kind: 'rich-menu',
+        payload: expect.objectContaining({ name: 'RoGym Member Menu' }),
+      }),
+      expect.objectContaining({
+        kind: 'push',
+        recipient: 'rogym-liff-mock-member',
+        payload: expect.objectContaining({
+          messages: [
+            expect.objectContaining({ type: 'flex', altText: 'Lịch tập sắp tới tại RoGym' }),
+          ],
+        }),
+      }),
+    ])
+  })
+
+  it('rejects visual samples when mock mode is disabled', () => {
+    expect(() => service.createMockSample('flex')).toThrow('LINE Mock is disabled')
   })
 
   it('creates both in-app reminders without requiring LINE, and skips LINE when deduped', async () => {
@@ -202,6 +271,59 @@ describe('LineMessagingService', () => {
       100n,
       expect.objectContaining({ type: 'training.starting', dedupeKey: 'training:1:starting' })
     )
+    expect(mockFetch).not.toHaveBeenCalled()
+  })
+
+  it('pushes subscription expiring reminder when member has a LINE id', async () => {
+    mockPrisma.subscription.findFirst.mockResolvedValueOnce({
+      subscriptionId: 10n,
+      endDate: new Date('2026-08-19T00:00:00Z'),
+      package: { name: 'Gói VIP 1 Tháng' },
+      member: { user: { lineId: 'U_SUB_123' } },
+    })
+
+    await expect(service.safePushSubscriptionExpiringReminder(10n)).resolves.toBe(true)
+
+    expect(mockFetch).toHaveBeenCalledWith(
+      'https://api.line.me/v2/bot/message/push',
+      expect.objectContaining({
+        method: 'POST',
+        body: expect.stringContaining('redirect=%2Fmember%2Fsubscriptions%2Fcurrent'),
+      })
+    )
+    const body = JSON.parse(mockFetch.mock.calls[0][1].body)
+    expect(body.to).toBe('U_SUB_123')
+    expect(body.messages[0].text).toContain('Gói tập Gói VIP 1 Tháng của bạn sẽ hết hạn vào ngày mai')
+    expect(body.messages[0].quickReply.items[0].action.label).toBe('Gia hạn ngay')
+    expect(body.messages[0].quickReply.items[0].action.uri).toContain('redirect=%2Fmember%2Fsubscriptions%2Fcurrent')
+  })
+
+  it('pushes Japanese subscription expiring reminder when LINE_MESSAGE_LOCALE is ja', async () => {
+    env.LINE_MESSAGE_LOCALE = 'ja'
+    mockPrisma.subscription.findFirst.mockResolvedValueOnce({
+      subscriptionId: 10n,
+      endDate: new Date('2026-08-19T00:00:00Z'),
+      package: { name: 'Premium Plan' },
+      member: { user: { lineId: 'U_SUB_JA' } },
+    })
+
+    await expect(service.safePushSubscriptionExpiringReminder(10n)).resolves.toBe(true)
+
+    const body = JSON.parse(mockFetch.mock.calls[0][1].body)
+    expect(body.to).toBe('U_SUB_JA')
+    expect(body.messages[0].text).toContain('ご利用中のプラン「Premium Plan」は明日')
+    expect(body.messages[0].quickReply.items[0].action.label).toBe('今すぐ更新')
+  })
+
+  it('returns false when subscription has no linked LINE id', async () => {
+    mockPrisma.subscription.findFirst.mockResolvedValueOnce({
+      subscriptionId: 11n,
+      endDate: new Date('2026-08-19T00:00:00Z'),
+      package: { name: 'Gói Cơ Bản' },
+      member: { user: { lineId: null } },
+    })
+
+    await expect(service.safePushSubscriptionExpiringReminder(11n)).resolves.toBe(false)
     expect(mockFetch).not.toHaveBeenCalled()
   })
 })

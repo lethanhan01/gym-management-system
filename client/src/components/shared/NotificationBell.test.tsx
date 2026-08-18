@@ -1,7 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
-import NotificationBell, { showRealtimeNotificationToast } from './NotificationBell'
+import NotificationBell from './NotificationBell'
+import { showRealtimeNotificationToast } from './notification-toast'
 import i18n from '@/lib/i18n'
 import { useAuthStore } from '@/stores/authStore'
 import { notificationService, type NotificationItem } from '@/services/notification.service'
@@ -105,7 +106,7 @@ describe('NotificationBell', () => {
     vi.mocked(notificationService.markAllRead).mockResolvedValue(1)
   })
 
-  it('renders unread badge and opens the notification list', async () => {
+  it('renders unread badge, and automatically marks all as read when opened', async () => {
     renderBell()
 
     expect(await screen.findByText('1')).toBeVisible()
@@ -115,8 +116,9 @@ describe('NotificationBell', () => {
     expect(screen.getByRole('region', { name: 'Thông báo' })).toHaveClass('rogym-notification-panel')
     expect(await screen.findByText('Phản hồi mới')).toBeVisible()
     expect(screen.getByText('Có một phản hồi mới từ hội viên.')).toBeVisible()
-    expect(screen.getByText('1 chưa đọc')).toBeVisible()
+    expect(screen.getByText('Đã đọc tất cả')).toBeVisible()
     expect(screen.getByText('Vừa xong')).toBeVisible()
+    await waitFor(() => expect(notificationService.markAllRead).toHaveBeenCalled())
   })
 
   afterEach(() => {
@@ -129,7 +131,7 @@ describe('NotificationBell', () => {
     fireEvent.click(await screen.findByRole('button', { name: 'Thông báo' }))
     fireEvent.click(screen.getByRole('button', { name: 'Đánh dấu tất cả đã đọc' }))
 
-    await waitFor(() => expect(notificationService.markAllRead).toHaveBeenCalledTimes(1))
+    await waitFor(() => expect(notificationService.markAllRead).toHaveBeenCalled())
     expect(screen.getByText('Đã đọc tất cả')).toBeVisible()
   })
 
@@ -137,6 +139,43 @@ describe('NotificationBell', () => {
     showRealtimeNotificationToast('Realtime notice')
 
     expect(toastInfoMock).toHaveBeenCalledWith('Realtime notice')
+  })
+
+  it('does not display realtime toast when panel is open during polling', async () => {
+    vi.useFakeTimers()
+    vi.mocked(notificationService.listNew).mockResolvedValue([])
+
+    renderBell()
+    await vi.runOnlyPendingTimersAsync()
+
+    // Open the panel
+    const bellBtn = screen.getByRole('button', { name: 'Thông báo' })
+    fireEvent.click(bellBtn)
+
+    const newItem = makeItem({ notificationId: '20', title: 'Thông báo mới' })
+    vi.mocked(notificationService.listNew).mockResolvedValue([newItem])
+    toastInfoMock.mockClear()
+
+    // Advance time to trigger polling
+    await vi.advanceTimersByTimeAsync(20000)
+
+    // Toast should not be triggered because openRef is true
+    expect(toastInfoMock).not.toHaveBeenCalled()
+  })
+
+  it('shows aggregated toast when multiple new notifications arrive via polling while closed', async () => {
+    vi.useFakeTimers()
+    const newItem1 = makeItem({ notificationId: '21', title: 'TB 1' })
+    const newItem2 = makeItem({ notificationId: '22', title: 'TB 2' })
+    vi.mocked(notificationService.listNew).mockResolvedValue([newItem1, newItem2])
+
+    renderBell()
+    await vi.runOnlyPendingTimersAsync()
+
+    // Advance time by 20s while closed
+    await vi.advanceTimersByTimeAsync(20000)
+
+    expect(toastInfoMock).toHaveBeenCalledWith('Bạn có 2 thông báo mới')
   })
 
   it('updates notification content when the language changes to Japanese', async () => {
@@ -160,7 +199,7 @@ describe('NotificationBell', () => {
     expect(await screen.findByRole('button', { name: '通知' })).toBeVisible()
     expect(screen.getByText('新しいトレーニング予定')).toBeVisible()
     expect(screen.getByText('PT Test Trainer とのトレーニング予定があります。')).toBeVisible()
-    expect(screen.getByText('未読 1 件')).toBeVisible()
+    expect(screen.getByText('すべて既読')).toBeVisible()
     expect(screen.getByText('たった今')).toBeVisible()
   })
 
@@ -207,13 +246,14 @@ describe('NotificationBell', () => {
     expect(screen.getByText('Legacy message')).toBeVisible()
   })
 
-  it('marks a clicked unread notification as read', async () => {
+  it('navigates and closes panel when a notification item is clicked', async () => {
     renderBell()
 
     fireEvent.click(await screen.findByRole('button', { name: 'Thông báo' }))
     fireEvent.click(await screen.findByText('Phản hồi mới'))
 
-    await waitFor(() => expect(notificationService.markRead).toHaveBeenCalledWith('10'))
+    await waitFor(() => expect(navigateMock).toHaveBeenCalledWith('/staff/feedback'))
+    expect(screen.queryByRole('region', { name: 'Thông báo' })).not.toBeInTheDocument()
   })
 
   it.each([

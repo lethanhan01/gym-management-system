@@ -23,6 +23,49 @@ coverage/
 .env.*.local
 .env.*
 !.env.example
+!.env.liff-mock.example
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Runtime
+*.pid
+*.seed
+*.pid.lock
+
+# Emergency database snapshots (may contain production data)
+server/backups/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+*.swp
+
+# Claude Code
+.claude/
+CLAUDE.md
+
+# Cache
+.cache/
+.eslintcache
+.stylelintcache
+.prettiercache
+
+# TypeScript
+*.tsbuildinfo
+
+# PlantUML generated output
+docs/VI/Diagram/picture/*.png
+docs/VI/Diagram/picture/*.svg
 
 # Logs
 logs/
@@ -72,3 +115,7 @@ docs/Design/API/postman_collections/
 docs/Design/API/*.postman_collection.json
 
 .agents/
+
+# Standalone Portable Design System Kit
+design-system-kit/
+client/design-system-kit/

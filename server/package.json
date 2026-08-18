@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "node scripts/dev-server.js",
+    "dev:line-mock": "node scripts/dev-line-mock.js",
     "build": "npm run db:safety:check && prisma db push && nest build",
     "config:check": "node dist/config/check.js",
     "prestart": "npm run config:check",
@@ -21,7 +22,8 @@
     "prisma:studio": "dotenv -e .env -e .env.local -- prisma studio",
     "db:safety:check": "node scripts/verify-no-destructive-db-commands.mjs",
     "exercise:catalog:preflight": "dotenv -e .env -e .env.local -- ts-node --transpile-only scripts/preflight-exercise-catalog.ts",
-    "exercise:catalog:sync": "dotenv -e .env -e .env.local -- ts-node --transpile-only scripts/sync-exercise-catalog.ts"
+    "exercise:catalog:sync": "dotenv -e .env -e .env.local -- ts-node --transpile-only scripts/sync-exercise-catalog.ts",
+    "line:sync-rich-menu": "dotenv -e .env -e .env.local -- ts-node --transpile-only scripts/sync-rich-menu.ts"
   },
   "dependencies": {
     "@nestjs/common": "^10.4.5",
@@ -39,6 +41,7 @@
     "dotenv": "^16.6.1",
     "express": "^4.22.1",
     "helmet": "^7.1.0",
+    "jose": "^6.2.9",
     "nodemailer": "^9.0.3",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
@@ -85,6 +88,9 @@
         }
       ]
     },
+    "transformIgnorePatterns": [
+      "node_modules/(?!(jose)/)"
+    ],
     "collectCoverageFrom": [
       "**/*.(t|j)s",
       "!**/*.spec.ts",

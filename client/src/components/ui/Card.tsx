@@ -96,7 +96,7 @@ export const Card = forwardRef<HTMLElement, CardProps>(
       disabled && 'opacity-50 pointer-events-none cursor-not-allowed',
       loading && 'pointer-events-none',
       isClickable &&
-        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--rogym-teal)] focus-visible:ring-offset-2 focus-visible:ring-offset-[#080e0b]',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--rogym-teal)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--rogym-bg-base)]',
       className
     )
 

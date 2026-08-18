@@ -7,10 +7,8 @@ import { hasActiveSubscription } from '@/lib/subscription'
 import { useSubscriptionStore } from '@/stores/subscriptionStore'
 import trainerService, { type Trainer } from '@/services/trainer.service'
 import { useAuthStore } from '@/stores/authStore'
-import { MemberPage, MemberPageHeader } from '@/components/MemberUI'
-import { Button } from '@/components/ui/Button'
+import { Button, Card, Page, PageHeader } from '@/components/ui'
 import { PackagePicker, PackagePickerSkeleton } from '@/components/PackagePicker'
-
 
 export default function SubscriptionSetupPage() {
   const { t } = useTranslation('member')
@@ -163,8 +161,8 @@ export default function SubscriptionSetupPage() {
 
   if (step === 'pick-trainer') {
     return (
-      <MemberPage>
-        <MemberPageHeader
+      <Page>
+        <PageHeader
           eyebrow={t('subscription.setup.trainerEyebrow')}
           title={t('subscription.setup.trainerTitle')}
           description={t('subscription.setup.trainerDescription', { name: selectedPackage?.name ?? '' })}
@@ -182,20 +180,20 @@ export default function SubscriptionSetupPage() {
             <div className="h-6 w-6 animate-spin rounded-full border-2 border-t-transparent border-[var(--rogym-teal)]" />
           </div>
         ) : (
-          <div className="mx-auto flex max-w-md flex-col gap-3">
-            {trainers.map((t) => (
+          <main className="mx-auto flex max-w-md flex-col gap-3">
+            {trainers.map((tr) => (
               <button
-                key={t.staffId}
+                key={tr.staffId}
                 type="button"
-                onClick={() => setSelectedTrainerId((id) => (id === t.staffId ? '' : t.staffId))}
+                onClick={() => setSelectedTrainerId((id) => (id === tr.staffId ? '' : tr.staffId))}
                 className={`w-full rounded-2xl border px-5 py-4 text-left transition-colors ${
-                  selectedTrainerId === t.staffId
+                  selectedTrainerId === tr.staffId
                     ? 'border-[var(--rogym-teal)] bg-[var(--rogym-teal)]/10'
                     : 'rogym-card rogym-card--compact border-white/10'
                 }`}
               >
-                <p className="text-sm font-semibold text-white">{t.fullName}</p>
-                <p className="mt-0.5 text-xs capitalize rogym-text-secondary">{t.position}</p>
+                <p className="text-sm font-semibold text-white">{tr.fullName}</p>
+                <p className="mt-0.5 text-xs capitalize rogym-text-secondary">{tr.position}</p>
               </button>
             ))}
             <Button
@@ -206,26 +204,26 @@ export default function SubscriptionSetupPage() {
             >
               {t('subscription.setup.buttonContinue')}
             </Button>
-          </div>
+          </main>
         )}
-      </MemberPage>
+      </Page>
     )
   }
 
   return (
-    <MemberPage>
-      <div className="text-center">
+    <Page>
+      <header className="text-center">
         <h1 className="font-anton text-[clamp(1.5rem,3vw,2.5rem)] leading-tight tracking-wide text-white">
           {t('subscription.setup.mainTitle')}
         </h1>
         <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-white/50">
           {t('subscription.setup.mainSubtitle')}
         </p>
-      </div>
+      </header>
       {loading || checkingSubscription ? (
         <PackagePickerSkeleton />
       ) : loadError ? (
-        <div className="rogym-card rogym-card--compact flex flex-col items-center justify-center gap-4 py-16 text-center">
+        <Card variant="compact" className="flex flex-col items-center justify-center gap-4 py-16 text-center">
           <p className="text-sm text-red-300">{t('subscription.setup.errorNetwork')}</p>
           <Button
             variant="outline-white"
@@ -233,11 +231,11 @@ export default function SubscriptionSetupPage() {
           >
             {t('subscription.setup.buttonRetry')}
           </Button>
-        </div>
+        </Card>
       ) : packages.length === 0 ? (
-        <div className="rogym-card rogym-card--compact flex items-center justify-center py-16 text-sm rogym-text-secondary">
+        <Card variant="compact" className="flex items-center justify-center py-16 text-sm rogym-text-secondary">
           {t('subscription.setup.emptyPackages')}
-        </div>
+        </Card>
       ) : (
         <PackagePicker
           packages={packages}
@@ -249,6 +247,7 @@ export default function SubscriptionSetupPage() {
           onContinue={handleContinue}
         />
       )}
-    </MemberPage>
+    </Page>
   )
 }
+

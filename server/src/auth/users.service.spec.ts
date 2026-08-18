@@ -123,6 +123,26 @@ describe('UsersService', () => {
     })
   })
 
+  describe('collision lookups', () => {
+    it('finds email collisions without excluding soft-deleted users', async () => {
+      mockPrisma.user.findFirst.mockResolvedValue(null)
+
+      await service.findByEmailIncludingDeleted('test@example.com')
+
+      expect(mockPrisma.user.findFirst).toHaveBeenCalledWith({
+        where: { OR: [{ emailNormalized: 'test@example.com' }, { email: 'test@example.com' }] },
+      })
+    })
+
+    it('finds LINE collisions without excluding soft-deleted users', async () => {
+      mockPrisma.user.findFirst.mockResolvedValue(null)
+
+      await service.findByLineIdIncludingDeleted('U999')
+
+      expect(mockPrisma.user.findFirst).toHaveBeenCalledWith({ where: { lineId: 'U999' } })
+    })
+  })
+
   describe('findByIdWithRoles', () => {
     it('returns user with roles and active profile IDs when profiles exist', async () => {
       mockPrisma.user.findFirst.mockResolvedValue({

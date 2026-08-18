@@ -5,6 +5,7 @@ import { TrainingSessionStatus } from '@prisma/client'
 import { createHmac, timingSafeEqual } from 'crypto'
 import { NotificationsService } from '../notifications/notifications.service'
 import { PrismaService } from '../prisma/prisma.service'
+import { LINE_MOCK_USER_ID, LINE_MOCK_WEBHOOK_SECRET } from '../line-mock/constants'
 
 type LineWebhookBody = {
   events?: LineWebhookEvent[]
@@ -34,6 +35,22 @@ type LineMessage = {
   }
 }
 
+export type LineMockOutboxMessage = {
+  id: string
+  kind: 'reply' | 'push' | 'rich-menu'
+  createdAt: string
+  recipient?: string
+  payload: Record<string, unknown>
+  liffUrl?: string
+}
+
+export type LineMockSample =
+  | 'flex'
+  | 'rich-menu'
+  | 'pt-booking-created'
+  | 'pt-reminder-30m'
+  | 'pt-session-cancelled'
+
 type TrainingLineEvent = 'created' | 'updated' | 'cancelled' | 'reminder' | 'starting'
 type LineMessageLocale = 'vi' | 'ja'
 
@@ -42,9 +59,11 @@ const LINE_MESSAGE_TEMPLATES: Record<
   {
     dateLocale: string
     detailButton: string
+    renewButton: string
     followText: string
     followButton: string
     attendanceCheckin: string
+    subscriptionExpiring: (data: { packageName: string; endDate: string }) => string
     training: Record<
       TrainingLineEvent,
       (session: {
@@ -59,9 +78,12 @@ const LINE_MESSAGE_TEMPLATES: Record<
   vi: {
     dateLocale: 'vi-VN',
     detailButton: 'Xem chi tiết',
+    renewButton: 'Gia hạn ngay',
     followText: 'Chào mừng bạn đến với RoGym. Bấm nút bên dưới để mở ứng dụng hội viên.',
     followButton: 'Mở ứng dụng',
     attendanceCheckin: 'Bạn đã check-in thành công tại RoGym.',
+    subscriptionExpiring: ({ packageName, endDate }) =>
+      `Gói tập ${packageName} của bạn sẽ hết hạn vào ngày mai (${endDate}). Vui lòng gia hạn để tiếp tục sử dụng dịch vụ tại RoGym.`,
     training: {
       created: ({ trainerName, roomName, when }) =>
         `Bạn đã đặt lịch tập thành công.\nThời gian: ${when}\nPT: ${trainerName}\nPhòng: ${roomName}`,
@@ -77,9 +99,12 @@ const LINE_MESSAGE_TEMPLATES: Record<
   ja: {
     dateLocale: 'ja-JP',
     detailButton: '詳細を見る',
+    renewButton: '今すぐ更新',
     followText: 'RoGymへようこそ。下のボタンから会員アプリを開いてください。',
     followButton: 'アプリを開く',
     attendanceCheckin: 'RoGymでのチェックインが完了しました。',
+    subscriptionExpiring: ({ packageName, endDate }) =>
+      `ご利用中のプラン「${packageName}」は明日（${endDate}）に有効期限が切れます。継続してご利用いただくには更新手続きをお願いいたします。`,
     training: {
       created: ({ trainerName, roomName, when }) =>
         `トレーニング予約が完了しました。\n日時: ${when}\nPT: ${trainerName}\nルーム: ${roomName}`,
@@ -90,7 +115,7 @@ const LINE_MESSAGE_TEMPLATES: Record<
       reminder: ({ trainerName, roomName, when, reminderMinutes }) =>
         `トレーニング開始まであと${reminderMinutes}分です。\n日時: ${when}\nPT: ${trainerName}\nルーム: ${roomName}`,
       starting: ({ trainerName, roomName, when }) =>
-        `トレーニング開始時間です。\n日時: ${when}\nPT: ${trainerName}\nルーム: ${roomName}`,
+        `トレーニングの時間です。\n日時: ${when}\nPT: ${trainerName}\nルーム: ${roomName}`,
     },
   },
 }
@@ -98,6 +123,7 @@ const LINE_MESSAGE_TEMPLATES: Record<
 @Injectable()
 export class LineMessagingService {
   private readonly logger = new Logger(LineMessagingService.name)
+  private readonly mockOutbox: LineMockOutboxMessage[] = []
 
   constructor(
     private readonly prisma: PrismaService,
@@ -126,6 +152,264 @@ export class LineMessagingService {
     return { data: { processedEvents: events.length, enabled: true } }
   }
 
+  isMockEnabled() {
+    return this.config.get<string>('LINE_MOCK_ENABLED') === 'true'
+  }
+
+  getMockMessages() {
+    this.assertMockEnabled()
+    return [...this.mockOutbox].reverse()
+  }
+
+  clearMockMessages() {
+    this.assertMockEnabled()
+    this.mockOutbox.length = 0
+  }
+
+  createMockSample(type: LineMockSample, locale: LineMessageLocale = 'vi') {
+    this.assertMockEnabled()
+    const targetLocale = locale === 'ja' ? 'ja' : 'vi'
+    const template = LINE_MESSAGE_TEMPLATES[targetLocale]
+
+    if (type === 'flex') {
+      const liffUrl = this.buildLiffUrl('/member/workout/sessions')
+      this.addMockOutbox({
+        kind: 'push',
+        recipient: LINE_MOCK_USER_ID,
+        liffUrl,
+        payload: {
+          to: LINE_MOCK_USER_ID,
+          messages: [
+            {
+              type: 'flex',
+              altText:
+                targetLocale === 'ja' ? 'RoGymでの次のトレーニング' : 'Lịch tập sắp tới tại RoGym',
+              contents: {
+                type: 'bubble',
+                header: {
+                  type: 'box',
+                  layout: 'vertical',
+                  contents: [
+                    { type: 'text', text: 'ROGYM', weight: 'bold', color: '#16a34a', size: 'sm' },
+                  ],
+                },
+                body: {
+                  type: 'box',
+                  layout: 'vertical',
+                  spacing: 'md',
+                  contents: [
+                    {
+                      type: 'text',
+                      text: targetLocale === 'ja' ? 'PTセッション' : 'Buổi tập với PT',
+                      weight: 'bold',
+                      size: 'xl',
+                      wrap: true,
+                    },
+                    {
+                      type: 'text',
+                      text:
+                        targetLocale === 'ja'
+                          ? '本日 18:00 · Room A'
+                          : 'Hôm nay, 18:00 · Room A',
+                      color: '#6b7280',
+                      wrap: true,
+                    },
+                    { type: 'separator' },
+                    {
+                      type: 'text',
+                      text:
+                        targetLocale === 'ja'
+                          ? 'トレーニングの準備をしましょう。'
+                          : 'Chuẩn bị sẵn sàng cho buổi tập của bạn.',
+                      size: 'sm',
+                      wrap: true,
+                    },
+                  ],
+                },
+                footer: {
+                  type: 'box',
+                  layout: 'vertical',
+                  contents: [
+                    {
+                      type: 'button',
+                      style: 'primary',
+                      action: {
+                        type: 'uri',
+                        label: targetLocale === 'ja' ? 'スケジュールを見る' : 'Xem lịch tập',
+                        uri: liffUrl,
+                      },
+                    },
+                  ],
+                },
+              },
+            },
+          ],
+        },
+      })
+      return
+    }
+
+    if (type === 'rich-menu') {
+      this.addMockOutbox({
+        kind: 'rich-menu',
+        payload: {
+          size: { width: 2500, height: 843 },
+          selected: true,
+          name: 'RoGym Member Menu',
+          chatBarText: targetLocale === 'ja' ? 'RoGymメニュー' : 'Mở menu RoGym',
+          areas: [
+            this.richMenuArea(
+              0,
+              targetLocale === 'ja' ? 'スケジュール' : 'Lịch tập',
+              this.buildLiffUrl('/member/workout/sessions')
+            ),
+            this.richMenuArea(
+              625,
+              targetLocale === 'ja' ? 'PT予約' : 'Đặt lịch',
+              this.buildLiffUrl('/member/workout/sessions?book=1')
+            ),
+            this.richMenuArea(
+              1250,
+              targetLocale === 'ja' ? 'チェックイン' : 'Check-in',
+              this.buildLiffUrl('/member/attendance')
+            ),
+            this.richMenuArea(
+              1875,
+              targetLocale === 'ja' ? 'マイページ' : 'Hồ sơ',
+              this.buildLiffUrl('/member/profile')
+            ),
+          ],
+        },
+      })
+      return
+    }
+
+    if (type === 'pt-booking-created') {
+      const mockSessionId = '101'
+      const liffUrl = this.buildLiffUrl(`/member/workout/sessions?sessionId=${mockSessionId}`)
+      const text = template.training.created({
+        trainerName: 'Coach Alex',
+        roomName: targetLocale === 'ja' ? 'Cardio & Weights Room 01' : 'Phòng Cardio & Tạ 01',
+        when: targetLocale === 'ja' ? '2026/08/20 09:00' : '09:00 20/08/2026',
+        reminderMinutes: 30,
+      })
+      this.addMockOutbox({
+        kind: 'push',
+        recipient: LINE_MOCK_USER_ID,
+        liffUrl,
+        payload: {
+          to: LINE_MOCK_USER_ID,
+          messages: [
+            {
+              type: 'text',
+              text,
+              quickReply: {
+                items: [
+                  {
+                    type: 'action',
+                    action: {
+                      type: 'uri',
+                      label: template.detailButton,
+                      uri: liffUrl,
+                    },
+                  },
+                ],
+              },
+            },
+          ],
+        },
+      })
+      return
+    }
+
+    if (type === 'pt-reminder-30m') {
+      const mockSessionId = '101'
+      const liffUrl = this.buildLiffUrl(`/member/workout/sessions?sessionId=${mockSessionId}`)
+      const text = template.training.reminder({
+        trainerName: 'Coach Alex',
+        roomName: targetLocale === 'ja' ? 'Cardio & Weights Room 01' : 'Phòng Cardio & Tạ 01',
+        when: targetLocale === 'ja' ? '2026/08/20 09:00' : '09:00 20/08/2026',
+        reminderMinutes: 30,
+      })
+      this.addMockOutbox({
+        kind: 'push',
+        recipient: LINE_MOCK_USER_ID,
+        liffUrl,
+        payload: {
+          to: LINE_MOCK_USER_ID,
+          messages: [
+            {
+              type: 'text',
+              text,
+              quickReply: {
+                items: [
+                  {
+                    type: 'action',
+                    action: {
+                      type: 'uri',
+                      label: template.detailButton,
+                      uri: liffUrl,
+                    },
+                  },
+                ],
+              },
+            },
+          ],
+        },
+      })
+      return
+    }
+
+    if (type === 'pt-session-cancelled') {
+      const liffUrl = this.buildLiffUrl('/member/workout/sessions')
+      const text = template.training.cancelled({
+        trainerName: 'Coach Alex',
+        roomName: targetLocale === 'ja' ? 'Cardio & Weights Room 01' : 'Phòng Cardio & Tạ 01',
+        when: targetLocale === 'ja' ? '2026/08/20 09:00' : '09:00 20/08/2026',
+        reminderMinutes: 0,
+      })
+      this.addMockOutbox({
+        kind: 'push',
+        recipient: LINE_MOCK_USER_ID,
+        liffUrl,
+        payload: {
+          to: LINE_MOCK_USER_ID,
+          messages: [
+            {
+              type: 'text',
+              text,
+              quickReply: {
+                items: [
+                  {
+                    type: 'action',
+                    action: {
+                      type: 'uri',
+                      label: template.detailButton,
+                      uri: liffUrl,
+                    },
+                  },
+                ],
+              },
+            },
+          ],
+        },
+      })
+      return
+    }
+  }
+
+  async simulateMockEvent(type: 'follow' | 'unfollow') {
+    this.assertMockEnabled()
+    const event: LineWebhookEvent = {
+      type,
+      source: { type: 'user', userId: LINE_MOCK_USER_ID },
+      ...(type === 'follow' ? { replyToken: `mock-reply-${Date.now()}` } : {}),
+    }
+    const body = Buffer.from(JSON.stringify({ events: [event] }))
+    const signature = createHmac('sha256', LINE_MOCK_WEBHOOK_SECRET).update(body).digest('base64')
+    return this.handleWebhook(body, signature)
+  }
+
   async safePushTrainingSessionEvent(kind: TrainingLineEvent, sessionId: bigint) {
     try {
       return await this.pushTrainingSessionEvent(kind, sessionId)
@@ -143,6 +427,17 @@ export class LineMessagingService {
     } catch (error) {
       this.logger.warn(
         `LINE attendance check-in push failed (attendanceId=${attendanceId.toString()}): ${this.describeError(error)}`
+      )
+      return false
+    }
+  }
+
+  async safePushSubscriptionExpiringReminder(subscriptionId: bigint) {
+    try {
+      return await this.pushSubscriptionExpiringReminder(subscriptionId)
+    } catch (error) {
+      this.logger.warn(
+        `LINE subscription expiring reminder push failed (subscriptionId=${subscriptionId.toString()}): ${this.describeError(error)}`
       )
       return false
     }
@@ -274,6 +569,30 @@ export class LineMessagingService {
     ])
   }
 
+  private async pushSubscriptionExpiringReminder(subscriptionId: bigint) {
+    if (!this.canPushMessages()) return false
+
+    const subscription = await this.prisma.subscription.findFirst({
+      where: { subscriptionId, deletedAt: null },
+      include: {
+        package: { select: { name: true } },
+        member: { select: { user: { select: { lineId: true } } } },
+      },
+    })
+    if (!subscription?.member.user.lineId) return false
+
+    const template = this.getMessageTemplate()
+    const endDateFormatted = this.formatDate(subscription.endDate, template.dateLocale)
+    const text = template.subscriptionExpiring({
+      packageName: subscription.package?.name ?? 'Gói tập',
+      endDate: endDateFormatted,
+    })
+
+    return this.pushMessage(subscription.member.user.lineId, [
+      this.withLiffButton(text, template.renewButton, '/member/subscriptions/current'),
+    ])
+  }
+
   private buildTrainingText(
     kind: TrainingLineEvent,
     session: { trainerName: string; roomName: string; startTime: Date; reminderMinutes: number }
@@ -303,6 +622,12 @@ export class LineMessagingService {
   }
 
   private buildLiffUrl(redirectPath: string) {
+    if (this.isMockEnabled()) {
+      const url = new URL('/liff', this.config.get<string>('CLIENT_URL') ?? 'http://localhost:5173')
+      url.searchParams.set('redirect', redirectPath)
+      return url.toString()
+    }
+
     const base = this.config.get<string>('LINE_LIFF_URL')
     if (!base) throw new Error('LINE_LIFF_URL is required when LINE messaging is enabled')
     const url = new URL(base)
@@ -319,6 +644,17 @@ export class LineMessagingService {
   }
 
   private async postLine(endpoint: 'reply' | 'push', body: unknown) {
+    if (this.isMockEnabled()) {
+      const payload = JSON.parse(JSON.stringify(body)) as Record<string, unknown>
+      this.addMockOutbox({
+        kind: endpoint,
+        recipient: this.getMockRecipient(endpoint, payload),
+        payload,
+        liffUrl: this.findLiffUrl(payload),
+      })
+      return true
+    }
+
     const token = this.config.get<string>('LINE_CHANNEL_ACCESS_TOKEN')
     if (!this.isMessagingEnabled() || !token) return false
 
@@ -340,7 +676,9 @@ export class LineMessagingService {
   }
 
   private assertValidSignature(rawBody: Buffer, signature?: string) {
-    const secret = this.config.get<string>('LINE_CHANNEL_SECRET')
+    const secret = this.isMockEnabled()
+      ? LINE_MOCK_WEBHOOK_SECRET
+      : this.config.get<string>('LINE_CHANNEL_SECRET')
     if (!secret || !signature) {
       throw new UnauthorizedException({
         success: false,
@@ -365,10 +703,11 @@ export class LineMessagingService {
   }
 
   private isMessagingEnabled() {
-    return this.config.get<string>('LINE_MESSAGING_ENABLED') === 'true'
+    return this.isMockEnabled() || this.config.get<string>('LINE_MESSAGING_ENABLED') === 'true'
   }
 
   private canPushMessages() {
+    if (this.isMockEnabled()) return true
     return (
       this.isMessagingEnabled() &&
       !!this.config.get<string>('LINE_CHANNEL_ACCESS_TOKEN') &&
@@ -401,8 +740,57 @@ export class LineMessagingService {
     }).format(value)
   }
 
+  private formatDate(value: Date, locale: string) {
+    return new Intl.DateTimeFormat(locale, {
+      timeZone: 'Asia/Ho_Chi_Minh',
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+    }).format(value)
+  }
+
   private describeError(error: unknown) {
     if (error instanceof Error) return error.message
     return String(error)
+  }
+
+  private assertMockEnabled() {
+    if (!this.isMockEnabled()) {
+      throw new Error('LINE Mock is disabled')
+    }
+  }
+
+  private getMockRecipient(endpoint: 'reply' | 'push', payload: Record<string, unknown>) {
+    const key = endpoint === 'reply' ? 'replyToken' : 'to'
+    return typeof payload[key] === 'string' ? payload[key] : 'unknown'
+  }
+
+  private addMockOutbox(entry: Omit<LineMockOutboxMessage, 'id' | 'createdAt'>) {
+    this.mockOutbox.push({
+      id: `${Date.now()}-${this.mockOutbox.length + 1}`,
+      createdAt: new Date().toISOString(),
+      ...entry,
+    })
+  }
+
+  private richMenuArea(x: number, label: string, uri: string) {
+    return {
+      bounds: { x, y: 0, width: 625, height: 843 },
+      action: { type: 'uri', label, uri },
+    }
+  }
+
+  private findLiffUrl(payload: Record<string, unknown>): string | undefined {
+    const messages = payload.messages
+    if (!Array.isArray(messages)) return undefined
+    for (const message of messages) {
+      const items = (message as { quickReply?: { items?: unknown[] } }).quickReply?.items
+      if (!Array.isArray(items)) continue
+      for (const item of items) {
+        const uri = (item as { action?: { uri?: unknown } }).action?.uri
+        if (typeof uri === 'string') return uri
+      }
+    }
+    return undefined
   }
 }

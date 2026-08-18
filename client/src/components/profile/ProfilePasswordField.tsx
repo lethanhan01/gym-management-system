@@ -1,3 +1,5 @@
+import { FormField, Input } from '@/components/ui'
+
 export function ProfilePasswordField({
   label,
   value,
@@ -8,15 +10,14 @@ export function ProfilePasswordField({
   onChange: (value: string) => void
 }) {
   return (
-    <label className="block space-y-2">
-      <span className="rogym-field-label">{label}</span>
-      <input
-        className="rogym-input"
+    <FormField label={label} required>
+      <Input
         type="password"
         value={value}
         onChange={(event) => onChange(event.target.value)}
         required
       />
-    </label>
+    </FormField>
   )
 }
+

@@ -8,8 +8,7 @@ import {
   YAxis,
 } from 'recharts'
 import { useTranslation } from 'react-i18next'
-
-const GREEN = '#06c384'
+import { TOKEN_COLORS } from '@/styles/token-values'
 
 interface WeightPoint {
   date: string
@@ -24,20 +23,20 @@ export default function MemberWeightChart({ data }: { data: WeightPoint[] }) {
         <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
         <XAxis
           dataKey="date"
-          tick={{ fill: '#bbcabf', fontSize: 11 }}
+          tick={{ fill: TOKEN_COLORS.textSecondary, fontSize: 11 }}
           axisLine={false}
           tickLine={false}
         />
         <YAxis
-          tick={{ fill: '#bbcabf', fontSize: 11 }}
+          tick={{ fill: TOKEN_COLORS.textSecondary, fontSize: 11 }}
           axisLine={false}
           tickLine={false}
           domain={['auto', 'auto']}
         />
         <Tooltip
           contentStyle={{
-            background: '#1a2d22',
-            border: `1px solid ${GREEN}33`,
+            background: TOKEN_COLORS.bgElevatedGreen,
+            border: `1px solid ${TOKEN_COLORS.green}33`,
             borderRadius: 10,
             color: '#fff',
             fontSize: 12,
@@ -47,9 +46,9 @@ export default function MemberWeightChart({ data }: { data: WeightPoint[] }) {
         <Line
           type="monotone"
           dataKey="weight"
-          stroke={GREEN}
+          stroke={TOKEN_COLORS.green}
           strokeWidth={2.5}
-          dot={{ fill: GREEN, r: 4 }}
+          dot={{ fill: TOKEN_COLORS.green, r: 4 }}
           activeDot={{ r: 6 }}
         />
       </LineChart>

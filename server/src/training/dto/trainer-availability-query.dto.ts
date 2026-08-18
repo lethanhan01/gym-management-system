@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsString, Matches } from 'class-validator'
+import { IsNotEmpty, IsOptional, IsString, Matches } from 'class-validator'
 
 export class TrainerAvailabilityQueryDto {
   @IsString()
@@ -7,4 +7,14 @@ export class TrainerAvailabilityQueryDto {
     message: 'date must be in YYYY-MM-DD format',
   })
   date!: string
+
+  @IsOptional()
+  @IsString()
+  @IsNotEmpty()
+  trainerStaffId?: string
+
+  @IsOptional()
+  @IsString()
+  @IsNotEmpty()
+  memberId?: string
 }

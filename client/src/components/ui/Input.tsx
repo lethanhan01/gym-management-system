@@ -6,6 +6,7 @@ import {
 } from 'react'
 import { Eye, EyeOff, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { getInputClasses } from './input-utils'
 
 export type InputSize = 'sm' | 'md' | 'lg' | 'default'
 
@@ -23,63 +24,6 @@ export interface BaseInputProps {
   loading?: boolean
   fullWidth?: boolean
   mobileFull?: boolean
-}
-
-export function normalizeInputSize(size: InputSize = 'md'): 'sm' | 'md' | 'lg' {
-  switch (size) {
-    case 'sm':
-      return 'sm'
-    case 'lg':
-      return 'lg'
-    case 'md':
-    case 'default':
-    default:
-      return 'md'
-  }
-}
-
-export function getInputClasses({
-  inputSize = 'md',
-  size,
-  hasLeftIcon,
-  hasRightIcon,
-  hasError,
-  fullWidth,
-  mobileFull,
-  disabled,
-  className,
-}: {
-  inputSize?: InputSize
-  size?: InputSize
-  hasLeftIcon?: boolean
-  hasRightIcon?: boolean
-  hasError?: boolean
-  fullWidth?: boolean
-  mobileFull?: boolean
-  disabled?: boolean
-  className?: string
-}) {
-  const effectiveSize = normalizeInputSize(size ?? inputSize)
-
-  const sizeClasses = {
-    sm: 'min-h-[38px] py-1.5 text-xs',
-    md: 'min-h-[44px] py-2.5 text-sm',
-    lg: 'min-h-[50px] py-3.5 text-base',
-  }
-
-  return cn(
-    'rogym-input block font-body transition-colors duration-200',
-    fullWidth && 'w-full',
-    mobileFull && 'w-full sm:w-auto',
-    !fullWidth && !mobileFull && 'w-full',
-    sizeClasses[effectiveSize],
-    hasLeftIcon && 'pl-10',
-    hasRightIcon && 'pr-10',
-    hasError &&
-      'border-red-500/80 focus:border-red-400 focus:ring-1 focus:ring-red-400/30',
-    disabled && 'cursor-not-allowed opacity-50',
-    className
-  )
 }
 
 export interface InputProps

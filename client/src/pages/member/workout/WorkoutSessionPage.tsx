@@ -3,12 +3,15 @@ import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { CheckCircle2, Circle, ArrowLeft, Info } from 'lucide-react'
 import {
-  MemberErrorState,
-  MemberPage,
-  MemberPageHeader,
-  MemberSkeleton,
-} from '@/components/MemberUI'
-import { Button, Modal } from '@/components/ui'
+  Alert,
+  Button,
+  Card,
+  Modal,
+  Page,
+  PageErrorState,
+  PageHeader,
+  PageSkeleton,
+} from '@/components/ui'
 import workoutService, {
   type WorkoutAssignmentSummary,
   type WorkoutPlan,
@@ -50,9 +53,9 @@ const WorkoutSessionExercise = memo(function WorkoutSessionExercise({
   const { t } = useTranslation('member')
   const isCardio = ex.exercise?.bodyPart?.name?.toLowerCase() === 'cardio'
   return (
-    <div className="rogym-sx-46079668">
+    <Card as="article" variant="compact" className="rogym-sx-46079668">
       {/* Exercise header */}
-      <div className="flex items-center gap-3 px-4 py-3 rogym-sx-dd0d9e7c">
+      <header className="flex items-center gap-3 px-4 py-3 rogym-sx-dd0d9e7c">
         <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-sm font-bold rogym-sx-252b3c13">
           {exIdx + 1}
         </div>
@@ -76,7 +79,7 @@ const WorkoutSessionExercise = memo(function WorkoutSessionExercise({
             <Info size={20} />
           </button>
         )}
-      </div>
+      </header>
 
       {/* Sets */}
       <div className="p-4">
@@ -140,7 +143,7 @@ const WorkoutSessionExercise = memo(function WorkoutSessionExercise({
           ))}
         </div>
       </div>
-    </div>
+    </Card>
   )
 })
 
@@ -263,14 +266,14 @@ export default function WorkoutSessionPage() {
 
   if (done) {
     return (
-      <MemberPage>
-        <div className="flex min-h-64 flex-col items-center justify-center gap-4 py-12 text-center">
+      <Page>
+        <main className="flex min-h-64 flex-col items-center justify-center gap-4 py-12 text-center">
           <CheckCircle2 size={56} className="rogym-sx-b2fbf853" />
           <h2 className="text-2xl font-bold text-white">{t('workout.session.completedTitle')}</h2>
           <p className="text-sm rogym-sx-d88f932f">
             {t('workout.session.completedDesc')}
           </p>
-          <div className="flex gap-3">
+          <footer className="flex gap-3">
             <Button
               variant="outline-white"
               onClick={() => navigate('/member/workout/plan')}
@@ -283,9 +286,9 @@ export default function WorkoutSessionPage() {
             >
               {t('workout.session.buttonViewHistory')}
             </Button>
-          </div>
-        </div>
-      </MemberPage>
+          </footer>
+        </main>
+      </Page>
     )
   }
 
@@ -294,8 +297,8 @@ export default function WorkoutSessionPage() {
     : []
 
   return (
-    <MemberPage>
-      <MemberPageHeader
+    <Page>
+      <PageHeader
         eyebrow={plan?.name ?? t('workout.session.defaultPlanName')}
         title={day ? `${day.name}` : t('workout.session.defaultDayName')}
         description={
@@ -316,13 +319,13 @@ export default function WorkoutSessionPage() {
       />
 
       {loading ? (
-        <MemberSkeleton rows={5} />
+        <PageSkeleton rows={5} />
       ) : error ? (
-        <MemberErrorState message={error} onRetry={load} />
+        <PageErrorState message={error} onRetry={load} />
       ) : !day ? (
-        <MemberErrorState message={t('workout.session.errorNotFound')} />
+        <PageErrorState message={t('workout.session.errorNotFound')} />
       ) : (
-        <div className="space-y-4 pb-28">
+        <main className="space-y-4 pb-28">
           {sortedExercises.map((ex, exIdx) => (
             <WorkoutSessionExercise
               key={ex.planExerciseId}
@@ -334,13 +337,14 @@ export default function WorkoutSessionPage() {
             />
           ))}
 
-          {submitError && <MemberErrorState message={submitError} />}
-        </div>
+          {submitError && <Alert tone="error" description={submitError} />}
+        </main>
       )}
 
       {/* Floating finish bar */}
       {!loading && !error && day && (
-        <div
+        <aside
+          aria-label="Workout session actions"
           className="fixed bottom-0 left-0 right-0 flex items-center justify-between gap-4 px-6 py-4 rogym-sx-e122cbce"
         >
           <p className="text-sm rogym-sx-d88f932f">
@@ -357,7 +361,7 @@ export default function WorkoutSessionPage() {
           >
             {submitting ? t('workout.session.buttonSaving') : t('workout.session.buttonFinish')}
           </Button>
-        </div>
+        </aside>
       )}
       {/* Info Modal */}
       {infoModalExercise && (
@@ -384,7 +388,8 @@ export default function WorkoutSessionPage() {
           </div>
         </Modal>
       )}
-    </MemberPage>
+    </Page>
   )
 }
+
 

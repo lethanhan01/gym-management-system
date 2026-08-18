@@ -3,6 +3,7 @@ import { TrainingSessionStatus } from '@prisma/client'
 import { AuditService } from '../common/audit/audit.service'
 import { PrismaService } from '../prisma/prisma.service'
 import { CancelBookingDto, CreateMemberBookingDto, TrainerAvailabilityQueryDto } from './dto'
+import { TrainerSessionAvailabilityService } from './trainer-session-availability.service'
 import { TrainingCallerResolverService } from './training-caller-resolver.service'
 import { TrainingSessionNotificationService } from './training-session-notification.service'
 import { SESSION_SUMMARY_INCLUDE, TrainingSessionPresenter } from './training-session.presenter'
@@ -10,7 +11,7 @@ import { TrainingSessionSchedulingService } from './training-session-scheduling.
 import { TrainingCaller as Caller } from './training.types'
 @Injectable()
 export class MemberSessionBookingService {
-  constructor(private readonly prisma: PrismaService, private readonly audit: AuditService, private readonly caller: TrainingCallerResolverService, private readonly scheduling: TrainingSessionSchedulingService, private readonly presenter: TrainingSessionPresenter, private readonly sessionNotifications: TrainingSessionNotificationService) {}
+  constructor(private readonly prisma: PrismaService, private readonly audit: AuditService, private readonly caller: TrainingCallerResolverService, private readonly scheduling: TrainingSessionSchedulingService, private readonly presenter: TrainingSessionPresenter, private readonly sessionNotifications: TrainingSessionNotificationService, private readonly availability: TrainerSessionAvailabilityService) {}
   async getTrainerAvailability(query: TrainerAvailabilityQueryDto, caller: Caller) {
     const memberId = await this.caller.resolveMemberId(caller)
     if (!memberId) {
@@ -23,21 +24,7 @@ export class MemberSessionBookingService {
 
     const member = await this.prisma.member.findFirst({
       where: { memberId, deletedAt: null },
-      select: {
-        memberId: true,
-        primaryTrainerId: true,
-        primaryTrainer: {
-          select: {
-            staffId: true,
-            user: {
-              select: {
-                fullName: true,
-                avatarFileId: true,
-              },
-            },
-          },
-        },
-      },
+      select: { primaryTrainerId: true },
     })
 
     if (!member) {
@@ -48,7 +35,7 @@ export class MemberSessionBookingService {
       })
     }
 
-    if (!member.primaryTrainerId || !member.primaryTrainer) {
+    if (!member.primaryTrainerId) {
       throw new BadRequestException({
         success: false,
         code: 'NO_PRIMARY_TRAINER',
@@ -56,89 +43,11 @@ export class MemberSessionBookingService {
       })
     }
 
-    const [yStr, mStr, dStr] = query.date.split('-')
-    const year = parseInt(yStr, 10)
-    const month = parseInt(mStr, 10) - 1
-    const day = parseInt(dStr, 10)
-
-    const dayStart = new Date(Date.UTC(year, month, day, 0 - 7, 0, 0, 0))
-    const dayEnd = new Date(Date.UTC(year, month, day, 24 - 7, 0, 0, 0))
-
-    const [trainerSessions, memberSessions] = await Promise.all([
-      this.prisma.trainingSession.findMany({
-        where: {
-          trainerStaffId: member.primaryTrainerId,
-          status: { not: TrainingSessionStatus.cancelled },
-          deletedAt: null,
-          startTime: { lt: dayEnd },
-          endTime: { gt: dayStart },
-        },
-        select: { startTime: true, endTime: true },
-      }),
-      this.prisma.trainingSession.findMany({
-        where: {
-          memberId: member.memberId,
-          status: { not: TrainingSessionStatus.cancelled },
-          deletedAt: null,
-          startTime: { lt: dayEnd },
-          endTime: { gt: dayStart },
-        },
-        select: { startTime: true, endTime: true },
-      }),
-    ])
-
-    const now = new Date()
-    const graceThreshold = new Date(now.getTime() + 5 * 60 * 1000)
-
-    const slots: Array<{
-      slotIndex: number
-      startTime: string
-      endTime: string
-      available: boolean
-      reason?: 'PAST_TIME' | 'TRAINER_BUSY' | 'MEMBER_BUSY'
-    }> = []
-
-    for (let hour = 6; hour < 21; hour++) {
-      const slotIndex = hour - 5
-      const slotStart = new Date(Date.UTC(year, month, day, hour - 7, 0, 0, 0))
-      const slotEnd = new Date(Date.UTC(year, month, day, hour + 1 - 7, 0, 0, 0))
-
-      let available = true
-      let reason: 'PAST_TIME' | 'TRAINER_BUSY' | 'MEMBER_BUSY' | undefined
-
-      if (slotStart <= graceThreshold) {
-        available = false
-        reason = 'PAST_TIME'
-      } else if (
-        trainerSessions.some((s) => s.startTime < slotEnd && s.endTime && s.endTime > slotStart)
-      ) {
-        available = false
-        reason = 'TRAINER_BUSY'
-      } else if (
-        memberSessions.some((s) => s.startTime < slotEnd && s.endTime && s.endTime > slotStart)
-      ) {
-        available = false
-        reason = 'MEMBER_BUSY'
-      }
-
-      slots.push({
-        slotIndex,
-        startTime: slotStart.toISOString(),
-        endTime: slotEnd.toISOString(),
-        available,
-        ...(reason ? { reason } : {}),
-      })
-    }
-
-    return {
-      date: query.date,
-      trainer: {
-        staffId: member.primaryTrainer.staffId.toString(),
-        fullName: member.primaryTrainer.user.fullName,
-        avatarFileId: member.primaryTrainer.user.avatarFileId?.toString() ?? null,
-      },
-      slots,
-    }
+    return this.availability.getAvailabilitySlots(
+      query.date,
+      member.primaryTrainerId,
+      memberId,
+    )
   }
 
   async bookSessionByMember(dto: CreateMemberBookingDto, caller: Caller) {

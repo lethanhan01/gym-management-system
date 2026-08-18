@@ -23,7 +23,14 @@ const mockService = {
   cancelBookingByMember: jest.fn(),
 }
 
-const ctrl = new TrainingController(mockService as any, mockService as any, mockService as any, mockService as any)
+const ctrl = new TrainingController(
+  mockService as any,
+  mockService as any,
+  mockService as any,
+  mockService as any,
+  mockService as any,
+  mockService as any
+)
 const deviceCtrl = new DeviceController(mockService as any)
 
 const trainerUser: AuthenticatedUser = {

@@ -14,13 +14,16 @@ export interface AuthUser {
   memberId?: string | null
 }
 
+export type AuthProvider = 'credentials' | 'line'
+
 interface AuthState {
   user: AuthUser | null
   token: string | null
+  authProvider?: AuthProvider | null
   isAuthenticated: boolean
   hasHydrated: boolean
 
-  setAuth: (user: AuthUser, token: string) => void
+  setAuth: (user: AuthUser, token: string, authProvider?: AuthProvider) => void
   setUser: (user: AuthUser) => void
   clearAuth: () => void
   setHasHydrated: (value: boolean) => void
@@ -31,14 +34,17 @@ export const useAuthStore = create<AuthState>()(
     (set) => ({
       user: null,
       token: null,
+      authProvider: null,
       isAuthenticated: false,
       hasHydrated: false,
 
-      setAuth: (user, token) => set({ user, token, isAuthenticated: true }),
+      setAuth: (user, token, authProvider = 'credentials') =>
+        set({ user, token, authProvider, isAuthenticated: true }),
 
       setUser: (user) => set({ user }),
 
-      clearAuth: () => set({ user: null, token: null, isAuthenticated: false }),
+      clearAuth: () =>
+        set({ user: null, token: null, authProvider: null, isAuthenticated: false }),
 
       setHasHydrated: (value) => set({ hasHydrated: value }),
     }),
@@ -47,6 +53,7 @@ export const useAuthStore = create<AuthState>()(
       partialize: (state) => ({
         user: state.user,
         token: state.token,
+        authProvider: state.authProvider,
         isAuthenticated: state.isAuthenticated,
       }),
       onRehydrateStorage: () => (state) => {

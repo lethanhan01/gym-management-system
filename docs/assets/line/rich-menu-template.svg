@@ -1,0 +1,189 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2500 843" width="2500" height="843" style="background:#080e0b; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+  <defs>
+    <!-- Gradients -->
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#060c09" />
+      <stop offset="50%" stop-color="#0a1510" />
+      <stop offset="100%" stop-color="#070d0a" />
+    </linearGradient>
+
+    <linearGradient id="ctaGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#22c55e" stop-opacity="0.18" />
+      <stop offset="100%" stop-color="#16a34a" stop-opacity="0.05" />
+    </linearGradient>
+
+    <linearGradient id="accentGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#22c55e" />
+      <stop offset="100%" stop-color="#4ade80" />
+    </linearGradient>
+
+    <linearGradient id="glowGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#22c55e" stop-opacity="0.3" />
+      <stop offset="100%" stop-color="#22c55e" stop-opacity="0" />
+    </linearGradient>
+
+    <!-- Filters -->
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="8" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+
+    <filter id="cardShadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#000000" flood-opacity="0.5" />
+    </filter>
+  </defs>
+
+  <!-- Background Base -->
+  <rect width="2500" height="843" fill="url(#bgGrad)" />
+
+  <!-- Top Accent Glow Line -->
+  <rect x="0" y="0" width="2500" height="4" fill="url(#accentGrad)" opacity="0.8" />
+
+  <!-- Subtle Grid Pattern Background -->
+  <g opacity="0.04" stroke="#22c55e" stroke-width="1">
+    <line x1="0" y1="210" x2="2500" y2="210" />
+    <line x1="0" y1="421" x2="2500" y2="421" />
+    <line x1="0" y1="632" x2="2500" y2="632" />
+  </g>
+
+  <!-- ========================================================================= -->
+  <!-- ZONE 1: LỊCH TẬP (0px -> 625px) -->
+  <!-- ========================================================================= -->
+  <g id="zone-schedule" transform="translate(0, 0)">
+    <!-- Active Card Background -->
+    <rect x="25" y="30" width="575" height="783" rx="28" fill="#111d17" fill-opacity="0.6" stroke="#ffffff" stroke-opacity="0.08" stroke-width="1.5" filter="url(#cardShadow)" />
+    
+    <!-- Icon Container -->
+    <circle cx="312" cy="280" r="88" fill="#16a34a" fill-opacity="0.12" stroke="#22c55e" stroke-opacity="0.3" stroke-width="2" />
+    <!-- Calendar Icon -->
+    <g transform="translate(262, 230)" stroke="#22c55e" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="5" y="15" width="90" height="80" rx="14" fill="#0d1b14" fill-opacity="0.8" />
+      <line x1="5" y1="42" x2="95" y2="42" stroke-width="5" />
+      <line x1="30" y1="5" x2="30" y2="25" />
+      <line x1="70" y1="5" x2="70" y2="25" />
+      <!-- Small day dots -->
+      <circle cx="32" cy="62" r="4" fill="#22c55e" stroke="none" />
+      <circle cx="50" cy="62" r="4" fill="#22c55e" stroke="none" />
+      <circle cx="68" cy="62" r="4" fill="#22c55e" stroke="none" />
+      <circle cx="32" cy="78" r="4" fill="#22c55e" stroke="none" />
+      <circle cx="50" cy="78" r="4" fill="#22c55e" stroke="none" />
+    </g>
+
+    <!-- Text -->
+    <text x="312" y="470" text-anchor="middle" font-size="44" font-weight="900" fill="#ffffff" letter-spacing="1.5">LỊCH TẬP</text>
+    <text x="312" y="525" text-anchor="middle" font-size="24" font-weight="500" fill="#9ca3af">Theo dõi &amp; Quản lý buổi tập</text>
+
+    <!-- Bottom Action Pill -->
+    <rect x="200" y="600" width="225" height="56" rx="28" fill="#ffffff" fill-opacity="0.06" stroke="#ffffff" stroke-opacity="0.12" stroke-width="1.5" />
+    <text x="312" y="637" text-anchor="middle" font-size="22" font-weight="700" fill="#e5e7eb">Xem chi tiết →</text>
+  </g>
+
+  <!-- Zone Divider 1 -->
+  <line x1="625" y1="60" x2="625" y2="783" stroke="#ffffff" stroke-opacity="0.08" stroke-width="1.5" stroke-dasharray="8 8" />
+
+  <!-- ========================================================================= -->
+  <!-- ZONE 2: ĐẶT LỊCH (625px -> 1250px) [FEATURED CTA] -->
+  <!-- ========================================================================= -->
+  <g id="zone-book" transform="translate(625, 0)">
+    <!-- Featured Highlight Card Background -->
+    <rect x="25" y="30" width="575" height="783" rx="28" fill="url(#ctaGrad)" stroke="#22c55e" stroke-opacity="0.5" stroke-width="2.5" filter="url(#cardShadow)" />
+    
+    <!-- Top Badge -->
+    <rect x="225" y="50" width="175" height="42" rx="21" fill="#22c55e" />
+    <text x="312" y="78" text-anchor="middle" font-size="20" font-weight="900" fill="#060c09" letter-spacing="1">ĐẶT NGAY</text>
+
+    <!-- Icon Container with Neon Glow -->
+    <circle cx="312" cy="280" r="96" fill="#22c55e" fill-opacity="0.18" stroke="#22c55e" stroke-width="3" filter="url(#glow)" />
+    <circle cx="312" cy="280" r="96" fill="#12251a" stroke="#22c55e" stroke-width="2.5" />
+    
+    <!-- Calendar Plus Icon -->
+    <g transform="translate(262, 230)" stroke="#22c55e" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="5" y="15" width="90" height="80" rx="14" fill="#09140e" />
+      <line x1="5" y1="42" x2="95" y2="42" stroke-width="5" />
+      <line x1="30" y1="5" x2="30" y2="25" />
+      <line x1="70" y1="5" x2="70" y2="25" />
+      <!-- Plus Sign in Center -->
+      <line x1="50" y1="55" x2="50" y2="79" stroke="#4ade80" stroke-width="7" />
+      <line x1="38" y1="67" x2="62" y2="67" stroke="#4ade80" stroke-width="7" />
+    </g>
+
+    <!-- Text -->
+    <text x="312" y="470" text-anchor="middle" font-size="46" font-weight="900" fill="#22c55e" letter-spacing="1.5">ĐẶT LỊCH PT</text>
+    <text x="312" y="525" text-anchor="middle" font-size="24" font-weight="600" fill="#a7f3d0">Chọn khung giờ với PT</text>
+
+    <!-- Prominent Bottom Button -->
+    <rect x="160" y="595" width="305" height="66" rx="33" fill="#22c55e" filter="url(#glow)" />
+    <text x="312" y="638" text-anchor="middle" font-size="24" font-weight="900" fill="#041208" letter-spacing="0.5">CHỌN GIỜ TẬP ⚡</text>
+  </g>
+
+  <!-- Zone Divider 2 -->
+  <line x1="1250" y1="60" x2="1250" y2="783" stroke="#ffffff" stroke-opacity="0.08" stroke-width="1.5" stroke-dasharray="8 8" />
+
+  <!-- ========================================================================= -->
+  <!-- ZONE 3: CHECK-IN (1250px -> 1875px) -->
+  <!-- ========================================================================= -->
+  <g id="zone-checkin" transform="translate(1250, 0)">
+    <!-- Card Background -->
+    <rect x="25" y="30" width="575" height="783" rx="28" fill="#111d17" fill-opacity="0.6" stroke="#ffffff" stroke-opacity="0.08" stroke-width="1.5" filter="url(#cardShadow)" />
+    
+    <!-- Icon Container -->
+    <circle cx="312" cy="280" r="88" fill="#16a34a" fill-opacity="0.12" stroke="#22c55e" stroke-opacity="0.3" stroke-width="2" />
+    
+    <!-- QR Scan Icon -->
+    <g transform="translate(265, 233)" stroke="#22c55e" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round">
+      <!-- Scanner Frame Corners -->
+      <path d="M 5 28 L 5 10 L 23 10" stroke-width="7" />
+      <path d="M 89 28 L 89 10 L 71 10" stroke-width="7" />
+      <path d="M 5 66 L 5 84 L 23 84" stroke-width="7" />
+      <path d="M 89 66 L 89 84 L 71 84" stroke-width="7" />
+      <!-- QR Blocks inside -->
+      <rect x="22" y="24" width="20" height="20" rx="3" fill="#22c55e" stroke="none" />
+      <rect x="52" y="24" width="20" height="20" rx="3" fill="#22c55e" stroke="none" />
+      <rect x="22" y="52" width="20" height="20" rx="3" fill="#22c55e" stroke="none" />
+      <rect x="52" y="52" width="20" height="20" rx="3" fill="#22c55e" stroke="none" />
+      <!-- Laser Scan Line -->
+      <line x1="10" y1="47" x2="84" y2="47" stroke="#4ade80" stroke-width="4" stroke-dasharray="4 4" />
+    </g>
+
+    <!-- Text -->
+    <text x="312" y="470" text-anchor="middle" font-size="44" font-weight="900" fill="#ffffff" letter-spacing="1.5">CHECK-IN</text>
+    <text x="312" y="525" text-anchor="middle" font-size="24" font-weight="500" fill="#9ca3af">Mã QR hội viên vào phòng</text>
+
+    <!-- Bottom Action Pill -->
+    <rect x="200" y="600" width="225" height="56" rx="28" fill="#ffffff" fill-opacity="0.06" stroke="#ffffff" stroke-opacity="0.12" stroke-width="1.5" />
+    <text x="312" y="637" text-anchor="middle" font-size="22" font-weight="700" fill="#e5e7eb">Mở mã QR →</text>
+  </g>
+
+  <!-- Zone Divider 3 -->
+  <line x1="1875" y1="60" x2="1875" y2="783" stroke="#ffffff" stroke-opacity="0.08" stroke-width="1.5" stroke-dasharray="8 8" />
+
+  <!-- ========================================================================= -->
+  <!-- ZONE 4: HỒ SƠ (1875px -> 2500px) -->
+  <!-- ========================================================================= -->
+  <g id="zone-profile" transform="translate(1875, 0)">
+    <!-- Card Background -->
+    <rect x="25" y="30" width="575" height="783" rx="28" fill="#111d17" fill-opacity="0.6" stroke="#ffffff" stroke-opacity="0.08" stroke-width="1.5" filter="url(#cardShadow)" />
+    
+    <!-- Icon Container -->
+    <circle cx="312" cy="280" r="88" fill="#16a34a" fill-opacity="0.12" stroke="#22c55e" stroke-opacity="0.3" stroke-width="2" />
+    
+    <!-- User Profile Icon -->
+    <g transform="translate(262, 230)" stroke="#22c55e" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round">
+      <!-- Head -->
+      <circle cx="50" cy="35" r="22" fill="#0d1b14" />
+      <!-- Body -->
+      <path d="M 12 88 C 12 65, 30 58, 50 58 C 70 58, 88 65, 88 88" fill="#0d1b14" />
+      <!-- Small membership star -->
+      <polygon points="76,14 79,22 87,22 81,27 83,35 76,30 69,35 71,27 65,22 73,22" fill="#22c55e" stroke="none" />
+    </g>
+
+    <!-- Text -->
+    <text x="312" y="470" text-anchor="middle" font-size="44" font-weight="900" fill="#ffffff" letter-spacing="1.5">HỒ SƠ</text>
+    <text x="312" y="525" text-anchor="middle" font-size="24" font-weight="500" fill="#9ca3af">Gói tập &amp; PT phụ trách</text>
+
+    <!-- Bottom Action Pill -->
+    <rect x="200" y="600" width="225" height="56" rx="28" fill="#ffffff" fill-opacity="0.06" stroke="#ffffff" stroke-opacity="0.12" stroke-width="1.5" />
+    <text x="312" y="637" text-anchor="middle" font-size="22" font-weight="700" fill="#e5e7eb">Xem hồ sơ →</text>
+  </g>
+
+</svg>

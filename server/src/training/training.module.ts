@@ -8,6 +8,7 @@ import { TrainingCallerResolverService } from './training-caller-resolver.servic
 import { TrainingSessionNotificationService } from './training-session-notification.service'
 import { TrainingSessionPresenter } from './training-session.presenter'
 import { TrainingSessionSchedulingService } from './training-session-scheduling.service'
+import { TrainerSessionAvailabilityService } from './trainer-session-availability.service'
 import { TrainingSessionService } from './training-session.service'
 import { DeviceApiKeyGuard } from './guards/device-api-key.guard'
 import { AuditService } from '../common/audit/audit.service'
@@ -26,6 +27,7 @@ import { LineMessagingModule } from '../line-messaging/line-messaging.module'
     TrainingSessionNotificationService,
     TrainingSessionPresenter,
     TrainingSessionSchedulingService,
+    TrainerSessionAvailabilityService,
     TrainingSessionService,
     DeviceApiKeyGuard,
     AuditService,

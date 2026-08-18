@@ -10,17 +10,18 @@ import subscriptionService from '@/services/subscription.service'
 import { useAuthStore } from '@/stores/authStore'
 import { useSubscriptionStore } from '@/stores/subscriptionStore'
 import {
-  MemberBadge,
-  MemberCard,
-  MemberEmptyState,
-  MemberPage,
-  MemberPageHeader,
-  MemberSkeleton,
-} from '@/components/MemberUI'
+  Alert,
+  Badge,
+  Button,
+  Card,
+  Page,
+  PageEmptyState,
+  PageHeader,
+  PageSkeleton,
+} from '@/components/ui'
 import { getPaymentMethodOptions } from '@/components/payment/payment-method-data'
 import { formatVnd } from '@/lib/currency'
 import { parsePackageBenefits } from '@/lib/package'
-import { Button } from '@/components/ui'
 
 export default function PaymentPage() {
   const { t } = useTranslation('member')
@@ -84,19 +85,19 @@ export default function PaymentPage() {
   }
 
   return (
-    <MemberPage>
-      <MemberPageHeader
+    <Page>
+      <PageHeader
         eyebrow="Gói Hội Viên"
         title={t('subscription.payment.headerTitle')}
         description={t('subscription.payment.headerSubtitle')}
       />
 
-      <div>
+      <main>
         {/* Package grid */}
         {loading ? (
-          <MemberSkeleton rows={4} />
+          <PageSkeleton rows={4} />
         ) : packages.length === 0 ? (
-          <MemberEmptyState
+          <PageEmptyState
             title={t('subscription.payment.emptyPackages')}
           />
         ) : (
@@ -106,9 +107,9 @@ export default function PaymentPage() {
               const isPopular  = idx === 1
               const benefits   = parsePackageBenefits(pkg.benefits)
               return (
-                <MemberCard
+                <Card
                   key={pkg.packageId}
-                  as="div"
+                  as="article"
                   onClick={() => handleSelect(pkg)}
                   variant="interactive"
                   className={`rogym-package-option cursor-pointer transition-all ${isSelected ? 'is-selected ring-2 ring-[var(--rogym-teal)]' : ''} ${
@@ -133,13 +134,13 @@ export default function PaymentPage() {
                       <span>{t('subscription.payment.days', { count: pkg.durationDays })}</span>
                     </div>
                     {pkg.includesPt ? (
-                      <MemberBadge tone="success" size="xs" leftIcon={<UserCheck size={11} />}>
+                      <Badge tone="success" size="xs" leftIcon={<UserCheck size={11} />}>
                         {t('subscription.payment.withPt')}
-                      </MemberBadge>
+                      </Badge>
                     ) : (
-                      <MemberBadge tone="muted" size="xs" leftIcon={<UserX size={11} />}>
+                      <Badge tone="muted" size="xs" leftIcon={<UserX size={11} />}>
                         {t('subscription.payment.selfTrain')}
-                      </MemberBadge>
+                      </Badge>
                     )}
                   </div>
                   {benefits.length > 0 && (
@@ -159,14 +160,14 @@ export default function PaymentPage() {
                   >
                     {isSelected ? t('subscription.payment.buttonSelected') : t('subscription.payment.buttonSelectThis')}
                   </Button>
-                </MemberCard>
+                </Card>
               )
             })}
           </div>
         )}
 
         {/* Payment panel */}
-        <div className={`rogym-payment-panel ${showPanel && selected ? 'is-open' : ''}`}>
+        <aside className={`rogym-payment-panel ${showPanel && selected ? 'is-open' : ''}`}>
           {selected && (
             <div className="rogym-sx-8f35a167">
               <div className="flex items-center justify-between mb-5">
@@ -191,13 +192,13 @@ export default function PaymentPage() {
                   <div className="flex items-center gap-2 mt-1">
                     <p className="rogym-sx-0cce7195">{t('subscription.payment.days', { count: selected.durationDays })}</p>
                     {selected.includesPt ? (
-                      <MemberBadge tone="success" size="xs" leftIcon={<UserCheck size={11} />}>
+                      <Badge tone="success" size="xs" leftIcon={<UserCheck size={11} />}>
                         {t('subscription.payment.withPt')}
-                      </MemberBadge>
+                      </Badge>
                     ) : (
-                      <MemberBadge tone="muted" size="xs" leftIcon={<UserX size={11} />}>
+                      <Badge tone="muted" size="xs" leftIcon={<UserX size={11} />}>
                         {t('subscription.payment.selfTrain')}
-                      </MemberBadge>
+                      </Badge>
                     )}
                   </div>
                 </div>
@@ -220,7 +221,7 @@ export default function PaymentPage() {
               </div>
 
               {error && (
-                <p className="rogym-sx-3b31904d">{error}</p>
+                <Alert tone="error" description={error} className="mb-4" />
               )}
 
               <Button
@@ -234,8 +235,9 @@ export default function PaymentPage() {
               </Button>
             </div>
           )}
-        </div>
-      </div>
-    </MemberPage>
+        </aside>
+      </main>
+    </Page>
   )
 }
+

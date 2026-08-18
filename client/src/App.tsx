@@ -8,6 +8,7 @@ import SubscriptionRequired from './components/shared/SubscriptionRequired'
 import AuthLayout from './layouts/AuthLayout'
 import { Toaster } from 'sonner'
 import { FullScreenLoader } from './components/shared/Spinner'
+import { isLiffMockEnabled } from './lib/liff'
 
 const DashboardLayout = lazy(() => import('./layouts/DashboardLayout'))
 
@@ -29,6 +30,9 @@ const ContactPage = lazy(() => import('./pages/home/ContactPage'))
 
 // LINE LIFF
 const LiffEntryPage = lazy(() => import('./pages/liff/LiffEntryPage'))
+const LineMockInboxPage = isLiffMockEnabled
+  ? lazy(() => import('./pages/dev/LineMockInboxPage'))
+  : null
 
 // Member — public registration flow
 
@@ -139,6 +143,7 @@ export default function App() {
 
         {/* LIFF — LINE entry point (public) */}
         <Route path="/liff" element={<LiffEntryPage />} />
+        {LineMockInboxPage && <Route path="/dev/line-mock" element={<LineMockInboxPage />} />}
 
         <Route element={<AuthLayout />}>
           <Route path="/login" element={<LoginPage />} />

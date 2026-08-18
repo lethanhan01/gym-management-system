@@ -1,18 +1,22 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Trash2, Star } from 'lucide-react'
-import { Button, Checkbox, FormField, Input } from '@/components/ui'
+import {
+  Alert,
+  Badge,
+  Button,
+  Card,
+  Checkbox,
+  FormField,
+  Input,
+  Page,
+  PageEmptyState,
+  PageHeader,
+  PageSkeleton,
+} from '@/components/ui'
 import paymentAccountService, { type PaymentAccount, type CreatePaymentAccountPayload } from '@/services/paymentAccount.service'
 import { type PaymentMethod } from '@/services/payment.service'
 import { useAuthStore } from '@/stores/authStore'
-import {
-  MemberBadge,
-  MemberCard,
-  MemberEmptyState,
-  MemberPage,
-  MemberPageHeader,
-  MemberSkeleton,
-} from '@/components/MemberUI'
 import {
   getPaymentMethodLabel,
   getPaymentMethodOptions,
@@ -93,27 +97,28 @@ export default function PaymentAccountsPage() {
   }
 
   return (
-    <MemberPage>
-      <MemberPageHeader
+    <Page>
+      <PageHeader
         eyebrow={t('paymentAccounts.eyebrow')}
         title={t('paymentAccounts.title')}
         description={t('paymentAccounts.description')}
       />
 
-      <div className="grid gap-5 xl:grid-cols-2">
+      <main className="grid gap-5 xl:grid-cols-2">
         {/* ── LEFT: accounts list ── */}
-        <div>
+        <section aria-label={t('paymentAccounts.title')}>
           {loading ? (
-            <MemberSkeleton rows={3} />
+            <PageSkeleton rows={3} />
           ) : accounts.length === 0 ? (
-            <MemberEmptyState
+            <PageEmptyState
               title={t('paymentAccounts.emptyTitle')}
               description={t('paymentAccounts.emptyDescription')}
             />
           ) : (
             <div className="flex flex-col gap-3">
               {accounts.map(acc => (
-                <MemberCard
+                <Card
+                  as="article"
                   key={acc.accountId}
                   variant="compact"
                   className={`rogym-payment-account px-5 py-4 flex items-center gap-4 ${
@@ -129,13 +134,13 @@ export default function PaymentAccountsPage() {
                         {acc.label || acc.provider || getPaymentMethodLabel(acc.type)}
                       </p>
                       {acc.isDefault && (
-                        <MemberBadge
+                        <Badge
                           tone="success"
                           size="xs"
                           leftIcon={<Star size={9} fill="currentColor" />}
                         >
                           {t('paymentAccounts.defaultBadge')}
-                        </MemberBadge>
+                        </Badge>
                       )}
                     </div>
                     <p className="text-xs rogym-text-secondary mt-0.5">
@@ -164,98 +169,102 @@ export default function PaymentAccountsPage() {
                   >
                     <Trash2 size={15} />
                   </Button>
-                </MemberCard>
+                </Card>
               ))}
             </div>
           )}
-        </div>
+        </section>
 
         {/* ── RIGHT: quick add card ── */}
-        <MemberCard variant="compact" className="p-6 flex flex-col gap-4 xl:self-start">
-          <h3 className="text-base font-bold text-white">
-            {t('paymentAccounts.formTitle')}
-          </h3>
+        <aside aria-label={t('paymentAccounts.formTitle')} className="xl:self-start">
+          <Card as="article" variant="compact" className="p-6 flex flex-col gap-4">
+            <h3 className="text-base font-bold text-white">
+              {t('paymentAccounts.formTitle')}
+            </h3>
 
-          {/* Type selector */}
-          <div className="flex gap-2">
-            {getPaymentMethodOptions().map(opt => (
-              <button
-                key={opt.value}
-                onClick={() => setType(opt.value)}
-                className={`rogym-payment-method-option flex-1 flex items-center justify-center gap-1.5 rounded-xl py-2.5 text-xs font-medium transition-all ${
-                  type === opt.value ? 'is-active' : ''
-                }`}
-              >
-                <opt.Icon size={16} />{opt.label}
-              </button>
-            ))}
-          </div>
+            {/* Type selector */}
+            <div className="flex gap-2">
+              {getPaymentMethodOptions().map(opt => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => setType(opt.value)}
+                  className={`rogym-payment-method-option flex-1 flex items-center justify-center gap-1.5 rounded-xl py-2.5 text-xs font-medium transition-all ${
+                    type === opt.value ? 'is-active' : ''
+                  }`}
+                >
+                  <opt.Icon size={16} />{opt.label}
+                </button>
+              ))}
+            </div>
 
-          {type === 'bank_card' && (
-            <>
-              <FormField label={t('paymentAccounts.fieldBankName')}>
-                <Input
-                  placeholder="Vietcombank, BIDV, Techcombank..."
-                  value={provider}
-                  onChange={e => setProvider(e.target.value)}
-                />
-              </FormField>
-              <FormField label={t('paymentAccounts.fieldAccountNo')}>
-                <Input
-                  placeholder="1234567890"
-                  value={accountRef}
-                  onChange={e => setAccountRef(e.target.value)}
-                />
-              </FormField>
-            </>
-          )}
-          {type === 'ewallet' && (
-            <>
-              <FormField label={t('paymentAccounts.fieldWallet')}>
-                <Input
-                  placeholder="MoMo, ZaloPay, VNPay..."
-                  value={provider}
-                  onChange={e => setProvider(e.target.value)}
-                />
-              </FormField>
-              <FormField label={t('paymentAccounts.fieldPhone')}>
-                <Input
-                  placeholder="0912 345 678"
-                  value={accountRef}
-                  onChange={e => setAccountRef(e.target.value)}
-                />
-              </FormField>
-            </>
-          )}
+            {type === 'bank_card' && (
+              <>
+                <FormField label={t('paymentAccounts.fieldBankName')}>
+                  <Input
+                    placeholder="Vietcombank, BIDV, Techcombank..."
+                    value={provider}
+                    onChange={e => setProvider(e.target.value)}
+                  />
+                </FormField>
+                <FormField label={t('paymentAccounts.fieldAccountNo')}>
+                  <Input
+                    placeholder="1234567890"
+                    value={accountRef}
+                    onChange={e => setAccountRef(e.target.value)}
+                  />
+                </FormField>
+              </>
+            )}
+            {type === 'ewallet' && (
+              <>
+                <FormField label={t('paymentAccounts.fieldWallet')}>
+                  <Input
+                    placeholder="MoMo, ZaloPay, VNPay..."
+                    value={provider}
+                    onChange={e => setProvider(e.target.value)}
+                  />
+                </FormField>
+                <FormField label={t('paymentAccounts.fieldPhone')}>
+                  <Input
+                    placeholder="0912 345 678"
+                    value={accountRef}
+                    onChange={e => setAccountRef(e.target.value)}
+                  />
+                </FormField>
+              </>
+            )}
 
-          <FormField label={t('paymentAccounts.fieldDisplayName')}>
-            <Input
-              placeholder="VD: Thẻ chính, Ví cá nhân..."
-              value={label}
-              onChange={e => setLabel(e.target.value)}
+            <FormField label={t('paymentAccounts.fieldDisplayName')}>
+              <Input
+                placeholder="VD: Thẻ chính, Ví cá nhân..."
+                value={label}
+                onChange={e => setLabel(e.target.value)}
+              />
+            </FormField>
+
+            <Checkbox
+              checked={isDefault}
+              onChange={e => setIsDefault(e.target.checked)}
+              label={t('paymentAccounts.checkboxDefault')}
             />
-          </FormField>
 
-          <Checkbox
-            checked={isDefault}
-            onChange={e => setIsDefault(e.target.checked)}
-            label={t('paymentAccounts.checkboxDefault')}
-          />
+            {formError && <Alert tone="error" description={formError} />}
+            {formSuccess && <Alert tone="success" description={t('paymentAccounts.submitSuccess')} />}
 
-          {formError && <p className="text-xs text-red-300">{formError}</p>}
-          {formSuccess && <p className="text-xs rogym-sx-b2fbf853">{t('paymentAccounts.submitSuccess')}</p>}
-
-          <Button
-            variant="primary"
-            onClick={handleSave}
-            disabled={saving}
-            loading={saving}
-            className="w-full justify-center mt-1"
-          >
-            {t('paymentAccounts.buttonSave')}
-          </Button>
-        </MemberCard>
-      </div>
-    </MemberPage>
+            <Button
+              variant="primary"
+              onClick={handleSave}
+              disabled={saving}
+              loading={saving}
+              className="w-full justify-center mt-1"
+            >
+              {t('paymentAccounts.buttonSave')}
+            </Button>
+          </Card>
+        </aside>
+      </main>
+    </Page>
   )
 }
+

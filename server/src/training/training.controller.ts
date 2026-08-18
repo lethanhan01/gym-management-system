@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -22,6 +23,8 @@ import { AttendanceService } from './attendance.service'
 import { DeviceAccessService } from './device-access.service'
 import { MemberProgressService } from './member-progress.service'
 import { MemberSessionBookingService } from './member-session-booking.service'
+import { TrainerSessionAvailabilityService } from './trainer-session-availability.service'
+import { TrainingCallerResolverService } from './training-caller-resolver.service'
 import { TrainingSessionService } from './training-session.service'
 import { DeviceApiKeyGuard } from './guards/device-api-key.guard'
 import {
@@ -47,7 +50,9 @@ export class TrainingController {
     private readonly sessions: TrainingSessionService,
     private readonly bookings: MemberSessionBookingService,
     private readonly attendance: AttendanceService,
-    private readonly progress: MemberProgressService
+    private readonly progress: MemberProgressService,
+    private readonly availability: TrainerSessionAvailabilityService,
+    private readonly caller: TrainingCallerResolverService,
   ) {}
 
   // ---- Training Sessions ----
@@ -77,6 +82,37 @@ export class TrainingController {
       staffId: user.staffId,
       memberId: user.memberId,
     })
+    return { success: true, ...result }
+  }
+
+  @Get('training-sessions/trainer-availability-for-trainer')
+  @DatabaseRetryable()
+  @RequirePermission('session.manage')
+  async getTrainerAvailabilityForTrainer(
+    @Query() query: TrainerAvailabilityQueryDto,
+    @CurrentUser() user: AuthenticatedUser
+  ) {
+    const trainerStaffId = query.trainerStaffId
+      ? BigInt(query.trainerStaffId)
+      : await this.caller.resolveStaffId({
+          userId: user.userId,
+          roles: user.roles,
+          staffId: user.staffId,
+          memberId: user.memberId,
+        })
+    if (!trainerStaffId) {
+      throw new BadRequestException({
+        success: false,
+        code: 'FK_CONSTRAINT',
+        message: 'trainerStaffId la bat buoc',
+      })
+    }
+    const memberId = query.memberId ? BigInt(query.memberId) : undefined
+    const result = await this.availability.getAvailabilitySlots(
+      query.date,
+      trainerStaffId,
+      memberId,
+    )
     return { success: true, ...result }
   }
 

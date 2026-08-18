@@ -61,7 +61,7 @@ export default function LiffEntryPage() {
         const { user, token } = await authService.lineLogin(idToken)
         if (cancelled) return
 
-        setAuth(user, token)
+        setAuth(user, token, 'line')
         clearSubscription()
         navigate(redirectPath, { replace: true })
       } catch (err) {

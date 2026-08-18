@@ -1,6 +1,5 @@
 import { memo, useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { Button } from '@/components/ui/Button'
 import { useTranslation } from 'react-i18next'
 import {
   Dumbbell,
@@ -9,7 +8,6 @@ import {
   Activity,
   Calendar,
   CalendarX,
-  AlertCircle,
   ClipboardList,
   MessageSquareOff,
   User,
@@ -26,14 +24,19 @@ import { memberService, type MemberProgress, type MemberProfile } from '@/servic
 import { feedbackService, type Feedback } from '@/services/feedback.service'
 import api from '@/services/api'
 import {
-  MemberBadge,
-  MemberCard,
-  MemberPage,
-  MemberPageHeader,
-  MemberStatCard,
-  MemberStatusBadge,
-} from '@/components/MemberUI'
-import type { BadgeTone } from '@/components/ui'
+  Alert,
+  Avatar,
+  Badge,
+  Button,
+  Card,
+  Page,
+  PageHeader,
+  ProgressBar,
+  Skeleton,
+  StatCard,
+  StatusBadge,
+  type BadgeTone,
+} from '@/components/ui'
 import { hasActiveSubscription, isSubscriptionActive } from '@/lib/subscription'
 import { getApiError } from '@/lib/api-error'
 import { toast } from '@/lib/toast'
@@ -72,14 +75,6 @@ function todayFull(locale: string) {
   })
 }
 
-const Skeleton = memo(function Skeleton({ h = 100 }: { h?: number }) {
-  return (
-    <div
-      className={`rogym-dashboard-skeleton rogym-dashboard-skeleton--${h} animate-pulse rounded-2xl`}
-    />
-  )
-})
-
 const ErrorWidget = memo(function ErrorWidget({
   message,
 }: {
@@ -87,10 +82,11 @@ const ErrorWidget = memo(function ErrorWidget({
 }) {
   const { t } = useTranslation('member')
   return (
-    <div className="flex items-center gap-2 py-4 px-3 rounded-2xl rogym-sx-6a3fe515">
-      <AlertCircle size={16} className="text-red-400 shrink-0" />
-      <span className="text-[13px] text-red-300 rogym-sx-3278ee06">{message ?? t('dashboard.errorLoad')}</span>
-    </div>
+    <Alert
+      tone="error"
+      description={message ?? t('dashboard.errorLoad')}
+      className="py-3 px-3.5"
+    />
   )
 })
 
@@ -132,37 +128,23 @@ const PtInfoCard = memo(function PtInfoCard({
   onRemoveTrainer: () => void
 }) {
   const { t } = useTranslation('member')
-  const initials = useMemo(() => {
-    if (!trainerName) return ''
-    return trainerName
-      .split(' ')
-      .map((w) => w[0])
-      .filter(Boolean)
-      .slice(-2)
-      .join('')
-      .toUpperCase()
-  }, [trainerName])
 
-  if (loading) return <Skeleton h={200} />
+  if (loading) return <Skeleton height={200} rounded="2xl" />
 
   if (activePlanIncludesPt === false) {
     return (
-      <MemberCard variant="compact" padding="sm" className="flex flex-col items-center gap-3 text-center">
-        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-white/5 rogym-text-dim">
-          <User size={24} />
-        </div>
+      <Card as="article" variant="compact" padding="sm" className="flex flex-col items-center gap-3 text-center">
+        <Avatar size="xl" fallback={<User size={24} />} tone="neutral" />
         <p className="text-sm font-medium text-white">{t('dashboard.pt.sectionTitle')}</p>
         <p className="text-xs rogym-text-secondary">{t('dashboard.pt.noPackagePt')}</p>
-      </MemberCard>
+      </Card>
     )
   }
 
   if (!trainerName) {
     return (
-      <MemberCard variant="compact" padding="sm" className="flex flex-col items-center gap-3 text-center">
-        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-white/5 rogym-text-dim">
-          <User size={24} />
-        </div>
+      <Card as="article" variant="compact" padding="sm" className="flex flex-col items-center gap-3 text-center">
+        <Avatar size="xl" fallback={<User size={24} />} tone="neutral" />
         <div>
           <p className="text-sm font-medium text-white">{t('dashboard.pt.sectionTitle')}</p>
           <p className="mt-1 text-xs rogym-text-secondary">{t('dashboard.pt.noTrainerAssigned')}</p>
@@ -174,18 +156,16 @@ const PtInfoCard = memo(function PtInfoCard({
         >
           {t('dashboard.pt.chooseTrainer')}
         </Button>
-      </MemberCard>
+      </Card>
     )
   }
 
   return (
-    <MemberCard variant="compact" padding="sm" className="flex flex-col gap-4">
+    <Card as="article" variant="compact" padding="sm" className="flex flex-col gap-4">
       <div className="rogym-eyebrow">{t('dashboard.pt.sectionTitle')}</div>
       {/* Avatar */}
       <div className="flex flex-col items-center gap-3 pt-1">
-        <div className="flex items-center justify-center rounded-full shrink-0 rogym-sx-20f77b4b">
-          <span className="rogym-sx-2e7dd58d">{initials}</span>
-        </div>
+        <Avatar name={trainerName} size="xl" status="online" />
         <div className="text-center">
           <h3 className="text-base font-bold text-white">{trainerName}</h3>
           <p className="mt-1 text-xs rogym-text-secondary">{t('dashboard.pt.trainerIncluded')}</p>
@@ -223,7 +203,7 @@ const PtInfoCard = memo(function PtInfoCard({
           {t('dashboard.pt.cancelTrainer')}
         </Button>
       </div>
-    </MemberCard>
+    </Card>
   )
 })
 
@@ -243,15 +223,15 @@ const SubscriptionCard = memo(function SubscriptionCard({
 }) {
   const { t, i18n } = useTranslation('member')
   const navigate = useNavigate()
-  if (loading) return <Skeleton h={140} />
+  if (loading) return <Skeleton height={140} rounded="2xl" />
   if (error) return <ErrorWidget />
 
   if (!subscription) {
     return (
-      <MemberCard variant="compact" padding="md" className="flex flex-col gap-3">
+      <Card as="article" variant="compact" padding="md" className="flex flex-col gap-3">
         <div className="flex items-center gap-2">
           <span className="text-base font-bold text-white">{t('dashboard.subscription.sectionTitle')}</span>
-          <MemberBadge tone="muted">{t('dashboard.subscription.noPackage')}</MemberBadge>
+          <Badge tone="muted">{t('dashboard.subscription.noPackage')}</Badge>
         </div>
         <p className="text-sm rogym-text-secondary">
           {t('dashboard.subscription.noPackageDesc')}
@@ -263,7 +243,7 @@ const SubscriptionCard = memo(function SubscriptionCard({
         >
           {t('dashboard.subscription.choosePlan')}
         </Button>
-      </MemberCard>
+      </Card>
     )
   }
 
@@ -271,18 +251,18 @@ const SubscriptionCard = memo(function SubscriptionCard({
   const startMs = new Date(subscription.startDate).getTime()
   const isExpired = subscription.status === 'expired' || Date.now() > endMs
   const daysLeft = subscription.daysLeft ?? Math.max(0, Math.ceil((endMs - Date.now()) / 86400000))
-  // Tổng ngày = toàn bộ kỳ hạn thực tế (đã gồm các lần gia hạn), không phải duration 1 kỳ.
   const spanDays = Math.round((endMs - startMs) / 86400000)
   const totalDays = spanDays > 0 ? spanDays : durationDays || 1
   const daysUsed = Math.max(0, totalDays - daysLeft)
   const pct = Math.min(100, Math.max(0, Math.round((daysUsed / totalDays) * 100)))
+
   return (
-    <MemberCard variant="compact" padding="md" className="flex flex-col gap-4">
+    <Card as="article" variant="compact" padding="md" className="flex flex-col gap-4">
       <div className="flex items-center gap-3 flex-wrap">
         <span className="rogym-sx-3c31803f">
           {packageName || subscription.packageName || t('dashboard.subscription.sectionTitle')}
         </span>
-        <MemberStatusBadge
+        <StatusBadge
           status={subscription.status}
           label={t('dashboard.subStatusLabel.' + subscription.status, subscription.status)}
           tone={SUB_STATUS_TONE[subscription.status]}
@@ -290,12 +270,12 @@ const SubscriptionCard = memo(function SubscriptionCard({
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <progress
-          className={`rogym-progress ${isExpired ? 'is-danger' : ''}`}
-          max={100}
+        <ProgressBar
           value={pct}
-          aria-label={`${pct}%`}
+          tone={isExpired ? 'danger' : 'primary'}
+          size="md"
         />
+
         <div className="flex justify-between text-xs rogym-text-secondary">
           <span>
             {daysUsed}/{totalDays} {t('dashboard.subscription.daysUsed')}
@@ -336,7 +316,7 @@ const SubscriptionCard = memo(function SubscriptionCard({
           {t('dashboard.subscription.viewDetail')}
         </Button>
       </div>
-    </MemberCard>
+    </Card>
   )
 })
 
@@ -352,11 +332,11 @@ const SessionsWidget = memo(function SessionsWidget({
 }) {
   const { t, i18n } = useTranslation('member')
   const navigate = useNavigate()
-  if (loading) return <Skeleton h={120} />
+  if (loading) return <Skeleton height={120} rounded="2xl" />
   if (error) return <ErrorWidget />
 
   return (
-    <MemberCard variant="compact" padding="sm" className="flex flex-col gap-3">
+    <Card as="article" variant="compact" padding="sm" className="flex flex-col gap-3">
       <div className="flex items-center justify-between">
         <span className="text-base font-bold text-white">{t('dashboard.sessions.widgetTitle')}</span>
         <Button
@@ -392,7 +372,7 @@ const SessionsWidget = memo(function SessionsWidget({
                   )}
                 </div>
               </div>
-              <MemberStatusBadge
+              <StatusBadge
                 status={s.status}
                 label={t('dashboard.sessionStatusLabel.' + s.status, s.status)}
                 tone={SESSION_STATUS_TONE[s.status]}
@@ -401,7 +381,7 @@ const SessionsWidget = memo(function SessionsWidget({
           ))}
         </div>
       )}
-    </MemberCard>
+    </Card>
   )
 })
 
@@ -417,11 +397,11 @@ const WorkoutWidget = memo(function WorkoutWidget({
 }) {
   const { t } = useTranslation('member')
   const navigate = useNavigate()
-  if (loading) return <Skeleton h={100} />
+  if (loading) return <Skeleton height={100} rounded="2xl" />
   if (error) return <ErrorWidget />
 
   return (
-    <MemberCard variant="compact" padding="sm" className="flex flex-col gap-3">
+    <Card as="article" variant="compact" padding="sm" className="flex flex-col gap-3">
       <div className="flex items-center justify-between">
         <span className="text-base font-bold text-white">{t('dashboard.workoutPlan.widgetTitle')}</span>
         <Button
@@ -447,7 +427,7 @@ const WorkoutWidget = memo(function WorkoutWidget({
           </div>
         </div>
       )}
-    </MemberCard>
+    </Card>
   )
 })
 
@@ -463,11 +443,11 @@ const FeedbackWidget = memo(function FeedbackWidget({
 }) {
   const { t } = useTranslation('member')
   const navigate = useNavigate()
-  if (loading) return <Skeleton h={100} />
+  if (loading) return <Skeleton height={100} rounded="2xl" />
   if (error) return <ErrorWidget />
 
   return (
-    <MemberCard variant="compact" padding="sm" className="flex flex-col gap-3">
+    <Card as="article" variant="compact" padding="sm" className="flex flex-col gap-3">
       <div className="flex items-center justify-between">
         <span className="text-base font-bold text-white">{t('dashboard.feedbackWidget.widgetTitle')}</span>
         <Button
@@ -492,10 +472,10 @@ const FeedbackWidget = memo(function FeedbackWidget({
             >
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">
-                  <MemberBadge tone={FEEDBACK_TYPE_TONE[fb.feedbackType]}>
+                  <Badge tone={FEEDBACK_TYPE_TONE[fb.feedbackType]}>
                     {t('dashboard.feedbackTypeLabel.' + fb.feedbackType, fb.feedbackType)}
-                  </MemberBadge>
-                  <MemberBadge
+                  </Badge>
+                  <Badge
                     tone={
                       fb.status === 'resolved'
                         ? 'success'
@@ -507,7 +487,7 @@ const FeedbackWidget = memo(function FeedbackWidget({
                     }
                   >
                     {t('dashboard.feedbackStatusLabel.' + fb.status, fb.status)}
-                  </MemberBadge>
+                  </Badge>
                 </div>
                 <p className="text-xs rogym-text-secondary line-clamp-1">{fb.content}</p>
               </div>
@@ -515,7 +495,7 @@ const FeedbackWidget = memo(function FeedbackWidget({
           ))}
         </div>
       )}
-    </MemberCard>
+    </Card>
   )
 })
 
@@ -693,16 +673,16 @@ export default function MemberDashboardPage() {
   }, [user?.memberId])
 
   return (
-    <MemberPage>
-      <MemberPageHeader
+    <Page>
+      <PageHeader
         eyebrow="Member workspace"
         title={t('dashboard.greeting', { name: user?.fullName ?? t('dashboard.greetingFallback') })}
         description={todayDescription}
       />
 
-      <div className="grid gap-6 xl:grid-cols-[1fr_300px]">
+      <main className="grid gap-6 xl:grid-cols-[1fr_300px]">
         {/* ── LEFT: main content ── */}
-        <div className="flex flex-col gap-6 min-w-0">
+        <section className="flex flex-col gap-6 min-w-0">
           {/* Subscription card */}
           <SubscriptionCard
             subscription={subscription}
@@ -713,36 +693,36 @@ export default function MemberDashboardPage() {
           />
 
           {/* Stats row */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <section aria-label="Quick Stats" className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {loadingProgress ? (
               <>
                 {STAT_SKELETON_KEYS.map((i) => (
-                  <Skeleton key={i} h={88} />
+                  <Skeleton key={i} height={88} rounded="2xl" />
                 ))}
               </>
             ) : (
               <>
-                <MemberStatCard
+                <StatCard
                   icon={<Dumbbell size={18} />}
                   label={t('dashboard.stats.sessionsThisMonth')}
                   value={sessionsThisMonth}
                   hint={t('dashboard.stats.unitSession')}
                   to="/member/workout/sessions"
                 />
-                <MemberStatCard
+                <StatCard
                   icon={<CheckSquare size={18} />}
                   label={t('dashboard.stats.checkInsThisMonth')}
                   value={sessionsThisMonth}
                   hint={t('dashboard.stats.unitTimes')}
                   to="/member/attendance"
                 />
-                <MemberStatCard
+                <StatCard
                   icon={<Scale size={18} />}
                   label={t('dashboard.stats.currentWeight')}
                   value={progress?.weight ? `${Number(progress.weight).toFixed(1)} kg` : '—'}
                   to="/member/progress"
                 />
-                <MemberStatCard
+                <StatCard
                   icon={<Activity size={18} />}
                   label="BMI"
                   value={progress?.bmi ? Number(progress.bmi).toFixed(1) : '—'}
@@ -750,10 +730,10 @@ export default function MemberDashboardPage() {
                 />
               </>
             )}
-          </div>
+          </section>
 
           {/* Bottom 3 widgets */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <section aria-label="Recent Activities" className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <SessionsWidget sessions={sessions} loading={loadingSessions} error={errorSessions} />
             <WorkoutWidget plan={workoutPlan} loading={loadingPlan} error={errorPlan} />
             <FeedbackWidget
@@ -761,8 +741,8 @@ export default function MemberDashboardPage() {
               loading={loadingFeedbacks}
               error={errorFeedbacks}
             />
-          </div>
-        </div>
+          </section>
+        </section>
 
         {/* ── RIGHT: PT info card (sticky) ── */}
         <aside className="xl:sticky xl:top-6 xl:self-start">
@@ -776,7 +756,8 @@ export default function MemberDashboardPage() {
             onRemoveTrainer={handleRemoveTrainer}
           />
         </aside>
-      </div>
-    </MemberPage>
+      </main>
+    </Page>
   )
 }
+

@@ -15,14 +15,21 @@ import {
   X,
   Zap,
 } from 'lucide-react'
-import { DatePickerInput, Button } from '@/components/ui'
 import {
-  MemberErrorState,
-  MemberPage,
-  MemberPageHeader,
-  MemberSearchToolbar,
-  MemberSkeleton,
-} from '@/components/MemberUI'
+  DatePickerInput,
+  Button,
+  Badge,
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  Page,
+  PageHeader,
+  PageSkeleton,
+  PageErrorState,
+  SearchToolbar,
+} from '@/components/ui'
+
 import { toast } from '@/lib/toast'
 import { getApiError, getApiErrorCode } from '@/lib/api-error'
 import workoutService, {
@@ -77,31 +84,38 @@ const SuggestedPlanCard = memo(function SuggestedPlanCard({
   }, [plan.days])
 
   return (
-    <div className="rogym-card rogym-card--md rogym-sx-3f1e9a27">
-      <div className="p-5">
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-2">
-              <span className="rounded-lg px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider rogym-sx-0c66f6c9">
-                PT
-              </span>
-              <h3 className="break-words font-bold text-white">{plan.name}</h3>
-            </div>
-            {plan.description && (
-              <p className="mt-1 text-sm rogym-sx-d88f932f">{plan.description}</p>
-            )}
-          </div>
-          <Button
-            variant="primary"
-            size="sm"
-            onClick={() => onUse(plan)}
-          >
-            {t('workout.planBuilder.buttonUsePlan')}
-          </Button>
-        </div>
+    <Card variant="compact" padding="none" className="overflow-hidden">
+      <div className="p-4 sm:p-5">
+        <CardHeader
+          responsive
+          eyebrow={
+            <Badge tone="success" size="xs">
+              PT
+            </Badge>
+          }
+          actions={
+            <Button
+              variant="primary"
+              size="sm"
+              className="w-full sm:w-auto"
+              onClick={() => onUse(plan)}
+            >
+              {t('workout.planBuilder.buttonUsePlan')}
+            </Button>
+          }
+        >
+          <CardTitle size="md" as="h3" className="text-white">
+            {plan.name}
+          </CardTitle>
+          {plan.description && (
+            <CardDescription className="mt-1">
+              {plan.description}
+            </CardDescription>
+          )}
+        </CardHeader>
 
         {/* Stats row */}
-        <div className="mt-4 flex flex-wrap gap-4 text-xs rogym-sx-5e5c39ab">
+        <div className="mt-4 flex flex-wrap items-center gap-4 text-xs rogym-text-dim">
           <span>
             <span className="font-semibold text-white">{totalDays}</span> {t('workout.planBuilder.unitDays')}
           </span>
@@ -110,8 +124,8 @@ const SuggestedPlanCard = memo(function SuggestedPlanCard({
           </span>
           {totalEstimated > 0 && (
             <span className="flex items-center gap-1">
-              <Clock size={11} />
-              <span className="font-semibold text-white">{totalEstimated}</span> {t('workout.planBuilder.unitMinutes')}/ngày (ước tính)
+              <Clock size={12} />
+              <span className="font-semibold text-white">{totalEstimated}</span> {t('workout.planBuilder.unitMinPerDay')}
             </span>
           )}
         </div>
@@ -119,31 +133,31 @@ const SuggestedPlanCard = memo(function SuggestedPlanCard({
         {/* Toggle exercises */}
         <button
           type="button"
-          className="rogym-text-link rogym-text-link--accent mt-3 flex items-center gap-1 text-xs"
+          className="rogym-text-link rogym-text-link--accent mt-3.5 flex items-center gap-1 text-xs font-semibold"
           onClick={() => setExpanded((v) => !v)}
         >
-          {expanded ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+          {expanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
           {expanded ? t('workout.planBuilder.buttonHideDetail') : t('workout.planBuilder.buttonShowDetail')}
         </button>
       </div>
 
       {expanded && (
-        <div className="rogym-sx-8553bf9e">
+        <div className="border-t border-[var(--rogym-border-teal-dim)] bg-white/[0.02]">
           {sortedDays.map((day) => (
-            <div key={day.planDayId} className="px-5 py-4 rogym-sx-6720cca7">
-              <p className="mb-2 text-xs font-bold uppercase tracking-wider rogym-sx-f27dac31">
+            <div key={day.planDayId} className="border-b border-white/5 px-4 py-3.5 sm:px-5 sm:py-4 last:border-b-0">
+              <p className="mb-2 text-xs font-bold uppercase tracking-wider text-[var(--rogym-teal)]">
                 {t('workout.planBuilder.dayLabel', { n: day.dayNumber, name: day.name })}
               </p>
               {[...(day.exercises ?? [])]
                 .sort((a, b) => a.orderIndex - b.orderIndex)
                 .map((ex, i) => (
-                  <div key={ex.planExerciseId} className="flex items-center gap-2 py-1.5">
-                    <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md text-[10px] font-bold rogym-sx-252b3c13">
+                  <div key={ex.planExerciseId} className="flex items-center gap-2.5 py-1.5">
+                    <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-white/10 text-[10px] font-bold text-white">
                       {i + 1}
                     </span>
                     <div className="min-w-0 flex-1">
-                      <span className="text-sm text-white">{ex.exercise?.name ?? '—'}</span>
-                      <span className="ml-2 text-xs rogym-sx-5e5c39ab">
+                      <span className="text-sm font-medium text-white">{ex.exercise?.name ?? '—'}</span>
+                      <span className="ml-2 text-xs text-white/60">
                         {ex.targetSets} sets ·{' '}
                         {ex.targetReps
                           ? `${ex.targetReps} reps`
@@ -153,20 +167,20 @@ const SuggestedPlanCard = memo(function SuggestedPlanCard({
                       </span>
                     </div>
                     {ex.exercise?.targetMuscle && (
-                      <span className="shrink-0 text-xs rogym-sx-ed519d00">
+                      <span className="shrink-0 text-xs text-white/50">
                         {ex.exercise.targetMuscle.name}
                       </span>
                     )}
                   </div>
                 ))}
               {!day.exercises?.length && (
-                <p className="text-xs rogym-sx-ed519d00">{t('workout.planBuilder.noExercisesInDay')}</p>
+                <p className="text-xs text-white/50">{t('workout.planBuilder.noExercisesInDay')}</p>
               )}
             </div>
           ))}
         </div>
       )}
-    </div>
+    </Card>
   )
 })
 
@@ -479,16 +493,16 @@ export default function MemberPlanBuilderPage() {
   // ─── Edit mode: loading / not-found guards ───────────────────────────
   if (isEditMode && loadingPlan) {
     return (
-      <MemberPage>
-        <MemberPageHeader eyebrow={t('workout.planBuilder.builderEyebrow')} title={t('workout.planBuilder.editTitle')} />
-        <MemberSkeleton rows={5} />
-      </MemberPage>
+      <Page>
+        <PageHeader eyebrow={t('workout.planBuilder.builderEyebrow')} title={t('workout.planBuilder.editTitle')} />
+        <PageSkeleton rows={5} />
+      </Page>
     )
   }
   if (isEditMode && !plan) {
     return (
-      <MemberPage>
-        <MemberPageHeader
+      <Page>
+        <PageHeader
           eyebrow={t('workout.planBuilder.builderEyebrow')}
           title={t('workout.planBuilder.editTitle')}
           actions={
@@ -502,16 +516,17 @@ export default function MemberPlanBuilderPage() {
             </Button>
           }
         />
-        <MemberErrorState message={error ?? t('workout.planBuilder.notFound')} />
-      </MemberPage>
+        <PageErrorState message={error ?? t('workout.planBuilder.notFound')} />
+      </Page>
     )
   }
+
 
   // ─── Phase: enter name ───────────────────────────────────────────────
   if (phase === 'name') {
     return (
-      <MemberPage>
-        <MemberPageHeader
+      <Page>
+        <PageHeader
           eyebrow={t('workout.planBuilder.eyebrow')}
           title={t('workout.planBuilder.title')}
           description={t('workout.planBuilder.namePhaseDesc')}
@@ -565,6 +580,7 @@ export default function MemberPlanBuilderPage() {
             <Button
               variant="primary"
               type="submit"
+              className="w-full sm:w-auto"
               disabled={!name.trim() || submitting}
               loading={submitting}
             >
@@ -583,7 +599,7 @@ export default function MemberPlanBuilderPage() {
             </span>
           </div>
           {loadingSuggested ? (
-            <MemberSkeleton rows={2} />
+            <PageSkeleton rows={2} />
           ) : suggestedPlans.length === 0 ? (
             <div className="rounded-[16px] p-5 text-center text-sm rogym-sx-0e44a235">
               <Dumbbell size={28} className="mx-auto mb-2 rogym-sx-ed519d00" />
@@ -627,14 +643,16 @@ export default function MemberPlanBuilderPage() {
             </div>
           </div>
         )}
-      </MemberPage>
+      </Page>
     )
   }
 
+
+
   // ─── Phase: build plan ───────────────────────────────────────────────
   return (
-    <MemberPage>
-      <MemberPageHeader
+    <Page>
+      <PageHeader
         eyebrow={t('workout.planBuilder.builderEyebrow')}
         title={plan?.name ?? t('workout.session.defaultPlanName')}
         description={
@@ -656,7 +674,7 @@ export default function MemberPlanBuilderPage() {
         }
       />
 
-      {error && <MemberErrorState message={error} />}
+      {error && <PageErrorState message={error} />}
 
       {readonly && (
         <div className="flex items-center gap-3 rounded-2xl border border-amber-400/20 bg-amber-400/10 p-4 text-sm text-amber-100">
@@ -676,8 +694,9 @@ export default function MemberPlanBuilderPage() {
 
       {/* Days */}
       {loadingExercises ? (
-        <MemberSkeleton rows={3} />
+        <PageSkeleton rows={3} />
       ) : (
+
         <div className="space-y-3">
           {sortedDays.map((day) => (
             <div key={day.planDayId} className="rogym-sx-013ea4c1">
@@ -886,7 +905,7 @@ export default function MemberPlanBuilderPage() {
 
       {/* Mobile reserves room for the tallest action-bar state above the bottom navigation. */}
       <div className="h-[calc(var(--rogym-bottom-nav-height)+var(--rogym-bottom-nav-center-action-clearance)+env(safe-area-inset-bottom,0px)+18rem)] md:h-20" />
-    </MemberPage>
+    </Page>
   )
 }
 
@@ -965,7 +984,7 @@ function AddExerciseForm({
     >
       <div className="space-y-2">
         <span className="rogym-field-label block">{t('workout.planBuilder.addExercise.title')}</span>
-        <MemberSearchToolbar
+        <SearchToolbar
           variant="plain"
           layout="row"
           value={search}
@@ -978,6 +997,7 @@ function AddExerciseForm({
                 if (open) {
                   setDraftBodyPartId(bodyPartId)
                   setDraftTargetMuscleId(targetMuscleId)
+
                   setDraftEquipmentId(equipmentId)
                   setFilterOpen(true)
                 } else {

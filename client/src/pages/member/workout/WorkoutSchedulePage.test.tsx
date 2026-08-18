@@ -30,8 +30,8 @@ const sessionDetail: TrainingSessionDetail = {
   planDayId: null,
   workoutPlan: null,
   planDay: null,
-  startTime: '2026-07-18T10:00:00.000Z',
-  endTime: '2026-07-18T11:00:00.000Z',
+  startTime: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+  endTime: new Date(Date.now() + 25 * 60 * 60 * 1000).toISOString(),
   status: 'scheduled',
   attendanceLogs: [],
 }
@@ -77,7 +77,7 @@ describe('WorkoutSchedulePage', () => {
     vi.useRealTimers()
   })
 
-  it('opens the session detail modal from the sessionId query parameter', async () => {
+  it('opens the session detail modal from the sessionId query parameter and shows cancel button when >= 2h', async () => {
     vi.mocked(trainingSessionService.getSessions).mockResolvedValue({ data: [], total: 0 })
     vi.mocked(trainingSessionService.getSession).mockResolvedValue(sessionDetail)
 
@@ -89,6 +89,34 @@ describe('WorkoutSchedulePage', () => {
     expect(screen.getByText('Room A')).toBeVisible()
     expect(screen.getByRole('button', { name: 'Hủy lịch hẹn' })).toBeVisible()
     expect(screen.getByRole('button', { name: 'Bắt đầu' })).toBeVisible()
+  })
+
+  it('shows late cancellation warning and hides cancel button when session starts within 2 hours', async () => {
+    vi.mocked(trainingSessionService.getSessions).mockResolvedValue({ data: [], total: 0 })
+    vi.mocked(trainingSessionService.getSession).mockResolvedValue({
+      ...sessionDetail,
+      startTime: new Date(Date.now() + 60 * 60 * 1000).toISOString(), // 1 hour away (< 2h)
+    })
+
+    renderPage()
+
+    await waitFor(() => expect(trainingSessionService.getSession).toHaveBeenCalledWith('123'))
+    expect(await screen.findByText('Chi tiết buổi tập')).toBeVisible()
+    expect(screen.queryByRole('button', { name: 'Hủy lịch hẹn' })).not.toBeInTheDocument()
+    expect(screen.getByText(/Buổi tập diễn ra trong vòng 2 giờ tới/i)).toBeVisible()
+  })
+
+  it('automatically opens the booking modal when book=1 query parameter is present', async () => {
+    vi.mocked(trainingSessionService.getSessions).mockResolvedValue({ data: [], total: 0 })
+    vi.mocked(trainingSessionService.getTrainerAvailability).mockResolvedValue({
+      date: '2026-08-20',
+      trainer: { staffId: '5', fullName: 'Coach Alex', avatarFileId: null },
+      slots: [],
+    })
+
+    renderPage('/member/workout/sessions?book=1')
+
+    expect(await screen.findByText('Đặt lịch tập với HLV')).toBeVisible()
   })
 
   it('renders the book PT session action button in page header', async () => {

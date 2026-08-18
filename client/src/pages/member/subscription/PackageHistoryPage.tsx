@@ -6,14 +6,21 @@ import subscriptionService, { type Subscription } from '@/services/subscription.
 import paymentService, { type Payment } from '@/services/payment.service'
 import { useAuthStore } from '@/stores/authStore'
 import {
-  MemberBadge,
-  MemberCard,
-  MemberEmptyState,
-  MemberPage,
-  MemberPageHeader,
-  MemberSkeleton,
-} from '@/components/MemberUI'
-import { CardTitle, Button, Pagination, ResponsiveTable } from '@/components/ui'
+  Badge,
+  Button,
+  Card,
+  CardTitle,
+  Page,
+  PageEmptyState,
+  PageHeader,
+  PageSkeleton,
+  Pagination,
+  ResponsiveTable,
+  Tabs,
+  TabsList,
+  TabsTrigger,
+} from '@/components/ui'
+
 import { getPaymentMethodLabel } from '@/components/payment/payment-method-data'
 import { formatVnd } from '@/lib/currency'
 import { formatDate } from '@/lib/date'
@@ -131,8 +138,8 @@ export default function PackageHistoryPage() {
   const pagedPayments = filteredPayments.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
 
   return (
-    <MemberPage>
-      <MemberPageHeader
+    <Page>
+      <PageHeader
         eyebrow={t('subscription.history.eyebrow')}
         title={t('subscription.history.title')}
         description={t('subscription.history.description')}
@@ -147,40 +154,33 @@ export default function PackageHistoryPage() {
         }
       />
 
-      {/* Tabs */}
-      <div className="flex gap-2 border-b border-[var(--rogym-border-section)] pb-3">
-        <Button
-          variant={activeTab === 'subscriptions' ? 'primary' : 'outline-white'}
-          size="sm"
-          onClick={() => setActiveTab('subscriptions')}
-        >
-          {t('subscription.history.tabSubscriptions')}
-        </Button>
-        <Button
-          variant={activeTab === 'payments' ? 'primary' : 'outline-white'}
-          size="sm"
-          onClick={() => setActiveTab('payments')}
-        >
-          {t('subscription.history.tabPayments')}
-        </Button>
-      </div>
+      <nav className="mb-6">
+        <Tabs value={activeTab} onValueChange={(tab) => setActiveTab(tab as 'subscriptions' | 'payments')}>
+          <TabsList>
+            <TabsTrigger value="subscriptions">{t('subscription.history.tabSubscriptions')}</TabsTrigger>
+            <TabsTrigger value="payments">{t('subscription.history.tabPayments')}</TabsTrigger>
+          </TabsList>
+        </Tabs>
+      </nav>
+
 
       {/* Subscriptions tab */}
       {activeTab === 'subscriptions' && (
         loadingSubs ? (
-          <MemberSkeleton rows={4} />
+          <PageSkeleton rows={4} />
         ) : subs.length === 0 ? (
-          <MemberEmptyState
+          <PageEmptyState
             title={t('subscription.history.emptySubscriptions')}
           />
         ) : (
-          <>
+          <main className="space-y-4">
             <div className="flex flex-col gap-3">
               {pagedSubs.map(sub => {
                 const st = SUB_STATUS[sub.status] ?? { label: sub.status, tone: 'muted' }
                 const statusLabel = t(`subscription.history.statusLabel.${sub.status}`, { defaultValue: st.label })
                 return (
-                  <MemberCard
+                  <Card
+                    as="article"
                     key={sub.subscriptionId}
                     variant="compact"
                     padding="sm"
@@ -197,9 +197,9 @@ export default function PackageHistoryPage() {
                           <p className="text-xs text-red-400 mt-1">{t('subscription.history.cancelledAt', { date: formatDate(sub.cancelledAt) })}</p>
                         )}
                       </div>
-                      <MemberBadge tone={st.tone}>{statusLabel}</MemberBadge>
+                      <Badge tone={st.tone}>{statusLabel}</Badge>
                     </div>
-                  </MemberCard>
+                  </Card>
                 )
               })}
             </div>
@@ -208,15 +208,15 @@ export default function PackageHistoryPage() {
               totalPages={totalSubPages}
               onPageChange={p => { setSubPage(p); window.scrollTo({ top: 0, behavior: 'smooth' }) }}
             />
-          </>
+          </main>
         )
       )}
 
       {/* Payments tab */}
       {activeTab === 'payments' && (
-        <div>
+        <main className="space-y-4">
           {/* Filters row */}
-          <div className="flex gap-3 mb-5 flex-wrap items-center">
+          <section className="flex gap-3 mb-5 flex-wrap items-center">
             <IslandGroup options={METHOD_OPTIONS} value={methodFilter} onChange={v => { setMethodFilter(v); setPage(1) }} />
             <IslandGroup options={STATUS_OPTIONS} value={statusFilter} onChange={v => { setStatusFilter(v); setPage(1) }} />
 
@@ -228,12 +228,12 @@ export default function PackageHistoryPage() {
             >
               {sortDir === 'desc' ? t('subscription.history.sortNewest') : t('subscription.history.sortOldest')}
             </Button>
-          </div>
+          </section>
 
           {loadingPays ? (
-            <MemberSkeleton rows={4} />
+            <PageSkeleton rows={4} />
           ) : filteredPayments.length === 0 ? (
-            <MemberEmptyState
+            <PageEmptyState
               title={t('subscription.history.emptyPayments')}
             />
           ) : (
@@ -250,7 +250,7 @@ export default function PackageHistoryPage() {
                     render: (p) => {
                       const ps = PAY_STATUS[p.status] ?? { label: p.status, tone: 'muted' }
                       const payStatusLabel = t(`subscription.history.payStatusLabel.${p.status}`, { defaultValue: ps.label })
-                      return <MemberBadge tone={ps.tone}>{payStatusLabel}</MemberBadge>
+                      return <Badge tone={ps.tone}>{payStatusLabel}</Badge>
                     },
                   },
                 ]}
@@ -264,8 +264,9 @@ export default function PackageHistoryPage() {
               />
             </>
           )}
-        </div>
+        </main>
       )}
-    </MemberPage>
+    </Page>
   )
 }
+
