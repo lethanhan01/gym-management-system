@@ -63,4 +63,77 @@ describe('LineMockInboxPage', () => {
     expect(api.delete).toHaveBeenCalledWith('/dev/line-mock/messages')
     expect(screen.getByText('Chưa có tin nhắn mock.')).toBeVisible()
   })
+
+  it('previews Flex and Rich Menu samples and requests them from the mock API', async () => {
+    const user = userEvent.setup()
+    api.get.mockResolvedValueOnce({
+      data: {
+        data: {
+          messages: [
+            {
+              id: 'flex-1',
+              kind: 'push',
+              createdAt: '2026-08-18T08:00:00.000Z',
+              recipient: 'member',
+              payload: {
+                messages: [
+                  {
+                    type: 'flex',
+                    altText: 'Lịch tập sắp tới',
+                    contents: {
+                      type: 'carousel',
+                      contents: [
+                        {
+                          type: 'bubble',
+                          body: {
+                            type: 'box',
+                            layout: 'vertical',
+                            contents: [{ type: 'text', text: 'Buổi tập với PT', weight: 'bold' }],
+                          },
+                        },
+                      ],
+                    },
+                  },
+                ],
+              },
+            },
+            {
+              id: 'menu-1',
+              kind: 'rich-menu',
+              createdAt: '2026-08-18T08:00:00.000Z',
+              payload: {
+                areas: [
+                  {
+                    action: { label: 'Lịch tập', uri: 'liff://mock-liff/member/workout/sessions' },
+                  },
+                  {
+                    action: {
+                      label: 'Đặt lịch',
+                      uri: 'liff://mock-liff/member/workout/sessions?book=1',
+                    },
+                  },
+                ],
+              },
+            },
+          ],
+        },
+      },
+    })
+    render(<LineMockInboxPage />)
+
+    expect(await screen.findByText('Lịch tập sắp tới')).toBeVisible()
+    expect(screen.getByText('Buổi tập với PT')).toBeVisible()
+    expect(screen.getByText('Rich Menu')).toBeVisible()
+    expect(screen.getAllByText('Đặt lịch')).not.toHaveLength(0)
+
+    await user.click(screen.getByRole('button', { name: 'Tạo mẫu Flex' }))
+    await waitFor(() => {
+      expect(api.post).toHaveBeenCalledWith('/dev/line-mock/samples', { type: 'flex' })
+    })
+
+    await user.click(screen.getByRole('button', { name: 'Tạo mẫu Rich Menu' }))
+    await waitFor(() => {
+      expect(api.post).toHaveBeenCalledWith('/dev/line-mock/samples', { type: 'rich-menu' })
+    })
+  })
 })

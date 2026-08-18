@@ -65,8 +65,10 @@ Sau login, URL chỉ được phép chuyển tới route `/member/...`; redirect
 1. Mở `http://localhost:5173/dev/line-mock`.
 2. Nhấn **Follow** để tạo webhook Follow có chữ ký nội bộ. Outbox sẽ xuất hiện Reply message kèm link mở LIFF.
 3. Nhấn **Unfollow** để mô phỏng việc OA bị unfollow; backend hủy liên kết `lineId` của member mock.
-4. Nhấn **Mở LIFF link** để kiểm tra redirect trong tin nhắn.
-5. Nhấn **Xóa inbox** để dọn outbox.
+4. Nhấn **Tạo mẫu Flex** để xem Flex Message dạng bubble/card; mở **Payload JSON** để đối chiếu payload LINE gốc.
+5. Nhấn **Tạo mẫu Rich Menu** để xem menu RoGym bốn vùng nhấn và URI LIFF tương ứng. Đây chỉ là preview, không tạo menu trên LINE thật.
+6. Nhấn **Mở LIFF link** để kiểm tra redirect trong tin nhắn.
+7. Nhấn **Xóa inbox** để dọn outbox.
 
 Outbox nằm trong bộ nhớ, không ghi database và tự xóa khi backend restart.
 
@@ -79,6 +81,7 @@ Các endpoint này chỉ hoạt động khi backend đang chạy bằng `npm run
 | `GET` | `/api/v1/dev/line-mock/messages` | Lấy outbox hiện tại |
 | `DELETE` | `/api/v1/dev/line-mock/messages` | Xóa outbox |
 | `POST` | `/api/v1/dev/line-mock/events` | Tạo event `follow` hoặc `unfollow` |
+| `POST` | `/api/v1/dev/line-mock/samples` | Tạo sample `{ "type": "flex" }` hoặc `{ "type": "rich-menu" }` |
 
 Ví dụ gọi từ PowerShell:
 
@@ -90,6 +93,12 @@ Invoke-RestMethod `
   -Uri http://localhost:3000/api/v1/dev/line-mock/events `
   -ContentType application/json `
   -Body '{"type":"follow"}'
+
+Invoke-RestMethod `
+  -Method Post `
+  -Uri http://localhost:3000/api/v1/dev/line-mock/samples `
+  -ContentType application/json `
+  -Body '{"type":"flex"}'
 
 Invoke-RestMethod `
   -Method Delete `

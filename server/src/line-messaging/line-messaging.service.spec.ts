@@ -221,6 +221,34 @@ describe('LineMessagingService', () => {
     expect(service.getMockMessages()).toEqual([])
   })
 
+  it('creates visual Flex and Rich Menu samples only in mock mode', () => {
+    env.LINE_MOCK_ENABLED = 'true'
+    env.CLIENT_URL = 'http://localhost:5173'
+
+    service.createMockSample('flex')
+    service.createMockSample('rich-menu')
+
+    expect(service.getMockMessages()).toEqual([
+      expect.objectContaining({
+        kind: 'rich-menu',
+        payload: expect.objectContaining({ name: 'RoGym Member Menu' }),
+      }),
+      expect.objectContaining({
+        kind: 'push',
+        recipient: 'rogym-liff-mock-member',
+        payload: expect.objectContaining({
+          messages: [
+            expect.objectContaining({ type: 'flex', altText: 'Lịch tập sắp tới tại RoGym' }),
+          ],
+        }),
+      }),
+    ])
+  })
+
+  it('rejects visual samples when mock mode is disabled', () => {
+    expect(() => service.createMockSample('flex')).toThrow('LINE Mock is disabled')
+  })
+
   it('creates both in-app reminders without requiring LINE, and skips LINE when deduped', async () => {
     env.LINE_MESSAGING_ENABLED = 'false'
     mockPrisma.trainingSession.findMany.mockResolvedValue([

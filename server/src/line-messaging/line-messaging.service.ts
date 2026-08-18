@@ -5,10 +5,7 @@ import { TrainingSessionStatus } from '@prisma/client'
 import { createHmac, timingSafeEqual } from 'crypto'
 import { NotificationsService } from '../notifications/notifications.service'
 import { PrismaService } from '../prisma/prisma.service'
-import {
-  LINE_MOCK_USER_ID,
-  LINE_MOCK_WEBHOOK_SECRET,
-} from '../line-mock/constants'
+import { LINE_MOCK_USER_ID, LINE_MOCK_WEBHOOK_SECRET } from '../line-mock/constants'
 
 type LineWebhookBody = {
   events?: LineWebhookEvent[]
@@ -40,12 +37,14 @@ type LineMessage = {
 
 export type LineMockOutboxMessage = {
   id: string
-  kind: 'reply' | 'push'
+  kind: 'reply' | 'push' | 'rich-menu'
   createdAt: string
-  recipient: string
+  recipient?: string
   payload: Record<string, unknown>
   liffUrl?: string
 }
+
+export type LineMockSample = 'flex' | 'rich-menu'
 
 type TrainingLineEvent = 'created' | 'updated' | 'cancelled' | 'reminder' | 'starting'
 type LineMessageLocale = 'vi' | 'ja'
@@ -152,6 +151,87 @@ export class LineMessagingService {
   clearMockMessages() {
     this.assertMockEnabled()
     this.mockOutbox.length = 0
+  }
+
+  createMockSample(type: LineMockSample) {
+    this.assertMockEnabled()
+    if (type === 'flex') {
+      const liffUrl = this.buildLiffUrl('/member/workout/sessions')
+      this.addMockOutbox({
+        kind: 'push',
+        recipient: LINE_MOCK_USER_ID,
+        liffUrl,
+        payload: {
+          to: LINE_MOCK_USER_ID,
+          messages: [
+            {
+              type: 'flex',
+              altText: 'Lịch tập sắp tới tại RoGym',
+              contents: {
+                type: 'bubble',
+                header: {
+                  type: 'box',
+                  layout: 'vertical',
+                  contents: [
+                    { type: 'text', text: 'ROGYM', weight: 'bold', color: '#16a34a', size: 'sm' },
+                  ],
+                },
+                body: {
+                  type: 'box',
+                  layout: 'vertical',
+                  spacing: 'md',
+                  contents: [
+                    {
+                      type: 'text',
+                      text: 'Buổi tập với PT',
+                      weight: 'bold',
+                      size: 'xl',
+                      wrap: true,
+                    },
+                    { type: 'text', text: 'Hôm nay, 18:00 · Room A', color: '#6b7280', wrap: true },
+                    { type: 'separator' },
+                    {
+                      type: 'text',
+                      text: 'Chuẩn bị sẵn sàng cho buổi tập của bạn.',
+                      size: 'sm',
+                      wrap: true,
+                    },
+                  ],
+                },
+                footer: {
+                  type: 'box',
+                  layout: 'vertical',
+                  contents: [
+                    {
+                      type: 'button',
+                      style: 'primary',
+                      action: { type: 'uri', label: 'Xem lịch tập', uri: liffUrl },
+                    },
+                  ],
+                },
+              },
+            },
+          ],
+        },
+      })
+      return
+    }
+
+    this.addMockOutbox({
+      kind: 'rich-menu',
+      payload: {
+        size: { width: 2500, height: 843 },
+        selected: true,
+        name: 'RoGym Member Menu',
+        chatBarText: 'Mở menu RoGym',
+        areas: [
+          this.richMenuArea(0, 'Lịch tập', 'liff://mock-liff/member/workout/sessions'),
+          this.richMenuArea(625, 'Đặt lịch', 'liff://mock-liff/member/workout/sessions?book=1'),
+          this.richMenuArea(1250, 'Check-in', 'liff://mock-liff/member/workout/sessions'),
+          this.richMenuArea(1875, 'Hồ sơ', 'liff://mock-liff/member/profile'),
+        ],
+      },
+    })
   }
 
   async simulateMockEvent(type: 'follow' | 'unfollow') {
@@ -367,10 +447,8 @@ export class LineMessagingService {
   private async postLine(endpoint: 'reply' | 'push', body: unknown) {
     if (this.isMockEnabled()) {
       const payload = JSON.parse(JSON.stringify(body)) as Record<string, unknown>
-      this.mockOutbox.push({
-        id: `${Date.now()}-${this.mockOutbox.length + 1}`,
+      this.addMockOutbox({
         kind: endpoint,
-        createdAt: new Date().toISOString(),
         recipient: this.getMockRecipient(endpoint, payload),
         payload,
         liffUrl: this.findLiffUrl(payload),
@@ -477,6 +555,21 @@ export class LineMessagingService {
   private getMockRecipient(endpoint: 'reply' | 'push', payload: Record<string, unknown>) {
     const key = endpoint === 'reply' ? 'replyToken' : 'to'
     return typeof payload[key] === 'string' ? payload[key] : 'unknown'
+  }
+
+  private addMockOutbox(entry: Omit<LineMockOutboxMessage, 'id' | 'createdAt'>) {
+    this.mockOutbox.push({
+      id: `${Date.now()}-${this.mockOutbox.length + 1}`,
+      createdAt: new Date().toISOString(),
+      ...entry,
+    })
+  }
+
+  private richMenuArea(x: number, label: string, uri: string) {
+    return {
+      bounds: { x, y: 0, width: 625, height: 843 },
+      action: { type: 'uri', label, uri },
+    }
   }
 
   private findLiffUrl(payload: Record<string, unknown>): string | undefined {

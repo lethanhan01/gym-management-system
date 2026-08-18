@@ -1,42 +1,43 @@
-# ĐẶC TÁ NGHIỆP VỤ: ĐẶT LỊCH TẬP VỚI PT QUA LINE RICH MENU
+# ĐẶC TẢ NGHIỆP VỤ: ĐẶT LỊCH TẬP VỚI PT QUA LINE RICH MENU
 
 - **Tác giả:** Đội ngũ phát triển Gym Management System
-- **Trạng thái:** Hoàn thiện & Triển khai
-- **Phiên bản:** 1.0.0
+- **Trạng thái:** Hoàn thiện & Chuẩn hóa (Aligned & Approved)
+- **Phiên bản:** 1.1.0
 - **Ngày cập nhật:** 18/08/2026
 
 ---
 
-## 1. MỤC ĐÍCH
+## 1. MỤC ĐÍCH & BỐI CẢNH
 
-Đặc tả nghiệp vụ cho luồng **đặt lịch tập với Huấn luyện viên (PT)** được truy cập thông qua **LINE Rich Menu** trên ứng dụng LINE, hướng đến đối tượng hội viên sử dụng LINE như kênh chính.
+Đặc tả nghiệp vụ cho luồng **đặt lịch tập với Huấn luyện viên cá nhân (PT - Personal Trainer)** được truy cập trực tiếp thông qua **LINE Rich Menu** và **LINE Front-end Framework (LIFF)** trên ứng dụng LINE.
 
-Tài liệu này tập trung vào phần trải nghiệm người dùng trên LINE (Rich Menu + LIFF) và cách nó kết nối với các API backend đã có. **Không giải thích lại logic backend** — tham chiếu đến tài liệu thiết kế hiện tại: [member-pt-booking-design.md](member-pt-booking-design.md).
+Tài liệu này chuẩn hóa toàn bộ trải nghiệm người dùng trên kênh LINE, cơ chế điều hướng Deep Link, quy tắc nghiệp vụ, luồng thông báo đa kênh và cách thức tích hợp với hệ thống backend hiện có (tham chiếu giải pháp kỹ thuật tại [member-pt-booking-design.md](member-pt-booking-design.md)).
 
 ---
 
 ## 2. GIỚI HẠN TÍNH NĂNG (SCOPE)
 
-### 2.1. Phạm vi
+### 2.1. Bảng phân định phạm vi
 
 | Hạng mục | Bao gồm | Không bao gồm |
 | :--- | :--- | :--- |
-| Rich Menu layout | Thiết kế zone, vùng nhấn, hành động | Tùy chỉnh theo user role (chỉ dùng 1 layout cho member) |
-| LIFF Pages | Trang đặt lịch (đã có), trang xem lịch, trang chi tiết session | Xây LIFF page mới hoàn toàn — tái sử dụng page hiện có |
-| Push Notification | Thông báo đặt/hủy/đổi lịch, nhắc lịch tập | Broadcast marketing, tin nhắn khuyến mãi |
-| Hủy lịch | Hủy từ LIFF page qua Rich Menu | Hủy từ chatbot keyword |
+| **Rich Menu Layout** | Thiết kế 4 vùng chạm toàn chiều cao (full-height), điều hướng LIFF Canonical URL | Tùy biến layout động theo role (dùng chung 1 layout chuẩn cho Member) |
+| **LIFF Pages & Routing** | Điều hướng tự động qua `LiffEntryPage`, tự mở modal đặt lịch (`?book=1`), mở chi tiết buổi tập (`?sessionId=X`), xem điểm danh (`/member/attendance`) | Xây dựng lại giao diện mới — tái sử dụng toàn bộ các màn hình hiện có |
+| **Thao tác lịch tập** | Đặt lịch mới (`POST /book`), Tự hủy lịch (`POST /:id/cancel-booking`) trước giờ tập >= 2h | Member tự bấm "Đổi lịch" trực tiếp (Member tự hủy rồi đặt mới, hoặc PT/Manager đổi lịch từ CMS) |
+| **Thông báo (Notifications)** | LINE Push Message cho Member (Đặt/Hủy/Đổi/Nhắc lịch); In-app Notification cho cả Member và Trainer | LINE Push cho Trainer (Trainer chỉ nhận In-app Notification trên Web Portal vì không dùng LINE Bot) |
+| **Onboarding LINE** | Tự động tạo tài khoản Member khi đăng nhập LIFF lần đầu; Hiển thị hướng dẫn mua gói/gán PT khi chưa đủ điều kiện | Tự động gán PT ngẫu nhiên hoặc kích hoạt gói tập dùng thử |
 
-### 2.2. Đối tượng người dùng
+### 2.2. Đối tượng người dùng & Kênh tương tác
 
-- **Hội viên (Member)** đã liên kết tài khoản LINE (có `lineId` trong hệ thống).
-- **Huấn luyện viên (Trainer)** nhận thông báo khi member đặt/hủy lịch (qua LINE Push hoặc In-app Notification).
+- **Hội viên (Member):** Tương tác chính qua ứng dụng LINE (Rich Menu, LIFF Webview, LINE Push Message).
+- **Huấn luyện viên (Personal Trainer - PT):** Tương tác qua **Web Portal** quản trị, nhận In-app Notification khi có hội viên đặt/hủy lịch.
+- **Ban quản lý (Owner / Manager):** Quản lý lịch tập và phân công PT phụ trách cho hội viên trên Web Portal.
 
-### 2.3. Giả định tiên quyết
+### 2.3. Giả định & Cơ chế tài khoản
 
-- Hội viên đã **đăng nhập LIFF** ít nhất 1 lần (đã có `lineId` linked).
-- Hệ thống đã có **Primary Trainer** gán cho member.
-- Gói tập (subscription) đang active.
-- Rich Menu đã được cấu hình trên LINE Developers Console, LIFF App đã tạo.
+- **Tự động liên kết tài khoản (Auto-provisioning):** Người dùng khi bấm vào Rich Menu sẽ mở LIFF. Nếu chưa có tài khoản trong hệ thống, `LineOAuthService` tự động khởi tạo bản ghi `User` (role: `member`) và `Member` tương ứng, gắn `lineId`.
+- **Điều kiện đặt lịch hợp lệ:** Hội viên phải có **Primary Trainer** được gán và có ít nhất 1 **Subscription** ở trạng thái `active` có hiệu lực vào ngày tập.
+- **Cấu hình LINE:** Rich Menu và LIFF App đã được tạo và kích hoạt trên LINE Developers Console.
 
 ---
 
@@ -44,263 +45,336 @@ Tài liệu này tập trung vào phần trải nghiệm người dùng trên LI
 
 ### 3.1. Cấu trúc Rich Menu
 
-Rich Menu là vùng chạm (tap zone) hiển thị ở cuối màn hình chat, thay thế bàn phím mặc định. Layout giữ nguyên cho tất cả member.
+Rich Menu hiển thị cố định ở phần đáy của màn hình chat LINE Official Account (thay thế bàn phím mặc định), kích thước tiêu chuẩn **2500 x 843 px**, chia đều thành **4 vùng chạm (Tap Zones) toàn chiều cao** (`width: 625px, height: 843px`).
 
 ```
-┌──────────────────────────────────────────────────┐
-│                                                    │
-│                  [Khu vực hình ảnh]                │
-│            (Hình nền theo branding RoGym)          │
-│                                                    │
-├────────────┬────────────┬────────────┬────────────┤
-│   LỊCH TẬP  │  ĐẶT LỊCH    │   CHECK-IN    │  HỒ SƠ     │
-│  (calendar)  │  (calendar+) │  (scan-qr)    │  (user)     │
-└────────────┴────────────┴────────────┴────────────┘
+┌─────────────────┬─────────────────┬─────────────────┬─────────────────┐
+│                 │                 │                 │                 │
+│     LỊCH TẬP    │     ĐẶT LỊCH    │     CHECK-IN    │      HỒ SƠ      │
+│                 │                 │                 │                 │
+│    (Calendar)   │   (Calendar+)   │    (Scan QR)    │     (Profile)   │
+│                 │                 │                 │                 │
+│   Zone 1 (0px)  │  Zone 2 (625px) │ Zone 3 (1250px) │ Zone 4 (1875px) │
+└─────────────────┴─────────────────┴─────────────────┴─────────────────┘
+ <─── 625 px ────><─── 625 px ────><─── 625 px ────><─── 625 px ────>
+ <───────────────────────────── 2500 px ─────────────────────────────>
 ```
 
-### 3.2. Bảng vùng nhấn (Tap Zones)
+### 3.2. Bảng cấu hình vùng nhấn (Tap Zones)
 
-| Zone | Vị trí | Hành động (URI Action) | Mô tả |
+| Zone | Tọa độ (x, y, w, h) | Canonical URI Action | Đích đến & Hành vi trải nghiệm |
 | :--- | :--- | :--- | :--- |
-| **Lịch tập** | Góc trái | `liff://<LIFF_ID>/member/workout/sessions` | Xem danh sách lịch tập sắp tới và đã qua |
-| **Đặt lịch** | Giữa trái | `liff://<LIFF_ID>/member/workout/sessions?book=1` | Mở trang lịch tập kèm modal đặt lịch tự mở |
-| **Check-in** | Giữa phải | `liff://<LIFF_ID>/member/workout/sessions` | Mở trang lịch tập (member chọn session để check-in) |
-| **Hồ sơ** | Góc phải | `liff://<LIFF_ID>/member/profile` | Xem thông tin cá nhân |
+| **1. Lịch tập** | `0, 0, 625, 843` | `https://liff.line.me/<LIFF_ID>?redirect=/member/workout/sessions` | Mở trang Lịch tập (`WorkoutSchedulePage`), hiển thị lịch dạng Calendar và danh sách buổi tập sắp tới. |
+| **2. Đặt lịch** | `625, 0, 625, 843` | `https://liff.line.me/<LIFF_ID>?redirect=/member/workout/sessions?book=1` | Mở trang Lịch tập kèm tham số `book=1`, tự động bung modal đặt lịch (`BookPtSessionModal`). |
+| **3. Check-in** | `1250, 0, 625, 843` | `https://liff.line.me/<LIFF_ID>?redirect=/member/attendance` | Mở trang Điểm danh (`AttendancePage`), hiển thị mã QR hội viên để quét tại quầy lễ tân hoặc quét thiết bị phòng tập. |
+| **4. Hồ sơ** | `1875, 0, 625, 843` | `https://liff.line.me/<LIFF_ID>?redirect=/member/profile` | Mở trang Thông tin cá nhân (`ProfilePage`), xem chi tiết gói tập, thông tin PT phụ trách và cài đặt tài khoản. |
 
-### 3.3. Cấu hình Rich Menu (LINE Developers Console)
-
-| Thuộc tính | Giá trị |
-| :--- | :--- |
-| Menu size | 2500 x 843 px |
-| Active area | Toàn bộ (full-tile) |
-| Selected mode | hi-alt (phím bếp / bàn phím) ở chế độ mặc định |
-| Actions | URI → LIFF URL (xem bảng zone ở trên) |
-
-> **Lưu ý:** URI scheme `liff://` mở LIFF page trực tiếp trong app LINE. Nếu dùng `https://` + LIFF URL đầy đủ cũng hoạt động, nhưng `liff://` ngắn hơn và ổn định hơn.
+> [!NOTE]
+> - **Canonical URI:** Khuyến nghị dùng định dạng chuẩn `https://liff.line.me/<LIFF_ID>?redirect=...` để đảm bảo tương thích tốt trên cả ứng dụng LINE di động lẫn trình duyệt web ngoài.
+> - Trong môi trường LINE Mock / Test nội bộ, hệ thống hỗ trợ tương đương URL `liff://mock-liff/...` hoặc `http://localhost:5173/liff?redirect=...`.
 
 ---
 
 ## 4. LUỒNG NGHIỆP VỤ CHÍNH
 
-### 4.1. Đặt lịch tập (Instant Booking)
+### 4.1. Luồng Đặt lịch tập (Instant Booking Flow)
 
 ```mermaid
 sequenceDiagram
     autonumber
     actor Member as Hội viên (trên LINE)
     participant RichMenu as LINE Rich Menu
-    participant LIFF as LIFF Page (WorkoutSchedulePage)
+    participant LiffEntry as LIFF Entry (/liff)
+    participant Page as WorkoutSchedulePage
+    participant Modal as BookPtSessionModal
     participant API as NestJS Server
     participant LINE as LINE Messaging API
-    participant Trainer as Huấn luyện viên
+    participant Trainer as Huấn luyện viên (Web Portal)
 
-    Member->>RichMenu: Tap zone "Đặt lịch"
-    RichMenu->>LIFF: Mở LIFF /member/workout/sessions?book=1
-    LIFF->>LIFF: Tự mở BookPtSessionModal
+    Member->>RichMenu: Chạm zone "ĐẶT LỊCH"
+    RichMenu->>LiffEntry: Mở https://liff.line.me/<LIFF_ID>?redirect=/member/workout/sessions?book=1
+    LiffEntry->>LiffEntry: Xác thực LINE ID Token (Tự động login/tạo tài khoản)
+    LiffEntry->>Page: Điều hướng tới /member/workout/sessions?book=1
+    Page->>Modal: Phát hiện param book=1 -> Mở modal đặt lịch
 
     rect rgb(235, 250, 235)
-    Note over LIFF: Hiển thị danh sách PT (Primary Trainer)
-    LIFF->>API: GET /training-sessions/trainer-availability?date=YYYY-MM-DD
-    API-->>LIFF: Danh sách slot (available/busy/past)
-    Note over LIFF: Member chọn ngày (7 ngày tới) → Chọn slot trống
-    LIFF->>API: POST /training-sessions/book {startTime, endTime}
-    API-->>LIFF: 201 Created (session created)
+    Note over Modal,API: Nạp thông tin PT & Khung giờ khả dụng
+    Modal->>API: GET /training-sessions/trainer-availability?date=YYYY-MM-DD
+    API-->>Modal: 200 OK (Thông tin PT, danh sách 15 slot trong ngày)
+    Member->>Modal: Chọn ngày (trong 7 ngày tới) -> Chọn 1 slot trống -> Bấm "Xác nhận đặt"
+    Modal->>API: POST /training-sessions/book {startTime, endTime, assignmentId, planDayId}
+    API->>API: Transaction: Kiểm tra PT, Subscription active, Overlap, Gán phòng trống
+    API-->>Modal: 201 Created (Bản ghi TrainingSession)
     end
 
     par Thông báo đa kênh
-        API->>LINE: Push message "Bạn đã đặt lịch tập với PT [tên]..."
-        Note over LINE,Trainer: LINE QuickReply: "Xem chi tiết" → LIFF /member/workout/sessions?sessionId=X
+        API->>LINE: Gửi tin nhắn LINE Push cho Hội viên (kèm nút QuickReply "Xem chi tiết")
     and
-        API-->>Member: In-app Notification "Lịch tập mới"
+        API->>Member: In-app Notification: "Lịch tập mới với PT [tên]"
+    and
+        API->>Trainer: In-app Notification trên Web Portal: "Lịch tập mới với hội viên [tên]"
     end
 
-    LIFF->>Member: Toast "Đặt lịch thành công" → Cập nhật Calendar
+    Modal->>Page: Đóng modal, xóa param "?book=1" trên URL, refresh Calendar
+    Page-->>Member: Toast thông báo "Đặt lịch thành công!"
 ```
 
-### 4.2. Xem và quản lý lịch tập
+---
 
-| Hành động | Từ Rich Menu | Kịch bản |
-| :--- | :--- | :--- |
-| Xem lịch sắp tới | Tap "Lịch tập" | Calendar view + danh sách sidebar (đã có tại `WorkoutSchedulePage`) |
-| Xem chi tiết session | Tap vào session trên Calendar | Modal chi tiết: thời gian, PT, phòng, bài tập giáo án |
-| Hủy lịch | Tap session → nút "Hủy" | Mở `CancelPtBookingModal` (lý do + kiểm tra 2h rule) |
-| Bắt đầu buổi tập | Tap session → nút "Bắt đầu" | Chuyển sang trang `CreateWorkoutSessionPage` |
+### 4.2. Luồng Xem & Quản lý lịch tập (Deep Linking & Detail View)
 
-### 4.3. Hủy lịch tập
+Hội viên có thể truy cập danh sách và chi tiết lịch tập thông qua các cách sau:
+1. **Từ Rich Menu "Lịch tập":** Mở `/member/workout/sessions`.
+2. **Từ nút QuickReply trong tin nhắn LINE:** Mở `/member/workout/sessions?sessionId=<ID>`.
+   - Trang sẽ tự động fetch chi tiết buổi tập qua `GET /training-sessions/:id` và mở `SessionDetailModal`.
+   - Khi đóng modal, URL tự động được làm sạch (xóa `sessionId` khỏi query param).
+
+---
+
+### 4.3. Luồng Hủy lịch tập (Member Cancellation Flow)
 
 ```mermaid
 sequenceDiagram
     autonumber
     actor Member as Hội viên
-    participant LIFF as LIFF Page
+    participant Page as WorkoutSchedulePage
+    participant Modal as CancelPtBookingModal
     participant API as NestJS Server
     participant LINE as LINE Messaging API
-    participant Trainer as Huấn luyện viên
+    participant Trainer as Huấn luyện viên (Web Portal)
 
-    Member->>LIFF: Chọn session → Bấm "Hủy lịch"
-    alt startTime - now >= 2h
-        LIFF->>Member: Hiển thị modal nhập lý do (3-255 ký tự)
-        Member->>LIFF: Nhập lý do → Xác nhận
-        LIFF->>API: POST /training-sessions/:id/cancel-booking {reason}
-        API->>API: Cập nhật status = cancelled
-        API->>LINE: Push message "Lịch tập với PT [tên] đã bị hủy"
-        API-->>LIFF: 200 OK
-        LIFF->>Member: Toast "Hủy lịch thành công"
-    else startTime - now < 2h
-        LIFF->>Member: Alert "Buổi tập diễn ra trong 2h. Liên hệ PT trực tiếp."
+    Member->>Page: Nhấn vào buổi tập trên Calendar / Danh sách
+    Page->>Page: Mở SessionDetailModal
+    
+    alt startTime - now >= 2 tiếng (Hợp lệ)
+        Member->>Modal: Bấm nút "Hủy lịch hẹn" -> Mở CancelPtBookingModal
+        Member->>Modal: Nhập lý do hủy (3 - 255 ký tự) -> Bấm "Xác nhận hủy"
+        Modal->>API: POST /training-sessions/:id/cancel-booking {reason}
+        API->>API: Kiểm tra quyền sở hữu, trạng thái scheduled, thời gian >= 2h
+        API->>API: Cập nhật status = cancelled, ghi Audit Log
+        API-->>Modal: 200 OK
+        
+        par Thông báo hủy lịch
+            API->>LINE: Gửi tin nhắn LINE Push thông báo lịch tập đã hủy tới Member
+        and
+            API->>Trainer: In-app Notification trên Web Portal: "Lịch tập với hội viên [tên] đã được hủy"
+        end
+        
+        Modal->>Page: Đóng modal, reload danh sách lịch
+        Page-->>Member: Toast "Đã hủy lịch tập thành công"
+    else startTime - now < 2 tiếng (Quá hạn tự hủy)
+        Page-->>Member: Ẩn nút hủy, hiển thị cảnh báo: "Buổi tập diễn ra trong vòng 2 giờ tới. Vui lòng liên hệ trực tiếp PT để được hỗ trợ."
     end
 ```
 
-### 4.4. Nhắc lịch tập (Reminder Push)
+---
+
+### 4.4. Luồng Đổi lịch tập (Reschedule Handling)
+
+> [!IMPORTANT]
+> **Quy định đổi lịch:**
+> - Hệ thống **không cung cấp API đổi lịch riêng lẻ cho Hội viên** trên LIFF. 
+> - Nếu Hội viên muốn đổi giờ tập:
+>   - **Cách 1 (Tự thao tác):** Hội viên tự Hủy buổi tập hiện tại (nếu trước giờ tập >= 2h), sau đó thực hiện Đặt lịch mới vào khung giờ mong muốn.
+>   - **Cách 2 (Thông qua PT/Quản lý):** Hội viên liên hệ PT/Lễ tân. PT hoặc Quản lý sẽ thực hiện đổi giờ trên Web Portal (`PUT /training-sessions/:id`).
+> - Khi PT/Quản lý đổi lịch trên Web Portal, hệ thống tự động kích hoạt:
+>   - Gửi **LINE Push Message** báo giờ tập mới cho Hội viên (kèm nút mở chi tiết LIFF).
+>   - Gửi **In-app Notification** cho Hội viên và PT.
+
+---
+
+### 4.5. Luồng Tự động nhắc lịch tập (Automated Reminders)
+
+Hệ thống chạy Cron Job mỗi phút (`@Cron('* * * * *')` theo múi giờ `Asia/Ho_Chi_Minh`):
 
 ```mermaid
 sequenceDiagram
     autonumber
-    participant Cron as Cron Job (mỗi phút)
-    participant Server as NestJS Server
+    participant Cron as NestJS Cron Job (mỗi phút)
+    participant Service as LineMessagingService
+    participant Notif as NotificationsService
     participant LINE as LINE Messaging API
-    participant Member as Hội viên
+    participant Member as Hội viên (LINE App)
 
-    Cron->>Server: sendUpcomingSessionReminders()
-    Server->>Server: Tìm sessions scheduled trong 30 phút tới
-    alt Còn >= 30 phút
-        Server->>LINE: Push "Buổi tập của bạn sẽ bắt đầu sau 30 phút..."
-        Note over LINE,Member: QuickReply: "Xem chi tiết" → LIFF sessions?sessionId=X
-    else Còn 0 phút (đến giờ)
-        Server->>LINE: Push "Đến giờ tập của bạn..."
-        Note over LINE,Member: QuickReply: "Xem chi tiết" → LIFF sessions?sessionId=X
+    Cron->>Service: sendUpcomingSessionReminders()
+    Service->>Service: Quét các TrainingSession (status: scheduled)
+    
+    alt Khung giờ bắt đầu sau 30 phút (Mặc định LINE_REMINDER_MINUTES)
+        Service->>Notif: safeNotifyUser(memberId, dedupeKey: "training:ID:reminder:30")
+        Service->>LINE: Push tin nhắn LINE: "Buổi tập của bạn sẽ bắt đầu sau 30 phút..." (Kèm QuickReply)
+    else Khung giờ bắt đầu ngay bây giờ (0 phút)
+        Service->>Notif: safeNotifyUser(memberId, dedupeKey: "training:ID:starting")
+        Service->>LINE: Push tin nhắn LINE: "Đến giờ tập của bạn..." (Kèm QuickReply)
     end
+    
+    Member->>LINE: Nhấn QuickReply "Xem chi tiết" -> Mở LIFF /member/workout/sessions?sessionId=ID
 ```
 
 ---
 
-## 5. CẤU HÌNH HIỆN TẠI (CODE REFERENCE)
+## 5. CẤU HÌNH KỸ THUẬT & MÃ NGUỒN LIÊN QUAN
 
-### 5.1. Backend — Các service liên quan
+### 5.1. Backend Services & Endpoints
 
-| Service | File | Nhiệm vụ |
+| Thành phần | Đường dẫn file | Trách nhiệm chính |
 | :--- | :--- | :--- |
-| `MemberSessionBookingService` | `server/src/training/member-session-booking.service.ts` | `bookSessionByMember()`, `cancelBookingByMember()`, `getTrainerAvailability()` |
-| `TrainingSessionNotificationService` | `server/src/training/training-session-notification.service.ts` | `notifyCreated()`, `notifyCancelled()`, `notifyUpdated()` |
-| `TrainingSessionSchedulingService` | `server/src/training/training-session-scheduling.service.ts` | `checkOverlap()`, `findAvailableRoom()`, `resolveSessionPlanLink()` |
-| `LineMessagingService` | `server/src/line-messaging/line-messaging.service.ts` | `safePushTrainingSessionEvent()`, `safePushAttendanceCheckin()`, `sendUpcomingSessionReminders()` (cron) |
-| `TrainingController` | `server/src/training/training.controller.ts` | Endpoints: `GET trainer-availability`, `POST book`, `POST :id/cancel-booking` |
+| `MemberSessionBookingService` | `server/src/training/member-session-booking.service.ts` | Xử lý `getTrainerAvailability()`, `bookSessionByMember()`, `cancelBookingByMember()` trong Prisma Transaction. |
+| `LineMessagingService` | `server/src/line-messaging/line-messaging.service.ts` | Gửi LINE Push Message (`created`, `updated`, `cancelled`, `reminder`, `starting`), xử lý Webhook, Cron nhắc lịch. |
+| `LineOAuthService` | `server/src/auth/line-oauth.service.ts` | Xác thực LINE ID Token, Auto-provisioning tài khoản Member mới từ LINE. |
+| `TrainingSessionNotificationService` | `server/src/training/training-session-notification.service.ts` | Điều phối bắn In-app Notification và kích hoạt gửi tin nhắn LINE. |
+| `TrainingController` | `server/src/training/training.controller.ts` | Endpoints: `GET /training-sessions/trainer-availability`, `POST /training-sessions/book`, `POST /training-sessions/:id/cancel-booking`. |
 
-### 5.2. Frontend — Các page/component liên quan
+### 5.2. Frontend Components & LIFF Helpers
 
-| Component | File | Nhiệm vụ |
+| Thành phần | Đường dẫn file | Trách nhiệm chính |
 | :--- | :--- | :--- |
-| `WorkoutSchedulePage` | `client/src/pages/member/workout/WorkoutSchedulePage.tsx` | Calendar view + sidebar + modal chi tiết session |
-| `BookPtSessionModal` | `client/src/pages/member/workout/BookPtSessionModal.tsx` | Chọn ngày → slot grid → xác nhận đặt lịch |
-| `CancelPtBookingModal` | `client/src/pages/member/workout/CancelPtBookingModal.tsx` | Nhập lý do hủy → xác nhận |
-| `LiffEntryPage` | `client/src/pages/liff/LiffEntryPage.tsx` | Đăng nhập LIFF → auto-redirect tới `/member` |
-| `liff.ts` | `client/src/lib/liff.ts` | `initLiff()`, mock mode, LIFF SDK wrapper |
-
-### 5.3. LIFF Routes hiện có
-
-```
-/liff                          → LiffEntryPage (auto-login + redirect)
-/member/workout/sessions       → WorkoutSchedulePage (Calendar + Booking)
-/member/workout/sessions?sessionId=X  → WorkoutSchedulePage (deep link mở chi tiết session)
-/member/profile                → ProfilePage
-```
-
-### 5.4. Rich Menu URI mapping
-
-Rich Menu tap → LIFF URL scheme:
-
-```
-"Lịch tập"      → liff://<LIFF_ID>/member/workout/sessions
-"Đặt lịch"      → liff://<LIFF_ID>/member/workout/sessions?book=1
-"Check-in"      → liff://<LIFF_ID>/member/workout/sessions
-"Hồ sơ"         → liff://<LIFF_ID>/member/profile
-```
-
-> **Về tham số `book=1`:** Hiện tại `WorkoutSchedulePage` có state `bookModalOpen` nhưng chưa đọc từ URL param. Cần bổ sung logic: nếu URL có `?book=1` thì tự mở `BookPtSessionModal` khi page load. Đây là thay đổi nhỏ, 1-2 dòng code.
+| `WorkoutSchedulePage` | `client/src/pages/member/workout/WorkoutSchedulePage.tsx` | Hiển thị Calendar, quản lý state `bookModalOpen`, xử lý deep link `?book=1` và `?sessionId=X`, dọn dẹp searchParams khi đóng modal. |
+| `BookPtSessionModal` | `client/src/pages/member/workout/BookPtSessionModal.tsx` | Thanh trượt chọn 7 ngày, lưới 15 khung giờ, chọn bài tập giáo án, bắt lỗi 409 Race Condition để auto-refresh slot. |
+| `CancelPtBookingModal` | `client/src/pages/member/workout/CancelPtBookingModal.tsx` | Modal nhập lý do hủy lịch (3-255 ký tự) và kiểm tra điều kiện 2 giờ. |
+| `LiffEntryPage` | `client/src/pages/liff/LiffEntryPage.tsx` | Xử lý vòng đời đăng nhập LIFF SDK, refresh ID token hết hạn, đồng bộ ngôn ngữ (vi/ja), điều hướng an toàn. |
+| `liff-redirect.ts` | `client/src/pages/liff/liff-redirect.ts` | Validate whitelist đường dẫn chuyển hướng sau login (bảo toàn query params và hash). |
 
 ---
 
-## 6. QUY TẮC NGHIỆP VỤ (TÓM TẮT)
+## 6. BẢNG QUY TẮC NGHIỆP VỤ (BUSINESS RULES)
 
-| Mã | Quy tắc | Giá trị hiện tại |
+| Mã quy tắc | Tên quy tắc | Nội dung chi tiết |
 | :--- | :--- | :--- |
-| BR-01 | Thời lượng mỗi buổi | Cố định **60 phút** |
-| BR-02 | Phạm vi PT | Chỉ Primary Trainer (`member.primaryTrainerId`) |
-| BR-03 | Khung giờ khả dụng | **06:00 - 21:00** (UTC+7), 15 slot/ngày |
-| BR-04 | Hạn mức đặt trước | Tối đa **7 ngày** trước, tối thiểu **5 phút** trước giờ tập |
-| BR-05 | Giới hạn slot đặt | Tối đa **3 lịch scheduled** đang chờ |
-| BR-06 | Điều kiện gói tập | Phải có subscription `active` tại ngày tập |
-| BR-07 | Phân bổ phòng | Auto-assign phòng trống (`findAvailableRoom`) |
-| BR-08 | Liên kết giáo án | Tùy chọn — chọn WorkoutPlanDay trong assignment đang active |
-| BR-09 | Chính sách hủy | Trước giờ tập **>= 2 tiếng**; bắt buộc nhập lý do (3-255 ký tự) |
-| BR-10 | Thông báo | 2 chiều: In-app Notification + LINE Push (cho cả member và trainer) |
+| **BR-01** | **Xác nhận tức thì (Instant Booking)** | Lịch tập được hệ thống tự động xác nhận ngay lập tức khi gửi yêu cầu thành công, không cần PT duyệt thủ công. |
+| **BR-02** | **Phạm vi PT** | Hội viên chỉ được đặt lịch với **Primary Trainer** được gán cho mình (`member.primaryTrainerId`). Nếu chưa có PT, không cho phép đặt lịch. |
+| **BR-03** | **Khung giờ & Múi giờ** | Cố định **60 phút/buổi**, gồm 15 slot trong ngày từ `06:00 - 07:00` đến `20:00 - 21:00` theo múi giờ phòng tập (`Asia/Ho_Chi_Minh - UTC+7`). Mọi dữ liệu API trao đổi theo chuẩn ISO 8601 (UTC). |
+| **BR-04** | **Hạn mức thời gian đặt** | Đặt trước tối đa **7 ngày** tính từ ngày hiện tại, và tối thiểu **5 phút** trước giờ bắt đầu của slot. |
+| **BR-05** | **Giới hạn số lịch chờ** | Tối đa **3 lịch tập ở trạng thái `scheduled`** trong tương lai cho mỗi hội viên để ngăn chặn spam giữ chỗ. |
+| **BR-06** | **Điều kiện Gói tập** | Phải có ít nhất 1 `Subscription` ở trạng thái `active` có hiệu lực tại ngày diễn ra buổi tập (không giới hạn số buổi trong thời hạn gói). |
+| **BR-07** | **Tự động phân bổ phòng** | Hệ thống tự động gán một phòng tập trống (`findAvailableRoom`). Nếu toàn bộ phòng đều kín chỗ trong khung giờ đó, trả về lỗi `NO_ROOM_AVAILABLE`. |
+| **BR-08** | **Liên kết giáo án (Tùy chọn)** | Hội viên có thể tùy chọn liên kết buổi tập với 1 ngày tập cụ thể (`planDayId`) trong giáo án đang kích hoạt (`MemberWorkoutPlan`). |
+| **BR-09** | **Chính sách hủy lịch** | Hội viên chỉ được tự hủy lịch trước giờ tập **tối thiểu 2 tiếng** (`startTime - now >= 2h`) và **bắt buộc nhập lý do** (3 đến 255 ký tự). Dưới 2 tiếng, hệ thống khóa thao tác hủy. |
+| **BR-10** | **Kênh thông báo chuẩn** | - **Hội viên:** Nhận In-app Notification + LINE Push Message.<br>- **Huấn luyện viên (PT):** Nhận In-app Notification trên Web Portal. |
 
 ---
 
-## 7. TÌNH HUỐNG NGOẠI LỆ (EDGE CASES)
+## 7. TÌNH HUỐNG NGOẠI LỆ & TRẢI NGHIỆM ONBOARDING (EDGE CASES & ONBOARDING UX)
 
-| Tình huống | Xử lý |
+| Tình huống | Hành vi hệ thống & Phản hồi UX |
 | :--- | :--- |
-| Member chưa có Primary Trainer | `BookPtSessionModal` hiển thị warning "Chưa được gán PT" + nút bị disable |
-| Member chưa có subscription active | Backend trả `409 MEMBER_HAS_NO_ACTIVE_SUBSCRIPTION`. Frontend toast lỗi |
-| Slot bị chiếm khi member đang chọn (race condition) | Backend trả `409 TRAINER_TIME_OVERLAP` hoặc `MEMBER_TIME_OVERLAP`. Frontend toast cảnh báo → auto-refresh slot grid |
-| Hủy lịch < 2 tiếng | `CancelPtBookingModal` hiển thị warning + ẩn nút hủy. Member liên hệ PT trực tiếp |
-| PT hủy/sửa lịch (từ hệ thống) | LINE Push message "Lịch tập đã được cập nhật/hủy" → QuickReply dẫn LIFF sessions |
-| LIFF token hết hạn | `LiffEntryPage` detect token exp → logout + re-login tự động |
-| Member mở LIFF mà chưa đăng nhập LINE | `liff.login()` redirect sang LINE OAuth flow |
+| **Hội viên mới từ LINE chưa có PT** | `BookPtSessionModal` hiển thị banner cảnh báo: *"Bạn chưa được phân công PT phụ trách. Vui lòng liên hệ quầy lễ tân hoặc hotline để chọn PT."* Vô hiệu hóa nút chọn slot. |
+| **Hội viên chưa có Gói tập Active** | Backend trả về mã lỗi `409 MEMBER_HAS_NO_ACTIVE_SUBSCRIPTION`. Giao diện hiển thị modal/thông báo: *"Bạn cần có gói tập đang hoạt động để đặt lịch"* kèm nút CTA dẫn trực tiếp sang trang Gói tập (`/member/membership`) hoặc liên hệ lễ tân. |
+| **Xung đột khung giờ (Race Condition)** | Khi 2 hội viên cùng đặt 1 khung giờ sát nút, người đến sau nhận lỗi `409 TRAINER_TIME_OVERLAP`. Frontend hiển thị Toast thân thiện: *"Khung giờ này vừa được người khác đặt trước ít giây"* và tự động kích hoạt nạp lại bảng slot trống. |
+| **Hội viên trùng lịch khác** | Backend trả về `409 MEMBER_TIME_OVERLAP`. Frontend thông báo: *"Bạn đã có lịch tập khác trong khung giờ này"*. |
+| **Hết phòng tập khả dụng** | Backend trả về `409 NO_ROOM_AVAILABLE`. Frontend thông báo: *"Tất cả phòng tập đã kín chỗ trong khung giờ này. Vui lòng chọn giờ khác"*. |
+| **Hủy lịch trễ (< 2 tiếng)** | `WorkoutSchedulePage` và `SessionDetailModal` ẩn nút Hủy, hiển thị thông báo màu vàng: *"Buổi tập diễn ra trong vòng 2 giờ tới. Để đổi hoặc hủy lịch, vui lòng liên hệ trực tiếp PT."* |
+| **LINE ID Token hết hạn khi mở lại webview** | `LiffEntryPage` kiểm tra `decoded.exp`, nếu còn dưới 30 giây hoặc đã hết hạn thì tự động `liff.logout()` và `liff.login()` lại một cách mượt mà. |
+| **Dọn dẹp Deep Link Param sau thao tác** | Khi người dùng đóng `BookPtSessionModal` hoặc `SessionDetailModal`, Frontend tự động xóa `book` / `sessionId` khỏi URL thông qua `setSearchParams(..., { replace: true })` để tránh tự mở lại modal khi người dùng F5 / reload. |
 
 ---
 
-## 8. ĐO LƯỢNG (METRICS)
+## 8. CHỈ SỐ ĐO LƯỜNG HIỆU QUẢ (KEY METRICS)
 
-| Metric | Cách đo | Mục tiêu |
+| Chỉ số (Metric) | Phương thức đo lường | Mục tiêu kỳ vọng |
 | :--- | :--- | :--- |
-| Tỷ lệ đặt lịch từ LINE/LIFF | `action: 'training.member_book'` trong AuditLog có `userAgent` chứa `LIFF` | >= 60% total bookings |
-| Thời gian đặt lịch (từ mở modal đến xác nhận) | Frontend timing (UX metric) | < 30 giây |
-| Tỷ lệ hủy lịch < 2h | `action: 'training.member_cancel'` where `session.startTime - auditLog.createdAt < 2h` | < 10% |
-| LINE Push delivery rate | `safePushTrainingSessionEvent` return `true` | >= 95% |
-| Daily Active Users trên LIFF | LiffEntryPage completions per day | Theo dõi trend |
+| **Tỷ lệ đặt lịch qua LINE/LIFF** | Tỷ lệ bản ghi `AuditLog` có `action = 'training.member_book'` phát sinh từ user-agent LIFF / LINE | >= 65% tổng số lượt đặt lịch |
+| **Thời gian hoàn tất đặt lịch** | Thời gian từ lúc mở `BookPtSessionModal` đến khi nhận response 201 | < 25 giây |
+| **Tỷ lệ xung đột Race Condition được phục hồi** | Tỷ lệ user gặp 409 Overlap tiếp tục chọn slot khác thành công trong phiên | >= 80% |
+| **Tỷ lệ gửi LINE Push thành công** | Tỷ lệ `safePushTrainingSessionEvent` trả về `true` cho các hội viên có `lineId` | >= 98% |
+| **Tỷ lệ hủy lịch đúng hạn** | Tỷ lệ các lượt hủy lịch tự phục vụ qua LIFF thỏa mãn điều kiện trước >= 2h | 100% (do hệ thống chặn < 2h) |
 
 ---
 
 ## 9. PHỤ LỤC
 
-### 9.1. LINE Message Template (hiện tại)
+### 9.1. Mẫu tin nhắn LINE Push đa ngôn ngữ (LINE Message Templates)
 
-**Khi đặt lịch thành công (vi):**
-```
-Bạn đã đặt lịch tập thành công.
-Thời gian: {datetime}
-PT: {trainerName}
-Phòng: {roomName}
-```
+#### 1. Đặt lịch thành công (`created`)
+- **Tiếng Việt (`vi`):**
+  ```
+  Bạn đã đặt lịch tập thành công.
+  Thời gian: {datetime}
+  PT: {trainerName}
+  Phòng: {roomName}
+  ```
+- **Tiếng Nhật (`ja`):**
+  ```
+  トレーニング予約が完了しました。
+  日時: {when}
+  PT: {trainerName}
+  ルーム: {roomName}
+  ```
 
-**Khi hủy lịch (vi):**
-```
-Lịch tập với PT {trainerName} vào {datetime} đã bị hủy.
-```
+#### 2. Lịch tập được cập nhật (`updated`)
+- **Tiếng Việt (`vi`):**
+  ```
+  Lịch tập của bạn đã được cập nhật.
+  Thời gian mới: {datetime}
+  PT: {trainerName}
+  Phòng: {roomName}
+  ```
+- **Tiếng Nhật (`ja`):**
+  ```
+  トレーニング予約が更新されました。
+  新しい日時: {when}
+  PT: {trainerName}
+  ルーム: {roomName}
+  ```
 
-**Nhắc lịch tập (vi):**
-```
-Buổi tập của bạn sẽ bắt đầu sau {reminderMinutes} phút.
-Thời gian: {datetime}
-PT: {trainerName}
-Phòng: {roomName}
-```
+#### 3. Hủy lịch tập (`cancelled`)
+- **Tiếng Việt (`vi`):**
+  ```
+  Lịch tập với PT {trainerName} vào {datetime} đã bị hủy.
+  ```
+- **Tiếng Nhật (`ja`):**
+  ```
+  PT {trainerName} との {when} のトレーニング予約はキャンセルされました。
+  ```
 
-Tất cả message đều có **QuickReply button** "Xem chi tiết" dẫn tới LIFF page.
+#### 4. Nhắc lịch tập trước 30 phút (`reminder`)
+- **Tiếng Việt (`vi`):**
+  ```
+  Buổi tập của bạn sẽ bắt đầu sau {reminderMinutes} phút.
+  Thời gian: {datetime}
+  PT: {trainerName}
+  Phòng: {roomName}
+  ```
+- **Tiếng Nhật (`ja`):**
+  ```
+  トレーニング開始まであと{reminderMinutes}分です。
+  日時: {when}
+  PT: {trainerName}
+  ルーム: {roomName}
+  ```
 
-### 9.2. Error Codes tham chiếu
+#### 5. Đến giờ tập (`starting`)
+- **Tiếng Việt (`vi`):**
+  ```
+  Đến giờ tập của bạn.
+  Thời gian: {datetime}
+  PT: {trainerName}
+  Phòng: {roomName}
+  ```
+- **Tiếng Nhật (`ja`):**
+  ```
+  トレーニング開始時間です。
+  日時: {when}
+  PT: {trainerName}
+  ルーム: {roomName}
+  ```
 
-| HTTP | Code | Ý nghĩa | Xử lý UI |
-| :--- | :--- | :--- | :--- |
-| 400 | `NO_PRIMARY_TRAINER` | Chưa có PT phụ trách | Alert + disable booking |
-| 400 | `INVALID_DURATION` | Thời lượng != 60 phút | Không xảy ra (frontend set đúng) |
-| 400 | `INVALID_BOOKING_TIME` | Ngoài khoảng 5 phút - 7 ngày | Toast lỗi |
-| 400 | `BOOKING_LIMIT_EXCEEDED` | Đã đặt >= 3 lịch scheduled | Toast "Đã đạt giới hạn" |
-| 409 | `MEMBER_HAS_NO_ACTIVE_SUBSCRIPTION` | Không có gói active | Toast "Cần gia hạn gói tập" |
-| 409 | `TRAINER_TIME_OVERLAP` | PT trùng lịch | Toast cảnh báo + auto-refresh slot |
-| 409 | `MEMBER_TIME_OVERLAP` | Member trùng lịch | Toast cảnh báo + auto-refresh slot |
-| 409 | `NO_ROOM_AVAILABLE` | Hết phòng | Toast "Hết phòng, thử giờ khác" |
-| 409 | `SESSION_NOT_CANCELLABLE` | Session không ở trạng thái scheduled | Toast lỗi |
-| 400 | `LATE_CANCELLATION` | Hủy < 2 tiếng | Alert warning + ẩn nút hủy |
+> Tất cả các tin nhắn LINE Push trên đều đính kèm **QuickReply Button**: *"Xem chi tiết"* (vi) / *"詳細を見る"* (ja) dẫn trực tiếp đến LIFF URL: `https://liff.line.me/<LIFF_ID>?redirect=/member/workout/sessions?sessionId=<ID>`.
+
+---
+
+### 9.2. Bảng mã lỗi API & Xử lý giao diện (Error Catalog)
+
+| HTTP Status | Mã lỗi (Error Code) | Ý nghĩa nghiệp vụ | Phản hồi giao diện người dùng |
+| :---: | :--- | :--- | :--- |
+| `400` | `NO_PRIMARY_TRAINER` | Hội viên chưa được gán PT phụ trách | Banner cảnh báo + Vô hiệu hóa chọn slot + Hướng dẫn liên hệ lễ tân |
+| `400` | `INVALID_DURATION` | Thời lượng buổi tập khác 60 phút | Chặn từ giao diện (chỉ cho phép đặt slot cố định 60 phút) |
+| `400` | `INVALID_BOOKING_TIME` | Thời gian đặt ngoài khoảng (5 phút - 7 ngày) | Toast cảnh báo thời gian đặt không hợp lệ |
+| `400` | `BOOKING_LIMIT_EXCEEDED` | Đã có >= 3 lịch hẹn `scheduled` trong tương lai | Toast thông báo: *"Bạn đã đạt giới hạn tối đa 3 lịch hẹn đang chờ"* |
+| `400` | `LATE_CANCELLATION` | Hủy lịch trước giờ tập < 2 tiếng | Ẩn nút hủy + Hiển thị thông báo liên hệ trực tiếp PT |
+| `403` | `FORBIDDEN` | Thao tác trên lịch tập của hội viên khác | Toast thông báo: *"Bạn không có quyền thực hiện thao tác này"* |
+| `404` | `NOT_FOUND` | Buổi tập không tồn tại hoặc đã bị xóa | Toast thông báo: *"Không tìm thấy thông tin buổi tập"* |
+| `409` | `MEMBER_HAS_NO_ACTIVE_SUBSCRIPTION` | Không có gói tập active vào ngày tập | Modal/Toast yêu cầu gia hạn gói tập + Nút dẫn tới `/member/membership` |
+| `409` | `TRAINER_TIME_OVERLAP` | PT bị trùng lịch (Race condition) | Toast thông báo khung giờ vừa bị người khác đặt + Tự động làm mới bảng slot |
+| `409` | `MEMBER_TIME_OVERLAP` | Hội viên bị trùng lịch khác trong khung giờ | Toast thông báo hội viên đã có lịch tập khác vào giờ này |
+| `409` | `NO_ROOM_AVAILABLE` | Toàn bộ phòng tập đều kín chỗ | Toast thông báo: *"Không còn phòng tập trống trong khung giờ này"* |
+| `409` | `SESSION_NOT_CANCELLABLE` | Buổi tập không ở trạng thái `scheduled` | Toast thông báo: *"Chỉ có thể hủy buổi tập đang ở trạng thái chờ diễn ra"* |
