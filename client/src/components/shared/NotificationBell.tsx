@@ -4,9 +4,9 @@ import { useTranslation } from 'react-i18next'
 import { Bell, CheckCheck, Loader2 } from 'lucide-react'
 import { NotificationPanel } from '@/components/shared/NotificationUI'
 import { translateNotification } from '@/lib/notification-i18n'
-import { toast } from '@/lib/toast'
 import { notificationService, type NotificationItem } from '@/services/notification.service'
 import { useAuthStore, type Role } from '@/stores/authStore'
+import { showRealtimeNotificationToast } from './notification-toast'
 
 const POLL_INTERVAL_MS = 20_000
 const TOAST_COOLDOWN_MS = 4_000
@@ -91,10 +91,6 @@ function getNotificationPath(item: NotificationItem, roles: Role[] | undefined, 
     default:
       return null
   }
-}
-
-export function showRealtimeNotificationToast(message: string) {
-  toast.info(message)
 }
 
 export default function NotificationBell() {

@@ -2,7 +2,8 @@ import { forwardRef, useEffect, useRef, useState } from 'react'
 import { Search, X } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { cn } from '@/lib/utils'
-import { type InputSize, normalizeInputSize } from './Input'
+import type { InputSize } from './Input'
+import { normalizeInputSize } from './input-utils'
 
 export interface SearchInputProps {
   value: string

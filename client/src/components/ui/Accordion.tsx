@@ -55,7 +55,7 @@ export interface AccordionProps extends HTMLAttributes<HTMLDivElement> {
   variant?: AccordionVariant
   value?: string | string[]
   defaultValue?: string | string[]
-  onValueChange?: (value: any) => void
+  onValueChange?: (value: string | string[]) => void
   collapsible?: boolean
   className?: string
   children?: ReactNode
@@ -354,4 +354,3 @@ export const AccordionGroup = forwardRef<HTMLDivElement, AccordionGroupProps>(
   }
 )
 AccordionGroup.displayName = 'AccordionGroup'
-

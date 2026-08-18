@@ -4,6 +4,14 @@ import api, { isLineSession } from './api'
 import { useAuthStore } from '@/stores/authStore'
 import * as liffModule from '@/lib/liff'
 
+type LiffInstance = Awaited<ReturnType<typeof liffModule.initLiff>>
+
+function getResponseErrorInterceptor() {
+  const rejected = api.interceptors.response.handlers?.[0]?.rejected
+  if (!rejected) throw new Error('Response error interceptor is not registered')
+  return rejected
+}
+
 vi.mock('@/lib/liff', () => ({
   initLiff: vi.fn(),
   isLiffMockEnabled: false,
@@ -25,16 +33,18 @@ describe('api.ts interceptors & silent re-login', () => {
     useAuthStore.getState().clearAuth()
 
     // Mock window.location
-    delete (window as any).location
-    window.location = {
+    Object.defineProperty(window, 'location', {
+      configurable: true,
+      value: {
       href: 'http://localhost:5173/member/dashboard',
       pathname: '/member/dashboard',
       search: '',
-    } as any
+      } as unknown as Location,
+    })
   })
 
   afterEach(() => {
-    window.location = originalLocation as any
+    Object.defineProperty(window, 'location', { configurable: true, value: originalLocation })
   })
 
   it('detects LINE session accurately based on authProvider', () => {
@@ -61,14 +71,14 @@ describe('api.ts interceptors & silent re-login', () => {
     )
 
     // Simulate 401 error directly through axios response interceptor
-    const interceptor = (api.interceptors.response as any).handlers[0]
+    const interceptor = getResponseErrorInterceptor()
 
     const error = {
       config: { url: '/member/profile', headers: {} },
       response: { status: 401 },
     }
 
-    await expect(interceptor.rejected(error)).rejects.toEqual(error)
+    await expect(interceptor(error)).rejects.toEqual(error)
     expect(useAuthStore.getState().isAuthenticated).toBe(false)
     expect(window.location.href).toBe('/login')
   })
@@ -87,7 +97,7 @@ describe('api.ts interceptors & silent re-login', () => {
       logout: vi.fn(),
       login: vi.fn(),
     }
-    vi.mocked(liffModule.initLiff).mockResolvedValue(mockLiff as any)
+    vi.mocked(liffModule.initLiff).mockResolvedValue(mockLiff as unknown as LiffInstance)
 
     vi.spyOn(axios, 'post').mockResolvedValueOnce({
       data: {
@@ -100,18 +110,18 @@ describe('api.ts interceptors & silent re-login', () => {
     })
 
     // Spy on api instance to mock the retried request
-    vi.spyOn(api, 'request' as any).mockResolvedValueOnce({
+    vi.spyOn(api, 'request').mockResolvedValueOnce({
       data: { success: true, data: 'retried-result' },
-    })
+    } as never)
 
-    const interceptor = (api.interceptors.response as any).handlers[0]
+    const interceptor = getResponseErrorInterceptor()
 
     const error = {
       config: { url: '/member/workout/plan', headers: {} },
       response: { status: 401 },
     }
 
-    await interceptor.rejected(error)
+    await interceptor(error)
     expect(axios.post).toHaveBeenCalledWith(
       expect.stringContaining('/auth/line-login'),
       { idToken: 'fresh-line-id-token' },
@@ -131,16 +141,16 @@ describe('api.ts interceptors & silent re-login', () => {
     const mockLiff = {
       isLoggedIn: vi.fn().mockReturnValue(false),
     }
-    vi.mocked(liffModule.initLiff).mockResolvedValue(mockLiff as any)
+    vi.mocked(liffModule.initLiff).mockResolvedValue(mockLiff as unknown as LiffInstance)
 
-    const interceptor = (api.interceptors.response as any).handlers[0]
+    const interceptor = getResponseErrorInterceptor()
 
     const error = {
       config: { url: '/member/workout/plan', headers: {} },
       response: { status: 401 },
     }
 
-    await expect(interceptor.rejected(error)).rejects.toThrow('LIFF not logged in')
+    await expect(interceptor(error)).rejects.toThrow('LIFF not logged in')
     expect(useAuthStore.getState().isAuthenticated).toBe(false)
     expect(window.location.href).toBe('/liff?redirect=%2Fmember%2Fdashboard')
   })
@@ -159,19 +169,19 @@ describe('api.ts interceptors & silent re-login', () => {
       logout: vi.fn(),
       login: vi.fn(),
     }
-    vi.mocked(liffModule.initLiff).mockResolvedValue(mockLiff as any)
+    vi.mocked(liffModule.initLiff).mockResolvedValue(mockLiff as unknown as LiffInstance)
 
-    let resolveLogin: (val: any) => void
-    const loginPromise = new Promise((resolve) => {
+    let resolveLogin: (value: unknown) => void
+    const loginPromise = new Promise<unknown>((resolve) => {
       resolveLogin = resolve
     })
 
-    const postSpy = vi.spyOn(axios, 'post').mockReturnValueOnce(loginPromise as any)
-    const apiSpy = vi.spyOn(api, 'request' as any).mockResolvedValue({
+    const postSpy = vi.spyOn(axios, 'post').mockReturnValueOnce(loginPromise as never)
+    const apiSpy = vi.spyOn(api, 'request').mockResolvedValue({
       data: { success: true },
-    })
+    } as never)
 
-    const interceptor = (api.interceptors.response as any).handlers[0]
+    const interceptor = getResponseErrorInterceptor()
 
     const error1 = {
       config: { url: '/member/workout/plan', headers: {} },
@@ -182,8 +192,8 @@ describe('api.ts interceptors & silent re-login', () => {
       response: { status: 401 },
     }
 
-    const promise1 = interceptor.rejected(error1)
-    const promise2 = interceptor.rejected(error2)
+    const promise1 = interceptor(error1)
+    const promise2 = interceptor(error2)
 
     // Resolve login
     resolveLogin!({

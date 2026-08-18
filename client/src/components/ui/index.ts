@@ -3,8 +3,6 @@ export {
   ButtonLink,
   ButtonAnchor,
   ButtonContent,
-  getButtonClasses,
-  normalizeButtonSize,
   type ButtonVariant,
   type ButtonSize,
   type BaseButtonProps,
@@ -12,40 +10,40 @@ export {
   type ButtonLinkProps,
   type ButtonAnchorProps,
 } from './Button'
+export { getButtonClasses, normalizeButtonSize } from './button-utils'
 
 export {
   Input,
-  getInputClasses,
-  normalizeInputSize,
   type InputSize,
   type BaseInputProps,
   type InputProps,
 } from './Input'
+export { getInputClasses, normalizeInputSize } from './input-utils'
 
 export {
   Textarea,
-  getTextareaClasses,
   type BaseTextareaProps,
   type TextareaProps,
 } from './Textarea'
+export { getTextareaClasses } from './textarea-utils'
 
 export { FormField, type FormFieldProps } from './FormField'
 
 export {
   Checkbox,
-  getCheckboxClasses,
   type CheckboxSize,
   type BaseCheckboxProps,
   type CheckboxProps,
 } from './Checkbox'
+export { getCheckboxClasses } from './checkbox-utils'
 
 export {
   Switch,
-  getSwitchClasses,
   type SwitchSize,
   type BaseSwitchProps,
   type SwitchProps,
 } from './Switch'
+export { getSwitchClasses } from './switch-utils'
 
 export { Select, type SelectProps, type SelectOptionProps } from './Select'
 export { DatePickerInput, type DatePickerInputProps } from './DatePickerInput'
@@ -104,13 +102,12 @@ export {
 export { Pagination, type PaginationProps } from './Pagination'
 export {
   Badge,
-  getBadgeClasses,
-  normalizeBadgeSize,
   type BadgeTone,
   type BadgeSize,
   type BaseBadgeProps,
   type BadgeProps,
 } from './Badge'
+export { getBadgeClasses, normalizeBadgeSize } from './badge-utils'
 export {
   StatusBadge,
   type StatusBadgeProps,

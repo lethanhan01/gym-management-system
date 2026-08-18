@@ -1,5 +1,5 @@
 import axios, { AxiosHeaders, type InternalAxiosRequestConfig } from 'axios'
-import { useAuthStore } from '@/stores/authStore'
+import { useAuthStore, type AuthUser } from '@/stores/authStore'
 import { initLiff, isLiffMockEnabled, liff } from '@/lib/liff'
 
 declare module 'axios' {
@@ -65,7 +65,7 @@ async function executeSilentLineRefresh(): Promise<string> {
   const baseUrl = import.meta.env.VITE_API_URL || '/api/v1'
   const res = await axios.post<{
     success: boolean
-    data: { accessToken: string; user: any }
+    data: { accessToken: string; user: AuthUser }
   }>(
     `${baseUrl}/auth/line-login`,
     { idToken },
