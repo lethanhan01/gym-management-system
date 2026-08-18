@@ -10,6 +10,7 @@ import { TrainingCallerResolverService } from './training-caller-resolver.servic
 import { TrainingSessionNotificationService } from './training-session-notification.service'
 import { TrainingSessionPresenter } from './training-session.presenter'
 import { TrainingSessionSchedulingService } from './training-session-scheduling.service'
+import { TrainerSessionAvailabilityService } from './trainer-session-availability.service'
 import { TrainingCaller } from './training.types'
 
 /**
@@ -23,6 +24,7 @@ describe('Member PT Booking Integration Suite (BR-01 -> BR-10 & Notifications)',
   let lineMessagingService: LineMessagingService
   let schedulingService: TrainingSessionSchedulingService
   let presenter: TrainingSessionPresenter
+  let availabilityService: TrainerSessionAvailabilityService
 
   let mockPrisma: any
   let mockAudit: { log: jest.Mock }
@@ -124,13 +126,18 @@ describe('Member PT Booking Integration Suite (BR-01 -> BR-10 & Notifications)',
       mockPrisma as unknown as PrismaService
     )
 
+    availabilityService = new TrainerSessionAvailabilityService(
+      mockPrisma as unknown as PrismaService
+    )
+
     bookingService = new MemberSessionBookingService(
       mockPrisma as unknown as PrismaService,
       mockAudit as unknown as AuditService,
       mockCallerResolver as unknown as TrainingCallerResolverService,
       schedulingService,
       presenter,
-      notificationService
+      notificationService,
+      availabilityService
     )
   })
 

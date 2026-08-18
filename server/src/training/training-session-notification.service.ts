@@ -43,7 +43,7 @@ export class TrainingSessionNotificationService {
       resourceType: 'training_session',
       resourceId: after.sessionId.toString(),
       metadata: { trainerName: after.trainer.user.fullName },
-      dedupeKey: `training:${after.sessionId.toString()}:updated:${Date.now()}`,
+      dedupeKey: `training:${after.sessionId.toString()}:updated:${after.startTime.getTime()}:${after.roomId?.toString() ?? 'none'}:${after.trainerStaffId.toString()}`,
     }
     await this.notifications.safeNotifyManyUsers([after.member.userId], memberPayload, {
       excludeActorUserId: actorUserId,

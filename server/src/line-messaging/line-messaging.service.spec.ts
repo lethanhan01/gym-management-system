@@ -176,7 +176,7 @@ describe('LineMessagingService', () => {
     mockPrisma.trainingSession.findFirst.mockResolvedValue(makeSession())
     await expect(service.safePushTrainingSessionEvent('starting', 1n)).resolves.toBe(true)
     const startingBody = JSON.parse(mockFetch.mock.calls[1][1].body)
-    expect(startingBody.messages[0].text).toContain('トレーニング開始時間です。')
+    expect(startingBody.messages[0].text).toContain('トレーニングの時間です。')
   })
 
   it('returns false instead of throwing when LINE push fails unexpectedly', async () => {

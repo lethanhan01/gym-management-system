@@ -9,6 +9,7 @@ import { notificationService, type NotificationItem } from '@/services/notificat
 import { useAuthStore, type Role } from '@/stores/authStore'
 
 const POLL_INTERVAL_MS = 20_000
+const TOAST_COOLDOWN_MS = 4_000
 
 function toNumberId(id: string) {
   const parsed = Number(id)
@@ -106,11 +107,17 @@ export default function NotificationBell() {
   const [unreadCount, setUnreadCount] = useState(0)
   const [latestId, setLatestId] = useState<string | null>(null)
   const rootRef = useRef<HTMLDivElement>(null)
+  const openRef = useRef(open)
+  const lastToastTimeRef = useRef(0)
   const panelTitleId = useId()
   const navigate = useNavigate()
   const { pathname } = useLocation()
   const user = useAuthStore((state) => state.user)
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
+
+  useEffect(() => {
+    openRef.current = open
+  }, [open])
 
   const roles = user?.roles
   const countLabel = useMemo(() => (unreadCount > 99 ? '99+' : String(unreadCount)), [unreadCount])
@@ -173,15 +180,31 @@ export default function NotificationBell() {
 
         const sorted = [...items].sort((a, b) => toNumberId(a.notificationId) - toNumberId(b.notificationId))
         const newest = sorted[sorted.length - 1]
-        const message =
-          items.length === 1
-            ? translateNotification(newest, tr).title
-            : tr('notification.toastMany', { count: items.length })
-        showRealtimeNotificationToast(message)
+
+        // Chỉ hiển thị toast khi panel không mở và thỏa mãn cooldown
+        if (!openRef.current) {
+          const now = Date.now()
+          if (now - lastToastTimeRef.current >= TOAST_COOLDOWN_MS) {
+            lastToastTimeRef.current = now
+            const message =
+              items.length === 1
+                ? translateNotification(newest, tr).title
+                : tr('notification.toastMany', { count: items.length })
+            showRealtimeNotificationToast(message)
+          }
+        }
+
         setLatestId(newest.notificationId)
         setNotifications((current) => mergeNotifications(current, sorted))
-        const count = await notificationService.unreadCount()
-        if (!cancelled) setUnreadCount(count)
+
+        if (openRef.current) {
+          // Bảng thông báo đang mở: tự động đánh dấu đã đọc
+          setUnreadCount(0)
+          void notificationService.markAllRead().catch(() => {})
+        } else {
+          const count = await notificationService.unreadCount()
+          if (!cancelled) setUnreadCount(count)
+        }
       } catch {
         // Polling should stay quiet; the popover shows the last loaded state.
       }
@@ -198,16 +221,39 @@ export default function NotificationBell() {
   }, [isAuthenticated, latestId, tr, user])
 
   async function handleToggle() {
-    setOpen((value) => !value)
-    if (!open && notifications.length === 0 && !loading) {
-      setLoading(true)
-      try {
-        const list = await notificationService.list({ page: 1, pageSize: 20, status: 'all' })
-        setNotifications(list.data)
-      } catch {
-        setError(true)
-      } finally {
-        setLoading(false)
+    const nextOpen = !open
+    setOpen(nextOpen)
+
+    if (nextOpen) {
+      // Khi mở bảng thông báo: Tự động đánh dấu tất cả là đã đọc và xóa badge đỏ
+      if (unreadCount > 0) {
+        setUnreadCount(0)
+        setNotifications((current) =>
+          current.map((item) => ({
+            ...item,
+            unread: false,
+            readAt: item.readAt ?? new Date().toISOString(),
+          }))
+        )
+        void notificationService.markAllRead().catch(() => {})
+      }
+
+      if (notifications.length === 0 && !loading) {
+        setLoading(true)
+        try {
+          const list = await notificationService.list({ page: 1, pageSize: 20, status: 'all' })
+          setNotifications(
+            list.data.map((item) => ({
+              ...item,
+              unread: false,
+              readAt: item.readAt ?? new Date().toISOString(),
+            }))
+          )
+        } catch {
+          setError(true)
+        } finally {
+          setLoading(false)
+        }
       }
     }
   }

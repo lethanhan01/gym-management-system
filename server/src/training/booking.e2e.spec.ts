@@ -9,6 +9,8 @@ import { TrainingController } from './training.controller'
 import { AttendanceService } from './attendance.service'
 import { MemberProgressService } from './member-progress.service'
 import { MemberSessionBookingService } from './member-session-booking.service'
+import { TrainerSessionAvailabilityService } from './trainer-session-availability.service'
+import { TrainingCallerResolverService } from './training-caller-resolver.service'
 import { TrainingSessionService } from './training-session.service'
 import { AuthenticatedUser } from '../auth/types/jwt-payload.interface'
 import { PermissionsGuard } from '../common/guards/permissions.guard'
@@ -49,6 +51,8 @@ describe('Member PT Booking (Integration / E2E)', () => {
         },
         { provide: AttendanceService, useValue: mockTrainingService },
         { provide: MemberProgressService, useValue: mockTrainingService },
+        { provide: TrainerSessionAvailabilityService, useValue: mockTrainingService },
+        { provide: TrainingCallerResolverService, useValue: mockTrainingService },
       ],
     })
       .overrideGuard(PermissionsGuard)

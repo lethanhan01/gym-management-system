@@ -487,11 +487,13 @@ export class SubscriptionsService {
   private async notifySubscriptionRenewed(
     subscription: {
       subscriptionId: bigint
+      endDate?: Date | null
       member: { userId: bigint }
       package?: { name: string } | null
     },
     actorUserId: bigint
   ) {
+    const endDateStr = subscription.endDate ? subscription.endDate.toISOString().split('T')[0] : 'unknown'
     await this.notifications.safeNotifyUser(subscription.member.userId, {
       type: 'subscription.renewed',
       title: 'Gia han goi thanh cong',
@@ -499,7 +501,7 @@ export class SubscriptionsService {
       resourceType: 'subscription',
       resourceId: subscription.subscriptionId.toString(),
       metadata: { packageName: subscription.package?.name ?? null },
-      dedupeKey: `subscription:${subscription.subscriptionId.toString()}:renewed:${Date.now()}`,
+      dedupeKey: `subscription:${subscription.subscriptionId.toString()}:renewed:${endDateStr}`,
     })
     await this.notifications.safeNotifyGroups(
       ['owner', 'staff'],
@@ -510,7 +512,7 @@ export class SubscriptionsService {
         resourceType: 'subscription',
         resourceId: subscription.subscriptionId.toString(),
         metadata: { packageName: subscription.package?.name ?? null },
-        dedupeKey: `subscription:${subscription.subscriptionId.toString()}:renewed-admin:${Date.now()}`,
+        dedupeKey: `subscription:${subscription.subscriptionId.toString()}:renewed-admin:${endDateStr}`,
       },
       { excludeActorUserId: actorUserId }
     )
