@@ -287,7 +287,7 @@ export default function NotificationBell() {
       <button
         type="button"
         onClick={handleToggle}
-        className={`rogym-btn--icon rogym-btn--elevated rogym-topbar__notification relative ${open ? 'text-[#42e09e]' : ''}`}
+        className={`rogym-btn--icon rogym-btn--elevated rogym-topbar__notification relative ${open ? 'text-[var(--rogym-teal)]' : ''}`}
         aria-label={tr('notification.ariaLabel')}
       >
         <Bell size={18} />

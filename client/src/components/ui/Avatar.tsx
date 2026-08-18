@@ -49,12 +49,12 @@ const STATUS_COLORS: Record<AvatarStatus, string> = {
 
 const TONE_CLASSES: Record<Exclude<AvatarTone, 'auto'>, string> = {
   emerald: 'bg-emerald-950/80 text-emerald-300 border-emerald-500/30',
-  teal: 'bg-teal-950/80 text-[var(--rogym-tone,#06c384)] border-teal-500/30',
+  teal: 'bg-teal-950/80 text-[var(--rogym-tone,var(--rogym-green))] border-teal-500/30',
   sky: 'bg-sky-950/80 text-sky-300 border-sky-500/30',
   purple: 'bg-purple-950/80 text-purple-300 border-purple-500/30',
   amber: 'bg-amber-950/80 text-amber-300 border-amber-500/30',
   rose: 'bg-rose-950/80 text-rose-300 border-rose-500/30',
-  neutral: 'bg-white/5 text-[var(--rogym-text-secondary,#bbcabf)] border-white/10',
+  neutral: 'bg-white/5 text-[var(--rogym-text-secondary)] border-white/10',
 }
 
 const AUTO_TONES: Exclude<AvatarTone, 'auto'>[] = ['teal', 'emerald', 'sky', 'purple', 'amber', 'rose']
@@ -145,7 +145,7 @@ export const Avatar = forwardRef<HTMLDivElement, AvatarProps>(
         {status && (
           <span
             className={cn(
-              'absolute bottom-0 right-0 rounded-full ring-[#080e0b]',
+              'absolute bottom-0 right-0 rounded-full ring-[var(--rogym-bg-base)]',
               sizeCfg.statusSize,
               STATUS_COLORS[status]
             )}
@@ -183,14 +183,14 @@ export const AvatarGroup = forwardRef<HTMLDivElement, AvatarGroupProps>(
           cloneElement(child as React.ReactElement<AvatarProps>, {
             key: index,
             size,
-            className: cn('ring-2 ring-[#080e0b]', (child.props as AvatarProps).className),
+            className: cn('ring-2 ring-[var(--rogym-bg-base)]', (child.props as AvatarProps).className),
           })
         )}
 
         {remainingCount > 0 && (
           <div
             className={cn(
-              'relative inline-flex shrink-0 items-center justify-center rounded-full bg-[#152a20] border border-white/10 text-white/90 font-bold ring-2 ring-[#080e0b]',
+              'relative inline-flex shrink-0 items-center justify-center rounded-full bg-[var(--rogym-bg-elevated-green)] border border-white/10 text-white/90 font-bold ring-2 ring-[var(--rogym-bg-base)]',
               sizeCfg.container,
               sizeCfg.text
             )}

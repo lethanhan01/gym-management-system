@@ -74,7 +74,7 @@ function NavItems({ sections, expanded }: { sections: NavSection[]; expanded: bo
                     const active = hasChildren ? groupActive : isActive
                     return `rogym-sidebar__nav-link rogym-sweep flex items-center py-2.5 rounded-xl text-sm font-medium ${
                       expanded ? 'px-3' : 'justify-center px-0'
-                    } ${active ? 'bg-[#06c384]/15 text-[#42e09e]' : 'text-[#bbcabf] hover:text-white'}`
+                    } ${active ? 'bg-[var(--rogym-green)]/15 text-[var(--rogym-teal)]' : 'text-[var(--rogym-text-secondary)] hover:text-white'}`
                   }}
                 >
                   <span className="shrink-0">{item.icon}</span>
@@ -94,8 +94,8 @@ function NavItems({ sections, expanded }: { sections: NavSection[]; expanded: bo
                             [
                               `rogym-sweep flex items-center rounded-lg text-xs font-medium px-3 ${
                                 isActive
-                                  ? 'text-[#42e09e] bg-[#06c384]/10'
-                                  : 'text-[#bbcabf] hover:text-white'
+                                  ? 'text-[var(--rogym-teal)] bg-[var(--rogym-green)]/10'
+                                  : 'text-[var(--rogym-text-secondary)] hover:text-white'
                               }`,
                               'rogym-sx-8bbf0968',
                             ]
@@ -388,7 +388,7 @@ export default function Sidebar({
             <button
               onClick={() => navigate('/owner')}
               title={!expanded ? tOwner('nav.modeBack') : undefined}
-              className="rogym-sidebar__mode-button w-full flex items-center rounded-xl border border-[rgba(66,224,158,0.2)] text-xs font-medium text-[#42e09e]"
+              className="rogym-sidebar__mode-button w-full flex items-center rounded-xl border border-[rgba(66,224,158,0.2)] text-xs font-medium text-[var(--rogym-teal)]"
             >
               <ArrowLeft size={14} className="shrink-0" />
               <span className="rogym-sidebar__mode-label">{tOwner('nav.modeBack')}</span>
@@ -397,7 +397,7 @@ export default function Sidebar({
             <button
               onClick={() => navigate('/staff')}
               title={!expanded ? tOwner('nav.modeOperation') : undefined}
-              className="rogym-sidebar__mode-button w-full flex items-center rounded-xl border border-[rgba(255,255,255,0.1)] text-xs font-medium text-[#bbcabf]"
+              className="rogym-sidebar__mode-button w-full flex items-center rounded-xl border border-[rgba(255,255,255,0.1)] text-xs font-medium text-[var(--rogym-text-secondary)]"
             >
               <Settings size={14} className="shrink-0" />
               <span className="rogym-sidebar__mode-label">{tOwner('nav.modeOperation')}</span>

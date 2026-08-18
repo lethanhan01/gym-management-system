@@ -53,14 +53,14 @@ const TONE_CLASSES: Record<AlertTone, Record<AlertVariant, string>> = {
     filled: 'bg-sky-950/80 border-sky-500/40 text-sky-100',
   },
   success: {
-    subtle: 'bg-[var(--rogym-tone,#06c384)]/10 border-[var(--rogym-tone,#06c384)]/25 text-[#72f5c8]',
-    outline: 'bg-transparent border-[var(--rogym-tone,#06c384)]/40 text-[var(--rogym-tone,#06c384)]',
-    filled: 'bg-[#042d1f]/90 border-[var(--rogym-tone,#06c384)]/40 text-emerald-100',
+    subtle: 'bg-[var(--rogym-tone,var(--rogym-green))]/10 border-[var(--rogym-tone,var(--rogym-green))]/25 text-[var(--rogym-teal)]',
+    outline: 'bg-transparent border-[var(--rogym-tone,var(--rogym-green))]/40 text-[var(--rogym-tone,var(--rogym-green))]',
+    filled: 'bg-[var(--rogym-bg-deep-alt)]/90 border-[var(--rogym-tone,var(--rogym-green))]/40 text-emerald-100',
   },
   neutral: {
-    subtle: 'bg-white/5 border-white/10 text-[var(--rogym-text-secondary,#bbcabf)]',
-    outline: 'bg-transparent border-white/15 text-[var(--rogym-text-secondary,#bbcabf)]',
-    filled: 'bg-[#0f1c16] border-white/15 text-white',
+    subtle: 'bg-white/5 border-white/10 text-[var(--rogym-text-secondary)]',
+    outline: 'bg-transparent border-white/15 text-[var(--rogym-text-secondary)]',
+    filled: 'bg-[var(--rogym-bg-card)] border-white/15 text-white',
   },
 }
 
@@ -68,8 +68,8 @@ const ICON_COLORS: Record<AlertTone, string> = {
   error: 'text-red-400',
   warning: 'text-amber-400',
   info: 'text-sky-400',
-  success: 'text-[var(--rogym-tone,#06c384)]',
-  neutral: 'text-[var(--rogym-text-dim,#718579)]',
+  success: 'text-[var(--rogym-tone,var(--rogym-green))]',
+  neutral: 'text-[var(--rogym-text-dim)]',
 }
 
 export const Alert = forwardRef<HTMLDivElement, AlertProps>(

@@ -187,10 +187,10 @@ export function StaffScheduleCalendar<TSchedule extends StaffScheduleCalendarEnt
                     className={cn(
                       'flex h-[52px] flex-col items-center justify-center gap-0.5 rounded-xl text-sm transition-colors',
                       selected
-                        ? 'bg-[var(--rogym-teal)] text-[#080e0b]'
+                        ? 'bg-[var(--rogym-teal)] text-[var(--rogym-bg-base)]'
                         : todayCell
-                          ? 'border border-[var(--rogym-teal)] text-[var(--rogym-teal)]'
-                          : 'text-white hover:bg-white/5'
+                          ? 'border border-[rgba(66,224,158,0.5)] text-[var(--rogym-teal)]'
+                          : 'text-white/60 hover:text-white'
                     )}
                   >
                     <span className="text-xs font-semibold leading-none">{day}</span>
@@ -199,7 +199,7 @@ export function StaffScheduleCalendar<TSchedule extends StaffScheduleCalendarEnt
                         className={cn(
                           'rounded-full px-1.5 py-0 text-[10px] font-bold leading-5',
                           selected
-                            ? 'bg-[#080e0b]/20 text-[#080e0b]'
+                            ? 'bg-[var(--rogym-bg-base)]/20 text-[var(--rogym-bg-base)]'
                             : 'bg-[rgba(66,224,158,0.15)] text-[var(--rogym-teal)]'
                         )}
                       >

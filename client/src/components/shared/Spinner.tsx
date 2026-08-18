@@ -48,7 +48,7 @@ export function FullScreenLoader() {
     <div
       role="status"
       aria-label={t('loading')}
-      className="flex min-h-screen w-full items-center justify-center bg-[#080e0b] text-[var(--rogym-green)]"
+      className="flex min-h-screen w-full items-center justify-center bg-[var(--rogym-bg-base)] text-[var(--rogym-green)]"
     >
       <Spinner size={44} />
     </div>

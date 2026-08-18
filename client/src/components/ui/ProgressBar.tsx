@@ -36,8 +36,8 @@ const SIZE_CLASSES: Record<ProgressBarSize, string> = {
 }
 
 const TONE_CLASSES: Record<ProgressBarTone, string> = {
-  primary: 'bg-[var(--rogym-tone,#06c384)] shadow-[0_0_10px_rgba(6,195,132,0.4)]',
-  cyan: 'bg-[#42e09e] shadow-[0_0_10px_rgba(66,224,158,0.4)]',
+  primary: 'bg-[var(--rogym-tone,var(--rogym-green))] shadow-[0_0_10px_rgba(6,195,132,0.4)]',
+  cyan: 'bg-[var(--rogym-teal)] shadow-[0_0_10px_rgba(66,224,158,0.4)]',
   success: 'bg-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.4)]',
   warning: 'bg-amber-400 shadow-[0_0_10px_rgba(251,191,36,0.4)]',
   danger: 'bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.4)]',
@@ -89,7 +89,7 @@ export const ProgressBar = forwardRef<HTMLDivElement, ProgressBarProps>(
 
             <div className="flex items-center gap-2">
               {hint && (
-                <span className="text-[var(--rogym-text-dim,#718579)]">{hint}</span>
+                <span className="text-[var(--rogym-text-dim)]">{hint}</span>
               )}
               {showValue && (
                 <span className="font-semibold text-white font-mono">{formattedValue}</span>

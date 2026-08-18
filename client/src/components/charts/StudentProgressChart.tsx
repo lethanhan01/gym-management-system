@@ -9,6 +9,7 @@ import {
   YAxis,
 } from 'recharts'
 import { useTranslation } from 'react-i18next'
+import { TOKEN_COLORS } from '@/styles/token-values'
 
 interface ProgressPoint {
   date: string
@@ -22,12 +23,12 @@ export default function StudentProgressChart({ data }: { data: ProgressPoint[] }
     <ResponsiveContainer width="100%" height="100%">
       <LineChart data={data}>
         <CartesianGrid stroke="rgba(255,255,255,0.06)" />
-        <XAxis dataKey="date" stroke="#8ab89c" fontSize={11} />
-        <YAxis yAxisId="weight" stroke="#42e09e" fontSize={11} />
-        <YAxis yAxisId="bmi" orientation="right" stroke="#bbcabf" fontSize={11} />
+        <XAxis dataKey="date" stroke={TOKEN_COLORS.textMuted} fontSize={11} />
+        <YAxis yAxisId="weight" stroke={TOKEN_COLORS.teal} fontSize={11} />
+        <YAxis yAxisId="bmi" orientation="right" stroke={TOKEN_COLORS.textSecondary} fontSize={11} />
         <Tooltip
           contentStyle={{
-            background: '#0f1c16',
+            background: TOKEN_COLORS.bgCard,
             border: '1px solid rgba(66,224,158,0.2)',
             borderRadius: 12,
           }}
@@ -38,7 +39,7 @@ export default function StudentProgressChart({ data }: { data: ProgressPoint[] }
           type="monotone"
           dataKey="weight"
           name={t('students.weightLabel')}
-          stroke="#42e09e"
+          stroke={TOKEN_COLORS.teal}
           strokeWidth={2}
           connectNulls
         />
@@ -47,7 +48,7 @@ export default function StudentProgressChart({ data }: { data: ProgressPoint[] }
           type="monotone"
           dataKey="bmi"
           name="BMI"
-          stroke="#bbcabf"
+          stroke={TOKEN_COLORS.textSecondary}
           strokeWidth={2}
           connectNulls
         />

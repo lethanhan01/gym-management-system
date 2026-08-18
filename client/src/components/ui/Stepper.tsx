@@ -61,13 +61,13 @@ export const Stepper = forwardRef<HTMLDivElement, StepperProps>(
             let nodeStyle = ''
             if (isCompleted) {
               nodeStyle =
-                'bg-[var(--rogym-tone,#06c384)] text-black border-[var(--rogym-tone,#06c384)] shadow-[0_0_12px_rgba(6,195,132,0.35)]'
+                'bg-[var(--rogym-tone,var(--rogym-green))] text-black border-[var(--rogym-tone,var(--rogym-green))] shadow-[var(--rogym-shadow-tone-sm)]'
             } else if (isCurrent) {
               nodeStyle =
-                'bg-black/60 border-2 border-[var(--rogym-tone,#06c384)] text-[var(--rogym-tone,#06c384)] shadow-[0_0_15px_rgba(6,195,132,0.4)]'
+                'bg-black/60 border-2 border-[var(--rogym-tone,var(--rogym-green))] text-[var(--rogym-tone,var(--rogym-green))] shadow-[var(--rogym-shadow-tone-md)]'
             } else {
               nodeStyle =
-                'bg-[#0b1610] border border-white/15 text-[var(--rogym-text-dim,#718579)]'
+                'bg-[var(--rogym-bg-card-darker)] border border-white/15 text-[var(--rogym-text-dim)]'
             }
 
             return (
@@ -77,7 +77,7 @@ export const Stepper = forwardRef<HTMLDivElement, StepperProps>(
                   <div
                     className={cn(
                       'absolute left-[17px] sm:left-[21px] top-9 -bottom-6 w-0.5 transition-colors duration-300',
-                      idx < activeStep ? 'bg-[var(--rogym-tone,#06c384)]' : 'bg-white/10'
+                      idx < activeStep ? 'bg-[var(--rogym-tone,var(--rogym-green))]' : 'bg-white/10'
                     )}
                   />
                 )}
@@ -115,13 +115,13 @@ export const Stepper = forwardRef<HTMLDivElement, StepperProps>(
                           ? 'text-white'
                           : isCompleted
                           ? 'text-white/90'
-                          : 'text-[var(--rogym-text-dim,#718579)]'
+                          : 'text-[var(--rogym-text-dim)]'
                       )}
                     >
                       {step.title}
                     </span>
                     {step.optional && (
-                      <span className="text-[11px] text-[var(--rogym-text-dim,#718579)]">
+                      <span className="text-[11px] text-[var(--rogym-text-dim)]">
                         (Tùy chọn)
                       </span>
                     )}
@@ -129,7 +129,7 @@ export const Stepper = forwardRef<HTMLDivElement, StepperProps>(
                   {step.description && (
                     <p
                       className={cn(
-                        'mt-0.5 text-[var(--rogym-text-dim,#718579)] leading-relaxed',
+                        'mt-0.5 text-[var(--rogym-text-dim)] leading-relaxed',
                         cfg.textDesc
                       )}
                     >
@@ -157,13 +157,13 @@ export const Stepper = forwardRef<HTMLDivElement, StepperProps>(
             let nodeStyle = ''
             if (isCompleted) {
               nodeStyle =
-                'bg-[var(--rogym-tone,#06c384)] text-black border-[var(--rogym-tone,#06c384)] shadow-[0_0_12px_rgba(6,195,132,0.35)]'
+                'bg-[var(--rogym-tone,var(--rogym-green))] text-black border-[var(--rogym-tone,var(--rogym-green))] shadow-[var(--rogym-shadow-tone-sm)]'
             } else if (isCurrent) {
               nodeStyle =
-                'bg-black/60 border-2 border-[var(--rogym-tone,#06c384)] text-[var(--rogym-tone,#06c384)] shadow-[0_0_15px_rgba(6,195,132,0.4)]'
+                'bg-black/60 border-2 border-[var(--rogym-tone,var(--rogym-green))] text-[var(--rogym-tone,var(--rogym-green))] shadow-[var(--rogym-shadow-tone-md)]'
             } else {
               nodeStyle =
-                'bg-[#0b1610] border border-white/15 text-[var(--rogym-text-dim,#718579)]'
+                'bg-[var(--rogym-bg-card-darker)] border border-white/15 text-[var(--rogym-text-dim)]'
             }
 
             return (
@@ -200,7 +200,7 @@ export const Stepper = forwardRef<HTMLDivElement, StepperProps>(
                         ? 'text-white'
                         : isCompleted
                         ? 'text-white/90'
-                        : 'text-[var(--rogym-text-dim,#718579)]'
+                        : 'text-[var(--rogym-text-dim)]'
                     )}
                   >
                     {step.title}
@@ -208,7 +208,7 @@ export const Stepper = forwardRef<HTMLDivElement, StepperProps>(
                   {step.description && (
                     <span
                       className={cn(
-                        'hidden sm:block mt-0.5 text-[var(--rogym-text-dim,#718579)] truncate max-w-[140px]',
+                        'hidden sm:block mt-0.5 text-[var(--rogym-text-dim)] truncate max-w-[140px]',
                         cfg.textDesc
                       )}
                     >
@@ -222,7 +222,7 @@ export const Stepper = forwardRef<HTMLDivElement, StepperProps>(
                   <div
                     className={cn(
                       'flex-1 h-0.5 mx-2 sm:mx-4 -mt-6 sm:-mt-8 transition-colors duration-300',
-                      idx < activeStep ? 'bg-[var(--rogym-tone,#06c384)]' : 'bg-white/10'
+                      idx < activeStep ? 'bg-[var(--rogym-tone,var(--rogym-green))]' : 'bg-white/10'
                     )}
                   />
                 )}

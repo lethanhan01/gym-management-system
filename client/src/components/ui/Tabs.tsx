@@ -95,7 +95,7 @@ export interface TabsListProps extends HTMLAttributes<HTMLDivElement> {
 
 const LIST_VARIANT_CLASSES: Record<TabsVariant, string> = {
   pills: 'flex items-center gap-1.5 p-1 bg-black/20 border border-white/5 rounded-2xl overflow-x-auto no-scrollbar',
-  segmented: 'inline-flex items-center p-1 bg-[#0b1610] border border-[var(--rogym-border-teal-dim)] rounded-xl overflow-x-auto no-scrollbar',
+  segmented: 'inline-flex items-center p-1 bg-[var(--rogym-bg-card-darker)] border border-[var(--rogym-border-teal-dim)] rounded-xl overflow-x-auto no-scrollbar',
   underline: 'flex items-center gap-6 border-b border-white/10 overflow-x-auto no-scrollbar',
 }
 
@@ -170,16 +170,16 @@ export const TabsTrigger = forwardRef<HTMLButtonElement, TabsTriggerProps>(
     let variantStyle = ''
     if (variant === 'pills') {
       variantStyle = isActive
-        ? 'bg-[var(--rogym-tone,#06c384)] text-black shadow-[0_0_15px_rgba(6,195,132,0.3)] font-bold'
-        : 'text-[var(--rogym-text-secondary,#bbcabf)] hover:text-white hover:bg-white/5'
+        ? 'bg-[var(--rogym-tone,var(--rogym-green))] text-black shadow-[var(--rogym-shadow-tone-md)] font-bold'
+        : 'text-[var(--rogym-text-secondary)] hover:text-white hover:bg-white/5'
     } else if (variant === 'segmented') {
       variantStyle = isActive
-        ? 'bg-[var(--rogym-tone,#06c384)]/15 text-[var(--rogym-tone,#06c384)] border border-[var(--rogym-tone,#06c384)]/30 font-bold shadow-sm'
-        : 'text-[var(--rogym-text-dim,#718579)] hover:text-white hover:bg-white/5'
+        ? 'bg-[var(--rogym-tone,var(--rogym-green))]/15 text-[var(--rogym-tone,var(--rogym-green))] border border-[var(--rogym-tone,var(--rogym-green))]/30 font-bold shadow-sm'
+        : 'text-[var(--rogym-text-dim)] hover:text-white hover:bg-white/5'
     } else if (variant === 'underline') {
       variantStyle = isActive
-        ? 'text-[var(--rogym-tone,#06c384)] border-b-2 border-[var(--rogym-tone,#06c384)] font-bold'
-        : 'text-[var(--rogym-text-dim,#718579)] hover:text-white border-b-2 border-transparent'
+        ? 'text-[var(--rogym-tone,var(--rogym-green))] border-b-2 border-[var(--rogym-tone,var(--rogym-green))] font-bold'
+        : 'text-[var(--rogym-text-dim)] hover:text-white border-b-2 border-transparent'
     }
 
     const handleKeyDown = (e: KeyboardEvent<HTMLButtonElement>) => {
@@ -233,7 +233,7 @@ export const TabsTrigger = forwardRef<HTMLButtonElement, TabsTriggerProps>(
         }}
         onKeyDown={handleKeyDown}
         className={cn(
-          'inline-flex items-center justify-center gap-2 whitespace-nowrap transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--rogym-tone,#06c384)] disabled:pointer-events-none disabled:opacity-40 select-none',
+          'inline-flex items-center justify-center gap-2 whitespace-nowrap transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--rogym-tone,var(--rogym-green))] disabled:pointer-events-none disabled:opacity-40 select-none',
           sizeClass,
           variantStyle,
           className
@@ -248,7 +248,7 @@ export const TabsTrigger = forwardRef<HTMLButtonElement, TabsTriggerProps>(
               'inline-flex items-center justify-center px-1.5 py-0.5 text-[11px] font-bold rounded-full transition-colors',
               isActive
                 ? 'bg-black/25 text-inherit'
-                : 'bg-white/10 text-[var(--rogym-text-secondary,#bbcabf)]'
+                : 'bg-white/10 text-[var(--rogym-text-secondary)]'
             )}
           >
             {badge}

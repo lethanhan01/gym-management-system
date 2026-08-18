@@ -242,13 +242,13 @@ export const AccordionTrigger = forwardRef<HTMLButtonElement, AccordionTriggerPr
         }}
         onKeyDown={handleKeyDown}
         className={cn(
-          'flex w-full items-center justify-between gap-3 px-4 sm:px-5 py-3.5 sm:py-4 text-left font-semibold text-white transition-all hover:bg-white/[0.03] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--rogym-tone,#06c384)] select-none',
+          'flex w-full items-center justify-between gap-3 px-4 sm:px-5 py-3.5 sm:py-4 text-left font-semibold text-white transition-all hover:bg-white/[0.03] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--rogym-tone,var(--rogym-green))] select-none',
           className
         )}
         {...props}
       >
         <div className="flex items-center gap-3 min-w-0">
-          {leftIcon && <span className="shrink-0 text-[var(--rogym-tone,#06c384)]">{leftIcon}</span>}
+          {leftIcon && <span className="shrink-0 text-[var(--rogym-tone,var(--rogym-green))]">{leftIcon}</span>}
           <span className="truncate">{children}</span>
           {badge && <span className="shrink-0">{badge}</span>}
         </div>
@@ -257,8 +257,8 @@ export const AccordionTrigger = forwardRef<HTMLButtonElement, AccordionTriggerPr
           <ChevronDown
             size={18}
             className={cn(
-              'shrink-0 text-[var(--rogym-text-dim,#718579)] transition-transform duration-200',
-              isOpen && 'rotate-180 text-[var(--rogym-tone,#06c384)]'
+              'shrink-0 text-[var(--rogym-text-dim)] transition-transform duration-200',
+              isOpen && 'rotate-180 text-[var(--rogym-tone,var(--rogym-green))]'
             )}
           />
         )}
@@ -288,7 +288,7 @@ export const AccordionContent = forwardRef<HTMLDivElement, AccordionContentProps
         role="region"
         aria-labelledby={headerId}
         className={cn(
-          'px-4 sm:px-5 pb-4 pt-1 text-sm text-[var(--rogym-text-secondary,#bbcabf)] border-t border-white/5 animate-in fade-in-50 duration-200 leading-relaxed',
+          'px-4 sm:px-5 pb-4 pt-1 text-sm text-[var(--rogym-text-secondary)] border-t border-white/5 animate-in fade-in-50 duration-200 leading-relaxed',
           className
         )}
         {...props}
