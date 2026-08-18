@@ -6,6 +6,7 @@ import { TrainingCallerResolverService } from './training-caller-resolver.servic
 import { TrainingSessionNotificationService } from './training-session-notification.service'
 import { TrainingSessionPresenter } from './training-session.presenter'
 import { TrainingSessionSchedulingService } from './training-session-scheduling.service'
+import { TrainerSessionAvailabilityService } from './trainer-session-availability.service'
 import { TrainingCaller } from './training.types'
 
 describe('MemberSessionBookingService', () => {
@@ -20,6 +21,7 @@ describe('MemberSessionBookingService', () => {
   }
   let mockPresenter: { serializeSession: jest.Mock }
   let mockNotifications: { notifyCreated: jest.Mock; notifyCancelled: jest.Mock }
+  let mockAvailability: { getAvailabilitySlots: jest.Mock }
 
   const makeCaller = (overrides: Partial<TrainingCaller> = {}): TrainingCaller => ({
     userId: 101n,
@@ -53,6 +55,9 @@ describe('MemberSessionBookingService', () => {
       notifyCreated: jest.fn().mockResolvedValue(undefined),
       notifyCancelled: jest.fn().mockResolvedValue(undefined),
     }
+    mockAvailability = {
+      getAvailabilitySlots: jest.fn().mockResolvedValue({ date: '2026-08-20', trainer: { fullName: 'Trainer' }, slots: [] }),
+    }
 
     service = new MemberSessionBookingService(
       mockPrisma as unknown as PrismaService,
@@ -60,7 +65,8 @@ describe('MemberSessionBookingService', () => {
       mockCallerResolver as unknown as TrainingCallerResolverService,
       mockScheduling as unknown as TrainingSessionSchedulingService,
       mockPresenter as unknown as TrainingSessionPresenter,
-      mockNotifications as unknown as TrainingSessionNotificationService
+      mockNotifications as unknown as TrainingSessionNotificationService,
+      mockAvailability as unknown as TrainerSessionAvailabilityService
     )
   })
 
@@ -96,14 +102,12 @@ describe('MemberSessionBookingService', () => {
       mockPrisma.member.findFirst.mockResolvedValue({
         memberId: 10n,
         primaryTrainerId: 20n,
-        primaryTrainer: {
-          staffId: 20n,
-          user: { fullName: 'Coach Sarah', avatarFileId: 5n },
-        },
       })
-      mockPrisma.trainingSession.findMany
-        .mockResolvedValueOnce([]) // trainer sessions
-        .mockResolvedValueOnce([]) // member sessions
+      mockAvailability.getAvailabilitySlots.mockResolvedValue({
+        date: '2026-08-25',
+        trainer: { staffId: '20', fullName: 'Coach Sarah', avatarFileId: '5' },
+        slots: new Array(15).fill({ slotIndex: 1, startTime: '06:00', endTime: '07:00', available: true }),
+      })
 
       const res = await service.getTrainerAvailability({ date: '2026-08-25' }, makeCaller())
 
