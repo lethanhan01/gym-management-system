@@ -174,6 +174,19 @@ export const trainingSessionService = {
     return (res.data?.data ?? res.data) as TrainerAvailabilityData
   },
 
+  getTrainerAvailabilityForTrainer: async (
+    date: string,
+    trainerStaffId: string,
+    memberId?: string,
+  ): Promise<TrainerAvailabilityData> => {
+    const params = new URLSearchParams({ date, trainerStaffId })
+    if (memberId) params.set('memberId', memberId)
+    const res = await api.get<TrainerAvailabilityData>(
+      `/training-sessions/trainer-availability-for-trainer?${params.toString()}`
+    )
+    return res.data
+  },
+
   bookSession: async (payload: CreateMemberBookingPayload): Promise<TrainingSession> => {
     const res = await api.post<{ success: boolean; data: TrainingSession }>(
       '/training-sessions/book',
