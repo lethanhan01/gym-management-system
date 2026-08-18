@@ -1,8 +1,10 @@
 # Tài Liệu Đặc Tả & Hướng Dẫn Sử Dụng Bộ Component RoGym (`ui` & `shared`)
 
-Tài liệu này tổng hợp toàn bộ các component giao diện dùng chung trong hệ thống **RoGym (Gym Management System)**, bao gồm:
-1. **Thư viện UI Core ([`client/src/components/ui`](file:///c:/Users/An/Documents/IT4549-ITSS/gym-management-system/client/src/components/ui))**: Bộ nguyên tử và phân tử giao diện chuẩn hóa (Buttons, Inputs, Cards, Tables, Dialogs...).
-2. **Thư viện Shared Components ([`client/src/components/shared`](file:///c:/Users/An/Documents/IT4549-ITSS/gym-management-system/client/src/components/shared))**: Bộ component bố cục hệ thống, thanh điều hướng theo phân quyền, chuông thông báo thời gian thực, route guard bảo mật và loader.
+> **Mới vào project?** Đọc [`QUICK_START.md`](./QUICK_START.md) trước — hướng dẫn 5-10 phút để tạo page đầu tiên. Tài liệu này là tham chiếu chi tiết dùng khi cần tra cứu.
+
+Tài liệu tổng hợp toàn bộ component giao diện dùng chung trong **RoGym (Gym Management System)**:
+1. **UI Core** ([`src/components/ui`](./src/components/ui)): Nguyên tử giao diện chuẩn hóa (Buttons, Inputs, Cards, Tables, Dialogs...).
+2. **Shared Components** ([`src/components/shared`](./src/components/shared)): Shell hệ thống — Sidebar, Topbar, Route Guards, Notification.
 
 ---
 
@@ -22,7 +24,7 @@ Hệ thống UI được xây dựng trên các nguyên tắc thiết kế cốt
 
 ### 1. Nhóm Nút Bấm & Điều Hướng (Button Family)
 
-Gồm 3 biến thể component xuất phát từ file [`Button.tsx`](file:///c:/Users/An/Documents/IT4549-ITSS/gym-management-system/client/src/components/ui/Button.tsx):
+Gồm 3 biến thể component xuất phát từ file [`Button.tsx`](./src/components/ui/Button.tsx):
 
 - **`<Button>`**: Dùng cho hành động (trigger function, form submit, toggle state) ➔ Render thẻ `<button>`.
 - **`<ButtonLink>`**: Dùng cho điều hướng nội bộ SPA ➔ Tích hợp `react-router-dom` `<Link>`.
@@ -31,7 +33,7 @@ Gồm 3 biến thể component xuất phát từ file [`Button.tsx`](file:///c:/
 #### 🎯 Vai trò & Đặc điểm
 - Là component nút bấm tương tác trung tâm của toàn bộ ứng dụng.
 - Tích hợp sẵn hiệu ứng xoay **Spinner Loading**, quản lý trạng thái `disabled`, icon hai phía (`leftIcon`, `rightIcon`), chế độ ẩn chữ chỉ hiện icon trên mobile (`responsiveIconOnly`).
-- Hỗ trợ hàm tiện ích [`getButtonClasses`](file:///c:/Users/An/Documents/IT4549-ITSS/gym-management-system/client/src/components/ui/Button.tsx#L74) và [`normalizeButtonSize`](file:///c:/Users/An/Documents/IT4549-ITSS/gym-management-system/client/src/components/ui/Button.tsx#L51).
+- Hỗ trợ hàm tiện ích [`getButtonClasses`](./src/components/ui/Button.tsx#L74) và [`normalizeButtonSize`](./src/components/ui/Button.tsx#L51).
 
 #### 🎨 Hình dáng & Biến thể
 - **Variants (13 kiểu)**:
@@ -78,7 +80,7 @@ import { Plus, Save } from 'lucide-react'
 
 ---
 
-### 2. FormField ([`FormField.tsx`](file:///c:/Users/An/Documents/IT4549-ITSS/gym-management-system/client/src/components/ui/FormField.tsx))
+### 2. FormField ([`FormField.tsx`](./src/components/ui/FormField.tsx))
 
 #### 🎯 Vai trò & Đặc điểm
 - Là container bao bọc chuẩn hóa cho mọi input trong form.
@@ -110,7 +112,7 @@ import { Plus, Save } from 'lucide-react'
 
 ---
 
-### 3. Input ([`Input.tsx`](file:///c:/Users/An/Documents/IT4549-ITSS/gym-management-system/client/src/components/ui/Input.tsx))
+### 3. Input ([`Input.tsx`](./src/components/ui/Input.tsx))
 
 #### 🎯 Vai trò & Đặc điểm
 - Ô nhập dữ liệu đơn dòng cao cấp.
@@ -154,7 +156,7 @@ import { Plus, Save } from 'lucide-react'
 
 ---
 
-### 4. Textarea ([`Textarea.tsx`](file:///c:/Users/An/Documents/IT4549-ITSS/gym-management-system/client/src/components/ui/Textarea.tsx))
+### 4. Textarea ([`Textarea.tsx`](./src/components/ui/Textarea.tsx))
 
 #### 🎯 Vai trò & Đặc điểm
 - Ô nhập văn bản nhiều dòng (ghi chú bài tập, mô tả gói tập, bệnh sử...).
@@ -180,7 +182,7 @@ import { Plus, Save } from 'lucide-react'
 
 ---
 
-### 5. Checkbox ([`Checkbox.tsx`](file:///c:/Users/An/Documents/IT4549-ITSS/gym-management-system/client/src/components/ui/Checkbox.tsx)) & Switch ([`Switch.tsx`](file:///c:/Users/An/Documents/IT4549-ITSS/gym-management-system/client/src/components/ui/Switch.tsx))
+### 5. Checkbox ([`Checkbox.tsx`](./src/components/ui/Checkbox.tsx)) & Switch ([`Switch.tsx`](./src/components/ui/Switch.tsx))
 
 #### 🎯 Vai trò & So sánh sử dụng
 
@@ -216,7 +218,7 @@ import { Plus, Save } from 'lucide-react'
 
 ---
 
-### 6. Select ([`Select.tsx`](file:///c:/Users/An/Documents/IT4549-ITSS/gym-management-system/client/src/components/ui/Select.tsx))
+### 6. Select ([`Select.tsx`](./src/components/ui/Select.tsx))
 
 #### 🎯 Vai trò & Đặc điểm
 - Hộp chọn giá trị đơn (Single Select) xây dựng trên nền tảng **Radix UI Select primitive**.
@@ -247,11 +249,11 @@ import { Plus, Save } from 'lucide-react'
 ### 7. Bộ Chọn Ngày & Giờ (Date & Time Pickers)
 
 #### 🎯 Vai trò & Đặc điểm
-- **`DatePickerInput`** ([`DatePickerInput.tsx`](file:///c:/Users/An/Documents/IT4549-ITSS/gym-management-system/client/src/components/ui/DatePickerInput.tsx)):
+- **`DatePickerInput`** ([`DatePickerInput.tsx`](./src/components/ui/DatePickerInput.tsx)):
   - Chọn ngày theo định dạng `yyyy-MM-dd` (hiển thị UI `dd/MM/yyyy`).
   - Cho phép vừa **gõ trực tiếp bàn phím** (tự động parse nhiều định dạng `d/M/yyyy`, `dd-MM-yyyy`), vừa **bấm chọn trên lịch Popover** (`react-day-picker`).
   - Hỗ trợ dropdown chọn nhanh tháng/năm (`captionLayout="dropdown"`), giới hạn dải ngày (`min`, `max`), tự động chuyển đổi ngôn ngữ lịch Tiếng Việt / Tiếng Nhật theo hệ thống.
-- **`DateTimePickerInput`** ([`DateTimePickerInput.tsx`](file:///c:/Users/An/Documents/IT4549-ITSS/gym-management-system/client/src/components/ui/DateTimePickerInput.tsx)):
+- **`DateTimePickerInput`** ([`DateTimePickerInput.tsx`](./src/components/ui/DateTimePickerInput.tsx)):
   - Mở rộng chọn cả **Ngày + Giờ:Phút** (định dạng `yyyy-MM-ddTHH:mm`).
   - Tích hợp thêm cụm chọn giờ (00-23) và phút với bước nhảy tùy chỉnh (`minuteStep`, mặc định 5 phút).
 
@@ -279,13 +281,13 @@ import { Plus, Save } from 'lucide-react'
 
 Bộ 3 component kết hợp tạo nên thanh công cụ danh sách dữ liệu:
 
-1. **`SearchInput`** ([`SearchInput.tsx`](file:///c:/Users/An/Documents/IT4549-ITSS/gym-management-system/client/src/components/ui/SearchInput.tsx)):
+1. **`SearchInput`** ([`SearchInput.tsx`](./src/components/ui/SearchInput.tsx)):
    - Tích hợp sẵn **Debounce tự động** (`debounceMs`, mặc định 300ms) giúp tối ưu gọi API tìm kiếm.
    - Nhấn `Enter` để search tức thì, nhấn `Escape` hoặc nút `X` để clear tìm kiếm.
-2. **`FilterDropdown`** ([`FilterDropdown.tsx`](file:///c:/Users/An/Documents/IT4549-ITSS/gym-management-system/client/src/components/ui/FilterDropdown.tsx)):
+2. **`FilterDropdown`** ([`FilterDropdown.tsx`](./src/components/ui/FilterDropdown.tsx)):
    - Nút bật menu popover chứa các bộ lọc phụ (trạng thái, chi nhánh, khoảng giá...).
    - Hiển thị **Badge số lượng bộ lọc đang kích hoạt** (`activeCount`), chân popup tối ưu 2 nút cân đối "Hủy" và "Lưu".
-3. **`SearchToolbar`** ([`SearchToolbar.tsx`](file:///c:/Users/An/Documents/IT4549-ITSS/gym-management-system/client/src/components/ui/SearchToolbar.tsx)):
+3. **`SearchToolbar`** ([`SearchToolbar.tsx`](./src/components/ui/SearchToolbar.tsx)):
    - Component mẹ kết hợp đồng bộ: Ô tìm kiếm + Khe cắm bộ lọc (`filters`) + Khe cắm nút hành động (`actions`).
    - Tự động chuyển đổi layout Responsive: Trên mobile xếp dọc (`flex-col`), trên desktop xếp ngang (`flex-row`).
 
@@ -323,7 +325,7 @@ Bộ 3 component kết hợp tạo nên thanh công cụ danh sách dữ liệu:
 ### 9. Thẻ Chứa & Thống Kê (Card Enterprise Suite & StatCard)
 
 #### 🎯 Vai trò & Phân biệt
-- **`Card Family`** ([`Card.tsx`](file:///c:/Users/An/Documents/IT4549-ITSS/gym-management-system/client/src/components/ui/Card.tsx)):
+- **`Card Family`** ([`Card.tsx`](./src/components/ui/Card.tsx)):
   - **Bộ subcomponent**: `Card`, `CardHeader`, `CardTitle`, `CardDescription`, `CardMedia`, `CardContent`, `CardFooter`, `CardRibbon`, `CardSkeleton`.
   - **Variants**:
     - `default`: Nền card tiêu chuẩn RoGym với viền teal mờ (`border-teal/20`).
@@ -349,7 +351,7 @@ Bộ 3 component kết hợp tạo nên thanh công cụ danh sách dữ liệu:
     - `<CardRibbon tone="accent | danger | warning | gold">HOT</CardRibbon>` nhãn góc ribbon nổi bật.
   - **Domain Aliases**:
     - `MemberCard`, `TrainerCard`, `StaffCard`, `OwnerCard` được re-export đồng bộ tại `MemberUI.tsx`, `TrainerUI.tsx`, `StaffUI.tsx`, `OwnerUI.tsx`.
-- **`StatCard`** ([`StatCard.tsx`](file:///c:/Users/An/Documents/IT4549-ITSS/gym-management-system/client/src/components/ui/StatCard.tsx)):
+- **`StatCard`** ([`StatCard.tsx`](./src/components/ui/StatCard.tsx)):
   - Thẻ hiển thị chỉ số thống kê (KPI/Metrics) trên Dashboard.
   - Tích hợp sẵn icon nổi bật, badge xu hướng (`trend`), skeleton loading (`loading`), và biến thành link điều hướng khi truyền prop `to` hoặc `onClick`.
 
@@ -411,9 +413,9 @@ Bộ 3 component kết hợp tạo nên thanh công cụ danh sách dữ liệu:
 
 | Thành phần | File nguồn | Khi nào nên dùng? |
 | :--- | :--- | :--- |
-| **`Table` Suite** | [`Table.tsx`](file:///c:/Users/An/Documents/IT4549-ITSS/gym-management-system/client/src/components/ui/Table.tsx) | Bộ nguyên tử HTML table (`TableContainer`, `TableHeader`, `TableBody`, `TableRow`, `TableHead`, `TableCell`). Dùng khi cần vẽ bảng cấu trúc tùy biến phức tạp (merge cell, custom row grouping). |
-| **`ResponsiveTable<T>`** | [`ResponsiveTable.tsx`](file:///c:/Users/An/Documents/IT4549-ITSS/gym-management-system/client/src/components/ui/ResponsiveTable.tsx) | **Khuyên dùng cho mọi trang danh sách**. Tự động hiển thị bảng cuộn trên Desktop (`md+`) và **chuyển thành Card Stack trên Mobile** (`<md`). Tích hợp sẵn Skeleton, Error Retry, Empty state, Pagination và `onRowClick`. |
-| **`Pagination`** | [`Pagination.tsx`](file:///c:/Users/An/Documents/IT4549-ITSS/gym-management-system/client/src/components/ui/Pagination.tsx) | Thanh chuyển trang thông minh, tự động rút gọn dấu ba chấm (`...`) và hiển thị cô đọng trên mobile. |
+| **`Table` Suite** | [`Table.tsx`](./src/components/ui/Table.tsx) | Bộ nguyên tử HTML table (`TableContainer`, `TableHeader`, `TableBody`, `TableRow`, `TableHead`, `TableCell`). Dùng khi cần vẽ bảng cấu trúc tùy biến phức tạp (merge cell, custom row grouping). |
+| **`ResponsiveTable<T>`** | [`ResponsiveTable.tsx`](./src/components/ui/ResponsiveTable.tsx) | **Khuyên dùng cho mọi trang danh sách**. Tự động hiển thị bảng cuộn trên Desktop (`md+`) và **chuyển thành Card Stack trên Mobile** (`<md`). Tích hợp sẵn Skeleton, Error Retry, Empty state, Pagination và `onRowClick`. |
+| **`Pagination`** | [`Pagination.tsx`](./src/components/ui/Pagination.tsx) | Thanh chuyển trang thông minh, tự động rút gọn dấu ba chấm (`...`) và hiển thị cô đọng trên mobile. |
 
 #### 💡 Ví dụ sử dụng `ResponsiveTable`:
 ```tsx
@@ -440,11 +442,11 @@ const columns: ColumnDef<Member>[] = [
 ### 11. Nhãn Trạng Thái (Badge & StatusBadge)
 
 #### 🎯 Vai trò & Phân biệt
-- **`Badge`** ([`Badge.tsx`](file:///c:/Users/An/Documents/IT4549-ITSS/gym-management-system/client/src/components/ui/Badge.tsx)):
+- **`Badge`** ([`Badge.tsx`](./src/components/ui/Badge.tsx)):
   - Huy hiệu nhãn thông tin đa dụng.
   - Tones: `success`, `accent`, `warning`, `danger`, `info`, `purple`, `primary`, `muted`, `outline`.
   - Sizes: `xs`, `sm`, `md`, `lg`. Hỗ trợ `leftIcon`, `rightIcon`, `interactive` (có thể click).
-- **`StatusBadge`** ([`StatusBadge.tsx`](file:///c:/Users/An/Documents/IT4549-ITSS/gym-management-system/client/src/components/ui/StatusBadge.tsx)):
+- **`StatusBadge`** ([`StatusBadge.tsx`](./src/components/ui/StatusBadge.tsx)):
   - Component chuyên dụng cho trạng thái trong domain Gym (Active, Inactive, Expired, Pending, Cancelled, Paid...).
   - Tự động map từ chuỗi trạng thái (`status="active"`, `"pending"`) sang tone màu và text đa ngữ.
 
@@ -462,11 +464,11 @@ const columns: ColumnDef<Member>[] = [
 ### 12. Hộp Thoại & Xác Nhận (Modal & ConfirmDialog)
 
 #### 🎯 Vai trò & Đặc điểm
-- **`Modal`** ([`Modal.tsx`](file:///c:/Users/An/Documents/IT4549-ITSS/gym-management-system/client/src/components/ui/Modal.tsx)):
+- **`Modal`** ([`Modal.tsx`](./src/components/ui/Modal.tsx)):
   - Hộp thoại popup đa năng (chứa form thêm/sửa, xem chi tiết).
   - Tích hợp backdrop làm mờ màn hình, chặn click xuyên thấu, đóng khi nhấn phím `Escape`, nút `X` đóng góc phải.
   - Sizes: `'sm' | 'md' | 'lg' | 'xl' | '2xl'`. Giới hạn chiều cao an toàn `max-h-[90vh]` kèm scroll bên trong.
-- **`ConfirmDialog`** ([`ConfirmDialog.tsx`](file:///c:/Users/An/Documents/IT4549-ITSS/gym-management-system/client/src/components/ui/ConfirmDialog.tsx)):
+- **`ConfirmDialog`** ([`ConfirmDialog.tsx`](./src/components/ui/ConfirmDialog.tsx)):
   - Hộp thoại xác nhận hành động nguy hiểm/quan trọng (xóa bản ghi, hủy lịch, hoàn tiền).
   - Tích hợp sẵn icon cảnh báo, nút Hủy và nút Xác nhận, hỗ trợ trạng thái `loading` khi đang thực thi async.
 
@@ -493,7 +495,7 @@ const columns: ColumnDef<Member>[] = [
 
 ### 13. Khung Trang & Trạng Thái Tải (PageUI Suite)
 
-Gồm 5 component chuẩn hóa bố cục trang trong file [`PageUI.tsx`](file:///c:/Users/An/Documents/IT4549-ITSS/gym-management-system/client/src/components/ui/PageUI.tsx):
+Gồm 5 component chuẩn hóa bố cục trang trong file [`PageUI.tsx`](./src/components/ui/PageUI.tsx):
 
 1. **`Page`**: Container bao bọc toàn trang, giới hạn max-width `1280px` căn giữa với khoảng cách chuẩn `space-y-6`.
 2. **`PageHeader`**: Header tiêu chuẩn với 3 tầng thông tin: `eyebrow` (nhãn định danh trên đầu) + `title` (`h1` 2xl/3xl) + `description` (mô tả) + `actions` (cụm nút bấm bên phải).
@@ -526,7 +528,7 @@ export function MembersPage() {
 
 ---
 
-### 14. Chuyển Đổi Ngôn Ngữ ([`LanguageSwitcher.tsx`](file:///c:/Users/An/Documents/IT4549-ITSS/gym-management-system/client/src/components/ui/LanguageSwitcher.tsx))
+### 14. Chuyển Đổi Ngôn Ngữ ([`LanguageSwitcher.tsx`](./src/components/ui/LanguageSwitcher.tsx))
 
 #### 🎯 Vai trò & Đặc điểm
 - Nút bấm chuyển đổi nhanh giữa hai ngôn ngữ **VI (Tiếng Việt)** và **JA (Tiếng Nhật)**.
@@ -535,7 +537,7 @@ export function MembersPage() {
 
 ---
 
-### 15. Nhóm Điều Hướng Tab (Tabs Suite - [`Tabs.tsx`](file:///c:/Users/An/Documents/IT4549-ITSS/gym-management-system/client/src/components/ui/Tabs.tsx))
+### 15. Nhóm Điều Hướng Tab (Tabs Suite - [`Tabs.tsx`](./src/components/ui/Tabs.tsx))
 
 #### 🎯 Vai trò & Đặc điểm
 - Chuẩn hóa điều hướng nội dung theo tab trên cùng một trang, thay thế toàn bộ việc tự viết `flex container` và chuyển đổi state giữa các `Button`.
@@ -585,7 +587,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent, TabsBar } from '@/components/
 
 ---
 
-### 16. Hộp Thông Báo & Cảnh Báo (Alert Suite - [`Alert.tsx`](file:///c:/Users/An/Documents/IT4549-ITSS/gym-management-system/client/src/components/ui/Alert.tsx))
+### 16. Hộp Thông Báo & Cảnh Báo (Alert Suite - [`Alert.tsx`](./src/components/ui/Alert.tsx))
 
 #### 🎯 Vai trò & Đặc điểm
 - Hiển thị các thông báo ngữ cảnh trong biểu mẫu, widget dữ liệu, cảnh báo tài khoản hoặc thông báo hệ thống.
@@ -619,7 +621,7 @@ import { Alert, AlertTitle, AlertDescription, Button } from '@/components/ui'
 
 ---
 
-### 17. Thanh Tiến Độ (ProgressBar - [`ProgressBar.tsx`](file:///c:/Users/An/Documents/IT4549-ITSS/gym-management-system/client/src/components/ui/ProgressBar.tsx))
+### 17. Thanh Tiến Độ (ProgressBar - [`ProgressBar.tsx`](./src/components/ui/ProgressBar.tsx))
 
 #### 🎯 Vai trò & Đặc điểm
 - Trực quan hóa tiến độ hoàn thành giáo án, phần trăm buổi tập đã thực hiện, chỉ số cơ thể, hoặc doanh thu mục tiêu.
@@ -658,7 +660,7 @@ import { ProgressBar } from '@/components/ui'
 
 ---
 
-### 18. Ảnh Đại Diện Hội Viên & Nhân Viên (Avatar Suite - [`Avatar.tsx`](file:///c:/Users/An/Documents/IT4549-ITSS/gym-management-system/client/src/components/ui/Avatar.tsx))
+### 18. Ảnh Đại Diện Hội Viên & Nhân Viên (Avatar Suite - [`Avatar.tsx`](./src/components/ui/Avatar.tsx))
 
 #### 🎯 Vai trò & Đặc điểm
 - Hiển thị ảnh đại diện của khách hàng, HLV cá nhân, nhân viên lễ tân và quản trị viên.
@@ -691,7 +693,7 @@ import { Avatar, AvatarGroup } from '@/components/ui'
 
 ---
 
-### 19. Menu Co Giãn (Accordion Suite - [`Accordion.tsx`](file:///c:/Users/An/Documents/IT4549-ITSS/gym-management-system/client/src/components/ui/Accordion.tsx))
+### 19. Menu Co Giãn (Accordion Suite - [`Accordion.tsx`](./src/components/ui/Accordion.tsx))
 
 #### 🎯 Vai trò & Đặc điểm
 - Gom nhóm và mở rộng nội dung chi tiết theo từng bài tập, nhóm cơ, lịch sử tập, câu hỏi thường gặp FAQ.
@@ -728,7 +730,7 @@ import { Dumbbell } from 'lucide-react'
 
 ---
 
-### 20. Trình Hướng Dẫn Từng Bước (Stepper - [`Stepper.tsx`](file:///c:/Users/An/Documents/IT4549-ITSS/gym-management-system/client/src/components/ui/Stepper.tsx))
+### 20. Trình Hướng Dẫn Từng Bước (Stepper - [`Stepper.tsx`](./src/components/ui/Stepper.tsx))
 
 #### 🎯 Vai trò & Đặc điểm
 - Hướng dẫn trực quan quy trình nhiều bước cho các luồng nghiệp vụ phức tạp: Đăng ký hội viên mới, Gia hạn gói tập, Thiết lập hợp đồng PT, Thanh toán đơn hàng.
@@ -754,7 +756,7 @@ import { User, CreditCard, CheckCircle } from 'lucide-react'
 
 ---
 
-### 21. Khung Giữ Chỗ Tải Dữ Liệu Nguyên Tử (Skeleton Suite - [`Skeleton.tsx`](file:///c:/Users/An/Documents/IT4549-ITSS/gym-management-system/client/src/components/ui/Skeleton.tsx))
+### 21. Khung Giữ Chỗ Tải Dữ Liệu Nguyên Tử (Skeleton Suite - [`Skeleton.tsx`](./src/components/ui/Skeleton.tsx))
 
 #### 🎯 Vai trò & Đặc điểm
 - Cung cấp các khối skeleton nguyên tử để xây dựng trạng thái tải (Loading State) mượt mà cho từng widget nhỏ, thẻ hội viên, danh sách bài tập mà không cần phải viết component inline với thẻ `<div>` thô.
@@ -785,7 +787,7 @@ Các component trong thư mục `shared` đảm nhận vai trò quản lý **Lay
 
 ---
 
-### 1. Sidebar ([`Sidebar.tsx`](file:///c:/Users/An/Documents/IT4549-ITSS/gym-management-system/client/src/components/shared/Sidebar.tsx))
+### 1. Sidebar ([`Sidebar.tsx`](./src/components/shared/Sidebar.tsx))
 
 #### 🎯 Vai trò & Đặc điểm
 - Thanh điều hướng dọc (Vertical Navigation) cố định cạnh trái cho Desktop (`md+`) và dạng ngăn kéo vuốt (Off-canvas Drawer) trên Mobile (`<md`).
@@ -819,14 +821,14 @@ import Sidebar from '@/components/shared/Sidebar'
 
 ---
 
-### 2. Topbar ([`Topbar.tsx`](file:///c:/Users/An/Documents/IT4549-ITSS/gym-management-system/client/src/components/shared/Topbar.tsx))
+### 2. Topbar ([`Topbar.tsx`](./src/components/shared/Topbar.tsx))
 
 #### 🎯 Vai trò & Đặc điểm
 - Thanh tiện ích nổi cố định ở góc trên bên phải màn hình (`fixed top-4 right-5 z-40`).
 - Tích hợp 4 cụm tính năng thiết yếu:
   1. **Nút Kêu gọi Hành động (CTA Mua gói tập)**: Tự động hiển thị nổi bật màu xanh lục khi hội viên chưa có gói tập hợp lệ.
-  2. **Chuyển đổi ngôn ngữ**: Tích hợp [`LanguageSwitcher`](file:///c:/Users/An/Documents/IT4549-ITSS/gym-management-system/client/src/components/ui/LanguageSwitcher.tsx).
-  3. **Chuông thông báo**: Tích hợp [`NotificationBell`](file:///c:/Users/An/Documents/IT4549-ITSS/gym-management-system/client/src/components/shared/NotificationBell.tsx).
+  2. **Chuyển đổi ngôn ngữ**: Tích hợp [`LanguageSwitcher`](./src/components/ui/LanguageSwitcher.tsx).
+  3. **Chuông thông báo**: Tích hợp [`NotificationBell`](./src/components/shared/NotificationBell.tsx).
   4. **Avatar người dùng & Dropdown Menu**: Hiển thị chữ cái đầu tên người dùng, mở menu popup chứa thông tin cá nhân, liên kết tài khoản thanh toán và nút Đăng xuất (xóa sạch Auth & Subscription Store).
 
 #### 💡 Ví dụ sử dụng:
@@ -846,7 +848,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
 
 ---
 
-### 3. BottomNav ([`BottomNav.tsx`](file:///c:/Users/An/Documents/IT4549-ITSS/gym-management-system/client/src/components/shared/BottomNav.tsx))
+### 3. BottomNav ([`BottomNav.tsx`](./src/components/shared/BottomNav.tsx))
 
 #### 🎯 Vai trò & Đặc điểm
 - Thanh điều hướng đáy màn hình (Bottom Navigation Bar) tối ưu trải nghiệm chạm trên điện thoại di động (chỉ hiển thị trên màn hình nhỏ `<md`).
@@ -868,7 +870,7 @@ import BottomNav from '@/components/shared/BottomNav'
 
 ---
 
-### 4. Chuông & Bảng Thông Báo Thời Gian Thực ([`NotificationBell.tsx`](file:///c:/Users/An/Documents/IT4549-ITSS/gym-management-system/client/src/components/shared/NotificationBell.tsx))
+### 4. Chuông & Bảng Thông Báo Thời Gian Thực ([`NotificationBell.tsx`](./src/components/shared/NotificationBell.tsx))
 
 #### 🎯 Vai trò & Đặc điểm
 - Nút icon chuông thông báo thông minh kèm **Huy hiệu số lượng chưa đọc (`unreadCount`)**.
@@ -892,7 +894,7 @@ import NotificationBell from '@/components/shared/NotificationBell'
 
 ---
 
-### 5. Bộ Thông Báo & Cảnh Báo ([`NotificationUI.tsx`](file:///c:/Users/An/Documents/IT4549-ITSS/gym-management-system/client/src/components/shared/NotificationUI.tsx))
+### 5. Bộ Thông Báo & Cảnh Báo ([`NotificationUI.tsx`](./src/components/shared/NotificationUI.tsx))
 
 Cung cấp 3 thành phần UI chuyên biệt cho thông điệp phản hồi:
 
@@ -923,7 +925,7 @@ import { AlertTriangle } from 'lucide-react'
 
 ---
 
-### 6. Bảo Vệ Tuyến Đường ([`ProtectedRoute.tsx`](file:///c:/Users/An/Documents/IT4549-ITSS/gym-management-system/client/src/components/shared/ProtectedRoute.tsx))
+### 6. Bảo Vệ Tuyến Đường ([`ProtectedRoute.tsx`](./src/components/shared/ProtectedRoute.tsx))
 
 #### 🎯 Vai trò & Đặc điểm
 - Là component bọc (Route Wrapper) đóng vai trò lá chắn phân quyền cao nhất của toàn bộ hệ thống định tuyến Client-side.
@@ -954,13 +956,13 @@ import ProtectedRoute from '@/components/shared/ProtectedRoute'
 
 ---
 
-### 7. Yêu Cầu Gói Tập ([`SubscriptionRequired.tsx`](file:///c:/Users/An/Documents/IT4549-ITSS/gym-management-system/client/src/components/shared/SubscriptionRequired.tsx))
+### 7. Yêu Cầu Gói Tập ([`SubscriptionRequired.tsx`](./src/components/shared/SubscriptionRequired.tsx))
 
 #### 🎯 Vai trò & Đặc điểm
 - Route Guard chuyên biệt dành riêng cho phân hệ **Hội viên (Member)**.
 - Đảm bảo hội viên chỉ có thể truy cập vào các tính năng tập luyện (Xem bài tập, Đặt lịch PT, Quét mã QR check-in) khi **đang sở hữu ít nhất một gói tập còn hiệu lực** (`hasActiveSub === true`).
-- Nếu hội viên chưa có gói hoặc gói đã hết hạn: Tự động chuyển hướng sang trang mua gói [`/member/subscription/setup`](file:///c:/Users/An/Documents/IT4549-ITSS/gym-management-system/client/src/pages/member/subscription/SubscriptionSetupPage.tsx).
-- Xử lý các tình huống lỗi mạng/mất kết nối server với thông báo [`PageErrorState`](file:///c:/Users/An/Documents/IT4549-ITSS/gym-management-system/client/src/components/ui/PageUI.tsx) kèm nút "Thử lại" hoặc "Đăng xuất".
+- Nếu hội viên chưa có gói hoặc gói đã hết hạn: Tự động chuyển hướng sang trang mua gói [`/member/subscription/setup`](./src/pages/member/subscription/SubscriptionSetupPage.tsx).
+- Xử lý các tình huống lỗi mạng/mất kết nối server với thông báo [`PageErrorState`](./src/components/ui/PageUI.tsx) kèm nút "Thử lại" hoặc "Đăng xuất".
 
 #### 💡 Ví dụ sử dụng:
 ```tsx
@@ -976,7 +978,7 @@ import SubscriptionRequired from '@/components/shared/SubscriptionRequired'
 
 ---
 
-### 8. Bộ Vòng Xoay Tải Trang (Spinner Suite - [`Spinner.tsx`](file:///c:/Users/An/Documents/IT4549-ITSS/gym-management-system/client/src/components/shared/Spinner.tsx))
+### 8. Bộ Vòng Xoay Tải Trang (Spinner Suite - [`Spinner.tsx`](./src/components/shared/Spinner.tsx))
 
 Cung cấp 3 cấp độ Loader đồng bộ với Design System:
 
@@ -1002,7 +1004,7 @@ const ExercisesPage = lazy(() => import('./ExercisesPage'))
 
 ---
 
-### 9. Bộ Lọc Khoảng Ngày Cho Chủ Phòng Tập ([`OwnerDateRangeFilter.tsx`](file:///c:/Users/An/Documents/IT4549-ITSS/gym-management-system/client/src/components/shared/OwnerDateRangeFilter.tsx))
+### 9. Bộ Lọc Khoảng Ngày Cho Chủ Phòng Tập ([`OwnerDateRangeFilter.tsx`](./src/components/shared/OwnerDateRangeFilter.tsx))
 
 #### 🎯 Vai trò & Đặc điểm
 - Component lọc khoảng thời gian (Từ ngày `from` ➔ Đến ngày `to`) thiết kế riêng cho các báo cáo doanh thu, thống kê hiệu suất nhân viên và hóa đơn giao dịch của Chủ phòng tập (Owner).
@@ -1037,10 +1039,10 @@ import { OwnerDateRangeFilter } from '@/components/shared/OwnerDateRangeFilter'
 
 ---
 
-### 10. Phân Trang Cho Chủ Phòng Tập ([`OwnerPagination.tsx`](file:///c:/Users/An/Documents/IT4549-ITSS/gym-management-system/client/src/components/shared/OwnerPagination.tsx))
+### 10. Phân Trang Cho Chủ Phòng Tập ([`OwnerPagination.tsx`](./src/components/shared/OwnerPagination.tsx))
 
 #### 🎯 Vai trò & Đặc điểm
-- Là wrapper tái sử dụng component [`Pagination`](file:///c:/Users/An/Documents/IT4549-ITSS/gym-management-system/client/src/components/ui/Pagination.tsx) gốc, giúp chuẩn hóa giao diện phân trang trong toàn bộ các bảng quản lý của Owner (Danh sách nhân viên, Hóa đơn, Báo cáo tài chính).
+- Là wrapper tái sử dụng component [`Pagination`](./src/components/ui/Pagination.tsx) gốc, giúp chuẩn hóa giao diện phân trang trong toàn bộ các bảng quản lý của Owner (Danh sách nhân viên, Hóa đơn, Báo cáo tài chính).
 
 ---
 
@@ -1050,36 +1052,36 @@ import { OwnerDateRangeFilter } from '@/components/shared/OwnerDateRangeFilter'
 
 | Nhóm Chức Năng | Thành Phần Export | File Nguồn |
 | :--- | :--- | :--- |
-| **Buttons & Links** | `Button`, `ButtonLink`, `ButtonAnchor`, `ButtonContent`, `getButtonClasses`, `normalizeButtonSize` | [`Button.tsx`](file:///c:/Users/An/Documents/IT4549-ITSS/gym-management-system/client/src/components/ui/Button.tsx) |
-| **Form Controls** | `Input`, `getInputClasses`, `normalizeInputSize` | [`Input.tsx`](file:///c:/Users/An/Documents/IT4549-ITSS/gym-management-system/client/src/components/ui/Input.tsx) |
-| | `Textarea`, `getTextareaClasses` | [`Textarea.tsx`](file:///c:/Users/An/Documents/IT4549-ITSS/gym-management-system/client/src/components/ui/Textarea.tsx) |
-| | `FormField` | [`FormField.tsx`](file:///c:/Users/An/Documents/IT4549-ITSS/gym-management-system/client/src/components/ui/FormField.tsx) |
-| | `Checkbox`, `getCheckboxClasses` | [`Checkbox.tsx`](file:///c:/Users/An/Documents/IT4549-ITSS/gym-management-system/client/src/components/ui/Checkbox.tsx) |
-| | `Switch`, `getSwitchClasses` | [`Switch.tsx`](file:///c:/Users/An/Documents/IT4549-ITSS/gym-management-system/client/src/components/ui/Switch.tsx) |
-| | `Select` | [`Select.tsx`](file:///c:/Users/An/Documents/IT4549-ITSS/gym-management-system/client/src/components/ui/Select.tsx) |
-| **Date & Time** | `DatePickerInput` | [`DatePickerInput.tsx`](file:///c:/Users/An/Documents/IT4549-ITSS/gym-management-system/client/src/components/ui/DatePickerInput.tsx) |
-| | `DateTimePickerInput` | [`DateTimePickerInput.tsx`](file:///c:/Users/An/Documents/IT4549-ITSS/gym-management-system/client/src/components/ui/DateTimePickerInput.tsx) |
-| **Search & Filtering** | `SearchInput` | [`SearchInput.tsx`](file:///c:/Users/An/Documents/IT4549-ITSS/gym-management-system/client/src/components/ui/SearchInput.tsx) |
-| | `FilterDropdown` | [`FilterDropdown.tsx`](file:///c:/Users/An/Documents/IT4549-ITSS/gym-management-system/client/src/components/ui/FilterDropdown.tsx) |
-| | `SearchToolbar` | [`SearchToolbar.tsx`](file:///c:/Users/An/Documents/IT4549-ITSS/gym-management-system/client/src/components/ui/SearchToolbar.tsx) |
-| **Containers & Cards** | `Card`, `CardHeader`, `CardTitle`, `CardDescription`, `CardContent`, `CardFooter` | [`Card.tsx`](file:///c:/Users/An/Documents/IT4549-ITSS/gym-management-system/client/src/components/ui/Card.tsx) |
-| | `StatCard` | [`StatCard.tsx`](file:///c:/Users/An/Documents/IT4549-ITSS/gym-management-system/client/src/components/ui/StatCard.tsx) |
-| **Data Tables & Pagination** | `Table`, `TableContainer`, `TableHeader`, `TableBody`, `TableFooter`, `TableRow`, `TableHead`, `TableCell` | [`Table.tsx`](file:///c:/Users/An/Documents/IT4549-ITSS/gym-management-system/client/src/components/ui/Table.tsx) |
-| | `ResponsiveTable` | [`ResponsiveTable.tsx`](file:///c:/Users/An/Documents/IT4549-ITSS/gym-management-system/client/src/components/ui/ResponsiveTable.tsx) |
-| | `Pagination` | [`Pagination.tsx`](file:///c:/Users/An/Documents/IT4549-ITSS/gym-management-system/client/src/components/ui/Pagination.tsx) |
-| **Badges & Feedback** | `Badge`, `getBadgeClasses`, `normalizeBadgeSize` | [`Badge.tsx`](file:///c:/Users/An/Documents/IT4549-ITSS/gym-management-system/client/src/components/ui/Badge.tsx) |
-| | `StatusBadge` | [`StatusBadge.tsx`](file:///c:/Users/An/Documents/IT4549-ITSS/gym-management-system/client/src/components/ui/StatusBadge.tsx) |
-| | `Modal` | [`Modal.tsx`](file:///c:/Users/An/Documents/IT4549-ITSS/gym-management-system/client/src/components/ui/Modal.tsx) |
-| | `ConfirmDialog` | [`ConfirmDialog.tsx`](file:///c:/Users/An/Documents/IT4549-ITSS/gym-management-system/client/src/components/ui/ConfirmDialog.tsx) |
-| **Page Layout & Utils** | `Page`, `PageHeader`, `PageSkeleton`, `PageEmptyState`, `PageErrorState` | [`PageUI.tsx`](file:///c:/Users/An/Documents/IT4549-ITSS/gym-management-system/client/src/components/ui/PageUI.tsx) |
-| | `LanguageSwitcher` | [`LanguageSwitcher.tsx`](file:///c:/Users/An/Documents/IT4549-ITSS/gym-management-system/client/src/components/ui/LanguageSwitcher.tsx) |
-| **Navigation & Tabs** | `Tabs`, `TabsList`, `TabsTrigger`, `TabsContent`, `TabsBar` | [`Tabs.tsx`](file:///c:/Users/An/Documents/IT4549-ITSS/gym-management-system/client/src/components/ui/Tabs.tsx) |
-| **Alerts & Messages** | `Alert`, `AlertTitle`, `AlertDescription` | [`Alert.tsx`](file:///c:/Users/An/Documents/IT4549-ITSS/gym-management-system/client/src/components/ui/Alert.tsx) |
-| **Progress & Metrics** | `ProgressBar` | [`ProgressBar.tsx`](file:///c:/Users/An/Documents/IT4549-ITSS/gym-management-system/client/src/components/ui/ProgressBar.tsx) |
-| **Avatars & Users** | `Avatar`, `AvatarGroup` | [`Avatar.tsx`](file:///c:/Users/An/Documents/IT4549-ITSS/gym-management-system/client/src/components/ui/Avatar.tsx) |
-| **Collapsible & FAQs** | `Accordion`, `AccordionItem`, `AccordionTrigger`, `AccordionContent`, `AccordionGroup` | [`Accordion.tsx`](file:///c:/Users/An/Documents/IT4549-ITSS/gym-management-system/client/src/components/ui/Accordion.tsx) |
-| **Wizards & Steppers** | `Stepper` | [`Stepper.tsx`](file:///c:/Users/An/Documents/IT4549-ITSS/gym-management-system/client/src/components/ui/Stepper.tsx) |
-| **Loading Skeletons** | `Skeleton`, `SkeletonText`, `SkeletonCircle` | [`Skeleton.tsx`](file:///c:/Users/An/Documents/IT4549-ITSS/gym-management-system/client/src/components/ui/Skeleton.tsx) |
+| **Buttons & Links** | `Button`, `ButtonLink`, `ButtonAnchor`, `ButtonContent`, `getButtonClasses`, `normalizeButtonSize` | [`Button.tsx`](./src/components/ui/Button.tsx) |
+| **Form Controls** | `Input`, `getInputClasses`, `normalizeInputSize` | [`Input.tsx`](./src/components/ui/Input.tsx) |
+| | `Textarea`, `getTextareaClasses` | [`Textarea.tsx`](./src/components/ui/Textarea.tsx) |
+| | `FormField` | [`FormField.tsx`](./src/components/ui/FormField.tsx) |
+| | `Checkbox`, `getCheckboxClasses` | [`Checkbox.tsx`](./src/components/ui/Checkbox.tsx) |
+| | `Switch`, `getSwitchClasses` | [`Switch.tsx`](./src/components/ui/Switch.tsx) |
+| | `Select` | [`Select.tsx`](./src/components/ui/Select.tsx) |
+| **Date & Time** | `DatePickerInput` | [`DatePickerInput.tsx`](./src/components/ui/DatePickerInput.tsx) |
+| | `DateTimePickerInput` | [`DateTimePickerInput.tsx`](./src/components/ui/DateTimePickerInput.tsx) |
+| **Search & Filtering** | `SearchInput` | [`SearchInput.tsx`](./src/components/ui/SearchInput.tsx) |
+| | `FilterDropdown` | [`FilterDropdown.tsx`](./src/components/ui/FilterDropdown.tsx) |
+| | `SearchToolbar` | [`SearchToolbar.tsx`](./src/components/ui/SearchToolbar.tsx) |
+| **Containers & Cards** | `Card`, `CardHeader`, `CardTitle`, `CardDescription`, `CardContent`, `CardFooter` | [`Card.tsx`](./src/components/ui/Card.tsx) |
+| | `StatCard` | [`StatCard.tsx`](./src/components/ui/StatCard.tsx) |
+| **Data Tables & Pagination** | `Table`, `TableContainer`, `TableHeader`, `TableBody`, `TableFooter`, `TableRow`, `TableHead`, `TableCell` | [`Table.tsx`](./src/components/ui/Table.tsx) |
+| | `ResponsiveTable` | [`ResponsiveTable.tsx`](./src/components/ui/ResponsiveTable.tsx) |
+| | `Pagination` | [`Pagination.tsx`](./src/components/ui/Pagination.tsx) |
+| **Badges & Feedback** | `Badge`, `getBadgeClasses`, `normalizeBadgeSize` | [`Badge.tsx`](./src/components/ui/Badge.tsx) |
+| | `StatusBadge` | [`StatusBadge.tsx`](./src/components/ui/StatusBadge.tsx) |
+| | `Modal` | [`Modal.tsx`](./src/components/ui/Modal.tsx) |
+| | `ConfirmDialog` | [`ConfirmDialog.tsx`](./src/components/ui/ConfirmDialog.tsx) |
+| **Page Layout & Utils** | `Page`, `PageHeader`, `PageSkeleton`, `PageEmptyState`, `PageErrorState` | [`PageUI.tsx`](./src/components/ui/PageUI.tsx) |
+| | `LanguageSwitcher` | [`LanguageSwitcher.tsx`](./src/components/ui/LanguageSwitcher.tsx) |
+| **Navigation & Tabs** | `Tabs`, `TabsList`, `TabsTrigger`, `TabsContent`, `TabsBar` | [`Tabs.tsx`](./src/components/ui/Tabs.tsx) |
+| **Alerts & Messages** | `Alert`, `AlertTitle`, `AlertDescription` | [`Alert.tsx`](./src/components/ui/Alert.tsx) |
+| **Progress & Metrics** | `ProgressBar` | [`ProgressBar.tsx`](./src/components/ui/ProgressBar.tsx) |
+| **Avatars & Users** | `Avatar`, `AvatarGroup` | [`Avatar.tsx`](./src/components/ui/Avatar.tsx) |
+| **Collapsible & FAQs** | `Accordion`, `AccordionItem`, `AccordionTrigger`, `AccordionContent`, `AccordionGroup` | [`Accordion.tsx`](./src/components/ui/Accordion.tsx) |
+| **Wizards & Steppers** | `Stepper` | [`Stepper.tsx`](./src/components/ui/Stepper.tsx) |
+| **Loading Skeletons** | `Skeleton`, `SkeletonText`, `SkeletonCircle` | [`Skeleton.tsx`](./src/components/ui/Skeleton.tsx) |
 
 ---
 
@@ -1087,14 +1089,91 @@ import { OwnerDateRangeFilter } from '@/components/shared/OwnerDateRangeFilter'
 
 | Nhóm Chức Năng | Thành Phần Export | File Nguồn |
 | :--- | :--- | :--- |
-| **Bố Cục & Điều Hướng** | `Sidebar` (Menu chính phân quyền, Hover Expand, Owner switch mode) | [`Sidebar.tsx`](file:///c:/Users/An/Documents/IT4549-ITSS/gym-management-system/client/src/components/shared/Sidebar.tsx) |
-| | `Topbar` (Thanh tiện ích Avatar, CTA gói tập, Đa ngôn ngữ, Thông báo) | [`Topbar.tsx`](file:///c:/Users/An/Documents/IT4549-ITSS/gym-management-system/client/src/components/shared/Topbar.tsx) |
-| | `BottomNav` (Thanh điều hướng đáy Mobile, Nút Check-in QR trung tâm) | [`BottomNav.tsx`](file:///c:/Users/An/Documents/IT4549-ITSS/gym-management-system/client/src/components/shared/BottomNav.tsx) |
-| **Hệ Thống Thông Báo** | `NotificationBell` (Chuông thông báo, Polling 20s, Realtime Toast) | [`NotificationBell.tsx`](file:///c:/Users/An/Documents/IT4549-ITSS/gym-management-system/client/src/components/shared/NotificationBell.tsx) |
-| | `NotificationToast`, `NotificationAlert`, `NotificationPanel` | [`NotificationUI.tsx`](file:///c:/Users/An/Documents/IT4549-ITSS/gym-management-system/client/src/components/shared/NotificationUI.tsx) |
-| **Bảo Mật Tuyến Đường** | `ProtectedRoute` (Phân quyền theo vai trò, chống F5 redirect sai, LINE LIFF) | [`ProtectedRoute.tsx`](file:///c:/Users/An/Documents/IT4549-ITSS/gym-management-system/client/src/components/shared/ProtectedRoute.tsx) |
-| | `SubscriptionRequired` (Bảo vệ tính năng tập luyện, yêu cầu gói tập hiệu lực) | [`SubscriptionRequired.tsx`](file:///c:/Users/An/Documents/IT4549-ITSS/gym-management-system/client/src/components/shared/SubscriptionRequired.tsx) |
-| **Hiệu Ứng Tải Trang** | `Spinner`, `PageLoader`, `FullScreenLoader` | [`Spinner.tsx`](file:///c:/Users/An/Documents/IT4549-ITSS/gym-management-system/client/src/components/shared/Spinner.tsx) |
-| **Bộ Lọc & Báo Cáo** | `OwnerDateRangeFilter` (Lọc khoảng ngày báo cáo doanh thu & hiệu suất) | [`OwnerDateRangeFilter.tsx`](file:///c:/Users/An/Documents/IT4549-ITSS/gym-management-system/client/src/components/shared/OwnerDateRangeFilter.tsx) |
-| | `OwnerPagination` (Wrapper phân trang cho Owner modules) | [`OwnerPagination.tsx`](file:///c:/Users/An/Documents/IT4549-ITSS/gym-management-system/client/src/components/shared/OwnerPagination.tsx) |
-| | `Page`, `PageHeader`, `PageSkeleton`, `PageEmptyState`, `PageErrorState` | [`PageUI.tsx`](file:///c:/Users/An/Documents/IT4549-ITSS/gym-management-system/client/src/components/shared/PageUI.tsx) |
+| **Bố Cục & Điều Hướng** | `Sidebar` (Menu chính phân quyền, Hover Expand, Owner switch mode) | [`Sidebar.tsx`](./src/components/shared/Sidebar.tsx) |
+| | `Topbar` (Thanh tiện ích Avatar, CTA gói tập, Đa ngôn ngữ, Thông báo) | [`Topbar.tsx`](./src/components/shared/Topbar.tsx) |
+| | `BottomNav` (Thanh điều hướng đáy Mobile, Nút Check-in QR trung tâm) | [`BottomNav.tsx`](./src/components/shared/BottomNav.tsx) |
+| **Hệ Thống Thông Báo** | `NotificationBell` (Chuông thông báo, Polling 20s, Realtime Toast) | [`NotificationBell.tsx`](./src/components/shared/NotificationBell.tsx) |
+| | `NotificationToast`, `NotificationAlert`, `NotificationPanel` | [`NotificationUI.tsx`](./src/components/shared/NotificationUI.tsx) |
+| **Bảo Mật Tuyến Đường** | `ProtectedRoute` (Phân quyền theo vai trò, chống F5 redirect sai, LINE LIFF) | [`ProtectedRoute.tsx`](./src/components/shared/ProtectedRoute.tsx) |
+| | `SubscriptionRequired` (Bảo vệ tính năng tập luyện, yêu cầu gói tập hiệu lực) | [`SubscriptionRequired.tsx`](./src/components/shared/SubscriptionRequired.tsx) |
+| **Hiệu Ứng Tải Trang** | `Spinner`, `PageLoader`, `FullScreenLoader` | [`Spinner.tsx`](./src/components/shared/Spinner.tsx) |
+| **Bộ Lọc & Báo Cáo** | `OwnerDateRangeFilter` (Lọc khoảng ngày báo cáo doanh thu & hiệu suất) | [`OwnerDateRangeFilter.tsx`](./src/components/shared/OwnerDateRangeFilter.tsx) |
+| | `OwnerPagination` (Wrapper phân trang cho Owner modules) | [`OwnerPagination.tsx`](./src/components/shared/OwnerPagination.tsx) |
+
+---
+
+## V. Tiêu Chuẩn Kỹ Thuật Khi Viết Component Mới
+
+> Phần này dành cho developer cần **tạo hoặc sửa** component trong `src/components/ui/`. Nếu bạn chỉ cần *dùng* component, bỏ qua phần này.
+
+### 5 quy tắc cốt lõi
+
+| # | Quy tắc | Lý do |
+|---|---|---|
+| 1 | Dùng `forwardRef` và khai báo `displayName` | Hỗ trợ refs (form focus, focus trap, animation) |
+| 2 | Tách `getXxxClasses()` thành pure function và export | Component khác tái dùng logic class mà không mount DOM |
+| 3 | Mọi phần tử bấm/chạm đạt touch target tối thiểu **44px** | WCAG 2.1 — chuẩn mobile |
+| 4 | Bọc `:hover` trong `@media (hover: hover) and (pointer: fine)` | Tránh sticky hover trên thiết bị cảm ứng |
+| 5 | 100% màu sắc dùng CSS variable `--rogym-*` hoặc class ngữ nghĩa | Không hardcode hex, không `style={{}}` inline |
+
+### Cấu trúc file chuẩn (tham chiếu: `Button.tsx`)
+
+```tsx
+import { cn } from '@/lib/utils'
+import { forwardRef, type HTMLAttributes, type ReactNode } from 'react'
+
+// 1. Types & Variants
+export type ComponentVariant = 'default' | 'elevated' | 'outline'
+export type ComponentSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl'
+export interface BaseComponentProps {
+  variant?: ComponentVariant
+  size?: ComponentSize
+  loading?: boolean
+  fullWidth?: boolean
+}
+
+// 2. Class helper (pure function — có thể tái dùng không cần mount DOM)
+export function getComponentClasses({ variant, size, fullWidth, className }: BaseComponentProps & { className?: string }) {
+  return cn(
+    'rogym-component',
+    variant === 'elevated' && 'rogym-component--elevated',
+    size === 'sm' && 'rogym-component--sm',
+    fullWidth && 'rogym-component--full',
+    className
+  )
+}
+
+// 3. Main component với forwardRef
+export interface ComponentProps extends HTMLAttributes<HTMLDivElement>, BaseComponentProps {}
+
+export const MyComponent = forwardRef<HTMLDivElement, ComponentProps>(
+  ({ variant, size, loading, fullWidth, className, children, ...props }, ref) => (
+    <div
+      ref={ref}
+      aria-busy={loading ? 'true' : undefined}
+      className={getComponentClasses({ variant, size, fullWidth, className })}
+      {...props}
+    >
+      {children}
+    </div>
+  )
+)
+MyComponent.displayName = 'MyComponent'
+```
+
+### Checklist 12 mục trước khi merge component mới
+
+| # | Kiểm tra |
+|---|---|
+| 1 | Dùng `forwardRef` và khai báo `displayName` |
+| 2 | Tách `getXxxClasses()` và export từ `ui/index.ts` |
+| 3 | Touch target tối thiểu **44px** trên mobile |
+| 4 | Nút/control trong flex có `flex-shrink: 0` chống méo |
+| 5 | Padding co giãn mobile-first (`px-3 sm:px-4`) |
+| 6 | Typography có `line-height >= 1.25` (tiếng Việt xuống 2 dòng không dính) |
+| 7 | Hover bọc trong `@media (hover: hover) and (pointer: fine)` |
+| 8 | Có `:active` tap feedback trên thiết bị cảm ứng (`scale(0.98)`) |
+| 9 | `loading` không gây layout shift (CLS = 0) |
+| 10 | `disabled`/`loading` chặn click triệt để (kể cả Link/Anchor) |
+| 11 | Đầy đủ `aria-busy`, `aria-disabled`, `aria-label`, `focus-visible` |
+| 12 | 100% màu dùng token RoGym — không inline style, không hardcode hex |
