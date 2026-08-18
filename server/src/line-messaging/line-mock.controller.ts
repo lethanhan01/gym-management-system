@@ -46,12 +46,20 @@ export class LineMockController {
   @Public()
   @Post('samples')
   @HttpCode(HttpStatus.OK)
-  sample(@Body() body: { type?: unknown }) {
+  sample(@Body() body: { type?: unknown; locale?: unknown }) {
     this.assertMockEnabled()
-    if (body.type !== 'flex' && body.type !== 'rich-menu') {
+    const allowedTypes: LineMockSample[] = [
+      'flex',
+      'rich-menu',
+      'pt-booking-created',
+      'pt-reminder-30m',
+      'pt-session-cancelled',
+    ]
+    if (!allowedTypes.includes(body.type as LineMockSample)) {
       throw new NotFoundException('LINE Mock sample không được hỗ trợ')
     }
-    this.lineMessaging.createMockSample(body.type as LineMockSample)
+    const locale = body.locale === 'ja' ? 'ja' : 'vi'
+    this.lineMessaging.createMockSample(body.type as LineMockSample, locale)
     return { success: true }
   }
 

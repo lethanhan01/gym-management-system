@@ -735,12 +735,25 @@ function SessionDetailModal({
         session ? (
           <>
             {session.status === 'scheduled' && onCancel && (
-              <Button
-                variant="danger"
-                onClick={() => onCancel(session)}
-              >
-                {t('workout.schedule.booking.cancelBtn')}
-              </Button>
+              (() => {
+                const isWithin2Hours =
+                  new Date(session.startTime).getTime() - Date.now() < 2 * 60 * 60 * 1000
+                if (isWithin2Hours) {
+                  return (
+                    <span className="text-xs text-amber-400 font-medium px-2.5 py-1 bg-amber-400/10 border border-amber-400/20 rounded-lg">
+                      {t('workout.schedule.booking.lateCancelWarning')}
+                    </span>
+                  )
+                }
+                return (
+                  <Button
+                    variant="danger"
+                    onClick={() => onCancel(session)}
+                  >
+                    {t('workout.schedule.booking.cancelBtn')}
+                  </Button>
+                )
+              })()
             )}
             <Button
               variant="primary"
@@ -908,6 +921,21 @@ export default function WorkoutSchedulePage() {
   }, [deepLinkSessionId, selectedSessionId])
 
   useEffect(() => {
+    if (searchParams.get('book') === '1') {
+      setBookModalOpen(true)
+    }
+  }, [searchParams])
+
+  const handleCloseBookModal = useCallback(() => {
+    setBookModalOpen(false)
+    if (!searchParams.has('book')) return
+
+    const next = new URLSearchParams(searchParams)
+    next.delete('book')
+    setSearchParams(next, { replace: true })
+  }, [searchParams, setSearchParams])
+
+  useEffect(() => {
     if (!selectedSessionId) {
       setSessionDetail(null)
       setDetailError(null)
@@ -1004,8 +1032,9 @@ export default function WorkoutSchedulePage() {
       )}
       <BookPtSessionModal
         open={bookModalOpen}
-        onClose={() => setBookModalOpen(false)}
+        onClose={handleCloseBookModal}
         onSuccess={() => {
+          handleCloseBookModal()
           loadSessions()
         }}
         scheduledCount={upcoming.length}

@@ -22,7 +22,8 @@
     "prisma:studio": "dotenv -e .env -e .env.local -- prisma studio",
     "db:safety:check": "node scripts/verify-no-destructive-db-commands.mjs",
     "exercise:catalog:preflight": "dotenv -e .env -e .env.local -- ts-node --transpile-only scripts/preflight-exercise-catalog.ts",
-    "exercise:catalog:sync": "dotenv -e .env -e .env.local -- ts-node --transpile-only scripts/sync-exercise-catalog.ts"
+    "exercise:catalog:sync": "dotenv -e .env -e .env.local -- ts-node --transpile-only scripts/sync-exercise-catalog.ts",
+    "line:sync-rich-menu": "dotenv -e .env -e .env.local -- ts-node --transpile-only scripts/sync-rich-menu.ts"
   },
   "dependencies": {
     "@nestjs/common": "^10.4.5",

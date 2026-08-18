@@ -645,7 +645,10 @@
         "cancelSuccess": "予約をキャンセルしました",
         "cancelling": "キャンセル中...",
         "confirmCancelBtn": "キャンセルを確定",
-        "lateCancelWarning": "開始2時間前を過ぎているためキャンセルできません。PTに直接ご連絡ください。"
+        "lateCancelWarning": "開始2時間前を過ぎているためキャンセルできません。PTに直接ご連絡ください。",
+        "noSubscriptionWarning": "PTセッションを予約するには有効なプランが必要です。",
+        "goToPackagesBtn": "プラン一覧を見る",
+        "bookingLimitWarning": "予約上限（3件）に達しています。"
       }
     },
     "categories": {

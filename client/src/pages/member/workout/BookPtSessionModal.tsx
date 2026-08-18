@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import {
   Clock,
@@ -58,6 +59,7 @@ export function BookPtSessionModal({
 }: BookPtSessionModalProps) {
   const { t, i18n } = useTranslation('member')
   const locale = i18n.language
+  const navigate = useNavigate()
   const { user } = useAuthStore()
 
   const availableDays = useMemo(() => getNext7Days(), [])
@@ -67,6 +69,7 @@ export function BookPtSessionModal({
 
   const [loadingAvailability, setLoadingAvailability] = useState(false)
   const [noTrainer, setNoTrainer] = useState(false)
+  const [noSubscription, setNoSubscription] = useState(false)
   const [bookingLoading, setBookingLoading] = useState(false)
 
   // Optional workout plan linkage
@@ -133,10 +136,12 @@ export function BookPtSessionModal({
     if (!open) {
       setSelectedSlot(null)
       setSelectedPlanDayId('')
+      setNoSubscription(false)
       return
     }
     if (selectedDate) {
       setSelectedSlot(null)
+      setNoSubscription(false)
       void fetchAvailability(selectedDate)
     }
   }, [open, selectedDate, fetchAvailability])
@@ -144,6 +149,7 @@ export function BookPtSessionModal({
   const handleBooking = async () => {
     if (!selectedSlot) return
     setBookingLoading(true)
+    setNoSubscription(false)
     try {
       await trainingSessionService.bookSession({
         startTime: selectedSlot.startTime,
@@ -160,6 +166,11 @@ export function BookPtSessionModal({
         toast.warning(t('workout.schedule.booking.conflictToast'))
         setSelectedSlot(null)
         void fetchAvailability(selectedDate)
+      } else if (code === 'MEMBER_HAS_NO_ACTIVE_SUBSCRIPTION') {
+        setNoSubscription(true)
+        toast.error(t('workout.schedule.booking.noSubscriptionWarning'))
+      } else if (code === 'BOOKING_LIMIT_EXCEEDED') {
+        toast.error(t('workout.schedule.booking.bookingLimitWarning'))
       } else {
         toast.error(getApiError(err, t('workout.schedule.errorLoad')))
       }
@@ -186,7 +197,7 @@ export function BookPtSessionModal({
           <Button
             variant="primary"
             onClick={() => void handleBooking()}
-            disabled={!selectedSlot || bookingLoading || noTrainer || scheduledCount >= 3}
+            disabled={!selectedSlot || bookingLoading || noTrainer || scheduledCount >= 3 || noSubscription}
             loading={bookingLoading}
           >
             {t('workout.schedule.booking.confirmBtn')}
@@ -220,6 +231,26 @@ export function BookPtSessionModal({
         {/* No Trainer Warning */}
         {noTrainer && (
           <Alert tone="warning" description={t('workout.schedule.booking.noTrainer')} />
+        )}
+
+        {/* Inactive Subscription Warning */}
+        {noSubscription && (
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 rounded-xl border border-amber-500/30 bg-amber-500/10 p-3.5 sm:p-4">
+            <p className="text-xs sm:text-sm font-medium text-amber-300">
+              {t('workout.schedule.booking.noSubscriptionWarning')}
+            </p>
+            <Button
+              variant="primary"
+              size="sm"
+              className="shrink-0 whitespace-nowrap"
+              onClick={() => {
+                onClose()
+                navigate('/member/membership')
+              }}
+            >
+              {t('workout.schedule.booking.goToPackagesBtn')} →
+            </Button>
+          </div>
         )}
 
         {/* Horizontal 7-day Date Picker */}

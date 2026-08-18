@@ -40,9 +40,17 @@ describe('LineMockController', () => {
     const controller = new LineMockController(lineMessaging as unknown as LineMessagingService)
 
     expect(controller.sample({ type: 'flex' })).toEqual({ success: true })
-    expect(controller.sample({ type: 'rich-menu' })).toEqual({ success: true })
-    expect(lineMessaging.createMockSample).toHaveBeenNthCalledWith(1, 'flex')
-    expect(lineMessaging.createMockSample).toHaveBeenNthCalledWith(2, 'rich-menu')
+    expect(controller.sample({ type: 'rich-menu', locale: 'ja' })).toEqual({ success: true })
+    expect(controller.sample({ type: 'pt-booking-created' })).toEqual({ success: true })
+    expect(controller.sample({ type: 'pt-reminder-30m', locale: 'ja' })).toEqual({ success: true })
+    expect(controller.sample({ type: 'pt-session-cancelled' })).toEqual({ success: true })
+
+    expect(lineMessaging.createMockSample).toHaveBeenNthCalledWith(1, 'flex', 'vi')
+    expect(lineMessaging.createMockSample).toHaveBeenNthCalledWith(2, 'rich-menu', 'ja')
+    expect(lineMessaging.createMockSample).toHaveBeenNthCalledWith(3, 'pt-booking-created', 'vi')
+    expect(lineMessaging.createMockSample).toHaveBeenNthCalledWith(4, 'pt-reminder-30m', 'ja')
+    expect(lineMessaging.createMockSample).toHaveBeenNthCalledWith(5, 'pt-session-cancelled', 'vi')
+
     expect(() => controller.sample({ type: 'text' })).toThrow(NotFoundException)
   })
 

@@ -44,7 +44,12 @@ export type LineMockOutboxMessage = {
   liffUrl?: string
 }
 
-export type LineMockSample = 'flex' | 'rich-menu'
+export type LineMockSample =
+  | 'flex'
+  | 'rich-menu'
+  | 'pt-booking-created'
+  | 'pt-reminder-30m'
+  | 'pt-session-cancelled'
 
 type TrainingLineEvent = 'created' | 'updated' | 'cancelled' | 'reminder' | 'starting'
 type LineMessageLocale = 'vi' | 'ja'
@@ -110,7 +115,7 @@ const LINE_MESSAGE_TEMPLATES: Record<
       reminder: ({ trainerName, roomName, when, reminderMinutes }) =>
         `トレーニング開始まであと${reminderMinutes}分です。\n日時: ${when}\nPT: ${trainerName}\nルーム: ${roomName}`,
       starting: ({ trainerName, roomName, when }) =>
-        `トレーニング開始時間です。\n日時: ${when}\nPT: ${trainerName}\nルーム: ${roomName}`,
+        `トレーニングの時間です。\n日時: ${when}\nPT: ${trainerName}\nルーム: ${roomName}`,
     },
   },
 }
@@ -151,7 +156,7 @@ export class LineMessagingService {
     return this.config.get<string>('LINE_MOCK_ENABLED') === 'true'
   }
 
-  getMockMessages(): LineMockOutboxMessage[] {
+  getMockMessages() {
     this.assertMockEnabled()
     return [...this.mockOutbox].reverse()
   }
@@ -161,8 +166,11 @@ export class LineMessagingService {
     this.mockOutbox.length = 0
   }
 
-  createMockSample(type: LineMockSample) {
+  createMockSample(type: LineMockSample, locale: LineMessageLocale = 'vi') {
     this.assertMockEnabled()
+    const targetLocale = locale === 'ja' ? 'ja' : 'vi'
+    const template = LINE_MESSAGE_TEMPLATES[targetLocale]
+
     if (type === 'flex') {
       const liffUrl = this.buildLiffUrl('/member/workout/sessions')
       this.addMockOutbox({
@@ -174,7 +182,8 @@ export class LineMessagingService {
           messages: [
             {
               type: 'flex',
-              altText: 'Lịch tập sắp tới tại RoGym',
+              altText:
+                targetLocale === 'ja' ? 'RoGymでの次のトレーニング' : 'Lịch tập sắp tới tại RoGym',
               contents: {
                 type: 'bubble',
                 header: {
@@ -191,16 +200,27 @@ export class LineMessagingService {
                   contents: [
                     {
                       type: 'text',
-                      text: 'Buổi tập với PT',
+                      text: targetLocale === 'ja' ? 'PTセッション' : 'Buổi tập với PT',
                       weight: 'bold',
                       size: 'xl',
                       wrap: true,
                     },
-                    { type: 'text', text: 'Hôm nay, 18:00 · Room A', color: '#6b7280', wrap: true },
+                    {
+                      type: 'text',
+                      text:
+                        targetLocale === 'ja'
+                          ? '本日 18:00 · Room A'
+                          : 'Hôm nay, 18:00 · Room A',
+                      color: '#6b7280',
+                      wrap: true,
+                    },
                     { type: 'separator' },
                     {
                       type: 'text',
-                      text: 'Chuẩn bị sẵn sàng cho buổi tập của bạn.',
+                      text:
+                        targetLocale === 'ja'
+                          ? 'トレーニングの準備をしましょう。'
+                          : 'Chuẩn bị sẵn sàng cho buổi tập của bạn.',
                       size: 'sm',
                       wrap: true,
                     },
@@ -213,7 +233,11 @@ export class LineMessagingService {
                     {
                       type: 'button',
                       style: 'primary',
-                      action: { type: 'uri', label: 'Xem lịch tập', uri: liffUrl },
+                      action: {
+                        type: 'uri',
+                        label: targetLocale === 'ja' ? 'スケジュールを見る' : 'Xem lịch tập',
+                        uri: liffUrl,
+                      },
                     },
                   ],
                 },
@@ -225,21 +249,153 @@ export class LineMessagingService {
       return
     }
 
-    this.addMockOutbox({
-      kind: 'rich-menu',
-      payload: {
-        size: { width: 2500, height: 843 },
-        selected: true,
-        name: 'RoGym Member Menu',
-        chatBarText: 'Mở menu RoGym',
-        areas: [
-          this.richMenuArea(0, 'Lịch tập', 'liff://mock-liff/member/workout/sessions'),
-          this.richMenuArea(625, 'Đặt lịch', 'liff://mock-liff/member/workout/sessions?book=1'),
-          this.richMenuArea(1250, 'Check-in', 'liff://mock-liff/member/workout/sessions'),
-          this.richMenuArea(1875, 'Hồ sơ', 'liff://mock-liff/member/profile'),
-        ],
-      },
-    })
+    if (type === 'rich-menu') {
+      this.addMockOutbox({
+        kind: 'rich-menu',
+        payload: {
+          size: { width: 2500, height: 843 },
+          selected: true,
+          name: 'RoGym Member Menu',
+          chatBarText: targetLocale === 'ja' ? 'RoGymメニュー' : 'Mở menu RoGym',
+          areas: [
+            this.richMenuArea(
+              0,
+              targetLocale === 'ja' ? 'スケジュール' : 'Lịch tập',
+              this.buildLiffUrl('/member/workout/sessions')
+            ),
+            this.richMenuArea(
+              625,
+              targetLocale === 'ja' ? 'PT予約' : 'Đặt lịch',
+              this.buildLiffUrl('/member/workout/sessions?book=1')
+            ),
+            this.richMenuArea(
+              1250,
+              targetLocale === 'ja' ? 'チェックイン' : 'Check-in',
+              this.buildLiffUrl('/member/attendance')
+            ),
+            this.richMenuArea(
+              1875,
+              targetLocale === 'ja' ? 'マイページ' : 'Hồ sơ',
+              this.buildLiffUrl('/member/profile')
+            ),
+          ],
+        },
+      })
+      return
+    }
+
+    if (type === 'pt-booking-created') {
+      const mockSessionId = '101'
+      const liffUrl = this.buildLiffUrl(`/member/workout/sessions?sessionId=${mockSessionId}`)
+      const text = template.training.created({
+        trainerName: 'Coach Alex',
+        roomName: targetLocale === 'ja' ? 'Cardio & Weights Room 01' : 'Phòng Cardio & Tạ 01',
+        when: targetLocale === 'ja' ? '2026/08/20 09:00' : '09:00 20/08/2026',
+        reminderMinutes: 30,
+      })
+      this.addMockOutbox({
+        kind: 'push',
+        recipient: LINE_MOCK_USER_ID,
+        liffUrl,
+        payload: {
+          to: LINE_MOCK_USER_ID,
+          messages: [
+            {
+              type: 'text',
+              text,
+              quickReply: {
+                items: [
+                  {
+                    type: 'action',
+                    action: {
+                      type: 'uri',
+                      label: template.detailButton,
+                      uri: liffUrl,
+                    },
+                  },
+                ],
+              },
+            },
+          ],
+        },
+      })
+      return
+    }
+
+    if (type === 'pt-reminder-30m') {
+      const mockSessionId = '101'
+      const liffUrl = this.buildLiffUrl(`/member/workout/sessions?sessionId=${mockSessionId}`)
+      const text = template.training.reminder({
+        trainerName: 'Coach Alex',
+        roomName: targetLocale === 'ja' ? 'Cardio & Weights Room 01' : 'Phòng Cardio & Tạ 01',
+        when: targetLocale === 'ja' ? '2026/08/20 09:00' : '09:00 20/08/2026',
+        reminderMinutes: 30,
+      })
+      this.addMockOutbox({
+        kind: 'push',
+        recipient: LINE_MOCK_USER_ID,
+        liffUrl,
+        payload: {
+          to: LINE_MOCK_USER_ID,
+          messages: [
+            {
+              type: 'text',
+              text,
+              quickReply: {
+                items: [
+                  {
+                    type: 'action',
+                    action: {
+                      type: 'uri',
+                      label: template.detailButton,
+                      uri: liffUrl,
+                    },
+                  },
+                ],
+              },
+            },
+          ],
+        },
+      })
+      return
+    }
+
+    if (type === 'pt-session-cancelled') {
+      const liffUrl = this.buildLiffUrl('/member/workout/sessions')
+      const text = template.training.cancelled({
+        trainerName: 'Coach Alex',
+        roomName: targetLocale === 'ja' ? 'Cardio & Weights Room 01' : 'Phòng Cardio & Tạ 01',
+        when: targetLocale === 'ja' ? '2026/08/20 09:00' : '09:00 20/08/2026',
+        reminderMinutes: 0,
+      })
+      this.addMockOutbox({
+        kind: 'push',
+        recipient: LINE_MOCK_USER_ID,
+        liffUrl,
+        payload: {
+          to: LINE_MOCK_USER_ID,
+          messages: [
+            {
+              type: 'text',
+              text,
+              quickReply: {
+                items: [
+                  {
+                    type: 'action',
+                    action: {
+                      type: 'uri',
+                      label: template.detailButton,
+                      uri: liffUrl,
+                    },
+                  },
+                ],
+              },
+            },
+          ],
+        },
+      })
+      return
+    }
   }
 
   async simulateMockEvent(type: 'follow' | 'unfollow') {

@@ -34,7 +34,7 @@ describe('api.ts interceptors & silent re-login', () => {
   })
 
   afterEach(() => {
-    window.location = originalLocation
+    window.location = originalLocation as any
   })
 
   it('detects LINE session accurately based on authProvider', () => {
@@ -100,7 +100,7 @@ describe('api.ts interceptors & silent re-login', () => {
     })
 
     // Spy on api instance to mock the retried request
-    const apiSpy = vi.spyOn(api, 'request' as any).mockResolvedValueOnce({
+    vi.spyOn(api, 'request' as any).mockResolvedValueOnce({
       data: { success: true, data: 'retried-result' },
     })
 
@@ -111,7 +111,7 @@ describe('api.ts interceptors & silent re-login', () => {
       response: { status: 401 },
     }
 
-    const result = await interceptor.rejected(error)
+    await interceptor.rejected(error)
     expect(axios.post).toHaveBeenCalledWith(
       expect.stringContaining('/auth/line-login'),
       { idToken: 'fresh-line-id-token' },

@@ -645,7 +645,10 @@
         "cancelSuccess": "Đã hủy lịch tập thành công",
         "cancelling": "Đang hủy...",
         "confirmCancelBtn": "Xác nhận hủy",
-        "lateCancelWarning": "Buổi tập diễn ra trong vòng 2 giờ tới. Để hủy hoặc đổi lịch, vui lòng liên hệ trực tiếp PT."
+        "lateCancelWarning": "Buổi tập diễn ra trong vòng 2 giờ tới. Để hủy hoặc đổi lịch, vui lòng liên hệ trực tiếp PT.",
+        "noSubscriptionWarning": "Bạn cần có gói tập đang hoạt động để đặt lịch với PT.",
+        "goToPackagesBtn": "Xem các gói tập",
+        "bookingLimitWarning": "Bạn đã đạt giới hạn tối đa 3 lịch hẹn đang chờ."
       }
     },
     "categories": {
