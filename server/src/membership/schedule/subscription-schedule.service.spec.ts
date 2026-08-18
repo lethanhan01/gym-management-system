@@ -26,6 +26,14 @@ const mockPrisma = {
   },
 }
 
+const mockNotifications = {
+  safeNotifyUser: jest.fn(),
+}
+
+const mockLineMessaging = {
+  safePushSubscriptionExpiringReminder: jest.fn(),
+}
+
 // ---------------------------------------------------------------------------
 // Suite
 // ---------------------------------------------------------------------------
@@ -34,8 +42,72 @@ describe('SubscriptionScheduleService', () => {
   let service: SubscriptionScheduleService
 
   beforeEach(() => {
-    service = new SubscriptionScheduleService(mockPrisma as any)
+    service = new SubscriptionScheduleService(
+      mockPrisma as any,
+      mockNotifications as any,
+      mockLineMessaging as any
+    )
     jest.clearAllMocks()
+  })
+
+  // -------------------------------------------------------------------------
+  // sendExpiringSubscriptionReminders
+  // -------------------------------------------------------------------------
+
+  describe('sendExpiringSubscriptionReminders', () => {
+    it('finds active subscriptions expiring tomorrow and sends in-app & LINE notifications', async () => {
+      mockPrisma.subscription.findMany.mockResolvedValue([
+        {
+          subscriptionId: 101n,
+          package: { name: 'VIP 1 Tháng' },
+          member: { userId: 50n },
+        },
+      ])
+      mockNotifications.safeNotifyUser.mockResolvedValue(true)
+      mockLineMessaging.safePushSubscriptionExpiringReminder.mockResolvedValue(true)
+
+      await service.sendExpiringSubscriptionReminders()
+
+      expect(mockPrisma.subscription.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            status: 'active',
+            endDate: expect.any(Date),
+            deletedAt: null,
+          }),
+          include: {
+            package: { select: { name: true } },
+            member: { select: { userId: true } },
+          },
+        })
+      )
+
+      expect(mockNotifications.safeNotifyUser).toHaveBeenCalledWith(
+        50n,
+        expect.objectContaining({
+          type: 'subscription.expiring_soon',
+          title: 'Gói tập sắp hết hạn',
+          resourceType: 'subscription',
+          resourceId: '101',
+          dedupeKey: expect.stringMatching(/^subscription:101:expiring_1d:/),
+          metadata: expect.objectContaining({
+            packageName: 'VIP 1 Tháng',
+            daysRemaining: 1,
+          }),
+        })
+      )
+
+      expect(mockLineMessaging.safePushSubscriptionExpiringReminder).toHaveBeenCalledWith(101n)
+    })
+
+    it('does not send notifications when no subscriptions expire tomorrow', async () => {
+      mockPrisma.subscription.findMany.mockResolvedValue([])
+
+      await service.sendExpiringSubscriptionReminders()
+
+      expect(mockNotifications.safeNotifyUser).not.toHaveBeenCalled()
+      expect(mockLineMessaging.safePushSubscriptionExpiringReminder).not.toHaveBeenCalled()
+    })
   })
 
   // -------------------------------------------------------------------------

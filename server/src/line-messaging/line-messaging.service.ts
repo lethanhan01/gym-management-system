@@ -54,9 +54,11 @@ const LINE_MESSAGE_TEMPLATES: Record<
   {
     dateLocale: string
     detailButton: string
+    renewButton: string
     followText: string
     followButton: string
     attendanceCheckin: string
+    subscriptionExpiring: (data: { packageName: string; endDate: string }) => string
     training: Record<
       TrainingLineEvent,
       (session: {
@@ -71,9 +73,12 @@ const LINE_MESSAGE_TEMPLATES: Record<
   vi: {
     dateLocale: 'vi-VN',
     detailButton: 'Xem chi tiết',
+    renewButton: 'Gia hạn ngay',
     followText: 'Chào mừng bạn đến với RoGym. Bấm nút bên dưới để mở ứng dụng hội viên.',
     followButton: 'Mở ứng dụng',
     attendanceCheckin: 'Bạn đã check-in thành công tại RoGym.',
+    subscriptionExpiring: ({ packageName, endDate }) =>
+      `Gói tập ${packageName} của bạn sẽ hết hạn vào ngày mai (${endDate}). Vui lòng gia hạn để tiếp tục sử dụng dịch vụ tại RoGym.`,
     training: {
       created: ({ trainerName, roomName, when }) =>
         `Bạn đã đặt lịch tập thành công.\nThời gian: ${when}\nPT: ${trainerName}\nPhòng: ${roomName}`,
@@ -89,9 +94,12 @@ const LINE_MESSAGE_TEMPLATES: Record<
   ja: {
     dateLocale: 'ja-JP',
     detailButton: '詳細を見る',
+    renewButton: '今すぐ更新',
     followText: 'RoGymへようこそ。下のボタンから会員アプリを開いてください。',
     followButton: 'アプリを開く',
     attendanceCheckin: 'RoGymでのチェックインが完了しました。',
+    subscriptionExpiring: ({ packageName, endDate }) =>
+      `ご利用中のプラン「${packageName}」は明日（${endDate}）に有効期限が切れます。継続してご利用いただくには更新手続きをお願いいたします。`,
     training: {
       created: ({ trainerName, roomName, when }) =>
         `トレーニング予約が完了しました。\n日時: ${when}\nPT: ${trainerName}\nルーム: ${roomName}`,
@@ -268,6 +276,17 @@ export class LineMessagingService {
     }
   }
 
+  async safePushSubscriptionExpiringReminder(subscriptionId: bigint) {
+    try {
+      return await this.pushSubscriptionExpiringReminder(subscriptionId)
+    } catch (error) {
+      this.logger.warn(
+        `LINE subscription expiring reminder push failed (subscriptionId=${subscriptionId.toString()}): ${this.describeError(error)}`
+      )
+      return false
+    }
+  }
+
   @Cron('* * * * *', { timeZone: 'Asia/Ho_Chi_Minh' })
   async sendUpcomingSessionReminders() {
     await this.sendSessionReminder(this.getReminderMinutes(), 'reminder')
@@ -391,6 +410,30 @@ export class LineMessagingService {
         this.getMessageTemplate().detailButton,
         '/member/attendance'
       ),
+    ])
+  }
+
+  private async pushSubscriptionExpiringReminder(subscriptionId: bigint) {
+    if (!this.canPushMessages()) return false
+
+    const subscription = await this.prisma.subscription.findFirst({
+      where: { subscriptionId, deletedAt: null },
+      include: {
+        package: { select: { name: true } },
+        member: { select: { user: { select: { lineId: true } } } },
+      },
+    })
+    if (!subscription?.member.user.lineId) return false
+
+    const template = this.getMessageTemplate()
+    const endDateFormatted = this.formatDate(subscription.endDate, template.dateLocale)
+    const text = template.subscriptionExpiring({
+      packageName: subscription.package?.name ?? 'Gói tập',
+      endDate: endDateFormatted,
+    })
+
+    return this.pushMessage(subscription.member.user.lineId, [
+      this.withLiffButton(text, template.renewButton, '/member/subscriptions/current'),
     ])
   }
 
@@ -535,6 +578,15 @@ export class LineMessagingService {
       timeZone: 'Asia/Ho_Chi_Minh',
       hour: '2-digit',
       minute: '2-digit',
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+    }).format(value)
+  }
+
+  private formatDate(value: Date, locale: string) {
+    return new Intl.DateTimeFormat(locale, {
+      timeZone: 'Asia/Ho_Chi_Minh',
       day: '2-digit',
       month: '2-digit',
       year: 'numeric',

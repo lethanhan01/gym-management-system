@@ -29,6 +29,9 @@ const mockPrisma = {
     findFirst: jest.fn(),
     findMany: jest.fn(),
   },
+  subscription: {
+    findFirst: jest.fn(),
+  },
 }
 
 const defaultEnv: Record<string, unknown> = {
@@ -268,6 +271,59 @@ describe('LineMessagingService', () => {
       100n,
       expect.objectContaining({ type: 'training.starting', dedupeKey: 'training:1:starting' })
     )
+    expect(mockFetch).not.toHaveBeenCalled()
+  })
+
+  it('pushes subscription expiring reminder when member has a LINE id', async () => {
+    mockPrisma.subscription.findFirst.mockResolvedValueOnce({
+      subscriptionId: 10n,
+      endDate: new Date('2026-08-19T00:00:00Z'),
+      package: { name: 'Gói VIP 1 Tháng' },
+      member: { user: { lineId: 'U_SUB_123' } },
+    })
+
+    await expect(service.safePushSubscriptionExpiringReminder(10n)).resolves.toBe(true)
+
+    expect(mockFetch).toHaveBeenCalledWith(
+      'https://api.line.me/v2/bot/message/push',
+      expect.objectContaining({
+        method: 'POST',
+        body: expect.stringContaining('redirect=%2Fmember%2Fsubscriptions%2Fcurrent'),
+      })
+    )
+    const body = JSON.parse(mockFetch.mock.calls[0][1].body)
+    expect(body.to).toBe('U_SUB_123')
+    expect(body.messages[0].text).toContain('Gói tập Gói VIP 1 Tháng của bạn sẽ hết hạn vào ngày mai')
+    expect(body.messages[0].quickReply.items[0].action.label).toBe('Gia hạn ngay')
+    expect(body.messages[0].quickReply.items[0].action.uri).toContain('redirect=%2Fmember%2Fsubscriptions%2Fcurrent')
+  })
+
+  it('pushes Japanese subscription expiring reminder when LINE_MESSAGE_LOCALE is ja', async () => {
+    env.LINE_MESSAGE_LOCALE = 'ja'
+    mockPrisma.subscription.findFirst.mockResolvedValueOnce({
+      subscriptionId: 10n,
+      endDate: new Date('2026-08-19T00:00:00Z'),
+      package: { name: 'Premium Plan' },
+      member: { user: { lineId: 'U_SUB_JA' } },
+    })
+
+    await expect(service.safePushSubscriptionExpiringReminder(10n)).resolves.toBe(true)
+
+    const body = JSON.parse(mockFetch.mock.calls[0][1].body)
+    expect(body.to).toBe('U_SUB_JA')
+    expect(body.messages[0].text).toContain('ご利用中のプラン「Premium Plan」は明日')
+    expect(body.messages[0].quickReply.items[0].action.label).toBe('今すぐ更新')
+  })
+
+  it('returns false when subscription has no linked LINE id', async () => {
+    mockPrisma.subscription.findFirst.mockResolvedValueOnce({
+      subscriptionId: 11n,
+      endDate: new Date('2026-08-19T00:00:00Z'),
+      package: { name: 'Gói Cơ Bản' },
+      member: { user: { lineId: null } },
+    })
+
+    await expect(service.safePushSubscriptionExpiringReminder(11n)).resolves.toBe(false)
     expect(mockFetch).not.toHaveBeenCalled()
   })
 })
