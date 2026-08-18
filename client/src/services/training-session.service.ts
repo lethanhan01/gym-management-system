@@ -179,7 +179,8 @@ export const trainingSessionService = {
     trainerStaffId: string,
     memberId?: string,
   ): Promise<TrainerAvailabilityData> => {
-    const params = new URLSearchParams({ date, trainerStaffId })
+    const params = new URLSearchParams({ date })
+    if (trainerStaffId) params.set('trainerStaffId', trainerStaffId)
     if (memberId) params.set('memberId', memberId)
     const res = await api.get<TrainerAvailabilityData>(
       `/training-sessions/trainer-availability-for-trainer?${params.toString()}`
