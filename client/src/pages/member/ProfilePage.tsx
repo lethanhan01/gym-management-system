@@ -94,7 +94,7 @@ export default function MemberProfilePage() {
     authService
       .me()
       .then((me) => {
-        setLineLinked(!!(me as { lineLinked?: boolean }).lineLinked)
+        setLineLinked(!!me.lineLinked)
       })
       .catch(() => { })
   }, [])

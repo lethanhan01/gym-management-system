@@ -48,7 +48,14 @@ describe('MemberProfilePage', () => {
       },
       'fake-token'
     )
-    vi.mocked(authService.me).mockResolvedValue({ lineLinked: false } as { lineLinked: boolean })
+    vi.mocked(authService.me).mockResolvedValue({
+      userId: '1',
+      email: 'test@example.com',
+      fullName: 'Le Thanh An',
+      roles: ['member'],
+      memberId: '10',
+      lineLinked: false,
+    })
   })
 
   it('renders member profile and displays synthetic line email as badge', async () => {
