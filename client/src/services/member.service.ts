@@ -158,7 +158,7 @@ export const memberService = {
 
   updateProfile: async (
     _memberId: string,
-    data: Partial<Pick<MemberProfile, 'phone' | 'dateOfBirth' | 'address'>>
+    data: Partial<Pick<MemberProfile, 'fullName' | 'phone' | 'dateOfBirth' | 'address'>>
   ): Promise<MemberProfile> => {
     const res = await api.patch<{ success: boolean; data: MemberProfile }>('/members/me', data)
     return res.data.data

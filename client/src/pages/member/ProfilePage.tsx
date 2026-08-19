@@ -1,7 +1,22 @@
 import { FormEvent, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
-import { Alert, Button, Card, ConfirmDialog, FormField, Input } from '@/components/ui'
+import {
+  Alert,
+  Avatar,
+  Badge,
+  Button,
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+  ConfirmDialog,
+  DatePickerInput,
+  FormField,
+  Input,
+} from '@/components/ui'
 import {
   MemberPage,
   MemberPageHeader,
@@ -41,14 +56,16 @@ function isSyntheticLineEmail(email?: string | null): boolean {
 export default function MemberProfilePage() {
   const { t } = useTranslation('member')
   const navigate = useNavigate()
-  const user = useAuthStore(state => state.user)
-  const clearAuth = useAuthStore(state => state.clearAuth)
-  const clearSubscription = useSubscriptionStore(state => state.clear)
+  const user = useAuthStore((state) => state.user)
+  const clearAuth = useAuthStore((state) => state.clearAuth)
+  const clearSubscription = useSubscriptionStore((state) => state.clear)
   const [profile, setProfile] = useState<MemberProfile | null>(null)
   const [loading, setLoading] = useState(true)
   const [profileError, setProfileError] = useState<string | null>(null)
 
   const [isEditing, setIsEditing] = useState(false)
+  const [editFullName, setEditFullName] = useState('')
+  const [editDateOfBirth, setEditDateOfBirth] = useState('')
   const [editPhone, setEditPhone] = useState('')
   const [editAddress, setEditAddress] = useState('')
   const [profileSaving, setProfileSaving] = useState(false)
@@ -74,12 +91,17 @@ export default function MemberProfilePage() {
   }, [t, user?.memberId])
 
   useEffect(() => {
-    authService.me()
-      .then((me) => { setLineLinked(!!(me as { lineLinked?: boolean }).lineLinked) })
+    authService
+      .me()
+      .then((me) => {
+        setLineLinked(!!(me as { lineLinked?: boolean }).lineLinked)
+      })
       .catch(() => {})
   }, [])
 
   function startEdit() {
+    setEditFullName(profile?.fullName ?? user?.fullName ?? '')
+    setEditDateOfBirth(profile?.dateOfBirth ? profile.dateOfBirth.slice(0, 10) : '')
     setEditPhone(profile?.phone ?? '')
     setEditAddress(profile?.address ?? '')
     setIsEditing(true)
@@ -90,13 +112,35 @@ export default function MemberProfilePage() {
   }
 
   async function handleSaveProfile() {
+    const trimmedName = editFullName.trim()
+    if (trimmedName.length < 2 || trimmedName.length > 100) {
+      toast.error(t('profile.errorFullNameInvalid'))
+      return
+    }
+
+    if (editDateOfBirth) {
+      const birthDate = new Date(editDateOfBirth)
+      if (isNaN(birthDate.getTime()) || birthDate > new Date()) {
+        toast.error(t('profile.errorBirthdayInvalid'))
+        return
+      }
+    }
+
     setProfileSaving(true)
     try {
       const updated = await memberService.updateProfile(user?.memberId ?? '', {
+        fullName: trimmedName,
         phone: editPhone.trim() || undefined,
+        dateOfBirth: editDateOfBirth || null,
         address: editAddress.trim() || null,
       })
       setProfile(updated)
+      if (user) {
+        useAuthStore.getState().setUser({
+          ...user,
+          fullName: updated.fullName,
+        })
+      }
       setIsEditing(false)
       toast.success(t('profile.buttonSave') + ' thành công')
     } catch (err) {
@@ -173,8 +217,7 @@ export default function MemberProfilePage() {
   const rawEmail = profile?.email ?? user?.email ?? ''
   const isLineAccount = isSyntheticLineEmail(rawEmail)
   const displayName = profile?.fullName ?? user?.fullName ?? '--'
-  const memberCodeText = profile?.memberCode ? `MC-${profile.memberCode}` : '--'
-  const initials = displayName !== '--' ? displayName.trim().charAt(0).toUpperCase() : 'M'
+  const memberCodeText = profile?.memberCode ?? '--'
 
   return (
     <MemberPage className="space-y-6">
@@ -202,119 +245,160 @@ export default function MemberProfilePage() {
       ) : (
         <main className="grid gap-6 xl:grid-cols-2">
           {/* Card 1: Thông tin cá nhân */}
-          <Card as="article" variant="compact" className="p-6 flex flex-col justify-between">
-            <div>
-              {/* Header profile info */}
-              <div className="mb-6 flex items-start justify-between gap-4 border-b border-white/5 pb-5">
-                <div className="flex items-center gap-3.5">
-                  <div className="flex h-13 w-13 items-center justify-center rounded-2xl bg-[var(--rogym-teal)]/15 text-[var(--rogym-teal)] font-bold text-lg border border-[var(--rogym-teal)]/25">
-                    {initials}
-                  </div>
-                  <div>
-                    <h2 className="text-base font-bold text-white leading-snug">{displayName}</h2>
-                    <div className="mt-1 flex items-center gap-2">
-                      <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-mono font-medium bg-white/5 text-white/70 border border-white/10">
-                        {memberCodeText}
-                      </span>
-                    </div>
-                  </div>
+          <Card as="article" variant="compact" className="flex flex-col justify-between p-6">
+            <header className="mb-6 border-b border-white/5 pb-5">
+              <CardHeader
+                icon={<Avatar name={displayName} size="lg" shape="rounded" tone="teal" border />}
+                actions={
+                  !isEditing && (
+                    <Button
+                      variant="outline-white"
+                      size="compact"
+                      type="button"
+                      responsiveIconOnly
+                      className="shrink-0 max-sm:h-9 max-sm:w-9 max-sm:justify-center max-sm:p-0"
+                      onClick={startEdit}
+                      leftIcon={<Edit3 size={15} />}
+                      aria-label={t('profile.buttonEdit')}
+                      title={t('profile.buttonEdit')}
+                    >
+                      {t('profile.buttonEdit')}
+                    </Button>
+                  )
+                }
+              >
+                <CardTitle size="md" truncate title={displayName}>
+                  {displayName}
+                </CardTitle>
+                <div className="pt-0.5">
+                  <Badge tone="muted" size="sm" className="font-mono">
+                    {memberCodeText}
+                  </Badge>
                 </div>
+              </CardHeader>
+            </header>
 
-                {!isEditing && (
-                  <Button
-                    variant="outline-white"
-                    size="compact"
-                    type="button"
-                    onClick={startEdit}
-                    leftIcon={<Edit3 size={14} />}
-                  >
-                    {t('profile.buttonEdit')}
-                  </Button>
-                )}
-              </div>
+            <CardContent className="space-y-1 p-0">
+              {isEditing ? (
+                <section className="border-b border-white/5 py-3">
+                  <FormField label={t('profile.fieldName')} required>
+                    <Input
+                      type="text"
+                      size="sm"
+                      value={editFullName}
+                      onChange={(e) => setEditFullName(e.target.value)}
+                      placeholder="Nhập họ và tên"
+                      className="mt-1"
+                    />
+                  </FormField>
+                </section>
+              ) : (
+                <ProfileInfoRow label={t('profile.fieldName')} value={displayName} />
+              )}
 
-              {/* Rows */}
-              <div className="space-y-1">
+              <ProfileInfoRow
+                label={t('profile.fieldMemberId')}
+                value={<span className="font-mono text-white/90">{memberCodeText}</span>}
+              />
+              <ProfileInfoRow
+                label={t('profile.fieldEmail')}
+                value={
+                  isLineAccount ? (
+                    <Badge tone="success" size="sm">
+                      <LineIcon className="mr-1 inline h-3.5 w-3.5 fill-current" />
+                      <span>{t('profile.lineLinkedBadge')}</span>
+                    </Badge>
+                  ) : (
+                    rawEmail || '--'
+                  )
+                }
+              />
+
+              {isEditing ? (
+                <section className="border-b border-white/5 py-3">
+                  <FormField label={t('profile.fieldPhone')}>
+                    <Input
+                      type="tel"
+                      size="sm"
+                      value={editPhone}
+                      onChange={(e) => setEditPhone(e.target.value)}
+                      placeholder="0901234567"
+                      className="mt-1"
+                    />
+                  </FormField>
+                </section>
+              ) : (
                 <ProfileInfoRow
-                  label={t('profile.fieldName')}
-                  value={displayName}
+                  label={t('profile.fieldPhone')}
+                  value={profile?.phone ?? t('profile.notUpdated')}
                 />
-                <ProfileInfoRow
-                  label={t('profile.fieldMemberId')}
-                  value={
-                    <span className="font-mono text-white/90">
-                      {memberCodeText}
-                    </span>
-                  }
-                />
-                <ProfileInfoRow
-                  label={t('profile.fieldEmail')}
-                  value={
-                    isLineAccount ? (
-                      <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#06C755]/15 text-[#06C755] border border-[#06C755]/30">
-                        <LineIcon className="w-3.5 h-3.5 fill-current" />
-                        <span>{t('profile.lineLinkedBadge')}</span>
-                      </div>
-                    ) : (
-                      rawEmail || '--'
-                    )
-                  }
-                />
+              )}
 
-                {isEditing ? (
-                  <div className="border-b border-white/5 py-3">
-                    <FormField label={t('profile.fieldPhone')}>
-                      <Input
-                        type="tel"
-                        size="sm"
-                        value={editPhone}
-                        onChange={(e) => setEditPhone(e.target.value)}
-                        placeholder="0901234567"
-                        className="mt-1"
-                      />
-                    </FormField>
-                  </div>
-                ) : (
-                  <ProfileInfoRow
-                    label={t('profile.fieldPhone')}
-                    value={profile?.phone ?? t('profile.notUpdated')}
-                  />
-                )}
-
+              {isEditing ? (
+                <section className="border-b border-white/5 py-3">
+                  <FormField label={t('profile.fieldBirthday')}>
+                    <DatePickerInput
+                      value={editDateOfBirth}
+                      max={new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' })}
+                      onChange={(value) => setEditDateOfBirth(value)}
+                      className="mt-1"
+                    />
+                  </FormField>
+                </section>
+              ) : (
                 <ProfileInfoRow
                   label={t('profile.fieldBirthday')}
-                  value={profile?.dateOfBirth ? formatDate(profile.dateOfBirth) : t('profile.notUpdated')}
+                  value={
+                    profile?.dateOfBirth ? formatDate(profile.dateOfBirth) : t('profile.notUpdated')
+                  }
                 />
+              )}
 
-                {isEditing ? (
-                  <div className="border-b border-white/5 py-3">
-                    <FormField label={t('profile.fieldAddress')}>
-                      <Input
-                        type="text"
-                        size="sm"
-                        value={editAddress}
-                        onChange={(e) => setEditAddress(e.target.value)}
-                        placeholder="Số nhà, đường, quận, thành phố"
-                        className="mt-1"
-                      />
-                    </FormField>
-                  </div>
-                ) : (
-                  <ProfileInfoRow
-                    label={t('profile.fieldAddress')}
-                    value={profile?.address ?? t('profile.notUpdated')}
-                  />
-                )}
-
+              {isEditing ? (
+                <section className="border-b border-white/5 py-3">
+                  <FormField label={t('profile.fieldAddress')}>
+                    <Input
+                      type="text"
+                      size="sm"
+                      value={editAddress}
+                      onChange={(e) => setEditAddress(e.target.value)}
+                      placeholder="Số nhà, đường, quận, thành phố"
+                      className="mt-1"
+                    />
+                  </FormField>
+                </section>
+              ) : (
                 <ProfileInfoRow
-                  label={t('profile.fieldTrainer')}
-                  value={profile?.trainerName ?? t('profile.notAssigned')}
+                  label={t('profile.fieldAddress')}
+                  value={profile?.address ?? t('profile.notUpdated')}
                 />
-              </div>
-            </div>
+              )}
+
+              <ProfileInfoRow
+                label={t('profile.fieldTrainer')}
+                value={
+                  <div className="flex items-center justify-end gap-2.5">
+                    <span
+                      className={`font-medium ${!profile?.trainerName ? 'italic text-white/40' : 'text-white'}`}
+                    >
+                      {profile?.trainerName ?? t('profile.notAssigned')}
+                    </span>
+                    <Button
+                      variant="outline-white"
+                      size="xs"
+                      type="button"
+                      className="shrink-0"
+                      onClick={() => navigate('/member/choose-trainer')}
+                    >
+                      {profile?.trainerName ? t('profile.buttonChangePt') : t('profile.buttonChoosePt')}
+                    </Button>
+                  </div>
+                }
+              />
+            </CardContent>
 
             {isEditing && (
-              <footer className="mt-6 pt-4 border-t border-white/5 flex gap-3">
+              <CardFooter className="mt-6 flex gap-3 border-t border-white/5 p-0 pt-4">
                 <Button
                   variant="outline-white"
                   type="button"
@@ -335,43 +419,42 @@ export default function MemberProfilePage() {
                 >
                   {t('profile.buttonSave')}
                 </Button>
-              </footer>
+              </CardFooter>
             )}
           </Card>
 
           {/* Card 2: Đổi mật khẩu */}
-          <Card as="article" variant="compact" className="p-6 flex flex-col justify-between">
+          <Card as="article" variant="compact" className="flex flex-col justify-between p-6">
             <div>
-              <header className="mb-5 flex items-center gap-3 border-b border-white/5 pb-4">
-                <div className="flex h-11 w-11 items-center justify-center rounded-xl [background:color-mix(in_srgb,var(--rogym-teal)_12%,transparent)] rogym-text-accent">
-                  <KeyRound size={20} />
-                </div>
-                <div>
-                  <h2 className="text-base font-bold text-white">{t('profile.sectionPassword')}</h2>
-                  <p className="text-xs text-white/50">{t('profile.fieldNewPassword')}</p>
-                </div>
+              <header className="mb-5 border-b border-white/5 pb-4">
+                <CardHeader icon={<KeyRound size={20} />}>
+                  <CardTitle size="md">{t('profile.sectionPassword')}</CardTitle>
+                  <CardDescription>{t('profile.fieldNewPassword')}</CardDescription>
+                </CardHeader>
               </header>
 
-              <form id="password-form" className="space-y-4" onSubmit={changePassword}>
-                <ProfilePasswordField
-                  label={t('profile.fieldCurrentPassword')}
-                  value={currentPassword}
-                  onChange={setCurrentPassword}
-                />
-                <ProfilePasswordField
-                  label={t('profile.fieldNewPassword')}
-                  value={newPassword}
-                  onChange={setNewPassword}
-                />
-                <ProfilePasswordField
-                  label={t('profile.fieldConfirmPassword')}
-                  value={confirmPassword}
-                  onChange={setConfirmPassword}
-                />
-              </form>
+              <CardContent className="p-0">
+                <form id="password-form" className="space-y-4" onSubmit={changePassword}>
+                  <ProfilePasswordField
+                    label={t('profile.fieldCurrentPassword')}
+                    value={currentPassword}
+                    onChange={setCurrentPassword}
+                  />
+                  <ProfilePasswordField
+                    label={t('profile.fieldNewPassword')}
+                    value={newPassword}
+                    onChange={setNewPassword}
+                  />
+                  <ProfilePasswordField
+                    label={t('profile.fieldConfirmPassword')}
+                    value={confirmPassword}
+                    onChange={setConfirmPassword}
+                  />
+                </form>
+              </CardContent>
             </div>
 
-            <footer className="mt-6 pt-4 border-t border-white/5">
+            <CardFooter className="mt-6 border-t border-white/5 p-0 pt-4">
               <Button
                 form="password-form"
                 type="submit"
@@ -382,87 +465,92 @@ export default function MemberProfilePage() {
               >
                 {t('profile.buttonUpdatePassword')}
               </Button>
-            </footer>
+            </CardFooter>
           </Card>
 
           {/* Card 3: LINE Account Link */}
           <Card as="article" variant="compact" className="p-6">
-            <header className="mb-4 flex items-center justify-between border-b border-white/5 pb-4">
-              <div className="flex items-center gap-3">
-                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#06C755]/15 text-[#06C755]">
-                  <LineIcon className="w-6 h-6 fill-current" />
-                </div>
-                <div>
-                  <h2 className="text-base font-bold text-white">{t('profile.sectionLine')}</h2>
-                  <p className="text-xs text-white/50">
-                    {lineLinked ? t('profile.lineLinkedDesc') : t('profile.lineNotLinked')}
-                  </p>
-                </div>
-              </div>
-
-              {lineLinked && (
-                <span className="hidden sm:inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-[#06C755]/15 text-[#06C755] border border-[#06C755]/30">
-                  {t('profile.lineLinkedBadge')}
-                </span>
-              )}
+            <header className="mb-4 border-b border-white/5 pb-4">
+              <CardHeader
+                icon={
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#06C755]/15 text-[#06C755]">
+                    <LineIcon className="h-5 w-5 fill-current" />
+                  </div>
+                }
+                actions={
+                  lineLinked ? (
+                    <Badge tone="success" size="sm" className="hidden sm:inline-flex">
+                      {t('profile.lineLinkedBadge')}
+                    </Badge>
+                  ) : undefined
+                }
+              >
+                <CardTitle size="md">{t('profile.sectionLine')}</CardTitle>
+                <CardDescription>
+                  {lineLinked ? t('profile.lineLinkedDesc') : t('profile.lineNotLinked')}
+                </CardDescription>
+              </CardHeader>
             </header>
 
-            {lineError && (
-              <Alert tone="error" description={lineError} className="mb-4" />
-            )}
+            <CardContent className="p-0">
+              {lineError && <Alert tone="error" description={lineError} className="mb-4" />}
 
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-              <div className="text-sm text-white/70">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="text-sm text-white/70">
+                  {lineLinked ? (
+                    <span className="flex items-center gap-1.5 font-medium text-[#06C755]">
+                      <span className="h-2 w-2 rounded-full bg-[#06C755]" />
+                      {t('profile.lineLinkedBadge')}
+                    </span>
+                  ) : (
+                    <span className="text-white/50">{t('profile.lineNotLinked')}</span>
+                  )}
+                </div>
+
                 {lineLinked ? (
-                  <span className="text-[#06C755] font-medium flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full bg-[#06C755]" />
-                    {t('profile.lineLinkedBadge')}
-                  </span>
+                  <Button
+                    variant="outline-white"
+                    size="compact"
+                    type="button"
+                    loading={lineLinking}
+                    loadingText="Đang xử lý..."
+                    onClick={handleUnlinkLine}
+                  >
+                    Hủy liên kết
+                  </Button>
                 ) : (
-                  <span className="text-white/50">{t('profile.lineNotLinked')}</span>
+                  <Button
+                    variant="primary"
+                    size="compact"
+                    type="button"
+                    loading={lineLinking}
+                    loadingText="Đang xử lý..."
+                    onClick={handleLinkLine}
+                    leftIcon={<LineIcon className="h-4 w-4 fill-current" />}
+                  >
+                    Liên kết với LINE
+                  </Button>
                 )}
               </div>
-
-              {lineLinked ? (
-                <Button
-                  variant="outline-white"
-                  size="compact"
-                  type="button"
-                  loading={lineLinking}
-                  loadingText="Đang xử lý..."
-                  onClick={handleUnlinkLine}
-                >
-                  Hủy liên kết
-                </Button>
-              ) : (
-                <Button
-                  variant="primary"
-                  size="compact"
-                  type="button"
-                  loading={lineLinking}
-                  loadingText="Đang xử lý..."
-                  onClick={handleLinkLine}
-                  leftIcon={<LineIcon className="w-4 h-4 fill-current" />}
-                >
-                  Liên kết với LINE
-                </Button>
-              )}
-            </div>
+            </CardContent>
           </Card>
 
           {/* Card 4: Quản lý tài khoản & Đăng xuất */}
-          <Card as="article" variant="compact" className="p-6 flex flex-col justify-between">
-            <header className="mb-4 flex items-center gap-3 border-b border-white/5 pb-4">
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-red-500/10 text-red-400">
-                <UserRound size={20} />
-              </div>
-              <div>
-                <h2 className="text-base font-bold text-white">{t('profile.sectionAccount')}</h2>
-                <p className="text-xs text-white/50">{t('profile.logoutDescription')}</p>
-              </div>
+          <Card as="article" variant="compact" className="flex flex-col justify-between p-6">
+            <header className="mb-4 border-b border-white/5 pb-4">
+              <CardHeader
+                icon={
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-red-500/10 text-red-400">
+                    <UserRound size={20} />
+                  </div>
+                }
+              >
+                <CardTitle size="md">{t('profile.sectionAccount')}</CardTitle>
+                <CardDescription>{t('profile.logoutDescription')}</CardDescription>
+              </CardHeader>
             </header>
 
-            <div className="mt-4">
+            <CardContent className="p-0 pt-2">
               <Button
                 variant="danger"
                 type="button"
@@ -472,7 +560,7 @@ export default function MemberProfilePage() {
               >
                 {t('profile.buttonLogout')}
               </Button>
-            </div>
+            </CardContent>
           </Card>
         </main>
       )}

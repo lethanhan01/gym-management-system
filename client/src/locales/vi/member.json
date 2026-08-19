@@ -138,7 +138,11 @@
     "lineLinkedBadge": "Đã liên kết LINE",
     "lineNotLinked": "Chưa liên kết",
     "sectionLine": "Tài khoản LINE",
-    "lineLinkedDesc": "Đã liên kết tài khoản LINE để nhận thông báo và đăng nhập nhanh."
+    "lineLinkedDesc": "Đã liên kết tài khoản LINE để nhận thông báo và đăng nhập nhanh.",
+    "buttonChoosePt": "Chọn PT",
+    "buttonChangePt": "Đổi PT",
+    "errorFullNameInvalid": "Họ và tên phải từ 2 đến 100 ký tự.",
+    "errorBirthdayInvalid": "Ngày sinh không hợp lệ."
   },
   "chooseTrainer": {
     "title": "Chọn huấn luyện viên",
