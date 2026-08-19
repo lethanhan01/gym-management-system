@@ -102,11 +102,16 @@ VITE_LIFF_MOCK="false"
 Hệ thống đã tích hợp sẵn script tự động hóa TypeScript để đồng bộ Rich Menu lên LINE Messaging API.
 
 ### 4.1. Kiểm tra trước khi đồng bộ (Dry Run)
-Chạy lệnh dry-run để kiểm tra cấu hình và định dạng JSON payload mà không gửi request ra ngoài:
+Chạy lệnh dry-run để kiểm tra cấu hình và định dạng JSON payload mà không gửi request ra ngoài (mặc định ngôn ngữ tiếng Nhật `ja`):
 
 ```powershell
 cd server
+# Mặc định tiếng Nhật (ja)
 npm run line:sync-rich-menu -- --dry-run
+
+# Tùy chọn tiếng Nhật hoặc tiếng Việt
+npm run line:sync-rich-menu -- --dry-run --locale ja
+npm run line:sync-rich-menu -- --dry-run --locale vi
 ```
 
 ### 4.2. Đồng bộ Menu & Upload ảnh lên LINE thật
@@ -114,12 +119,13 @@ Chạy lệnh đồng bộ chính thức:
 
 ```powershell
 cd server
-npm run line:sync-rich-menu
+# Đồng bộ Rich Menu tiếng Nhật làm mặc định
+npm run line:sync-rich-menu -- --locale ja
 ```
 
 Script sẽ tự động thực hiện 3 bước:
-1. `POST https://api.line.me/v2/bot/richmenu` -> Khởi tạo menu 4 zones.
-2. `POST https://api-data.line.me/v2/bot/richmenu/{richMenuId}/content` -> Upload ảnh Rich Menu chuẩn (`docs/assets/line/rich-menu-template.png` hoặc file tùy chọn với cờ `--image <path>`).
+1. `POST https://api.line.me/v2/bot/richmenu` -> Khởi tạo menu 4 zones với nhãn tiếng Nhật (`RoGymメニュー`, `スケジュール`, `PT予約`, `チェックイン`, `マイページ`).
+2. `POST https://api-data.line.me/v2/bot/richmenu/{richMenuId}/content` -> Upload ảnh Rich Menu chuẩn (`docs/assets/line/rich-menu-template-ja.png` hoặc file tùy chọn với cờ `--image <path>`).
 3. `POST https://api.line.me/v2/bot/user/all/richmenu/{richMenuId}` -> Kích hoạt menu làm mặc định cho tất cả follower của Official Account.
 
 ---

@@ -1,21 +1,30 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import {
-  Bot,
+  ArrowDown,
   Calendar,
   CalendarPlus,
+  Camera,
   Check,
   ChevronDown,
+  ChevronLeft,
   ChevronUp,
   Copy,
+  Dumbbell,
   ExternalLink,
   Globe,
+  Image as ImageIcon,
   Keyboard,
   List,
+  Menu,
   MessageSquare,
+  Mic,
+  Plus,
   QrCode,
   RefreshCw,
+  Search,
   Send,
   Smartphone,
+  Smile,
   Sparkles,
   User,
   X,
@@ -275,40 +284,79 @@ function InteractiveRichMenuGrid({
   areas,
   onSelectUrl,
   compact = false,
+  locale,
 }: {
   areas: JsonRecord[]
   onSelectUrl: (url: string, label?: string, index?: number) => void
   compact?: boolean
+  locale?: 'ja' | 'vi'
 }) {
-  const zoneMeta = [
-    {
-      icon: Calendar,
-      title: 'LỊCH TẬP',
-      subtitle: 'Xem & theo dõi',
-      badge: 'ZONE 1',
-    },
-    {
-      icon: CalendarPlus,
-      title: 'ĐẶT LỊCH PT',
-      subtitle: 'Xác nhận ngay',
-      badge: 'ZONE 2',
-    },
-    {
-      icon: QrCode,
-      title: 'CHECK-IN',
-      subtitle: 'Quét mã vào cổng',
-      badge: 'ZONE 3',
-    },
-    {
-      icon: User,
-      title: 'HỒ SƠ',
-      subtitle: 'Gói tập & PT',
-      badge: 'ZONE 4',
-    },
-  ]
+  const firstActionLabel =
+    areas.length > 0 && isRecord(areas[0]?.action) ? stringValue(areas[0]?.action.label) : ''
+  const isJa = locale === 'ja' || firstActionLabel === 'スケジュール' || (!locale && firstActionLabel !== 'Lịch tập')
+
+  const zoneMeta = isJa
+    ? [
+        {
+          icon: Calendar,
+          title: 'スケジュール',
+          subtitle: '履歴・予定確認',
+          badge: 'ZONE 1',
+        },
+        {
+          icon: CalendarPlus,
+          title: 'PT予約',
+          subtitle: '日時指定予約',
+          badge: '今すぐ予約',
+        },
+        {
+          icon: QrCode,
+          title: 'チェックイン',
+          subtitle: '会員証QR表示',
+          badge: 'ZONE 3',
+        },
+        {
+          icon: User,
+          title: 'マイページ',
+          subtitle: '契約・会員情報',
+          badge: 'ZONE 4',
+        },
+      ]
+    : [
+        {
+          icon: Calendar,
+          title: 'LỊCH TẬP',
+          subtitle: 'Xem & theo dõi',
+          badge: 'ZONE 1',
+        },
+        {
+          icon: CalendarPlus,
+          title: 'ĐẶT LỊCH PT',
+          subtitle: 'Xác nhận ngay',
+          badge: 'HOT · Zone 2',
+        },
+        {
+          icon: QrCode,
+          title: 'CHECK-IN',
+          subtitle: 'Quét mã vào cổng',
+          badge: 'ZONE 3',
+        },
+        {
+          icon: User,
+          title: 'HỒ SƠ',
+          subtitle: 'Gói tập & PT',
+          badge: 'ZONE 4',
+        },
+      ]
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-emerald-500/20 bg-black/40 overflow-hidden">
+    <div
+      className={`grid ${
+        compact
+          ? 'grid-cols-4 divide-x divide-emerald-500/20'
+          : 'grid-cols-2 sm:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-emerald-500/20'
+      } bg-black/40 overflow-hidden`}
+    >
       {areas.map((area, index) => {
         const action = isRecord(area.action) ? area.action : undefined
         const uri = stringValue(action?.uri) ?? ''
@@ -327,14 +375,16 @@ function InteractiveRichMenuGrid({
             type="button"
             onClick={() => uri && onSelectUrl(uri, label, index + 1)}
             className={`group relative flex flex-col items-center justify-center ${
-              compact ? 'p-3' : 'p-4 sm:p-5'
+              compact ? 'p-1.5 sm:p-2' : 'p-4 sm:p-5'
             } text-center transition-all hover:bg-white/[0.06] active:scale-[0.98] cursor-pointer`}
           >
             {/* Zone Badge using UI Badge Component */}
             <Badge
               tone="muted"
               size="xs"
-              className="mb-2 font-extrabold uppercase tracking-wider text-white/80 border-white/15 bg-white/10"
+              className={`${
+                compact ? 'mb-1 text-[9px] px-1 py-0' : 'mb-2 text-xs'
+              } font-extrabold uppercase tracking-wider text-white/80 border-white/15 bg-white/10`}
             >
               {meta.badge}
             </Badge>
@@ -342,19 +392,23 @@ function InteractiveRichMenuGrid({
             {/* Icon Box */}
             <div
               className={`flex ${
-                compact ? 'h-10 w-10' : 'h-12 w-12'
-              } items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-400 ring-1 ring-emerald-500/30 transition-all group-hover:scale-110 group-hover:bg-emerald-500/20 group-hover:text-emerald-300`}
+                compact ? 'h-8 w-8' : 'h-12 w-12'
+              } items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-400 ring-1 ring-emerald-500/30 transition-all group-hover:scale-105 group-hover:bg-emerald-500/20 group-hover:text-emerald-300`}
             >
-              <IconComponent size={compact ? 20 : 22} />
+              <IconComponent size={compact ? 16 : 22} />
             </div>
 
             {/* Title */}
-            <p className="mt-2 text-xs sm:text-sm font-bold tracking-wide text-white group-hover:text-[var(--rogym-accent)]">
+            <p
+              className={`mt-1.5 ${
+                compact ? 'text-[11px]' : 'text-xs sm:text-sm'
+              } font-bold tracking-tight text-white group-hover:text-[var(--rogym-accent)] line-clamp-1`}
+            >
               {label}
             </p>
 
             {/* Subtitle / Hint */}
-            <p className="mt-0.5 text-[11px] text-white/50">{meta.subtitle}</p>
+            {!compact && <p className="mt-0.5 text-[11px] text-white/50">{meta.subtitle}</p>}
 
             {!compact && (
               <span className="mt-2 inline-flex items-center gap-1 text-[10px] font-medium text-[var(--rogym-accent)] opacity-0 transition-opacity group-hover:opacity-100">
@@ -568,14 +622,14 @@ type ChatRoomEvent = {
 const DEFAULT_RICH_MENU_PAYLOAD: JsonRecord = {
   size: { width: 2500, height: 843 },
   selected: true,
-  name: 'RoGym Member Menu',
-  chatBarText: 'Mở menu RoGym',
+  name: 'RoGym Member Menu (JA)',
+  chatBarText: 'RoGymメニュー',
   areas: [
     {
       bounds: { x: 0, y: 0, width: 625, height: 843 },
       action: {
         type: 'uri',
-        label: 'Lịch tập',
+        label: 'スケジュール',
         uri: '/liff?redirect=/member/workout/sessions',
       },
     },
@@ -583,7 +637,7 @@ const DEFAULT_RICH_MENU_PAYLOAD: JsonRecord = {
       bounds: { x: 625, y: 0, width: 625, height: 843 },
       action: {
         type: 'uri',
-        label: 'Đặt lịch',
+        label: 'PT予約',
         uri: `/liff?redirect=${encodeURIComponent('/member/workout/sessions?book=1')}`,
       },
     },
@@ -591,7 +645,7 @@ const DEFAULT_RICH_MENU_PAYLOAD: JsonRecord = {
       bounds: { x: 1250, y: 0, width: 625, height: 843 },
       action: {
         type: 'uri',
-        label: 'Check-in',
+        label: 'チェックイン',
         uri: '/liff?redirect=/member/check-in',
       },
     },
@@ -599,11 +653,115 @@ const DEFAULT_RICH_MENU_PAYLOAD: JsonRecord = {
       bounds: { x: 1875, y: 0, width: 625, height: 843 },
       action: {
         type: 'uri',
-        label: 'Hồ sơ',
+        label: 'マイページ',
         uri: '/liff?redirect=/member/profile',
       },
     },
   ],
+}
+
+function formatLineDateBadge(isoString?: string): string {
+  if (!isoString) return 'Th 7, 18 thg 7'
+  const date = new Date(isoString)
+  if (isNaN(date.getTime())) return 'Th 7, 18 thg 7'
+  const days = ['CN', 'Th 2', 'Th 3', 'Th 4', 'Th 5', 'Th 6', 'Th 7']
+  const dayName = days[date.getDay()]
+  const dayNum = date.getDate()
+  const monthNum = date.getMonth() + 1
+  return `${dayName}, ${dayNum} thg ${monthNum}`
+}
+
+function LineMobileChatMessageBubble({
+  payload,
+  timestamp,
+  onSelectUrl,
+}: {
+  payload: JsonRecord
+  timestamp: string
+  onSelectUrl: (url: string) => void
+}) {
+  const messages = recordList(payload.messages)
+  const timeStr = new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+
+  if (messages.length === 0) return null
+
+  return (
+    <div className="flex items-start gap-2 max-w-[92%]">
+      {/* Bot Circular Avatar */}
+      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-700 text-white font-extrabold shadow border border-emerald-400/30">
+        <Dumbbell size={16} />
+      </div>
+
+      <div className="flex flex-col gap-2 min-w-0 flex-1">
+        {messages.map((message, index) => {
+          if (message.type === 'text') {
+            const rawText = stringValue(message.text) ?? ''
+            const quickReply = isRecord(message.quickReply)
+              ? recordList(message.quickReply.items)
+              : []
+            const hasLiffUrl =
+              rawText.includes('http') || rawText.includes('liff') || rawText.includes('/liff')
+
+            return (
+              <div key={index} className="flex items-end gap-1.5 min-w-0">
+                {/* Bubble Container */}
+                <div className="rounded-2xl rounded-tl-xs bg-[#262626] px-3.5 py-2.5 text-xs sm:text-sm text-white leading-relaxed shadow-md border border-white/5 max-w-[82%] break-words">
+                  <p className="whitespace-pre-wrap font-normal text-white/90">
+                    {rawText}
+                  </p>
+
+                  {/* LIFF Link Preview Card if message contains LIFF link */}
+                  {hasLiffUrl && (
+                    <div
+                      onClick={() => onSelectUrl('/liff?redirect=/member/profile')}
+                      className="mt-2.5 cursor-pointer overflow-hidden rounded-xl border border-white/10 bg-[#1d1d1d] p-2.5 transition-all hover:bg-[#222]"
+                    >
+                      <div className="flex items-center gap-1.5 text-xs font-bold text-white">
+                        <span>Gym Management</span>
+                        <ExternalLink size={12} className="text-blue-400" />
+                      </div>
+                      <p className="mt-1 text-[11px] text-white/60">
+                        Chạm vào đây để mở liên kết này.
+                      </p>
+                    </div>
+                  )}
+
+                  {quickReply.length > 0 && (
+                    <div className="mt-2.5 flex flex-wrap gap-1.5 border-t border-white/10 pt-2">
+                      <QuickReply items={quickReply} onSelectUrl={onSelectUrl} />
+                    </div>
+                  )}
+                </div>
+
+                {/* Timestamp outside bottom right of bubble */}
+                <span className="text-[10px] text-white/40 font-medium shrink-0 self-end mb-0.5">
+                  {timeStr}
+                </span>
+              </div>
+            )
+          }
+
+          if (message.type === 'flex') {
+            return (
+              <div key={index} className="flex items-end gap-1.5 min-w-0">
+                <div>
+                  <p className="mb-1 text-[10px] text-white/50">
+                    {stringValue(message.altText) ?? 'Flex Message'}
+                  </p>
+                  <FlexPreview contents={message.contents} />
+                </div>
+                <span className="text-[10px] text-white/40 font-medium shrink-0 self-end mb-0.5">
+                  {timeStr}
+                </span>
+              </div>
+            )
+          }
+
+          return null
+        })}
+      </div>
+    </div>
+  )
 }
 
 function LineChatRoomSimulator({
@@ -633,7 +791,7 @@ function LineChatRoomSimulator({
   )
 
   useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+    chatEndRef.current?.scrollIntoView?.({ behavior: 'smooth' })
   }, [allEvents.length, showRichMenu])
 
   function handleSendUserMessage(e?: React.FormEvent) {
@@ -667,164 +825,219 @@ function LineChatRoomSimulator({
   const areas = recordList(richMenuPayload.areas)
 
   return (
-    <div className="flex flex-col rounded-3xl border-2 border-[var(--rogym-border-teal-dim)] bg-[#04120e] shadow-2xl overflow-hidden min-h-[620px] max-h-[780px]">
-      {/* LINE Chat Room Simulator Header */}
-      <div className="flex items-center justify-between border-b border-emerald-500/20 bg-gradient-to-r from-[#07241c] via-[#0b362a] to-[#07241c] px-5 py-3.5 shadow-md">
-        <div className="flex items-center gap-3">
-          <div className="relative">
-            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-400 to-teal-600 text-black font-extrabold shadow-md">
-              <Bot size={22} />
+    <div className="flex flex-col items-center">
+      {/* Smartphone Device Frame for LINE Chat Room */}
+      <div className="relative w-[360px] sm:w-[380px] rounded-[48px] border-4 border-[#334155] bg-[#090d16] p-3 shadow-2xl ring-1 ring-white/20">
+        {/* Dynamic Island / Speaker Pill */}
+        <div className="absolute left-1/2 top-4 -translate-x-1/2 z-20 flex h-5 w-24 items-center justify-center rounded-full bg-black">
+          <div className="h-2.5 w-2.5 rounded-full bg-[#1e293b] ring-1 ring-white/10" />
+          <div className="ml-2 h-1.5 w-1.5 rounded-full bg-[#0ea5e9]/40" />
+        </div>
+
+        {/* Screen Bezel Container */}
+        <div className="relative flex flex-col h-[660px] w-full overflow-hidden rounded-[36px] bg-[#191919]">
+          {/* Status Bar */}
+          <div className="z-10 flex items-center justify-between bg-[#111111] px-5 pt-3 pb-1 text-[10px] text-white/70 font-semibold border-b border-white/5">
+            <span>4:37</span>
+            <div className="flex items-center gap-1.5">
+              <span className="text-[9px] px-1 rounded bg-white/10">VoLTE</span>
+              <span>4G</span>
+              <span className="inline-block h-2 w-3.5 rounded-sm border border-white/60 bg-white/40" />
             </div>
-            <span className="absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full border-2 border-[#07241c] bg-emerald-400 shadow-sm" />
           </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h3 className="text-sm font-bold text-white tracking-wide">RoGym Official</h3>
-              <span className="rounded bg-emerald-500/20 px-1.5 py-0.5 text-[10px] font-extrabold text-emerald-300 border border-emerald-500/30">
-                OFFICIAL ACCOUNT
+
+          {/* LINE Chat Room Header (Matching Screenshot) */}
+          <div className="z-10 flex items-center justify-between border-b border-white/10 bg-[#161616] px-3.5 py-2.5 shadow-md">
+            <div className="flex items-center gap-2 min-w-0">
+              <button type="button" className="text-white hover:opacity-70 p-0.5">
+                <ChevronLeft size={22} />
+              </button>
+              <div className="min-w-0 leading-tight">
+                <h3 className="text-sm font-extrabold text-white tracking-wide truncate uppercase">ROGYM</h3>
+                <p className="text-[10px] text-[#4183d7] font-semibold truncate">
+                  Phản hồi từ nhà cung cấp
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3 text-white">
+              <button type="button" title="Tìm kiếm" className="hover:opacity-70 p-1">
+                <Search size={18} />
+              </button>
+              <button type="button" title="Menu" className="hover:opacity-70 p-1">
+                <Menu size={20} />
+              </button>
+            </div>
+          </div>
+
+          {/* Chat Messages Timeline Stream */}
+          <div className="relative flex-1 overflow-y-auto p-3 space-y-3 bg-[#191919] scrollbar-thin scrollbar-thumb-white/10">
+            {/* Centered Date Badge */}
+            <div className="my-1.5 flex justify-center">
+              <span className="rounded-full bg-[#262626] px-3.5 py-0.5 text-[10px] font-semibold text-white/70 shadow-sm border border-white/5">
+                {formatLineDateBadge(allEvents[0]?.timestamp)}
               </span>
             </div>
-            <p className="text-[11px] text-emerald-200/70 font-medium">
-              Khung Chat Giả Lập LINE · Persistent Rich Menu (`selected: true`)
-            </p>
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="rounded-full bg-emerald-500/15 border border-emerald-500/30 px-2.5 py-1 text-[11px] font-semibold text-emerald-300">
-            Default Rich Menu: Active
-          </span>
-        </div>
-      </div>
 
-      {/* Chat Messages Timeline Stream */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-[#030c09]/90 scrollbar-thin scrollbar-thumb-emerald-800/40">
-        {/* Welcome / Header Banner */}
-        <div className="mx-auto max-w-sm rounded-2xl border border-white/10 bg-black/40 p-3 text-center text-xs text-white/60">
-          <p className="font-semibold text-emerald-400">💬 LINE OA Chat Room Active</p>
-          <p className="mt-1 text-[11px] text-white/50">
-            Tin nhắn gửi đi trôi ở phía trên. Rich Menu 4 vùng ghim cố định ở đáy khung chat bên dưới.
-          </p>
-        </div>
-
-        {allEvents.length === 0 ? (
-          <div className="py-12 text-center text-xs text-white/40 italic">
-            Chưa có tin nhắn trong khung chat. Bấm các nút ở trên để bắn mẫu tin nhắn Push / Flex Message.
-          </div>
-        ) : (
-          allEvents.map((evt) => {
-            if (evt.type === 'server-msg' && evt.mockMessage) {
-              return (
-                <div key={evt.id} className="flex flex-col items-start gap-1">
-                  <span className="ml-1 text-[10px] font-semibold text-white/40">
-                    RoGym Bot · {new Date(evt.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                  </span>
-                  <MessagePreview payload={evt.mockMessage.payload} onSelectUrl={onSelectUrl} />
-                </div>
-              )
-            }
-
-            if (evt.type === 'user-msg') {
-              return (
-                <div key={evt.id} className="flex flex-col items-end gap-1">
-                  <span className="mr-1 text-[10px] font-semibold text-white/40">
-                    Bạn · {new Date(evt.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                  </span>
-                  <div className="max-w-md rounded-2xl rounded-tr-xs bg-gradient-to-r from-emerald-600 to-teal-600 px-4 py-2.5 text-sm font-medium text-white shadow-lg">
-                    {evt.userText}
-                  </div>
-                </div>
-              )
-            }
-
-            if (evt.type === 'system-tap' && evt.tapDetails) {
-              return (
-                <div key={evt.id} className="my-2 flex justify-center">
-                  <div className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-[11px] font-bold text-emerald-300 shadow-sm">
-                    <Sparkles size={12} />
-                    <span>
-                      [Tap Zone {evt.tapDetails.zoneIndex}] {evt.tapDetails.label}
-                    </span>
-                    <span className="text-white/40">→ Mở LIFF Simulator</span>
-                  </div>
-                </div>
-              )
-            }
-
-            return null
-          })
-        )}
-        <div ref={chatEndRef} />
-      </div>
-
-      {/* Sticky Bottom Chat Bar (Rich Menu vs Bàn phím) */}
-      <div className="border-t-2 border-[var(--rogym-border-teal-dim)] bg-[#071d17]">
-        {/* Chat Bar Toggle Header Strip */}
-        <div className="flex items-center justify-between border-b border-white/10 bg-black/40 px-4 py-1.5 text-xs">
-          <button
-            type="button"
-            onClick={() => setShowRichMenu((prev) => !prev)}
-            className="group flex items-center gap-1.5 rounded-lg border border-white/15 bg-white/5 px-2.5 py-1 text-xs font-bold text-white transition-all hover:bg-[var(--rogym-accent)] hover:text-black active:scale-95"
-          >
-            {showRichMenu ? (
-              <>
-                <Keyboard size={14} />
-                <span>Thu gọn menu RoGym (Nhắn tin)</span>
-                <ChevronDown size={14} />
-              </>
+            {allEvents.length === 0 ? (
+              <div className="py-12 text-center text-[11px] text-white/40 italic">
+                Chưa có tin nhắn trong khung chat. Bấm các nút mẫu tin nhắn ở trên để thử nghiệm.
+              </div>
             ) : (
-              <>
-                <Sparkles size={14} className="text-[var(--rogym-accent)] group-hover:text-black" />
-                <span>Mở menu RoGym (4 Vùng)</span>
-                <ChevronUp size={14} />
-              </>
+              allEvents.map((evt) => {
+                if (evt.type === 'server-msg' && evt.mockMessage) {
+                  return (
+                    <LineMobileChatMessageBubble
+                      key={evt.id}
+                      payload={evt.mockMessage.payload}
+                      timestamp={evt.timestamp}
+                      onSelectUrl={onSelectUrl}
+                    />
+                  )
+                }
+
+                if (evt.type === 'user-msg') {
+                  const timeStr = new Date(evt.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                  return (
+                    <div key={evt.id} className="flex justify-end items-end gap-1.5">
+                      <span className="text-[10px] text-white/40 font-medium shrink-0 self-end mb-0.5">
+                        {timeStr}
+                      </span>
+                      <div className="max-w-[82%] rounded-2xl rounded-tr-xs bg-[#06C755] px-3.5 py-2.5 text-xs sm:text-sm font-medium text-white shadow-md">
+                        {evt.userText}
+                      </div>
+                    </div>
+                  )
+                }
+
+                if (evt.type === 'system-tap' && evt.tapDetails) {
+                  return (
+                    <div key={evt.id} className="my-1.5 flex justify-center">
+                      <div className="inline-flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-0.5 text-[10px] font-bold text-emerald-300 shadow-sm">
+                        <Sparkles size={11} />
+                        <span>
+                          [Zone {evt.tapDetails.zoneIndex}] {evt.tapDetails.label}
+                        </span>
+                        <span className="text-white/40">→ Simulator</span>
+                      </div>
+                    </div>
+                  )
+                }
+
+                return null
+              })
             )}
-          </button>
+            <div ref={chatEndRef} />
 
-          <span className="hidden sm:inline text-[11px] font-medium text-white/50">
-            {showRichMenu ? '📌 Rich Menu ghim cố định ở đáy' : '⌨ Bàn phím nhập tin nhắn User'}
-          </span>
-        </div>
+            {/* Floating Scroll Down Arrow Button */}
+            <button
+              type="button"
+              onClick={() => chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })}
+              className="absolute right-3 bottom-3 z-20 flex h-7 w-7 items-center justify-center rounded-lg bg-[#262626]/90 text-white shadow-xl border border-white/10 hover:bg-[#333] transition-all active:scale-95"
+              title="Cuộn xuống tin nhắn mới nhất"
+            >
+              <ArrowDown size={14} />
+            </button>
+          </div>
 
-        {/* Content area based on showRichMenu state */}
-        {showRichMenu ? (
-          /* Fixed 4-Zone Rich Menu Bar */
-          <div className="bg-[#051612] p-2">
-            <div className="rounded-xl border border-emerald-500/30 overflow-hidden shadow-inner">
-              <InteractiveRichMenuGrid
-                areas={areas}
-                compact
-                onSelectUrl={(url, label, index) => {
-                  if (label && index) {
-                    handleTapZone(label, url, index)
-                  } else {
-                    onSelectUrl(url)
-                  }
-                }}
-              />
+          {/* Sticky Bottom LINE Chat Bar & Toolbar */}
+          <div className="border-t border-white/10 bg-[#161616]">
+            {/* Chat Bar Toggle Header Strip */}
+            <div className="flex items-center justify-between border-b border-white/10 bg-black/40 px-3 py-1 text-[11px]">
+              <button
+                type="button"
+                onClick={() => setShowRichMenu((prev) => !prev)}
+                className="group flex items-center gap-1 rounded-lg border border-white/15 bg-white/5 px-2 py-0.5 text-[10px] font-bold text-white transition-all hover:bg-[var(--rogym-accent)] hover:text-black active:scale-95"
+              >
+                {showRichMenu ? (
+                  <>
+                    <Keyboard size={12} />
+                    <span>Thu gọn menu</span>
+                    <ChevronDown size={12} />
+                  </>
+                ) : (
+                  <>
+                    <Sparkles size={12} className="text-[var(--rogym-accent)] group-hover:text-black" />
+                    <span>{stringValue(richMenuPayload.chatBarText) || 'RoGymメニュー'} (4 Vùng)</span>
+                    <ChevronUp size={12} />
+                  </>
+                )}
+              </button>
+
+              <span className="text-[10px] font-medium text-white/50">
+                {showRichMenu ? '📌 Rich Menu 4 Vùng' : '⌨ Bàn phím LINE'}
+              </span>
+            </div>
+
+            {/* Content area based on showRichMenu state */}
+            {showRichMenu ? (
+              /* Fixed 4-Zone Rich Menu Bar */
+              <div className="bg-[#0f0f0f] p-1.5">
+                <div className="rounded-lg border border-white/10 overflow-hidden shadow-inner">
+                  <InteractiveRichMenuGrid
+                    areas={areas}
+                    compact
+                    onSelectUrl={(url, label, index) => {
+                      if (label && index) {
+                        handleTapZone(label, url, index)
+                      } else {
+                        onSelectUrl(url)
+                      }
+                    }}
+                  />
+                </div>
+              </div>
+            ) : (
+              /* Authentic LINE Toolbar Input Form */
+              <form onSubmit={handleSendUserMessage} className="flex items-center gap-2 p-2.5 bg-[#161616]">
+                <div className="flex items-center gap-2 text-white/70">
+                  <button type="button" title="Menu" className="hover:text-white transition-colors">
+                    <Plus size={18} />
+                  </button>
+                  <button type="button" title="Camera" className="hover:text-white transition-colors">
+                    <Camera size={18} />
+                  </button>
+                  <button type="button" title="Bộ sưu tập" className="hover:text-white transition-colors">
+                    <ImageIcon size={18} />
+                  </button>
+                </div>
+
+                {/* Pill Input */}
+                <div className="relative flex flex-1 items-center rounded-full border border-white/10 bg-[#262626] px-3 py-1.5">
+                  <input
+                    type="text"
+                    placeholder="Nhập tin nhắn..."
+                    value={inputText}
+                    onChange={(e) => setInputText(e.target.value)}
+                    className="w-full bg-transparent text-xs text-white placeholder-white/40 focus:outline-none"
+                  />
+                  <button type="button" title="Biểu cảm Emoji" className="ml-1 text-white/60 hover:text-white">
+                    <Smile size={16} />
+                  </button>
+                </div>
+
+                <div className="flex items-center gap-1.5">
+                  {inputText.trim() ? (
+                    <button
+                      type="submit"
+                      className="rounded-full bg-emerald-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-emerald-500 transition-all active:scale-95"
+                    >
+                      <Send size={12} />
+                    </button>
+                  ) : (
+                    <button type="button" title="Ghi âm" className="text-white/70 hover:text-white p-1">
+                      <Mic size={18} />
+                    </button>
+                  )}
+                </div>
+              </form>
+            )}
+
+            {/* Bottom Home Indicator Bar */}
+            <div className="flex h-4 w-full items-center justify-center bg-[#111111]">
+              <div className="h-1 w-28 rounded-full bg-white/40" />
             </div>
           </div>
-        ) : (
-          /* Keyboard Input Form */
-          <form onSubmit={handleSendUserMessage} className="flex items-center gap-2.5 p-3 bg-[#051410]">
-            <div className="relative flex-1">
-              <input
-                type="text"
-                placeholder="Nhập tin nhắn giả lập của User..."
-                value={inputText}
-                onChange={(e) => setInputText(e.target.value)}
-                className="w-full rounded-2xl border border-white/15 bg-black/60 px-4 py-2.5 text-xs sm:text-sm text-white placeholder-white/40 focus:border-[var(--rogym-accent)] focus:outline-none focus:ring-1 focus:ring-[var(--rogym-accent)]"
-              />
-            </div>
-            <button
-              type="submit"
-              disabled={!inputText.trim()}
-              className="inline-flex items-center gap-1.5 rounded-2xl bg-[var(--rogym-accent)] px-4 py-2.5 text-xs font-extrabold text-black transition-all hover:bg-[var(--rogym-accent)]/90 active:scale-95 disabled:opacity-40 disabled:pointer-events-none shadow-md"
-            >
-              <span>Gửi</span>
-              <Send size={14} />
-            </button>
-          </form>
-        )}
+        </div>
       </div>
     </div>
   )
@@ -837,7 +1050,7 @@ export default function LineMockInboxPage() {
   const [selectedLocale, setSelectedLocale] = useState<MockLocale>('vi')
   const [simulatorUrl, setSimulatorUrl] = useState<string>('/liff?redirect=/member/workout/sessions')
   const [simulatorOpen, setSimulatorOpen] = useState(false)
-  const [viewMode, setViewMode] = useState<'chat' | 'logs'>('chat')
+  const [viewMode, setViewMode] = useState<'chat' | 'logs'>('logs')
 
   const refresh = useCallback(async () => {
     setLoading(true)
