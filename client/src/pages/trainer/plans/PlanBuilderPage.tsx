@@ -588,12 +588,14 @@ export default function TrainerPlanBuilderPage() {
           {selectedExercise && (
             <div className="flex gap-4 rounded-2xl border border-white/5 bg-white/[0.025] p-4">
               {selectedExercise.gifUrl && (
-                <img
-                  src={selectedExercise.gifUrl}
-                  alt={t('plans.builder.exerciseModal.illustrationAlt', { name: selectedExercise.name })}
-                  className="h-24 w-28 rounded-xl object-cover"
-                  loading="lazy"
-                />
+                <div className="h-24 w-28 shrink-0 overflow-hidden rounded-xl bg-white p-1.5 flex items-center justify-center">
+                  <img
+                    src={selectedExercise.gifUrl}
+                    alt={t('plans.builder.exerciseModal.illustrationAlt', { name: selectedExercise.name })}
+                    className="h-full w-full object-contain"
+                    loading="lazy"
+                  />
+                </div>
               )}
               <div className="text-sm rogym-text-secondary">
                 <div className="font-semibold text-white">{selectedExercise.name}</div>
@@ -859,12 +861,14 @@ const PlanDayCard = memo(function PlanDayCard({
               {index + 1}
             </div>
             {item.exercise?.gifUrl && (
-              <img
-                src={item.exercise.gifUrl}
-                alt={t('plans.builder.exerciseModal.illustrationAlt', { name: item.exercise.name })}
-                className="h-20 w-full rounded-xl object-cover md:w-24"
-                loading="lazy"
-              />
+              <div className="h-20 w-24 shrink-0 overflow-hidden rounded-xl bg-white p-1 flex items-center justify-center">
+                <img
+                  src={item.exercise.gifUrl}
+                  alt={t('plans.builder.exerciseModal.illustrationAlt', { name: item.exercise.name })}
+                  className="h-full w-full object-contain"
+                  loading="lazy"
+                />
+              </div>
             )}
             <div className="min-w-0 flex-1">
               <div className="font-semibold text-white">

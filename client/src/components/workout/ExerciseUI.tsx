@@ -23,7 +23,7 @@ export const ExerciseCard = memo(function ExerciseCard({
   exercise,
   action,
   onClick,
-  imageAspect = '6/4',
+  imageAspect = '1/1',
 }: {
   exercise: Exercise
   action?: ReactNode
@@ -31,7 +31,7 @@ export const ExerciseCard = memo(function ExerciseCard({
   imageAspect?: string
 }) {
   const { t } = useTranslation('member')
-  const aspect = (imageAspect.replace('aspect-[', '').replace(']', '') || '6/4') as CardAspectRatio
+  const aspect = (imageAspect.replace('aspect-[', '').replace(']', '') || '1/1') as CardAspectRatio
 
   return (
     <Card
@@ -47,8 +47,10 @@ export const ExerciseCard = memo(function ExerciseCard({
         aspectRatio={
           aspect === '6/4' || aspect === '16/9' || aspect === '4/3' || aspect === '1/1' || aspect === '21/9'
             ? aspect
-            : '6/4'
+            : '1/1'
         }
+        objectFit="contain"
+        className={exercise.gifUrl ? 'bg-white' : undefined}
       >
         {!exercise.gifUrl && (
           <div className="flex h-full items-center justify-center rogym-text-dim">
@@ -57,38 +59,33 @@ export const ExerciseCard = memo(function ExerciseCard({
         )}
       </CardMedia>
 
-      <div className="flex flex-1 flex-col p-5">
+      <div className="flex flex-1 flex-col p-4">
         <div className="flex items-start justify-between gap-3">
-          <div>
-            <CardTitle size="md" as="h2">
+          <div className="min-w-0 flex-1">
+            <CardTitle size="md" as="h2" className="truncate">
               {exercise.name}
             </CardTitle>
-            <p className="mt-1 text-xs uppercase tracking-wider rogym-text-dim">
+            <p className="mt-1 truncate text-xs uppercase tracking-wider rogym-text-dim">
               {exercise.targetMuscle?.name ?? '—'}
             </p>
           </div>
           {action}
         </div>
 
-        <div className="mt-4 flex-1">
-          <CardDescription lineClamp={3}>
+        <div className="mt-3 flex-1">
+          <CardDescription lineClamp={2}>
             {exercise.description ?? t('workout.exercises.noDescription')}
           </CardDescription>
-          {exercise.instructions && exercise.instructions.length > 0 && (
-            <p className="mt-2 text-sm leading-5 rogym-text-dim line-clamp-2">
-              {exercise.instructions.join(' ')}
-            </p>
-          )}
         </div>
 
-        <div className="mt-5 grid grid-cols-2 gap-3 border-t border-white/5 pt-4 text-xs">
+        <div className="mt-4 grid grid-cols-2 gap-2 border-t border-white/5 pt-3 text-xs">
           <div>
             <span className="rogym-text-dim">{t('workout.exercises.fieldBodyPart', 'Body Part')}</span>
-            <div className="mt-1 text-white">{exercise.bodyPart?.name ?? '—'}</div>
+            <div className="mt-0.5 truncate text-white">{exercise.bodyPart?.name ?? '—'}</div>
           </div>
           <div>
             <span className="rogym-text-dim">{t('workout.exercises.fieldEquipment', 'Equipment')}</span>
-            <div className="mt-1 text-white">{exercise.equipment?.name ?? t('workout.exercises.equipmentNone', 'None')}</div>
+            <div className="mt-0.5 truncate text-white">{exercise.equipment?.name ?? t('workout.exercises.equipmentNone', 'None')}</div>
           </div>
         </div>
       </div>
