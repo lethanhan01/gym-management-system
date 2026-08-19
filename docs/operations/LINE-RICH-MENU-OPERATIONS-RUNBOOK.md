@@ -31,9 +31,16 @@ Hệ thống cung cấp trải nghiệm đặt lịch và tương tác hội vi�
 | Vùng (Zone) | Tọa độ (x, y, w, h) | Canonical URI Action | Đích đến & Hành vi trải nghiệm |
 | :--- | :--- | :--- | :--- |
 | **1. Lịch tập** | `0, 0, 625, 843` | `https://liff.line.me/<LIFF_ID>?redirect=/member/workout/sessions` | Mở trang Lịch tập (`WorkoutSchedulePage`), xem Calendar buổi tập sắp tới. |
-| **2. Đặt lịch** | `625, 0, 625, 843` | `https://liff.line.me/<LIFF_ID>?redirect=/member/workout/sessions?book=1` | Tự động bung modal Đặt lịch (`BookPtSessionModal`) với PT phụ trách. |
-| **3. Check-in** | `1250, 0, 625, 843` | `https://liff.line.me/<LIFF_ID>?redirect=/member/attendance` | Mở trang Điểm danh (`AttendancePage`) hiển thị mã QR hội viên. |
+| **2. Đặt lịch** | `625, 0, 625, 843` | `https://liff.line.me/<LIFF_ID>?redirect=%2Fmember%2Fworkout%2Fsessions%3Fbook%3D1` | Tự động bung modal Đặt lịch (`BookPtSessionModal`) với PT phụ trách. |
+| **3. Check-in** | `1250, 0, 625, 843` | `https://liff.line.me/<LIFF_ID>?redirect=/member/check-in` | Mở trang QR Check-in (`CheckInPage`) sẵn sàng quét mã camera vào phòng tập. |
 | **4. Hồ sơ** | `1875, 0, 625, 843` | `https://liff.line.me/<LIFF_ID>?redirect=/member/profile` | Mở trang Thông tin cá nhân, xem chi tiết gói tập & PT. |
+
+### 1.3. Nguyên lý Duy trì trạng thái Persistent Rich Menu khi gửi Push Message
+ Trên LINE Platform thật, việc gửi **Push Message / Flex Message** không làm ẩn hay mất Rich Menu khi menu được thiết lập làm Default Rich Menu (`/user/all/richmenu/{richMenuId}`) với thuộc tính `selected: true`.
+- **Cơ chế hoạt động:**
+  - Tin nhắn Push/Flex mới sẽ xuất hiện trôi ở dòng thời gian phía trên.
+  - Rich Menu 4 vùng vẫn ghim cố định ở chân ứng dụng LINE di động.
+  - Người dùng có thể nhấn nút Chat Bar ở góc dưới ("Mở menu RoGym" / "Thu gọn menu") để mở/xếp gọn Rich Menu để nhường chỗ cho bàn phím nhắn tin.
 
 ---
 

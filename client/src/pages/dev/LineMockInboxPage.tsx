@@ -1,20 +1,27 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import {
+  Bot,
   Calendar,
   CalendarPlus,
   Check,
+  ChevronDown,
+  ChevronUp,
   Copy,
   ExternalLink,
   Globe,
+  Keyboard,
+  List,
   MessageSquare,
   QrCode,
   RefreshCw,
+  Send,
   Smartphone,
   Sparkles,
   User,
   X,
 } from 'lucide-react'
 import api from '@/services/api'
+import { Badge } from '@/components/ui/Badge'
 
 type MockMessage = {
   id: string
@@ -264,6 +271,103 @@ function MessagePreview({
   )
 }
 
+function InteractiveRichMenuGrid({
+  areas,
+  onSelectUrl,
+  compact = false,
+}: {
+  areas: JsonRecord[]
+  onSelectUrl: (url: string, label?: string, index?: number) => void
+  compact?: boolean
+}) {
+  const zoneMeta = [
+    {
+      icon: Calendar,
+      title: 'LỊCH TẬP',
+      subtitle: 'Xem & theo dõi',
+      badge: 'ZONE 1',
+    },
+    {
+      icon: CalendarPlus,
+      title: 'ĐẶT LỊCH PT',
+      subtitle: 'Xác nhận ngay',
+      badge: 'ZONE 2',
+    },
+    {
+      icon: QrCode,
+      title: 'CHECK-IN',
+      subtitle: 'Quét mã vào cổng',
+      badge: 'ZONE 3',
+    },
+    {
+      icon: User,
+      title: 'HỒ SƠ',
+      subtitle: 'Gói tập & PT',
+      badge: 'ZONE 4',
+    },
+  ]
+
+  return (
+    <div className="grid grid-cols-2 sm:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-emerald-500/20 bg-black/40 overflow-hidden">
+      {areas.map((area, index) => {
+        const action = isRecord(area.action) ? area.action : undefined
+        const uri = stringValue(action?.uri) ?? ''
+        const label = stringValue(action?.label) ?? `Zone ${index + 1}`
+        const meta = zoneMeta[index] ?? {
+          icon: Sparkles,
+          title: label,
+          subtitle: 'Mở liên kết',
+          badge: `ZONE ${index + 1}`,
+        }
+        const IconComponent = meta.icon
+
+        return (
+          <button
+            key={index}
+            type="button"
+            onClick={() => uri && onSelectUrl(uri, label, index + 1)}
+            className={`group relative flex flex-col items-center justify-center ${
+              compact ? 'p-3' : 'p-4 sm:p-5'
+            } text-center transition-all hover:bg-white/[0.06] active:scale-[0.98] cursor-pointer`}
+          >
+            {/* Zone Badge using UI Badge Component */}
+            <Badge
+              tone="muted"
+              size="xs"
+              className="mb-2 font-extrabold uppercase tracking-wider text-white/80 border-white/15 bg-white/10"
+            >
+              {meta.badge}
+            </Badge>
+
+            {/* Icon Box */}
+            <div
+              className={`flex ${
+                compact ? 'h-10 w-10' : 'h-12 w-12'
+              } items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-400 ring-1 ring-emerald-500/30 transition-all group-hover:scale-110 group-hover:bg-emerald-500/20 group-hover:text-emerald-300`}
+            >
+              <IconComponent size={compact ? 20 : 22} />
+            </div>
+
+            {/* Title */}
+            <p className="mt-2 text-xs sm:text-sm font-bold tracking-wide text-white group-hover:text-[var(--rogym-accent)]">
+              {label}
+            </p>
+
+            {/* Subtitle / Hint */}
+            <p className="mt-0.5 text-[11px] text-white/50">{meta.subtitle}</p>
+
+            {!compact && (
+              <span className="mt-2 inline-flex items-center gap-1 text-[10px] font-medium text-[var(--rogym-accent)] opacity-0 transition-opacity group-hover:opacity-100">
+                <span>Mở mô phỏng</span> →
+              </span>
+            )}
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
 function RichMenuPreview({
   payload,
   onSelectUrl,
@@ -272,36 +376,6 @@ function RichMenuPreview({
   onSelectUrl: (url: string) => void
 }) {
   const areas = recordList(payload.areas)
-  const zoneMeta = [
-    {
-      icon: Calendar,
-      title: 'LỊCH TẬP',
-      subtitle: 'Xem & theo dõi',
-      badge: 'Zone 1',
-      isCta: false,
-    },
-    {
-      icon: CalendarPlus,
-      title: 'ĐẶT LỊCH PT',
-      subtitle: 'Xác nhận ngay',
-      badge: 'HOT · Zone 2',
-      isCta: true,
-    },
-    {
-      icon: QrCode,
-      title: 'CHECK-IN',
-      subtitle: 'Quét mã vào cổng',
-      badge: 'Zone 3',
-      isCta: false,
-    },
-    {
-      icon: User,
-      title: 'HỒ SƠ',
-      subtitle: 'Gói tập & PT',
-      badge: 'Zone 4',
-      isCta: false,
-    },
-  ]
 
   return (
     <div className="space-y-4">
@@ -311,76 +385,15 @@ function RichMenuPreview({
         <div className="flex items-center justify-between border-b border-emerald-500/20 bg-gradient-to-r from-[#07241c] via-[#0b362a] to-[#07241c] px-4 py-2 text-xs">
           <div className="flex items-center gap-2">
             <span className="font-bold tracking-widest text-[var(--rogym-accent)]">ROGYM OFFICIAL</span>
-            <span className="rounded bg-emerald-500/20 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-300">
+            <Badge tone="success" size="xs">
               2500 × 843 px
-            </span>
+            </Badge>
           </div>
           <span className="text-[11px] text-white/50">Click vào vùng bất kỳ để test trên Simulator</span>
         </div>
 
-        {/* 4 Interactive Tap Zones Grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-emerald-500/20 bg-black/40">
-          {areas.map((area, index) => {
-            const action = isRecord(area.action) ? area.action : undefined
-            const uri = stringValue(action?.uri) ?? ''
-            const meta = zoneMeta[index] ?? {
-              icon: Sparkles,
-              title: stringValue(action?.label) ?? `Zone ${index + 1}`,
-              subtitle: 'Mở liên kết',
-              badge: `Zone ${index + 1}`,
-              isCta: false,
-            }
-            const IconComponent = meta.icon
-
-            return (
-              <button
-                key={index}
-                type="button"
-                onClick={() => uri && onSelectUrl(uri)}
-                className={`group relative flex flex-col items-center justify-center p-4 text-center transition-all ${
-                  meta.isCta
-                    ? 'bg-gradient-to-b from-emerald-900/40 via-emerald-800/30 to-emerald-950/60 hover:from-emerald-800/60 hover:to-emerald-900/80 ring-1 ring-inset ring-[var(--rogym-accent)]/40'
-                    : 'hover:bg-white/[0.04]'
-                } active:scale-[0.98] cursor-pointer`}
-              >
-                {/* Badge */}
-                <span
-                  className={`mb-2 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
-                    meta.isCta
-                      ? 'bg-[var(--rogym-accent)] text-black'
-                      : 'bg-white/10 text-white/70'
-                  }`}
-                >
-                  {meta.badge}
-                </span>
-
-                {/* Icon */}
-                <div
-                  className={`flex h-12 w-12 items-center justify-center rounded-2xl transition-transform group-hover:scale-110 ${
-                    meta.isCta
-                      ? 'bg-[var(--rogym-accent)]/20 text-[var(--rogym-accent)] ring-1 ring-[var(--rogym-accent)]/50'
-                      : 'bg-white/5 text-white/80 group-hover:text-emerald-300'
-                  }`}
-                >
-                  <IconComponent size={22} />
-                </div>
-
-                {/* Title */}
-                <p className="mt-2.5 text-xs sm:text-sm font-bold tracking-wide text-white group-hover:text-[var(--rogym-accent)]">
-                  {stringValue(action?.label) ?? meta.title}
-                </p>
-
-                {/* Subtitle / Hint */}
-                <p className="mt-0.5 text-[11px] text-white/50">{meta.subtitle}</p>
-
-                {/* Hover CTA Indicator */}
-                <span className="mt-2 inline-flex items-center gap-1 text-[10px] font-medium text-[var(--rogym-accent)] opacity-0 transition-opacity group-hover:opacity-100">
-                  <span>Mở mô phỏng</span> →
-                </span>
-              </button>
-            )
-          })}
-        </div>
+        {/* Reusable 4 Interactive Tap Zones Grid */}
+        <InteractiveRichMenuGrid areas={areas} onSelectUrl={(url) => onSelectUrl(url)} />
       </div>
 
       {/* Target URLs Table */}
@@ -543,6 +556,280 @@ function MobilePhoneSimulator({
   )
 }
 
+type ChatRoomEvent = {
+  id: string
+  type: 'server-msg' | 'user-msg' | 'system-tap'
+  timestamp: string
+  mockMessage?: MockMessage
+  userText?: string
+  tapDetails?: { label: string; uri: string; zoneIndex: number }
+}
+
+const DEFAULT_RICH_MENU_PAYLOAD: JsonRecord = {
+  size: { width: 2500, height: 843 },
+  selected: true,
+  name: 'RoGym Member Menu',
+  chatBarText: 'Mở menu RoGym',
+  areas: [
+    {
+      bounds: { x: 0, y: 0, width: 625, height: 843 },
+      action: {
+        type: 'uri',
+        label: 'Lịch tập',
+        uri: '/liff?redirect=/member/workout/sessions',
+      },
+    },
+    {
+      bounds: { x: 625, y: 0, width: 625, height: 843 },
+      action: {
+        type: 'uri',
+        label: 'Đặt lịch',
+        uri: `/liff?redirect=${encodeURIComponent('/member/workout/sessions?book=1')}`,
+      },
+    },
+    {
+      bounds: { x: 1250, y: 0, width: 625, height: 843 },
+      action: {
+        type: 'uri',
+        label: 'Check-in',
+        uri: '/liff?redirect=/member/check-in',
+      },
+    },
+    {
+      bounds: { x: 1875, y: 0, width: 625, height: 843 },
+      action: {
+        type: 'uri',
+        label: 'Hồ sơ',
+        uri: '/liff?redirect=/member/profile',
+      },
+    },
+  ],
+}
+
+function LineChatRoomSimulator({
+  messages,
+  onSelectUrl,
+}: {
+  messages: MockMessage[]
+  onSelectUrl: (url: string) => void
+}) {
+  const [showRichMenu, setShowRichMenu] = useState(true)
+  const [inputText, setInputText] = useState('')
+  const [userEvents, setUserEvents] = useState<ChatRoomEvent[]>([])
+  const chatEndRef = useRef<HTMLDivElement>(null)
+
+  // Merge server messages & user events chronologically
+  const serverEvents: ChatRoomEvent[] = messages
+    .filter((m) => m.kind !== 'rich-menu')
+    .map((m) => ({
+      id: m.id,
+      type: 'server-msg',
+      timestamp: m.createdAt,
+      mockMessage: m,
+    }))
+
+  const allEvents = [...serverEvents, ...userEvents].sort(
+    (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+  )
+
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [allEvents.length, showRichMenu])
+
+  function handleSendUserMessage(e?: React.FormEvent) {
+    e?.preventDefault()
+    if (!inputText.trim()) return
+
+    const newEvent: ChatRoomEvent = {
+      id: `user-${Date.now()}`,
+      type: 'user-msg',
+      timestamp: new Date().toISOString(),
+      userText: inputText.trim(),
+    }
+
+    setUserEvents((prev) => [...prev, newEvent])
+    setInputText('')
+  }
+
+  function handleTapZone(label: string, uri: string, zoneIndex: number) {
+    const tapEvent: ChatRoomEvent = {
+      id: `tap-${Date.now()}`,
+      type: 'system-tap',
+      timestamp: new Date().toISOString(),
+      tapDetails: { label, uri, zoneIndex },
+    }
+    setUserEvents((prev) => [...prev, tapEvent])
+    onSelectUrl(uri)
+  }
+
+  const richMenuMsg = messages.find((m) => m.kind === 'rich-menu')
+  const richMenuPayload = (richMenuMsg?.payload as JsonRecord) || DEFAULT_RICH_MENU_PAYLOAD
+  const areas = recordList(richMenuPayload.areas)
+
+  return (
+    <div className="flex flex-col rounded-3xl border-2 border-[var(--rogym-border-teal-dim)] bg-[#04120e] shadow-2xl overflow-hidden min-h-[620px] max-h-[780px]">
+      {/* LINE Chat Room Simulator Header */}
+      <div className="flex items-center justify-between border-b border-emerald-500/20 bg-gradient-to-r from-[#07241c] via-[#0b362a] to-[#07241c] px-5 py-3.5 shadow-md">
+        <div className="flex items-center gap-3">
+          <div className="relative">
+            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-400 to-teal-600 text-black font-extrabold shadow-md">
+              <Bot size={22} />
+            </div>
+            <span className="absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full border-2 border-[#07241c] bg-emerald-400 shadow-sm" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <h3 className="text-sm font-bold text-white tracking-wide">RoGym Official</h3>
+              <span className="rounded bg-emerald-500/20 px-1.5 py-0.5 text-[10px] font-extrabold text-emerald-300 border border-emerald-500/30">
+                OFFICIAL ACCOUNT
+              </span>
+            </div>
+            <p className="text-[11px] text-emerald-200/70 font-medium">
+              Khung Chat Giả Lập LINE · Persistent Rich Menu (`selected: true`)
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="rounded-full bg-emerald-500/15 border border-emerald-500/30 px-2.5 py-1 text-[11px] font-semibold text-emerald-300">
+            Default Rich Menu: Active
+          </span>
+        </div>
+      </div>
+
+      {/* Chat Messages Timeline Stream */}
+      <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-[#030c09]/90 scrollbar-thin scrollbar-thumb-emerald-800/40">
+        {/* Welcome / Header Banner */}
+        <div className="mx-auto max-w-sm rounded-2xl border border-white/10 bg-black/40 p-3 text-center text-xs text-white/60">
+          <p className="font-semibold text-emerald-400">💬 LINE OA Chat Room Active</p>
+          <p className="mt-1 text-[11px] text-white/50">
+            Tin nhắn gửi đi trôi ở phía trên. Rich Menu 4 vùng ghim cố định ở đáy khung chat bên dưới.
+          </p>
+        </div>
+
+        {allEvents.length === 0 ? (
+          <div className="py-12 text-center text-xs text-white/40 italic">
+            Chưa có tin nhắn trong khung chat. Bấm các nút ở trên để bắn mẫu tin nhắn Push / Flex Message.
+          </div>
+        ) : (
+          allEvents.map((evt) => {
+            if (evt.type === 'server-msg' && evt.mockMessage) {
+              return (
+                <div key={evt.id} className="flex flex-col items-start gap-1">
+                  <span className="ml-1 text-[10px] font-semibold text-white/40">
+                    RoGym Bot · {new Date(evt.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  </span>
+                  <MessagePreview payload={evt.mockMessage.payload} onSelectUrl={onSelectUrl} />
+                </div>
+              )
+            }
+
+            if (evt.type === 'user-msg') {
+              return (
+                <div key={evt.id} className="flex flex-col items-end gap-1">
+                  <span className="mr-1 text-[10px] font-semibold text-white/40">
+                    Bạn · {new Date(evt.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  </span>
+                  <div className="max-w-md rounded-2xl rounded-tr-xs bg-gradient-to-r from-emerald-600 to-teal-600 px-4 py-2.5 text-sm font-medium text-white shadow-lg">
+                    {evt.userText}
+                  </div>
+                </div>
+              )
+            }
+
+            if (evt.type === 'system-tap' && evt.tapDetails) {
+              return (
+                <div key={evt.id} className="my-2 flex justify-center">
+                  <div className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-[11px] font-bold text-emerald-300 shadow-sm">
+                    <Sparkles size={12} />
+                    <span>
+                      [Tap Zone {evt.tapDetails.zoneIndex}] {evt.tapDetails.label}
+                    </span>
+                    <span className="text-white/40">→ Mở LIFF Simulator</span>
+                  </div>
+                </div>
+              )
+            }
+
+            return null
+          })
+        )}
+        <div ref={chatEndRef} />
+      </div>
+
+      {/* Sticky Bottom Chat Bar (Rich Menu vs Bàn phím) */}
+      <div className="border-t-2 border-[var(--rogym-border-teal-dim)] bg-[#071d17]">
+        {/* Chat Bar Toggle Header Strip */}
+        <div className="flex items-center justify-between border-b border-white/10 bg-black/40 px-4 py-1.5 text-xs">
+          <button
+            type="button"
+            onClick={() => setShowRichMenu((prev) => !prev)}
+            className="group flex items-center gap-1.5 rounded-lg border border-white/15 bg-white/5 px-2.5 py-1 text-xs font-bold text-white transition-all hover:bg-[var(--rogym-accent)] hover:text-black active:scale-95"
+          >
+            {showRichMenu ? (
+              <>
+                <Keyboard size={14} />
+                <span>Thu gọn menu RoGym (Nhắn tin)</span>
+                <ChevronDown size={14} />
+              </>
+            ) : (
+              <>
+                <Sparkles size={14} className="text-[var(--rogym-accent)] group-hover:text-black" />
+                <span>Mở menu RoGym (4 Vùng)</span>
+                <ChevronUp size={14} />
+              </>
+            )}
+          </button>
+
+          <span className="hidden sm:inline text-[11px] font-medium text-white/50">
+            {showRichMenu ? '📌 Rich Menu ghim cố định ở đáy' : '⌨ Bàn phím nhập tin nhắn User'}
+          </span>
+        </div>
+
+        {/* Content area based on showRichMenu state */}
+        {showRichMenu ? (
+          /* Fixed 4-Zone Rich Menu Bar */
+          <div className="bg-[#051612] p-2">
+            <div className="rounded-xl border border-emerald-500/30 overflow-hidden shadow-inner">
+              <InteractiveRichMenuGrid
+                areas={areas}
+                compact
+                onSelectUrl={(url, label, index) => {
+                  if (label && index) {
+                    handleTapZone(label, url, index)
+                  } else {
+                    onSelectUrl(url)
+                  }
+                }}
+              />
+            </div>
+          </div>
+        ) : (
+          /* Keyboard Input Form */
+          <form onSubmit={handleSendUserMessage} className="flex items-center gap-2.5 p-3 bg-[#051410]">
+            <div className="relative flex-1">
+              <input
+                type="text"
+                placeholder="Nhập tin nhắn giả lập của User..."
+                value={inputText}
+                onChange={(e) => setInputText(e.target.value)}
+                className="w-full rounded-2xl border border-white/15 bg-black/60 px-4 py-2.5 text-xs sm:text-sm text-white placeholder-white/40 focus:border-[var(--rogym-accent)] focus:outline-none focus:ring-1 focus:ring-[var(--rogym-accent)]"
+              />
+            </div>
+            <button
+              type="submit"
+              disabled={!inputText.trim()}
+              className="inline-flex items-center gap-1.5 rounded-2xl bg-[var(--rogym-accent)] px-4 py-2.5 text-xs font-extrabold text-black transition-all hover:bg-[var(--rogym-accent)]/90 active:scale-95 disabled:opacity-40 disabled:pointer-events-none shadow-md"
+            >
+              <span>Gửi</span>
+              <Send size={14} />
+            </button>
+          </form>
+        )}
+      </div>
+    </div>
+  )
+}
+
 export default function LineMockInboxPage() {
   const [messages, setMessages] = useState<MockMessage[]>([])
   const [error, setError] = useState<string | null>(null)
@@ -550,6 +837,7 @@ export default function LineMockInboxPage() {
   const [selectedLocale, setSelectedLocale] = useState<MockLocale>('vi')
   const [simulatorUrl, setSimulatorUrl] = useState<string>('/liff?redirect=/member/workout/sessions')
   const [simulatorOpen, setSimulatorOpen] = useState(false)
+  const [viewMode, setViewMode] = useState<'chat' | 'logs'>('chat')
 
   const refresh = useCallback(async () => {
     setLoading(true)
@@ -771,91 +1059,128 @@ export default function LineMockInboxPage() {
               </p>
             )}
 
-            {/* Outbox List */}
-            <section className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h2 className="text-sm font-bold uppercase tracking-wider text-white">
-                  Danh sách tin nhắn gửi đi ({messages.length})
-                </h2>
-                <span className="text-xs text-white/50">Mới nhất ở trên</span>
+            {/* View Mode Tab Switcher */}
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 pb-3">
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setViewMode('chat')}
+                  className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-extrabold transition-all cursor-pointer ${
+                    viewMode === 'chat'
+                      ? 'bg-[var(--rogym-accent)] text-black shadow-lg shadow-[var(--rogym-accent)]/20'
+                      : 'border border-white/10 bg-white/5 text-white/70 hover:bg-white/10 hover:text-white'
+                  }`}
+                >
+                  <MessageSquare size={15} />
+                  <span>💬 LINE Chat Room Simulator</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setViewMode('logs')}
+                  className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-extrabold transition-all cursor-pointer ${
+                    viewMode === 'logs'
+                      ? 'bg-[var(--rogym-accent)] text-black shadow-lg shadow-[var(--rogym-accent)]/20'
+                      : 'border border-white/10 bg-white/5 text-white/70 hover:bg-white/10 hover:text-white'
+                  }`}
+                >
+                  <List size={15} />
+                  <span>🛠 Admin Outbox Logs ({messages.length})</span>
+                </button>
               </div>
+              <span className="hidden sm:inline text-xs text-white/40">
+                {viewMode === 'chat' ? 'Khung Chat Giả Lập Ứng Dụng LINE' : 'Danh sách Raw JSON Payload'}
+              </span>
+            </div>
 
-              {loading ? (
-                <p className="py-8 text-center text-sm text-white/50">Đang nạp dữ liệu…</p>
-              ) : messages.length === 0 ? (
-                <div className="rounded-2xl border border-dashed border-white/10 p-10 text-center text-sm text-white/50">
-                  Chưa có tin nhắn mock nào trong hàng đợi. Bấm các nút ở trên để tạo mẫu thử nghiệm.
+            {/* Main Display: Chat Simulator vs Outbox List */}
+            {viewMode === 'chat' ? (
+              <LineChatRoomSimulator messages={messages} onSelectUrl={handleSelectUrl} />
+            ) : (
+              <section className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-sm font-bold uppercase tracking-wider text-white">
+                    Danh sách tin nhắn gửi đi ({messages.length})
+                  </h2>
+                  <span className="text-xs text-white/50">Mới nhất ở trên</span>
                 </div>
-              ) : (
-                messages.map((message) => (
-                  <article
-                    key={message.id}
-                    className="rounded-2xl border border-white/10 bg-[#081814] p-5 shadow-lg space-y-3.5"
-                  >
-                    <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/5 pb-2.5 text-xs">
-                      <div className="flex items-center gap-2">
-                        <span
-                          className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
-                            message.kind === 'rich-menu'
-                              ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30'
-                              : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
-                          }`}
-                        >
-                          {message.kind === 'rich-menu'
-                            ? 'Rich Menu'
-                            : `${message.kind === 'reply' ? 'Reply' : 'Push'} message`}
-                        </span>
-                        {message.recipient && (
-                          <span className="text-white/60">Đích: {message.recipient}</span>
+
+                {loading ? (
+                  <p className="py-8 text-center text-sm text-white/50">Đang nạp dữ liệu…</p>
+                ) : messages.length === 0 ? (
+                  <div className="rounded-2xl border border-dashed border-white/10 p-10 text-center text-sm text-white/50">
+                    Chưa có tin nhắn mock nào trong hàng đợi. Bấm các nút ở trên để tạo mẫu thử nghiệm.
+                  </div>
+                ) : (
+                  messages.map((message) => (
+                    <article
+                      key={message.id}
+                      className="rounded-2xl border border-white/10 bg-[#081814] p-5 shadow-lg space-y-3.5"
+                    >
+                      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/5 pb-2.5 text-xs">
+                        <div className="flex items-center gap-2">
+                          <span
+                            className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
+                              message.kind === 'rich-menu'
+                                ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30'
+                                : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                            }`}
+                          >
+                            {message.kind === 'rich-menu'
+                              ? 'Rich Menu'
+                              : `${message.kind === 'reply' ? 'Reply' : 'Push'} message`}
+                          </span>
+                          {message.recipient && (
+                            <span className="text-white/60">Đích: {message.recipient}</span>
+                          )}
+                        </div>
+                        <time className="font-mono text-white/40">
+                          {new Date(message.createdAt).toLocaleString()}
+                        </time>
+                      </div>
+
+                      {/* Preview Content */}
+                      <div>
+                        {message.kind === 'rich-menu' ? (
+                          <RichMenuPreview
+                            payload={message.payload}
+                            onSelectUrl={handleSelectUrl}
+                          />
+                        ) : (
+                          <MessagePreview
+                            payload={message.payload}
+                            onSelectUrl={handleSelectUrl}
+                          />
                         )}
                       </div>
-                      <time className="font-mono text-white/40">
-                        {new Date(message.createdAt).toLocaleString()}
-                      </time>
-                    </div>
 
-                    {/* Preview Content */}
-                    <div>
-                      {message.kind === 'rich-menu' ? (
-                        <RichMenuPreview
-                          payload={message.payload}
-                          onSelectUrl={handleSelectUrl}
-                        />
-                      ) : (
-                        <MessagePreview
-                          payload={message.payload}
-                          onSelectUrl={handleSelectUrl}
-                        />
+                      {/* LIFF URL Action link */}
+                      {message.liffUrl && (
+                        <div className="flex items-center gap-3 pt-1">
+                          <button
+                            type="button"
+                            onClick={() => handleSelectUrl(message.liffUrl!)}
+                            className="inline-flex items-center gap-1.5 text-xs font-bold text-[var(--rogym-accent)] hover:underline"
+                          >
+                            <Smartphone size={13} />
+                            <span>Mở trên Mobile Simulator</span>
+                          </button>
+                        </div>
                       )}
-                    </div>
 
-                    {/* LIFF URL Action link */}
-                    {message.liffUrl && (
-                      <div className="flex items-center gap-3 pt-1">
-                        <button
-                          type="button"
-                          onClick={() => handleSelectUrl(message.liffUrl!)}
-                          className="inline-flex items-center gap-1.5 text-xs font-bold text-[var(--rogym-accent)] hover:underline"
-                        >
-                          <Smartphone size={13} />
-                          <span>Mở trên Mobile Simulator</span>
-                        </button>
-                      </div>
-                    )}
-
-                    {/* Raw JSON Payload */}
-                    <details className="border-t border-white/5 pt-2">
-                      <summary className="cursor-pointer text-[11px] font-medium text-white/50 hover:text-white">
-                        Xem chi tiết Payload JSON
-                      </summary>
-                      <pre className="mt-2 overflow-x-auto rounded-xl border border-white/5 bg-black/50 p-3 font-mono text-[11px] text-emerald-400">
-                        {JSON.stringify(message.payload, null, 2)}
-                      </pre>
-                    </details>
-                  </article>
-                ))
-              )}
-            </section>
+                      {/* Raw JSON Payload */}
+                      <details className="border-t border-white/5 pt-2">
+                        <summary className="cursor-pointer text-[11px] font-medium text-white/50 hover:text-white">
+                          Xem chi tiết Payload JSON
+                        </summary>
+                        <pre className="mt-2 overflow-x-auto rounded-xl border border-white/5 bg-black/50 p-3 font-mono text-[11px] text-emerald-400">
+                          {JSON.stringify(message.payload, null, 2)}
+                        </pre>
+                      </details>
+                    </article>
+                  ))
+                )}
+              </section>
+            )}
           </div>
 
           {/* Right Column: Mobile Simulator Component */}

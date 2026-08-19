@@ -74,7 +74,7 @@ function buildRichMenuDefinition(liffBaseUrl: string): RichMenuObject {
         action: {
           type: 'uri',
           label: 'Đặt lịch',
-          uri: `${liffBaseUrl}?redirect=/member/workout/sessions?book=1`,
+          uri: `${liffBaseUrl}?redirect=${encodeURIComponent('/member/workout/sessions?book=1')}`,
         },
       },
       {
@@ -82,7 +82,7 @@ function buildRichMenuDefinition(liffBaseUrl: string): RichMenuObject {
         action: {
           type: 'uri',
           label: 'Check-in',
-          uri: `${liffBaseUrl}?redirect=/member/attendance`,
+          uri: `${liffBaseUrl}?redirect=/member/check-in`,
         },
       },
       {
