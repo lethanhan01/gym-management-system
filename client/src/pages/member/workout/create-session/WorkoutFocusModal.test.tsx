@@ -89,7 +89,7 @@ describe('WorkoutFocusModal', () => {
       />
     )
 
-    expect(screen.getByText('Đang thực hiện buổi tập')).toBeVisible()
+    expect(screen.getByText('Day 1: Full Body')).toBeVisible()
     expect(screen.getByText('Barbell Squat')).toBeVisible()
     expect(screen.getByText('00:45')).toBeVisible()
     expect(screen.getByText('02:30')).toBeVisible()
@@ -127,9 +127,9 @@ describe('WorkoutFocusModal', () => {
       />
     )
 
-    expect(screen.getByText('Nghỉ giữa hiệp')).toBeVisible()
+    expect(screen.getAllByText(/Nghỉ giữa hiệp/)[0]).toBeVisible()
     expect(screen.getByText('00:25')).toBeVisible()
-    expect(screen.getByText('Thời gian nghỉ')).toBeVisible()
+    expect(screen.getAllByText(/Thời gian còn lại/)[0]).toBeVisible()
 
     fireEvent.click(screen.getByRole('button', { name: 'Dừng buổi tập' }))
     expect(onPause).toHaveBeenCalled()
@@ -170,7 +170,6 @@ describe('WorkoutFocusModal', () => {
           ...mockDay.exercises![0],
           exercise: {
             ...mockDay.exercises![0].exercise!,
-            // API returns raw JSON string from DB
             instructions: JSON.stringify(['JSON Step 1: Warmup', 'JSON Step 2: Push']) as unknown as string[],
           },
         },
@@ -254,5 +253,104 @@ describe('WorkoutFocusModal', () => {
     )
 
     expect(screen.getByText('Giữ đúng tư thế chuẩn, hít thở đều đặn và kiểm soát chuyển động.')).toBeVisible()
+  })
+
+  it('renders exercise GIF in active set and next exercise GIF in rest break', () => {
+    const dayWithGifs: WorkoutPlanDay = {
+      ...mockDay,
+      exercises: [
+        {
+          ...mockDay.exercises![0],
+          exercise: {
+            ...mockDay.exercises![0].exercise!,
+            gifUrl: 'https://example.com/squat.gif',
+          },
+        },
+        {
+          planExerciseId: 'ex-2',
+          planDayId: '1',
+          exerciseId: '102',
+          orderIndex: 2,
+          targetSets: 2,
+          targetReps: 12,
+          targetDurationSec: null,
+          targetWeightKg: '10',
+          restSeconds: 30,
+          notes: null,
+          exercise: {
+            exerciseId: '102',
+            name: 'Push Up',
+            bodyPartId: 2,
+            targetMuscleId: null,
+            equipmentId: null,
+            description: null,
+            instructions: ['Keep core tight'],
+            gifUrl: 'https://example.com/pushup.gif',
+            createdByStaffId: null,
+            createdAt: '',
+            deletedAt: null,
+          },
+        },
+      ],
+    }
+
+    const activeRuntime: SessionTimerRuntime = {
+      ...mockRuntime,
+      segmentIndex: 0,
+    }
+
+    const { rerender } = render(
+      <WorkoutFocusModal
+        open={true}
+        onClose={vi.fn()}
+        runtime={activeRuntime}
+        status="running"
+        day={dayWithGifs}
+        onPause={vi.fn()}
+        onResume={vi.fn()}
+        onSkipRest={vi.fn()}
+        celebrationSeconds={null}
+      />
+    )
+
+    const activeGif = screen.getByAltText('Barbell Squat')
+    expect(activeGif).toBeVisible()
+    expect(activeGif).toHaveAttribute('src', 'https://example.com/squat.gif')
+
+    const restRuntime: SessionTimerRuntime = {
+      ...mockRuntime,
+      config: {
+        ...mockRuntime.config,
+        'ex-2': {
+          restSeconds: 30,
+          sets: [{ actualReps: '12', actualWeightKg: '10', actualDurationSec: '' }],
+        },
+      },
+      segments: [
+        { kind: 'set', planExerciseId: 'ex-1', setIndex: 0, durationSec: 60 },
+        { kind: 'rest', planExerciseId: 'ex-1', setIndex: 0, durationSec: 30 },
+        { kind: 'set', planExerciseId: 'ex-2', setIndex: 0, durationSec: 60 },
+      ],
+      segmentIndex: 1,
+      segmentRemainingSec: 30,
+    }
+
+    rerender(
+      <WorkoutFocusModal
+        open={true}
+        onClose={vi.fn()}
+        runtime={restRuntime}
+        status="running"
+        day={dayWithGifs}
+        onPause={vi.fn()}
+        onResume={vi.fn()}
+        onSkipRest={vi.fn()}
+        celebrationSeconds={null}
+      />
+    )
+
+    const nextGif = screen.getByAltText('Push Up')
+    expect(nextGif).toBeVisible()
+    expect(nextGif).toHaveAttribute('src', 'https://example.com/pushup.gif')
   })
 })
