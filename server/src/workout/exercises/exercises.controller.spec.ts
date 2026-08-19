@@ -5,7 +5,6 @@ const exercises = {
   create: jest.fn(),
   update: jest.fn(),
   softDelete: jest.fn(),
-  clearOverrides: jest.fn(),
 } as any
 const user = { userId: 1n, email: 'trainer@test.com', roles: ['trainer'] } as any
 describe('ExercisesController', () => {
@@ -19,10 +18,5 @@ describe('ExercisesController', () => {
       meta: { page: 1 },
     })
     expect(exercises.findAll).toHaveBeenCalledWith(expect.objectContaining({ q: 'squat', page: 1 }))
-  })
-  it('clears provider overrides by internal ID', async () => {
-    exercises.clearOverrides.mockResolvedValue({ exerciseId: 5n })
-    await controller.clearOverrides(5, user)
-    expect(exercises.clearOverrides).toHaveBeenCalledWith(5n, user)
   })
 })

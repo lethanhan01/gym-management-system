@@ -242,7 +242,7 @@ export class ExerciseCatalogSyncService implements OnModuleInit {
       (item) => Prisma.sql`(
       ${item.name}, ${bodyPartMap.get(item.bodyPart!) ?? null}, ${muscleMap.get(item.targetMuscle!) ?? null},
       ${equipmentMap.get(item.equipmentName!) ?? null}, ${item.description}, ${instructionsJson(item.instructions)},
-      ${item.imageUrl}, ${ExerciseSource.exercisedb}::\"exercise_source\", ${item.externalId}, ${item.contentHash},
+      ${item.gifUrl}, ${ExerciseSource.exercisedb}::\"exercise_source\", ${item.externalId}, ${item.contentHash},
       ${runId}, ${now}, true
     )`
     )
@@ -251,7 +251,7 @@ export class ExerciseCatalogSyncService implements OnModuleInit {
       INSERT INTO "exercises" (
         "name", "body_part_id", "target_muscle_id",
         "equipment_id", "description", "instructions",
-        "image_url", "source", "external_id", "content_hash",
+        "gifUrl", "source", "external_id", "content_hash",
         "last_seen_sync_run_id", "last_synced_at", "catalog_visible"
       ) VALUES ${Prisma.join(rows)}
       ON CONFLICT ("source", "external_id") DO UPDATE SET
@@ -261,7 +261,7 @@ export class ExerciseCatalogSyncService implements OnModuleInit {
         "equipment_id" = EXCLUDED."equipment_id",
         "description" = EXCLUDED."description",
         "instructions" = EXCLUDED."instructions",
-        "image_url" = EXCLUDED."image_url",
+        "gifUrl" = EXCLUDED."gifUrl",
         "content_hash" = EXCLUDED."content_hash",
         "last_seen_sync_run_id" = EXCLUDED."last_seen_sync_run_id",
         "last_synced_at" = EXCLUDED."last_synced_at",

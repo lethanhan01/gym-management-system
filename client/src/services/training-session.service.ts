@@ -54,7 +54,7 @@ export interface TrainingSessionPlanExercise {
     targetMuscle: { name: string } | null
     equipment: { name: string } | null
     description: string | null
-    imageUrl: string | null
+    gifUrl: string | null
     createdByStaffId: string | null
     createdAt: string
     deletedAt: string | null

@@ -33,7 +33,7 @@ const mockDay: WorkoutPlanDay = {
         equipmentId: null,
         description: null,
         instructions: ['Stand with feet shoulder-width apart', 'Lower hips until thighs are parallel'],
-        imageUrl: null,
+        gifUrl: null,
         createdByStaffId: null,
         createdAt: '',
         deletedAt: null,

@@ -109,7 +109,7 @@ export class TrainingSessionPresenter {
                         ? { name: exercise.exercise.equipment.name }
                         : null,
                       description: exercise.exercise.description,
-                      imageUrl: exercise.exercise.imageUrl,
+                      gifUrl: exercise.exercise.gifUrl,
                       createdByStaffId: exercise.exercise.createdByStaffId?.toString() ?? null,
                       createdAt: exercise.exercise.createdAt,
                       deletedAt: exercise.exercise.deletedAt,

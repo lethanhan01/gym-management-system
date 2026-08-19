@@ -80,16 +80,6 @@ export class ExercisesController {
     return { success: true, data }
   }
 
-  @Delete(':id/overrides')
-  @RequirePermission('exercise.update')
-  async clearOverrides(
-    @Param('id', ParseIntPipe) id: number,
-    @CurrentUser() user: AuthenticatedUser
-  ) {
-    const data = await this.exercises.clearOverrides(BigInt(id), user)
-    return { success: true, data }
-  }
-
   @Patch(':id')
   @RequirePermission('exercise.update')
   async update(

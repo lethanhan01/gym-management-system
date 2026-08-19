@@ -26,7 +26,7 @@ const plan: WorkoutPlan = {
   days: [{ planDayId: '11', planId: '1', dayNumber: 1, weekNumber: 1, dayOfWeek: 1, name: '全身A', notes: null, exercises: [{
     planExerciseId: '111', planDayId: '11', exerciseId: '1001', orderIndex: 1, targetSets: 3, targetReps: 10,
     targetDurationSec: null, targetWeightKg: '20', restSeconds: 60, notes: null,
-    exercise: { exerciseId: '1001', name: 'Squat', bodyPartId: 1, targetMuscleId: null, equipmentId: null, description: null, instructions: null, imageUrl: null, createdByStaffId: null, createdAt: '2026-07-01T00:00:00.000Z', deletedAt: null, bodyPart: { bodyPartId: 1, name: 'strength' } },
+    exercise: { exerciseId: '1001', name: 'Squat', bodyPartId: 1, targetMuscleId: null, equipmentId: null, description: null, instructions: null, gifUrl: null, createdByStaffId: null, createdAt: '2026-07-01T00:00:00.000Z', deletedAt: null, bodyPart: { bodyPartId: 1, name: 'strength' } },
   }] }],
 }
 

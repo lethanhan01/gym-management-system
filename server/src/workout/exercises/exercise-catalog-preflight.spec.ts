@@ -9,7 +9,7 @@ const item = (externalId: string) => ({
   equipmentName: 'body weight',
   description: null,
   instructions: [],
-  imageUrl: null,
+  gifUrl: null,
   contentHash: externalId,
 })
 

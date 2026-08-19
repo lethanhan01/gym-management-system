@@ -57,7 +57,7 @@ Response body:
       "muscleGroup": "chest",
       "equipmentNeeded": "barbell",
       "description": "Đẩy ngực với tạ đòn",
-      "imageUrl": "https://example.com/bench.png"
+      "gifUrl": "https://example.com/bench.gif"
     }
   ]
 }
@@ -76,7 +76,7 @@ Request body:
   "muscleGroup": "chest",
   "equipmentNeeded": "barbell",
   "description": "Đẩy ngực với tạ đòn",
-  "imageUrl": "https://example.com/bench.png"
+  "gifUrl": "https://example.com/bench.gif"
 }
 ```
 
@@ -115,7 +115,7 @@ Response body:
 
 Query: `limit` number optional (tối đa 100). Cần quyền `exercise.sync`.
 
-`imageUrl` của catalog ExerciseDB là URL ảnh do provider cung cấp; metadata catalog nằm trong database nhưng ảnh vẫn được tải từ host ngoài.
+`gifUrl` của catalog ExerciseDB là URL GIF do provider cung cấp; metadata catalog nằm trong database nhưng GIF vẫn được tải từ host ngoài.
 
 ### Cập nhật bài tập - PATCH `/api/v1/exercises/:id`
 
@@ -130,7 +130,7 @@ Request body:
   "muscleGroup": "chest",
   "equipmentNeeded": "barbell",
   "description": "Đẩy ngực với tạ đòn",
-  "imageUrl": "https://example.com/bench.png"
+  "gifUrl": "https://example.com/bench.gif"
 }
 ```
 

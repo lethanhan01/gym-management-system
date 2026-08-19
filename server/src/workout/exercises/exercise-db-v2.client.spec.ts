@@ -46,7 +46,7 @@ describe('ExerciseDbV2Client', () => {
         targetMuscle: 'pectorals',
         secondaryMuscles: ['triceps', 'deltoids'],
         equipmentName: 'body weight',
-        imageUrl: null,
+        gifUrl: null,
       }),
     ])
     expect(fetchMock).toHaveBeenCalledWith(
@@ -80,7 +80,7 @@ describe('ExerciseDbV2Client', () => {
     expect(first.equipmentName).toBe('body weight')
   })
 
-  it('captures gifUrl into imageUrl when present', async () => {
+  it('captures gifUrl when present', async () => {
     fetchMock.mockResolvedValue(
       new Response(JSON.stringify([exercise({ gifUrl: 'https://example.com/pushup.gif' })]), {
         status: 200,
@@ -94,10 +94,10 @@ describe('ExerciseDbV2Client', () => {
 
     const first = (await client.allExercises().next()).value![0]
 
-    expect(first.imageUrl).toBe('https://example.com/pushup.gif')
+    expect(first.gifUrl).toBe('https://example.com/pushup.gif')
   })
 
-  it('sets imageUrl to null when gifUrl is absent', async () => {
+  it('sets gifUrl to null when gifUrl is absent', async () => {
     fetchMock.mockResolvedValue(
       new Response(JSON.stringify([exercise({ gifUrl: null })]), { status: 200 })
     )
@@ -109,7 +109,7 @@ describe('ExerciseDbV2Client', () => {
 
     const first = (await client.allExercises().next()).value![0]
 
-    expect(first.imageUrl).toBeNull()
+    expect(first.gifUrl).toBeNull()
   })
 
   it('stores instructions as array and uses description field', async () => {

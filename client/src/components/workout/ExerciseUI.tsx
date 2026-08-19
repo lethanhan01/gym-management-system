@@ -42,7 +42,7 @@ export const ExerciseCard = memo(function ExerciseCard({
       className="flex flex-col overflow-hidden"
     >
       <CardMedia
-        src={exercise.imageUrl ?? undefined}
+        src={exercise.gifUrl ?? undefined}
         alt={t('workout.exercises.imageAlt', { name: exercise.name })}
         aspectRatio={
           aspect === '6/4' || aspect === '16/9' || aspect === '4/3' || aspect === '1/1' || aspect === '21/9'
@@ -50,7 +50,7 @@ export const ExerciseCard = memo(function ExerciseCard({
             : '6/4'
         }
       >
-        {!exercise.imageUrl && (
+        {!exercise.gifUrl && (
           <div className="flex h-full items-center justify-center rogym-text-dim">
             <ImageIcon size={32} />
           </div>

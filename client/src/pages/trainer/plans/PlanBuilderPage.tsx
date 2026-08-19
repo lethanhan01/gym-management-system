@@ -587,9 +587,9 @@ export default function TrainerPlanBuilderPage() {
           </label>
           {selectedExercise && (
             <div className="flex gap-4 rounded-2xl border border-white/5 bg-white/[0.025] p-4">
-              {selectedExercise.imageUrl && (
+              {selectedExercise.gifUrl && (
                 <img
-                  src={selectedExercise.imageUrl}
+                  src={selectedExercise.gifUrl}
                   alt={t('plans.builder.exerciseModal.illustrationAlt', { name: selectedExercise.name })}
                   className="h-24 w-28 rounded-xl object-cover"
                   loading="lazy"
@@ -858,9 +858,9 @@ const PlanDayCard = memo(function PlanDayCard({
             <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[rgba(66,224,158,0.12)] text-sm font-bold rogym-text-accent">
               {index + 1}
             </div>
-            {item.exercise?.imageUrl && (
+            {item.exercise?.gifUrl && (
               <img
-                src={item.exercise.imageUrl}
+                src={item.exercise.gifUrl}
                 alt={t('plans.builder.exerciseModal.illustrationAlt', { name: item.exercise.name })}
                 className="h-20 w-full rounded-xl object-cover md:w-24"
                 loading="lazy"

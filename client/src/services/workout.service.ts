@@ -27,7 +27,7 @@ export interface Exercise {
   equipmentId: number | null
   description: string | null
   instructions: string[] | null
-  imageUrl: string | null
+  gifUrl: string | null
   createdByStaffId: string | null
   createdAt: string
   deletedAt: string | null
@@ -160,7 +160,7 @@ export interface CreateExerciseDto {
   equipmentId?: number
   description?: string
   instructions?: string[]
-  imageUrl?: string
+  gifUrl?: string
 }
 
 export interface UpdateExerciseDto {
@@ -170,7 +170,7 @@ export interface UpdateExerciseDto {
   equipmentId?: number
   description?: string
   instructions?: string[]
-  imageUrl?: string
+  gifUrl?: string
 }
 
 export interface CreateWorkoutPlanDto {

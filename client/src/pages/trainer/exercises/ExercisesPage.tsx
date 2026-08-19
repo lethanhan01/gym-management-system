@@ -58,7 +58,7 @@ export default function ExercisesPage() {
   const [formEquipmentId, setFormEquipmentId] = useState<number | ''>('')
   const [description, setDescription] = useState('')
   const [instructions, setInstructions] = useState<string[]>([''])
-  const [imageUrl, setImageUrl] = useState('')
+  const [gifUrl, setGifUrl] = useState('')
 
   const loadLookups = useCallback(async () => {
     try {
@@ -118,7 +118,7 @@ export default function ExercisesPage() {
     setFormEquipmentId('')
     setDescription('')
     setInstructions([''])
-    setImageUrl('')
+    setGifUrl('')
     setModalOpen(true)
   }
 
@@ -130,7 +130,7 @@ export default function ExercisesPage() {
     setFormEquipmentId(exercise.equipmentId ?? '')
     setDescription(exercise.description ?? '')
     setInstructions(exercise.instructions?.length ? exercise.instructions : [''])
-    setImageUrl(exercise.imageUrl ?? '')
+    setGifUrl(exercise.gifUrl ?? '')
     setModalOpen(true)
   }
 
@@ -145,7 +145,7 @@ export default function ExercisesPage() {
       equipmentId: formEquipmentId !== '' ? formEquipmentId : undefined,
       description: description.trim() || undefined,
       instructions: instructions.map(s => s.trim()).filter(s => s).length > 0 ? instructions.map(s => s.trim()).filter(s => s) : undefined,
-      imageUrl: imageUrl.trim() || undefined,
+      gifUrl: gifUrl.trim() || undefined,
     }
     try {
       if (editing) await workoutService.updateExercise(editing.exerciseId, payload)
@@ -363,11 +363,11 @@ export default function ExercisesPage() {
             </Button>
           </div>
           <label className="block space-y-2">
-            <span className="rogym-field-label">{t('exercises.modal.fieldImageUrl')}</span>
+            <span className="rogym-field-label">{t('exercises.modal.fieldGifUrl')}</span>
             <input
               className="rogym-input"
-              value={imageUrl}
-              onChange={(event) => setImageUrl(event.target.value)}
+              value={gifUrl}
+              onChange={(event) => setGifUrl(event.target.value)}
               maxLength={1000}
               placeholder="/exercises/squat.png"
             />

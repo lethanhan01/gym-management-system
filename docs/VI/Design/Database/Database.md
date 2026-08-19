@@ -383,7 +383,6 @@ Attribute table phía dưới chỉ liệt kê các thuộc tính NGHIỆP VỤ 
 | `external_id` | `VARCHAR(191)` | Unique cùng `source` | ID provider khi đồng bộ. |
 | `content_hash`, `last_seen_sync_run_id`, `last_synced_at` |  |  | Theo dõi idempotency và lượt sync gần nhất. |
 | `catalog_visible` | `BOOLEAN` |  | Điều khiển record có xuất hiện trong catalog công khai. |
-| `description_override`, `image_url_override` |  |  | Override cục bộ cho ExerciseDB, không bị sync ghi đè. |
 
 `exercise_catalog_sync_runs` lưu trạng thái/counter/lỗi đã sanitize của từng lượt đồng bộ; `exercise_catalog_sync_locks` giữ lease singleton để cron và sync thủ công không chạy đồng thời.
 | `created_at` | `TIMESTAMP` |  | Thời điểm bản ghi được tạo. |
@@ -675,7 +674,7 @@ Ràng buộc CHECK ở DB đảm bảo `subject_staff_id` / `subject_equipment_i
 | `muscle_group` | `TEXT` |  | Metadata nhóm cơ chuẩn hóa từ provider (target, secondary muscles, body part; nullable). |
 | `equipment_needed` | `VARCHAR(100)` |  | Thiết bị cần dùng (nullable). |
 | `description` | `TEXT` |  | Hướng dẫn thực hiện (nullable). |
-| `image_url` | `VARCHAR(1000)` |  | URL ảnh minh họa bài tập (nullable). |
+| `gifUrl` | `VARCHAR(1000)` |  | URL GIF minh họa bài tập (nullable). |
 | `created_by_staff_id` | `BIGINT` | FK → `staff.staff_id` (nullable) | Staff tạo; `NULL` khi bài tập mặc định hệ thống. |
 | `deleted_at` | `TIMESTAMP` |  | Soft delete. |
 
@@ -1361,7 +1360,7 @@ CREATE TABLE exercises (
     muscle_group TEXT NULL,
     equipment_needed VARCHAR(100) NULL,
     description TEXT NULL,
-    image_url VARCHAR(1000) NULL,
+    "gifUrl" VARCHAR(1000) NULL,
     created_by_staff_id BIGINT NULL,
     deleted_at TIMESTAMP NULL,
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
