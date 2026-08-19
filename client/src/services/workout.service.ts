@@ -28,6 +28,7 @@ export interface Exercise {
   description: string | null
   instructions: string[] | null
   gifUrl: string | null
+  imageUrl?: string | null
   createdByStaffId: string | null
   createdAt: string
   deletedAt: string | null
@@ -39,7 +40,10 @@ export interface Exercise {
   secondaryMuscles?: { muscle: ExerciseMuscle }[]
 }
 
-export interface ExerciseCatalogPage { data: Exercise[]; meta: { page: number; pageSize: number; total: number; totalPages: number } }
+export interface ExerciseCatalogPage {
+  data: Exercise[]
+  meta: { page: number; pageSize: number; total: number; totalPages: number }
+}
 
 export interface WorkoutPlanExercise {
   planExerciseId: string
@@ -161,6 +165,7 @@ export interface CreateExerciseDto {
   description?: string
   instructions?: string[]
   gifUrl?: string
+  imageUrl?: string
 }
 
 export interface UpdateExerciseDto {
@@ -171,6 +176,7 @@ export interface UpdateExerciseDto {
   description?: string
   instructions?: string[]
   gifUrl?: string
+  imageUrl?: string
 }
 
 export interface CreateWorkoutPlanDto {
@@ -288,7 +294,6 @@ const workoutService = {
   async unassignMember(assignmentId: string): Promise<void> {
     await api.delete(`/workout-plans/assignments/${assignmentId}`)
   },
-
 
   // Workout Plans
   async getPlans(): Promise<WorkoutPlan[]> {

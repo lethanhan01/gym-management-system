@@ -1,4 +1,4 @@
-import { memo } from 'react'
+import { memo, useState } from 'react'
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ImageIcon } from 'lucide-react'
@@ -31,7 +31,14 @@ export const ExerciseCard = memo(function ExerciseCard({
   imageAspect?: string
 }) {
   const { t } = useTranslation('member')
+  const [isHovered, setIsHovered] = useState(false)
   const aspect = (imageAspect.replace('aspect-[', '').replace(']', '') || '1/1') as CardAspectRatio
+
+  // Priority: When hovered and gifUrl exists -> gifUrl (animated).
+  // Otherwise -> imageUrl (static poster) || gifUrl || undefined.
+  const activeMediaSrc = isHovered && exercise.gifUrl
+    ? exercise.gifUrl
+    : (exercise.imageUrl || exercise.gifUrl || undefined)
 
   return (
     <Card
@@ -39,10 +46,12 @@ export const ExerciseCard = memo(function ExerciseCard({
       variant={onClick ? 'interactive' : 'compact'}
       padding="none"
       onClick={onClick}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
       className="flex flex-col overflow-hidden"
     >
       <CardMedia
-        src={exercise.gifUrl ?? undefined}
+        src={activeMediaSrc}
         alt={t('workout.exercises.imageAlt', { name: exercise.name })}
         aspectRatio={
           aspect === '6/4' || aspect === '16/9' || aspect === '4/3' || aspect === '1/1' || aspect === '21/9'
@@ -50,9 +59,9 @@ export const ExerciseCard = memo(function ExerciseCard({
             : '1/1'
         }
         objectFit="contain"
-        className={exercise.gifUrl ? 'bg-white' : undefined}
+        className={activeMediaSrc ? 'bg-white' : undefined}
       >
-        {!exercise.gifUrl && (
+        {!activeMediaSrc && (
           <div className="flex h-full items-center justify-center rogym-text-dim">
             <ImageIcon size={32} />
           </div>

@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common'
 import { Prisma } from '@prisma/client'
 import { AttendanceRow, AttendanceService } from './attendance.service'
 import { SessionRow } from './training.types'
+
 export const SESSION_PLAN_SELECT = {
   planId: true,
   name: true,
@@ -52,6 +53,7 @@ export const SESSION_DETAIL_INCLUDE = {
     },
   },
 } satisfies Prisma.TrainingSessionInclude
+
 @Injectable()
 export class TrainingSessionPresenter {
   constructor(private readonly attendance: AttendanceService) {}
@@ -110,6 +112,7 @@ export class TrainingSessionPresenter {
                         : null,
                       description: exercise.exercise.description,
                       gifUrl: exercise.exercise.gifUrl,
+                      imageUrl: exercise.exercise.imageUrl,
                       createdByStaffId: exercise.exercise.createdByStaffId?.toString() ?? null,
                       createdAt: exercise.exercise.createdAt,
                       deletedAt: exercise.exercise.deletedAt,

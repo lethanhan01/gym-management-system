@@ -39,6 +39,11 @@ export class CreateExerciseDto {
   gifUrl?: string
 
   @IsOptional()
+  @IsString()
+  @MaxLength(1000)
+  imageUrl?: string
+
+  @IsOptional()
   @IsArray()
   @IsString({ each: true })
   instructions?: string[]

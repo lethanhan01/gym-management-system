@@ -522,6 +522,7 @@
       "fieldMuscleGroup": "Nhóm cơ",
       "fieldEquipment": "Dụng cụ",
       "fieldDescription": "Mô tả",
+      "fieldImageUrl": "Đường dẫn ảnh tĩnh (URL)",
       "fieldGifUrl": "Đường dẫn GIF minh họa"
     },
     "error": {

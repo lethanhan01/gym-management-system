@@ -211,10 +211,10 @@ export default function MemberExercisesPage() {
             </>
           }
         >
-          {detail.gifUrl && (
+          {(detail.gifUrl || detail.imageUrl) && (
             <div className="aspect-[16/9] max-h-64 sm:max-h-80 w-full overflow-hidden rounded-xl mb-4 bg-white border border-white/10 p-2 sm:p-3 flex items-center justify-center">
               <img
-                src={detail.gifUrl}
+                src={detail.gifUrl || detail.imageUrl || ''}
                 alt={t('workout.exercises.imageAlt', { name: detail.name })}
                 className="h-full w-full object-contain"
                 loading="lazy"

@@ -860,10 +860,10 @@ const PlanDayCard = memo(function PlanDayCard({
             <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[rgba(66,224,158,0.12)] text-sm font-bold rogym-text-accent">
               {index + 1}
             </div>
-            {item.exercise?.gifUrl && (
+            {(item.exercise?.gifUrl || item.exercise?.imageUrl) && (
               <div className="h-20 w-24 shrink-0 overflow-hidden rounded-xl bg-white p-1 flex items-center justify-center">
                 <img
-                  src={item.exercise.gifUrl}
+                  src={item.exercise.gifUrl || item.exercise.imageUrl || ''}
                   alt={t('plans.builder.exerciseModal.illustrationAlt', { name: item.exercise.name })}
                   className="h-full w-full object-contain"
                   loading="lazy"

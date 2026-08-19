@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "public"."exercises" ADD COLUMN IF NOT EXISTS "image_url" VARCHAR(1000);

@@ -8,7 +8,7 @@ import { LanguageSwitcher } from '@/components/ui/LanguageSwitcher';
 import NotificationBell from '@/components/shared/NotificationBell';
 
 
-export default function Topbar() {
+export default function Topbar({ className }: { className?: string } = {}) {
   const [open, setOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const user = useAuthStore((state) => state.user);
@@ -56,7 +56,7 @@ export default function Topbar() {
   }
 
   return (
-    <div className="fixed top-4 right-5 z-40 flex items-center gap-3">
+    <div className={className ?? "fixed top-4 right-5 z-40 flex items-center gap-3"}>
       {showSubCta && (
         <button
           onClick={() => navigate('/member/subscription/setup')}

@@ -10,6 +10,7 @@ model Exercise {
   deletedAt           DateTime?                 @map("deleted_at") @db.Timestamp(6)
   createdAt           DateTime                  @default(now()) @map("created_at") @db.Timestamp(6)
   gifUrl              String?                   @map("gifUrl") @db.VarChar(1000)
+  imageUrl            String?                   @map("image_url") @db.VarChar(1000)
   source              ExerciseSource            @default(legacy)
   externalId          String?                   @map("external_id") @db.VarChar(191)
   contentHash         String?                   @map("content_hash") @db.VarChar(64)
