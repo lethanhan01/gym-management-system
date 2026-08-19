@@ -11,7 +11,7 @@ const item = {
   equipmentName: 'body weight',
   description: 'Push.',
   instructions: ['Lower body', 'Push up'],
-  imageUrl: null,
+  gifUrl: null,
   contentHash: 'a'.repeat(64),
 }
 

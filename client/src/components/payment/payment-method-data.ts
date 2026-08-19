@@ -36,6 +36,11 @@ export function getPaymentMethodOptions(): PaymentMethodOption[] {
   }))
 }
 
+export function getSavablePaymentMethodOptions(): PaymentMethodOption[] {
+  return getPaymentMethodOptions().filter((opt) => opt.value !== 'cash')
+}
+
+
 
 export function maskPaymentAccountRef(reference: string | null): string {
   if (!reference) return ''

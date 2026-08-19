@@ -19,7 +19,7 @@ import { type PaymentMethod } from '@/services/payment.service'
 import { useAuthStore } from '@/stores/authStore'
 import {
   getPaymentMethodLabel,
-  getPaymentMethodOptions,
+  getSavablePaymentMethodOptions,
   maskPaymentAccountRef,
 } from '@/components/payment/payment-method-data'
 import { PaymentMethodIcon } from '@/components/payment/payment-methods'
@@ -183,17 +183,18 @@ export default function PaymentAccountsPage() {
             </h3>
 
             {/* Type selector */}
-            <div className="flex gap-2">
-              {getPaymentMethodOptions().map(opt => (
+            <div className="grid grid-cols-2 gap-3">
+              {getSavablePaymentMethodOptions().map(opt => (
                 <button
                   key={opt.value}
                   type="button"
                   onClick={() => setType(opt.value)}
-                  className={`rogym-payment-method-option flex-1 flex items-center justify-center gap-1.5 rounded-xl py-2.5 text-xs font-medium transition-all ${
+                  className={`rogym-payment-method-option flex flex-col items-center justify-center gap-1.5 rounded-xl py-3 px-3 text-xs font-medium text-center transition-all ${
                     type === opt.value ? 'is-active' : ''
                   }`}
                 >
-                  <opt.Icon size={16} />{opt.label}
+                  <opt.Icon size={20} className="shrink-0" />
+                  <span className="leading-tight">{opt.label}</span>
                 </button>
               ))}
             </div>

@@ -124,6 +124,8 @@ export function WorkoutFocusModal({
   const isCardio = currentPlanExercise?.exercise?.bodyPart?.name?.trim().toLowerCase() === 'cardio'
   const exerciseName =
     currentPlanExercise?.exercise?.name ?? t('workout.session.defaultExerciseName')
+  const currentGifUrl =
+    currentPlanExercise?.exercise?.gifUrl || currentPlanExercise?.exercise?.imageUrl
   const instructions = parseInstructions(currentPlanExercise?.exercise?.instructions)
 
   // Next segment info for rest period
@@ -133,6 +135,8 @@ export function WorkoutFocusModal({
     : null
   const nextExerciseName =
     nextPlanExercise?.exercise?.name ?? t('workout.session.defaultExerciseName')
+  const nextGifUrl =
+    nextPlanExercise?.exercise?.gifUrl || nextPlanExercise?.exercise?.imageUrl
 
   // Progress percentage for current segment
   const segmentDuration = segment.durationSec > 0 ? segment.durationSec : 1
@@ -142,9 +146,43 @@ export function WorkoutFocusModal({
   return (
     <Modal
       open={open}
-      title={t('workout.createSession.focusModalTitle')}
+      title={
+        <div className="flex flex-wrap items-center gap-2 min-w-0">
+          <span
+            className={`inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold ${
+              isRest
+                ? 'bg-amber-400/20 text-amber-300 ring-1 ring-amber-300/30'
+                : isRunning
+                ? 'bg-cyan-400/20 text-cyan-300 ring-1 ring-cyan-300/30'
+                : 'bg-white/10 text-white/70'
+            }`}
+          >
+            {isRest ? (
+              <>
+                <Clock size={12} />
+                {t('workout.createSession.focusStatusRest')}
+              </>
+            ) : isRunning ? (
+              <>
+                <Zap size={12} className="fill-current" />
+                {t('workout.createSession.focusStatusRunning')}
+              </>
+            ) : (
+              <>
+                <Pause size={12} />
+                {t('workout.createSession.focusStatusPaused')}
+              </>
+            )}
+          </span>
+          <span className="truncate text-sm sm:text-base font-bold text-white max-w-[200px] sm:max-w-xs">
+            {day.name}
+          </span>
+        </div>
+      }
       onClose={onClose}
       size="xl"
+      showCloseButton={false}
+      bodyClassName="p-2 sm:p-3"
       headerActions={
         <Button
           variant="icon"
@@ -157,79 +195,58 @@ export function WorkoutFocusModal({
         </Button>
       }
     >
-      <div className="space-y-5">
-        {/* Top bar: Session Status & Total Remaining */}
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3">
-          <div className="flex items-center gap-2">
-            <span
-              className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold ${
-                isRest
-                  ? 'bg-amber-400/20 text-amber-300 ring-1 ring-amber-300/30'
-                  : isRunning
-                  ? 'bg-cyan-400/20 text-cyan-300 ring-1 ring-cyan-300/30'
-                  : 'bg-white/10 text-white/70'
-              }`}
-            >
-              {isRest ? (
-                <>
-                  <Clock size={12} />
-                  {t('workout.createSession.focusStatusRest')}
-                </>
-              ) : isRunning ? (
-                <>
-                  <Zap size={12} className="fill-current" />
-                  {t('workout.createSession.focusStatusRunning')}
-                </>
-              ) : (
-                <>
-                  <Pause size={12} />
-                  {t('workout.createSession.focusStatusPaused')}
-                </>
-              )}
-            </span>
-            <span className="text-xs text-white/50">{day.name}</span>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <span className="text-xs uppercase tracking-wider text-white/60">
-              {t('workout.createSession.timeRemaining')}:
-            </span>
-            <span className="text-base font-bold tabular-nums text-white">
-              {formatTimer(runtime.totalRemainingSec)}
-            </span>
-          </div>
-        </div>
-
+      <div className="space-y-3.5 sm:space-y-4">
         {/* Active Segment Display */}
         {isRest ? (
-          <div className="rounded-2xl border border-amber-400/30 bg-amber-400/10 p-6 text-center">
-            <div className="flex items-center justify-center gap-2 text-amber-300">
-              <Clock size={20} />
-              <h4 className="text-base font-semibold uppercase tracking-wider">
-                {t('workout.createSession.focusRestTitle')}
-              </h4>
+          <div className="rounded-2xl border border-amber-400/30 bg-amber-400/10 p-3.5 sm:p-4 text-center">
+            <div className="flex flex-col items-center gap-1 text-center mb-1.5">
+              <div className="flex items-center justify-center gap-1.5 text-amber-300">
+                <Clock size={18} className="shrink-0" />
+                <h4 className="text-sm sm:text-base font-semibold uppercase tracking-wider text-amber-300">
+                  {t('workout.createSession.focusRestTitle')}
+                </h4>
+              </div>
+              <div className="text-xs font-semibold text-white/70">
+                {t('workout.createSession.timeRemaining')}:{' '}
+                <span className="tabular-nums font-bold text-white">
+                  {formatTimer(runtime.totalRemainingSec)}
+                </span>
+              </div>
             </div>
 
-            <div className="my-4 text-5xl font-black tabular-nums tracking-tight text-white sm:text-6xl">
-              {formatTimer(segmentRemaining)}
-            </div>
+            {nextGifUrl && (
+              <div className="my-2 flex justify-center">
+                <div className="w-full max-w-md overflow-hidden rounded-xl border border-amber-400/30 bg-black/40 p-1">
+                  <img
+                    src={nextGifUrl}
+                    alt={nextExerciseName}
+                    className="max-h-64 sm:max-h-72 w-full object-contain rounded-lg mx-auto"
+                    loading="lazy"
+                  />
+                </div>
+              </div>
+            )}
 
-            <div className="mx-auto mb-4 h-2 max-w-md overflow-hidden rounded-full bg-white/10">
+            {/* Integrated Countdown Progress Bar */}
+            <div className="relative mx-auto my-3 h-11 sm:h-12 w-full max-w-md overflow-hidden rounded-xl border border-amber-400/30 bg-white/10">
               <div
                 className="h-full bg-amber-400 transition-[width] duration-200 motion-reduce:transition-none"
                 style={{ width: `${segmentProgress}%` }}
               />
+              <div className="absolute inset-0 flex items-center justify-center text-2xl sm:text-3xl font-black tabular-nums tracking-tight text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
+                {formatTimer(segmentRemaining)}
+              </div>
             </div>
 
             {/* Controls right under countdown */}
-            <div className="mb-4 flex flex-wrap items-center justify-center gap-3">
+            <div className="mb-2 flex flex-wrap items-center justify-center gap-2">
               {isRunning && (
                 <Button
                   variant="outline-white"
                   size="sm"
                   className="border-amber-400/40 bg-amber-400/15 text-amber-200 hover:bg-amber-400/25 hover:text-white"
                   onClick={onPause}
-                  leftIcon={<Pause size={15} />}
+                  leftIcon={<Pause size={14} />}
                 >
                   {t('workout.createSession.buttonStopWorkout')}
                 </Button>
@@ -240,7 +257,7 @@ export function WorkoutFocusModal({
                   size="sm"
                   className="border-amber-400/40 bg-amber-400/15 text-amber-200 hover:bg-amber-400/25 hover:text-white"
                   onClick={onResume}
-                  leftIcon={<Play size={15} />}
+                  leftIcon={<Play size={14} />}
                 >
                   {t('workout.createSession.buttonResumeWorkout')}
                 </Button>
@@ -249,14 +266,14 @@ export function WorkoutFocusModal({
                 variant="primary"
                 size="sm"
                 onClick={onSkipRest}
-                leftIcon={<FastForward size={15} />}
+                leftIcon={<FastForward size={14} />}
               >
                 {t('workout.createSession.buttonSkipRest')}
               </Button>
             </div>
 
             {nextSegment && (
-              <p className="text-sm text-amber-200/80">
+              <p className="text-xs text-amber-200/80 mt-1">
                 {t('workout.createSession.focusNextSet', {
                   exercise: nextExerciseName,
                   setNumber: nextSegment.setIndex + 1,
@@ -265,15 +282,23 @@ export function WorkoutFocusModal({
             )}
           </div>
         ) : (
-          <div className="rounded-2xl border border-cyan-400/30 bg-cyan-400/10 p-6 text-center">
-            <div className="flex items-center justify-center gap-2 text-cyan-300">
-              <Dumbbell size={20} />
-              <h4 className="text-base font-bold text-white sm:text-lg">
-                {exerciseName}
-              </h4>
+          <div className="rounded-2xl border border-cyan-400/30 bg-cyan-400/10 p-3.5 sm:p-4 text-center">
+            <div className="flex flex-col items-center gap-1 text-center mb-1.5">
+              <div className="flex items-center justify-center gap-1.5 text-cyan-300">
+                <Dumbbell size={18} className="shrink-0" />
+                <h4 className="text-base sm:text-lg font-bold text-white break-words">
+                  {exerciseName}
+                </h4>
+              </div>
+              <div className="text-xs font-semibold text-white/70">
+                {t('workout.createSession.timeRemaining')}:{' '}
+                <span className="tabular-nums font-bold text-white">
+                  {formatTimer(runtime.totalRemainingSec)}
+                </span>
+              </div>
             </div>
 
-            <p className="mt-1 text-xs text-cyan-200/80 sm:text-sm">
+            <p className="text-xs text-cyan-200/80">
               Set {segment.setIndex + 1} / {currentSets.length}
               {currentSetConfig && (
                 <>
@@ -286,25 +311,38 @@ export function WorkoutFocusModal({
               )}
             </p>
 
-            <div className="my-4 text-5xl font-black tabular-nums tracking-tight text-white sm:text-6xl">
-              {formatTimer(segmentRemaining)}
-            </div>
+            {currentGifUrl && (
+              <div className="my-2 flex justify-center">
+                <div className="w-full max-w-md overflow-hidden rounded-xl border border-cyan-400/30 bg-black/40 p-1">
+                  <img
+                    src={currentGifUrl}
+                    alt={exerciseName}
+                    className="max-h-64 sm:max-h-72 w-full object-contain rounded-lg mx-auto"
+                    loading="lazy"
+                  />
+                </div>
+              </div>
+            )}
 
-            <div className="mx-auto h-2 max-w-md overflow-hidden rounded-full bg-white/10">
+            {/* Integrated Countdown Progress Bar */}
+            <div className="relative mx-auto my-3 h-11 sm:h-12 w-full max-w-md overflow-hidden rounded-xl border border-cyan-400/30 bg-white/10">
               <div
-                className="h-full bg-cyan-300 transition-[width] duration-200 motion-reduce:transition-none"
+                className="h-full bg-cyan-400 transition-[width] duration-200 motion-reduce:transition-none"
                 style={{ width: `${segmentProgress}%` }}
               />
+              <div className="absolute inset-0 flex items-center justify-center text-2xl sm:text-3xl font-black tabular-nums tracking-tight text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
+                {formatTimer(segmentRemaining)}
+              </div>
             </div>
 
             {/* Controls right under countdown */}
-            <div className="mt-4 flex items-center justify-center gap-3">
+            <div className="mt-2 flex items-center justify-center gap-2">
               {isRunning && (
                 <Button
                   variant="primary"
                   size="sm"
                   onClick={onPause}
-                  leftIcon={<Pause size={15} />}
+                  leftIcon={<Pause size={14} />}
                 >
                   {t('workout.createSession.buttonStopWorkout')}
                 </Button>
@@ -314,7 +352,7 @@ export function WorkoutFocusModal({
                   variant="primary"
                   size="sm"
                   onClick={onResume}
-                  leftIcon={<Play size={15} />}
+                  leftIcon={<Play size={14} />}
                 >
                   {t('workout.createSession.buttonResumeWorkout')}
                 </Button>
@@ -324,22 +362,22 @@ export function WorkoutFocusModal({
         )}
 
         {/* Exercise Steps / Instructions */}
-        <div className="rounded-xl border border-white/10 bg-white/[0.02] p-4 sm:p-5">
-          <h5 className="mb-3 flex items-center gap-2 text-sm font-semibold text-white">
-            <Dumbbell size={15} className="text-cyan-400" />
+        <div className="rounded-xl border border-white/10 bg-white/[0.02] p-3 sm:p-4">
+          <h5 className="mb-2 flex items-center gap-2 text-xs sm:text-sm font-semibold text-white">
+            <Dumbbell size={14} className="text-cyan-400" />
             {t('workout.createSession.focusExerciseSteps')}: {exerciseName}
           </h5>
 
           {instructions && instructions.length > 0 ? (
-            <ol className="list-decimal space-y-2.5 pl-5 text-sm leading-relaxed text-white/80">
+            <ol className="list-decimal space-y-1.5 pl-4 text-xs leading-relaxed text-white/80">
               {instructions.map((step, index) => (
-                <li key={index} className="pl-1">
+                <li key={index} className="pl-0.5">
                   {step}
                 </li>
               ))}
             </ol>
           ) : (
-            <p className="text-sm italic text-white/50">
+            <p className="text-xs italic text-white/50">
               {t('workout.createSession.focusNoSteps')}
             </p>
           )}

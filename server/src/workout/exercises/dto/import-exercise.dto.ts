@@ -28,5 +28,10 @@ export class ImportExerciseDto {
   @IsOptional()
   @IsString()
   @MaxLength(1000)
+  gifUrl?: string
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(1000)
   imageUrl?: string
 }

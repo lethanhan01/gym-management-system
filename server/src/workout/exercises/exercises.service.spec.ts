@@ -1,4 +1,4 @@
-import { BadRequestException } from '@nestjs/common'
+import { ConflictException } from '@nestjs/common'
 import { ExercisesService } from './exercises.service'
 
 const exercise = {
@@ -8,9 +8,7 @@ const exercise = {
   muscleGroup: null,
   equipmentNeeded: null,
   description: 'provider',
-  imageUrl: null,
-  descriptionOverride: null,
-  imageUrlOverride: null,
+  gifUrl: null,
   source: 'manual',
   deletedAt: null,
 }
@@ -35,20 +33,10 @@ describe('ExercisesService', () => {
       })
     )
   })
-  it('allows only image/description overrides for provider records', async () => {
+  it('rejects updates to provider records', async () => {
     prisma.exercise.findFirst.mockResolvedValue({ ...exercise, source: 'exercisedb' })
     await expect(
       service.update(1n, { name: 'Nope' } as any, { userId: 1n } as any)
-    ).rejects.toBeInstanceOf(BadRequestException)
-  })
-  it('resolves an ExerciseDB description override', async () => {
-    prisma.exercise.findFirst.mockResolvedValue({ ...exercise, source: 'exercisedb' })
-    prisma.exercise.update.mockResolvedValue({
-      ...exercise,
-      source: 'exercisedb',
-      descriptionOverride: 'custom',
-    })
-    const result = await service.update(1n, { description: 'custom' } as any, { userId: 1n } as any)
-    expect(result.description).toBe('custom')
+    ).rejects.toBeInstanceOf(ConflictException)
   })
 })

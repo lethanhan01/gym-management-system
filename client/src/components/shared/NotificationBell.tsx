@@ -1,4 +1,5 @@
 import { useEffect, useId, useMemo, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Bell, CheckCheck, Loader2 } from 'lucide-react'
@@ -103,6 +104,7 @@ export default function NotificationBell() {
   const [unreadCount, setUnreadCount] = useState(0)
   const [latestId, setLatestId] = useState<string | null>(null)
   const rootRef = useRef<HTMLDivElement>(null)
+  const panelRef = useRef<HTMLDivElement>(null)
   const openRef = useRef(open)
   const lastToastTimeRef = useRef(0)
   const panelTitleId = useId()
@@ -110,6 +112,9 @@ export default function NotificationBell() {
   const { pathname } = useLocation()
   const user = useAuthStore((state) => state.user)
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
+  const [isMobile, setIsMobile] = useState(
+    () => typeof window !== 'undefined' && window.matchMedia?.('(max-width: 767px)').matches === true
+  )
 
   useEffect(() => {
     openRef.current = open
@@ -120,13 +125,27 @@ export default function NotificationBell() {
 
   useEffect(() => {
     function handleClick(event: MouseEvent) {
-      if (rootRef.current && !rootRef.current.contains(event.target as Node)) {
+      if (
+        rootRef.current &&
+        !rootRef.current.contains(event.target as Node) &&
+        !panelRef.current?.contains(event.target as Node)
+      ) {
         setOpen(false)
       }
     }
     if (open) document.addEventListener('mousedown', handleClick)
     return () => document.removeEventListener('mousedown', handleClick)
   }, [open])
+
+  useEffect(() => {
+    const media = window.matchMedia?.('(max-width: 767px)')
+    if (!media) return
+
+    const syncViewport = () => setIsMobile(media.matches)
+    syncViewport()
+    media.addEventListener('change', syncViewport)
+    return () => media.removeEventListener('change', syncViewport)
+  }, [])
 
   useEffect(() => {
     if (!isAuthenticated || !user) {
@@ -278,6 +297,68 @@ export default function NotificationBell() {
     if (path) navigate(path)
   }
 
+  const panel = (
+    <div ref={panelRef}>
+      <NotificationPanel titleId={panelTitleId}>
+        <div className="rogym-notification-panel__header">
+          <div className="rogym-notification-panel__header-copy">
+            <div id={panelTitleId} className="rogym-notification-panel__title">{tr('notification.title')}</div>
+            <div className="rogym-notification-panel__meta">
+              {unreadCount > 0 ? tr('notification.unread', { count: unreadCount }) : tr('notification.allRead')}
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={handleReadAll}
+            disabled={unreadCount === 0}
+            className="rogym-notification-panel__mark-all"
+            aria-label={tr('notification.markAllRead')}
+          >
+            <CheckCheck size={16} />
+          </button>
+        </div>
+
+        <div className="rogym-notification-panel__list">
+          {loading && (
+            <div className="rogym-notification-panel__state">
+              <Loader2 size={16} className="animate-spin" />
+              {tr('notification.loading')}
+            </div>
+          )}
+
+          {!loading && error && <div className="rogym-notification-panel__state is-error">{tr('notification.loadError')}</div>}
+
+          {!loading && !error && notifications.length === 0 && (
+            <div className="rogym-notification-panel__state">{tr('notification.empty')}</div>
+          )}
+
+          {!loading &&
+            !error &&
+            notifications.map((item) => {
+              const notificationText = translateNotification(item, tr)
+              return (
+                <button
+                  key={item.notificationId}
+                  type="button"
+                  onClick={() => void handleNotificationClick(item)}
+                  className={`rogym-notification-panel__item ${item.unread ? 'is-unread' : ''}`}
+                >
+                  <div className="rogym-notification-panel__item-layout">
+                    <span className={`rogym-notification-panel__dot ${item.unread ? 'is-unread' : ''}`} />
+                    <span className="rogym-notification-panel__item-copy">
+                      <span className="rogym-notification-panel__item-title">{notificationText.title}</span>
+                      <span className="rogym-notification-panel__item-message">{notificationText.message}</span>
+                      <span className="rogym-notification-panel__item-time">{relativeTime(item.createdAt, tr)}</span>
+                    </span>
+                  </div>
+                </button>
+              )
+            })}
+        </div>
+      </NotificationPanel>
+    </div>
+  )
+
   return (
     <div ref={rootRef} className="relative">
       <button
@@ -294,65 +375,7 @@ export default function NotificationBell() {
         )}
       </button>
 
-      {open && (
-        <NotificationPanel titleId={panelTitleId}>
-          <div className="rogym-notification-panel__header">
-            <div className="rogym-notification-panel__header-copy">
-              <div id={panelTitleId} className="rogym-notification-panel__title">{tr('notification.title')}</div>
-              <div className="rogym-notification-panel__meta">
-                {unreadCount > 0 ? tr('notification.unread', { count: unreadCount }) : tr('notification.allRead')}
-              </div>
-            </div>
-            <button
-              type="button"
-              onClick={handleReadAll}
-              disabled={unreadCount === 0}
-              className="rogym-notification-panel__mark-all"
-              aria-label={tr('notification.markAllRead')}
-            >
-              <CheckCheck size={16} />
-            </button>
-          </div>
-
-          <div className="rogym-notification-panel__list">
-            {loading && (
-              <div className="rogym-notification-panel__state">
-                <Loader2 size={16} className="animate-spin" />
-                {tr('notification.loading')}
-              </div>
-            )}
-
-            {!loading && error && <div className="rogym-notification-panel__state is-error">{tr('notification.loadError')}</div>}
-
-            {!loading && !error && notifications.length === 0 && (
-              <div className="rogym-notification-panel__state">{tr('notification.empty')}</div>
-            )}
-
-            {!loading &&
-              !error &&
-              notifications.map((item) => {
-                const notificationText = translateNotification(item, tr)
-                return (
-                  <button
-                    key={item.notificationId}
-                    type="button"
-                    onClick={() => void handleNotificationClick(item)}
-                    className={`rogym-notification-panel__item ${item.unread ? 'is-unread' : ''}`}
-                  >
-                    <div className="rogym-notification-panel__item-layout">
-                      <span className={`rogym-notification-panel__dot ${item.unread ? 'is-unread' : ''}`} />
-                      <span className="rogym-notification-panel__item-copy">
-                        <span className="rogym-notification-panel__item-title">{notificationText.title}</span>
-                        <span className="rogym-notification-panel__item-message">{notificationText.message}</span>
-                        <span className="rogym-notification-panel__item-time">{relativeTime(item.createdAt, tr)}</span>
-                      </span>
-                    </div>
-                  </button>
-                )
-              })}
-          </div>
-        </NotificationPanel>
-      )}
+      {open && (isMobile ? createPortal(panel, document.body) : panel)}
     </div>
   )
 }

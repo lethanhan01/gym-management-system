@@ -15,12 +15,14 @@ const SIZE_CLASS: Record<ModalSize, string> = {
 
 interface ModalProps {
   open: boolean
-  title: string
+  title: ReactNode
   children: ReactNode
   onClose: () => void
   footer?: ReactNode
   headerActions?: ReactNode
   size?: ModalSize
+  showCloseButton?: boolean
+  bodyClassName?: string
 }
 
 export function ModalFooter({ children, className = '' }: { children: ReactNode; className?: string }) {
@@ -31,7 +33,17 @@ export function ModalFooter({ children, className = '' }: { children: ReactNode;
   )
 }
 
-export function Modal({ open, title, children, onClose, footer, headerActions, size = 'xl' }: ModalProps) {
+export function Modal({
+  open,
+  title,
+  children,
+  onClose,
+  footer,
+  headerActions,
+  size = 'xl',
+  showCloseButton = true,
+  bodyClassName,
+}: ModalProps) {
   const { t } = useTranslation('common')
   useEffect(() => {
     if (!open) return
@@ -60,17 +72,19 @@ export function Modal({ open, title, children, onClose, footer, headerActions, s
           </h2>
           <div className="flex items-center gap-1.5">
             {headerActions}
-            <Button
-              variant="icon"
-              size="sm"
-              onClick={onClose}
-              aria-label={t('button.close')}
-            >
-              <X size={16} />
-            </Button>
+            {showCloseButton && (
+              <Button
+                variant="icon"
+                size="sm"
+                onClick={onClose}
+                aria-label={t('button.close')}
+              >
+                <X size={16} />
+              </Button>
+            )}
           </div>
         </div>
-        <div className="p-4 sm:p-6">{children}</div>
+        <div className={bodyClassName ?? 'p-4 sm:p-6'}>{children}</div>
         {footer && (
           <div className="border-t border-white/5 px-4 sm:px-6 py-3.5 sm:py-4">
             <ModalFooter>{footer}</ModalFooter>

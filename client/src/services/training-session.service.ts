@@ -54,6 +54,7 @@ export interface TrainingSessionPlanExercise {
     targetMuscle: { name: string } | null
     equipment: { name: string } | null
     description: string | null
+    gifUrl: string | null
     imageUrl: string | null
     createdByStaffId: string | null
     createdAt: string
@@ -177,7 +178,7 @@ export const trainingSessionService = {
   getTrainerAvailabilityForTrainer: async (
     date: string,
     trainerStaffId: string,
-    memberId?: string,
+    memberId?: string
   ): Promise<TrainerAvailabilityData> => {
     const params = new URLSearchParams({ date })
     if (trainerStaffId) params.set('trainerStaffId', trainerStaffId)

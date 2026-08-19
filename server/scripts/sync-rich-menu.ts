@@ -54,18 +54,19 @@ function resolveLiffBaseUrl(): string {
   return 'https://liff.line.me/MOCK_LIFF_ID'
 }
 
-function buildRichMenuDefinition(liffBaseUrl: string): RichMenuObject {
+function buildRichMenuDefinition(liffBaseUrl: string, locale: 'ja' | 'vi' = 'ja'): RichMenuObject {
+  const isJa = locale === 'ja'
   return {
     size: { width: 2500, height: 843 },
     selected: true,
-    name: 'RoGym Member Menu',
-    chatBarText: 'Mở menu RoGym',
+    name: `RoGym Member Menu (${locale.toUpperCase()})`,
+    chatBarText: isJa ? 'RoGymメニュー' : 'Mở menu RoGym',
     areas: [
       {
         bounds: { x: 0, y: 0, width: 625, height: 843 },
         action: {
           type: 'uri',
-          label: 'Lịch tập',
+          label: isJa ? 'スケジュール' : 'Lịch tập',
           uri: `${liffBaseUrl}?redirect=/member/workout/sessions`,
         },
       },
@@ -73,23 +74,23 @@ function buildRichMenuDefinition(liffBaseUrl: string): RichMenuObject {
         bounds: { x: 625, y: 0, width: 625, height: 843 },
         action: {
           type: 'uri',
-          label: 'Đặt lịch',
-          uri: `${liffBaseUrl}?redirect=/member/workout/sessions?book=1`,
+          label: isJa ? 'PT予約' : 'Đặt lịch',
+          uri: `${liffBaseUrl}?redirect=${encodeURIComponent('/member/workout/sessions?book=1')}`,
         },
       },
       {
         bounds: { x: 1250, y: 0, width: 625, height: 843 },
         action: {
           type: 'uri',
-          label: 'Check-in',
-          uri: `${liffBaseUrl}?redirect=/member/attendance`,
+          label: isJa ? 'チェックイン' : 'Check-in',
+          uri: `${liffBaseUrl}?redirect=/member/check-in`,
         },
       },
       {
         bounds: { x: 1875, y: 0, width: 625, height: 843 },
         action: {
           type: 'uri',
-          label: 'Hồ sơ',
+          label: isJa ? 'マイページ' : 'Hồ sơ',
           uri: `${liffBaseUrl}?redirect=/member/profile`,
         },
       },
@@ -103,6 +104,10 @@ async function main() {
   const imageArgIdx = args.indexOf('--image')
   const customImagePath = imageArgIdx >= 0 ? args[imageArgIdx + 1] : undefined
 
+  const localeArgIdx = args.indexOf('--locale')
+  const localeRaw = localeArgIdx >= 0 ? args[localeArgIdx + 1] : 'ja'
+  const locale: 'ja' | 'vi' = localeRaw === 'vi' ? 'vi' : 'ja'
+
   console.log('====================================================')
   console.log('  RoGym LINE Rich Menu Sync Tool')
   console.log('====================================================\n')
@@ -112,10 +117,11 @@ async function main() {
   const liffBaseUrl = resolveLiffBaseUrl()
 
   console.log(`[Config] LIFF Base URL:       ${liffBaseUrl}`)
+  console.log(`[Config] Target Locale:       ${locale.toUpperCase()}`)
   console.log(`[Config] Mock Mode:           ${isMockEnabled ? 'ENABLED' : 'DISABLED'}`)
   console.log(`[Config] Dry Run Mode:        ${isDryRun ? 'YES (No API Calls)' : 'NO'}`)
 
-  const richMenuPayload = buildRichMenuDefinition(liffBaseUrl)
+  const richMenuPayload = buildRichMenuDefinition(liffBaseUrl, locale)
   console.log('\n[Rich Menu Structure]:')
   console.log(JSON.stringify(richMenuPayload, null, 2))
 
@@ -162,8 +168,11 @@ async function main() {
   // ───────────────────────────────────────────────────────────────────────────
   // Step 2: Upload Rich Menu Image
   // ───────────────────────────────────────────────────────────────────────────
+  const defaultLocaleImagePath = path.resolve(__dirname, `../../docs/assets/line/rich-menu-template-${locale}.png`)
+  const fallbackImagePath = path.resolve(__dirname, '../../docs/assets/line/rich-menu-template.png')
   const imagePath =
-    customImagePath || path.resolve(__dirname, '../../docs/assets/line/rich-menu-template.png')
+    customImagePath ||
+    (fs.existsSync(defaultLocaleImagePath) ? defaultLocaleImagePath : fallbackImagePath)
 
   if (fs.existsSync(imagePath)) {
     console.log(`\n[Step 2/3] Uploading image from: ${imagePath}...`)

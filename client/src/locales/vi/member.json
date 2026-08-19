@@ -130,7 +130,19 @@
     "errorPasswordMismatch": "Mật khẩu xác nhận không khớp.",
     "errorPasswordTooShort": "Mật khẩu mới cần ít nhất 8 ký tự.",
     "errorPasswordChange": "Không thể đổi mật khẩu.",
-    "successPasswordChange": "Đổi mật khẩu thành công."
+    "successPasswordChange": "Đổi mật khẩu thành công.",
+    "sectionAccount": "Quản lý tài khoản",
+    "logoutDescription": "Đăng xuất khỏi tài khoản trên thiết bị hiện tại.",
+    "confirmLogoutTitle": "Xác nhận đăng xuất",
+    "confirmLogoutDesc": "Bạn có chắc chắn muốn đăng xuất khỏi hệ thống?",
+    "lineLinkedBadge": "Đã liên kết LINE",
+    "lineNotLinked": "Chưa liên kết",
+    "sectionLine": "Tài khoản LINE",
+    "lineLinkedDesc": "Đã liên kết tài khoản LINE để nhận thông báo và đăng nhập nhanh.",
+    "buttonChoosePt": "Chọn PT",
+    "buttonChangePt": "Đổi PT",
+    "errorFullNameInvalid": "Họ và tên phải từ 2 đến 100 ký tự.",
+    "errorBirthdayInvalid": "Ngày sinh không hợp lệ."
   },
   "chooseTrainer": {
     "title": "Chọn huấn luyện viên",

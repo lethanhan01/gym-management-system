@@ -15,7 +15,7 @@ export interface NormalizedExerciseDbExercise {
   equipmentName: string | null
   description: string | null
   instructions: string[]
-  imageUrl: string | null
+  gifUrl: string | null
   contentHash: string
 }
 
@@ -147,8 +147,7 @@ function normalize(item: Record<string, unknown>): NormalizedExerciseDbExercise 
   const secondaryMuscles = list(item.secondaryMuscles)
   const equipmentName = clean(item.equipment)
   const instructions = list(item.instructions)
-  // Use gifUrl if provided (some API versions may still include it)
-  const imageUrl = clean(item.gifUrl)
+  const gifUrl = clean(item.gifUrl)
 
   const description = clean(item.description) ?? (instructions.slice(0, 3).join(' ') || null)
 
@@ -161,7 +160,7 @@ function normalize(item: Record<string, unknown>): NormalizedExerciseDbExercise 
     equipmentName,
     description,
     instructions,
-    imageUrl,
+    gifUrl,
   }
   assertColumnLengths(persisted)
   return {
@@ -173,7 +172,7 @@ function normalize(item: Record<string, unknown>): NormalizedExerciseDbExercise 
 function assertColumnLengths(
   item: Pick<
     NormalizedExerciseDbExercise,
-    'externalId' | 'name' | 'bodyPart' | 'targetMuscle' | 'equipmentName' | 'imageUrl'
+    'externalId' | 'name' | 'bodyPart' | 'targetMuscle' | 'equipmentName' | 'gifUrl'
   >
 ) {
   const limits: Array<[string, string | null, number]> = [

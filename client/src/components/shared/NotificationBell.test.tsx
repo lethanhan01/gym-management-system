@@ -121,8 +121,25 @@ describe('NotificationBell', () => {
     await waitFor(() => expect(notificationService.markAllRead).toHaveBeenCalled())
   })
 
+  it('mounts the mobile panel outside the blurred header container', async () => {
+    vi.stubGlobal(
+      'matchMedia',
+      vi.fn().mockReturnValue({
+        matches: true,
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+      })
+    )
+
+    renderBell()
+    fireEvent.click(await screen.findByRole('button', { name: 'Thông báo' }))
+
+    expect((await screen.findByRole('region', { name: 'Thông báo' })).parentElement?.parentElement).toBe(document.body)
+  })
+
   afterEach(() => {
     vi.useRealTimers()
+    vi.unstubAllGlobals()
   })
 
   it('marks all notifications as read from the panel action', async () => {

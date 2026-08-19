@@ -522,7 +522,8 @@
       "fieldMuscleGroup": "筋肉グループ",
       "fieldEquipment": "必要器具",
       "fieldDescription": "説明",
-      "fieldImageUrl": "イラスト画像URL"
+      "fieldImageUrl": "画像URL",
+      "fieldGifUrl": "GIF URL"
     },
     "error": {
       "loadFailed": "エクササイズライブラリを読み込めませんでした。",

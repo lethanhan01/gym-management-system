@@ -133,20 +133,30 @@ export default function DashboardLayout() {
         </>
       )}
       <div className="flex flex-col min-h-screen">
-        <Topbar />
-        {/* Hamburger button — chỉ hiện trên mobile khi có sidebar */}
-        {showSidebar && (
-          <Button
-            variant="icon"
-            onClick={() => setIsSidebarOpen(true)}
-            className="fixed top-[14px] left-4 z-40 md:hidden flex items-center justify-center w-11 h-11 border border-white/10 text-white"
-            style={{ background: 'var(--rogym-bg-card)' }}
-            aria-label="Mở menu điều hướng"
-          >
-            <Menu size={20} />
-          </Button>
-        )}
-        <main className="flex-1 overflow-auto px-6 pt-20 pb-24 md:px-6 md:pt-20 md:pb-6">
+        {/* Mobile Header Bar */}
+        <header className="md:hidden fixed top-0 left-0 right-0 h-16 z-40 px-4 bg-[#080e0b]/90 backdrop-blur-md border-b border-white/5 flex items-center justify-between">
+          {showSidebar ? (
+            <Button
+              variant="icon"
+              onClick={() => setIsSidebarOpen(true)}
+              className="flex items-center justify-center w-10 h-10 border border-white/10 text-white rounded-xl"
+              style={{ background: 'var(--rogym-bg-card)' }}
+              aria-label="Mở menu điều hướng"
+            >
+              <Menu size={20} />
+            </Button>
+          ) : (
+            <div className="w-10" />
+          )}
+          <Topbar className="flex items-center gap-2.5" />
+        </header>
+
+        {/* Desktop Topbar */}
+        <div className="hidden md:block">
+          <Topbar />
+        </div>
+
+        <main className="flex-1 overflow-auto px-4 sm:px-6 pt-20 pb-24 md:px-6 md:pt-20 md:pb-6">
           <Suspense fallback={<PageLoader />}>
             <Outlet />
           </Suspense>

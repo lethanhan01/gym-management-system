@@ -26,7 +26,7 @@ const plan: WorkoutPlan = {
   days: [{ planDayId: '11', planId: '1', dayNumber: 1, weekNumber: 1, dayOfWeek: 1, name: '全身A', notes: null, exercises: [{
     planExerciseId: '111', planDayId: '11', exerciseId: '1001', orderIndex: 1, targetSets: 3, targetReps: 10,
     targetDurationSec: null, targetWeightKg: '20', restSeconds: 60, notes: null,
-    exercise: { exerciseId: '1001', name: 'Squat', bodyPartId: 1, targetMuscleId: null, equipmentId: null, description: null, instructions: null, imageUrl: null, createdByStaffId: null, createdAt: '2026-07-01T00:00:00.000Z', deletedAt: null, bodyPart: { bodyPartId: 1, name: 'strength' } },
+    exercise: { exerciseId: '1001', name: 'Squat', bodyPartId: 1, targetMuscleId: null, equipmentId: null, description: null, instructions: null, gifUrl: null, createdByStaffId: null, createdAt: '2026-07-01T00:00:00.000Z', deletedAt: null, bodyPart: { bodyPartId: 1, name: 'strength' } },
   }] }],
 }
 
@@ -81,16 +81,15 @@ describe('CreateWorkoutDaySessionPage', () => {
     const stopButtons = await screen.findAllByRole('button', { name: 'Dừng buổi tập' })
     expect(stopButtons.length).toBeGreaterThanOrEqual(1)
     expect(screen.getAllByText('02:45')[0]).toBeVisible()
-    expect(screen.getByText('Đang thực hiện buổi tập')).toBeVisible()
+    expect(screen.getAllByText('全身A').length).toBeGreaterThanOrEqual(1)
 
     // Test minimizing focus modal
     fireEvent.click(screen.getByRole('button', { name: 'Thu nhỏ' }))
-    expect(screen.queryByText('Đang thực hiện buổi tập')).toBeNull()
     expect(screen.getByRole('button', { name: 'Mở bảng tập luyện' })).toBeVisible()
 
     // Reopen modal
     fireEvent.click(screen.getByRole('button', { name: 'Mở bảng tập luyện' }))
-    expect(screen.getByText('Đang thực hiện buổi tập')).toBeVisible()
+    expect(screen.getAllByText('全身A').length).toBeGreaterThanOrEqual(1)
 
     fireEvent.click(screen.getByRole('button', { name: 'Quay lại chọn ngày tập' }))
     expect(screen.getByText('Dừng buổi tập?')).toBeVisible()

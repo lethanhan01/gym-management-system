@@ -36,6 +36,11 @@ export class CreateExerciseDto {
   @IsOptional()
   @IsString()
   @MaxLength(1000)
+  gifUrl?: string
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(1000)
   imageUrl?: string
 
   @IsOptional()

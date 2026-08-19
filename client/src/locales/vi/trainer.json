@@ -522,7 +522,8 @@
       "fieldMuscleGroup": "Nhóm cơ",
       "fieldEquipment": "Dụng cụ",
       "fieldDescription": "Mô tả",
-      "fieldImageUrl": "Đường dẫn hình minh họa"
+      "fieldImageUrl": "Đường dẫn ảnh tĩnh (URL)",
+      "fieldGifUrl": "Đường dẫn GIF minh họa"
     },
     "error": {
       "loadFailed": "Không thể tải thư viện bài tập.",

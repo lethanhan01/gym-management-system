@@ -587,13 +587,15 @@ export default function TrainerPlanBuilderPage() {
           </label>
           {selectedExercise && (
             <div className="flex gap-4 rounded-2xl border border-white/5 bg-white/[0.025] p-4">
-              {selectedExercise.imageUrl && (
-                <img
-                  src={selectedExercise.imageUrl}
-                  alt={t('plans.builder.exerciseModal.illustrationAlt', { name: selectedExercise.name })}
-                  className="h-24 w-28 rounded-xl object-cover"
-                  loading="lazy"
-                />
+              {selectedExercise.gifUrl && (
+                <div className="h-24 w-28 shrink-0 overflow-hidden rounded-xl bg-white p-1.5 flex items-center justify-center">
+                  <img
+                    src={selectedExercise.gifUrl}
+                    alt={t('plans.builder.exerciseModal.illustrationAlt', { name: selectedExercise.name })}
+                    className="h-full w-full object-contain"
+                    loading="lazy"
+                  />
+                </div>
               )}
               <div className="text-sm rogym-text-secondary">
                 <div className="font-semibold text-white">{selectedExercise.name}</div>
@@ -858,13 +860,15 @@ const PlanDayCard = memo(function PlanDayCard({
             <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[rgba(66,224,158,0.12)] text-sm font-bold rogym-text-accent">
               {index + 1}
             </div>
-            {item.exercise?.imageUrl && (
-              <img
-                src={item.exercise.imageUrl}
-                alt={t('plans.builder.exerciseModal.illustrationAlt', { name: item.exercise.name })}
-                className="h-20 w-full rounded-xl object-cover md:w-24"
-                loading="lazy"
-              />
+            {(item.exercise?.gifUrl || item.exercise?.imageUrl) && (
+              <div className="h-20 w-24 shrink-0 overflow-hidden rounded-xl bg-white p-1 flex items-center justify-center">
+                <img
+                  src={item.exercise.gifUrl || item.exercise.imageUrl || ''}
+                  alt={t('plans.builder.exerciseModal.illustrationAlt', { name: item.exercise.name })}
+                  className="h-full w-full object-contain"
+                  loading="lazy"
+                />
+              </div>
             )}
             <div className="min-w-0 flex-1">
               <div className="font-semibold text-white">

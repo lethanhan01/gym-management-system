@@ -130,7 +130,19 @@
     "errorPasswordMismatch": "パスワードが一致しません。",
     "errorPasswordTooShort": "新しいパスワードは8文字以上必要です。",
     "errorPasswordChange": "パスワードを変更できません。",
-    "successPasswordChange": "パスワードを変更しました。"
+    "successPasswordChange": "パスワードを変更しました。",
+    "sectionAccount": "アカウント管理",
+    "logoutDescription": "この端末からログアウトします。",
+    "confirmLogoutTitle": "ログアウトの確認",
+    "confirmLogoutDesc": "本当にログアウトしますか？",
+    "lineLinkedBadge": "LINE連携済み",
+    "lineNotLinked": "未連携",
+    "sectionLine": "LINEアカウント",
+    "lineLinkedDesc": "LINEアカウントと連携して通知の受信や簡単ログインが可能です。",
+    "buttonChoosePt": "PTを選択",
+    "buttonChangePt": "PTを変更",
+    "errorFullNameInvalid": "氏名は2〜100文字で入力してください。",
+    "errorBirthdayInvalid": "生年月日が無効です。"
   },
   "chooseTrainer": {
     "title": "トレーナーを選択",

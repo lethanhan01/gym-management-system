@@ -1,9 +1,4 @@
-import {
-  BadRequestException,
-  ConflictException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common'
+import { ConflictException, Injectable, NotFoundException } from '@nestjs/common'
 import { ExerciseSource } from '@prisma/client'
 import { AuthenticatedUser } from '../../auth/types/jwt-payload.interface'
 import { AuditService } from '../../common/audit/audit.service'
@@ -102,26 +97,8 @@ export class ExercisesService {
     const before = await this.findOneOrThrow(id)
     if (before.source === ExerciseSource.legacy)
       throw new ConflictException('Legacy exercise cannot be edited')
-    if (before.source === ExerciseSource.exercisedb) {
-      const invalid = Object.keys(dto).filter((key) => !['description', 'imageUrl'].includes(key))
-      if (invalid.length)
-        throw new BadRequestException(
-          'ExerciseDB exercises only allow description and image URL overrides'
-        )
-      const exercise = await this.prisma.exercise.update({
-        where: { exerciseId: id },
-        data: { descriptionOverride: dto.description, imageUrlOverride: dto.imageUrl },
-        include: EXERCISE_INCLUDE,
-      })
-      await this.audit.log({
-        actorUserId: user.userId,
-        action: 'exercise.override',
-        resourceType: 'exercise',
-        resourceId: id.toString(),
-        afterData: { fields: Object.keys(dto) },
-      })
-      return this.present(exercise)
-    }
+    if (before.source === ExerciseSource.exercisedb)
+      throw new ConflictException('ExerciseDB exercises cannot be edited')
     const exercise = await this.prisma.exercise.update({
       where: { exerciseId: id },
       data: {
@@ -143,24 +120,6 @@ export class ExercisesService {
       afterData: { name: exercise.name },
     })
     return this.present(exercise)
-  }
-
-  async clearOverrides(id: bigint, user: AuthenticatedUser) {
-    const exercise = await this.findOneOrThrow(id)
-    if (exercise.source !== ExerciseSource.exercisedb)
-      throw new BadRequestException('Only ExerciseDB exercises have overrides')
-    const updated = await this.prisma.exercise.update({
-      where: { exerciseId: id },
-      data: { descriptionOverride: null, imageUrlOverride: null },
-      include: EXERCISE_INCLUDE,
-    })
-    await this.audit.log({
-      actorUserId: user.userId,
-      action: 'exercise.clear_override',
-      resourceType: 'exercise',
-      resourceId: id.toString(),
-    })
-    return this.present(updated)
   }
 
   async softDelete(id: bigint, user: AuthenticatedUser) {
@@ -193,9 +152,7 @@ export class ExercisesService {
   private present<
     T extends {
       description: string | null
-      imageUrl: string | null
-      descriptionOverride: string | null
-      imageUrlOverride: string | null
+      gifUrl: string | null
       instructions: string | null
     },
   >(exercise: T) {
@@ -215,8 +172,6 @@ export class ExercisesService {
 
     return {
       ...exercise,
-      description: exercise.descriptionOverride ?? exercise.description,
-      imageUrl: exercise.imageUrlOverride ?? exercise.imageUrl,
       instructions: parsedInstructions,
     }
   }

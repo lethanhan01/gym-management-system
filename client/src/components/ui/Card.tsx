@@ -309,6 +309,16 @@ export interface CardMediaProps extends HTMLAttributes<HTMLDivElement> {
   badge?: ReactNode
   action?: ReactNode
   zoomOnHover?: boolean
+  objectFit?: 'cover' | 'contain' | 'fill' | 'scale-down' | 'none'
+  imageClassName?: string
+}
+
+const OBJECT_FIT_CLASSES: Record<'cover' | 'contain' | 'fill' | 'scale-down' | 'none', string> = {
+  cover: 'object-cover',
+  contain: 'object-contain',
+  fill: 'object-fill',
+  'scale-down': 'object-scale-down',
+  none: 'object-none',
 }
 
 const ASPECT_CLASSES: Record<CardAspectRatio, string> = {
@@ -328,6 +338,8 @@ export function CardMedia({
   badge,
   action,
   zoomOnHover = true,
+  objectFit = 'cover',
+  imageClassName,
   className,
   children,
   ...props
@@ -347,8 +359,10 @@ export function CardMedia({
           alt={alt}
           loading="lazy"
           className={cn(
-            'h-full w-full object-cover',
-            zoomOnHover && 'transition-transform duration-300 group-hover:scale-105'
+            'h-full w-full',
+            OBJECT_FIT_CLASSES[objectFit],
+            zoomOnHover && 'transition-transform duration-300 group-hover:scale-105',
+            imageClassName
           )}
         />
       ) : (

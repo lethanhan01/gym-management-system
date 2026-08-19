@@ -170,7 +170,7 @@ export default function MemberExercisesPage() {
             description={t('workout.exercises.emptyDescription')}
           />
         ) : (
-          <section aria-label={t('workout.exercises.pageTitle')} className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          <section aria-label={t('workout.exercises.pageTitle')} className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {filtered.map((exercise) => (
               <ExerciseCard
                 key={exercise.exerciseId}
@@ -211,12 +211,12 @@ export default function MemberExercisesPage() {
             </>
           }
         >
-          {detail.imageUrl && (
-            <div className="aspect-[16/7] overflow-hidden rounded-xl mb-4">
+          {(detail.gifUrl || detail.imageUrl) && (
+            <div className="aspect-[16/9] max-h-64 sm:max-h-80 w-full overflow-hidden rounded-xl mb-4 bg-white border border-white/10 p-2 sm:p-3 flex items-center justify-center">
               <img
-                src={detail.imageUrl}
+                src={detail.gifUrl || detail.imageUrl || ''}
                 alt={t('workout.exercises.imageAlt', { name: detail.name })}
-                className="h-full w-full object-cover"
+                className="h-full w-full object-contain"
                 loading="lazy"
               />
             </div>
