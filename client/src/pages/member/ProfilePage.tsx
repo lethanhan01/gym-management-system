@@ -23,7 +23,7 @@ import {
   MemberSkeleton,
   MemberErrorState,
 } from '@/components/MemberUI'
-import { Edit3, KeyRound, LogOut, Save, UserRound, X } from 'lucide-react'
+import { ChevronRight, Edit3, KeyRound, LogOut, Save, UserCheck, UserRound, X } from 'lucide-react'
 import { getApiError } from '@/lib/api-error'
 import { initLiff } from '@/lib/liff'
 import { formatDate } from '@/lib/date'
@@ -96,7 +96,7 @@ export default function MemberProfilePage() {
       .then((me) => {
         setLineLinked(!!(me as { lineLinked?: boolean }).lineLinked)
       })
-      .catch(() => {})
+      .catch(() => { })
   }, [])
 
   function startEdit() {
@@ -248,6 +248,7 @@ export default function MemberProfilePage() {
           <Card as="article" variant="compact" className="flex flex-col justify-between p-6">
             <header className="mb-6 border-b border-white/5 pb-5">
               <CardHeader
+                responsive={false}
                 icon={<Avatar name={displayName} size="lg" shape="rounded" tone="teal" border />}
                 actions={
                   !isEditing && (
@@ -280,18 +281,17 @@ export default function MemberProfilePage() {
 
             <CardContent className="space-y-1 p-0">
               {isEditing ? (
-                <section className="border-b border-white/5 py-3">
+                <div className="border-b border-white/5 py-3">
                   <FormField label={t('profile.fieldName')} required>
                     <Input
                       type="text"
-                      size="sm"
                       value={editFullName}
                       onChange={(e) => setEditFullName(e.target.value)}
                       placeholder="Nhập họ và tên"
                       className="mt-1"
                     />
                   </FormField>
-                </section>
+                </div>
               ) : (
                 <ProfileInfoRow label={t('profile.fieldName')} value={displayName} />
               )}
@@ -315,18 +315,17 @@ export default function MemberProfilePage() {
               />
 
               {isEditing ? (
-                <section className="border-b border-white/5 py-3">
+                <div className="border-b border-white/5 py-3">
                   <FormField label={t('profile.fieldPhone')}>
                     <Input
                       type="tel"
-                      size="sm"
                       value={editPhone}
                       onChange={(e) => setEditPhone(e.target.value)}
                       placeholder="0901234567"
                       className="mt-1"
                     />
                   </FormField>
-                </section>
+                </div>
               ) : (
                 <ProfileInfoRow
                   label={t('profile.fieldPhone')}
@@ -335,7 +334,7 @@ export default function MemberProfilePage() {
               )}
 
               {isEditing ? (
-                <section className="border-b border-white/5 py-3">
+                <div className="border-b border-white/5 py-3">
                   <FormField label={t('profile.fieldBirthday')}>
                     <DatePickerInput
                       value={editDateOfBirth}
@@ -344,7 +343,7 @@ export default function MemberProfilePage() {
                       className="mt-1"
                     />
                   </FormField>
-                </section>
+                </div>
               ) : (
                 <ProfileInfoRow
                   label={t('profile.fieldBirthday')}
@@ -355,18 +354,17 @@ export default function MemberProfilePage() {
               )}
 
               {isEditing ? (
-                <section className="border-b border-white/5 py-3">
+                <div className="border-b border-white/5 py-3">
                   <FormField label={t('profile.fieldAddress')}>
                     <Input
                       type="text"
-                      size="sm"
                       value={editAddress}
                       onChange={(e) => setEditAddress(e.target.value)}
                       placeholder="Số nhà, đường, quận, thành phố"
                       className="mt-1"
                     />
                   </FormField>
-                </section>
+                </div>
               ) : (
                 <ProfileInfoRow
                   label={t('profile.fieldAddress')}
@@ -377,22 +375,30 @@ export default function MemberProfilePage() {
               <ProfileInfoRow
                 label={t('profile.fieldTrainer')}
                 value={
-                  <div className="flex items-center justify-end gap-2.5">
-                    <span
-                      className={`font-medium ${!profile?.trainerName ? 'italic text-white/40' : 'text-white'}`}
-                    >
-                      {profile?.trainerName ?? t('profile.notAssigned')}
-                    </span>
+                  profile?.trainerName ? (
                     <Button
                       variant="outline-white"
                       size="xs"
                       type="button"
-                      className="shrink-0"
+                      className="group inline-flex items-center gap-1.5 rounded-lg border-white/15 px-3 py-1 text-xs font-semibold text-white hover:border-[var(--rogym-teal)]/50 hover:bg-[var(--rogym-teal)]/10 hover:text-[var(--rogym-teal)] transition-all"
+                      onClick={() => navigate('/member/choose-trainer')}
+                      title={t('profile.buttonChangePt')}
+                    >
+                      <UserCheck size={13} className="text-[var(--rogym-teal)] shrink-0" />
+                      <span className="truncate max-w-[160px] sm:max-w-[200px] font-medium">{profile.trainerName}</span>
+                      <ChevronRight size={13} className="text-white/40 group-hover:text-[var(--rogym-teal)] group-hover:translate-x-0.5 transition-all shrink-0" />
+                    </Button>
+                  ) : (
+                    <Button
+                      variant="outline-white"
+                      size="xs"
+                      type="button"
+                      className="inline-flex items-center gap-1.5 rounded-lg border-dashed border-white/20 text-xs text-white/60 hover:border-[var(--rogym-teal)]/50 hover:text-[var(--rogym-teal)] transition-all"
                       onClick={() => navigate('/member/choose-trainer')}
                     >
-                      {profile?.trainerName ? t('profile.buttonChangePt') : t('profile.buttonChoosePt')}
+                      <span>+ {t('profile.buttonChoosePt')}</span>
                     </Button>
-                  </div>
+                  )
                 }
               />
             </CardContent>
