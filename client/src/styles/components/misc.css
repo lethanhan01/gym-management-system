@@ -249,16 +249,25 @@
 
   .rogym-payment-method-option {
     border: 1px solid rgba(255, 255, 255, 0.1);
-    background: transparent;
+    background: rgba(255, 255, 255, 0.02);
     color: var(--rogym-text-secondary);
     cursor: pointer;
+    transition: all 150ms ease-in-out;
+  }
+
+  .rogym-payment-method-option:hover:not(.is-active) {
+    border-color: rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.05);
+    color: #fff;
   }
 
   .rogym-payment-method-option.is-active {
     border: 1.5px solid var(--rogym-green);
-    background: rgba(6, 195, 132, 0.09);
+    background: rgba(6, 195, 132, 0.12);
     color: var(--rogym-green);
+    box-shadow: 0 0 12px rgba(6, 195, 132, 0.15);
   }
+
 
   .rogym-checkbox {
     width: 18px;
