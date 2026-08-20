@@ -98,10 +98,10 @@ api.interceptors.response.use(
       if (config._retry) {
         useAuthStore.getState().clearAuth()
         const currentPath = window.location.pathname + window.location.search
-        const redirect = currentPath.startsWith('/liff') || currentPath.startsWith('/login')
-          ? '/member'
-          : currentPath
-        window.location.href = `/liff?redirect=${encodeURIComponent(redirect)}`
+        if (currentPath.startsWith('/liff')) {
+          return Promise.reject(err)
+        }
+        window.location.href = `/liff?redirect=${encodeURIComponent(currentPath)}`
         return Promise.reject(err)
       }
 
@@ -123,9 +123,10 @@ api.interceptors.response.use(
       } catch (refreshErr) {
         useAuthStore.getState().clearAuth()
         const currentPath = window.location.pathname + window.location.search
-        const redirect = currentPath.startsWith('/liff') || currentPath.startsWith('/login')
-          ? '/member'
-          : currentPath
+        if (currentPath.startsWith('/liff')) {
+          return Promise.reject(refreshErr)
+        }
+        const redirect = currentPath.startsWith('/login') ? '/member' : currentPath
         window.location.href = `/liff?redirect=${encodeURIComponent(redirect)}`
         return Promise.reject(refreshErr)
       }

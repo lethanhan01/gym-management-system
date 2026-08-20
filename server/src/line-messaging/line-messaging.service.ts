@@ -700,7 +700,7 @@ export class LineMessagingService {
     })
 
     return this.pushMessage(subscription.member.user.lineId, [
-      this.withLiffButton(text, template.renewButton, '/member/subscriptions/current'),
+      this.withLiffButton(text, template.renewButton, '/member/subscription/current'),
     ])
   }
 
