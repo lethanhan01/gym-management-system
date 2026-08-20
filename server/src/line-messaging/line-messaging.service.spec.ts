@@ -1,5 +1,6 @@
 import { BadRequestException, UnauthorizedException } from '@nestjs/common'
 import { createHmac } from 'crypto'
+import { LINE_MOCK_WEBHOOK_SECRET } from '../line-mock/constants'
 import { LineMessagingService } from './line-messaging.service'
 
 function sign(body: Buffer, secret = 'secret') {
@@ -120,6 +121,112 @@ describe('LineMessagingService', () => {
         ],
       })
     )
+  })
+
+  describe('message event', () => {
+    it('replies with helpText and LIFF button when a user sends any message (vi)', async () => {
+      const body = Buffer.from(
+        JSON.stringify({
+          events: [
+            {
+              type: 'message',
+              replyToken: 'reply-token-msg',
+              source: { type: 'user', userId: 'U123' },
+              message: { type: 'text', text: 'Xin chào!' },
+            },
+          ],
+        })
+      )
+
+      await service.handleWebhook(body, sign(body))
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        'https://api.line.me/v2/bot/message/reply',
+        expect.objectContaining({ method: 'POST' })
+      )
+      const replyBody = JSON.parse(mockFetch.mock.calls[0][1].body)
+      expect(replyBody.replyToken).toBe('reply-token-msg')
+      expect(replyBody.messages[0].text).toContain('RoGym không hỗ trợ trả lời tin nhắn trực tiếp')
+      expect(replyBody.messages[0].quickReply.items[0].action.uri).toContain(
+        'redirect=%2Fmember'
+      )
+    })
+
+    it('replies with Japanese helpText when LINE_MESSAGE_LOCALE is ja', async () => {
+      env.LINE_MESSAGE_LOCALE = 'ja'
+      const body = Buffer.from(
+        JSON.stringify({
+          events: [
+            {
+              type: 'message',
+              replyToken: 'reply-token-ja',
+              source: { type: 'user', userId: 'U123' },
+              message: { type: 'sticker' },
+            },
+          ],
+        })
+      )
+
+      await service.handleWebhook(body, sign(body))
+
+      const replyBody = JSON.parse(mockFetch.mock.calls[0][1].body)
+      expect(replyBody.messages[0].text).toContain('RoGymは自動返信に対応していません')
+      expect(replyBody.messages[0].quickReply.items[0].action.label).toBe('アプリを開く')
+    })
+
+    it('does not reply when message event has no replyToken', async () => {
+      const body = Buffer.from(
+        JSON.stringify({
+          events: [
+            {
+              type: 'message',
+              source: { type: 'user', userId: 'U123' },
+              message: { type: 'text', text: 'hello' },
+            },
+          ],
+        })
+      )
+
+      await service.handleWebhook(body, sign(body))
+
+      expect(mockFetch).not.toHaveBeenCalled()
+    })
+
+    it('records message reply in mock outbox when mock mode is enabled', async () => {
+      env.LINE_MOCK_ENABLED = 'true'
+      env.CLIENT_URL = 'http://localhost:5173'
+      const body = Buffer.from(
+        JSON.stringify({
+          events: [
+            {
+              type: 'message',
+              replyToken: 'mock-reply-msg',
+              source: { type: 'user', userId: 'U123' },
+              message: { type: 'text', text: 'test' },
+            },
+          ],
+        })
+      )
+      const sig = createHmac('sha256', LINE_MOCK_WEBHOOK_SECRET).update(body).digest('base64')
+
+      await service.handleWebhook(body, sig)
+
+      expect(mockFetch).not.toHaveBeenCalled()
+      const messages = service.getMockMessages()
+      expect(messages).toEqual([
+        expect.objectContaining({
+          kind: 'reply',
+          payload: expect.objectContaining({
+            replyToken: 'mock-reply-msg',
+            messages: [
+              expect.objectContaining({
+                text: expect.stringContaining('RoGym không hỗ trợ trả lời tin nhắn trực tiếp'),
+              }),
+            ],
+          }),
+        }),
+      ])
+    })
   })
 
   it('unlinks the matching app user when LINE sends an unfollow event', async () => {

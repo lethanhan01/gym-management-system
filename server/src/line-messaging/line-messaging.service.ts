@@ -12,12 +12,13 @@ type LineWebhookBody = {
 }
 
 type LineWebhookEvent = {
-  type: 'follow' | 'unfollow' | string
+  type: 'follow' | 'unfollow' | 'message' | string
   replyToken?: string
   source?: {
     type?: string
     userId?: string
   }
+  message?: { type: string; text?: string }
 }
 
 type LineMessage = {
@@ -62,6 +63,8 @@ const LINE_MESSAGE_TEMPLATES: Record<
     renewButton: string
     followText: string
     followButton: string
+    helpText: string
+    helpButton: string
     attendanceCheckin: string
     subscriptionExpiring: (data: { packageName: string; endDate: string }) => string
     training: Record<
@@ -81,6 +84,9 @@ const LINE_MESSAGE_TEMPLATES: Record<
     renewButton: 'Gia hạn ngay',
     followText: 'Chào mừng bạn đến với RoGym. Bấm nút bên dưới để mở ứng dụng hội viên.',
     followButton: 'Mở ứng dụng',
+    helpText:
+      'Xin chào! RoGym không hỗ trợ trả lời tin nhắn trực tiếp. Bấm nút bên dưới để mở ứng dụng hội viên.',
+    helpButton: 'Mở ứng dụng',
     attendanceCheckin: 'Bạn đã check-in thành công tại RoGym.',
     subscriptionExpiring: ({ packageName, endDate }) =>
       `Gói tập ${packageName} của bạn sẽ hết hạn vào ngày mai (${endDate}). Vui lòng gia hạn để tiếp tục sử dụng dịch vụ tại RoGym.`,
@@ -102,6 +108,9 @@ const LINE_MESSAGE_TEMPLATES: Record<
     renewButton: '今すぐ更新',
     followText: 'RoGymへようこそ。下のボタンから会員アプリを開いてください。',
     followButton: 'アプリを開く',
+    helpText:
+      'こんにちは！RoGymは自動返信に対応していません。下のボタンから会員アプリを開いてください。',
+    helpButton: 'アプリを開く',
     attendanceCheckin: 'RoGymでのチェックインが完了しました。',
     subscriptionExpiring: ({ packageName, endDate }) =>
       `ご利用中のプラン「${packageName}」は明日（${endDate}）に有効期限が切れます。継続してご利用いただくには更新手続きをお願いいたします。`,
@@ -567,6 +576,14 @@ export class LineMessagingService {
       if (result.count > 0) {
         this.logger.log(`LINE user ${lineUserId} unfollowed; unlinked ${result.count} app user(s)`)
       }
+      return
+    }
+
+    if (event.type === 'message' && event.replyToken) {
+      const template = this.getMessageTemplate()
+      await this.replyMessage(event.replyToken, [
+        this.withLiffButton(template.helpText, template.helpButton, '/member'),
+      ])
     }
   }
 
