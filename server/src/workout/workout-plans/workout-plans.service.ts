@@ -19,9 +19,11 @@ import { UpdateWorkoutPlanDto } from './dto/update-workout-plan.dto'
 
 const PLAN_DETAIL_INCLUDE = {
   days: {
+    where: { deletedAt: null },
     orderBy: { dayNumber: 'asc' } as const,
     include: {
       exercises: {
+        where: { deletedAt: null },
         orderBy: { orderIndex: 'asc' },
         include: {
           exercise: true,
@@ -128,16 +130,16 @@ export class WorkoutPlansService {
     const plan = await this.getPlanOrThrow(id)
     await this.assertCanMutatePlan(plan, user)
     this.assertPlanStructureMutable(plan.status)
-    await this.assertPlanHasNoLogs(id)
 
     if (dto.status) {
       this.assertValidStatusTransition(plan.status, dto.status, plan.planId)
       if (dto.status === WorkoutPlanStatus.active) {
         const days = await this.prisma.workoutPlanDay.findMany({
-          where: { planId: id },
+          where: { planId: id, deletedAt: null },
           select: {
             planDayId: true,
             exercises: {
+              where: { deletedAt: null },
               select: {
                 targetReps: true,
                 targetDurationSec: true,
@@ -252,7 +254,6 @@ export class WorkoutPlansService {
     const plan = await this.getPlanOrThrow(planId)
     await this.assertCanMutatePlan(plan, user)
     this.assertPlanStructureMutable(plan.status)
-    await this.assertPlanHasNoLogs(planId)
 
     const weekNumber = dto.weekNumber ?? Math.ceil(dto.dayNumber / 7)
     const dayOfWeek = dto.dayOfWeek ?? ((dto.dayNumber - 1) % 7) + 1
@@ -289,7 +290,7 @@ export class WorkoutPlansService {
     user: AuthenticatedUser
   ) {
     const day = await this.prisma.workoutPlanDay.findFirst({
-      where: { planDayId, planId },
+      where: { planDayId, planId, deletedAt: null },
       include: { plan: true },
     })
     if (!day || day.plan.deletedAt) {
@@ -298,7 +299,6 @@ export class WorkoutPlansService {
 
     await this.assertCanMutatePlan(day.plan, user)
     this.assertPlanStructureMutable(day.plan.status)
-    await this.assertPlanHasNoLogs(planId)
 
     const updated = await this.prisma.workoutPlanDay.update({
       where: { planDayId },
@@ -328,7 +328,7 @@ export class WorkoutPlansService {
 
   async deleteDay(planId: bigint, planDayId: bigint, user: AuthenticatedUser) {
     const day = await this.prisma.workoutPlanDay.findFirst({
-      where: { planDayId, planId },
+      where: { planDayId, planId, deletedAt: null },
       include: { plan: true },
     })
     if (!day || day.plan.deletedAt) {
@@ -337,9 +337,20 @@ export class WorkoutPlansService {
 
     await this.assertCanMutatePlan(day.plan, user)
     this.assertPlanStructureMutable(day.plan.status)
-    await this.assertPlanHasNoLogs(planId)
 
-    await this.prisma.workoutPlanDay.delete({ where: { planDayId } })
+    const hasLog = await this.prisma.workoutLog.findFirst({
+      where: { planDayId },
+      select: { logId: true },
+    })
+
+    if (hasLog) {
+      await this.prisma.workoutPlanDay.update({
+        where: { planDayId },
+        data: { deletedAt: new Date() },
+      })
+    } else {
+      await this.prisma.workoutPlanDay.delete({ where: { planDayId } })
+    }
 
     await this.audit.log({
       actorUserId: user.userId,
@@ -361,7 +372,7 @@ export class WorkoutPlansService {
     user: AuthenticatedUser
   ) {
     const day = await this.prisma.workoutPlanDay.findFirst({
-      where: { planDayId, planId },
+      where: { planDayId, planId, deletedAt: null },
       include: { plan: true },
     })
     if (!day || day.plan.deletedAt) {
@@ -370,7 +381,6 @@ export class WorkoutPlansService {
 
     await this.assertCanMutatePlan(day.plan, user)
     this.assertPlanStructureMutable(day.plan.status)
-    await this.assertPlanHasNoLogs(planId)
 
     const exercise = await this.prisma.exercise.findFirst({
       where: { exerciseId: BigInt(dto.exerciseId), deletedAt: null },
@@ -417,7 +427,7 @@ export class WorkoutPlansService {
     user: AuthenticatedUser
   ) {
     const pe = await this.prisma.workoutPlanExercise.findFirst({
-      where: { planExerciseId, planDayId },
+      where: { planExerciseId, planDayId, deletedAt: null },
       include: {
         planDay: {
           include: { plan: true },
@@ -430,28 +440,33 @@ export class WorkoutPlansService {
 
     await this.assertCanMutatePlan(pe.planDay.plan, user)
     this.assertPlanStructureMutable(pe.planDay.plan.status)
-    await this.assertPlanHasNoLogs(planId)
 
-    try {
-      await this.prisma.workoutPlanExercise.delete({ where: { planExerciseId } })
-      await this.audit.log({
-        actorUserId: user.userId,
-        action: 'workout_plan.update',
-        resourceType: 'workout_plan',
-        resourceId: planId.toString(),
-        afterData: {
-          planId: planId.toString(),
-          dayId: planDayId.toString(),
-          planExerciseId: planExerciseId.toString(),
-          deleted: true,
-        },
+    const hasLogSet = await this.prisma.workoutLogSet.findFirst({
+      where: { planExerciseId },
+      select: { logSetId: true },
+    })
+
+    if (hasLogSet) {
+      await this.prisma.workoutPlanExercise.update({
+        where: { planExerciseId },
+        data: { deletedAt: new Date() },
       })
-    } catch (error: unknown) {
-      if ((error as { code?: string }).code === 'P2003') {
-        throw new ConflictException('WorkoutPlanExercise dang duoc tham chieu boi workout log')
-      }
-      throw error
+    } else {
+      await this.prisma.workoutPlanExercise.delete({ where: { planExerciseId } })
     }
+
+    await this.audit.log({
+      actorUserId: user.userId,
+      action: 'workout_plan.update',
+      resourceType: 'workout_plan',
+      resourceId: planId.toString(),
+      afterData: {
+        planId: planId.toString(),
+        dayId: planDayId.toString(),
+        planExerciseId: planExerciseId.toString(),
+        deleted: true,
+      },
+    })
   }
 
   async updatePlanExercise(
@@ -462,7 +477,7 @@ export class WorkoutPlansService {
     user: AuthenticatedUser
   ) {
     const planExercise = await this.prisma.workoutPlanExercise.findFirst({
-      where: { planExerciseId, planDayId },
+      where: { planExerciseId, planDayId, deletedAt: null },
       include: { planDay: { include: { plan: true } } },
     })
     if (
@@ -475,7 +490,6 @@ export class WorkoutPlansService {
 
     await this.assertCanMutatePlan(planExercise.planDay.plan, user)
     this.assertPlanStructureMutable(planExercise.planDay.plan.status)
-    await this.assertPlanHasNoLogs(planId)
 
     const updated = await this.prisma.workoutPlanExercise.update({
       where: { planExerciseId },
@@ -538,6 +552,7 @@ export class WorkoutPlansService {
             description: true,
             status: true,
             days: {
+              where: { deletedAt: null },
               select: {
                 planDayId: true,
                 weekNumber: true,
@@ -545,6 +560,7 @@ export class WorkoutPlansService {
                 dayNumber: true,
                 name: true,
                 exercises: {
+                  where: { deletedAt: null },
                   select: {
                     planExerciseId: true,
                     targetSets: true,
@@ -684,8 +700,10 @@ export class WorkoutPlansService {
     }
 
     const [dayCount, exerciseCount] = await Promise.all([
-      this.prisma.workoutPlanDay.count({ where: { planId: plan.planId } }),
-      this.prisma.workoutPlanExercise.count({ where: { planDay: { planId: plan.planId } } }),
+      this.prisma.workoutPlanDay.count({ where: { planId: plan.planId, deletedAt: null } }),
+      this.prisma.workoutPlanExercise.count({
+        where: { planDay: { planId: plan.planId, deletedAt: null }, deletedAt: null },
+      }),
     ])
     if (dayCount === 0 || exerciseCount === 0) {
       throw new BadRequestException('Plan can co it nhat mot ngay va mot bai tap')
@@ -767,9 +785,10 @@ export class WorkoutPlansService {
         plan: {
           select: {
             days: {
+              where: { deletedAt: null },
               select: {
                 planDayId: true,
-                exercises: { select: { targetSets: true } },
+                exercises: { where: { deletedAt: null }, select: { targetSets: true } },
               },
             },
           },
@@ -866,20 +885,6 @@ export class WorkoutPlansService {
     return plan
   }
 
-  private async assertPlanHasNoLogs(planId: bigint) {
-    const hasLog = await this.prisma.workoutLog.findFirst({
-      where: { assignment: { planId } },
-      select: { logId: true },
-    })
-    if (hasLog) {
-      throw new ConflictException({
-        success: false,
-        code: 'PLAN_WRITE_BLOCKED',
-        message: 'Plan da co workout log - khong the sua',
-      })
-    }
-  }
-
   private assertPlanStructureMutable(status: WorkoutPlanStatus) {
     if (status === WorkoutPlanStatus.archived) {
       throw new BadRequestException({
@@ -891,16 +896,22 @@ export class WorkoutPlansService {
   }
 
   private async assertCanMutatePlan(
-    plan: { creatorType: PlanCreatorType; creatorMemberId: bigint | null },
+    plan: { creatorType: PlanCreatorType; creatorMemberId: bigint | null; creatorStaffId: bigint | null },
     caller: AuthenticatedUser
   ) {
-    if (plan.creatorType === PlanCreatorType.staff) {
+    if (plan.creatorType === PlanCreatorType.member) {
+      const callerMemberId = await this.resolveCallerMemberId(caller)
+      if (!callerMemberId || plan.creatorMemberId !== callerMemberId) {
+        throw new ForbiddenException('Khong co quyen sua plan nay')
+      }
       return
     }
 
-    const callerMemberId = await this.resolveCallerMemberId(caller)
-    if (!callerMemberId || plan.creatorMemberId !== callerMemberId) {
-      throw new ForbiddenException('Khong co quyen sua plan nay')
+    if (this.isTrainerOnly(caller)) {
+      const callerStaffId = await this.resolveCallerStaffId(caller)
+      if (!callerStaffId || plan.creatorStaffId !== callerStaffId) {
+        throw new ForbiddenException('Khong co quyen sua plan nay')
+      }
     }
   }
 

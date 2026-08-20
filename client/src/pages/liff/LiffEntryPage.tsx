@@ -7,7 +7,7 @@ import { useAuthStore } from '@/stores/authStore'
 import { useSubscriptionStore } from '@/stores/subscriptionStore'
 import { getApiError } from '@/lib/api-error'
 import { LanguageSwitcher } from '@/components/ui/LanguageSwitcher'
-import { extractLiffRedirectPath, getCleanLiffRedirectUri } from './liff-redirect'
+import { extractLiffRedirectPath, getCleanLiffRedirectUri, storeLiffRedirectPath, consumeLiffRedirectPath } from './liff-redirect'
 
 export default function LiffEntryPage() {
   const { t, i18n } = useTranslation(['auth', 'common'])
@@ -15,6 +15,8 @@ export default function LiffEntryPage() {
   const setAuth = useAuthStore((s) => s.setAuth)
   const clearSubscription = useSubscriptionStore((s) => s.clear)
   const [error, setError] = useState<string | null>(null)
+  const [attemptCount, setAttemptCount] = useState(0)
+  const MAX_ATTEMPTS = 3
 
   useEffect(() => {
     let cancelled = false
@@ -28,6 +30,10 @@ export default function LiffEntryPage() {
 
       try {
         const liff = await initLiff()
+
+        // Luu redirect path vao sessionStorage truoc khi goi liff.login()
+        // Chi dung khi phai redirect duoi nhu quen hoac da het session
+        const redirectFromStorage = consumeLiffRedirectPath()
 
         // Sync LINE user's language if the user hasn't explicitly set their locale
         const savedLocale = localStorage.getItem('gym-locale')
@@ -44,7 +50,15 @@ export default function LiffEntryPage() {
         const cleanRedirectUri = getCleanLiffRedirectUri(window.location.href)
 
         if (!liff.isLoggedIn()) {
+          if (attemptCount >= MAX_ATTEMPTS) {
+            setError('Đăng nhập thất bại sau nhiều lần thử. Vui lòng thử lại sau.')
+            return
+          }
+          // Luu redirect path vao sessionStorage truoc khi di chuyen sang OAuth flow
+          const pathToStore = redirectFromStorage || redirectPath
+          storeLiffRedirectPath(pathToStore)
           liff.login({ redirectUri: cleanRedirectUri })
+          setAttemptCount(prev => prev + 1)
           return
         }
 
@@ -53,8 +67,16 @@ export default function LiffEntryPage() {
         if (decoded && typeof decoded.exp === 'number') {
           const expMs = decoded.exp * 1000
           if (expMs - 30_000 <= Date.now()) {
+            if (attemptCount >= MAX_ATTEMPTS) {
+              setError('Phiên đăng nhập đã hết hạn. Vui lòng tải lại trang để tiếp tục.')
+              return
+            }
+            // Luu redirect path vao sessionStorage truoc khi di chuyen sang OAuth flow
+            const pathToStore = redirectFromStorage || redirectPath
+            storeLiffRedirectPath(pathToStore)
             liff.logout()
             liff.login({ redirectUri: cleanRedirectUri })
+            setAttemptCount(prev => prev + 1)
             return
           }
         }
@@ -67,7 +89,10 @@ export default function LiffEntryPage() {
 
         setAuth(user, token, 'line')
         clearSubscription()
-        navigate(redirectPath, { replace: true })
+
+        // Di chuyen toi redirect path tu sessionStorage (neu co), neu khong thi redirectPath tu URL
+        const finalRedirectPath = redirectFromStorage || redirectPath
+        navigate(finalRedirectPath, { replace: true })
       } catch (err) {
         if (cancelled) return
         setError(getApiError(err, t('error.network', { ns: 'common' })))
@@ -89,14 +114,25 @@ export default function LiffEntryPage() {
         {error ? (
           <div className="text-center">
             <p className="text-error mb-4">{error}</p>
-            <a href="/login" className="text-primary underline">
-              {t('liff.backToLogin')}
-            </a>
+            <div className="space-x-2">
+              <button
+                onClick={() => window.location.reload()}
+                className="btn-primary"
+              >
+                {t('liff.retry')}
+              </button>
+              <a href="/login" className="btn-secondary">
+                {t('liff.backToLogin')}
+              </a>
+            </div>
           </div>
         ) : (
           <div className="text-center">
             <div className="mb-4 h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent mx-auto" />
             <p className="text-on-surface-variant text-sm">{t('liff.loggingIn')}</p>
+            <p className="text-on-surface-variant text-xs mt-2 opacity-70">
+              Thử lần {attemptCount}/{MAX_ATTEMPTS}
+            </p>
           </div>
         )}
       </div>
