@@ -395,14 +395,14 @@ describe('LineMessagingService', () => {
       'https://api.line.me/v2/bot/message/push',
       expect.objectContaining({
         method: 'POST',
-        body: expect.stringContaining('redirect=%2Fmember%2Fsubscriptions%2Fcurrent'),
+        body: expect.stringContaining('redirect=%2Fmember%2Fsubscription%2Fcurrent'),
       })
     )
     const body = JSON.parse(mockFetch.mock.calls[0][1].body)
     expect(body.to).toBe('U_SUB_123')
     expect(body.messages[0].text).toContain('Gói tập Gói VIP 1 Tháng của bạn sẽ hết hạn vào ngày mai')
     expect(body.messages[0].quickReply.items[0].action.label).toBe('Gia hạn ngay')
-    expect(body.messages[0].quickReply.items[0].action.uri).toContain('redirect=%2Fmember%2Fsubscriptions%2Fcurrent')
+    expect(body.messages[0].quickReply.items[0].action.uri).toContain('redirect=%2Fmember%2Fsubscription%2Fcurrent')
   })
 
   it('pushes Japanese subscription expiring reminder when LINE_MESSAGE_LOCALE is ja', async () => {

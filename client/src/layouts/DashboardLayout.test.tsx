@@ -103,7 +103,27 @@ describe('DashboardLayout subscription orchestration', () => {
     expect(mockedGetByMember).not.toHaveBeenCalled()
   })
 
-  it('forces an expired member from regular member pages to subscription setup', async () => {
+  it('forces an expired member from restricted member pages to subscription setup', async () => {
+    useAuthStore.getState().setAuth(
+      {
+        userId: '1',
+        email: 'member@example.com',
+        fullName: 'Member',
+        roles: ['member'],
+        memberId: '10',
+      },
+      'token'
+    )
+    mockedGetByMember.mockResolvedValue([
+      makeSubscription({ status: 'expired', endDate: '2026-06-30' }),
+    ])
+
+    renderLayout('/member')
+
+    await waitFor(() => expect(screen.getByText('Setup page')).toBeVisible())
+  })
+
+  it('allows an expired member to access allowed utility pages like profile', async () => {
     useAuthStore.getState().setAuth(
       {
         userId: '1',
@@ -120,8 +140,7 @@ describe('DashboardLayout subscription orchestration', () => {
 
     renderLayout('/member/profile')
 
-    await waitFor(() => expect(screen.getByText('Setup page')).toBeVisible())
-    expect(screen.queryByText('Profile page')).not.toBeInTheDocument()
+    await waitFor(() => expect(screen.getByText('Profile page')).toBeVisible())
   })
 
   it('keeps subscription setup accessible for an expired member', () => {

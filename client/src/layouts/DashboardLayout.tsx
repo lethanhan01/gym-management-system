@@ -20,6 +20,12 @@ const EXPIRED_MEMBER_ALLOWED_PATHS = new Set([
   MEMBER_SUBSCRIPTION_SETUP_PATH,
   '/member/subscription/buy',
   '/member/subscription/buy/payment',
+  '/member/subscription/current',
+  '/member/subscription/renew',
+  '/member/subscription/renew/payment',
+  '/member/subscription/history',
+  '/member/profile',
+  '/member/payment-accounts',
 ])
 
 function canExpiredMemberAccess(pathname: string): boolean {
