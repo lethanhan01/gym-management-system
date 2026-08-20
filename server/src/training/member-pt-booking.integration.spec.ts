@@ -835,7 +835,7 @@ describe('Member PT Booking Integration Suite (BR-01 -> BR-10 & Notifications)',
         expect(payload.messages[0].text).toContain('Phòng: Phòng VIP 1')
         expect(payload.messages[0].quickReply.items[0].action.label).toBe('Xem chi tiết')
         expect(payload.messages[0].quickReply.items[0].action.uri).toContain(
-          'https://liff.line.me/123456-abcdef?redirect=%2Fmember%2Fworkout%2Fsessions%3FsessionId%3D888'
+          'https://liff.line.me/123456-abcdef?liff.state=%3Fredirect%3D%252Fmember%252Fworkout%252Fsessions%253FsessionId%253D888'
         )
       } finally {
         global.fetch = originalFetch
@@ -897,7 +897,7 @@ describe('Member PT Booking Integration Suite (BR-01 -> BR-10 & Notifications)',
         expect(payload.messages[0].text).toContain('ルーム: Room B')
         expect(payload.messages[0].quickReply.items[0].action.label).toBe('詳細を見る')
         expect(payload.messages[0].quickReply.items[0].action.uri).toContain(
-          'https://liff.line.me/123456-abcdef?redirect=%2Fmember%2Fworkout%2Fsessions%3FsessionId%3D999'
+          'https://liff.line.me/123456-abcdef?liff.state=%3Fredirect%3D%252Fmember%252Fworkout%252Fsessions%253FsessionId%253D999'
         )
       } finally {
         global.fetch = originalFetch
