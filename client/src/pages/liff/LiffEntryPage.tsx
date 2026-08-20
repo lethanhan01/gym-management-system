@@ -7,7 +7,7 @@ import { useAuthStore } from '@/stores/authStore'
 import { useSubscriptionStore } from '@/stores/subscriptionStore'
 import { getApiError } from '@/lib/api-error'
 import { LanguageSwitcher } from '@/components/ui/LanguageSwitcher'
-import { extractLiffRedirectPath } from './liff-redirect'
+import { extractLiffRedirectPath, getCleanLiffRedirectUri } from './liff-redirect'
 
 export default function LiffEntryPage() {
   const { t, i18n } = useTranslation(['auth', 'common'])
@@ -41,21 +41,22 @@ export default function LiffEntryPage() {
           localStorage.setItem('gym-locale', detectedLang)
         }
 
+        const cleanRedirectUri = getCleanLiffRedirectUri(window.location.href)
+
         if (!liff.isLoggedIn()) {
-          liff.login({ redirectUri: window.location.href })
+          liff.login({ redirectUri: cleanRedirectUri })
           return
         }
 
-        // LIFF cache id_token trong localStorage và không tự refresh. Ở lần mở lại,
-        // access token còn hạn nên isLoggedIn() = true, nhưng id_token có thể đã quá exp
-        // -> LINE verify trả 400 "IdToken expired". Phải logout rồi login lại để lấy token mới.
-        // login() là no-op khi đang logged-in, nên bắt buộc logout() trước.
+        // Only logout & re-login if decoded ID token exists AND is actually expired
         const decoded = liff.getDecodedIDToken()
-        const expMs = decoded?.exp ? decoded.exp * 1000 : 0
-        if (expMs - 30_000 <= Date.now()) {
-          liff.logout()
-          liff.login({ redirectUri: window.location.href })
-          return
+        if (decoded && typeof decoded.exp === 'number') {
+          const expMs = decoded.exp * 1000
+          if (expMs - 30_000 <= Date.now()) {
+            liff.logout()
+            liff.login({ redirectUri: cleanRedirectUri })
+            return
+          }
         }
 
         const idToken = liff.getIDToken()

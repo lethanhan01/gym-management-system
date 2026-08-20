@@ -34,6 +34,7 @@ import { useSubscriptionStore } from '@/stores/subscriptionStore'
 import { toast } from '@/lib/toast'
 import { ProfileInfoRow } from '@/components/profile/ProfileInfoRow'
 import { ProfilePasswordField } from '@/components/profile/ProfilePasswordField'
+import { getCleanLiffRedirectUri } from '../liff/liff-redirect'
 
 function LineIcon({ className = 'w-4 h-4' }: { className?: string }) {
   return (
@@ -172,15 +173,13 @@ export default function MemberProfilePage() {
     } finally {
       setSaving(false)
     }
-  }
-
   async function handleLinkLine() {
     setLineLinking(true)
     setLineError(null)
     try {
       const liff = await initLiff()
       if (!liff.isLoggedIn()) {
-        liff.login({ redirectUri: window.location.href })
+        liff.login({ redirectUri: getCleanLiffRedirectUri(window.location.href) })
         return
       }
       const idToken = liff.getIDToken()

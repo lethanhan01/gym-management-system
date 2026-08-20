@@ -86,3 +86,16 @@ export function extractLiffRedirectPath(search: string): string {
   return DEFAULT_MEMBER_REDIRECT
 }
 
+export function getCleanLiffRedirectUri(href: string = typeof window !== 'undefined' ? window.location.href : 'https://rogym.local/liff'): string {
+  try {
+    const url = new URL(href)
+    url.searchParams.delete('code')
+    url.searchParams.delete('state')
+    url.searchParams.delete('liffClientId')
+    url.searchParams.delete('liffRedirectUri')
+    return url.toString()
+  } catch {
+    return href
+  }
+}
+

@@ -2,6 +2,8 @@ import axios, { AxiosHeaders, type InternalAxiosRequestConfig } from 'axios'
 import { useAuthStore, type AuthUser } from '@/stores/authStore'
 import { initLiff, isLiffMockEnabled, liff } from '@/lib/liff'
 
+import { getCleanLiffRedirectUri } from '@/pages/liff/liff-redirect'
+
 declare module 'axios' {
   export interface AxiosRequestConfig {
     suppressAuthRedirect?: boolean
@@ -52,11 +54,13 @@ async function executeSilentLineRefresh(): Promise<string> {
 
   // Check ID token expiration (with 30s safety buffer)
   const decoded = liffInstance.getDecodedIDToken()
-  const expMs = decoded?.exp ? decoded.exp * 1000 : 0
-  if (expMs - 30_000 <= Date.now()) {
-    liffInstance.logout()
-    liffInstance.login({ redirectUri: window.location.href })
-    throw new Error('Refreshing LIFF ID token session')
+  if (decoded && typeof decoded.exp === 'number') {
+    const expMs = decoded.exp * 1000
+    if (expMs - 30_000 <= Date.now()) {
+      liffInstance.logout()
+      liffInstance.login({ redirectUri: getCleanLiffRedirectUri(window.location.href) })
+      throw new Error('Refreshing LIFF ID token session')
+    }
   }
 
   const idToken = liffInstance.getIDToken()

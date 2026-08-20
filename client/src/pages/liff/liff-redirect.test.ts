@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { extractLiffRedirectPath, getSafeMemberRedirect } from './liff-redirect'
+import { extractLiffRedirectPath, getCleanLiffRedirectUri, getSafeMemberRedirect } from './liff-redirect'
 
 describe('liff-redirect', () => {
   describe('getSafeMemberRedirect', () => {
@@ -43,6 +43,13 @@ describe('liff-redirect', () => {
     it('defaults to /member for empty or invalid params', () => {
       expect(extractLiffRedirectPath('')).toBe('/member')
       expect(extractLiffRedirectPath('?liff.state=invalid')).toBe('/member')
+    })
+  })
+
+  describe('getCleanLiffRedirectUri', () => {
+    it('strips code, state, and liffClientId parameters from URL', () => {
+      const dirty = 'https://app.local/liff?code=123456&state=abcdef&redirect=%2Fmember'
+      expect(getCleanLiffRedirectUri(dirty)).toBe('https://app.local/liff?redirect=%2Fmember')
     })
   })
 })
