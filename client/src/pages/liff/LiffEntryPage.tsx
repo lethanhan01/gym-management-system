@@ -17,11 +17,22 @@ export default function LiffEntryPage() {
   const [error, setError] = useState<string | null>(null)
   const [attemptCount, setAttemptCount] = useState(0)
   const MAX_ATTEMPTS = 3
+  const CIRCUIT_BREAKER_DELAY = 5000
 
   useEffect(() => {
     let cancelled = false
+    let lastAttemptTime = 0
 
     async function run() {
+      // Circuit breaker logic
+      if (attemptCount >= MAX_ATTEMPTS) {
+        const timeSinceLastAttempt = Date.now() - lastAttemptTime
+        if (timeSinceLastAttempt < CIRCUIT_BREAKER_DELAY) {
+          setError('Hệ thống đang bận. Vui lòng thử lại sau.')
+          return
+        }
+      }
+
       const redirectPath = extractLiffRedirectPath(window.location.search)
       if (window.location.search.includes('liff.state')) {
         const cleanUrl = `/liff?redirect=${encodeURIComponent(redirectPath)}`
@@ -30,6 +41,7 @@ export default function LiffEntryPage() {
 
       try {
         const liff = await initLiff()
+        lastAttemptTime = Date.now()
 
         // Luu redirect path vao sessionStorage truoc khi goi liff.login()
         // Chi dung khi phai redirect duoi nhu quen hoac da het session
@@ -47,7 +59,7 @@ export default function LiffEntryPage() {
           localStorage.setItem('gym-locale', detectedLang)
         }
 
-        const cleanRedirectUri = getCleanLiffRedirectUri(window.location.href)
+        const cleanRedirectUri = getCleanLiffRedirectUri()
 
         if (!liff.isLoggedIn()) {
           if (attemptCount >= MAX_ATTEMPTS) {

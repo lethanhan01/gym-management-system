@@ -29,16 +29,24 @@ async function configureLiffMock() {
 
 export async function initLiff(): Promise<typeof liff> {
   if (initialized) return liff
-  const liffId = import.meta.env.VITE_LIFF_ID
-  if (!liffId) throw new Error('VITE_LIFF_ID is not set')
-  if (isLiffMockEnabled) {
-    await configureLiffMock()
-    await liff.init({ liffId, mock: true })
-  } else {
-    await liff.init({ liffId })
+
+  try {
+    const liffId = import.meta.env.VITE_LIFF_ID
+    if (!liffId) throw new Error('VITE_LIFF_ID is not set')
+
+    if (isLiffMockEnabled) {
+      await configureLiffMock()
+      await liff.init({ liffId, mock: true })
+    } else {
+      await liff.init({ liffId })
+    }
+    initialized = true
+    return liff
+  } catch (error) {
+    initialized = false // Allow retry
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+    throw new Error(`LIFF init failed: ${errorMessage}`)
   }
-  initialized = true
-  return liff
 }
 
 export { liff }
