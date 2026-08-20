@@ -124,6 +124,12 @@ export function getCleanLiffRedirectUri(href: string = typeof window !== 'undefi
     url.searchParams.delete('state')
     url.searchParams.delete('liffClientId')
     url.searchParams.delete('liffRedirectUri')
+    // Preserve redirect parameter
+    const redirectParam = url.searchParams.get('redirect')
+    url.searchParams.clear()
+    if (redirectParam) {
+      url.searchParams.set('redirect', redirectParam)
+    }
     return url.toString()
   } catch {
     return `${window.location.origin}/liff`
