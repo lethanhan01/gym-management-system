@@ -173,6 +173,8 @@ export default function MemberProfilePage() {
     } finally {
       setSaving(false)
     }
+  }
+
   async function handleLinkLine() {
     setLineLinking(true)
     setLineError(null)
