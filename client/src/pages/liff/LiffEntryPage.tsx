@@ -33,15 +33,16 @@ export default function LiffEntryPage() {
         }
       }
 
-      const redirectPath = extractLiffRedirectPath(window.location.search)
-      if (window.location.search.includes('liff.state')) {
-        const cleanUrl = `/liff?redirect=${encodeURIComponent(redirectPath)}`
-        window.history.replaceState(null, '', cleanUrl)
-      }
-
       try {
+        const redirectPath = extractLiffRedirectPath(window.location.search)
+
         const liff = await initLiff()
         lastAttemptTime = Date.now()
+
+        if (window.location.search.includes('liff.state') || window.location.search.includes('code=')) {
+          const cleanUrl = `/liff?redirect=${encodeURIComponent(redirectPath)}`
+          window.history.replaceState(null, '', cleanUrl)
+        }
 
         // Luu redirect path vao sessionStorage truoc khi goi liff.login()
         // Chi dung khi phai redirect duoi nhu quen hoac da het session

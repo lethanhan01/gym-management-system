@@ -111,6 +111,20 @@ describe('LiffEntryPage', () => {
     expect(useAuthStore.getState()).toMatchObject({ token: 'app-jwt', isAuthenticated: true })
   })
 
+  it('preserves code and state in search params when initLiff is called', async () => {
+    let capturedSearchAtInit = ''
+    mocks.initLiff.mockImplementationOnce(async () => {
+      capturedSearchAtInit = window.location.search
+      return liff
+    })
+
+    renderEntry('?liff.state=%2Fliff%3Fredirect%3D%252Fmember&code=TEST_OAUTH_CODE&state=TEST_STATE')
+
+    expect(await screen.findByTestId('location')).toHaveTextContent('/member')
+    expect(capturedSearchAtInit).toContain('code=TEST_OAUTH_CODE')
+    expect(capturedSearchAtInit).toContain('state=TEST_STATE')
+  })
+
   it('does not force logout when getDecodedIDToken returns null', async () => {
     liff.getDecodedIDToken.mockReturnValue(null)
 
