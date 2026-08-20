@@ -98,12 +98,12 @@ describe('LineMessagingService', () => {
       'https://api.line.me/v2/bot/message/reply',
       expect.objectContaining({
         method: 'POST',
-        body: expect.stringContaining('https://liff.line.me/test-liff?redirect=%2Fmember'),
+        body: expect.stringContaining('https://liff.line.me/test-liff?liff.state=%3Fredirect%3D%252Fmember'),
       })
     )
     const replyBody = JSON.parse(mockFetch.mock.calls[0][1].body)
     expect(replyBody.messages[0].quickReply.items[0].action.uri).toBe(
-      'https://liff.line.me/test-liff?redirect=%2Fmember'
+      'https://liff.line.me/test-liff?liff.state=%3Fredirect%3D%252Fmember'
     )
     expect(replyBody).toEqual(
       expect.objectContaining({
@@ -148,7 +148,7 @@ describe('LineMessagingService', () => {
       expect(replyBody.replyToken).toBe('reply-token-msg')
       expect(replyBody.messages[0].text).toContain('RoGym không hỗ trợ trả lời tin nhắn trực tiếp')
       expect(replyBody.messages[0].quickReply.items[0].action.uri).toContain(
-        'redirect=%2Fmember'
+        'liff.state=%3Fredirect%3D'
       )
     })
 
@@ -259,7 +259,7 @@ describe('LineMessagingService', () => {
     expect(mockFetch).toHaveBeenCalledWith(
       'https://api.line.me/v2/bot/message/push',
       expect.objectContaining({
-        body: expect.stringContaining('redirect=%2Fmember%2Fworkout%2Fsessions%3FsessionId%3D1'),
+        body: expect.stringContaining('liff.state=%3Fredirect%3D%252Fmember%252Fworkout%252Fsessions%253FsessionId%253D1'),
       })
     )
     const body = JSON.parse(mockFetch.mock.calls[0][1].body)
@@ -277,7 +277,7 @@ describe('LineMessagingService', () => {
     expect(body.messages[0].text).toContain('トレーニング開始まであと30分です。')
     expect(body.messages[0].quickReply.items[0].action.label).toBe('詳細を見る')
     expect(body.messages[0].quickReply.items[0].action.uri).toContain(
-      'redirect=%2Fmember%2Fworkout%2Fsessions%3FsessionId%3D1'
+      'liff.state=%3Fredirect%3D%252Fmember%252Fworkout%252Fsessions%253FsessionId%253D1'
     )
 
     mockPrisma.trainingSession.findFirst.mockResolvedValue(makeSession())
@@ -395,14 +395,14 @@ describe('LineMessagingService', () => {
       'https://api.line.me/v2/bot/message/push',
       expect.objectContaining({
         method: 'POST',
-        body: expect.stringContaining('redirect=%2Fmember%2Fsubscription%2Fcurrent'),
+        body: expect.stringContaining('liff.state=%3Fredirect%3D%252Fmember%252Fsubscription%252Fcurrent'),
       })
     )
     const body = JSON.parse(mockFetch.mock.calls[0][1].body)
     expect(body.to).toBe('U_SUB_123')
     expect(body.messages[0].text).toContain('Gói tập Gói VIP 1 Tháng của bạn sẽ hết hạn vào ngày mai')
     expect(body.messages[0].quickReply.items[0].action.label).toBe('Gia hạn ngay')
-    expect(body.messages[0].quickReply.items[0].action.uri).toContain('redirect=%2Fmember%2Fsubscription%2Fcurrent')
+    expect(body.messages[0].quickReply.items[0].action.uri).toContain('liff.state=%3Fredirect%3D%252Fmember%252Fsubscription%252Fcurrent')
   })
 
   it('pushes Japanese subscription expiring reminder when LINE_MESSAGE_LOCALE is ja', async () => {
