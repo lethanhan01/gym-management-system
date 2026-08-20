@@ -111,6 +111,16 @@ describe('LiffEntryPage', () => {
     expect(useAuthStore.getState()).toMatchObject({ token: 'app-jwt', isAuthenticated: true })
   })
 
+  it('does not force logout when getDecodedIDToken returns null', async () => {
+    liff.getDecodedIDToken.mockReturnValue(null)
+
+    renderEntry('?redirect=%2Fmember')
+
+    expect(await screen.findByTestId('location')).toHaveTextContent('/member')
+    expect(liff.logout).not.toHaveBeenCalled()
+    expect(mocks.lineLogin).toHaveBeenCalledWith('line-id-token')
+  })
+
   it('refreshes an expired LINE ID token before it calls the backend', async () => {
     liff.getDecodedIDToken.mockReturnValue({ exp: Math.floor(Date.now() / 1000) - 1 })
 
