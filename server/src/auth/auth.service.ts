@@ -19,6 +19,7 @@ export interface LoginResult {
     roles: string[]
     staffId?: string // ◄── Thêm trường này vào interface kết quả trả về
     memberId?: string // ◄── Thêm trường này vào interface kết quả trả về
+    memberCode?: string
   }
 }
 
@@ -146,6 +147,7 @@ export class AuthService {
         roles: user.roles,
         staffId: staff?.staffId ? staff.staffId.toString() : undefined,
         memberId: memberRecord?.memberId ? memberRecord.memberId.toString() : undefined,
+        memberCode: memberRecord?.memberCode ?? undefined,
       },
     }
   }

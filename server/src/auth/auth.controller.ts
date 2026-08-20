@@ -91,6 +91,7 @@ export class AuthController {
         roles: user.roles,
         staffId: current.staffId?.toString() ?? null,
         memberId: user.memberId?.toString() ?? null,
+        memberCode: user.memberCode ?? null,
         lineLinked: !!user.lineId,
       },
     }

@@ -12,6 +12,7 @@ export interface AuthUser {
   phone?: string | null
   staffId?: string | null
   memberId?: string | null
+  memberCode?: string | null
   lineLinked?: boolean
 }
 
