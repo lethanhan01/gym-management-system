@@ -117,22 +117,29 @@ export function consumeLiffRedirectPath(): string | null {
 export function getCleanLiffRedirectUri(href: string = typeof window !== 'undefined' ? window.location.href : 'https://gym-management-system-teal-three.vercel.app/liff'): string {
   try {
     const url = new URL(href)
-    // Use current domain instead of hardcoded
-    const baseUrl = `${window.location.protocol}//${window.location.host}`
-    url.href = `${baseUrl}/liff`
+
+    // Preserve redirect parameter before cleaning
+    const redirectParam = url.searchParams.get('redirect')
+
+    // Clean parameters
     url.searchParams.delete('code')
     url.searchParams.delete('state')
     url.searchParams.delete('liffClientId')
     url.searchParams.delete('liffRedirectUri')
-    // Preserve redirect parameter
-    const redirectParam = url.searchParams.get('redirect')
-    url.searchParams.clear()
+
+    // Set URL to clean base path while preserving original domain
+    url.pathname = '/liff'
+    url.search = ''
+
+    // Restore redirect parameter if it existed
     if (redirectParam) {
       url.searchParams.set('redirect', redirectParam)
     }
+
     return url.toString()
   } catch {
-    return `${window.location.origin}/liff`
+    // Fallback to default
+    return 'https://gym-management-system-teal-three.vercel.app/liff'
   }
 }
 
