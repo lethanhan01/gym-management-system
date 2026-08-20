@@ -1,0 +1,121 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2500 843" width="2500" height="843" style="background:#080e0b; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+  <defs>
+    <!-- Gradients -->
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#060c09" />
+      <stop offset="50%" stop-color="#0a1510" />
+      <stop offset="100%" stop-color="#070d0a" />
+    </linearGradient>
+
+    <linearGradient id="accentGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#22c55e" />
+      <stop offset="100%" stop-color="#4ade80" />
+    </linearGradient>
+
+    <!-- Filters -->
+    <filter id="cardShadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#000000" flood-opacity="0.5" />
+    </filter>
+  </defs>
+
+  <!-- Background Base -->
+  <rect width="2500" height="843" fill="url(#bgGrad)" />
+
+  <!-- Top Accent Glow Line -->
+  <rect x="0" y="0" width="2500" height="4" fill="url(#accentGrad)" opacity="0.8" />
+
+  <!-- Subtle Grid Pattern Background -->
+  <g opacity="0.04" stroke="#22c55e" stroke-width="1">
+    <line x1="0" y1="210" x2="2500" y2="210" />
+    <line x1="0" y1="421" x2="2500" y2="421" />
+    <line x1="0" y1="632" x2="2500" y2="632" />
+  </g>
+
+  <!-- ========================================================================= -->
+  <!-- ZONE 1: GÓI TẬP (0px -> 625px) -->
+  <!-- ========================================================================= -->
+  <g id="zone-subscription" transform="translate(0, 0)">
+    <rect x="25" y="30" width="575" height="783" rx="28" fill="#111d17" fill-opacity="0.6" stroke="#ffffff" stroke-opacity="0.08" stroke-width="1.5" filter="url(#cardShadow)" />
+    
+    <circle cx="312" cy="280" r="88" fill="#16a34a" fill-opacity="0.12" stroke="#22c55e" stroke-opacity="0.3" stroke-width="2" />
+    <g transform="translate(262, 230)" stroke="#22c55e" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="10" y="20" width="80" height="60" rx="10" fill="#0d1b14" />
+      <line x1="10" y1="45" x2="90" y2="45" stroke-dasharray="6 6" />
+      <circle cx="30" cy="62" r="5" fill="#22c55e" stroke="none" />
+    </g>
+
+    <text x="312" y="470" text-anchor="middle" font-size="44" font-weight="900" fill="#ffffff" letter-spacing="1">Gói Tập</text>
+    <text x="312" y="525" text-anchor="middle" font-size="24" font-weight="500" fill="#9ca3af">Thông tin và Gia hạn</text>
+
+    <rect x="200" y="600" width="225" height="56" rx="28" fill="#ffffff" fill-opacity="0.06" stroke="#ffffff" stroke-opacity="0.12" stroke-width="1.5" />
+    <text x="312" y="637" text-anchor="middle" font-size="22" font-weight="700" fill="#e5e7eb">Xem gói →</text>
+  </g>
+
+  <!-- Zone Divider 1 -->
+  <line x1="625" y1="60" x2="625" y2="783" stroke="#ffffff" stroke-opacity="0.08" stroke-width="1.5" stroke-dasharray="8 8" />
+
+  <!-- ========================================================================= -->
+  <!-- ZONE 2: ĐÁNH GIÁ (625px -> 1250px) -->
+  <!-- ========================================================================= -->
+  <g id="zone-feedback" transform="translate(625, 0)">
+    <rect x="25" y="30" width="575" height="783" rx="28" fill="#111d17" fill-opacity="0.6" stroke="#ffffff" stroke-opacity="0.08" stroke-width="1.5" filter="url(#cardShadow)" />
+    
+    <circle cx="312" cy="280" r="88" fill="#16a34a" fill-opacity="0.12" stroke="#22c55e" stroke-opacity="0.3" stroke-width="2" />
+    <g transform="translate(262, 230)" stroke="#22c55e" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M 15 20 C 15 20, 85 20, 85 20 C 90 20, 95 25, 95 30 L 95 65 C 95 70, 90 75, 85 75 L 45 75 L 20 90 L 25 75 L 15 75 C 10 75, 5 70, 5 65 L 5 30 C 5 25, 10 20, 15 20 Z" fill="#0d1b14" />
+      <line x1="25" y1="40" x2="75" y2="40" />
+      <line x1="25" y1="55" x2="55" y2="55" />
+    </g>
+
+    <text x="312" y="470" text-anchor="middle" font-size="44" font-weight="900" fill="#ffffff" letter-spacing="1">Đánh Giá</text>
+    <text x="312" y="525" text-anchor="middle" font-size="24" font-weight="500" fill="#9ca3af">Gửi phản hồi dịch vụ</text>
+
+    <rect x="200" y="600" width="225" height="56" rx="28" fill="#ffffff" fill-opacity="0.06" stroke="#ffffff" stroke-opacity="0.12" stroke-width="1.5" />
+    <text x="312" y="637" text-anchor="middle" font-size="22" font-weight="700" fill="#e5e7eb">Gửi góp ý →</text>
+  </g>
+
+  <!-- Zone Divider 2 -->
+  <line x1="1250" y1="60" x2="1250" y2="783" stroke="#ffffff" stroke-opacity="0.08" stroke-width="1.5" stroke-dasharray="8 8" />
+
+  <!-- ========================================================================= -->
+  <!-- ZONE 3: HỒ SƠ CÁ NHÂN (1250px -> 1875px) -->
+  <!-- ========================================================================= -->
+  <g id="zone-profile" transform="translate(1250, 0)">
+    <rect x="25" y="30" width="575" height="783" rx="28" fill="#111d17" fill-opacity="0.6" stroke="#ffffff" stroke-opacity="0.08" stroke-width="1.5" filter="url(#cardShadow)" />
+    
+    <circle cx="312" cy="280" r="88" fill="#16a34a" fill-opacity="0.12" stroke="#22c55e" stroke-opacity="0.3" stroke-width="2" />
+    <g transform="translate(262, 230)" stroke="#22c55e" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="50" cy="35" r="22" fill="#0d1b14" />
+      <path d="M 12 88 C 12 65, 30 58, 50 58 C 70 58, 88 65, 88 88" fill="#0d1b14" />
+    </g>
+
+    <text x="312" y="470" text-anchor="middle" font-size="44" font-weight="900" fill="#ffffff" letter-spacing="1">Hồ Sơ</text>
+    <text x="312" y="525" text-anchor="middle" font-size="24" font-weight="500" fill="#9ca3af">Thông tin tài khoản</text>
+
+    <rect x="200" y="600" width="225" height="56" rx="28" fill="#ffffff" fill-opacity="0.06" stroke="#ffffff" stroke-opacity="0.12" stroke-width="1.5" />
+    <text x="312" y="637" text-anchor="middle" font-size="22" font-weight="700" fill="#e5e7eb">Mở hồ sơ →</text>
+  </g>
+
+  <!-- Zone Divider 3 -->
+  <line x1="1875" y1="60" x2="1875" y2="783" stroke="#ffffff" stroke-opacity="0.08" stroke-width="1.5" stroke-dasharray="8 8" />
+
+  <!-- ========================================================================= -->
+  <!-- ZONE 4: ◀ QUAY LẠI (1875px -> 2500px) -->
+  <!-- ========================================================================= -->
+  <g id="zone-back" transform="translate(1875, 0)">
+    <rect x="25" y="30" width="575" height="783" rx="28" fill="#111d17" fill-opacity="0.6" stroke="#ffffff" stroke-opacity="0.08" stroke-width="1.5" filter="url(#cardShadow)" />
+    
+    <circle cx="312" cy="280" r="88" fill="#16a34a" fill-opacity="0.12" stroke="#22c55e" stroke-opacity="0.3" stroke-width="2" />
+    <g transform="translate(262, 230)" stroke="#22c55e" stroke-width="7" fill="none" stroke-linecap="round" stroke-linejoin="round">
+      <line x1="85" y1="50" x2="15" y2="50" />
+      <polyline points="45,20 15,50 45,80" />
+    </g>
+
+    <text x="312" y="470" text-anchor="middle" font-size="44" font-weight="900" fill="#ffffff" letter-spacing="1">◀ Quay lại</text>
+    <text x="312" y="525" text-anchor="middle" font-size="24" font-weight="500" fill="#9ca3af">Về Menu chính</text>
+
+    <rect x="200" y="600" width="225" height="56" rx="28" fill="#ffffff" fill-opacity="0.06" stroke="#ffffff" stroke-opacity="0.12" stroke-width="1.5" />
+    <text x="312" y="637" text-anchor="middle" font-size="22" font-weight="700" fill="#e5e7eb">◀ Quay lại</text>
+  </g>
+
+</svg>

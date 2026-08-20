@@ -17,6 +17,7 @@ Thư mục `docs/VI` tập hợp tài liệu tiếng Việt của dự án, từ
 | Test API thủ công bằng Postman | [postman-guide.md](./postman-guide.md) |
 | Coverage, CI và SonarQube | [code-quality.md](./code-quality.md) |
 | Đánh giá SOLID, coupling và cohesion | [reports](./reports/) |
+| Hướng dẫn Hủy follow / Block ROGYM trên LINE & Cơ chế Webhook | [line-unfollow-guide.md](./line-unfollow-guide.md) |
 
 ## 2. Phạm vi tài liệu hiện tại
 
@@ -35,6 +36,7 @@ Thư mục `docs/VI` tập hợp tài liệu tiếng Việt của dự án, từ
 ```text
 docs/VI/
 ├── README.md
+├── line-unfollow-guide.md
 ├── postman-guide.md
 ├── code-quality.md
 ├── Requirement/

@@ -103,6 +103,14 @@ describe('LiffEntryPage', () => {
     expect(useAuthStore.getState()).toMatchObject({ token: 'app-jwt', isAuthenticated: true })
   })
 
+  it('handles liff.state parameter and redirects to the decoded member route', async () => {
+    renderEntry('?liff.state=%3Fredirect%3D%252Fmember%252Fsubscription%252Fsetup')
+
+    expect(await screen.findByTestId('location')).toHaveTextContent('/member/subscription/setup')
+    expect(mocks.lineLogin).toHaveBeenCalledWith('line-id-token')
+    expect(useAuthStore.getState()).toMatchObject({ token: 'app-jwt', isAuthenticated: true })
+  })
+
   it('refreshes an expired LINE ID token before it calls the backend', async () => {
     liff.getDecodedIDToken.mockReturnValue({ exp: Math.floor(Date.now() / 1000) - 1 })
 

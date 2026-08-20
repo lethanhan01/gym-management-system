@@ -12,12 +12,13 @@ type LineWebhookBody = {
 }
 
 type LineWebhookEvent = {
-  type: 'follow' | 'unfollow' | string
+  type: 'follow' | 'unfollow' | 'message' | string
   replyToken?: string
   source?: {
     type?: string
     userId?: string
   }
+  message?: { type: string; text?: string }
 }
 
 type LineMessage = {
@@ -37,7 +38,7 @@ type LineMessage = {
 
 export type LineMockOutboxMessage = {
   id: string
-  kind: 'reply' | 'push' | 'rich-menu'
+  kind: 'reply' | 'push' | 'rich-menu' | 'unsend'
   createdAt: string
   recipient?: string
   payload: Record<string, unknown>
@@ -62,6 +63,8 @@ const LINE_MESSAGE_TEMPLATES: Record<
     renewButton: string
     followText: string
     followButton: string
+    helpText: string
+    helpButton: string
     attendanceCheckin: string
     subscriptionExpiring: (data: { packageName: string; endDate: string }) => string
     training: Record<
@@ -81,6 +84,9 @@ const LINE_MESSAGE_TEMPLATES: Record<
     renewButton: 'Gia hạn ngay',
     followText: 'Chào mừng bạn đến với RoGym. Bấm nút bên dưới để mở ứng dụng hội viên.',
     followButton: 'Mở ứng dụng',
+    helpText:
+      'Xin chào! RoGym không hỗ trợ trả lời tin nhắn trực tiếp. Bấm nút bên dưới để mở ứng dụng hội viên.',
+    helpButton: 'Mở ứng dụng',
     attendanceCheckin: 'Bạn đã check-in thành công tại RoGym.',
     subscriptionExpiring: ({ packageName, endDate }) =>
       `Gói tập ${packageName} của bạn sẽ hết hạn vào ngày mai (${endDate}). Vui lòng gia hạn để tiếp tục sử dụng dịch vụ tại RoGym.`,
@@ -102,6 +108,9 @@ const LINE_MESSAGE_TEMPLATES: Record<
     renewButton: '今すぐ更新',
     followText: 'RoGymへようこそ。下のボタンから会員アプリを開いてください。',
     followButton: 'アプリを開く',
+    helpText:
+      'こんにちは！RoGymは自動返信に対応していません。下のボタンから会員アプリを開いてください。',
+    helpButton: 'アプリを開く',
     attendanceCheckin: 'RoGymでのチェックインが完了しました。',
     subscriptionExpiring: ({ packageName, endDate }) =>
       `ご利用中のプラン「${packageName}」は明日（${endDate}）に有効期限が切れます。継続してご利用いただくには更新手続きをお願いいたします。`,
@@ -443,6 +452,99 @@ export class LineMessagingService {
     }
   }
 
+  async safeAssignRichMenu(lineUserId: string): Promise<boolean> {
+    try {
+      return await this.assignRichMenu(lineUserId)
+    } catch (error) {
+      this.logger.warn(
+        `LINE Rich Menu assignment failed for user ${lineUserId}: ${this.describeError(error)}`
+      )
+      return false
+    }
+  }
+
+  async assignRichMenu(lineUserId: string): Promise<boolean> {
+    if (!lineUserId) return false
+
+    const richMenuId = this.config.get<string>('LINE_RICH_MENU_ID')
+    if (!richMenuId) return false
+
+    if (this.isMockEnabled()) {
+      this.addMockOutbox({
+        kind: 'rich-menu',
+        recipient: lineUserId,
+        payload: { userId: lineUserId, richMenuId },
+      })
+      return true
+    }
+
+    const token = this.config.get<string>('LINE_CHANNEL_ACCESS_TOKEN')
+    if (!this.isMessagingEnabled() || !token) return false
+
+    const res = await fetch(`https://api.line.me/v2/bot/user/${lineUserId}/richmenu/${richMenuId}`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
+
+    if (!res.ok) {
+      const detail = await res.text().catch(() => '<no body>')
+      this.logger.warn(`LINE assign rich menu failed (${res.status}): ${detail}`)
+      return false
+    }
+    return true
+  }
+
+  async safeUnsend(messageId: string): Promise<boolean> {
+    try {
+      return await this.unsend(messageId)
+    } catch (error) {
+      this.logger.warn(
+        `LINE unsend failed (messageId=${messageId}): ${this.describeError(error)}`
+      )
+      return false
+    }
+  }
+
+  async unsend(messageId: string): Promise<boolean> {
+    if (!messageId) {
+      throw new BadRequestException({
+        success: false,
+        code: 'LINE_UNSEND_MESSAGE_ID_REQUIRED',
+        message: 'messageId khong duoc de rong',
+      })
+    }
+
+    if (this.isMockEnabled()) {
+      this.addMockOutbox({
+        kind: 'unsend',
+        recipient: 'system',
+        payload: { messageId },
+      })
+      return true
+    }
+
+    const token = this.config.get<string>('LINE_CHANNEL_ACCESS_TOKEN')
+    if (!this.isMessagingEnabled() || !token) return false
+
+    const res = await fetch('https://api.line.me/v2/bot/message/unsend', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ messageId }),
+    })
+
+    if (!res.ok) {
+      const detail = await res.text().catch(() => '<no body>')
+      this.logger.warn(`LINE unsend failed (${res.status}): ${detail}`)
+      return false
+    }
+    return true
+  }
+
   @Cron('* * * * *', { timeZone: 'Asia/Ho_Chi_Minh' })
   async sendUpcomingSessionReminders() {
     await this.sendSessionReminder(this.getReminderMinutes(), 'reminder')
@@ -507,6 +609,7 @@ export class LineMessagingService {
       await this.replyMessage(event.replyToken, [
         this.withLiffButton(template.followText, template.followButton, '/member'),
       ])
+      await this.safeAssignRichMenu(lineUserId)
       return
     }
 
@@ -518,6 +621,14 @@ export class LineMessagingService {
       if (result.count > 0) {
         this.logger.log(`LINE user ${lineUserId} unfollowed; unlinked ${result.count} app user(s)`)
       }
+      return
+    }
+
+    if (event.type === 'message' && event.replyToken) {
+      const template = this.getMessageTemplate()
+      await this.replyMessage(event.replyToken, [
+        this.withLiffButton(template.helpText, template.helpButton, '/member'),
+      ])
     }
   }
 

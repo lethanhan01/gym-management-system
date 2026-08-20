@@ -589,7 +589,7 @@ export class RbacService {
     }
   }
 
-  async deleteUser(id: bigint, actorUserId: bigint) {
+  async deleteUser(id: bigint, actorUserId: bigint, hardDelete = false) {
     if (id === actorUserId)
       throw new ConflictException({
         success: false,
@@ -598,7 +598,7 @@ export class RbacService {
       })
 
     const user = await this.prisma.user.findFirst({
-      where: { userId: id, deletedAt: null },
+      where: hardDelete ? { userId: id } : { userId: id, deletedAt: null },
       include: { groups: { include: { group: true } }, member: true, staff: true },
     })
     if (!user)
@@ -621,26 +621,64 @@ export class RbacService {
         })
     }
 
-    const now = new Date()
-    await this.prisma.$transaction(async (tx) => {
-      await tx.user.update({ where: { userId: id }, data: { deletedAt: now } })
-      if (user.member)
-        await tx.member.update({
-          where: { memberId: user.member.memberId },
-          data: { deletedAt: now },
-        })
-      if (user.staff)
-        await tx.staff.update({ where: { staffId: user.staff.staffId }, data: { deletedAt: now } })
-    })
+    if (hardDelete) {
+      await this.prisma.$transaction(async (tx) => {
+        if (user.member) {
+          const memberId = user.member.memberId
+          await tx.attendanceLog.deleteMany({ where: { memberId } })
+          await tx.feedback.deleteMany({ where: { memberId } })
+          await tx.memberProgress.deleteMany({ where: { memberId } })
+          await tx.memberWorkoutPlan.deleteMany({ where: { memberId } })
+          await tx.payment.deleteMany({ where: { memberId } })
+          await tx.paymentAccount.deleteMany({ where: { memberId } })
+          await tx.subscription.deleteMany({ where: { memberId } })
+          await tx.trainingSession.deleteMany({ where: { memberId } })
+          await tx.workoutLog.deleteMany({ where: { memberId } })
+          await tx.workoutPlan.deleteMany({ where: { creatorMemberId: memberId } })
+          await tx.member.delete({ where: { memberId } })
+        }
+        if (user.staff) {
+          await tx.staff.delete({ where: { staffId: user.staff.staffId } })
+        }
+        await tx.notification.deleteMany({ where: { recipientUserId: id } })
+        await tx.userGroup.deleteMany({ where: { userId: id } })
+        await tx.otpCode.deleteMany({ where: { userId: id } })
+        await tx.otpRequestThrottle.deleteMany({ where: { userId: id } })
+        await tx.passwordResetGrant.deleteMany({ where: { userId: id } })
+        await tx.auditLog.deleteMany({ where: { actorUserId: id } })
+        await tx.user.delete({ where: { userId: id } })
+      })
 
-    await this.permCache.delete(id.toString())
-    this.audit.log({
-      actorUserId,
-      action: 'user.delete',
-      resourceType: 'user',
-      resourceId: id.toString(),
-      beforeData: { email: user.email, fullName: user.fullName },
-    })
+      await this.permCache.delete(id.toString())
+      this.audit.log({
+        actorUserId,
+        action: 'user.hard-delete',
+        resourceType: 'user',
+        resourceId: id.toString(),
+        beforeData: { email: user.email, fullName: user.fullName, lineId: user.lineId },
+      })
+    } else {
+      const now = new Date()
+      await this.prisma.$transaction(async (tx) => {
+        await tx.user.update({ where: { userId: id }, data: { deletedAt: now } })
+        if (user.member)
+          await tx.member.update({
+            where: { memberId: user.member.memberId },
+            data: { deletedAt: now },
+          })
+        if (user.staff)
+          await tx.staff.update({ where: { staffId: user.staff.staffId }, data: { deletedAt: now } })
+      })
+
+      await this.permCache.delete(id.toString())
+      this.audit.log({
+        actorUserId,
+        action: 'user.delete',
+        resourceType: 'user',
+        resourceId: id.toString(),
+        beforeData: { email: user.email, fullName: user.fullName },
+      })
+    }
   }
 
   // ──────────────────────────────────────────────────────────────

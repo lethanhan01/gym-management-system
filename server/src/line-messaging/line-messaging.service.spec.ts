@@ -1,5 +1,6 @@
-import { UnauthorizedException } from '@nestjs/common'
+import { BadRequestException, UnauthorizedException } from '@nestjs/common'
 import { createHmac } from 'crypto'
+import { LINE_MOCK_WEBHOOK_SECRET } from '../line-mock/constants'
 import { LineMessagingService } from './line-messaging.service'
 
 function sign(body: Buffer, secret = 'secret') {
@@ -120,6 +121,112 @@ describe('LineMessagingService', () => {
         ],
       })
     )
+  })
+
+  describe('message event', () => {
+    it('replies with helpText and LIFF button when a user sends any message (vi)', async () => {
+      const body = Buffer.from(
+        JSON.stringify({
+          events: [
+            {
+              type: 'message',
+              replyToken: 'reply-token-msg',
+              source: { type: 'user', userId: 'U123' },
+              message: { type: 'text', text: 'Xin chào!' },
+            },
+          ],
+        })
+      )
+
+      await service.handleWebhook(body, sign(body))
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        'https://api.line.me/v2/bot/message/reply',
+        expect.objectContaining({ method: 'POST' })
+      )
+      const replyBody = JSON.parse(mockFetch.mock.calls[0][1].body)
+      expect(replyBody.replyToken).toBe('reply-token-msg')
+      expect(replyBody.messages[0].text).toContain('RoGym không hỗ trợ trả lời tin nhắn trực tiếp')
+      expect(replyBody.messages[0].quickReply.items[0].action.uri).toContain(
+        'redirect=%2Fmember'
+      )
+    })
+
+    it('replies with Japanese helpText when LINE_MESSAGE_LOCALE is ja', async () => {
+      env.LINE_MESSAGE_LOCALE = 'ja'
+      const body = Buffer.from(
+        JSON.stringify({
+          events: [
+            {
+              type: 'message',
+              replyToken: 'reply-token-ja',
+              source: { type: 'user', userId: 'U123' },
+              message: { type: 'sticker' },
+            },
+          ],
+        })
+      )
+
+      await service.handleWebhook(body, sign(body))
+
+      const replyBody = JSON.parse(mockFetch.mock.calls[0][1].body)
+      expect(replyBody.messages[0].text).toContain('RoGymは自動返信に対応していません')
+      expect(replyBody.messages[0].quickReply.items[0].action.label).toBe('アプリを開く')
+    })
+
+    it('does not reply when message event has no replyToken', async () => {
+      const body = Buffer.from(
+        JSON.stringify({
+          events: [
+            {
+              type: 'message',
+              source: { type: 'user', userId: 'U123' },
+              message: { type: 'text', text: 'hello' },
+            },
+          ],
+        })
+      )
+
+      await service.handleWebhook(body, sign(body))
+
+      expect(mockFetch).not.toHaveBeenCalled()
+    })
+
+    it('records message reply in mock outbox when mock mode is enabled', async () => {
+      env.LINE_MOCK_ENABLED = 'true'
+      env.CLIENT_URL = 'http://localhost:5173'
+      const body = Buffer.from(
+        JSON.stringify({
+          events: [
+            {
+              type: 'message',
+              replyToken: 'mock-reply-msg',
+              source: { type: 'user', userId: 'U123' },
+              message: { type: 'text', text: 'test' },
+            },
+          ],
+        })
+      )
+      const sig = createHmac('sha256', LINE_MOCK_WEBHOOK_SECRET).update(body).digest('base64')
+
+      await service.handleWebhook(body, sig)
+
+      expect(mockFetch).not.toHaveBeenCalled()
+      const messages = service.getMockMessages()
+      expect(messages).toEqual([
+        expect.objectContaining({
+          kind: 'reply',
+          payload: expect.objectContaining({
+            replyToken: 'mock-reply-msg',
+            messages: [
+              expect.objectContaining({
+                text: expect.stringContaining('RoGym không hỗ trợ trả lời tin nhắn trực tiếp'),
+              }),
+            ],
+          }),
+        }),
+      ])
+    })
   })
 
   it('unlinks the matching app user when LINE sends an unfollow event', async () => {
@@ -326,4 +433,140 @@ describe('LineMessagingService', () => {
     await expect(service.safePushSubscriptionExpiringReminder(11n)).resolves.toBe(false)
     expect(mockFetch).not.toHaveBeenCalled()
   })
+
+  describe('unsend & safeUnsend', () => {
+    it('throws BadRequestException if messageId is empty', async () => {
+      await expect(service.unsend('')).rejects.toBeInstanceOf(BadRequestException)
+    })
+
+    it('sends POST request to LINE unsend API when messaging is enabled', async () => {
+      mockFetch.mockResolvedValueOnce({ ok: true, text: jest.fn().mockResolvedValue('') })
+
+      const result = await service.unsend('msg-id-12345')
+
+      expect(result).toBe(true)
+      expect(mockFetch).toHaveBeenCalledWith(
+        'https://api.line.me/v2/bot/message/unsend',
+        expect.objectContaining({
+          method: 'POST',
+          headers: expect.objectContaining({
+            Authorization: 'Bearer token',
+            'Content-Type': 'application/json',
+          }),
+          body: JSON.stringify({ messageId: 'msg-id-12345' }),
+        })
+      )
+    })
+
+    it('returns false when LINE unsend API returns non-ok status', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 400,
+        text: jest.fn().mockResolvedValue('Message not found or older than 24 hours'),
+      })
+
+      const result = await service.unsend('msg-id-expired')
+
+      expect(result).toBe(false)
+    })
+
+    it('records unsend event in mock outbox when mock mode is enabled', async () => {
+      env.LINE_MOCK_ENABLED = 'true'
+
+      const result = await service.unsend('mock-msg-999')
+
+      expect(result).toBe(true)
+      expect(mockFetch).not.toHaveBeenCalled()
+      expect(service.getMockMessages()).toEqual([
+        expect.objectContaining({
+          kind: 'unsend',
+          recipient: 'system',
+          payload: { messageId: 'mock-msg-999' },
+        }),
+      ])
+    })
+
+    it('safeUnsend catches errors and returns false', async () => {
+      jest.spyOn(service, 'unsend').mockRejectedValueOnce(new Error('Network failure'))
+
+      const result = await service.safeUnsend('msg-err')
+
+      expect(result).toBe(false)
+    })
+  })
+
+  describe('assignRichMenu & safeAssignRichMenu', () => {
+    it('assigns rich menu to user on follow event when LINE_RICH_MENU_ID is configured', async () => {
+      env.LINE_RICH_MENU_ID = 'richmenu-abc123'
+      const body = Buffer.from(
+        JSON.stringify({
+          events: [
+            {
+              type: 'follow',
+              replyToken: 'reply-token',
+              source: { type: 'user', userId: 'U123' },
+            },
+          ],
+        })
+      )
+
+      await service.handleWebhook(body, sign(body))
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        'https://api.line.me/v2/bot/user/U123/richmenu/richmenu-abc123',
+        expect.objectContaining({
+          method: 'POST',
+          headers: expect.objectContaining({
+            Authorization: 'Bearer token',
+          }),
+        })
+      )
+    })
+
+    it('returns false if LINE_RICH_MENU_ID is not configured', async () => {
+      delete env.LINE_RICH_MENU_ID
+      const result = await service.assignRichMenu('U123')
+      expect(result).toBe(false)
+      expect(mockFetch).not.toHaveBeenCalled()
+    })
+
+    it('records rich-menu entry in mock outbox when mock mode is enabled', async () => {
+      env.LINE_MOCK_ENABLED = 'true'
+      env.LINE_RICH_MENU_ID = 'richmenu-mock-001'
+
+      const result = await service.assignRichMenu('U123')
+
+      expect(result).toBe(true)
+      expect(mockFetch).not.toHaveBeenCalled()
+      expect(service.getMockMessages()).toEqual([
+        expect.objectContaining({
+          kind: 'rich-menu',
+          recipient: 'U123',
+          payload: { userId: 'U123', richMenuId: 'richmenu-mock-001' },
+        }),
+      ])
+    })
+
+    it('returns false when LINE API returns non-ok status', async () => {
+      env.LINE_RICH_MENU_ID = 'richmenu-bad'
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 404,
+        text: jest.fn().mockResolvedValue('Rich menu not found'),
+      })
+
+      const result = await service.assignRichMenu('U123')
+
+      expect(result).toBe(false)
+    })
+
+    it('safeAssignRichMenu catches exceptions and returns false', async () => {
+      jest.spyOn(service, 'assignRichMenu').mockRejectedValueOnce(new Error('Network error'))
+
+      const result = await service.safeAssignRichMenu('U123')
+
+      expect(result).toBe(false)
+    })
+  })
 })
+
