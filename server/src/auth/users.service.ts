@@ -8,6 +8,7 @@ export type Role = 'owner' | 'staff' | 'trainer' | 'member'
 export interface UserWithRoles extends User {
   roles: Role[]
   memberId?: bigint | null
+  memberCode?: string | null
   staffId?: bigint | null
 }
 
@@ -80,7 +81,7 @@ export class UsersService {
       where: { userId, deletedAt: null },
       include: {
         groups: { include: { group: true } },
-        member: { where: { deletedAt: null }, select: { memberId: true } },
+        member: { where: { deletedAt: null }, select: { memberId: true, memberCode: true } },
         staff: { where: { deletedAt: null }, select: { staffId: true } },
       },
     })
@@ -91,6 +92,7 @@ export class UsersService {
       ...user,
       roles: groups.map((ug) => ug.group.name as Role),
       memberId: member?.memberId ?? null,
+      memberCode: member?.memberCode ?? null,
       staffId: staff?.staffId ?? null,
     }
   }

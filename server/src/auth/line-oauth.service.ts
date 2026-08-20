@@ -167,6 +167,7 @@ export class LineOAuthService {
         roles: user.roles,
         staffId: staff?.staffId ? staff.staffId.toString() : undefined,
         memberId: memberRecord?.memberId ? memberRecord.memberId.toString() : undefined,
+        memberCode: memberRecord?.memberCode ?? undefined,
       },
     }
   }

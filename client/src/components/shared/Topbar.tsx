@@ -85,7 +85,9 @@ export default function Topbar({ className }: { className?: string } = {}) {
               <div className="rogym-sx-09581911">{initials}</div>
               <div className="rogym-sx-2cd52ab9">
                 <div className="rogym-sx-ac999974">{user?.fullName}</div>
-                <div className="rogym-sx-f57809e3">{user?.email}</div>
+                <div className="rogym-sx-f57809e3">
+                  {role === 'member' ? (user?.memberCode ?? '--') : user?.email}
+                </div>
               </div>
             </div>
 
