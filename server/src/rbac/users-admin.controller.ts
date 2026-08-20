@@ -95,8 +95,13 @@ export class UsersAdminController {
   @Delete(':id')
   @RequirePermission('user.delete')
   @HttpCode(HttpStatus.NO_CONTENT)
-  async delete(@Param('id', ParseIntPipe) id: number, @CurrentUser() user: AuthenticatedUser) {
-    await this.rbac.deleteUser(BigInt(id), user.userId)
+  async delete(
+    @Param('id', ParseIntPipe) id: number,
+    @Query('hard') hard: string | undefined,
+    @CurrentUser() user: AuthenticatedUser
+  ) {
+    const isHard = hard === 'true' || hard === '1'
+    await this.rbac.deleteUser(BigInt(id), user.userId, isHard)
   }
 
   /** Kiểm tra inline permission (Self-bypass endpoints). */

@@ -1,4 +1,4 @@
-import { UnauthorizedException } from '@nestjs/common'
+import { BadRequestException, UnauthorizedException } from '@nestjs/common'
 import { createHmac } from 'crypto'
 import { LineMessagingService } from './line-messaging.service'
 
@@ -325,5 +325,66 @@ describe('LineMessagingService', () => {
 
     await expect(service.safePushSubscriptionExpiringReminder(11n)).resolves.toBe(false)
     expect(mockFetch).not.toHaveBeenCalled()
+  })
+
+  describe('unsend & safeUnsend', () => {
+    it('throws BadRequestException if messageId is empty', async () => {
+      await expect(service.unsend('')).rejects.toBeInstanceOf(BadRequestException)
+    })
+
+    it('sends POST request to LINE unsend API when messaging is enabled', async () => {
+      mockFetch.mockResolvedValueOnce({ ok: true, text: jest.fn().mockResolvedValue('') })
+
+      const result = await service.unsend('msg-id-12345')
+
+      expect(result).toBe(true)
+      expect(mockFetch).toHaveBeenCalledWith(
+        'https://api.line.me/v2/bot/message/unsend',
+        expect.objectContaining({
+          method: 'POST',
+          headers: expect.objectContaining({
+            Authorization: 'Bearer token',
+            'Content-Type': 'application/json',
+          }),
+          body: JSON.stringify({ messageId: 'msg-id-12345' }),
+        })
+      )
+    })
+
+    it('returns false when LINE unsend API returns non-ok status', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 400,
+        text: jest.fn().mockResolvedValue('Message not found or older than 24 hours'),
+      })
+
+      const result = await service.unsend('msg-id-expired')
+
+      expect(result).toBe(false)
+    })
+
+    it('records unsend event in mock outbox when mock mode is enabled', async () => {
+      env.LINE_MOCK_ENABLED = 'true'
+
+      const result = await service.unsend('mock-msg-999')
+
+      expect(result).toBe(true)
+      expect(mockFetch).not.toHaveBeenCalled()
+      expect(service.getMockMessages()).toEqual([
+        expect.objectContaining({
+          kind: 'unsend',
+          recipient: 'system',
+          payload: { messageId: 'mock-msg-999' },
+        }),
+      ])
+    })
+
+    it('safeUnsend catches errors and returns false', async () => {
+      jest.spyOn(service, 'unsend').mockRejectedValueOnce(new Error('Network failure'))
+
+      const result = await service.safeUnsend('msg-err')
+
+      expect(result).toBe(false)
+    })
   })
 })

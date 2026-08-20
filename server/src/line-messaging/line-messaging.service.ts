@@ -37,7 +37,7 @@ type LineMessage = {
 
 export type LineMockOutboxMessage = {
   id: string
-  kind: 'reply' | 'push' | 'rich-menu'
+  kind: 'reply' | 'push' | 'rich-menu' | 'unsend'
   createdAt: string
   recipient?: string
   payload: Record<string, unknown>
@@ -441,6 +441,55 @@ export class LineMessagingService {
       )
       return false
     }
+  }
+
+  async safeUnsend(messageId: string): Promise<boolean> {
+    try {
+      return await this.unsend(messageId)
+    } catch (error) {
+      this.logger.warn(
+        `LINE unsend failed (messageId=${messageId}): ${this.describeError(error)}`
+      )
+      return false
+    }
+  }
+
+  async unsend(messageId: string): Promise<boolean> {
+    if (!messageId) {
+      throw new BadRequestException({
+        success: false,
+        code: 'LINE_UNSEND_MESSAGE_ID_REQUIRED',
+        message: 'messageId khong duoc de rong',
+      })
+    }
+
+    if (this.isMockEnabled()) {
+      this.addMockOutbox({
+        kind: 'unsend',
+        recipient: 'system',
+        payload: { messageId },
+      })
+      return true
+    }
+
+    const token = this.config.get<string>('LINE_CHANNEL_ACCESS_TOKEN')
+    if (!this.isMessagingEnabled() || !token) return false
+
+    const res = await fetch('https://api.line.me/v2/bot/message/unsend', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ messageId }),
+    })
+
+    if (!res.ok) {
+      const detail = await res.text().catch(() => '<no body>')
+      this.logger.warn(`LINE unsend failed (${res.status}): ${detail}`)
+      return false
+    }
+    return true
   }
 
   @Cron('* * * * *', { timeZone: 'Asia/Ho_Chi_Minh' })

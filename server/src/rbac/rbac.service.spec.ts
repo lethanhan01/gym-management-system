@@ -450,6 +450,72 @@ describe('RbacService', () => {
       )
       expect(mockAudit.log).toHaveBeenCalledWith(expect.objectContaining({ action: 'user.delete' }))
     })
+
+    it('hard deletes user + member + staff + relations in transaction when hardDelete=true', async () => {
+      const memberRecord = { memberId: 10n }
+      const staffRecord = { staffId: 20n }
+
+      mockPrisma.user.findFirst.mockResolvedValue(
+        makeUser({
+          groups: [{ group: { name: 'member' } }],
+          member: memberRecord,
+          staff: staffRecord,
+        })
+      )
+
+      const txUser = { delete: jest.fn().mockResolvedValue({}) }
+      const txMember = { delete: jest.fn().mockResolvedValue({}) }
+      const txStaff = { delete: jest.fn().mockResolvedValue({}) }
+      const txAttendance = { deleteMany: jest.fn().mockResolvedValue({}) }
+      const txFeedback = { deleteMany: jest.fn().mockResolvedValue({}) }
+      const txProgress = { deleteMany: jest.fn().mockResolvedValue({}) }
+      const txMemberWorkoutPlan = { deleteMany: jest.fn().mockResolvedValue({}) }
+      const txPayment = { deleteMany: jest.fn().mockResolvedValue({}) }
+      const txPaymentAccount = { deleteMany: jest.fn().mockResolvedValue({}) }
+      const txSubscription = { deleteMany: jest.fn().mockResolvedValue({}) }
+      const txTrainingSession = { deleteMany: jest.fn().mockResolvedValue({}) }
+      const txWorkoutLog = { deleteMany: jest.fn().mockResolvedValue({}) }
+      const txWorkoutPlan = { deleteMany: jest.fn().mockResolvedValue({}) }
+      const txNotification = { deleteMany: jest.fn().mockResolvedValue({}) }
+      const txUserGroup = { deleteMany: jest.fn().mockResolvedValue({}) }
+      const txOtpCode = { deleteMany: jest.fn().mockResolvedValue({}) }
+      const txOtpThrottle = { deleteMany: jest.fn().mockResolvedValue({}) }
+      const txPasswordGrant = { deleteMany: jest.fn().mockResolvedValue({}) }
+      const txAuditLog = { deleteMany: jest.fn().mockResolvedValue({}) }
+
+      mockPrisma.$transaction.mockImplementation(async (fn: (tx: any) => Promise<any>) =>
+        fn({
+          user: txUser,
+          member: txMember,
+          staff: txStaff,
+          attendanceLog: txAttendance,
+          feedback: txFeedback,
+          memberProgress: txProgress,
+          memberWorkoutPlan: txMemberWorkoutPlan,
+          payment: txPayment,
+          paymentAccount: txPaymentAccount,
+          subscription: txSubscription,
+          trainingSession: txTrainingSession,
+          workoutLog: txWorkoutLog,
+          workoutPlan: txWorkoutPlan,
+          notification: txNotification,
+          userGroup: txUserGroup,
+          otpCode: txOtpCode,
+          otpRequestThrottle: txOtpThrottle,
+          passwordResetGrant: txPasswordGrant,
+          auditLog: txAuditLog,
+        })
+      )
+
+      await service.deleteUser(50n, 99n, true)
+
+      expect(txMember.delete).toHaveBeenCalledWith({ where: { memberId: 10n } })
+      expect(txStaff.delete).toHaveBeenCalledWith({ where: { staffId: 20n } })
+      expect(txUser.delete).toHaveBeenCalledWith({ where: { userId: 50n } })
+      expect(mockAudit.log).toHaveBeenCalledWith(
+        expect.objectContaining({ action: 'user.hard-delete' })
+      )
+    })
   })
 
   // ─────────────────────────────────────────────────────────────────

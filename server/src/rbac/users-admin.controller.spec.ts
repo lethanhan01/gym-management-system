@@ -108,10 +108,17 @@ describe('UsersAdminController', () => {
   })
 
   describe('delete', () => {
-    it('delegates to deleteUser and returns void', async () => {
-      (mockRbac.deleteUser as jest.Mock).mockResolvedValue(undefined)
-      const res = await ctrl.delete(5, owner)
-      expect(mockRbac.deleteUser).toHaveBeenCalledWith(BigInt(5), owner.userId)
+    it('delegates to deleteUser with hard=false when hard query param is undefined', async () => {
+      ;(mockRbac.deleteUser as jest.Mock).mockResolvedValue(undefined)
+      const res = await ctrl.delete(5, undefined, owner)
+      expect(mockRbac.deleteUser).toHaveBeenCalledWith(BigInt(5), owner.userId, false)
+      expect(res).toBeUndefined()
+    })
+
+    it('delegates to deleteUser with hard=true when hard query param is true', async () => {
+      ;(mockRbac.deleteUser as jest.Mock).mockResolvedValue(undefined)
+      const res = await ctrl.delete(5, 'true', owner)
+      expect(mockRbac.deleteUser).toHaveBeenCalledWith(BigInt(5), owner.userId, true)
       expect(res).toBeUndefined()
     })
   })

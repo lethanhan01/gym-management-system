@@ -65,6 +65,23 @@ export default defineConfig(({ command, mode }) => {
         '/api': {
           target: proxyTarget,
           changeOrigin: true,
+          configure: (proxy) => {
+            proxy.on('error', (err, _req, res) => {
+              const code = (err as { code?: string }).code
+              if (code === 'ECONNRESET' || code === 'ECONNREFUSED') {
+                if ('writeHead' in res && !res.headersSent) {
+                  res.writeHead(502, { 'Content-Type': 'application/json' })
+                  res.end(
+                    JSON.stringify({
+                      success: false,
+                      code: 'BACKEND_UNAVAILABLE',
+                      message: 'Backend service is restarting or temporarily unavailable',
+                    })
+                  )
+                }
+              }
+            })
+          },
         },
       },
     },
