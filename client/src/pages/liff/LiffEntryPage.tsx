@@ -7,7 +7,7 @@ import { useAuthStore } from '@/stores/authStore'
 import { useSubscriptionStore } from '@/stores/subscriptionStore'
 import { getApiError } from '@/lib/api-error'
 import { LanguageSwitcher } from '@/components/ui/LanguageSwitcher'
-import { extractLiffRedirectPath, getSafeMemberRedirect } from './liff-redirect'
+import { extractLiffRedirectPath } from './liff-redirect'
 
 export default function LiffEntryPage() {
   const { t, i18n } = useTranslation(['auth', 'common'])

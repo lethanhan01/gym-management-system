@@ -3,6 +3,9 @@ import { UsersAdminController } from './users-admin.controller'
 import { RbacService } from './rbac.service'
 import { PrismaService } from '../prisma/prisma.service'
 import { AuthenticatedUser } from '../auth/types/jwt-payload.interface'
+import { ListUsersDto } from './dto/list-users.dto'
+import { AssignGroupDto } from './dto/assign-group.dto'
+import { UpdateUserDto } from './dto/update-user.dto'
 
 const mockRbac = {
   listUsers: jest.fn(),
@@ -40,8 +43,8 @@ describe('UsersAdminController', () => {
   describe('list', () => {
     it('delegates to listUsers and wraps success', async () => {
       const serviceResult = { data: [], meta: { total: 0 } }
-      ;(mockRbac.listUsers as jest.Mock).mockResolvedValue(serviceResult)
-      const query = { page: 1, pageSize: 20 } as any
+      jest.mocked(mockRbac.listUsers).mockResolvedValue(serviceResult as never)
+      const query = { page: 1, pageSize: 20 } as ListUsersDto
       const res = await ctrl.list(query)
       expect(mockRbac.listUsers).toHaveBeenCalledWith(query)
       expect(res).toEqual({ success: true, ...serviceResult })
@@ -51,7 +54,7 @@ describe('UsersAdminController', () => {
   describe('detail', () => {
     it('returns own profile without permission check (self bypass)', async () => {
       const serviceResult = { data: { id: '1', email: 'owner@test.com' } }
-      ;(mockRbac.getUser as jest.Mock).mockResolvedValue(serviceResult)
+      jest.mocked(mockRbac.getUser).mockResolvedValue(serviceResult as never)
       const res = await ctrl.detail(1, owner)
       expect(mockPrisma.userGroup.findMany).not.toHaveBeenCalled()
       expect(mockRbac.getUser).toHaveBeenCalledWith(BigInt(1))
@@ -59,20 +62,20 @@ describe('UsersAdminController', () => {
     })
 
     it('throws ForbiddenException when accessing other user without permission', async () => {
-      (mockPrisma.userGroup.findMany as jest.Mock).mockResolvedValue([])
+      jest.mocked(mockPrisma.userGroup.findMany).mockResolvedValue([])
       await expect(ctrl.detail(99, staff)).rejects.toBeInstanceOf(ForbiddenException)
     })
 
     it('allows access to other user when permission exists', async () => {
       const serviceResult = { data: { id: '99', email: 'other@test.com' } }
-      ;(mockPrisma.userGroup.findMany as jest.Mock).mockResolvedValue([
+      jest.mocked(mockPrisma.userGroup.findMany).mockResolvedValue([
         {
           group: {
             permissions: [{ permission: { code: 'user.read' } }],
           },
         },
-      ])
-      ;(mockRbac.getUser as jest.Mock).mockResolvedValue(serviceResult)
+      ] as never)
+      jest.mocked(mockRbac.getUser).mockResolvedValue(serviceResult as never)
       const res = await ctrl.detail(99, staff)
       expect(mockRbac.getUser).toHaveBeenCalledWith(BigInt(99))
       expect(res).toEqual({ success: true, ...serviceResult })
@@ -82,8 +85,8 @@ describe('UsersAdminController', () => {
   describe('assignGroup', () => {
     it('delegates to assignUserGroup and wraps success', async () => {
       const serviceResult = { data: { userId: '5', groupId: '2' } }
-      ;(mockRbac.assignUserGroup as jest.Mock).mockResolvedValue(serviceResult)
-      const dto = { groupId: 2 } as any
+      jest.mocked(mockRbac.assignUserGroup).mockResolvedValue(serviceResult as never)
+      const dto: AssignGroupDto = { groupId: '2' }
       const res = await ctrl.assignGroup(5, dto, owner)
       expect(mockRbac.assignUserGroup).toHaveBeenCalledWith(BigInt(5), BigInt(2), owner.userId)
       expect(res).toEqual({ success: true, ...serviceResult })
@@ -93,8 +96,8 @@ describe('UsersAdminController', () => {
   describe('update', () => {
     it('allows self-update without permission check', async () => {
       const serviceResult = { data: { id: '1' } }
-      ;(mockRbac.updateUser as jest.Mock).mockResolvedValue(serviceResult)
-      const dto = { fullName: 'Updated' } as any
+      jest.mocked(mockRbac.updateUser).mockResolvedValue(serviceResult as never)
+      const dto = { fullName: 'Updated' } as UpdateUserDto
       const res = await ctrl.update(1, dto, owner)
       expect(mockPrisma.userGroup.findMany).not.toHaveBeenCalled()
       expect(mockRbac.updateUser).toHaveBeenCalledWith(BigInt(1), dto, owner.userId, true)
@@ -102,21 +105,21 @@ describe('UsersAdminController', () => {
     })
 
     it('throws ForbiddenException when updating other user without permission', async () => {
-      (mockPrisma.userGroup.findMany as jest.Mock).mockResolvedValue([])
-      await expect(ctrl.update(99, {} as any, staff)).rejects.toBeInstanceOf(ForbiddenException)
+      jest.mocked(mockPrisma.userGroup.findMany).mockResolvedValue([])
+      await expect(ctrl.update(99, {} as UpdateUserDto, staff)).rejects.toBeInstanceOf(ForbiddenException)
     })
   })
 
   describe('delete', () => {
     it('delegates to deleteUser with hard=false when hard query param is undefined', async () => {
-      ;(mockRbac.deleteUser as jest.Mock).mockResolvedValue(undefined)
+      jest.mocked(mockRbac.deleteUser).mockResolvedValue(undefined as never)
       const res = await ctrl.delete(5, undefined, owner)
       expect(mockRbac.deleteUser).toHaveBeenCalledWith(BigInt(5), owner.userId, false)
       expect(res).toBeUndefined()
     })
 
     it('delegates to deleteUser with hard=true when hard query param is true', async () => {
-      ;(mockRbac.deleteUser as jest.Mock).mockResolvedValue(undefined)
+      jest.mocked(mockRbac.deleteUser).mockResolvedValue(undefined as never)
       const res = await ctrl.delete(5, 'true', owner)
       expect(mockRbac.deleteUser).toHaveBeenCalledWith(BigInt(5), owner.userId, true)
       expect(res).toBeUndefined()
