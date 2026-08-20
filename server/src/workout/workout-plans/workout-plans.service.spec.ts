@@ -104,6 +104,9 @@ const mockPrisma = {
   workoutLog: {
     findFirst: jest.fn(),
   },
+  workoutLogSet: {
+    findFirst: jest.fn(),
+  },
   memberWorkoutPlan: {
     findFirst: jest.fn(),
     updateMany: jest.fn(),
@@ -272,14 +275,15 @@ describe('WorkoutPlansService', () => {
       )
     })
 
-    it('throws ConflictException PLAN_WRITE_BLOCKED when plan has workout logs', async () => {
-      mockPrisma.workoutPlan.findFirst.mockResolvedValue(makePlan())
+    it('allows update even when plan has workout logs', async () => {
+      const plan = makePlan()
+      mockPrisma.workoutPlan.findFirst.mockResolvedValue(plan)
       mockPrisma.workoutLog.findFirst.mockResolvedValue({ logId: 1n })
+      mockPrisma.workoutPlan.update.mockResolvedValue({ ...plan, name: 'X' })
       const caller = makeOwner()
 
-      await expect(service.update(1n, { name: 'X' } as any, caller as any)).rejects.toThrow(
-        ConflictException
-      )
+      const result = await service.update(1n, { name: 'X' } as any, caller as any)
+      expect(result.name).toBe('X')
     })
 
     it('throws BadRequestException on draft→active with empty days', async () => {
@@ -414,14 +418,14 @@ describe('WorkoutPlansService', () => {
       ).rejects.toThrow(BadRequestException)
     })
 
-    it('throws ConflictException when plan has logs (write-blocked)', async () => {
+    it('allows addDay even when plan has logs', async () => {
       mockPrisma.workoutPlan.findFirst.mockResolvedValue(makePlan())
       mockPrisma.workoutLog.findFirst.mockResolvedValue({ logId: 1n })
+      mockPrisma.workoutPlanDay.create.mockResolvedValue(makeDay())
       const caller = makeOwner()
 
-      await expect(
-        service.addDay(1n, { dayNumber: 1, name: 'Day 1' } as any, caller as any)
-      ).rejects.toThrow(ConflictException)
+      const result = await service.addDay(1n, { dayNumber: 1, name: 'Day 1' } as any, caller as any)
+      expect(result).toBeDefined()
     })
 
     it('propagates P2002 error from prisma on duplicate dayNumber', async () => {
@@ -754,14 +758,15 @@ describe('WorkoutPlansService', () => {
       ).rejects.toThrow(NotFoundException)
     })
 
-    it('throws ConflictException when plan has logs (write-blocked)', async () => {
+    it('allows updateDay even when plan has logs', async () => {
       mockPrisma.workoutPlanDay.findFirst.mockResolvedValue(dayWithPlan)
       mockPrisma.workoutLog.findFirst.mockResolvedValue({ logId: 1n })
+      const updatedDay = { ...makeDay(), name: 'Day 1' }
+      mockPrisma.workoutPlanDay.update.mockResolvedValue(updatedDay)
       const caller = makeOwner()
 
-      await expect(
-        service.updateDay(1n, 10n, { name: 'Day 1' } as any, caller as any)
-      ).rejects.toThrow(ConflictException)
+      const result = await service.updateDay(1n, 10n, { name: 'Day 1' } as any, caller as any)
+      expect(result).toBeDefined()
     })
 
     it('happy path: updates day and logs audit', async () => {
@@ -781,7 +786,7 @@ describe('WorkoutPlansService', () => {
   })
 
   // -------------------------------------------------------------------------
-  // deleteDay (Phase 10 — coverage gap)
+  // deleteDay
   // -------------------------------------------------------------------------
 
   describe('deleteDay', () => {
@@ -794,8 +799,28 @@ describe('WorkoutPlansService', () => {
       await expect(service.deleteDay(1n, 10n, caller as any)).rejects.toThrow(NotFoundException)
     })
 
-    it('happy path: deletes day and logs audit', async () => {
+    it('soft deletes day when workout log exists', async () => {
       mockPrisma.workoutPlanDay.findFirst.mockResolvedValue(dayWithPlan)
+      mockPrisma.workoutLog.findFirst.mockResolvedValue({ logId: 100n })
+      mockPrisma.workoutPlanDay.update.mockResolvedValue({ ...dayWithPlan, deletedAt: new Date() })
+      const caller = makeOwner()
+
+      await service.deleteDay(1n, 10n, caller as any)
+
+      expect(mockPrisma.workoutPlanDay.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { planDayId: 10n },
+          data: { deletedAt: expect.any(Date) },
+        })
+      )
+      expect(mockAudit.log).toHaveBeenCalledWith(
+        expect.objectContaining({ action: 'workout_plan.update' })
+      )
+    })
+
+    it('hard deletes day when no workout log exists', async () => {
+      mockPrisma.workoutPlanDay.findFirst.mockResolvedValue(dayWithPlan)
+      mockPrisma.workoutLog.findFirst.mockResolvedValue(null)
       mockPrisma.workoutPlanDay.delete.mockResolvedValue(dayWithPlan)
       const caller = makeOwner()
 
@@ -811,7 +836,7 @@ describe('WorkoutPlansService', () => {
   })
 
   // -------------------------------------------------------------------------
-  // addExercise (Phase 10 — coverage gap)
+  // addExercise
   // -------------------------------------------------------------------------
 
   describe('addExercise', () => {
@@ -896,7 +921,7 @@ describe('WorkoutPlansService', () => {
   })
 
   // -------------------------------------------------------------------------
-  // removePlanExercise (Phase 10 — coverage gap)
+  // removePlanExercise
   // -------------------------------------------------------------------------
 
   describe('removePlanExercise', () => {
@@ -916,18 +941,25 @@ describe('WorkoutPlansService', () => {
       )
     })
 
-    it('throws ConflictException on P2003 (referenced by workout log)', async () => {
+    it('soft deletes exercise when log set exists', async () => {
       mockPrisma.workoutPlanExercise.findFirst.mockResolvedValue(planExercise)
-      mockPrisma.workoutPlanExercise.delete.mockRejectedValue({ code: 'P2003' })
+      mockPrisma.workoutLogSet.findFirst.mockResolvedValue({ logSetId: 200n })
+      mockPrisma.workoutPlanExercise.update.mockResolvedValue({ ...planExercise, deletedAt: new Date() })
       const caller = makeOwner()
 
-      await expect(service.removePlanExercise(1n, 10n, 50n, caller as any)).rejects.toThrow(
-        ConflictException
+      await service.removePlanExercise(1n, 10n, 50n, caller as any)
+
+      expect(mockPrisma.workoutPlanExercise.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { planExerciseId: 50n },
+          data: { deletedAt: expect.any(Date) },
+        })
       )
     })
 
-    it('happy path: deletes exercise and logs audit', async () => {
+    it('hard deletes exercise when no log set exists', async () => {
       mockPrisma.workoutPlanExercise.findFirst.mockResolvedValue(planExercise)
+      mockPrisma.workoutLogSet.findFirst.mockResolvedValue(null)
       mockPrisma.workoutPlanExercise.delete.mockResolvedValue(planExercise)
       const caller = makeOwner()
 
