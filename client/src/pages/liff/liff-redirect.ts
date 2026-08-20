@@ -117,16 +117,16 @@ export function consumeLiffRedirectPath(): string | null {
 export function getCleanLiffRedirectUri(href: string = typeof window !== 'undefined' ? window.location.href : 'https://gym-management-system-teal-three.vercel.app/liff'): string {
   try {
     const url = new URL(href)
+    // Use current domain instead of hardcoded
+    const baseUrl = `${window.location.protocol}//${window.location.host}`
+    url.href = `${baseUrl}/liff`
     url.searchParams.delete('code')
     url.searchParams.delete('state')
     url.searchParams.delete('liffClientId')
     url.searchParams.delete('liffRedirectUri')
-    // Đảm bảo domain khớp với production Vercel
-    url.hostname = url.hostname === 'rogym.local' ? 'gym-management-system-teal-three.vercel.app' : url.hostname
     return url.toString()
   } catch {
-    // Fallback production domain
-    return 'https://gym-management-system-teal-three.vercel.app/liff'
+    return `${window.location.origin}/liff`
   }
 }
 

@@ -1,7 +1,7 @@
 {
   "rewrites": [
     {
-      "source": "/(.*)",
+      "source": "/((?!liff|__next).*)(/.*)?",
       "destination": "/index.html"
     }
   ]
