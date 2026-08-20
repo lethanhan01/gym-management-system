@@ -7,7 +7,7 @@ import { useAuthStore } from '@/stores/authStore'
 import { useSubscriptionStore } from '@/stores/subscriptionStore'
 import { getApiError } from '@/lib/api-error'
 import { LanguageSwitcher } from '@/components/ui/LanguageSwitcher'
-import { getSafeMemberRedirect } from './liff-redirect'
+import { extractLiffRedirectPath, getSafeMemberRedirect } from './liff-redirect'
 
 export default function LiffEntryPage() {
   const { t, i18n } = useTranslation(['auth', 'common'])
@@ -20,9 +20,12 @@ export default function LiffEntryPage() {
     let cancelled = false
 
     async function run() {
-      const redirectPath = getSafeMemberRedirect(
-        new URLSearchParams(window.location.search).get('redirect')
-      )
+      const redirectPath = extractLiffRedirectPath(window.location.search)
+      if (window.location.search.includes('liff.state')) {
+        const cleanUrl = `/liff?redirect=${encodeURIComponent(redirectPath)}`
+        window.history.replaceState(null, '', cleanUrl)
+      }
+
       try {
         const liff = await initLiff()
 

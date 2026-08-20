@@ -494,4 +494,79 @@ describe('LineMessagingService', () => {
       expect(result).toBe(false)
     })
   })
+
+  describe('assignRichMenu & safeAssignRichMenu', () => {
+    it('assigns rich menu to user on follow event when LINE_RICH_MENU_ID is configured', async () => {
+      env.LINE_RICH_MENU_ID = 'richmenu-abc123'
+      const body = Buffer.from(
+        JSON.stringify({
+          events: [
+            {
+              type: 'follow',
+              replyToken: 'reply-token',
+              source: { type: 'user', userId: 'U123' },
+            },
+          ],
+        })
+      )
+
+      await service.handleWebhook(body, sign(body))
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        'https://api.line.me/v2/bot/user/U123/richmenu/richmenu-abc123',
+        expect.objectContaining({
+          method: 'POST',
+          headers: expect.objectContaining({
+            Authorization: 'Bearer token',
+          }),
+        })
+      )
+    })
+
+    it('returns false if LINE_RICH_MENU_ID is not configured', async () => {
+      delete env.LINE_RICH_MENU_ID
+      const result = await service.assignRichMenu('U123')
+      expect(result).toBe(false)
+      expect(mockFetch).not.toHaveBeenCalled()
+    })
+
+    it('records rich-menu entry in mock outbox when mock mode is enabled', async () => {
+      env.LINE_MOCK_ENABLED = 'true'
+      env.LINE_RICH_MENU_ID = 'richmenu-mock-001'
+
+      const result = await service.assignRichMenu('U123')
+
+      expect(result).toBe(true)
+      expect(mockFetch).not.toHaveBeenCalled()
+      expect(service.getMockMessages()).toEqual([
+        expect.objectContaining({
+          kind: 'rich-menu',
+          recipient: 'U123',
+          payload: { userId: 'U123', richMenuId: 'richmenu-mock-001' },
+        }),
+      ])
+    })
+
+    it('returns false when LINE API returns non-ok status', async () => {
+      env.LINE_RICH_MENU_ID = 'richmenu-bad'
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 404,
+        text: jest.fn().mockResolvedValue('Rich menu not found'),
+      })
+
+      const result = await service.assignRichMenu('U123')
+
+      expect(result).toBe(false)
+    })
+
+    it('safeAssignRichMenu catches exceptions and returns false', async () => {
+      jest.spyOn(service, 'assignRichMenu').mockRejectedValueOnce(new Error('Network error'))
+
+      const result = await service.safeAssignRichMenu('U123')
+
+      expect(result).toBe(false)
+    })
+  })
 })
+

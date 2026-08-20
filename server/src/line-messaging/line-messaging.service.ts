@@ -452,6 +452,50 @@ export class LineMessagingService {
     }
   }
 
+  async safeAssignRichMenu(lineUserId: string): Promise<boolean> {
+    try {
+      return await this.assignRichMenu(lineUserId)
+    } catch (error) {
+      this.logger.warn(
+        `LINE Rich Menu assignment failed for user ${lineUserId}: ${this.describeError(error)}`
+      )
+      return false
+    }
+  }
+
+  async assignRichMenu(lineUserId: string): Promise<boolean> {
+    if (!lineUserId) return false
+
+    const richMenuId = this.config.get<string>('LINE_RICH_MENU_ID')
+    if (!richMenuId) return false
+
+    if (this.isMockEnabled()) {
+      this.addMockOutbox({
+        kind: 'rich-menu',
+        recipient: lineUserId,
+        payload: { userId: lineUserId, richMenuId },
+      })
+      return true
+    }
+
+    const token = this.config.get<string>('LINE_CHANNEL_ACCESS_TOKEN')
+    if (!this.isMessagingEnabled() || !token) return false
+
+    const res = await fetch(`https://api.line.me/v2/bot/user/${lineUserId}/richmenu/${richMenuId}`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
+
+    if (!res.ok) {
+      const detail = await res.text().catch(() => '<no body>')
+      this.logger.warn(`LINE assign rich menu failed (${res.status}): ${detail}`)
+      return false
+    }
+    return true
+  }
+
   async safeUnsend(messageId: string): Promise<boolean> {
     try {
       return await this.unsend(messageId)
@@ -565,6 +609,7 @@ export class LineMessagingService {
       await this.replyMessage(event.replyToken, [
         this.withLiffButton(template.followText, template.followButton, '/member'),
       ])
+      await this.safeAssignRichMenu(lineUserId)
       return
     }
 
