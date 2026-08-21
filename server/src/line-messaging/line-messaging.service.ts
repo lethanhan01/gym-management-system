@@ -74,6 +74,7 @@ const LINE_MESSAGE_TEMPLATES: Record<
         roomName: string
         when: string
         reminderMinutes: number
+        sessionName?: string
       }) => string
     >
   }
@@ -91,15 +92,16 @@ const LINE_MESSAGE_TEMPLATES: Record<
     subscriptionExpiring: ({ packageName, endDate }) =>
       `Gói tập ${packageName} của bạn sẽ hết hạn vào ngày mai (${endDate}). Vui lòng gia hạn để tiếp tục sử dụng dịch vụ tại RoGym.`,
     training: {
-      created: ({ trainerName, roomName, when }) =>
-        `Bạn đã đặt lịch tập thành công.\nThời gian: ${when}\nPT: ${trainerName}\nPhòng: ${roomName}`,
-      updated: ({ trainerName, roomName, when }) =>
-        `Lịch tập của bạn đã được cập nhật.\nThời gian mới: ${when}\nPT: ${trainerName}\nPhòng: ${roomName}`,
-      cancelled: ({ trainerName, when }) => `Lịch tập với PT ${trainerName} vào ${when} đã bị hủy.`,
-      reminder: ({ trainerName, roomName, when, reminderMinutes }) =>
-        `Buổi tập của bạn sẽ bắt đầu sau ${reminderMinutes} phút.\nThời gian: ${when}\nPT: ${trainerName}\nPhòng: ${roomName}`,
-      starting: ({ trainerName, roomName, when }) =>
-        `Đến giờ tập của bạn.\nThời gian: ${when}\nPT: ${trainerName}\nPhòng: ${roomName}`,
+      created: ({ trainerName, roomName, when, sessionName }) =>
+        `Bạn đã đặt lịch tập thành công.\n${sessionName ? `Nội dung: ${sessionName}\n` : ''}Thời gian: ${when}\nPT: ${trainerName}\nPhòng: ${roomName}`,
+      updated: ({ trainerName, roomName, when, sessionName }) =>
+        `Lịch tập của bạn đã được cập nhật.\n${sessionName ? `Nội dung mới: ${sessionName}\n` : ''}Thời gian mới: ${when}\nPT: ${trainerName}\nPhòng: ${roomName}`,
+      cancelled: ({ trainerName, when, sessionName }) =>
+        `Lịch tập${sessionName ? ` "${sessionName}"` : ''} với PT ${trainerName} vào ${when} đã bị hủy.`,
+      reminder: ({ trainerName, roomName, when, reminderMinutes, sessionName }) =>
+        `Buổi tập của bạn sẽ bắt đầu sau ${reminderMinutes} phút.\n${sessionName ? `Nội dung: ${sessionName}\n` : ''}Thời gian: ${when}\nPT: ${trainerName}\nPhòng: ${roomName}`,
+      starting: ({ trainerName, roomName, when, sessionName }) =>
+        `Đến giờ tập của bạn.\n${sessionName ? `Nội dung: ${sessionName}\n` : ''}Thời gian: ${when}\nPT: ${trainerName}\nPhòng: ${roomName}`,
     },
   },
   ja: {
@@ -115,16 +117,16 @@ const LINE_MESSAGE_TEMPLATES: Record<
     subscriptionExpiring: ({ packageName, endDate }) =>
       `ご利用中のプラン「${packageName}」は明日（${endDate}）に有効期限が切れます。継続してご利用いただくには更新手続きをお願いいたします。`,
     training: {
-      created: ({ trainerName, roomName, when }) =>
-        `トレーニング予約が完了しました。\n日時: ${when}\nPT: ${trainerName}\nルーム: ${roomName}`,
-      updated: ({ trainerName, roomName, when }) =>
-        `トレーニング予約が更新されました。\n新しい日時: ${when}\nPT: ${trainerName}\nルーム: ${roomName}`,
-      cancelled: ({ trainerName, when }) =>
-        `PT ${trainerName} との ${when} のトレーニング予約はキャンセルされました。`,
-      reminder: ({ trainerName, roomName, when, reminderMinutes }) =>
-        `トレーニング開始まであと${reminderMinutes}分です。\n日時: ${when}\nPT: ${trainerName}\nルーム: ${roomName}`,
-      starting: ({ trainerName, roomName, when }) =>
-        `トレーニングの時間です。\n日時: ${when}\nPT: ${trainerName}\nルーム: ${roomName}`,
+      created: ({ trainerName, roomName, when, sessionName }) =>
+        `トレーニング予約が完了しました。\n${sessionName ? `内容: ${sessionName}\n` : ''}日時: ${when}\nPT: ${trainerName}\nルーム: ${roomName}`,
+      updated: ({ trainerName, roomName, when, sessionName }) =>
+        `トレーニング予約が更新されました。\n${sessionName ? `新しい内容: ${sessionName}\n` : ''}新しい日時: ${when}\nPT: ${trainerName}\nルーム: ${roomName}`,
+      cancelled: ({ trainerName, when, sessionName }) =>
+        `PT ${trainerName} との ${when} のトレーニング予約${sessionName ? `（${sessionName}）` : ''}はキャンセルされました。`,
+      reminder: ({ trainerName, roomName, when, reminderMinutes, sessionName }) =>
+        `トレーニング開始まであと${reminderMinutes}分です。\n${sessionName ? `内容: ${sessionName}\n` : ''}日時: ${when}\nPT: ${trainerName}\nルーム: ${roomName}`,
+      starting: ({ trainerName, roomName, when, sessionName }) =>
+        `トレーニングの時間です。\n${sessionName ? `内容: ${sessionName}\n` : ''}日時: ${when}\nPT: ${trainerName}\nルーム: ${roomName}`,
     },
   },
 }
@@ -574,6 +576,7 @@ export class LineMessagingService {
         member: { select: { userId: true, user: { select: { lineId: true, fullName: true } } } },
         trainer: { select: { user: { select: { fullName: true } } } },
         room: { select: { name: true } },
+        planDay: { select: { name: true } },
       },
       take: 100,
     })
@@ -641,6 +644,7 @@ export class LineMessagingService {
         member: { select: { userId: true, user: { select: { lineId: true, fullName: true } } } },
         trainer: { select: { user: { select: { fullName: true } } } },
         room: { select: { name: true } },
+        planDay: { select: { name: true } },
       },
     })
     if (!session?.member.user.lineId) return false
@@ -653,6 +657,7 @@ export class LineMessagingService {
           roomName: session.room.name,
           startTime: session.startTime,
           reminderMinutes: this.getReminderMinutes(),
+          sessionName: session.planDay?.name,
         }),
         this.getMessageTemplate().detailButton,
         this.buildTrainingRedirect(session.sessionId)
@@ -706,7 +711,13 @@ export class LineMessagingService {
 
   private buildTrainingText(
     kind: TrainingLineEvent,
-    session: { trainerName: string; roomName: string; startTime: Date; reminderMinutes: number }
+    session: {
+      trainerName: string
+      roomName: string
+      startTime: Date
+      reminderMinutes: number
+      sessionName?: string
+    }
   ) {
     const template = this.getMessageTemplate()
     const when = this.formatDateTime(session.startTime, template.dateLocale)

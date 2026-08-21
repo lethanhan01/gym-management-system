@@ -216,11 +216,11 @@ export function WorkoutFocusModal({
 
             {nextGifUrl && (
               <div className="my-2 flex justify-center">
-                <div className="w-full max-w-md overflow-hidden rounded-xl border border-amber-400/30 bg-black/40 p-1">
+                <div className="aspect-square h-56 sm:h-64 max-w-full overflow-hidden rounded-xl border border-amber-400/30 bg-black/40 p-1">
                   <img
                     src={nextGifUrl}
                     alt={nextExerciseName}
-                    className="max-h-64 sm:max-h-72 w-full object-contain rounded-lg mx-auto"
+                    className="h-full w-full object-contain rounded-lg mx-auto"
                     loading="lazy"
                   />
                 </div>
@@ -313,11 +313,11 @@ export function WorkoutFocusModal({
 
             {currentGifUrl && (
               <div className="my-2 flex justify-center">
-                <div className="w-full max-w-md overflow-hidden rounded-xl border border-cyan-400/30 bg-black/40 p-1">
+                <div className="aspect-square h-56 sm:h-64 max-w-full overflow-hidden rounded-xl border border-cyan-400/30 bg-black/40 p-1">
                   <img
                     src={currentGifUrl}
                     alt={exerciseName}
-                    className="max-h-64 sm:max-h-72 w-full object-contain rounded-lg mx-auto"
+                    className="h-full w-full object-contain rounded-lg mx-auto"
                     loading="lazy"
                   />
                 </div>
