@@ -143,7 +143,7 @@ export default function MemberProfilePage() {
         })
       }
       setIsEditing(false)
-      toast.success(t('profile.buttonSave') + ' thành công')
+      toast.success(t('profile.successUpdateProfile'))
     } catch (err) {
       toast.error(getApiError(err, t('profile.errorSave')))
     } finally {
@@ -185,11 +185,11 @@ export default function MemberProfilePage() {
         return
       }
       const idToken = liff.getIDToken()
-      if (!idToken) throw new Error('Không lấy được LINE idToken')
+      if (!idToken) throw new Error(t('profile.lineGetTokenFailed'))
       await authService.linkLine(idToken)
       setLineLinked(true)
     } catch (err) {
-      setLineError(getApiError(err, 'Liên kết thất bại'))
+      setLineError(getApiError(err, t('profile.lineLinkFailed')))
     } finally {
       setLineLinking(false)
     }
@@ -202,7 +202,7 @@ export default function MemberProfilePage() {
       await authService.unlinkLine()
       setLineLinked(false)
     } catch (err) {
-      setLineError(getApiError(err, 'Hủy liên kết thất bại'))
+      setLineError(getApiError(err, t('profile.lineUnlinkFailed')))
     } finally {
       setLineLinking(false)
     }
@@ -520,10 +520,10 @@ export default function MemberProfilePage() {
                     size="compact"
                     type="button"
                     loading={lineLinking}
-                    loadingText="Đang xử lý..."
+                    loadingText={t('profile.processing')}
                     onClick={handleUnlinkLine}
                   >
-                    Hủy liên kết
+                    {t('profile.buttonUnlinkLine')}
                   </Button>
                 ) : (
                   <Button
@@ -531,11 +531,11 @@ export default function MemberProfilePage() {
                     size="compact"
                     type="button"
                     loading={lineLinking}
-                    loadingText="Đang xử lý..."
+                    loadingText={t('profile.processing')}
                     onClick={handleLinkLine}
                     leftIcon={<LineIcon className="h-4 w-4 fill-current" />}
                   >
-                    Liên kết với LINE
+                    {t('profile.buttonLinkLine')}
                   </Button>
                 )}
               </div>

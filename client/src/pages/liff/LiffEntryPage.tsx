@@ -28,7 +28,7 @@ export default function LiffEntryPage() {
       if (attemptCount >= MAX_ATTEMPTS) {
         const timeSinceLastAttempt = Date.now() - lastAttemptTime
         if (timeSinceLastAttempt < CIRCUIT_BREAKER_DELAY) {
-          setError('Hệ thống đang bận. Vui lòng thử lại sau.')
+          setError(t('liff.circuitBreakerError'))
           return
         }
       }
@@ -64,7 +64,7 @@ export default function LiffEntryPage() {
 
         if (!liff.isLoggedIn()) {
           if (attemptCount >= MAX_ATTEMPTS) {
-            setError('Đăng nhập thất bại sau nhiều lần thử. Vui lòng thử lại sau.')
+            setError(t('liff.maxAttemptsError'))
             return
           }
           // Luu redirect path vao sessionStorage truoc khi di chuyen sang OAuth flow
@@ -81,7 +81,7 @@ export default function LiffEntryPage() {
           const expMs = decoded.exp * 1000
           if (expMs - 30_000 <= Date.now()) {
             if (attemptCount >= MAX_ATTEMPTS) {
-              setError('Phiên đăng nhập đã hết hạn. Vui lòng tải lại trang để tiếp tục.')
+              setError(t('liff.sessionExpired'))
               return
             }
             // Luu redirect path vao sessionStorage truoc khi di chuyen sang OAuth flow
@@ -144,7 +144,7 @@ export default function LiffEntryPage() {
             <div className="mb-4 h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent mx-auto" />
             <p className="text-on-surface-variant text-sm">{t('liff.loggingIn')}</p>
             <p className="text-on-surface-variant text-xs mt-2 opacity-70">
-              Thử lần {attemptCount}/{MAX_ATTEMPTS}
+              Loading {attemptCount}/{MAX_ATTEMPTS}
             </p>
           </div>
         )}
