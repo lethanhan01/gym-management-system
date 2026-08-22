@@ -49,8 +49,10 @@ type Slot = {
   reason?: string
 }
 
+const DAY_KEYS = ['', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'] as const
+
 export default function CreateSessionPage() {
-  const { t } = useTranslation('trainer')
+  const { t, i18n } = useTranslation(['trainer', 'common'])
   const { id } = useParams()
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
@@ -81,12 +83,34 @@ export default function CreateSessionPage() {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  const currentLocale = i18n.language === 'ja' ? 'ja-JP' : 'vi-VN'
+
   function formatPlanDayOption(day: PlanDayOption) {
+    const dayKey = DAY_KEYS[day.dayOfWeek]
+    const dayName = dayKey
+      ? t(`plans.builder.dayLabels.${dayKey}`)
+      : String(day.dayOfWeek)
+
     return t('sessions.create.planDayOptionFormat', {
       dayNumber: day.dayNumber,
       weekNumber: day.weekNumber,
-      dayOfWeek: day.dayOfWeek,
+      dayName,
       name: day.name,
+    })
+  }
+
+  function formatDisplayDateTime(iso: string) {
+    if (!iso) return ''
+    const d = new Date(iso)
+    if (isNaN(d.getTime())) return ''
+    return d.toLocaleString(currentLocale, {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+      timeZone: 'Asia/Ho_Chi_Minh',
     })
   }
 
@@ -283,7 +307,7 @@ export default function CreateSessionPage() {
       navigate('/trainer/sessions')
     } catch (err) {
       toast.error(getApiError(err, t('sessions.create.error.saveFailed')), {
-        action: { label: t('button.retry', { defaultValue: 'Thử lại' }), onClick: handleSubmit },
+        action: { label: t('common:button.retry'), onClick: handleSubmit },
       })
     } finally {
       setSubmitting(false)
@@ -317,7 +341,7 @@ export default function CreateSessionPage() {
         <Alert
           tone="warning"
           className="mb-6"
-          title={t('sessions.create.error.editBlockedTitle', { defaultValue: 'Không thể chỉnh sửa' })}
+          title={t('sessions.create.error.editBlockedTitle')}
           description={t('sessions.create.error.editBlocked')}
         />
       )}
@@ -326,7 +350,7 @@ export default function CreateSessionPage() {
         <Alert
           tone="error"
           className="mb-6"
-          title={t('sessions.create.error.generalTitle', { defaultValue: 'Đã xảy ra lỗi' })}
+          title={t('sessions.create.error.generalTitle')}
           description={error}
           onClose={() => setError(null)}
         />
@@ -395,7 +419,7 @@ export default function CreateSessionPage() {
                           )}
                         </div>
                         <Badge tone="accent" size="sm" className="shrink-0">
-                          {t('sessions.create.assignedPlanBadge', { defaultValue: 'Đang theo học' })}
+                          {t('sessions.create.assignedPlanBadge')}
                         </Badge>
                       </div>
                     </Card>
@@ -472,9 +496,7 @@ export default function CreateSessionPage() {
                 <FormField
                   label={t('sessions.create.fieldStartTime')}
                   required
-                  hint={t('sessions.create.selectDateHint', {
-                    defaultValue: 'Chọn ngày để tra cứu các khung giờ trống',
-                  })}
+                  hint={t('sessions.create.selectDateHint')}
                 >
                   <DatePickerInput
                     value={selectedDate}
@@ -487,7 +509,7 @@ export default function CreateSessionPage() {
 
                 <div className="space-y-2">
                   <span className="flex items-center gap-1 text-xs font-semibold uppercase tracking-wider text-white/80 select-none">
-                    <span>{t('sessions.create.availableSlots', { defaultValue: 'Khung giờ khả dụng' })}</span>
+                    <span>{t('sessions.create.availableSlots')}</span>
                     <span className="text-red-400 font-bold" aria-hidden="true">*</span>
                   </span>
 
@@ -504,7 +526,7 @@ export default function CreateSessionPage() {
                           selectedSlot?.startTime === slot.startTime &&
                           selectedSlot?.endTime === slot.endTime
                         const fmt = (iso: string) =>
-                          new Date(iso).toLocaleTimeString('vi-VN', {
+                          new Date(iso).toLocaleTimeString(currentLocale, {
                             hour: '2-digit',
                             minute: '2-digit',
                             hour12: false,
@@ -535,8 +557,8 @@ export default function CreateSessionPage() {
                                 className="mt-1.5 text-[10px] py-0 px-1.5 font-normal"
                               >
                                 {slot.reason === 'PAST_TIME'
-                                  ? t('sessions.create.slotPast', { defaultValue: 'Quá giờ' })
-                                  : t('sessions.create.slotBusy', { defaultValue: 'Đã đặt' })}
+                                  ? t('sessions.create.slotPast')
+                                  : t('sessions.create.slotBusy')}
                               </Badge>
                             )}
                           </button>
@@ -548,9 +570,7 @@ export default function CreateSessionPage() {
                       tone="neutral"
                       variant="subtle"
                       className="py-3"
-                      description={t('sessions.create.noSlots', {
-                        defaultValue: 'Không có khung giờ nào khả dụng trong ngày đã chọn.',
-                      })}
+                      description={t('sessions.create.noSlots')}
                     />
                   )}
                 </div>
@@ -573,9 +593,7 @@ export default function CreateSessionPage() {
                 <FormField
                   label={t('sessions.create.fieldDuration')}
                   required
-                  hint={t('sessions.create.durationHint', {
-                    defaultValue: 'Thời lượng tính bằng phút (bội số của 15)',
-                  })}
+                  hint={t('sessions.create.durationHint')}
                 >
                   <Input
                     type="number"
@@ -588,7 +606,7 @@ export default function CreateSessionPage() {
                     required
                     trailingIcon={
                       <span className="text-xs text-white/50">
-                        {t('sessions.create.minutesUnit', { defaultValue: 'phút' })}
+                        {t('sessions.create.minutesUnit')}
                       </span>
                     }
                   />
@@ -601,13 +619,13 @@ export default function CreateSessionPage() {
               tone="info"
               variant="subtle"
               icon={<Clock3 size={18} className="text-sky-400 shrink-0" />}
-              title={t('sessions.create.summaryTitle', { defaultValue: 'Thời gian buổi tập dự kiến' })}
+              title={t('sessions.create.summaryTitle')}
               description={
                 computedEndTime ? (
                   <span className="font-medium text-white/90">
-                    {computedStartTime ? toDateTimeLocalInput(computedStartTime).replace('T', ' ') : ''}{' '}
-                    &rarr; {toDateTimeLocalInput(computedEndTime).replace('T', ' ')}{' '}
-                    ({effectiveDuration} {t('sessions.create.minutesUnit', { defaultValue: 'phút' })})
+                    {computedStartTime ? formatDisplayDateTime(computedStartTime) : ''}{' '}
+                    &rarr; {formatDisplayDateTime(computedEndTime)}{' '}
+                    ({effectiveDuration} {t('sessions.create.minutesUnit')})
                   </span>
                 ) : (
                   t('sessions.create.endUnknown')
