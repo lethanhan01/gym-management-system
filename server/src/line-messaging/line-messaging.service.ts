@@ -1325,7 +1325,7 @@ export class LineMessagingService {
     const base = this.config.get<string>('LINE_LIFF_URL')
     if (!base) throw new Error('LINE_LIFF_URL is required when LINE messaging is enabled')
     const url = new URL(base)
-    url.searchParams.set('liff.state', `?redirect=${encodeURIComponent(redirectPath)}`)
+    url.searchParams.set('redirect', redirectPath)
     return url.toString()
   }
 
