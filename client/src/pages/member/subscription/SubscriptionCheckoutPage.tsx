@@ -345,7 +345,7 @@ export default function SubscriptionCheckoutPage({ mode }: { mode: 'buy' | 'rene
             className="mt-auto"
           >
             {mode === 'renew'
-              ? t('subscription.checkout.buttonConfirmRenew')
+              ? t('subscription.checkout.buttonConfirmRenew', { price: formatVnd(state.price) })
               : t('subscription.checkout.buttonConfirmPay', { price: formatVnd(state.price) })}
           </Button>
         </Card>
