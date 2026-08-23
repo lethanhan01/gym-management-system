@@ -70,8 +70,18 @@ export type LineMockSample =
   | 'flex'
   | 'rich-menu'
   | 'pt-booking-created'
-  | 'pt-reminder-30m'
+  | 'pt-booking-updated'
+  | 'pt-booking-cancelled'
   | 'pt-session-cancelled'
+  | 'pt-reminder-30m'
+  | 'pt-session-starting'
+  | 'pt-training-completed'
+  | 'attendance-checkin'
+  | 'subscription-expiring'
+  | 'payment-success'
+  | 'feedback-responded'
+  | 'welcome'
+  | 'help'
 
 type TrainingLineEvent = 'created' | 'updated' | 'cancelled' | 'reminder' | 'starting'
 
@@ -256,36 +266,49 @@ export class LineMessagingService {
       return
     }
 
-    if (type === 'rich-menu') {
+    if (type === 'pt-booking-updated') {
+      const mockSessionId = '101'
+      const liffUrl = this.buildLiffUrl(`/member/workout/sessions?sessionId=${mockSessionId}`)
+      const flexMsg = buildTrainingBookingUpdatedFlex(
+        {
+          sessionName: targetLocale === 'ja' ? 'パーソナルトレーニング' : 'Buổi tập PT cá nhân',
+          trainerName: 'Coach Alex',
+          roomName: targetLocale === 'ja' ? 'VIP Studio 02' : 'Phòng VIP Studio 02',
+          when: targetLocale === 'ja' ? '2026/08/21 10:30' : '10:30 21/08/2026',
+        },
+        targetLocale,
+        liffUrl
+      )
       this.addMockOutbox({
-        kind: 'rich-menu',
+        kind: 'push',
+        recipient: LINE_MOCK_USER_ID,
+        liffUrl,
         payload: {
-          size: { width: 2500, height: 843 },
-          selected: true,
-          name: 'RoGym Member Menu',
-          chatBarText: targetLocale === 'ja' ? 'RoGymメニュー' : 'Mở menu RoGym',
-          areas: [
-            this.richMenuArea(
-              0,
-              targetLocale === 'ja' ? 'スケジュール' : 'Lịch tập',
-              this.buildLiffUrl('/member/workout/sessions')
-            ),
-            this.richMenuArea(
-              625,
-              targetLocale === 'ja' ? 'PT予約' : 'Đặt lịch',
-              this.buildLiffUrl('/member/workout/sessions?book=1')
-            ),
-            this.richMenuArea(
-              1250,
-              targetLocale === 'ja' ? 'チェックイン' : 'Check-in',
-              this.buildLiffUrl('/member/attendance')
-            ),
-            this.richMenuArea(
-              1875,
-              targetLocale === 'ja' ? 'マイページ' : 'Hồ sơ',
-              this.buildLiffUrl('/member/profile')
-            ),
-          ],
+          to: LINE_MOCK_USER_ID,
+          messages: [flexMsg],
+        },
+      })
+      return
+    }
+
+    if (type === 'pt-booking-cancelled' || type === 'pt-session-cancelled') {
+      const liffUrl = this.buildLiffUrl('/member/workout/sessions')
+      const flexMsg = buildTrainingBookingCancelledFlex(
+        {
+          sessionName: targetLocale === 'ja' ? 'パーソナルトレーニング' : 'Buổi tập PT cá nhân',
+          trainerName: 'Coach Alex',
+          when: targetLocale === 'ja' ? '2026/08/20 09:00' : '09:00 20/08/2026',
+        },
+        targetLocale,
+        liffUrl
+      )
+      this.addMockOutbox({
+        kind: 'push',
+        recipient: LINE_MOCK_USER_ID,
+        liffUrl,
+        payload: {
+          to: LINE_MOCK_USER_ID,
+          messages: [flexMsg],
         },
       })
       return
@@ -317,12 +340,14 @@ export class LineMessagingService {
       return
     }
 
-    if (type === 'pt-session-cancelled') {
-      const liffUrl = this.buildLiffUrl('/member/workout/sessions')
-      const flexMsg = buildTrainingBookingCancelledFlex(
+    if (type === 'pt-session-starting') {
+      const mockSessionId = '101'
+      const liffUrl = this.buildLiffUrl(`/member/workout/sessions?sessionId=${mockSessionId}`)
+      const flexMsg = buildTrainingStartingFlex(
         {
           sessionName: targetLocale === 'ja' ? 'パーソナルトレーニング' : 'Buổi tập PT cá nhân',
           trainerName: 'Coach Alex',
+          roomName: targetLocale === 'ja' ? 'Cardio & Weights Room 01' : 'Phòng Cardio & Tạ 01',
           when: targetLocale === 'ja' ? '2026/08/20 09:00' : '09:00 20/08/2026',
         },
         targetLocale,
@@ -335,6 +360,192 @@ export class LineMessagingService {
         payload: {
           to: LINE_MOCK_USER_ID,
           messages: [flexMsg],
+        },
+      })
+      return
+    }
+
+    if (type === 'pt-training-completed') {
+      const reviewUrl = this.buildLiffUrl('/member/feedback/new?trainerId=101')
+      const historyUrl = this.buildLiffUrl('/member/workout/sessions')
+      const flexMsg = buildTrainingCompletedFlex(
+        {
+          sessionName: targetLocale === 'ja' ? 'パーソナルトレーニング' : 'Buổi tập PT cá nhân',
+          when: targetLocale === 'ja' ? '2026/08/20 10:00' : '10:00 20/08/2026',
+          trainerName: 'Coach Alex',
+          roomName: targetLocale === 'ja' ? 'Cardio & Weights Room 01' : 'Phòng Cardio & Tạ 01',
+        },
+        targetLocale,
+        reviewUrl,
+        historyUrl
+      )
+      this.addMockOutbox({
+        kind: 'push',
+        recipient: LINE_MOCK_USER_ID,
+        liffUrl: reviewUrl,
+        payload: {
+          to: LINE_MOCK_USER_ID,
+          messages: [flexMsg],
+        },
+      })
+      return
+    }
+
+    if (type === 'attendance-checkin') {
+      const liffUrl = this.buildLiffUrl('/member/attendance')
+      const flexMsg = buildAttendanceCheckinFlex(
+        {
+          checkinTime: targetLocale === 'ja' ? '2026/08/20 08:45' : '08:45 20/08/2026',
+          branchName: targetLocale === 'ja' ? 'RoGym Central Branch' : 'RoGym Chi nhánh Trung Tâm',
+        },
+        targetLocale,
+        liffUrl
+      )
+      this.addMockOutbox({
+        kind: 'push',
+        recipient: LINE_MOCK_USER_ID,
+        liffUrl,
+        payload: {
+          to: LINE_MOCK_USER_ID,
+          messages: [flexMsg],
+        },
+      })
+      return
+    }
+
+    if (type === 'subscription-expiring') {
+      const renewUrl = this.buildLiffUrl('/member/profile')
+      const detailUrl = this.buildLiffUrl('/member/profile')
+      const flexMsg = buildSubscriptionExpiringFlex(
+        {
+          packageName: targetLocale === 'ja' ? 'Diamond 3ヶ月プラン' : 'Gói Diamond 3 Tháng',
+          endDate: targetLocale === 'ja' ? '2026/08/25' : '25/08/2026',
+        },
+        targetLocale,
+        renewUrl,
+        detailUrl
+      )
+      this.addMockOutbox({
+        kind: 'push',
+        recipient: LINE_MOCK_USER_ID,
+        liffUrl: renewUrl,
+        payload: {
+          to: LINE_MOCK_USER_ID,
+          messages: [flexMsg],
+        },
+      })
+      return
+    }
+
+    if (type === 'payment-success') {
+      const liffUrl = this.buildLiffUrl('/member/profile')
+      const flexMsg = buildPaymentSuccessFlex(
+        {
+          packageName: targetLocale === 'ja' ? 'Diamond 3ヶ月プラン' : 'Gói Diamond 3 Tháng',
+          amount: targetLocale === 'ja' ? 15000 : 2500000,
+          paymentMethod: targetLocale === 'ja' ? 'クレジットカード' : 'VNPay QR',
+          paymentCode: 'PAY-20260820-9988',
+          paidAt: targetLocale === 'ja' ? '2026/08/20 08:30' : '08:30 20/08/2026',
+        },
+        targetLocale,
+        liffUrl
+      )
+      this.addMockOutbox({
+        kind: 'push',
+        recipient: LINE_MOCK_USER_ID,
+        liffUrl,
+        payload: {
+          to: LINE_MOCK_USER_ID,
+          messages: [flexMsg],
+        },
+      })
+      return
+    }
+
+    if (type === 'feedback-responded') {
+      const liffUrl = this.buildLiffUrl('/member/feedback/101')
+      const flexMsg = buildFeedbackRespondedFlex(
+        {
+          feedbackTitle:
+            targetLocale === 'ja'
+              ? 'シャワールームの設備について'
+              : 'Góp ý về phòng tắm nóng lạnh',
+          respondedAt: targetLocale === 'ja' ? '2026/08/20 11:15' : '11:15 20/08/2026',
+          responderName: targetLocale === 'ja' ? 'RoGym 管理チーム' : 'Ban quản lý RoGym',
+        },
+        targetLocale,
+        liffUrl
+      )
+      this.addMockOutbox({
+        kind: 'push',
+        recipient: LINE_MOCK_USER_ID,
+        liffUrl,
+        payload: {
+          to: LINE_MOCK_USER_ID,
+          messages: [flexMsg],
+        },
+      })
+      return
+    }
+
+    if (type === 'welcome') {
+      const liffUrl = this.buildLiffUrl('/member')
+      const flexMsg = buildWelcomeFlex(targetLocale, liffUrl)
+      this.addMockOutbox({
+        kind: 'reply',
+        recipient: LINE_MOCK_USER_ID,
+        liffUrl,
+        payload: {
+          messages: [flexMsg],
+        },
+      })
+      return
+    }
+
+    if (type === 'help') {
+      const liffUrl = this.buildLiffUrl('/member')
+      const flexMsg = buildHelpAutoReplyFlex(targetLocale, liffUrl)
+      this.addMockOutbox({
+        kind: 'reply',
+        recipient: LINE_MOCK_USER_ID,
+        liffUrl,
+        payload: {
+          messages: [flexMsg],
+        },
+      })
+      return
+    }
+
+    if (type === 'rich-menu') {
+      this.addMockOutbox({
+        kind: 'rich-menu',
+        payload: {
+          size: { width: 2500, height: 843 },
+          selected: true,
+          name: 'RoGym Member Menu',
+          chatBarText: targetLocale === 'ja' ? 'RoGymメニュー' : 'Mở menu RoGym',
+          areas: [
+            this.richMenuArea(
+              0,
+              targetLocale === 'ja' ? 'スケジュール' : 'Lịch tập',
+              this.buildLiffUrl('/member/workout/sessions')
+            ),
+            this.richMenuArea(
+              625,
+              targetLocale === 'ja' ? 'PT予約' : 'Đặt lịch',
+              this.buildLiffUrl('/member/workout/sessions?book=1')
+            ),
+            this.richMenuArea(
+              1250,
+              targetLocale === 'ja' ? 'チェックイン' : 'Check-in',
+              this.buildLiffUrl('/member/attendance')
+            ),
+            this.richMenuArea(
+              1875,
+              targetLocale === 'ja' ? 'マイページ' : 'Hồ sơ',
+              this.buildLiffUrl('/member/profile')
+            ),
+          ],
         },
       })
       return

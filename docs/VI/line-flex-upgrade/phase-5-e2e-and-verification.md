@@ -75,9 +75,9 @@ npm test -- --run
 
 ## 4. Tiêu Chí Nghiệm Thu Toàn Dự Án (Final Definition of Done - DoD Khắt Khe)
 
-- [ ] **100% Test Pass Rate**: Toàn bộ unit tests và integration tests ở cả Backend và Frontend chạy thành công 100% không có cảnh báo hay lỗi thất bại.
-- [ ] **100% Code Coverage**: `line-flex-builder.ts` và `line-flex-tokens.ts` đạt độ bao phủ tuyệt đối 100% trên cả 4 tiêu chí (Statements, Branches, Functions, Lines).
-- [ ] **Đồng bộ Design Tokens tuyệt đối**: 100% Flex Cards tuân thủ Dark Theme RoGym (`#0f1c16` bg, `#06c384` brand, đúng Tone Badges `success`, `info`, `warning`, `danger`, `muted`).
-- [ ] **Độ tin cậy & Khả năng chịu lỗi cao**: Cơ chế Graceful Fallback 2 tầng hoạt động hoàn hảo khi nhận dữ liệu khuyết thiếu hoặc gặp sự cố runtime.
-- [ ] **Song ngữ toàn diện**: Hỗ trợ chuẩn xác 100% cả 2 ngôn ngữ `vi` và `ja` cho toàn bộ 12 sự kiện.
-- [ ] **Tài liệu hoàn chỉnh**: Toàn bộ hệ thống tài liệu kỹ thuật trong `docs/VI/` được cập nhật đồng bộ, chính xác và đầy đủ.
+- [x] **100% Test Pass Rate**: Toàn bộ unit tests và integration tests ở cả Backend và Frontend chạy thành công 100% không có cảnh báo hay lỗi thất bại.
+- [x] **100% Code Coverage**: `line-flex-builder.ts` và `line-flex-tokens.ts` đạt độ bao phủ tuyệt đối 100% trên cả 4 tiêu chí (Statements, Branches, Functions, Lines).
+- [x] **Đồng bộ Design Tokens tuyệt đối**: 100% Flex Cards tuân thủ Dark Theme RoGym (`#0f1c16` bg, `#06c384` brand, đúng Tone Badges `success`, `info`, `warning`, `danger`, `muted`).
+- [x] **Độ tin cậy & Khả năng chịu lỗi cao**: Cơ chế Graceful Fallback 2 tầng hoạt động hoàn hảo khi nhận dữ liệu khuyết thiếu hoặc gặp sự cố runtime.
+- [x] **Song ngữ toàn diện**: Hỗ trợ chuẩn xác 100% cả 2 ngôn ngữ `vi` và `ja` cho toàn bộ 12 sự kiện.
+- [x] **Tài liệu hoàn chỉnh**: Toàn bộ hệ thống tài liệu kỹ thuật trong `docs/VI/` được cập nhật đồng bộ, chính xác và đầy đủ.

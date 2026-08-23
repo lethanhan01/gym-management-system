@@ -20,6 +20,7 @@ Thư mục `docs/VI` tập hợp tài liệu tiếng Việt của dự án, từ
 | Hướng dẫn Hủy follow / Block ROGYM trên LINE & Cơ chế Webhook | [line-unfollow-guide.md](./line-unfollow-guide.md) |
 | Đặc tả Hệ thống LINE Messaging API (Sự kiện & Dữ liệu gửi tin) | [line-messaging-specification.md](./line-messaging-specification.md) |
 | Kế hoạch Triển khai Nâng cấp LINE Flex Message (Phased Plan) | [line-flex-message-upgrade-plan.md](./line-flex-message-upgrade-plan.md) |
+| Lộ trình Chi tiết 5 Giai đoạn Nâng cấp LINE Flex (Phase 1-5) | [line-flex-upgrade/README.md](./line-flex-upgrade/README.md) |
 
 ## 2. Phạm vi tài liệu hiện tại
 
@@ -39,6 +40,15 @@ Thư mục `docs/VI` tập hợp tài liệu tiếng Việt của dự án, từ
 docs/VI/
 ├── README.md
 ├── line-unfollow-guide.md
+├── line-messaging-specification.md
+├── line-flex-message-upgrade-plan.md
+├── line-flex-upgrade/
+│   ├── README.md
+│   ├── phase-1-core-flex-builder.md
+│   ├── phase-2-service-refactoring.md
+│   ├── phase-3-missing-events-integration.md
+│   ├── phase-4-dev-mock-and-ui.md
+│   └── phase-5-e2e-and-verification.md
 ├── postman-guide.md
 ├── code-quality.md
 ├── Requirement/

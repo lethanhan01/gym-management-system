@@ -52,8 +52,18 @@ export class LineMockController {
       'flex',
       'rich-menu',
       'pt-booking-created',
-      'pt-reminder-30m',
+      'pt-booking-updated',
+      'pt-booking-cancelled',
       'pt-session-cancelled',
+      'pt-reminder-30m',
+      'pt-session-starting',
+      'pt-training-completed',
+      'attendance-checkin',
+      'subscription-expiring',
+      'payment-success',
+      'feedback-responded',
+      'welcome',
+      'help',
     ]
     if (!allowedTypes.includes(body.type as LineMockSample)) {
       throw new NotFoundException('LINE Mock sample không được hỗ trợ')
