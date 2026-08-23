@@ -140,12 +140,12 @@ export default function DashboardLayout() {
       )}
       <div className="flex flex-col min-h-screen">
         {/* Mobile Header Bar */}
-        <header className="md:hidden fixed top-0 left-0 right-0 h-16 z-40 px-4 bg-[#080e0b]/90 backdrop-blur-md border-b border-white/5 flex items-center justify-between">
+        <header className="md:hidden fixed top-0 left-0 right-0 h-16 z-40 px-4 bg-[#080e0b]/90 backdrop-blur-md border-b border-white/5 flex items-center justify-between pointer-events-none">
           {showSidebar ? (
             <Button
               variant="icon"
               onClick={() => setIsSidebarOpen(true)}
-              className="flex items-center justify-center w-10 h-10 border border-white/10 text-white rounded-xl"
+              className="pointer-events-auto flex items-center justify-center w-10 h-10 border border-white/10 text-white rounded-xl"
               style={{ background: 'var(--rogym-bg-card)' }}
               aria-label="Mở menu điều hướng"
             >
@@ -154,13 +154,10 @@ export default function DashboardLayout() {
           ) : (
             <div className="w-10" />
           )}
-          <Topbar className="flex items-center gap-2.5" />
         </header>
 
-        {/* Desktop Topbar */}
-        <div className="hidden md:block">
-          <Topbar />
-        </div>
+        {/* Unified Topbar - single instance mounted for both mobile and desktop */}
+        <Topbar className="fixed top-3 right-4 z-50 flex items-center gap-2.5 md:top-4 md:right-5 md:gap-3" />
 
         <main className="flex-1 overflow-auto px-4 sm:px-6 pt-20 pb-24 md:px-6 md:pt-20 md:pb-6">
           <Suspense fallback={<PageLoader />}>
