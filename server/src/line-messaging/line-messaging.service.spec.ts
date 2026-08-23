@@ -128,7 +128,7 @@ describe('LineMessagingService', () => {
       expect(msg.contents.type).toBe('bubble')
       expect(msg.contents.body.contents[0].text).toContain('Chào mừng bạn đến với RoGym!')
       expect(msg.contents.footer.contents[0].action.uri).toContain(
-        'https://liff.line.me/test-liff?liff.state=%3Fredirect%3D%252Fmember'
+        'https://liff.line.me/test-liff?redirect=%2Fmember'
       )
     })
 
@@ -183,7 +183,7 @@ describe('LineMessagingService', () => {
       expect(msg.altText).toContain('Trung tâm hỗ trợ tự động RoGym')
       expect(msg.contents.body.contents[0].text).toBe('Trung tâm hỗ trợ RoGym')
       expect(msg.contents.footer.contents[0].action.uri).toContain(
-        'liff.state=%3Fredirect%3D%252Fmember'
+        'redirect=%2Fmember'
       )
     })
 
@@ -277,7 +277,7 @@ describe('LineMessagingService', () => {
       expect(mockFetch).toHaveBeenCalledWith(
         'https://api.line.me/v2/bot/message/push',
         expect.objectContaining({
-          body: expect.stringContaining('liff.state=%3Fredirect%3D%252Fmember%252Fworkout%252Fsessions%253FsessionId%253D1'),
+          body: expect.stringContaining('redirect=%2Fmember%2Fworkout%2Fsessions%3FsessionId%3D1'),
         })
       )
       const body = JSON.parse(mockFetch.mock.calls[0][1].body)
@@ -298,7 +298,7 @@ describe('LineMessagingService', () => {
       const msg = body.messages[0]
       expect(msg.type).toBe('flex')
       expect(msg.contents.body.contents[0].text).toBe('Lịch tập đã được thay đổi')
-      expect(msg.contents.footer.contents[0].action.uri).toContain('sessionId%253D1')
+      expect(msg.contents.footer.contents[0].action.uri).toContain('sessionId%3D1')
     })
 
     it('pushes training.cancelled Flex Card (vi)', async () => {
@@ -311,7 +311,7 @@ describe('LineMessagingService', () => {
       expect(msg.type).toBe('flex')
       expect(msg.contents.body.contents[0].text).toBe('Lịch tập đã bị hủy')
       expect(msg.contents.footer.contents[0].action.uri).toContain(
-        'liff.state=%3Fredirect%3D%252Fmember%252Fworkout%252Fsessions'
+        'redirect=%2Fmember%2Fworkout%2Fsessions'
       )
     })
 
@@ -380,7 +380,7 @@ describe('LineMessagingService', () => {
       expect(mockFetch).toHaveBeenCalledWith(
         'https://api.line.me/v2/bot/message/push',
         expect.objectContaining({
-          body: expect.stringContaining('liff.state=%3Fredirect%3D%252Fmember%252Fattendance'),
+          body: expect.stringContaining('redirect=%2Fmember%2Fattendance'),
         })
       )
       const body = JSON.parse(mockFetch.mock.calls[0][1].body)
@@ -440,12 +440,12 @@ describe('LineMessagingService', () => {
       // Primary button
       expect(msg.contents.footer.contents[0].action.label).toBe('Gia hạn ngay')
       expect(msg.contents.footer.contents[0].action.uri).toContain(
-        'liff.state=%3Fredirect%3D%252Fmember%252Fsubscription%252Fcurrent'
+        'redirect=%2Fmember%2Fsubscription%2Fcurrent'
       )
       // Secondary button
       expect(msg.contents.footer.contents[1].action.label).toBe('Xem chi tiết gói')
       expect(msg.contents.footer.contents[1].action.uri).toContain(
-        'liff.state=%3Fredirect%3D%252Fmember%252Fprofile'
+        'redirect=%2Fmember%2Fprofile'
       )
     })
 

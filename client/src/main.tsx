@@ -23,7 +23,7 @@ const queryClient = new QueryClient({
 const liffSearch = window.location.search
 const isLiffRootCallback =
   window.location.pathname === '/' &&
-  (/[?&](liff\.state|liffClientId)=/.test(liffSearch) || isLineInAppBrowser())
+  (/[?&](redirect|liff\.state|liffClientId)=/.test(liffSearch) || isLineInAppBrowser())
 
 if (isLiffRootCallback) {
   window.location.replace('/liff' + liffSearch + window.location.hash)
