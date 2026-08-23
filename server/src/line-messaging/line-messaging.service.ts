@@ -252,7 +252,8 @@ export class LineMessagingService {
           when: targetLocale === 'ja' ? '2026/08/20 09:00' : '09:00 20/08/2026',
         },
         targetLocale,
-        liffUrl
+        liffUrl,
+        this.getCoverImageUrl()
       )
       this.addMockOutbox({
         kind: 'push',
@@ -448,7 +449,8 @@ export class LineMessagingService {
           paidAt: targetLocale === 'ja' ? '2026/08/20 08:30' : '08:30 20/08/2026',
         },
         targetLocale,
-        liffUrl
+        liffUrl,
+        this.getCoverImageUrl()
       )
       this.addMockOutbox({
         kind: 'push',
@@ -490,7 +492,7 @@ export class LineMessagingService {
 
     if (type === 'welcome') {
       const liffUrl = this.buildLiffUrl('/member')
-      const flexMsg = buildWelcomeFlex(targetLocale, liffUrl)
+      const flexMsg = buildWelcomeFlex(targetLocale, liffUrl, this.getCoverImageUrl())
       this.addMockOutbox({
         kind: 'reply',
         recipient: LINE_MOCK_USER_ID,
@@ -788,7 +790,7 @@ export class LineMessagingService {
     if (event.type === 'follow' && event.replyToken) {
       let message: LineMessage
       try {
-        message = buildWelcomeFlex(locale, this.buildLiffUrl('/member'))
+        message = buildWelcomeFlex(locale, this.buildLiffUrl('/member'), this.getCoverImageUrl())
       } catch (error) {
         this.logger.warn(
           `Flex builder failed for webhook.follow: ${this.describeError(error)}, falling back to text`
@@ -880,7 +882,8 @@ export class LineMessagingService {
         return buildTrainingBookingCreatedFlex(
           { sessionName, when, trainerName, roomName },
           locale,
-          redirectUrl
+          redirectUrl,
+          this.getCoverImageUrl()
         )
       case 'updated':
         return buildTrainingBookingUpdatedFlex(
@@ -1107,7 +1110,8 @@ export class LineMessagingService {
         paidAt: paidAtFormatted,
       },
       locale,
-      this.buildLiffUrl('/member/subscription/current')
+      this.buildLiffUrl('/member/subscription/current'),
+      this.getCoverImageUrl()
     )
   }
 
@@ -1412,6 +1416,17 @@ export class LineMessagingService {
 
   private buildTrainingRedirect(sessionId: bigint) {
     return `/member/workout/sessions?sessionId=${sessionId.toString()}`
+  }
+
+  private getCoverImageUrl(): string | undefined {
+    const customUrl = this.config.get<string>('LINE_COVER_IMAGE_URL')
+    if (customUrl) return customUrl
+
+    const clientUrl = this.config.get<string>('CLIENT_URL')
+    if (clientUrl) {
+      return `${clientUrl.replace(/\/$/, '')}/cover_photo.jpg`
+    }
+    return undefined
   }
 
   getLocale(): LineMessageLocale {

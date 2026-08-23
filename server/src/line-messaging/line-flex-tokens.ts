@@ -32,7 +32,7 @@ export const FLEX_THEME: FlexTheme = {
   textPrimary: '#ffffff',
   textSecondary: '#bbcabf',
   textMuted: '#8ab89c',
-  borderSubtle: '#1a2520',
+  borderSubtle: '#26382e',
 } as const
 
 export const FLEX_BADGE_TONES: Record<BadgeTone, BadgeToneConfig> = {
