@@ -190,17 +190,17 @@ export function GymDomainFlowsShowcase() {
         controls={
           <div className="flex items-center gap-3 text-xs">
             <span className="text-white/60">Lọc theo nhóm cơ:</span>
-            <select
+            <Select
               value={muscleFilter}
-              onChange={(e) => setMuscleFilter(e.target.value)}
-              className="rounded bg-black/40 border border-white/20 px-3 py-1.5 text-xs text-white"
+              onValueChange={(val) => setMuscleFilter(val)}
+              className="w-48 text-xs"
             >
               <option value="all">Tất cả nhóm cơ (4)</option>
               <option value="Ngực">Ngực (Chest)</option>
               <option value="Chân">Chân & Đùi (Legs)</option>
               <option value="Lưng">Lưng & Xô (Back)</option>
               <option value="Vai">Vai (Shoulders)</option>
-            </select>
+            </Select>
           </div>
         }
         codeSnippet={`<ExerciseCard\n  exercise={exercise}\n  onClick={() => openModal(exercise)}\n/>`}
@@ -434,7 +434,7 @@ export function GymDomainFlowsShowcase() {
             <FormField label="Chọn phương thức thanh toán">
               <RadioGroup
                 value={paymentMethod}
-                onValueChange={(val) => setPaymentMethod(val as any)}
+                onValueChange={(val) => setPaymentMethod(val as 'vnpay' | 'momo' | 'cash' | 'card')}
                 className="grid grid-cols-2 gap-3"
               >
                 <RadioCard

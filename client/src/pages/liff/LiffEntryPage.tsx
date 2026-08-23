@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { initLiff } from '@/lib/liff'
@@ -16,17 +16,18 @@ export default function LiffEntryPage() {
   const clearSubscription = useSubscriptionStore((s) => s.clear)
   const [error, setError] = useState<string | null>(null)
   const [attemptCount, setAttemptCount] = useState(0)
+  const attemptCountRef = useRef(0)
+  const lastAttemptTimeRef = useRef(0)
   const MAX_ATTEMPTS = 3
   const CIRCUIT_BREAKER_DELAY = 5000
 
   useEffect(() => {
     let cancelled = false
-    let lastAttemptTime = 0
 
     async function run() {
       // Circuit breaker logic
-      if (attemptCount >= MAX_ATTEMPTS) {
-        const timeSinceLastAttempt = Date.now() - lastAttemptTime
+      if (attemptCountRef.current >= MAX_ATTEMPTS) {
+        const timeSinceLastAttempt = Date.now() - lastAttemptTimeRef.current
         if (timeSinceLastAttempt < CIRCUIT_BREAKER_DELAY) {
           setError(t('liff.circuitBreakerError'))
           return
@@ -37,7 +38,7 @@ export default function LiffEntryPage() {
         const redirectPath = extractLiffRedirectPath(window.location.search)
 
         const liff = await initLiff()
-        lastAttemptTime = Date.now()
+        lastAttemptTimeRef.current = Date.now()
 
         if (window.location.search.includes('liff.state') || window.location.search.includes('code=')) {
           const cleanUrl = `/liff?redirect=${encodeURIComponent(redirectPath)}`
@@ -63,7 +64,7 @@ export default function LiffEntryPage() {
         const cleanRedirectUri = getCleanLiffRedirectUri()
 
         if (!liff.isLoggedIn()) {
-          if (attemptCount >= MAX_ATTEMPTS) {
+          if (attemptCountRef.current >= MAX_ATTEMPTS) {
             setError(t('liff.maxAttemptsError'))
             return
           }
@@ -71,7 +72,8 @@ export default function LiffEntryPage() {
           const pathToStore = redirectFromStorage || redirectPath
           storeLiffRedirectPath(pathToStore)
           liff.login({ redirectUri: cleanRedirectUri })
-          setAttemptCount(prev => prev + 1)
+          attemptCountRef.current += 1
+          setAttemptCount(attemptCountRef.current)
           return
         }
 
@@ -80,7 +82,7 @@ export default function LiffEntryPage() {
         if (decoded && typeof decoded.exp === 'number') {
           const expMs = decoded.exp * 1000
           if (expMs - 30_000 <= Date.now()) {
-            if (attemptCount >= MAX_ATTEMPTS) {
+            if (attemptCountRef.current >= MAX_ATTEMPTS) {
               setError(t('liff.sessionExpired'))
               return
             }
@@ -89,7 +91,8 @@ export default function LiffEntryPage() {
             storeLiffRedirectPath(pathToStore)
             liff.logout()
             liff.login({ redirectUri: cleanRedirectUri })
-            setAttemptCount(prev => prev + 1)
+            attemptCountRef.current += 1
+            setAttemptCount(attemptCountRef.current)
             return
           }
         }

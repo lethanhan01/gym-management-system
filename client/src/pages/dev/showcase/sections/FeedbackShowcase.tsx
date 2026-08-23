@@ -3,6 +3,7 @@ import { Loader2 } from 'lucide-react'
 import {
   Alert,
   Button,
+  Select,
   Separator,
   type AlertTone,
   type AlertVariant,
@@ -51,29 +52,29 @@ export function FeedbackShowcase() {
           <div className="flex flex-wrap items-center gap-4 text-xs w-full">
             <div className="flex items-center gap-2">
               <span className="text-white/60">Tone:</span>
-              <select
+              <Select
                 value={alertTone}
-                onChange={(e) => setAlertTone(e.target.value as AlertTone)}
-                className="rounded bg-black/40 border border-white/20 px-2 py-1 text-xs text-white"
+                onValueChange={(val) => setAlertTone(val as AlertTone)}
+                className="w-28 text-xs"
               >
                 <option value="success">success</option>
                 <option value="warning">warning</option>
                 <option value="error">error</option>
                 <option value="info">info</option>
-              </select>
+              </Select>
             </div>
 
             <div className="flex items-center gap-2">
               <span className="text-white/60">Variant:</span>
-              <select
+              <Select
                 value={alertVariant}
-                onChange={(e) => setAlertVariant(e.target.value as AlertVariant)}
-                className="rounded bg-black/40 border border-white/20 px-2 py-1 text-xs text-white"
+                onValueChange={(val) => setAlertVariant(val as AlertVariant)}
+                className="w-28 text-xs"
               >
                 <option value="subtle">subtle</option>
                 <option value="filled">filled</option>
                 <option value="bordered">bordered</option>
-              </select>
+              </Select>
             </div>
 
             <Button size="xs" variant="outline-white" onClick={() => setShowAlert(!showAlert)}>

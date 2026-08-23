@@ -32,6 +32,7 @@ import {
   Pagination,
   ProgressBar,
   ResponsiveTable,
+  Select,
   Separator,
   Skeleton,
   SkeletonCircle,
@@ -426,17 +427,17 @@ export function DataDisplayShowcase() {
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-white/60">Tone:</span>
-                <select
+                <Select
                   value={progressTone}
-                  onChange={(e) => setProgressTone(e.target.value as ProgressBarTone)}
-                  className="rounded bg-black/40 border border-white/20 px-2 py-1 text-xs text-white"
+                  onValueChange={(val) => setProgressTone(val as ProgressBarTone)}
+                  className="w-28 text-xs"
                 >
                   <option value="primary">primary</option>
                   <option value="accent">accent</option>
                   <option value="success">success</option>
                   <option value="warning">warning</option>
                   <option value="danger">danger</option>
-                </select>
+                </Select>
               </div>
             </div>
           }
