@@ -23,7 +23,42 @@ type ToastOptions = ExternalToast & {
   }
 }
 
+const DEDUPE_WINDOW_MS = 1500
+const recentToasts = new Map<string, number>()
+
+function getDedupeKey(message: React.ReactNode, tone: NotificationTone, options?: ToastOptions): string {
+  if (options?.id !== undefined) {
+    return String(options.id)
+  }
+  if (typeof message === 'string' || typeof message === 'number') {
+    return `${tone}:${message}`
+  }
+  return `${tone}:${String(message)}`
+}
+
+function shouldDedupe(key: string): boolean {
+  const now = Date.now()
+  const lastTime = recentToasts.get(key)
+  if (lastTime && now - lastTime < DEDUPE_WINDOW_MS) {
+    return true
+  }
+  recentToasts.set(key, now)
+  if (recentToasts.size > 50) {
+    for (const [k, time] of recentToasts.entries()) {
+      if (now - time > DEDUPE_WINDOW_MS * 2) {
+        recentToasts.delete(k)
+      }
+    }
+  }
+  return false
+}
+
 function customToast(message: React.ReactNode, tone: NotificationTone, options?: ToastOptions) {
+  const dedupeKey = getDedupeKey(message, tone, options)
+  if (options?.id === undefined && shouldDedupe(dedupeKey)) {
+    return dedupeKey
+  }
+
   const className = ['rogym-sonner-toast', options?.className].filter(Boolean).join(' ')
 
   return sonnerToast.custom(
