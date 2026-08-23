@@ -67,7 +67,9 @@ export const toast = Object.assign(toastFn, {
   error: (message: string | React.ReactNode, options?: ToastOptions) => customToast(message, 'error', options),
   warning: (message: string | React.ReactNode, options?: ToastOptions) => customToast(message, 'warning', options),
   info: (message: string | React.ReactNode, options?: ToastOptions) => customToast(message, 'info', options),
+  loading: (message: string | React.ReactNode, options?: ToastOptions) => sonnerToast.loading(message, options),
   dismiss: sonnerToast.dismiss,
   promise: sonnerToast.promise,
   custom: sonnerToast.custom,
 })
+

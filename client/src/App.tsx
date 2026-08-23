@@ -34,6 +34,13 @@ const LineMockInboxPage = isLiffMockEnabled
   ? lazy(() => import('./pages/dev/LineMockInboxPage'))
   : null
 
+// Dev & Showcase
+const DesignSystemShowcasePage = lazy(
+  () => import('./pages/dev/DesignSystemShowcasePage')
+)
+
+
+
 // Member — public registration flow
 
 const RegisterPage = lazy(() => import('./pages/member/register/RegisterPage'))
@@ -143,7 +150,9 @@ export default function App() {
 
         {/* LIFF — LINE entry point (public) */}
         <Route path="/liff" element={<LiffEntryPage />} />
+        <Route path="/dev/ui-showcase" element={<DesignSystemShowcasePage />} />
         {LineMockInboxPage && <Route path="/dev/line-mock" element={<LineMockInboxPage />} />}
+
 
         <Route element={<AuthLayout />}>
           <Route path="/login" element={<LoginPage />} />

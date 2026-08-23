@@ -1,6 +1,4 @@
-import type { ReactNode } from 'react'
 import {
-  Button,
   Card,
   Modal,
   StatCard,
@@ -9,6 +7,7 @@ import {
   type StatusTone,
 } from '@/components/ui'
 
+// Re-exports with Role Aliases (Backwards Compatibility Layer)
 export {
   Page as StaffPage,
   PageEmptyState as StaffEmptyState,
@@ -17,6 +16,7 @@ export {
   PageSkeleton as StaffSkeleton,
   SearchToolbar as StaffSearchToolbar,
   SearchInput as StaffSearchInput,
+  SubmitButton,
 } from '@/components/ui'
 
 export const StaffCard = Card
@@ -34,22 +34,4 @@ export function StaffStatusBadge({
   label?: string
 }) {
   return <StatusBadge status={status} tone={tone} label={label} />
-}
-
-export function SubmitButton({
-  loading,
-  children,
-  disabled,
-  form,
-}: {
-  loading?: boolean
-  children: ReactNode
-  disabled?: boolean
-  form?: string
-}) {
-  return (
-    <Button type="submit" form={form} loading={loading} disabled={disabled}>
-      {children}
-    </Button>
-  )
 }

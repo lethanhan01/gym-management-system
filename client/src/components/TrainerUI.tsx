@@ -1,7 +1,5 @@
-import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
-  Button,
   Card,
   Modal,
   StatCard,
@@ -9,8 +7,10 @@ import {
   Select,
   type StatusTone,
 } from '@/components/ui'
+
 import type { TrainerStudentSummary } from '@/services/member.service'
 
+// Re-exports with Role Aliases (Backwards Compatibility Layer)
 export {
   Page as TrainerPage,
   PageEmptyState as TrainerEmptyState,
@@ -19,6 +19,7 @@ export {
   PageSkeleton as TrainerSkeleton,
   SearchToolbar as TrainerSearchToolbar,
   SearchInput as TrainerSearchInput,
+  SubmitButton,
 } from '@/components/ui'
 
 export const TrainerCard = Card
@@ -36,24 +37,6 @@ export function TrainerStatusBadge({
   label?: string
 }) {
   return <StatusBadge status={status} tone={tone} label={label} />
-}
-
-export function SubmitButton({
-  loading,
-  children,
-  disabled,
-  form,
-}: {
-  loading?: boolean
-  children: ReactNode
-  disabled?: boolean
-  form?: string
-}) {
-  return (
-    <Button type="submit" form={form} loading={loading} disabled={disabled}>
-      {children}
-    </Button>
-  )
 }
 
 export function StudentCombobox({
@@ -79,3 +62,4 @@ export function StudentCombobox({
     </Select>
   )
 }
+

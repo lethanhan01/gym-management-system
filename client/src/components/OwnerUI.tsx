@@ -1,6 +1,4 @@
-import type { ReactNode } from 'react'
 import {
-  Button,
   Card,
   Modal,
   StatCard,
@@ -9,23 +7,25 @@ import {
   type StatusTone,
 } from '@/components/ui'
 
+// Re-exports with Role Aliases (Backwards Compatibility Layer)
 export {
   Page as OwnerPage,
   PageEmptyState as OwnerEmptyState,
   PageErrorState as OwnerErrorState,
   PageHeader as OwnerPageHeader,
   PageSkeleton as OwnerSkeleton,
+  Select as OwnerSelect,
+  Pagination as OwnerPagination,
+  SearchToolbar as OwnerSearchToolbar,
+  SubmitButton as OwnerSubmitButton,
 } from '@/components/ui'
 
-export { Select as OwnerSelect } from '@/components/ui'
 export { OwnerDateRangeFilter } from '@/components/shared/OwnerDateRangeFilter'
-export { Pagination as OwnerPagination } from '@/components/ui'
 
 export const OwnerCard = Card
 export const OwnerStatCard = StatCard
-export { Modal as OwnerModal }
-export { SearchInput as OwnerSearchInput }
-export { SearchToolbar as OwnerSearchToolbar } from '@/components/ui'
+export const OwnerModal = Modal
+export const OwnerSearchInput = SearchInput
 
 export function OwnerBadge({ label, color }: { label: string; color: string }) {
   return (
@@ -48,22 +48,4 @@ export function OwnerStatusBadge({
   label?: string
 }) {
   return <StatusBadge status={status} tone={tone} label={label} />
-}
-
-export function OwnerSubmitButton({
-  loading,
-  children,
-  disabled,
-  form,
-}: {
-  loading?: boolean
-  children: ReactNode
-  disabled?: boolean
-  form?: string
-}) {
-  return (
-    <Button type="submit" form={form} loading={loading} disabled={disabled}>
-      {children}
-    </Button>
-  )
 }

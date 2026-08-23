@@ -1,3 +1,4 @@
+// Buttons & Actions
 export {
   Button,
   ButtonLink,
@@ -11,7 +12,10 @@ export {
   type ButtonAnchorProps,
 } from './Button'
 export { getButtonClasses, normalizeButtonSize } from './button-utils'
+export { SubmitButton, type SubmitButtonProps } from './SubmitButton'
+export { BackButton, type BackButtonProps } from './BackButton'
 
+// Form Controls & Inputs
 export {
   Input,
   type InputSize,
@@ -28,6 +32,11 @@ export {
 export { getTextareaClasses } from './textarea-utils'
 
 export { FormField, type FormFieldProps } from './FormField'
+export {
+  FormFieldContext,
+  useFormField,
+  type FormFieldContextValue,
+} from './form-field-context'
 
 export {
   Checkbox,
@@ -46,8 +55,24 @@ export {
 export { getSwitchClasses } from './switch-utils'
 
 export { Select, type SelectProps, type SelectOptionProps } from './Select'
+export {
+  Combobox,
+  type ComboboxProps,
+  type ComboboxOption,
+} from './Combobox'
+export {
+  RadioGroup,
+  RadioGroupItem,
+  RadioCard,
+  type RadioCardProps,
+} from './RadioGroup'
+
 export { DatePickerInput, type DatePickerInputProps } from './DatePickerInput'
 export { DateTimePickerInput, type DateTimePickerInputProps } from './DateTimePickerInput'
+export { TimeSlotPicker, type TimeSlotPickerProps, type TimeSlot } from './TimeSlotPicker'
+export { FileUpload, type FileUploadProps } from './FileUpload'
+
+// Filter & Search Controls
 export { FilterDropdown, type FilterDropdownProps, type FilterDropdownSize } from './FilterDropdown'
 export { SearchInput, type SearchInputProps } from './SearchInput'
 export {
@@ -56,6 +81,69 @@ export {
   type SearchToolbarVariant,
   type SearchToolbarLayout,
 } from './SearchToolbar'
+export { FilterBar, type FilterBarProps, type FilterChipItem } from './FilterBar'
+export { Chip, type ChipProps, type ChipTone, type ChipSize } from './Chip'
+export { TagInput, type TagInputProps } from './TagInput'
+
+// Overlays, Menus & Dialogs (Radix UI Primitives)
+export {
+  Modal,
+  ModalFooter,
+  type ModalProps,
+  type ModalSize,
+  type ModalFooterProps,
+} from './Modal'
+export { ConfirmDialog, type ConfirmDialogProps } from './ConfirmDialog'
+export {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuCheckboxItem,
+  DropdownMenuRadioItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuShortcut,
+  DropdownMenuGroup,
+  DropdownMenuPortal,
+  DropdownMenuSub,
+  DropdownMenuSubTrigger,
+  DropdownMenuSubContent,
+  DropdownMenuRadioGroup,
+} from './DropdownMenu'
+export {
+  Tooltip,
+  TooltipProvider,
+  TooltipRoot,
+  TooltipTrigger,
+  TooltipContent,
+  TooltipPortal,
+  type TooltipProps,
+} from './Tooltip'
+export {
+  Popover,
+  PopoverTrigger,
+  PopoverAnchor,
+  PopoverPortal,
+  PopoverClose,
+  PopoverContent,
+} from './Popover'
+export {
+  Sheet,
+  SheetTrigger,
+  SheetClose,
+  SheetPortal,
+  SheetOverlay,
+  SheetContent,
+  SheetHeader,
+  SheetFooter,
+  SheetTitle,
+  SheetDescription,
+  type SheetSide,
+  type SheetContentProps,
+} from './Sheet'
+
+// Data Display & Containers
 export {
   Card,
   CardHeader,
@@ -82,6 +170,7 @@ export {
   type CardRibbonProps,
   type CardSkeletonProps,
 } from './Card'
+export { StatCard, type StatCardProps } from './StatCard'
 export {
   Table,
   TableContainer,
@@ -113,10 +202,24 @@ export {
   type StatusBadgeProps,
   type StatusTone,
 } from './StatusBadge'
-export { Modal, ModalFooter } from './Modal'
-export { ConfirmDialog, type ConfirmDialogProps } from './ConfirmDialog'
-export { StatCard, type StatCardProps } from './StatCard'
-export { LanguageSwitcher } from './LanguageSwitcher'
+export {
+  Avatar,
+  AvatarGroup,
+  type AvatarProps,
+  type AvatarGroupProps,
+  type AvatarSize,
+  type AvatarShape,
+  type AvatarStatus,
+  type AvatarTone,
+} from './Avatar'
+export { Separator, type SeparatorProps } from './Separator'
+export {
+  EmptyState,
+  type EmptyStateProps,
+  type EmptyStateSize,
+} from './EmptyState'
+
+// Navigation & Structure
 export {
   Page,
   PageHeader,
@@ -124,7 +227,15 @@ export {
   PageEmptyState,
   PageErrorState,
 } from './PageUI'
-
+export {
+  Breadcrumb,
+  BreadcrumbList,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+  BreadcrumbEllipsis,
+} from './Breadcrumb'
 export {
   Tabs,
   TabsList,
@@ -140,34 +251,11 @@ export {
   type TabsVariant,
   type TabsSize,
 } from './Tabs'
-
 export {
-  Alert,
-  AlertTitle,
-  AlertDescription,
-  type AlertProps,
-  type AlertTone,
-  type AlertVariant,
-} from './Alert'
-
-export {
-  ProgressBar,
-  type ProgressBarProps,
-  type ProgressBarTone,
-  type ProgressBarSize,
-} from './ProgressBar'
-
-export {
-  Avatar,
-  AvatarGroup,
-  type AvatarProps,
-  type AvatarGroupProps,
-  type AvatarSize,
-  type AvatarShape,
-  type AvatarStatus,
-  type AvatarTone,
-} from './Avatar'
-
+  SegmentedControl,
+  type SegmentedControlProps,
+  type SegmentedControlOption,
+} from './SegmentedControl'
 export {
   Accordion,
   AccordionItem,
@@ -183,7 +271,6 @@ export {
   type AccordionType,
   type AccordionVariant,
 } from './Accordion'
-
 export {
   Stepper,
   type StepperProps,
@@ -191,7 +278,23 @@ export {
   type StepperOrientation,
   type StepperSize,
 } from './Stepper'
+export { LanguageSwitcher } from './LanguageSwitcher'
 
+// Feedback & Loading
+export {
+  Alert,
+  AlertTitle,
+  AlertDescription,
+  type AlertProps,
+  type AlertTone,
+  type AlertVariant,
+} from './Alert'
+export {
+  ProgressBar,
+  type ProgressBarProps,
+  type ProgressBarTone,
+  type ProgressBarSize,
+} from './ProgressBar'
 export {
   Skeleton,
   SkeletonText,
