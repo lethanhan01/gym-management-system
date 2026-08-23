@@ -61,13 +61,31 @@ export interface LineFlexBox {
   borderColor?: string
 }
 
-export type LineFlexComponent = LineFlexBox | LineFlexText | LineFlexButton | LineFlexSeparator
+export interface LineFlexImage {
+  type: 'image'
+  url: string
+  size?: 'xxs' | 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'xxl' | '3xl' | '4xl' | '5xl' | 'full'
+  aspectRatio?: string
+  aspectMode?: 'cover' | 'fit'
+  action?: {
+    type: 'uri'
+    label?: string
+    uri: string
+  }
+}
+
+export type LineFlexComponent =
+  | LineFlexBox
+  | LineFlexText
+  | LineFlexButton
+  | LineFlexSeparator
+  | LineFlexImage
 
 export interface LineFlexBubble {
   type: 'bubble'
   size?: 'nano' | 'micro' | 'kilo' | 'mega' | 'giga'
   header?: LineFlexBox
-  hero?: LineFlexComponent
+  hero?: LineFlexImage
   body?: LineFlexBox
   footer?: LineFlexBox
   styles?: {
@@ -91,6 +109,8 @@ export interface FlexBubbleBaseParams {
   primaryButton: { label: string; uri: string }
   secondaryButton?: { label: string; uri: string }
   altText: string
+  heroImageUrl?: string
+  size?: 'nano' | 'micro' | 'kilo' | 'mega' | 'giga'
 }
 
 /**
@@ -145,6 +165,7 @@ export function createFlexBadge(tone: BadgeTone, label: string): LineFlexBox {
   return {
     type: 'box',
     layout: 'horizontal',
+    flex: 0,
     backgroundColor: badgeConfig.backgroundColor,
     cornerRadius: 'xxl',
     paddingTop: '2px',
@@ -160,6 +181,7 @@ export function createFlexBadge(tone: BadgeTone, label: string): LineFlexBox {
         color: badgeConfig.textColor,
         size: 'xxs',
         weight: 'bold',
+        flex: 0,
       },
     ],
   }
@@ -233,8 +255,22 @@ export function buildFlexBubbleBase(params: FlexBubbleBaseParams): LineFlexMessa
 
   const rowBoxes = params.rows.map((row) => createKeyValueRow(row.label, row.value))
 
+  const headerContents: LineFlexComponent[] = []
+  if (!params.heroImageUrl) {
+    headerContents.push({
+      type: 'text',
+      text: 'ROGYM',
+      color: FLEX_THEME.brandGreen,
+      weight: 'bold',
+      size: 'sm',
+      flex: 0,
+    })
+  }
+  headerContents.push(createFlexBadge(params.badgeTone, params.badgeLabel))
+
   const bubble: LineFlexBubble = {
     type: 'bubble',
+    size: params.size || (params.heroImageUrl ? 'mega' : 'kilo'),
     styles: {
       header: { backgroundColor: FLEX_THEME.bgCard },
       body: { backgroundColor: FLEX_THEME.bgCard },
@@ -244,18 +280,8 @@ export function buildFlexBubbleBase(params: FlexBubbleBaseParams): LineFlexMessa
       type: 'box',
       layout: 'horizontal',
       alignItems: 'center',
-      justifyContent: 'space-between',
-      contents: [
-        {
-          type: 'text',
-          text: 'ROGYM',
-          color: FLEX_THEME.brandGreen,
-          weight: 'bold',
-          size: 'sm',
-          flex: 0,
-        },
-        createFlexBadge(params.badgeTone, params.badgeLabel),
-      ],
+      justifyContent: params.heroImageUrl ? 'flex-end' : 'space-between',
+      contents: headerContents,
     },
     body: {
       type: 'box',
@@ -266,7 +292,7 @@ export function buildFlexBubbleBase(params: FlexBubbleBaseParams): LineFlexMessa
           type: 'text',
           text: params.title,
           weight: 'bold',
-          size: 'xl',
+          size: 'lg',
           color: FLEX_THEME.textPrimary,
           wrap: true,
         },
@@ -286,6 +312,16 @@ export function buildFlexBubbleBase(params: FlexBubbleBaseParams): LineFlexMessa
     },
   }
 
+  if (params.heroImageUrl) {
+    bubble.hero = {
+      type: 'image',
+      url: params.heroImageUrl,
+      size: 'full',
+      aspectRatio: '20:13',
+      aspectMode: 'cover',
+    }
+  }
+
   return {
     type: 'flex',
     altText: truncateText(params.altText, 400),
@@ -303,7 +339,8 @@ export function buildFlexBubbleBase(params: FlexBubbleBaseParams): LineFlexMessa
 export function buildTrainingBookingCreatedFlex(
   data: { sessionName?: string; when: string; trainerName: string; roomName: string },
   locale: LineMessageLocale,
-  liffUrl: string
+  liffUrl: string,
+  heroImageUrl?: string
 ): LineFlexMessage {
   const dict = getFlexLocales(locale)
   const t = dict.trainingCreated
@@ -317,6 +354,7 @@ export function buildTrainingBookingCreatedFlex(
     badgeLabel: t.badge,
     title: t.title,
     altText: t.altText({ trainerName, when }),
+    heroImageUrl,
     rows: [
       { label: t.labels.sessionName, value: sessionName },
       { label: t.labels.when, value: when },
@@ -580,7 +618,8 @@ export function buildPaymentSuccessFlex(
     paidAt?: string
   },
   locale: LineMessageLocale,
-  liffUrl: string
+  liffUrl: string,
+  heroImageUrl?: string
 ): LineFlexMessage {
   const dict = getFlexLocales(locale)
   const t = dict.paymentSuccess
@@ -605,6 +644,7 @@ export function buildPaymentSuccessFlex(
     badgeLabel: t.badge,
     title: t.title,
     altText: t.altText({ packageName }),
+    heroImageUrl,
     rows,
     primaryButton: {
       label: t.buttons.detail,
@@ -659,7 +699,8 @@ export function buildFeedbackRespondedFlex(
  */
 export function buildWelcomeFlex(
   locale: LineMessageLocale,
-  liffUrl: string
+  liffUrl: string,
+  heroImageUrl?: string
 ): LineFlexMessage {
   const dict = getFlexLocales(locale)
   const t = dict.welcome
@@ -669,6 +710,7 @@ export function buildWelcomeFlex(
     badgeLabel: t.badge,
     title: t.title,
     altText: t.altText(),
+    heroImageUrl,
     rows: [
       {
         label: t.labels.guide,

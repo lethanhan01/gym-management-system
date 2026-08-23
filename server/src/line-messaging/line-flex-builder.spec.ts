@@ -111,13 +111,15 @@ describe('LineFlexBuilder, LineFlexTokens & LineFlexLocales (Phase 1)', () => {
       expect(formatAmount('Đã thanh toán', 'vi')).toBe('Đã thanh toán')
     })
 
-    it('1.2 createFlexBadge tạo Box bo góc đúng chuẩn và nhãn text không vượt 40 ký tự', () => {
+    it('1.2 createFlexBadge tạo Box bo góc đúng chuẩn, flex: 0 và nhãn text không vượt 40 ký tự', () => {
       const badge = createFlexBadge('success', 'A'.repeat(50))
       expect(badge.type).toBe('box')
       expect(badge.layout).toBe('horizontal')
+      expect(badge.flex).toBe(0)
       expect(badge.cornerRadius).toBe('xxl')
       expect(badge.backgroundColor).toBe(FLEX_BADGE_TONES.success.backgroundColor)
       expect(badge.contents[0].type).toBe('text')
+      expect((badge.contents[0] as { flex?: number }).flex).toBe(0)
       expect((badge.contents[0] as { text: string }).text).toHaveLength(40)
       expect((badge.contents[0] as { color: string }).color).toBe(FLEX_BADGE_TONES.success.textColor)
 
@@ -177,7 +179,7 @@ describe('LineFlexBuilder, LineFlexTokens & LineFlexLocales (Phase 1)', () => {
       expect(emptyBtn.action.label).toBe('')
     })
 
-    it('1.5 buildFlexBubbleBase trả về đúng schema LINE Flex Message và giới hạn altText 400 ký tự', () => {
+    it('1.5 buildFlexBubbleBase trả về đúng schema LINE Flex Message (compact size kilo) và giới hạn altText 400 ký tự', () => {
       const longAltText = 'C'.repeat(500)
       const message = buildFlexBubbleBase({
         badgeTone: 'info',
@@ -192,6 +194,7 @@ describe('LineFlexBuilder, LineFlexTokens & LineFlexLocales (Phase 1)', () => {
       expect(message.type).toBe('flex')
       expect(message.altText).toHaveLength(400)
       expect(message.contents.type).toBe('bubble')
+      expect(message.contents.size).toBe('kilo')
       expect(message.contents.styles?.header?.backgroundColor).toBe(FLEX_THEME.bgCard)
       expect(message.contents.styles?.body?.backgroundColor).toBe(FLEX_THEME.bgCard)
       expect(message.contents.styles?.footer?.backgroundColor).toBe(FLEX_THEME.bgCard)
@@ -212,10 +215,11 @@ describe('LineFlexBuilder, LineFlexTokens & LineFlexLocales (Phase 1)', () => {
       expect(headerContents).toHaveLength(2)
       expect((headerContents[0] as { text: string }).text).toBe('ROGYM')
 
-      // Kiểm tra Body có title, separator và row
+      // Kiểm tra Body có title (size lg), separator và row
       const bodyContents = message.contents.body?.contents || []
       expect(bodyContents.length).toBeGreaterThanOrEqual(3)
-      expect((bodyContents[0] as { text: string }).text).toBe('Tiêu đề kiểm thử')
+      expect((bodyContents[0] as { text: string; size?: string }).text).toBe('Tiêu đề kiểm thử')
+      expect((bodyContents[0] as { size?: string }).size).toBe('lg')
       expect(bodyContents[1].type).toBe('separator')
 
       // Kiểm tra Footer có 2 nút
@@ -227,6 +231,32 @@ describe('LineFlexBuilder, LineFlexTokens & LineFlexLocales (Phase 1)', () => {
       const bodyDepth = getMaxBoxDepth(message.contents.body!)
       const footerDepth = getMaxBoxDepth(message.contents.footer!)
       expect(Math.max(headerDepth, bodyDepth, footerDepth)).toBeLessThanOrEqual(10)
+    })
+
+    it('1.6 buildFlexBubbleBase với heroImageUrl tạo thẻ mega, hero image cover và ẩn logo ROGYM ở header', () => {
+      const message = buildFlexBubbleBase({
+        badgeTone: 'success',
+        badgeLabel: 'XÁC NHẬN',
+        title: 'Đặt lịch thành công',
+        heroImageUrl: 'https://rogym.vn/assets/cover_photo.jpg',
+        rows: [{ label: 'Khóa', value: 'Giá trị' }],
+        primaryButton: { label: 'Xem chi tiết', uri: 'https://rogym.vn/p' },
+        altText: 'Thông báo đặt lịch',
+      })
+
+      expect(message.contents.size).toBe('mega')
+      expect(message.contents.hero).toEqual({
+        type: 'image',
+        url: 'https://rogym.vn/assets/cover_photo.jpg',
+        size: 'full',
+        aspectRatio: '20:13',
+        aspectMode: 'cover',
+      })
+      // Header khi có hero chỉ chứa badge căn phải (ẩn text ROGYM)
+      const headerContents = message.contents.header?.contents || []
+      expect(headerContents).toHaveLength(1)
+      expect(headerContents[0].type).toBe('box')
+      expect(message.contents.header?.justifyContent).toBe('flex-end')
     })
   })
 
@@ -243,7 +273,7 @@ describe('LineFlexBuilder, LineFlexTokens & LineFlexLocales (Phase 1)', () => {
       expect(FLEX_THEME.textPrimary).toBe('#ffffff')
       expect(FLEX_THEME.textSecondary).toBe('#bbcabf')
       expect(FLEX_THEME.textMuted).toBe('#8ab89c')
-      expect(FLEX_THEME.borderSubtle).toBe('#1a2520')
+      expect(FLEX_THEME.borderSubtle).toBe('#26382e')
 
       expect(FLEX_BADGE_TONES.success).toEqual({
         textColor: '#42e09e',

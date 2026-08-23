@@ -73,6 +73,7 @@ export class EnvironmentVariables {
   @IsOptional() @IsString() LINE_CHANNEL_SECRET?: string
   @IsOptional() @IsString() LINE_CHANNEL_ACCESS_TOKEN?: string
   @IsOptional() @IsString() LINE_LIFF_URL?: string
+  @IsOptional() @IsString() LINE_COVER_IMAGE_URL?: string
   @IsOptional() @IsNumber() LINE_REMINDER_MINUTES: number = 30
   @IsOptional() @IsString() LINE_MESSAGING_ENABLED: string = 'false'
   @IsOptional() @IsIn(['vi', 'ja']) LINE_MESSAGE_LOCALE: 'vi' | 'ja' = 'vi'
