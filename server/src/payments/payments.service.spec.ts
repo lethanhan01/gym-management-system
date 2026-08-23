@@ -85,6 +85,9 @@ const mockNotifications = {
   safeNotifyUser: jest.fn(),
   safeNotifyGroups: jest.fn(),
 }
+const mockLineMessaging = {
+  safePushPaymentSuccess: jest.fn().mockResolvedValue(true),
+}
 
 // ---------------------------------------------------------------------------
 // Suite
@@ -94,7 +97,12 @@ describe('PaymentsService', () => {
   let service: PaymentsService
 
   beforeEach(() => {
-    service = new PaymentsService(mockPrisma as any, mockAudit as any, mockNotifications as any)
+    service = new PaymentsService(
+      mockPrisma as any,
+      mockAudit as any,
+      mockNotifications as any,
+      mockLineMessaging as any
+    )
     jest.clearAllMocks()
 
     // Default $transaction passthrough
@@ -200,6 +208,28 @@ describe('PaymentsService', () => {
         }),
         { excludeActorUserId: caller.userId }
       )
+      expect(mockLineMessaging.safePushPaymentSuccess).toHaveBeenCalledWith(100n)
+    })
+
+    it('does not trigger safePushPaymentSuccess when payment status is failed', async () => {
+      mockPrisma.subscription.findFirst
+        .mockResolvedValueOnce(makeSub({ startDate: new Date('2020-01-01') }))
+        .mockResolvedValueOnce(null)
+
+      mockPrisma.$transaction.mockImplementationOnce(async (fn: (tx: any) => Promise<any>) => {
+        const txPayment = {
+          create: jest.fn().mockResolvedValue({ ...mockPayment, status: PaymentStatus.failed }),
+        }
+        const txSubscription = {
+          update: jest.fn().mockResolvedValue(mockSub),
+        }
+        return fn({ payment: txPayment, subscription: txSubscription })
+      })
+
+      const caller = makeCaller()
+      await service.createPayment({ ...dto, status: PaymentStatus.failed } as any, caller)
+
+      expect(mockLineMessaging.safePushPaymentSuccess).not.toHaveBeenCalled()
     })
 
     it('happy path: payment created but NOT activated when another active subscription exists', async () => {

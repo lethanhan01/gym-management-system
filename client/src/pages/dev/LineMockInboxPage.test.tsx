@@ -53,15 +53,17 @@ describe('LineMockInboxPage', () => {
     api.delete.mockResolvedValue({ data: { success: true } })
   })
 
-  it('renders the outbox and simulates a follow webhook', async () => {
+  it('renders 4 categorized trigger groups and simulates a follow webhook', async () => {
     const user = userEvent.setup()
     render(<LineMockInboxPage />)
 
-    expect(await screen.findByText('Push message')).toBeVisible()
-    expect(screen.getByText('Đích: rogym-liff-mock-member')).toBeVisible()
-    expect(screen.getByText('Mock notification')).toBeVisible()
+    expect(await screen.findByText('LINE Mock Inbox & Simulator')).toBeVisible()
+    expect(screen.getByText('1. Lịch Tập PT')).toBeVisible()
+    expect(screen.getByText('2. Điểm Danh & Gói Tập')).toBeVisible()
+    expect(screen.getByText('3. Thanh Toán & Góp Ý')).toBeVisible()
+    expect(screen.getByText('4. Webhook OA & Menu')).toBeVisible()
 
-    await user.click(screen.getByRole('button', { name: 'Follow' }))
+    await user.click(screen.getByRole('button', { name: 'Follow Event' }))
 
     await waitFor(() => {
       expect(api.post).toHaveBeenCalledWith('/dev/line-mock/events', { type: 'follow' })
@@ -69,11 +71,20 @@ describe('LineMockInboxPage', () => {
     expect(api.get).toHaveBeenCalledTimes(2)
   })
 
-  it('clears the outbox', async () => {
+  it('switches between Chat Room simulator view and Admin Outbox Logs view and clears inbox', async () => {
     const user = userEvent.setup()
     render(<LineMockInboxPage />)
 
-    await screen.findByText('Push message')
+    await screen.findByText('LINE Mock Inbox & Simulator')
+
+    // Switch to logs view
+    await user.click(screen.getByRole('button', { name: /Admin Outbox Logs/i }))
+
+    expect(await screen.findByText('Push message')).toBeVisible()
+    expect(screen.getByText('Đích: rogym-liff-mock-member')).toBeVisible()
+    expect(screen.getByText('Mock notification')).toBeVisible()
+
+    // Clear inbox
     await user.click(screen.getByRole('button', { name: 'Xóa inbox' }))
 
     expect(api.delete).toHaveBeenCalledWith('/dev/line-mock/messages')
@@ -82,56 +93,67 @@ describe('LineMockInboxPage', () => {
     ).toBeVisible()
   })
 
-  it('opens and closes the mobile simulator when clicking quick reply or header toggle', async () => {
-    const user = userEvent.setup()
-    render(<LineMockInboxPage />)
-
-    await screen.findByText('Mock notification')
-
-    // Click QuickReply button
-    const quickReplyBtn = screen.getByRole('button', { name: /Xem chi tiết/i })
-    await user.click(quickReplyBtn)
-
-    // Simulator should now be visible with iframe
-    expect(screen.getByTitle('LIFF Mobile Preview')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Đóng Simulator' })).toBeVisible()
-
-    // Close simulator
-    await user.click(screen.getByRole('button', { name: 'Đóng Simulator' }))
-    expect(screen.queryByTitle('LIFF Mobile Preview')).not.toBeInTheDocument()
-  })
-
-  it('previews Rich Menu with 4 interactive zones and triggers sample requests with locale', async () => {
+  it('previews Flex Bubble cards and handles action button CTA click to open simulator', async () => {
     const user = userEvent.setup()
     api.get.mockResolvedValueOnce({
       data: {
         data: {
           messages: [
             {
-              id: 'menu-1',
-              kind: 'rich-menu',
+              id: 'flex-1',
+              kind: 'push',
               createdAt: '2026-08-18T08:00:00.000Z',
               payload: {
-                areas: [
+                messages: [
                   {
-                    action: { label: 'Lịch tập', uri: 'http://localhost:5173/liff?redirect=/member/workout/sessions' },
-                  },
-                  {
-                    action: {
-                      label: 'Đặt lịch',
-                      uri: 'http://localhost:5173/liff?redirect=/member/workout/sessions?book=1',
-                    },
-                  },
-                  {
-                    action: {
-                      label: 'Check-in',
-                      uri: 'http://localhost:5173/liff?redirect=/member/attendance',
-                    },
-                  },
-                  {
-                    action: {
-                      label: 'Hồ sơ',
-                      uri: 'http://localhost:5173/liff?redirect=/member/profile',
+                    type: 'flex',
+                    altText: 'Thông báo đặt lịch tập PT',
+                    contents: {
+                      type: 'bubble',
+                      header: {
+                        type: 'box',
+                        layout: 'horizontal',
+                        contents: [
+                          { type: 'text', text: 'ROGYM', color: '#06c384', weight: 'bold' },
+                          {
+                            type: 'box',
+                            layout: 'horizontal',
+                            backgroundColor: '#06c38426',
+                            contents: [{ type: 'text', text: 'ĐÃ ĐẶT LỊCH', color: '#42e09e' }],
+                          },
+                        ],
+                      },
+                      body: {
+                        type: 'box',
+                        layout: 'vertical',
+                        contents: [
+                          { type: 'text', text: 'Đặt lịch tập thành công', size: 'xl', weight: 'bold' },
+                          { type: 'separator' },
+                          {
+                            type: 'box',
+                            layout: 'horizontal',
+                            contents: [
+                              { type: 'text', text: 'PT:', color: '#8ab89c', flex: 3 },
+                              { type: 'text', text: 'Coach Alex', color: '#ffffff', weight: 'bold', flex: 7 },
+                            ],
+                          },
+                        ],
+                      },
+                      footer: {
+                        type: 'box',
+                        layout: 'vertical',
+                        contents: [
+                          {
+                            type: 'button',
+                            style: 'primary',
+                            action: {
+                              type: 'uri',
+                              label: 'Xem chi tiết buổi tập',
+                              uri: 'http://localhost:5173/liff?redirect=/member/workout/sessions?sessionId=101',
+                            },
+                          },
+                        ],
+                      },
                     },
                   },
                 ],
@@ -141,17 +163,34 @@ describe('LineMockInboxPage', () => {
         },
       },
     })
+
     render(<LineMockInboxPage />)
 
-    expect(await screen.findByText('Rich Menu')).toBeVisible()
-    expect(screen.getByText('ROGYM OFFICIAL')).toBeVisible()
-    expect(screen.getByText('HOT · Zone 2')).toBeVisible()
+    expect(await screen.findByText('ROGYM')).toBeVisible()
+    expect(screen.getByText('ĐÃ ĐẶT LỊCH')).toBeVisible()
+    expect(screen.getByText('Đặt lịch tập thành công')).toBeVisible()
+    expect(screen.getByText('Coach Alex')).toBeVisible()
+
+    // Click CTA action button
+    const ctaBtn = screen.getByRole('button', { name: 'Xem chi tiết buổi tập' })
+    await user.click(ctaBtn)
+
+    // Simulator should now open with iframe
+    expect(screen.getByTitle('LIFF Mobile Preview')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Đóng Simulator' })).toBeVisible()
+  })
+
+  it('triggers sample requests across groups with selected locale', async () => {
+    const user = userEvent.setup()
+    render(<LineMockInboxPage />)
+
+    await screen.findByText('LINE Mock Inbox & Simulator')
 
     // Switch language to Japanese
     await user.click(screen.getByRole('button', { name: '日本語 (ja)' }))
 
-    // Click sample buttons
-    await user.click(screen.getByRole('button', { name: /Tạo mẫu Đặt lịch PT/i }))
+    // Click PT sample button
+    await user.click(screen.getByRole('button', { name: /Đặt lịch mới/i }))
     await waitFor(() => {
       expect(api.post).toHaveBeenCalledWith('/dev/line-mock/samples', {
         type: 'pt-booking-created',
@@ -159,23 +198,53 @@ describe('LineMockInboxPage', () => {
       })
     })
 
-    await user.click(screen.getByRole('button', { name: /Tạo mẫu Nhắc lịch 30p/i }))
+    // Click PT update button
+    await user.click(screen.getByRole('button', { name: /Đổi lịch/i }))
     await waitFor(() => {
       expect(api.post).toHaveBeenCalledWith('/dev/line-mock/samples', {
-        type: 'pt-reminder-30m',
+        type: 'pt-booking-updated',
         locale: 'ja',
       })
     })
 
-    await user.click(screen.getByRole('button', { name: /Tạo mẫu Hủy lịch/i }))
+    // Click PT cancel button
+    await user.click(screen.getByRole('button', { name: /Hủy lịch/i }))
     await waitFor(() => {
       expect(api.post).toHaveBeenCalledWith('/dev/line-mock/samples', {
-        type: 'pt-session-cancelled',
+        type: 'pt-booking-cancelled',
         locale: 'ja',
       })
     })
 
-    await user.click(screen.getByRole('button', { name: /Tạo mẫu Rich Menu/i }))
+    // Click attendance checkin button
+    await user.click(screen.getByRole('button', { name: /Check-in QR/i }))
+    await waitFor(() => {
+      expect(api.post).toHaveBeenCalledWith('/dev/line-mock/samples', {
+        type: 'attendance-checkin',
+        locale: 'ja',
+      })
+    })
+
+    // Click payment success button
+    await user.click(screen.getByRole('button', { name: /Biên lai thanh toán/i }))
+    await waitFor(() => {
+      expect(api.post).toHaveBeenCalledWith('/dev/line-mock/samples', {
+        type: 'payment-success',
+        locale: 'ja',
+      })
+    })
+
+    // Click welcome button
+    await user.click(screen.getByRole('button', { name: /Chào mừng/i }))
+    await waitFor(() => {
+      expect(api.post).toHaveBeenCalledWith('/dev/line-mock/samples', {
+        type: 'welcome',
+        locale: 'ja',
+      })
+    })
+
+    // Click rich menu button
+    await user.click(screen.getByRole('button', { name: /Rich Menu/i }))
     await waitFor(() => {
       expect(api.post).toHaveBeenCalledWith('/dev/line-mock/samples', {
         type: 'rich-menu',

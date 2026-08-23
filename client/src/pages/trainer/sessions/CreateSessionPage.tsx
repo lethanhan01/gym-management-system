@@ -1,7 +1,6 @@
 import { FormEvent, useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
-import { ButtonLink } from '@/components/ui/Button'
-import { ArrowLeft, Clock3 } from 'lucide-react'
+import { ArrowLeft, Calendar as CalendarIcon, Clock3, Dumbbell } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { getApiError } from '@/lib/api-error'
 import { localDateTimeInputToIso, toDateTimeLocalInput } from '@/lib/date'
@@ -16,14 +15,26 @@ import workoutService, {
 import {
   StudentCombobox,
   SubmitButton,
-  TrainerErrorState,
   TrainerPage,
   TrainerPageHeader,
   TrainerSelect,
   TrainerSkeleton,
 } from '@/components/TrainerUI'
+import {
+  Alert,
+  Badge,
+  ButtonLink,
+  Card,
+  CardContent,
+  CardFooter,
+  DatePickerInput,
+  DateTimePickerInput,
+  FormField,
+  Input,
+  Skeleton,
+} from '@/components/ui'
 import { toast } from '@/lib/toast'
-import { DateTimePickerInput } from '@/components/ui'
+import { cn } from '@/lib/utils'
 
 type PlanDayOption = Pick<
   WorkoutPlanDay,
@@ -38,8 +49,10 @@ type Slot = {
   reason?: string
 }
 
+const DAY_KEYS = ['', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'] as const
+
 export default function CreateSessionPage() {
-  const { t } = useTranslation('trainer')
+  const { t, i18n } = useTranslation(['trainer', 'common'])
   const { id } = useParams()
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
@@ -70,12 +83,34 @@ export default function CreateSessionPage() {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  const currentLocale = i18n.language === 'ja' ? 'ja-JP' : 'vi-VN'
+
   function formatPlanDayOption(day: PlanDayOption) {
+    const dayKey = DAY_KEYS[day.dayOfWeek]
+    const dayName = dayKey
+      ? t(`plans.builder.dayLabels.${dayKey}`)
+      : String(day.dayOfWeek)
+
     return t('sessions.create.planDayOptionFormat', {
       dayNumber: day.dayNumber,
       weekNumber: day.weekNumber,
-      dayOfWeek: day.dayOfWeek,
+      dayName,
       name: day.name,
+    })
+  }
+
+  function formatDisplayDateTime(iso: string) {
+    if (!iso) return ''
+    const d = new Date(iso)
+    if (isNaN(d.getTime())) return ''
+    return d.toLocaleString(currentLocale, {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+      timeZone: 'Asia/Ho_Chi_Minh',
     })
   }
 
@@ -88,7 +123,7 @@ export default function CreateSessionPage() {
         const [studentResult, roomResult, existingSession, planResult] = await Promise.all([
           memberService.list({ pageSize: 100 }),
           facilityService.listRooms(),
-id ? trainingSessionService.getSession(id) : Promise.resolve(null),
+          id ? trainingSessionService.getSession(id) : Promise.resolve(null),
           workoutService.getPlans(),
         ])
         if (!active) return
@@ -210,6 +245,18 @@ id ? trainingSessionService.getSession(id) : Promise.resolve(null),
     return new Date(start.getTime() + duration * 60000).toISOString()
   }, [selectedSlot, computedStartTime, duration])
 
+  const effectiveDuration = useMemo(() => {
+    if (selectedSlot && computedStartTime && computedEndTime) {
+      return Math.max(
+        1,
+        Math.round(
+          (new Date(computedEndTime).getTime() - new Date(computedStartTime).getTime()) / 60000
+        )
+      )
+    }
+    return duration
+  }, [selectedSlot, computedStartTime, computedEndTime, duration])
+
   const selectedPlan = useMemo(
     () => plans.find((plan) => plan.planId === selectedPlanId) ?? null,
     [plans, selectedPlanId]
@@ -240,7 +287,7 @@ id ? trainingSessionService.getSession(id) : Promise.resolve(null),
         endTime: computedEndTime,
       }
       if (editing && id) {
-await trainingSessionService.updateSession(id, payload)
+        await trainingSessionService.updateSession(id, payload)
       } else {
         let assignmentId = activeAssignment?.assignmentId ?? ''
         if (!assignmentId) {
@@ -250,7 +297,7 @@ await trainingSessionService.updateSession(id, payload)
           })
           assignmentId = assignment.assignmentId
         }
-await trainingSessionService.createSession({
+        await trainingSessionService.createSession({
           ...payload,
           memberId,
           assignmentId,
@@ -260,7 +307,7 @@ await trainingSessionService.createSession({
       navigate('/trainer/sessions')
     } catch (err) {
       toast.error(getApiError(err, t('sessions.create.error.saveFailed')), {
-        action: { label: t('button.retry', { defaultValue: 'Thử lại' }), onClick: handleSubmit },
+        action: { label: t('common:button.retry'), onClick: handleSubmit },
       })
     } finally {
       setSubmitting(false)
@@ -289,217 +336,332 @@ await trainingSessionService.createSession({
           </ButtonLink>
         }
       />
-      {error && <TrainerErrorState message={error} />}
-      <form className="rogym-card rogym-card--compact space-y-5 p-6" onSubmit={handleSubmit}>
-        <label className="block space-y-2">
-          <span className="rogym-field-label">{t('sessions.create.fieldStudent')}</span>
-          <StudentCombobox
-            students={students}
-            value={memberId}
-            onChange={setMemberId}
-            disabled={editing}
-          />
-        </label>
-        {editing ? (
-          <>
-            <label className="block space-y-2">
-              <span className="rogym-field-label">{t('sessions.create.fieldWorkoutPlan')}</span>
-              <div className="rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-white">
-                {linkedPlanName ?? t('sessions.create.notLinked')}
+
+      {editBlocked && (
+        <Alert
+          tone="warning"
+          className="mb-6"
+          title={t('sessions.create.error.editBlockedTitle')}
+          description={t('sessions.create.error.editBlocked')}
+        />
+      )}
+
+      {error && !editBlocked && (
+        <Alert
+          tone="error"
+          className="mb-6"
+          title={t('sessions.create.error.generalTitle')}
+          description={error}
+          onClose={() => setError(null)}
+        />
+      )}
+
+      <Card variant="compact" className="p-0">
+        <form onSubmit={handleSubmit}>
+          <CardContent noPaddingTop className="p-6 space-y-6">
+            {/* 1. Member Selection */}
+            <FormField
+              label={t('sessions.create.fieldStudent')}
+              required
+              fullWidth
+            >
+              <StudentCombobox
+                students={students}
+                value={memberId}
+                onChange={setMemberId}
+                disabled={editing}
+              />
+            </FormField>
+
+            {/* 2. Workout Plan & Plan Day */}
+            {editing ? (
+              <div className="grid gap-4 md:grid-cols-2">
+                <FormField label={t('sessions.create.fieldWorkoutPlan')}>
+                  <div className="flex items-center gap-2.5 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-white">
+                    <Dumbbell size={16} className="text-[var(--rogym-teal)] shrink-0" />
+                    <span className="truncate">{linkedPlanName ?? t('sessions.create.notLinked')}</span>
+                  </div>
+                </FormField>
+                <FormField label={t('sessions.create.fieldPlanDay')}>
+                  <div className="flex items-center gap-2.5 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-white">
+                    <CalendarIcon size={16} className="text-[var(--rogym-teal)] shrink-0" />
+                    <span className="truncate">{linkedPlanDayName ?? t('sessions.create.noPlanDay')}</span>
+                  </div>
+                </FormField>
               </div>
-            </label>
-            <label className="block space-y-2">
-              <span className="rogym-field-label">{t('sessions.create.fieldPlanDay')}</span>
-              <div className="rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-white">
-                {linkedPlanDayName ?? t('sessions.create.noPlanDay')}
-              </div>
-            </label>
-          </>
-        ) : memberId ? (
-          <>
-            <label className="block space-y-2">
-              <span className="rogym-field-label">{t('sessions.create.fieldWorkoutPlan')}</span>
-              {assignmentLoading ? (
-                <div className="rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm rogym-text-secondary">
-                  {t('sessions.create.loadingPlan')}
-                </div>
-              ) : assignmentError ? (
-                <p className="text-sm text-red-300">{assignmentError}</p>
-              ) : activeAssignment?.plan ? (
-                <div className="rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3">
-                  <p className="text-sm font-semibold text-white">{activeAssignment.plan.name}</p>
-                  {activeAssignment.plan.description && (
-                    <p className="mt-1 text-xs rogym-text-secondary">
-                      {activeAssignment.plan.description}
-                    </p>
+            ) : memberId ? (
+              <div className="space-y-4 rounded-xl border border-white/10 bg-white/[0.02] p-4">
+                <FormField
+                  label={t('sessions.create.fieldWorkoutPlan')}
+                  required={!activeAssignment?.plan}
+                  error={assignmentError ?? undefined}
+                >
+                  {assignmentLoading ? (
+                    <Skeleton className="h-11 w-full rounded-xl" />
+                  ) : activeAssignment?.plan ? (
+                    <Card
+                      variant="glass"
+                      padding="sm"
+                      className="border-[var(--rogym-teal)]/30 bg-[var(--rogym-teal)]/[0.03]"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="space-y-1 min-w-0 flex-1">
+                          <div className="flex items-center gap-2">
+                            <Dumbbell size={16} className="text-[var(--rogym-teal)] shrink-0" />
+                            <p className="text-sm font-semibold text-white truncate">
+                              {activeAssignment.plan.name}
+                            </p>
+                          </div>
+                          {activeAssignment.plan.description && (
+                            <p className="text-xs rogym-text-secondary line-clamp-2">
+                              {activeAssignment.plan.description}
+                            </p>
+                          )}
+                        </div>
+                        <Badge tone="accent" size="sm" className="shrink-0">
+                          {t('sessions.create.assignedPlanBadge')}
+                        </Badge>
+                      </div>
+                    </Card>
+                  ) : (
+                    <>
+                      <TrainerSelect
+                        value={selectedPlanId}
+                        onValueChange={setSelectedPlanId}
+                        required
+                      >
+                        <option value="">{t('sessions.create.selectPlan')}</option>
+                        {plans.map((plan) => (
+                          <option key={plan.planId} value={plan.planId}>
+                            {plan.name}
+                          </option>
+                        ))}
+                      </TrainerSelect>
+                      {plans.length === 0 && (
+                        <p className="text-xs rogym-text-secondary mt-1">
+                          {t('sessions.create.noActivePlan')}
+                        </p>
+                      )}
+                    </>
                   )}
-                </div>
-              ) : (
-                <>
-                  <TrainerSelect value={selectedPlanId} onValueChange={setSelectedPlanId} required>
-                    <option value="">{t('sessions.create.selectPlan')}</option>
-                    {plans.map((plan) => (
-                      <option key={plan.planId} value={plan.planId}>
-                        {plan.name}
+                </FormField>
+
+                <FormField
+                  label={t('sessions.create.fieldPlanDay')}
+                  required
+                >
+                  {assignmentLoading ? (
+                    <Skeleton className="h-11 w-full rounded-xl" />
+                  ) : (
+                    <TrainerSelect
+                      value={selectedPlanDayId}
+                      onValueChange={setSelectedPlanDayId}
+                      disabled={planDayOptions.length === 0}
+                      required
+                    >
+                      <option value="">
+                        {planDayOptions.length > 0
+                          ? t('sessions.create.selectPlanDay')
+                          : t('sessions.create.selectPlanFirst')}
                       </option>
-                    ))}
-                  </TrainerSelect>
-                  {plans.length === 0 && (
-                    <p className="text-xs rogym-text-secondary">
-                      {t('sessions.create.noActivePlan')}
-                    </p>
+                      {planDayOptions.map((day) => (
+                        <option key={day.planDayId} value={day.planDayId}>
+                          {formatPlanDayOption(day)}
+                        </option>
+                      ))}
+                    </TrainerSelect>
                   )}
-                </>
-              )}
-            </label>
-            <label className="block space-y-2">
-              <span className="rogym-field-label">{t('sessions.create.fieldPlanDay')}</span>
-              <TrainerSelect
-                value={selectedPlanDayId}
-                onValueChange={setSelectedPlanDayId}
-                disabled={assignmentLoading || planDayOptions.length === 0}
-                required
-              >
-                <option value="">
-                  {planDayOptions.length > 0
-                    ? t('sessions.create.selectPlanDay')
-                    : t('sessions.create.selectPlanFirst')}
-                </option>
-                {planDayOptions.map((day) => (
-                  <option key={day.planDayId} value={day.planDayId}>
-                    {formatPlanDayOption(day)}
+                </FormField>
+              </div>
+            ) : null}
+
+            {/* 3. Room Selection */}
+            <FormField
+              label={t('sessions.create.fieldRoom')}
+              required
+            >
+              <TrainerSelect value={roomId} onValueChange={setRoomId} required>
+                <option value="">{t('sessions.create.selectRoom')}</option>
+                {rooms.map((room) => (
+                  <option key={room.roomId} value={room.roomId}>
+                    {room.roomCode} - {room.name} ({room.capacity} {t('sessions.create.capacityUnit')})
                   </option>
                 ))}
               </TrainerSelect>
-            </label>
-          </>
-        ) : null}
-        <label className="block space-y-2">
-          <span className="rogym-field-label">{t('sessions.create.fieldRoom')}</span>
-          <TrainerSelect value={roomId} onValueChange={setRoomId} required>
-            <option value="">{t('sessions.create.selectRoom')}</option>
-            {rooms.map((room) => (
-              <option key={room.roomId} value={room.roomId}>
-                {room.roomCode} - {room.name} ({room.capacity} {t('sessions.create.capacityUnit')})
-              </option>
-            ))}
-          </TrainerSelect>
-        </label>
-        {memberId && !editing ? (
-          <div className="space-y-2">
-            <span className="rogym-field-label">{t('sessions.create.fieldStartTime')}</span>
-            <input
-              type="date"
-              className="rogym-input"
-              value={selectedDate}
-              onChange={(e) => setSelectedDate(e.target.value)}
-              min={new Date().toISOString().slice(0, 10)}
-            />
-            {slotsLoading ? (
-              <div className="grid grid-cols-3 gap-2 py-2">
-                {Array.from({ length: 6 }).map((_, i) => (
-                  <div key={i} className="h-12 animate-pulse rounded-xl bg-white/5" />
-                ))}
+            </FormField>
+
+            {/* 4. Date & Slots (Create Mode) / Start Time & Duration (Edit Mode) */}
+            {memberId && !editing ? (
+              <div className="space-y-4">
+                <FormField
+                  label={t('sessions.create.fieldStartTime')}
+                  required
+                  hint={t('sessions.create.selectDateHint')}
+                >
+                  <DatePickerInput
+                    value={selectedDate}
+                    onChange={setSelectedDate}
+                    min={new Date().toISOString().slice(0, 10)}
+                    aria-label={t('sessions.create.fieldStartTime')}
+                    required
+                  />
+                </FormField>
+
+                <div className="space-y-2">
+                  <span className="flex items-center gap-1 text-xs font-semibold uppercase tracking-wider text-white/80 select-none">
+                    <span>{t('sessions.create.availableSlots')}</span>
+                    <span className="text-red-400 font-bold" aria-hidden="true">*</span>
+                  </span>
+
+                  {slotsLoading ? (
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 py-1">
+                      {Array.from({ length: 6 }).map((_, i) => (
+                        <Skeleton key={i} className="h-14 rounded-xl" />
+                      ))}
+                    </div>
+                  ) : availabilitySlots.length > 0 ? (
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+                      {availabilitySlots.map((slot) => {
+                        const isSelected =
+                          selectedSlot?.startTime === slot.startTime &&
+                          selectedSlot?.endTime === slot.endTime
+                        const fmt = (iso: string) =>
+                          new Date(iso).toLocaleTimeString(currentLocale, {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            hour12: false,
+                            timeZone: 'Asia/Ho_Chi_Minh',
+                          })
+                        return (
+                          <button
+                            key={slot.slotIndex}
+                            type="button"
+                            disabled={!slot.available}
+                            onClick={() => setSelectedSlot(slot)}
+                            className={cn(
+                              'relative flex flex-col items-center justify-center rounded-xl p-3 text-center text-sm font-semibold transition-all touch-manipulation',
+                              isSelected
+                                ? 'border-2 border-[var(--rogym-teal)] bg-[var(--rogym-teal)]/20 text-white shadow-sm ring-1 ring-[var(--rogym-teal)]/40'
+                                : slot.available
+                                  ? 'border border-white/10 bg-white/[0.02] text-white hover:border-[var(--rogym-teal)]/40 hover:bg-white/[0.05]'
+                                  : 'cursor-not-allowed border border-white/5 bg-white/[0.01] text-white/30 opacity-50'
+                            )}
+                          >
+                            <span>
+                              {fmt(slot.startTime)} - {fmt(slot.endTime)}
+                            </span>
+                            {!slot.available && (
+                              <Badge
+                                tone={slot.reason === 'PAST_TIME' ? 'muted' : 'danger'}
+                                size="sm"
+                                className="mt-1.5 text-[10px] py-0 px-1.5 font-normal"
+                              >
+                                {slot.reason === 'PAST_TIME'
+                                  ? t('sessions.create.slotPast')
+                                  : t('sessions.create.slotBusy')}
+                              </Badge>
+                            )}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  ) : (
+                    <Alert
+                      tone="neutral"
+                      variant="subtle"
+                      className="py-3"
+                      description={t('sessions.create.noSlots')}
+                    />
+                  )}
+                </div>
               </div>
-            ) : availabilitySlots.length > 0 ? (
-              <div className="grid grid-cols-3 gap-2">
-                {availabilitySlots.map((slot) => {
-                  const isSelected =
-                    selectedSlot?.startTime === slot.startTime &&
-                    selectedSlot?.endTime === slot.endTime
-                  const fmt = (iso: string) =>
-                    new Date(iso).toLocaleTimeString('vi-VN', {
-                      hour: '2-digit',
-                      minute: '2-digit',
-                      hour12: false,
-                      timeZone: 'Asia/Ho_Chi_Minh',
-                    })
-                  return (
-                    <button
-                      key={slot.slotIndex}
-                      type="button"
-                      disabled={!slot.available}
-                      onClick={() => setSelectedSlot(slot)}
-                      className={`rounded-xl px-3 py-2 text-center text-sm font-semibold transition-all ${
-                        isSelected
-                          ? 'border border-[var(--rogym-accent)] bg-[var(--rogym-accent)]/20 text-white'
-                          : slot.available
-                            ? 'border border-white/10 bg-white/[0.02] text-white hover:border-[var(--rogym-accent)]/40'
-                            : 'cursor-not-allowed border border-white/5 bg-white/[0.01] text-white/25 opacity-50'
-                      }`}
-                    >
-                      {fmt(slot.startTime)} - {fmt(slot.endTime)}
-                      {!slot.available && (
-                        <span className="mt-0.5 block text-[10px] font-normal text-rose-400/80">
-                          {slot.reason === 'PAST_TIME'
-                            ? t('sessions.create.slotPast', { defaultValue: 'Qua gio' })
-                            : t('sessions.create.slotBusy', { defaultValue: 'Da dat' })}
-                        </span>
-                      )}
-                    </button>
-                  )
-                })}
+            ) : editing ? (
+              <div className="grid gap-4 md:grid-cols-2">
+                <FormField
+                  label={t('sessions.create.fieldStartTime')}
+                  required
+                >
+                  <DateTimePickerInput
+                    value={startTime}
+                    onChange={setStartTime}
+                    placeholder={t('sessions.create.startTimePlaceholder')}
+                    aria-label={t('sessions.create.fieldStartTime')}
+                    disabled={editBlocked}
+                  />
+                </FormField>
+
+                <FormField
+                  label={t('sessions.create.fieldDuration')}
+                  required
+                  hint={t('sessions.create.durationHint')}
+                >
+                  <Input
+                    type="number"
+                    min={15}
+                    max={360}
+                    step={15}
+                    value={duration}
+                    onChange={(event) => setDuration(Number(event.target.value))}
+                    disabled={editBlocked}
+                    required
+                    trailingIcon={
+                      <span className="text-xs text-white/50">
+                        {t('sessions.create.minutesUnit')}
+                      </span>
+                    }
+                  />
+                </FormField>
               </div>
-            ) : memberId ? (
-              <p className="text-xs text-white/50">
-                {t('sessions.create.noSlots', { defaultValue: 'Khong co khung gio nao' })}
-              </p>
             ) : null}
-          </div>
-        ) : editing ? (
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="block space-y-2">
-              <span className="rogym-field-label">{t('sessions.create.fieldStartTime')}</span>
-              <DateTimePickerInput
-                value={startTime}
-                onChange={setStartTime}
-                placeholder={t('sessions.create.startTimePlaceholder')}
-                aria-label={t('sessions.create.fieldStartTime')}
-                disabled={editBlocked}
-              />
-            </div>
-            <label className="block space-y-2">
-              <span className="rogym-field-label">{t('sessions.create.fieldDuration')}</span>
-              <input
-                className="rogym-input"
-                type="number"
-                min={15}
-                max={360}
-                step={15}
-                value={duration}
-                onChange={(event) => setDuration(Number(event.target.value))}
-                required
-              />
-            </label>
-          </div>
-        ) : null}
-        <div className="flex items-center gap-2 rounded-xl border border-white/5 bg-white/[0.03] p-4 text-sm rogym-text-secondary">
-          <Clock3 size={17} className="rogym-text-accent" />
-          {t('sessions.create.estimatedEnd')}{' '}
-          {computedEndTime ? toDateTimeLocalInput(computedEndTime).replace('T', ' ') : t('sessions.create.endUnknown')}
-        </div>
-        <div className="flex justify-end gap-3 border-t border-white/5 pt-5">
-          <ButtonLink
-            variant="outline-white"
-            to={id ? `/trainer/sessions/${id}` : '/trainer/sessions'}
+
+            {/* 5. Summary Feedback Banner */}
+            <Alert
+              tone="info"
+              variant="subtle"
+              icon={<Clock3 size={18} className="text-sky-400 shrink-0" />}
+              title={t('sessions.create.summaryTitle')}
+              description={
+                computedEndTime ? (
+                  <span className="font-medium text-white/90">
+                    {computedStartTime ? formatDisplayDateTime(computedStartTime) : ''}{' '}
+                    &rarr; {formatDisplayDateTime(computedEndTime)}{' '}
+                    ({effectiveDuration} {t('sessions.create.minutesUnit')})
+                  </span>
+                ) : (
+                  t('sessions.create.endUnknown')
+                )
+              }
+            />
+          </CardContent>
+
+          {/* 6. Footer Actions */}
+          <CardFooter
+            align="end"
+            responsiveStack
+            className="px-6 py-4 border-t border-white/5 bg-white/[0.01]"
           >
-            {t('sessions.create.cancel')}
-          </ButtonLink>
-          <SubmitButton
-            loading={submitting}
-            disabled={
-              editBlocked ||
-              !memberId ||
-              !roomId ||
-              (!editing && !selectedSlot) ||
-              (editing && !computedEndTime) ||
-              !hasWorkoutPlanLink
-            }
-          >
-            {editing ? t('sessions.create.save') : t('sessions.create.submit')}
-          </SubmitButton>
-        </div>
-      </form>
+            <ButtonLink
+              variant="outline-white"
+              to={id ? `/trainer/sessions/${id}` : '/trainer/sessions'}
+            >
+              {t('sessions.create.cancel')}
+            </ButtonLink>
+            <SubmitButton
+              loading={submitting}
+              disabled={
+                editBlocked ||
+                !memberId ||
+                !roomId ||
+                (!editing && !selectedSlot) ||
+                (editing && !computedEndTime) ||
+                !hasWorkoutPlanLink
+              }
+            >
+              {editing ? t('sessions.create.save') : t('sessions.create.submit')}
+            </SubmitButton>
+          </CardFooter>
+        </form>
+      </Card>
     </TrainerPage>
   )
 }

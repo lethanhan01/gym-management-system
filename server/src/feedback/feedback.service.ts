@@ -10,6 +10,7 @@ import { PrismaService } from '../prisma/prisma.service'
 import { AuditService } from '../common/audit/audit.service'
 import { type Role } from '../auth/users.service'
 import { NotificationsService } from '../notifications/notifications.service'
+import { LineMessagingService } from '../line-messaging/line-messaging.service'
 import { ListFeedbackDto } from './dto/list-feedback.dto'
 import { CreateFeedbackDto } from './dto/create-feedback.dto'
 import { AssignFeedbackDto } from './dto/assign-feedback.dto'
@@ -42,7 +43,8 @@ export class FeedbackService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly audit: AuditService,
-    private readonly notifications: NotificationsService
+    private readonly notifications: NotificationsService,
+    private readonly lineMessaging: LineMessagingService
   ) {}
 
   // ---------------------------------------------------------------------------
@@ -503,6 +505,7 @@ export class FeedbackService {
         resourceId: id.toString(),
         dedupeKey: `feedback:${id.toString()}:${newStatus}`,
       })
+      await this.lineMessaging.safePushFeedbackResponded(id)
     }
 
     return { data: this.serialize(updated, true) }

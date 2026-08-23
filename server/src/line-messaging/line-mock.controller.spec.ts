@@ -39,17 +39,44 @@ describe('LineMockController', () => {
   it('creates only supported visual samples', () => {
     const controller = new LineMockController(lineMessaging as unknown as LineMessagingService)
 
-    expect(controller.sample({ type: 'flex' })).toEqual({ success: true })
-    expect(controller.sample({ type: 'rich-menu', locale: 'ja' })).toEqual({ success: true })
-    expect(controller.sample({ type: 'pt-booking-created' })).toEqual({ success: true })
-    expect(controller.sample({ type: 'pt-reminder-30m', locale: 'ja' })).toEqual({ success: true })
-    expect(controller.sample({ type: 'pt-session-cancelled' })).toEqual({ success: true })
+    const samples: Array<{ type: string; locale?: string }> = [
+      { type: 'flex' },
+      { type: 'rich-menu', locale: 'ja' },
+      { type: 'pt-booking-created' },
+      { type: 'pt-booking-updated', locale: 'ja' },
+      { type: 'pt-booking-cancelled' },
+      { type: 'pt-session-cancelled', locale: 'ja' },
+      { type: 'pt-reminder-30m' },
+      { type: 'pt-session-starting', locale: 'ja' },
+      { type: 'pt-training-completed' },
+      { type: 'attendance-checkin', locale: 'ja' },
+      { type: 'subscription-expiring' },
+      { type: 'payment-success', locale: 'ja' },
+      { type: 'feedback-responded' },
+      { type: 'welcome', locale: 'ja' },
+      { type: 'help' },
+    ]
 
+    samples.forEach((s) => {
+      expect(controller.sample(s)).toEqual({ success: true })
+    })
+
+    expect(lineMessaging.createMockSample).toHaveBeenCalledTimes(samples.length)
     expect(lineMessaging.createMockSample).toHaveBeenNthCalledWith(1, 'flex', 'vi')
     expect(lineMessaging.createMockSample).toHaveBeenNthCalledWith(2, 'rich-menu', 'ja')
     expect(lineMessaging.createMockSample).toHaveBeenNthCalledWith(3, 'pt-booking-created', 'vi')
-    expect(lineMessaging.createMockSample).toHaveBeenNthCalledWith(4, 'pt-reminder-30m', 'ja')
-    expect(lineMessaging.createMockSample).toHaveBeenNthCalledWith(5, 'pt-session-cancelled', 'vi')
+    expect(lineMessaging.createMockSample).toHaveBeenNthCalledWith(4, 'pt-booking-updated', 'ja')
+    expect(lineMessaging.createMockSample).toHaveBeenNthCalledWith(5, 'pt-booking-cancelled', 'vi')
+    expect(lineMessaging.createMockSample).toHaveBeenNthCalledWith(6, 'pt-session-cancelled', 'ja')
+    expect(lineMessaging.createMockSample).toHaveBeenNthCalledWith(7, 'pt-reminder-30m', 'vi')
+    expect(lineMessaging.createMockSample).toHaveBeenNthCalledWith(8, 'pt-session-starting', 'ja')
+    expect(lineMessaging.createMockSample).toHaveBeenNthCalledWith(9, 'pt-training-completed', 'vi')
+    expect(lineMessaging.createMockSample).toHaveBeenNthCalledWith(10, 'attendance-checkin', 'ja')
+    expect(lineMessaging.createMockSample).toHaveBeenNthCalledWith(11, 'subscription-expiring', 'vi')
+    expect(lineMessaging.createMockSample).toHaveBeenNthCalledWith(12, 'payment-success', 'ja')
+    expect(lineMessaging.createMockSample).toHaveBeenNthCalledWith(13, 'feedback-responded', 'vi')
+    expect(lineMessaging.createMockSample).toHaveBeenNthCalledWith(14, 'welcome', 'ja')
+    expect(lineMessaging.createMockSample).toHaveBeenNthCalledWith(15, 'help', 'vi')
 
     expect(() => controller.sample({ type: 'text' })).toThrow(NotFoundException)
   })

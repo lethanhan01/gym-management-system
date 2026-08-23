@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   ArrowDown,
+  Award,
+  Bot,
   Calendar,
   CalendarPlus,
   Camera,
@@ -8,10 +10,15 @@ import {
   ChevronDown,
   ChevronLeft,
   ChevronUp,
+  Clock,
   Copy,
+  CreditCard,
   Dumbbell,
   ExternalLink,
+  Flame,
   Globe,
+  HelpCircle,
+  Hourglass,
   Image as ImageIcon,
   Keyboard,
   List,
@@ -20,6 +27,7 @@ import {
   Mic,
   Plus,
   QrCode,
+  Receipt,
   RefreshCw,
   Search,
   Send,
@@ -27,6 +35,7 @@ import {
   Smile,
   Sparkles,
   User,
+  UserPlus,
   X,
 } from 'lucide-react'
 import api from '@/services/api'
@@ -46,8 +55,18 @@ type MockSample =
   | 'flex'
   | 'rich-menu'
   | 'pt-booking-created'
-  | 'pt-reminder-30m'
+  | 'pt-booking-updated'
+  | 'pt-booking-cancelled'
   | 'pt-session-cancelled'
+  | 'pt-reminder-30m'
+  | 'pt-session-starting'
+  | 'pt-training-completed'
+  | 'attendance-checkin'
+  | 'subscription-expiring'
+  | 'payment-success'
+  | 'feedback-responded'
+  | 'welcome'
+  | 'help'
 
 type MockLocale = 'vi' | 'ja'
 type JsonRecord = Record<string, unknown>
@@ -112,17 +131,50 @@ function QuickReply({
   })
 }
 
-function FlexComponent({ component }: { component: JsonRecord }) {
+function FlexComponent({
+  component,
+  onSelectUrl,
+}: {
+  component: JsonRecord
+  onSelectUrl?: (url: string, label?: string) => void
+}) {
   const type = stringValue(component.type)
+
   if (type === 'text') {
     const text = stringValue(component.text) ?? ''
     const size = stringValue(component.size)
+    const color = stringValue(component.color)
+    const weight = stringValue(component.weight)
+    const flex = typeof component.flex === 'number' ? component.flex : undefined
+    const wrap = component.wrap !== false
+    const align = stringValue(component.align)
+
+    const sizeClass =
+      size === 'xxs'
+        ? 'text-[10px]'
+        : size === 'xs'
+        ? 'text-[11px]'
+        : size === 'sm'
+        ? 'text-xs sm:text-sm'
+        : size === 'md'
+        ? 'text-sm'
+        : size === 'lg'
+        ? 'text-base font-semibold'
+        : size === 'xl'
+        ? 'text-lg font-bold'
+        : size === 'xxl'
+        ? 'text-xl font-bold'
+        : 'text-xs sm:text-sm'
+
     return (
       <p
-        className={`whitespace-pre-wrap ${component.weight === 'bold' ? 'font-bold' : ''} ${
-          size === 'xl' ? 'text-xl' : size === 'lg' ? 'text-lg' : size === 'sm' ? 'text-sm' : ''
-        }`}
-        style={{ color: stringValue(component.color) }}
+        className={`${wrap ? 'whitespace-pre-wrap break-words' : 'truncate'} ${
+          weight === 'bold' ? 'font-bold' : 'font-normal'
+        } ${sizeClass} ${align === 'center' ? 'text-center' : align === 'end' ? 'text-right' : ''}`}
+        style={{
+          color: color || undefined,
+          flex: flex !== undefined ? `${flex} ${flex} 0%` : undefined,
+        }}
       >
         {text}
       </p>
@@ -130,13 +182,86 @@ function FlexComponent({ component }: { component: JsonRecord }) {
   }
 
   if (type === 'box') {
-    const horizontal = component.layout === 'horizontal'
+    const layout = stringValue(component.layout) ?? 'vertical'
+    const horizontal = layout === 'horizontal' || layout === 'baseline'
+    const bg = stringValue(component.backgroundColor)
+    const cornerRadius = stringValue(component.cornerRadius)
+    const flex = typeof component.flex === 'number' ? component.flex : undefined
+    const alignItems = stringValue(component.alignItems)
+    const justifyContent = stringValue(component.justifyContent)
+    const spacing = stringValue(component.spacing)
+    const margin = stringValue(component.margin)
+
+    const gapClass =
+      spacing === 'xs'
+        ? 'gap-1'
+        : spacing === 'sm'
+        ? 'gap-1.5'
+        : spacing === 'md'
+        ? 'gap-2.5'
+        : spacing === 'lg'
+        ? 'gap-3.5'
+        : spacing === 'xl'
+        ? 'gap-4'
+        : horizontal
+        ? 'gap-2'
+        : 'gap-1.5'
+
+    const marginClass =
+      margin === 'xs'
+        ? 'mt-1'
+        : margin === 'sm'
+        ? 'mt-1.5'
+        : margin === 'md'
+        ? 'mt-2.5'
+        : margin === 'lg'
+        ? 'mt-3.5'
+        : ''
+
+    const roundedClass =
+      cornerRadius === 'xxl' || cornerRadius === 'xl'
+        ? 'rounded-full'
+        : cornerRadius === 'md' || cornerRadius === 'lg'
+        ? 'rounded-lg'
+        : cornerRadius === 'sm'
+        ? 'rounded-md'
+        : ''
+
+    const alignClass =
+      alignItems === 'center'
+        ? 'items-center'
+        : alignItems === 'flex-start'
+        ? 'items-start'
+        : alignItems === 'flex-end'
+        ? 'items-end'
+        : ''
+
+    const justifyClass =
+      justifyContent === 'space-between'
+        ? 'justify-between'
+        : justifyContent === 'center'
+        ? 'justify-center'
+        : justifyContent === 'flex-end'
+        ? 'justify-end'
+        : ''
+
     return (
-      <div className={`flex ${horizontal ? 'flex-row' : 'flex-col'} gap-3`}>
+      <div
+        className={`flex ${horizontal ? 'flex-row' : 'flex-col'} ${gapClass} ${marginClass} ${roundedClass} ${alignClass} ${justifyClass}`}
+        style={{
+          backgroundColor: bg || undefined,
+          flex: flex !== undefined ? `${flex} ${flex} 0%` : undefined,
+          paddingTop: stringValue(component.paddingTop),
+          paddingBottom: stringValue(component.paddingBottom),
+          paddingLeft: stringValue(component.paddingStart) || stringValue(component.paddingAll),
+          paddingRight: stringValue(component.paddingEnd) || stringValue(component.paddingAll),
+        }}
+      >
         {recordList(component.contents).map((child, index) => (
           <FlexComponent
             key={`${stringValue(child.type) ?? 'component'}-${index}`}
             component={child}
+            onSelectUrl={onSelectUrl}
           />
         ))}
       </div>
@@ -146,31 +271,47 @@ function FlexComponent({ component }: { component: JsonRecord }) {
   if (type === 'button') {
     const action = isRecord(component.action) ? component.action : undefined
     const label = stringValue(action?.label) ?? 'Action'
+    const uri = stringValue(action?.uri) ?? ''
+    const style = stringValue(component.style) ?? 'primary'
+
     return (
-      <span
-        className={`block rounded-md px-3 py-2 text-center text-sm font-semibold ${
-          component.style === 'primary'
-            ? 'bg-[var(--rogym-accent)] text-black'
-            : 'border border-[var(--rogym-accent)] text-[var(--rogym-accent)]'
+      <button
+        type="button"
+        onClick={() => {
+          if (uri && onSelectUrl) {
+            onSelectUrl(uri, label)
+          }
+        }}
+        className={`w-full rounded-xl py-2.5 px-3 text-center text-xs sm:text-sm font-extrabold transition-all active:scale-[0.98] cursor-pointer shadow-md ${
+          style === 'primary'
+            ? 'bg-[#06c384] text-[#00492f] hover:bg-[#08d891] hover:shadow-emerald-500/20'
+            : 'border border-[#42e09e]/50 bg-[#42e09e]/10 text-[#42e09e] hover:bg-[#42e09e]/20'
         }`}
       >
         {label}
-      </span>
+      </button>
     )
+  }
+
+  if (type === 'separator') {
+    const color = stringValue(component.color) || '#1a2520'
+    const margin = stringValue(component.margin)
+    const marginClass =
+      margin === 'md' ? 'my-2.5' : margin === 'lg' ? 'my-3.5' : 'my-2'
+    return <hr className={`w-full border-t ${marginClass}`} style={{ borderColor: color }} />
   }
 
   if (type === 'image') {
     const url = stringValue(component.url)
     return url ? (
       <img
-        className="max-h-48 w-full rounded object-cover"
+        className="max-h-48 w-full rounded-xl object-cover"
         src={url}
         alt={stringValue(component.altText) ?? ''}
       />
     ) : null
   }
 
-  if (type === 'separator') return <hr className="border-white/10" />
   if (type === 'spacer') return <div className="h-2" />
 
   return (
@@ -180,29 +321,58 @@ function FlexComponent({ component }: { component: JsonRecord }) {
   )
 }
 
-function FlexPreview({ contents }: { contents: unknown }) {
+function FlexPreview({
+  contents,
+  onSelectUrl,
+}: {
+  contents: unknown
+  onSelectUrl?: (url: string, label?: string) => void
+}) {
   const root = isRecord(contents) ? contents : undefined
   if (!root)
     return <p className="text-sm text-white/60">Flex payload không có nội dung hợp lệ.</p>
 
-  const renderBubble = (bubble: JsonRecord, index: number) => (
-    <div
-      key={index}
-      className="min-w-[17rem] max-w-sm rounded-xl border border-white/10 bg-[#0d1f1a] p-4 shadow-sm"
-    >
-      {['header', 'hero', 'body', 'footer'].map((section) => {
-        const component = isRecord(bubble[section]) ? bubble[section] : undefined
-        return component ? (
-          <div
-            key={section}
-            className={section === 'hero' ? 'mb-3' : section === 'footer' ? 'mt-3' : 'mb-3'}
-          >
-            <FlexComponent component={component} />
+  const renderBubble = (bubble: JsonRecord, index: number) => {
+    const styles = isRecord(bubble.styles) ? bubble.styles : undefined
+    const headerBg = isRecord(styles?.header) ? stringValue(styles?.header.backgroundColor) : '#0f1c16'
+    const bodyBg = isRecord(styles?.body) ? stringValue(styles?.body.backgroundColor) : '#0f1c16'
+    const footerBg = isRecord(styles?.footer) ? stringValue(styles?.footer.backgroundColor) : '#0f1c16'
+
+    return (
+      <div
+        key={index}
+        className="min-w-[17rem] max-w-sm overflow-hidden rounded-2xl border border-[#1a2520] bg-[#0f1c16] shadow-xl ring-1 ring-white/5"
+      >
+        {/* Header section */}
+        {isRecord(bubble.header) && (
+          <div className="border-b border-[#1a2520] px-4 py-3" style={{ backgroundColor: headerBg }}>
+            <FlexComponent component={bubble.header} onSelectUrl={onSelectUrl} />
           </div>
-        ) : null
-      })}
-    </div>
-  )
+        )}
+
+        {/* Hero section */}
+        {isRecord(bubble.hero) && (
+          <div className="overflow-hidden">
+            <FlexComponent component={bubble.hero} onSelectUrl={onSelectUrl} />
+          </div>
+        )}
+
+        {/* Body section */}
+        {isRecord(bubble.body) && (
+          <div className="p-4" style={{ backgroundColor: bodyBg }}>
+            <FlexComponent component={bubble.body} onSelectUrl={onSelectUrl} />
+          </div>
+        )}
+
+        {/* Footer section */}
+        {isRecord(bubble.footer) && (
+          <div className="border-t border-[#1a2520] p-3" style={{ backgroundColor: footerBg }}>
+            <FlexComponent component={bubble.footer} onSelectUrl={onSelectUrl} />
+          </div>
+        )}
+      </div>
+    )
+  }
 
   if (root.type === 'bubble') return <div className="max-w-sm">{renderBubble(root, 0)}</div>
   if (root.type === 'carousel') {
@@ -266,7 +436,7 @@ function MessagePreview({
               <p className="mb-2 text-xs text-white/60">
                 {stringValue(message.altText) ?? 'Flex Message'}
               </p>
-              <FlexPreview contents={message.contents} />
+              <FlexPreview contents={message.contents} onSelectUrl={onSelectUrl} />
             </div>
           )
         }
@@ -748,7 +918,7 @@ function LineMobileChatMessageBubble({
                   <p className="mb-1 text-[10px] text-white/50">
                     {stringValue(message.altText) ?? 'Flex Message'}
                   </p>
-                  <FlexPreview contents={message.contents} />
+                  <FlexPreview contents={message.contents} onSelectUrl={onSelectUrl} />
                 </div>
                 <span className="text-[10px] text-white/40 font-medium shrink-0 self-end mb-0.5">
                   {timeStr}
@@ -818,6 +988,17 @@ function LineChatRoomSimulator({
     }
     setUserEvents((prev) => [...prev, tapEvent])
     onSelectUrl(uri)
+  }
+
+  function handleTapCTA(url: string, label?: string) {
+    const tapEvent: ChatRoomEvent = {
+      id: `cta-${Date.now()}`,
+      type: 'system-tap',
+      timestamp: new Date().toISOString(),
+      tapDetails: { label: label ? `CTA: ${label}` : 'Flex CTA', uri: url, zoneIndex: 0 },
+    }
+    setUserEvents((prev) => [...prev, tapEvent])
+    onSelectUrl(url)
   }
 
   const richMenuMsg = messages.find((m) => m.kind === 'rich-menu')
@@ -890,7 +1071,7 @@ function LineChatRoomSimulator({
                       key={evt.id}
                       payload={evt.mockMessage.payload}
                       timestamp={evt.timestamp}
-                      onSelectUrl={onSelectUrl}
+                      onSelectUrl={handleTapCTA}
                     />
                   )
                 }
@@ -915,7 +1096,8 @@ function LineChatRoomSimulator({
                       <div className="inline-flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-0.5 text-[10px] font-bold text-emerald-300 shadow-sm">
                         <Sparkles size={11} />
                         <span>
-                          [Zone {evt.tapDetails.zoneIndex}] {evt.tapDetails.label}
+                          {evt.tapDetails.zoneIndex > 0 ? `[Zone ${evt.tapDetails.zoneIndex}] ` : ''}
+                          {evt.tapDetails.label}
                         </span>
                         <span className="text-white/40">→ Simulator</span>
                       </div>
@@ -1050,7 +1232,7 @@ export default function LineMockInboxPage() {
   const [selectedLocale, setSelectedLocale] = useState<MockLocale>('vi')
   const [simulatorUrl, setSimulatorUrl] = useState<string>('/liff?redirect=/member/workout/sessions')
   const [simulatorOpen, setSimulatorOpen] = useState(false)
-  const [viewMode, setViewMode] = useState<'chat' | 'logs'>('logs')
+  const [viewMode, setViewMode] = useState<'chat' | 'logs'>('chat')
 
   const refresh = useCallback(async () => {
     setLoading(true)
@@ -1168,16 +1350,24 @@ export default function LineMockInboxPage() {
           {/* Main Controls & Outbox */}
           <div className="space-y-6 min-w-0">
             {/* Simulation Controls Panel */}
-            <section className="rounded-2xl border border-white/10 bg-[#081814] p-5 shadow-lg space-y-4">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <h2 className="text-sm font-bold uppercase tracking-wider text-white">
-                  Mô phỏng sự kiện & Mẫu tin nhắn LINE
-                </h2>
+            <section className="rounded-2xl border border-white/10 bg-[#081814] p-5 shadow-lg space-y-5">
+              <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 pb-4">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="flex h-2 w-2 rounded-full bg-[var(--rogym-accent)] animate-pulse" />
+                    <h2 className="text-sm font-extrabold uppercase tracking-wider text-white">
+                      Mô phỏng sự kiện & Mẫu tin nhắn LINE Flex
+                    </h2>
+                  </div>
+                  <p className="mt-0.5 text-xs text-white/50">
+                    Bấm để tạo và gửi tin nhắn mẫu song ngữ vào Outbox / Chat Room
+                  </p>
+                </div>
 
                 {/* Language Switcher */}
                 <div className="flex items-center gap-1.5 rounded-xl border border-white/10 bg-black/40 p-1 text-xs">
                   <Globe size={13} className="text-white/50 ml-1.5" />
-                  <span className="text-white/50 text-[11px]">Ngôn ngữ:</span>
+                  <span className="text-white/50 text-[11px] font-medium">Ngôn ngữ:</span>
                   <button
                     type="button"
                     onClick={() => setSelectedLocale('vi')}
@@ -1203,65 +1393,247 @@ export default function LineMockInboxPage() {
                 </div>
               </div>
 
-              {/* Action Buttons */}
-              <div className="space-y-2.5">
-                <p className="text-[11px] font-semibold uppercase tracking-wider text-white/50">
-                  Mẫu thông báo Đặt lịch PT & Rich Menu
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  <button
-                    className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-500/30 bg-emerald-500/15 px-3 py-2 text-xs font-bold text-emerald-300 hover:bg-emerald-500/25 active:scale-95"
-                    onClick={() => void createSample('pt-booking-created')}
-                  >
-                    <CalendarPlus size={14} />
-                    <span>Tạo mẫu Đặt lịch PT</span>
-                  </button>
-                  <button
-                    className="inline-flex items-center gap-1.5 rounded-xl border border-amber-500/30 bg-amber-500/15 px-3 py-2 text-xs font-bold text-amber-300 hover:bg-amber-500/25 active:scale-95"
-                    onClick={() => void createSample('pt-reminder-30m')}
-                  >
-                    <Calendar size={14} />
-                    <span>Tạo mẫu Nhắc lịch 30p</span>
-                  </button>
-                  <button
-                    className="inline-flex items-center gap-1.5 rounded-xl border border-rose-500/30 bg-rose-500/15 px-3 py-2 text-xs font-bold text-rose-300 hover:bg-rose-500/25 active:scale-95"
-                    onClick={() => void createSample('pt-session-cancelled')}
-                  >
-                    <X size={14} />
-                    <span>Tạo mẫu Hủy lịch</span>
-                  </button>
-                  <button
-                    className="inline-flex items-center gap-1.5 rounded-xl border border-[var(--rogym-accent)]/40 bg-[var(--rogym-accent)]/15 px-3 py-2 text-xs font-bold text-[var(--rogym-accent)] hover:bg-[var(--rogym-accent)]/25 active:scale-95"
-                    onClick={() => void createSample('rich-menu')}
-                  >
-                    <Sparkles size={14} />
-                    <span>Tạo mẫu Rich Menu</span>
-                  </button>
-                  <button
-                    className="rounded-xl border border-white/15 bg-white/5 px-3 py-2 text-xs font-medium text-white/80 hover:bg-white/10"
-                    onClick={() => void createSample('flex')}
-                  >
-                    Tạo mẫu Flex
-                  </button>
+              {/* 4 Categorized Sample Trigger Cards Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Group 1: PT Sessions */}
+                <div className="rounded-xl border border-emerald-500/20 bg-black/30 p-3.5 space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-emerald-500/20 text-emerald-400">
+                        <Dumbbell size={13} />
+                      </div>
+                      <h3 className="text-xs font-extrabold uppercase tracking-wide text-emerald-300">
+                        1. Lịch Tập PT
+                      </h3>
+                    </div>
+                    <Badge tone="success" size="xs">6 Mẫu</Badge>
+                  </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => void createSample('pt-booking-created')}
+                      className="group flex flex-col items-start gap-1 rounded-lg border border-emerald-500/25 bg-emerald-500/10 p-2 text-left transition-all hover:bg-emerald-500/20 active:scale-95 cursor-pointer"
+                    >
+                      <div className="flex items-center gap-1 text-emerald-400">
+                        <CalendarPlus size={12} />
+                        <span className="text-[11px] font-bold">Đặt lịch mới</span>
+                      </div>
+                      <span className="text-[9px] text-white/50 line-clamp-1">training.created</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => void createSample('pt-booking-updated')}
+                      className="group flex flex-col items-start gap-1 rounded-lg border border-sky-500/25 bg-sky-500/10 p-2 text-left transition-all hover:bg-sky-500/20 active:scale-95 cursor-pointer"
+                    >
+                      <div className="flex items-center gap-1 text-sky-400">
+                        <Calendar size={12} />
+                        <span className="text-[11px] font-bold">Đổi lịch</span>
+                      </div>
+                      <span className="text-[9px] text-white/50 line-clamp-1">training.updated</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => void createSample('pt-booking-cancelled')}
+                      className="group flex flex-col items-start gap-1 rounded-lg border border-rose-500/25 bg-rose-500/10 p-2 text-left transition-all hover:bg-rose-500/20 active:scale-95 cursor-pointer"
+                    >
+                      <div className="flex items-center gap-1 text-rose-400">
+                        <X size={12} />
+                        <span className="text-[11px] font-bold">Hủy lịch</span>
+                      </div>
+                      <span className="text-[9px] text-white/50 line-clamp-1">training.cancelled</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => void createSample('pt-reminder-30m')}
+                      className="group flex flex-col items-start gap-1 rounded-lg border border-amber-500/25 bg-amber-500/10 p-2 text-left transition-all hover:bg-amber-500/20 active:scale-95 cursor-pointer"
+                    >
+                      <div className="flex items-center gap-1 text-amber-400">
+                        <Clock size={12} />
+                        <span className="text-[11px] font-bold">Nhắc 30p</span>
+                      </div>
+                      <span className="text-[9px] text-white/50 line-clamp-1">training.reminder</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => void createSample('pt-session-starting')}
+                      className="group flex flex-col items-start gap-1 rounded-lg border border-emerald-500/25 bg-emerald-500/10 p-2 text-left transition-all hover:bg-emerald-500/20 active:scale-95 cursor-pointer"
+                    >
+                      <div className="flex items-center gap-1 text-emerald-400">
+                        <Flame size={12} />
+                        <span className="text-[11px] font-bold">Tới giờ tập</span>
+                      </div>
+                      <span className="text-[9px] text-white/50 line-clamp-1">training.starting</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => void createSample('pt-training-completed')}
+                      className="group flex flex-col items-start gap-1 rounded-lg border border-teal-500/25 bg-teal-500/10 p-2 text-left transition-all hover:bg-teal-500/20 active:scale-95 cursor-pointer"
+                    >
+                      <div className="flex items-center gap-1 text-teal-300">
+                        <Award size={12} />
+                        <span className="text-[11px] font-bold">Hoàn thành</span>
+                      </div>
+                      <span className="text-[9px] text-white/50 line-clamp-1">training.completed</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Group 2: Attendance & Subscriptions */}
+                <div className="rounded-xl border border-sky-500/20 bg-black/30 p-3.5 space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-sky-500/20 text-sky-400">
+                        <QrCode size={13} />
+                      </div>
+                      <h3 className="text-xs font-extrabold uppercase tracking-wide text-sky-300">
+                        2. Điểm Danh & Gói Tập
+                      </h3>
+                    </div>
+                    <Badge tone="info" size="xs">2 Mẫu</Badge>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => void createSample('attendance-checkin')}
+                      className="group flex flex-col items-start gap-1 rounded-lg border border-sky-500/25 bg-sky-500/10 p-2.5 text-left transition-all hover:bg-sky-500/20 active:scale-95 cursor-pointer"
+                    >
+                      <div className="flex items-center gap-1.5 text-sky-400">
+                        <QrCode size={13} />
+                        <span className="text-xs font-bold">Check-in QR</span>
+                      </div>
+                      <span className="text-[10px] text-white/50">attendance.checkin</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => void createSample('subscription-expiring')}
+                      className="group flex flex-col items-start gap-1 rounded-lg border border-amber-500/25 bg-amber-500/10 p-2.5 text-left transition-all hover:bg-amber-500/20 active:scale-95 cursor-pointer"
+                    >
+                      <div className="flex items-center gap-1.5 text-amber-400">
+                        <Hourglass size={13} />
+                        <span className="text-xs font-bold">Gói sắp hết hạn</span>
+                      </div>
+                      <span className="text-[10px] text-white/50">subscription.expiring</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Group 3: Payments & Feedback */}
+                <div className="rounded-xl border border-purple-500/20 bg-black/30 p-3.5 space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-purple-500/20 text-purple-400">
+                        <Receipt size={13} />
+                      </div>
+                      <h3 className="text-xs font-extrabold uppercase tracking-wide text-purple-300">
+                        3. Thanh Toán & Góp Ý
+                      </h3>
+                    </div>
+                    <Badge tone="purple" size="xs">2 Mẫu</Badge>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => void createSample('payment-success')}
+                      className="group flex flex-col items-start gap-1 rounded-lg border border-purple-500/25 bg-purple-500/10 p-2.5 text-left transition-all hover:bg-purple-500/20 active:scale-95 cursor-pointer"
+                    >
+                      <div className="flex items-center gap-1.5 text-purple-400">
+                        <CreditCard size={13} />
+                        <span className="text-xs font-bold">Biên lai thanh toán</span>
+                      </div>
+                      <span className="text-[10px] text-white/50">payment.success</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => void createSample('feedback-responded')}
+                      className="group flex flex-col items-start gap-1 rounded-lg border border-sky-500/25 bg-sky-500/10 p-2.5 text-left transition-all hover:bg-sky-500/20 active:scale-95 cursor-pointer"
+                    >
+                      <div className="flex items-center gap-1.5 text-sky-400">
+                        <MessageSquare size={13} />
+                        <span className="text-xs font-bold">Phản hồi góp ý</span>
+                      </div>
+                      <span className="text-[10px] text-white/50">feedback.responded</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Group 4: Webhook OA & Rich Menu */}
+                <div className="rounded-xl border border-amber-500/20 bg-black/30 p-3.5 space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-amber-500/20 text-amber-400">
+                        <Bot size={13} />
+                      </div>
+                      <h3 className="text-xs font-extrabold uppercase tracking-wide text-amber-300">
+                        4. Webhook OA & Menu
+                      </h3>
+                    </div>
+                    <Badge tone="warning" size="xs">3 Mẫu</Badge>
+                  </div>
+                  <div className="grid grid-cols-3 gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => void createSample('welcome')}
+                      className="group flex flex-col items-start gap-1 rounded-lg border border-emerald-500/25 bg-emerald-500/10 p-2 text-left transition-all hover:bg-emerald-500/20 active:scale-95 cursor-pointer"
+                    >
+                      <div className="flex items-center gap-1 text-emerald-400">
+                        <UserPlus size={12} />
+                        <span className="text-[11px] font-bold">Chào mừng</span>
+                      </div>
+                      <span className="text-[9px] text-white/50 line-clamp-1">webhook.follow</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => void createSample('help')}
+                      className="group flex flex-col items-start gap-1 rounded-lg border border-amber-500/25 bg-amber-500/10 p-2 text-left transition-all hover:bg-amber-500/20 active:scale-95 cursor-pointer"
+                    >
+                      <div className="flex items-center gap-1 text-amber-400">
+                        <HelpCircle size={12} />
+                        <span className="text-[11px] font-bold">Trợ giúp</span>
+                      </div>
+                      <span className="text-[9px] text-white/50 line-clamp-1">webhook.help</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => void createSample('rich-menu')}
+                      className="group flex flex-col items-start gap-1 rounded-lg border border-[var(--rogym-accent)]/30 bg-[var(--rogym-accent)]/10 p-2 text-left transition-all hover:bg-[var(--rogym-accent)]/20 active:scale-95 cursor-pointer"
+                    >
+                      <div className="flex items-center gap-1 text-[var(--rogym-accent)]">
+                        <Sparkles size={12} />
+                        <span className="text-[11px] font-bold">Rich Menu</span>
+                      </div>
+                      <span className="text-[9px] text-white/50 line-clamp-1">4 Vùng</span>
+                    </button>
+                  </div>
                 </div>
               </div>
 
-              {/* Webhook Events */}
-              <div className="border-t border-white/10 pt-3 flex flex-wrap items-center gap-2">
-                <span className="text-[11px] font-semibold uppercase tracking-wider text-white/50 mr-2">
-                  Webhook Event:
-                </span>
+              {/* Webhook Events Simulator Strip */}
+              <div className="border-t border-white/10 pt-3 flex flex-wrap items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-[11px] font-semibold uppercase tracking-wider text-white/50">
+                    Giả lập Webhook OA:
+                  </span>
+                  <button
+                    type="button"
+                    className="rounded-lg border border-white/15 bg-white/5 px-3 py-1 text-xs font-medium hover:bg-white/10 transition-colors cursor-pointer"
+                    onClick={() => void simulateEvent('follow')}
+                  >
+                    Follow Event
+                  </button>
+                  <button
+                    type="button"
+                    className="rounded-lg border border-white/15 bg-white/5 px-3 py-1 text-xs font-medium hover:bg-white/10 transition-colors cursor-pointer"
+                    onClick={() => void simulateEvent('unfollow')}
+                  >
+                    Unfollow Event
+                  </button>
+                </div>
                 <button
-                  className="rounded-lg border border-white/15 bg-white/5 px-3 py-1.5 text-xs font-medium hover:bg-white/10"
-                  onClick={() => void simulateEvent('follow')}
+                  type="button"
+                  className="rounded-lg border border-white/15 bg-white/5 px-2.5 py-1 text-[11px] text-white/60 hover:bg-white/10 hover:text-white transition-colors cursor-pointer"
+                  onClick={() => void createSample('flex')}
                 >
-                  Follow
-                </button>
-                <button
-                  className="rounded-lg border border-white/15 bg-white/5 px-3 py-1.5 text-xs font-medium hover:bg-white/10"
-                  onClick={() => void simulateEvent('unfollow')}
-                >
-                  Unfollow
+                  Mẫu Flex chuẩn (Fallback)
                 </button>
               </div>
             </section>
