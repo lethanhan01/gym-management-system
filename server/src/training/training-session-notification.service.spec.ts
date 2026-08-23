@@ -11,6 +11,7 @@ describe('TrainingSessionNotificationService', () => {
   }
   let mockLineMessaging: {
     safePushTrainingSessionEvent: jest.Mock
+    safePushTrainingSessionCompleted: jest.Mock
   }
 
   const makeSession = (overrides = {}): SessionRow =>
@@ -48,6 +49,7 @@ describe('TrainingSessionNotificationService', () => {
     }
     mockLineMessaging = {
       safePushTrainingSessionEvent: jest.fn(),
+      safePushTrainingSessionCompleted: jest.fn(),
     }
 
     service = new TrainingSessionNotificationService(
@@ -131,7 +133,7 @@ describe('TrainingSessionNotificationService', () => {
   })
 
   describe('notifyCompleted', () => {
-    it('notifies member about session completion', async () => {
+    it('notifies member about session completion and pushes LINE completed card', async () => {
       const session = makeSession()
       await service.notifyCompleted(session)
 
@@ -142,6 +144,7 @@ describe('TrainingSessionNotificationService', () => {
           resourceId: '100',
         })
       )
+      expect(mockLineMessaging.safePushTrainingSessionCompleted).toHaveBeenCalledWith(100n)
     })
   })
 })

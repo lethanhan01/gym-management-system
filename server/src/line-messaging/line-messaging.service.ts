@@ -8,14 +8,18 @@ import { PrismaService } from '../prisma/prisma.service'
 import { LINE_MOCK_USER_ID, LINE_MOCK_WEBHOOK_SECRET } from '../line-mock/constants'
 import {
   buildAttendanceCheckinFlex,
+  buildFeedbackRespondedFlex,
   buildHelpAutoReplyFlex,
+  buildPaymentSuccessFlex,
   buildSubscriptionExpiringFlex,
   buildTrainingBookingCancelledFlex,
   buildTrainingBookingCreatedFlex,
   buildTrainingBookingUpdatedFlex,
+  buildTrainingCompletedFlex,
   buildTrainingReminderFlex,
   buildTrainingStartingFlex,
   buildWelcomeFlex,
+  formatAmount,
   LineFlexMessage,
   LineMessageLocale,
 } from './line-flex-builder'
@@ -77,12 +81,22 @@ const LINE_MESSAGE_TEMPLATES: Record<
     dateLocale: string
     detailButton: string
     renewButton: string
+    reviewButton: string
+    feedbackButton: string
     followText: string
     followButton: string
     helpText: string
     helpButton: string
     attendanceCheckin: string
     subscriptionExpiring: (data: { packageName: string; endDate: string }) => string
+    paymentSuccess: (data: {
+      packageName: string
+      amount: string
+      paymentMethod?: string
+      paymentCode?: string
+    }) => string
+    trainingCompleted: (data: { trainerName: string; sessionName?: string }) => string
+    feedbackResponded: (data: { feedbackTitle?: string }) => string
     training: Record<
       TrainingLineEvent,
       (session: {
@@ -99,6 +113,8 @@ const LINE_MESSAGE_TEMPLATES: Record<
     dateLocale: 'vi-VN',
     detailButton: 'Xem chi tiết',
     renewButton: 'Gia hạn ngay',
+    reviewButton: 'Đánh giá PT',
+    feedbackButton: 'Xem phản hồi',
     followText: 'Chào mừng bạn đến với RoGym. Bấm nút bên dưới để mở ứng dụng hội viên.',
     followButton: 'Mở ứng dụng',
     helpText:
@@ -107,6 +123,14 @@ const LINE_MESSAGE_TEMPLATES: Record<
     attendanceCheckin: 'Bạn đã check-in thành công tại RoGym.',
     subscriptionExpiring: ({ packageName, endDate }) =>
       `Gói tập ${packageName} của bạn sẽ hết hạn vào ngày mai (${endDate}). Vui lòng gia hạn để tiếp tục sử dụng dịch vụ tại RoGym.`,
+    paymentSuccess: ({ packageName, amount, paymentMethod, paymentCode }) =>
+      `Thanh toán thành công gói tập ${packageName}.\nSố tiền: ${amount}${
+        paymentMethod ? `\nPhương thức: ${paymentMethod}` : ''
+      }${paymentCode ? `\nMã GD: ${paymentCode}` : ''}`,
+    trainingCompleted: ({ trainerName, sessionName }) =>
+      `Buổi tập${sessionName ? ` "${sessionName}"` : ''} với PT ${trainerName} đã hoàn thành.\nCảm ơn bạn đã tập luyện cùng RoGym! Hãy dành chút thời gian đánh giá chất lượng buổi tập nhé.`,
+    feedbackResponded: ({ feedbackTitle }) =>
+      `Góp ý${feedbackTitle ? ` "${feedbackTitle}"` : ''} của bạn đã nhận được phản hồi từ Ban quản lý RoGym.`,
     training: {
       created: ({ trainerName, roomName, when, sessionName }) =>
         `Bạn đã đặt lịch tập thành công.\n${sessionName ? `Nội dung: ${sessionName}\n` : ''}Thời gian: ${when}\nPT: ${trainerName}\nPhòng: ${roomName}`,
@@ -124,6 +148,8 @@ const LINE_MESSAGE_TEMPLATES: Record<
     dateLocale: 'ja-JP',
     detailButton: '詳細を見る',
     renewButton: '今すぐ更新',
+    reviewButton: 'PTを評価',
+    feedbackButton: '返答を確認',
     followText: 'RoGymへようこそ。下のボタンから会員アプリを開いてください。',
     followButton: 'アプリを開く',
     helpText:
@@ -132,6 +158,14 @@ const LINE_MESSAGE_TEMPLATES: Record<
     attendanceCheckin: 'RoGymでのチェックインが完了しました。',
     subscriptionExpiring: ({ packageName, endDate }) =>
       `ご利用中のプラン「${packageName}」は明日（${endDate}）に有効期限が切れます。継続してご利用いただくには更新手続きをお願いいたします。`,
+    paymentSuccess: ({ packageName, amount, paymentMethod, paymentCode }) =>
+      `プラン「${packageName}」のお支払いが完了しました。\nお支払い金額: ${amount}${
+        paymentMethod ? `\nお支払い方法: ${paymentMethod}` : ''
+      }${paymentCode ? `\n決済番号: ${paymentCode}` : ''}`,
+    trainingCompleted: ({ trainerName, sessionName }) =>
+      `PT ${trainerName} とのトレーニングセッション${sessionName ? `（${sessionName}）` : ''}が完了しました。\nRoGymをご利用いただきありがとうございます！セッションの評価にご協力ください。`,
+    feedbackResponded: ({ feedbackTitle }) =>
+      `ご意見${feedbackTitle ? `「${feedbackTitle}」` : ''}への返答がRoGym管理者より届きました。`,
     training: {
       created: ({ trainerName, roomName, when, sessionName }) =>
         `トレーニング予約が完了しました。\n${sessionName ? `内容: ${sessionName}\n` : ''}日時: ${when}\nPT: ${trainerName}\nルーム: ${roomName}`,
@@ -347,6 +381,39 @@ export class LineMessagingService {
     } catch (error) {
       this.logger.warn(
         `LINE subscription expiring reminder push failed (subscriptionId=${subscriptionId.toString()}): ${this.describeError(error)}`
+      )
+      return false
+    }
+  }
+
+  async safePushPaymentSuccess(paymentId: bigint): Promise<boolean> {
+    try {
+      return await this.pushPaymentSuccess(paymentId)
+    } catch (error) {
+      this.logger.warn(
+        `LINE payment success push failed (paymentId=${paymentId.toString()}): ${this.describeError(error)}`
+      )
+      return false
+    }
+  }
+
+  async safePushTrainingSessionCompleted(sessionId: bigint): Promise<boolean> {
+    try {
+      return await this.pushTrainingSessionCompleted(sessionId)
+    } catch (error) {
+      this.logger.warn(
+        `LINE training session completed push failed (sessionId=${sessionId.toString()}): ${this.describeError(error)}`
+      )
+      return false
+    }
+  }
+
+  async safePushFeedbackResponded(feedbackId: bigint): Promise<boolean> {
+    try {
+      return await this.pushFeedbackResponded(feedbackId)
+    } catch (error) {
+      this.logger.warn(
+        `LINE feedback responded push failed (feedbackId=${feedbackId.toString()}): ${this.describeError(error)}`
       )
       return false
     }
@@ -766,6 +833,237 @@ export class LineMessagingService {
       endDate: endDateFormatted,
     })
     return this.withLiffButton(text, template.renewButton, '/member/subscription/current')
+  }
+
+  private async pushPaymentSuccess(paymentId: bigint): Promise<boolean> {
+    if (!this.canPushMessages()) return false
+
+    const payment = await this.prisma.payment.findFirst({
+      where: { paymentId },
+      include: {
+        subscription: {
+          include: {
+            package: { select: { name: true } },
+          },
+        },
+        member: {
+          select: {
+            user: { select: { lineId: true } },
+          },
+        },
+      },
+    })
+    if (!payment?.member.user.lineId) return false
+
+    const locale = this.getLocale()
+    let message: LineMessage
+
+    try {
+      message = this.buildPaymentSuccessFlexMessage(payment, locale)
+    } catch (error) {
+      this.logger.warn(
+        `Flex builder failed for payment.success (paymentId=${paymentId.toString()}): ${this.describeError(error)}, falling back to text`
+      )
+      message = this.buildPaymentSuccessLegacyTextMessage(payment, locale)
+    }
+
+    return this.pushMessage(payment.member.user.lineId, [message])
+  }
+
+  private buildPaymentSuccessFlexMessage(
+    payment: {
+      amount: { toString(): string } | number | string
+      method: string
+      transactionReference?: string | null
+      paymentId: bigint
+      paidAt?: Date | null
+      subscription?: { package?: { name: string } | null } | null
+    },
+    locale: LineMessageLocale
+  ): LineFlexMessage {
+    const template = this.getMessageTemplate()
+    const packageName = payment.subscription?.package?.name ?? 'Gói tập hội viên'
+    const paymentCode = payment.transactionReference || payment.paymentId.toString()
+    const paidAtFormatted = payment.paidAt
+      ? this.formatDateTime(payment.paidAt, template.dateLocale)
+      : undefined
+    return buildPaymentSuccessFlex(
+      {
+        packageName,
+        amount: payment.amount.toString(),
+        paymentMethod: payment.method,
+        paymentCode,
+        paidAt: paidAtFormatted,
+      },
+      locale,
+      this.buildLiffUrl('/member/subscription/current')
+    )
+  }
+
+  private buildPaymentSuccessLegacyTextMessage(
+    payment: {
+      amount: { toString(): string } | number | string
+      method: string
+      transactionReference?: string | null
+      paymentId: bigint
+      subscription?: { package?: { name: string } | null } | null
+    },
+    locale: LineMessageLocale
+  ): LineMessage {
+    const template = LINE_MESSAGE_TEMPLATES[locale]
+    const packageName = payment.subscription?.package?.name ?? 'Gói tập hội viên'
+    const formattedAmount = formatAmount(payment.amount.toString(), locale)
+    const text = template.paymentSuccess({
+      packageName,
+      amount: formattedAmount,
+      paymentMethod: payment.method,
+      paymentCode: payment.transactionReference || payment.paymentId.toString(),
+    })
+    return this.withLiffButton(text, template.detailButton, '/member/subscription/current')
+  }
+
+  private async pushTrainingSessionCompleted(sessionId: bigint): Promise<boolean> {
+    if (!this.canPushMessages()) return false
+
+    const session = await this.prisma.trainingSession.findFirst({
+      where: { sessionId, deletedAt: null },
+      include: {
+        member: { select: { userId: true, user: { select: { lineId: true, fullName: true } } } },
+        trainer: { select: { user: { select: { fullName: true } } } },
+        room: { select: { name: true } },
+        planDay: { select: { name: true } },
+      },
+    })
+    if (!session?.member.user.lineId) return false
+
+    const locale = this.getLocale()
+    let message: LineMessage
+
+    try {
+      message = this.buildTrainingCompletedFlexMessage(session, locale)
+    } catch (error) {
+      this.logger.warn(
+        `Flex builder failed for training.completed (sessionId=${sessionId.toString()}): ${this.describeError(error)}, falling back to text`
+      )
+      message = this.buildTrainingCompletedLegacyTextMessage(session, locale)
+    }
+
+    return this.pushMessage(session.member.user.lineId, [message])
+  }
+
+  private buildTrainingCompletedFlexMessage(
+    session: {
+      sessionId: bigint
+      startTime: Date
+      trainer: { user: { fullName: string } }
+      room?: { name: string } | null
+      planDay?: { name: string } | null
+    },
+    locale: LineMessageLocale
+  ): LineFlexMessage {
+    const template = this.getMessageTemplate()
+    const when = this.formatDateTime(session.startTime, template.dateLocale)
+    const sessionName = session.planDay?.name
+    const trainerName = session.trainer.user.fullName
+    const roomName = session.room?.name
+    const reviewUrl = this.buildLiffUrl('/member/feedback/send')
+    const historyUrl = this.buildLiffUrl('/member/workout/sessions')
+
+    return buildTrainingCompletedFlex(
+      { sessionName, when, trainerName, roomName },
+      locale,
+      reviewUrl,
+      historyUrl
+    )
+  }
+
+  private buildTrainingCompletedLegacyTextMessage(
+    session: {
+      trainer: { user: { fullName: string } }
+      planDay?: { name: string } | null
+    },
+    locale: LineMessageLocale
+  ): LineMessage {
+    const template = LINE_MESSAGE_TEMPLATES[locale]
+    const text = template.trainingCompleted({
+      trainerName: session.trainer.user.fullName,
+      sessionName: session.planDay?.name,
+    })
+    return this.withLiffButton(text, template.reviewButton, '/member/feedback/send')
+  }
+
+  private async pushFeedbackResponded(feedbackId: bigint): Promise<boolean> {
+    if (!this.canPushMessages()) return false
+
+    const feedback = await this.prisma.feedback.findFirst({
+      where: { feedbackId, deletedAt: null },
+      include: {
+        member: { select: { user: { select: { lineId: true } } } },
+        handledByStaff: { select: { user: { select: { fullName: true } } } },
+      },
+    })
+    if (!feedback?.member.user.lineId) return false
+
+    const locale = this.getLocale()
+    let message: LineMessage
+
+    try {
+      message = this.buildFeedbackRespondedFlexMessage(feedback, locale)
+    } catch (error) {
+      this.logger.warn(
+        `Flex builder failed for feedback.responded (feedbackId=${feedbackId.toString()}): ${this.describeError(error)}, falling back to text`
+      )
+      message = this.buildFeedbackRespondedLegacyTextMessage(feedback, locale)
+    }
+
+    return this.pushMessage(feedback.member.user.lineId, [message])
+  }
+
+  private buildFeedbackRespondedFlexMessage(
+    feedback: {
+      content: string
+      handledAt?: Date | null
+      resolutionNote?: string | null
+      handledByStaff?: { user: { fullName: string } } | null
+    },
+    locale: LineMessageLocale
+  ): LineFlexMessage {
+    const template = this.getMessageTemplate()
+    const respondedAt = feedback.handledAt
+      ? this.formatDateTime(feedback.handledAt, template.dateLocale)
+      : this.formatDateTime(new Date(), template.dateLocale)
+    const feedbackTitle = feedback.content
+      ? feedback.content.length > 30
+        ? feedback.content.slice(0, 30) + '...'
+        : feedback.content
+      : undefined
+    const responderName = feedback.handledByStaff?.user.fullName
+
+    return buildFeedbackRespondedFlex(
+      {
+        feedbackTitle,
+        respondedAt,
+        responderName,
+      },
+      locale,
+      this.buildLiffUrl('/member/feedback')
+    )
+  }
+
+  private buildFeedbackRespondedLegacyTextMessage(
+    feedback: {
+      content: string
+    },
+    locale: LineMessageLocale
+  ): LineMessage {
+    const template = LINE_MESSAGE_TEMPLATES[locale]
+    const feedbackTitle = feedback.content
+      ? feedback.content.length > 30
+        ? feedback.content.slice(0, 30) + '...'
+        : feedback.content
+      : undefined
+    const text = template.feedbackResponded({ feedbackTitle })
+    return this.withLiffButton(text, template.feedbackButton, '/member/feedback')
   }
 
   private buildTrainingText(

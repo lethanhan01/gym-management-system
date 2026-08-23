@@ -3,9 +3,10 @@ import { PaymentsController, PaymentAccountsController } from './payments.contro
 import { PaymentsService } from './payments.service'
 import { AuditService } from '../common/audit/audit.service'
 import { NotificationsModule } from '../notifications/notifications.module'
+import { LineMessagingModule } from '../line-messaging/line-messaging.module'
 
 @Module({
-  imports: [NotificationsModule],
+  imports: [NotificationsModule, LineMessagingModule],
   controllers: [PaymentsController, PaymentAccountsController],
   providers: [PaymentsService, AuditService],
   exports: [PaymentsService],

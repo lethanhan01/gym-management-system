@@ -82,6 +82,9 @@ const mockNotifications = {
   safeNotifyManyUsers: jest.fn(),
   safeNotifyGroups: jest.fn(),
 }
+const mockLineMessaging = {
+  safePushFeedbackResponded: jest.fn().mockResolvedValue(true),
+}
 
 // ---------------------------------------------------------------------------
 // Suite
@@ -91,7 +94,12 @@ describe('FeedbackService', () => {
   let service: FeedbackService
 
   beforeEach(() => {
-    service = new FeedbackService(mockPrisma as any, mockAudit as any, mockNotifications as any)
+    service = new FeedbackService(
+      mockPrisma as any,
+      mockAudit as any,
+      mockNotifications as any,
+      mockLineMessaging as any
+    )
     jest.clearAllMocks()
   })
 
@@ -423,10 +431,15 @@ describe('FeedbackService', () => {
       expect(mockAudit.log).toHaveBeenCalledWith(
         expect.objectContaining({ action: 'feedback.resolve' })
       )
+      expect(mockNotifications.safeNotifyUser).toHaveBeenCalledWith(
+        100n,
+        expect.objectContaining({ type: 'feedback.resolved' })
+      )
+      expect(mockLineMessaging.safePushFeedbackResponded).toHaveBeenCalledWith(10n)
       expect((result.data as any).status).toBe('resolved')
     })
 
-    it('in_progress→rejected: calls audit.log feedback.reject', async () => {
+    it('in_progress→rejected: calls audit.log feedback.reject and triggers safePushFeedbackResponded', async () => {
       mockPrisma.feedback.findFirst.mockResolvedValue(makeFeedback({ status: 'in_progress' }))
       const updated = makeFeedback({ status: 'rejected', handledAt: new Date('2024-01-10') })
       mockPrisma.feedback.update.mockResolvedValue(updated)
@@ -441,6 +454,11 @@ describe('FeedbackService', () => {
       expect(mockAudit.log).toHaveBeenCalledWith(
         expect.objectContaining({ action: 'feedback.reject' })
       )
+      expect(mockNotifications.safeNotifyUser).toHaveBeenCalledWith(
+        100n,
+        expect.objectContaining({ type: 'feedback.rejected' })
+      )
+      expect(mockLineMessaging.safePushFeedbackResponded).toHaveBeenCalledWith(10n)
     })
   })
 })

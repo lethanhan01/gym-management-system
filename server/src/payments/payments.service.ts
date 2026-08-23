@@ -10,6 +10,7 @@ import { AuthenticatedUser } from '../auth/types/jwt-payload.interface'
 import { AuditService } from '../common/audit/audit.service'
 import { PrismaService } from '../prisma/prisma.service'
 import { NotificationsService } from '../notifications/notifications.service'
+import { LineMessagingService } from '../line-messaging/line-messaging.service'
 import { CreatePaymentDto } from './dto/create-payment.dto'
 import { ListPaymentsDto } from './dto/list-payments.dto'
 import { CreatePaymentAccountDto } from './dto/create-payment-account.dto'
@@ -28,7 +29,8 @@ export class PaymentsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly audit: AuditService,
-    private readonly notifications: NotificationsService
+    private readonly notifications: NotificationsService,
+    private readonly lineMessaging: LineMessagingService
   ) {}
 
   async createPayment(dto: CreatePaymentDto, caller: AuthenticatedUser) {
@@ -338,6 +340,9 @@ export class PaymentsService {
       },
       dedupeKey: `payment:${args.paymentId.toString()}:${args.status}`,
     })
+    if (isSuccess) {
+      await this.lineMessaging.safePushPaymentSuccess(args.paymentId)
+    }
     await this.notifications.safeNotifyGroups(
       ['owner', 'staff'],
       {

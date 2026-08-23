@@ -38,6 +38,12 @@ const mockPrisma = {
   subscription: {
     findFirst: jest.fn(),
   },
+  payment: {
+    findFirst: jest.fn(),
+  },
+  feedback: {
+    findFirst: jest.fn(),
+  },
 }
 
 const defaultEnv: Record<string, unknown> = {
@@ -870,6 +876,254 @@ describe('LineMessagingService', () => {
       jest.spyOn(service, 'assignRichMenu').mockRejectedValueOnce(new Error('Network error'))
 
       const result = await service.safeAssignRichMenu('U123')
+      expect(result).toBe(false)
+    })
+  })
+
+  describe('safePushPaymentSuccess', () => {
+    const makePaymentRow = (overrides = {}) => ({
+      paymentId: 501n,
+      amount: '500000',
+      method: 'vnpay',
+      transactionReference: 'VNP123456',
+      paidAt: new Date('2026-08-20T10:00:00Z'),
+      subscription: {
+        package: { name: 'Gói VIP 12 Tháng' },
+      },
+      member: {
+        user: { lineId: 'U_PAYER_123' },
+      },
+      ...overrides,
+    })
+
+    it('pushes payment.success Flex Card (vi)', async () => {
+      mockPrisma.payment.findFirst.mockResolvedValueOnce(makePaymentRow())
+
+      const result = await service.safePushPaymentSuccess(501n)
+
+      expect(result).toBe(true)
+      expect(mockFetch).toHaveBeenCalledWith(
+        'https://api.line.me/v2/bot/message/push',
+        expect.objectContaining({
+          method: 'POST',
+          body: expect.stringContaining('THANH TOÁN THÀNH CÔNG'),
+        })
+      )
+      const sentPayload = JSON.parse(mockFetch.mock.calls[0][1].body)
+      expect(sentPayload.to).toBe('U_PAYER_123')
+      expect(sentPayload.messages[0].type).toBe('flex')
+      expect(sentPayload.messages[0].contents.header.contents[1].backgroundColor).toBe('#1a3326')
+    })
+
+    it('pushes payment.success Flex Card (ja)', async () => {
+      env.LINE_MESSAGE_LOCALE = 'ja'
+      mockPrisma.payment.findFirst.mockResolvedValueOnce(makePaymentRow())
+
+      const result = await service.safePushPaymentSuccess(501n)
+
+      expect(result).toBe(true)
+      const sentPayload = JSON.parse(mockFetch.mock.calls[0][1].body)
+      expect(sentPayload.messages[0].type).toBe('flex')
+      expect(sentPayload.messages[0].altText).toContain('お支払いが完了しました')
+    })
+
+    it('falls back to plain text when Flex builder throws', async () => {
+      mockPrisma.payment.findFirst.mockResolvedValueOnce(makePaymentRow())
+      jest.spyOn(flexBuilder, 'buildPaymentSuccessFlex').mockImplementationOnce(() => {
+        throw new Error('Builder failed')
+      })
+
+      const result = await service.safePushPaymentSuccess(501n)
+
+      expect(result).toBe(true)
+      const sentPayload = JSON.parse(mockFetch.mock.calls[0][1].body)
+      expect(sentPayload.messages[0].type).toBe('text')
+      expect(sentPayload.messages[0].text).toContain('Thanh toán thành công gói tập')
+      expect(
+        decodeURIComponent(
+          decodeURIComponent(sentPayload.messages[0].quickReply.items[0].action.uri)
+        )
+      ).toContain('/member/subscription/current')
+    })
+
+    it('returns false when member has no lineId', async () => {
+      mockPrisma.payment.findFirst.mockResolvedValueOnce(
+        makePaymentRow({ member: { user: { lineId: null } } })
+      )
+
+      const result = await service.safePushPaymentSuccess(501n)
+
+      expect(result).toBe(false)
+      expect(mockFetch).not.toHaveBeenCalled()
+    })
+
+    it('catches error and returns false when push fails', async () => {
+      mockPrisma.payment.findFirst.mockRejectedValueOnce(new Error('DB Error'))
+
+      const result = await service.safePushPaymentSuccess(501n)
+
+      expect(result).toBe(false)
+    })
+  })
+
+  describe('safePushTrainingSessionCompleted', () => {
+    const makeCompletedSession = (overrides = {}) => ({
+      sessionId: 601n,
+      startTime: new Date('2026-08-20T10:00:00Z'),
+      member: { userId: 100n, user: { lineId: 'U_TRAINEE_123', fullName: 'Học viên A' } },
+      trainer: { user: { fullName: 'HLV Minh' } },
+      room: { name: 'Phòng PT 01' },
+      planDay: { name: 'Tập Lưng Xô' },
+      ...overrides,
+    })
+
+    it('pushes training.completed Flex Card with 2 CTA buttons (vi)', async () => {
+      mockPrisma.trainingSession.findFirst.mockResolvedValueOnce(makeCompletedSession())
+
+      const result = await service.safePushTrainingSessionCompleted(601n)
+
+      expect(result).toBe(true)
+      const sentPayload = JSON.parse(mockFetch.mock.calls[0][1].body)
+      expect(sentPayload.to).toBe('U_TRAINEE_123')
+      expect(sentPayload.messages[0].type).toBe('flex')
+      expect(sentPayload.messages[0].contents.header.contents[1].backgroundColor).toBe('#1a3326')
+      expect(sentPayload.messages[0].contents.footer.contents).toHaveLength(2)
+      expect(
+        decodeURIComponent(
+          decodeURIComponent(sentPayload.messages[0].contents.footer.contents[0].action.uri)
+        )
+      ).toContain('/member/feedback/send')
+      expect(
+        decodeURIComponent(
+          decodeURIComponent(sentPayload.messages[0].contents.footer.contents[1].action.uri)
+        )
+      ).toContain('/member/workout/sessions')
+    })
+
+    it('pushes training.completed Flex Card (ja)', async () => {
+      env.LINE_MESSAGE_LOCALE = 'ja'
+      mockPrisma.trainingSession.findFirst.mockResolvedValueOnce(makeCompletedSession())
+
+      const result = await service.safePushTrainingSessionCompleted(601n)
+
+      expect(result).toBe(true)
+      const sentPayload = JSON.parse(mockFetch.mock.calls[0][1].body)
+      expect(sentPayload.messages[0].altText).toContain('トレーニングセッションが完了しました')
+    })
+
+    it('falls back to plain text when Flex builder throws', async () => {
+      mockPrisma.trainingSession.findFirst.mockResolvedValueOnce(makeCompletedSession())
+      jest.spyOn(flexBuilder, 'buildTrainingCompletedFlex').mockImplementationOnce(() => {
+        throw new Error('Builder failed')
+      })
+
+      const result = await service.safePushTrainingSessionCompleted(601n)
+
+      expect(result).toBe(true)
+      const sentPayload = JSON.parse(mockFetch.mock.calls[0][1].body)
+      expect(sentPayload.messages[0].type).toBe('text')
+      expect(sentPayload.messages[0].text).toContain('đã hoàn thành')
+      expect(
+        decodeURIComponent(
+          decodeURIComponent(sentPayload.messages[0].quickReply.items[0].action.uri)
+        )
+      ).toContain('/member/feedback/send')
+    })
+
+    it('returns false when member has no lineId', async () => {
+      mockPrisma.trainingSession.findFirst.mockResolvedValueOnce(
+        makeCompletedSession({ member: { userId: 100n, user: { lineId: null, fullName: 'A' } } })
+      )
+
+      const result = await service.safePushTrainingSessionCompleted(601n)
+
+      expect(result).toBe(false)
+      expect(mockFetch).not.toHaveBeenCalled()
+    })
+
+    it('catches error and returns false when push fails', async () => {
+      mockPrisma.trainingSession.findFirst.mockRejectedValueOnce(new Error('DB Error'))
+
+      const result = await service.safePushTrainingSessionCompleted(601n)
+
+      expect(result).toBe(false)
+    })
+  })
+
+  describe('safePushFeedbackResponded', () => {
+    const makeFeedbackRow = (overrides = {}) => ({
+      feedbackId: 701n,
+      content: 'Chất lượng phòng tập rất tốt nhưng máy lạnh hơi lạnh',
+      handledAt: new Date('2026-08-20T11:00:00Z'),
+      resolutionNote: 'Ban quản lý đã điều chỉnh nhiệt độ điều hòa',
+      member: { user: { lineId: 'U_FEEDBACK_123' } },
+      handledByStaff: { user: { fullName: 'Quản lý Hùng' } },
+      ...overrides,
+    })
+
+    it('pushes feedback.responded Flex Card with Tone info (vi)', async () => {
+      mockPrisma.feedback.findFirst.mockResolvedValueOnce(makeFeedbackRow())
+
+      const result = await service.safePushFeedbackResponded(701n)
+
+      expect(result).toBe(true)
+      const sentPayload = JSON.parse(mockFetch.mock.calls[0][1].body)
+      expect(sentPayload.to).toBe('U_FEEDBACK_123')
+      expect(sentPayload.messages[0].type).toBe('flex')
+      expect(sentPayload.messages[0].contents.header.contents[1].backgroundColor).toBe('#0c2838')
+      expect(
+        decodeURIComponent(
+          decodeURIComponent(sentPayload.messages[0].contents.footer.contents[0].action.uri)
+        )
+      ).toContain('/member/feedback')
+    })
+
+    it('pushes feedback.responded Flex Card (ja)', async () => {
+      env.LINE_MESSAGE_LOCALE = 'ja'
+      mockPrisma.feedback.findFirst.mockResolvedValueOnce(makeFeedbackRow())
+
+      const result = await service.safePushFeedbackResponded(701n)
+
+      expect(result).toBe(true)
+      const sentPayload = JSON.parse(mockFetch.mock.calls[0][1].body)
+      expect(sentPayload.messages[0].altText).toContain('ご意見への返答が届きました')
+    })
+
+    it('falls back to plain text when Flex builder throws', async () => {
+      mockPrisma.feedback.findFirst.mockResolvedValueOnce(makeFeedbackRow())
+      jest.spyOn(flexBuilder, 'buildFeedbackRespondedFlex').mockImplementationOnce(() => {
+        throw new Error('Builder failed')
+      })
+
+      const result = await service.safePushFeedbackResponded(701n)
+
+      expect(result).toBe(true)
+      const sentPayload = JSON.parse(mockFetch.mock.calls[0][1].body)
+      expect(sentPayload.messages[0].type).toBe('text')
+      expect(sentPayload.messages[0].text).toContain('đã nhận được phản hồi')
+      expect(
+        decodeURIComponent(
+          decodeURIComponent(sentPayload.messages[0].quickReply.items[0].action.uri)
+        )
+      ).toContain('/member/feedback')
+    })
+
+    it('returns false when member has no lineId', async () => {
+      mockPrisma.feedback.findFirst.mockResolvedValueOnce(
+        makeFeedbackRow({ member: { user: { lineId: null } } })
+      )
+
+      const result = await service.safePushFeedbackResponded(701n)
+
+      expect(result).toBe(false)
+      expect(mockFetch).not.toHaveBeenCalled()
+    })
+
+    it('catches error and returns false when push fails', async () => {
+      mockPrisma.feedback.findFirst.mockRejectedValueOnce(new Error('DB Error'))
+
+      const result = await service.safePushFeedbackResponded(701n)
+
       expect(result).toBe(false)
     })
   })
