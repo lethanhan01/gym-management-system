@@ -467,6 +467,12 @@
         "submit": "エクササイズを追加",
         "fieldExercise": "エクササイズ",
         "selectFromLib": "ライブラリから選択",
+        "searchPlaceholder": "エクササイズ名で検索...",
+        "loadMore": "さらに読み込む",
+        "loading": "読み込み中...",
+        "notFound": "該当するエクササイズが見つかりません",
+        "selected": "選択中",
+        "resultsCount": "{{count}} / {{total}} 件のエクササイズを表示中",
         "fieldNotes": "技術メモ",
         "hint": "セット数、レップ数（適用の場合）、トレーニング時間、休憩時間を入力してください。",
         "illustrationAlt": "{{name}}のイラスト"

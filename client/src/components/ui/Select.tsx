@@ -14,6 +14,7 @@ export type SelectOptionProps = {
 export interface SelectProps {
   children: ReactNode
   className?: string
+  contentClassName?: string
   value: string
   onValueChange: (value: string) => void
   disabled?: boolean
@@ -26,6 +27,7 @@ export interface SelectProps {
 export function Select({
   children,
   className,
+  contentClassName,
   value,
   onValueChange,
   disabled,
@@ -73,7 +75,7 @@ export function Select({
       </RadixSelect.Trigger>
       <RadixSelect.Portal>
         <RadixSelect.Content
-          className="rogym-select__content"
+          className={cn('rogym-select__content', contentClassName)}
           position="popper"
           sideOffset={8}
           align="start"

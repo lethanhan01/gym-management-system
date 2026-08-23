@@ -31,6 +31,7 @@ function CalendarDropdown({
         name={name}
         ariaLabel={ariaLabel}
         className="rogym-date-picker__select"
+        contentClassName="rogym-date-picker__select-content"
         value={String(value ?? '')}
         onValueChange={handleValueChange}
       >
@@ -47,6 +48,8 @@ export interface DateTimePickerInputProps {
   disabled?: boolean
   min?: string // 'yyyy-MM-dd' or 'yyyy-MM-ddTHH:mm'
   max?: string
+  fromYear?: number
+  toYear?: number
   'aria-label'?: string
   className?: string
   minuteStep?: number
@@ -68,6 +71,8 @@ export function DateTimePickerInput({
   disabled = false,
   min,
   max,
+  fromYear,
+  toYear,
   'aria-label': ariaLabel,
   className,
   minuteStep = 5,
@@ -91,19 +96,23 @@ export function DateTimePickerInput({
   const fromDate = parsedMin && isValid(parsedMin) ? parsedMin : undefined
   const toDate = parsedMax && isValid(parsedMax) ? parsedMax : undefined
   const currentYear = new Date().getFullYear()
-  const calendarFromDate = fromDate ?? new Date(DEFAULT_FROM_YEAR, 0, 1)
+  const calendarFromDate =
+    fromDate ??
+    (fromYear ? new Date(fromYear, 0, 1) : new Date(DEFAULT_FROM_YEAR, 0, 1))
   const calendarToDate =
     toDate ??
-    new Date(
-      fromDate
-        ? Math.max(
-            currentYear + DEFAULT_FUTURE_YEARS,
-            fromDate.getFullYear() + DEFAULT_FUTURE_YEARS
-          )
-        : currentYear + DEFAULT_FUTURE_YEARS,
-      11,
-      31
-    )
+    (toYear
+      ? new Date(toYear, 11, 31)
+      : new Date(
+          fromDate
+            ? Math.max(
+                currentYear + DEFAULT_FUTURE_YEARS,
+                fromDate.getFullYear() + DEFAULT_FUTURE_YEARS
+              )
+            : currentYear + DEFAULT_FUTURE_YEARS,
+          11,
+          31
+        ))
 
   function handleDateSelect(date: Date | undefined) {
     if (!date) return
@@ -169,7 +178,7 @@ export function DateTimePickerInput({
             classNames={{
               root: 'rdp rogym-date-picker',
               months: 'flex flex-col',
-              month: 'space-y-2',
+              month: 'space-y-1',
               caption: 'rogym-date-picker__caption',
               caption_dropdowns: 'rogym-date-picker__caption-dropdowns',
               caption_label: 'rogym-date-picker__caption-label',
@@ -177,7 +186,7 @@ export function DateTimePickerInput({
               dropdown_year: 'rogym-date-picker__dropdown is-year',
               table: 'w-full border-collapse',
               head_row: 'flex',
-              head_cell: 'rogym-text-muted w-8 text-center text-xs font-normal pb-1',
+              head_cell: 'rogym-text-muted w-8 text-center text-xs font-normal pb-0.5',
               row: 'flex w-full mt-0.5',
               cell: 'h-8 w-8 text-center text-sm relative',
               day: cn(

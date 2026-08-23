@@ -23,6 +23,7 @@ import {
   TrainerStatusBadge,
 } from '@/components/TrainerUI'
 import { ExerciseTargetFields, NumberField } from '@/components/workout/PlanBuilderUI'
+import { ExerciseSearchPicker } from '@/components/workout/ExerciseSearchPicker'
 
 type DeleteTarget =
   | { type: 'day'; day: WorkoutPlanDay }
@@ -34,7 +35,7 @@ export default function TrainerPlanBuilderPage() {
   const { id = '' } = useParams()
   const navigate = useNavigate()
   const [plan, setPlan] = useState<WorkoutPlan | null>(null)
-  const [exercises, setExercises] = useState<Exercise[]>([])
+  const [selectedExercise, setSelectedExercise] = useState<Exercise | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [writeBlocked, setWriteBlocked] = useState(false)
@@ -47,7 +48,6 @@ export default function TrainerPlanBuilderPage() {
   const [dayName, setDayName] = useState('')
   const [dayNotes, setDayNotes] = useState('')
   const [exerciseDay, setExerciseDay] = useState<WorkoutPlanDay | null>(null)
-  const [exerciseId, setExerciseId] = useState('')
   const [targetSets, setTargetSets] = useState(3)
   const [targetReps, setTargetReps] = useState(10)
   const [targetDuration, setTargetDuration] = useState(60)
@@ -76,13 +76,9 @@ export default function TrainerPlanBuilderPage() {
     setLoading(true)
     setError(null)
     try {
-      const [planData, exerciseData] = await Promise.all([
-        workoutService.getPlan(id),
-        workoutService.getExercises({ pageSize: 100 }),
-      ])
+      const planData = await workoutService.getPlan(id)
       setPlan(planData)
       if (planData.status === 'archived') setWriteBlocked(true)
-      setExercises(exerciseData.data)
     } catch (err) {
       setError(getApiError(err, t('plans.builder.error.loadFailed')))
     } finally {
@@ -94,10 +90,6 @@ export default function TrainerPlanBuilderPage() {
     void load()
   }, [load])
 
-  const selectedExercise = useMemo(
-    () => exercises.find((exercise) => exercise.exerciseId === exerciseId) ?? null,
-    [exerciseId, exercises]
-  )
   const readonly = writeBlocked || plan?.status === 'archived'
   const exerciseCount = useMemo(
     () => plan?.days?.reduce((sum, day) => sum + (day.exercises?.length ?? 0), 0) ?? 0,
@@ -204,7 +196,7 @@ export default function TrainerPlanBuilderPage() {
 
   const openAddExercise = useCallback((day: WorkoutPlanDay) => {
     setExerciseDay(day)
-    setExerciseId('')
+    setSelectedExercise(null)
     setTargetSets(3)
     setTargetReps(10)
     setTargetDuration(60)
@@ -253,6 +245,7 @@ export default function TrainerPlanBuilderPage() {
         notes: exerciseNotes.trim() || undefined,
       })
       setExerciseDay(null)
+      setSelectedExercise(null)
       await load()
     } catch (err) {
       handleMutationError(err, t('plans.builder.error.addExerciseFailed'), () => addExercise(event))
@@ -566,7 +559,7 @@ export default function TrainerPlanBuilderPage() {
             <SubmitButton
               form="plan-exercise-form"
               loading={submitting}
-              disabled={!exerciseId || targetSets < 1}
+              disabled={!selectedExercise || targetSets < 1}
             >
               {t('plans.builder.exerciseModal.submit')}
             </SubmitButton>
@@ -574,39 +567,14 @@ export default function TrainerPlanBuilderPage() {
         }
       >
         <form id="plan-exercise-form" className="space-y-4" onSubmit={addExercise}>
-          <label className="block space-y-2">
+          <div className="space-y-2">
             <span className="rogym-field-label">{t('plans.builder.exerciseModal.fieldExercise')}</span>
-            <TrainerSelect value={exerciseId} onValueChange={setExerciseId} required>
-              <option value="">{t('plans.builder.exerciseModal.selectFromLib')}</option>
-              {exercises.map((exercise) => (
-                <option key={exercise.exerciseId} value={exercise.exerciseId}>
-                  {exercise.name} - {exercise.targetMuscle?.name ?? '—'}
-                </option>
-              ))}
-            </TrainerSelect>
-          </label>
-          {selectedExercise && (
-            <div className="flex gap-4 rounded-2xl border border-white/5 bg-white/[0.025] p-4">
-              {selectedExercise.gifUrl && (
-                <div className="h-24 w-28 shrink-0 overflow-hidden rounded-xl bg-white p-1.5 flex items-center justify-center">
-                  <img
-                    src={selectedExercise.gifUrl}
-                    alt={t('plans.builder.exerciseModal.illustrationAlt', { name: selectedExercise.name })}
-                    className="h-full w-full object-contain"
-                    loading="lazy"
-                  />
-                </div>
-              )}
-              <div className="text-sm rogym-text-secondary">
-                <div className="font-semibold text-white">{selectedExercise.name}</div>
-                <div className="mt-1">
-                  {selectedExercise.targetMuscle?.name ?? t('plans.builder.dayCard.bodyPart')} ·{' '}
-                  {selectedExercise.equipment?.name ?? t('plans.builder.dayCard.noEquipment')}
-                </div>
-                <p className="mt-2 line-clamp-3">{selectedExercise.description}</p>
-              </div>
-            </div>
-          )}
+            <ExerciseSearchPicker
+              selectedExercise={selectedExercise}
+              onSelectExercise={setSelectedExercise}
+            />
+          </div>
+
           <ExerciseTargetFields
             isCardio={selectedExercise?.bodyPart?.name?.toLowerCase() === 'cardio'}
             durationMode="always"
