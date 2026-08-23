@@ -107,8 +107,10 @@
 
   .rogym-select__content {
     z-index: 100;
-    width: var(--radix-select-trigger-width);
-    max-height: var(--radix-select-content-available-height);
+    min-width: var(--radix-select-trigger-width);
+    width: max-content;
+    max-width: min(90vw, 22rem);
+    max-height: min(var(--radix-select-content-available-height, 16rem), 16rem);
     overflow: hidden;
     border: 1px solid var(--rogym-border-teal-hover);
     border-radius: 1rem;
