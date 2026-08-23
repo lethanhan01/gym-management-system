@@ -18,6 +18,8 @@ Thư mục `docs/VI` tập hợp tài liệu tiếng Việt của dự án, từ
 | Coverage, CI và SonarQube | [code-quality.md](./code-quality.md) |
 | Đánh giá SOLID, coupling và cohesion | [reports](./reports/) |
 | Hướng dẫn Hủy follow / Block ROGYM trên LINE & Cơ chế Webhook | [line-unfollow-guide.md](./line-unfollow-guide.md) |
+| Đặc tả Hệ thống LINE Messaging API (Sự kiện & Dữ liệu gửi tin) | [line-messaging-specification.md](./line-messaging-specification.md) |
+| Kế hoạch Triển khai Nâng cấp LINE Flex Message (Phased Plan) | [line-flex-message-upgrade-plan.md](./line-flex-message-upgrade-plan.md) |
 
 ## 2. Phạm vi tài liệu hiện tại
 
