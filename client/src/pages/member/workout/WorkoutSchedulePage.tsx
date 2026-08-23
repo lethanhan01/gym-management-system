@@ -20,6 +20,7 @@ import {
 import { BookPtSessionModal } from './BookPtSessionModal'
 import { CancelPtBookingModal } from './CancelPtBookingModal'
 import {
+  Alert,
   Button,
   Card,
   Modal,
@@ -724,6 +725,10 @@ function SessionDetailModal({
 }) {
   const { t, i18n } = useTranslation('member')
   const exercises = session?.planDay?.exercises ?? []
+  const isWithin2Hours =
+    session?.status === 'scheduled' && session?.startTime
+      ? new Date(session.startTime).getTime() - Date.now() < 2 * 60 * 60 * 1000
+      : false
 
   return (
     <Modal
@@ -734,26 +739,13 @@ function SessionDetailModal({
       footer={
         session ? (
           <>
-            {session.status === 'scheduled' && onCancel && (
-              (() => {
-                const isWithin2Hours =
-                  new Date(session.startTime).getTime() - Date.now() < 2 * 60 * 60 * 1000
-                if (isWithin2Hours) {
-                  return (
-                    <span className="text-xs text-amber-400 font-medium px-2.5 py-1 bg-amber-400/10 border border-amber-400/20 rounded-lg">
-                      {t('workout.schedule.booking.lateCancelWarning')}
-                    </span>
-                  )
-                }
-                return (
-                  <Button
-                    variant="danger"
-                    onClick={() => onCancel(session)}
-                  >
-                    {t('workout.schedule.booking.cancelBtn')}
-                  </Button>
-                )
-              })()
+            {session.status === 'scheduled' && onCancel && !isWithin2Hours && (
+              <Button
+                variant="danger"
+                onClick={() => onCancel(session)}
+              >
+                {t('workout.schedule.booking.cancelBtn')}
+              </Button>
             )}
             <Button
               variant="primary"
@@ -852,6 +844,13 @@ function SessionDetailModal({
                     )
                   })}
               </section>
+            )}
+
+            {isWithin2Hours && (
+              <Alert
+                tone="warning"
+                description={t('workout.schedule.booking.lateCancelWarning')}
+              />
             )}
 
             <div className="border-t border-white/10 pt-4">
