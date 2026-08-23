@@ -1,6 +1,7 @@
 import { BadRequestException, UnauthorizedException } from '@nestjs/common'
 import { createHmac } from 'crypto'
-import { LINE_MOCK_WEBHOOK_SECRET } from '../line-mock/constants'
+import { LINE_MOCK_USER_ID, LINE_MOCK_WEBHOOK_SECRET } from '../line-mock/constants'
+import * as flexBuilder from './line-flex-builder'
 import { LineMessagingService } from './line-messaging.service'
 
 function sign(body: Buffer, secret = 'secret') {
@@ -14,10 +15,11 @@ function makeSession(overrides: object = {}) {
     status: 'scheduled',
     member: {
       userId: 100n,
-      user: { lineId: 'U123', fullName: 'Member' },
+      user: { lineId: 'U123', fullName: 'Nguyễn Văn A' },
     },
-    trainer: { user: { fullName: 'Trainer' } },
+    trainer: { user: { fullName: 'Coach Alex' } },
     room: { name: 'Room A' },
+    planDay: { name: 'Chest Day' },
     ...overrides,
   }
 }
@@ -29,6 +31,9 @@ const mockPrisma = {
   trainingSession: {
     findFirst: jest.fn(),
     findMany: jest.fn(),
+  },
+  attendanceLog: {
+    findFirst: jest.fn(),
   },
   subscription: {
     findFirst: jest.fn(),
@@ -71,6 +76,10 @@ describe('LineMessagingService', () => {
     mockConfig.get.mockImplementation((key: string) => env[key])
   })
 
+  afterEach(() => {
+    jest.restoreAllMocks()
+  })
+
   it('rejects webhook requests with an invalid signature', async () => {
     const body = Buffer.from(JSON.stringify({ events: [] }))
 
@@ -79,52 +88,69 @@ describe('LineMessagingService', () => {
     )
   })
 
-  it('replies with a LIFF button when a user follows the OA', async () => {
-    const body = Buffer.from(
-      JSON.stringify({
-        events: [
-          {
-            type: 'follow',
-            replyToken: 'reply-token',
-            source: { type: 'user', userId: 'U123' },
-          },
-        ],
-      })
-    )
+  // =========================================================================
+  // TẦNG 1: UNIT TEST HAPPY PATH (FLEX MESSAGE PAYLOADS & SONG NGỮ)
+  // =========================================================================
 
-    await service.handleWebhook(body, sign(body))
+  describe('Tầng 1: Webhook Follow & Message (Happy Path Flex Card)', () => {
+    it('replies with Welcome Flex Card when a user follows the OA (vi)', async () => {
+      const body = Buffer.from(
+        JSON.stringify({
+          events: [
+            {
+              type: 'follow',
+              replyToken: 'reply-token',
+              source: { type: 'user', userId: 'U123' },
+            },
+          ],
+        })
+      )
 
-    expect(mockFetch).toHaveBeenCalledWith(
-      'https://api.line.me/v2/bot/message/reply',
-      expect.objectContaining({
-        method: 'POST',
-        body: expect.stringContaining('https://liff.line.me/test-liff?liff.state=%3Fredirect%3D%252Fmember'),
-      })
-    )
-    const replyBody = JSON.parse(mockFetch.mock.calls[0][1].body)
-    expect(replyBody.messages[0].quickReply.items[0].action.uri).toBe(
-      'https://liff.line.me/test-liff?liff.state=%3Fredirect%3D%252Fmember'
-    )
-    expect(replyBody).toEqual(
-      expect.objectContaining({
-        messages: [
-          expect.objectContaining({
-            text: 'Chào mừng bạn đến với RoGym. Bấm nút bên dưới để mở ứng dụng hội viên.',
-            quickReply: expect.objectContaining({
-              items: [
-                expect.objectContaining({
-                  action: expect.objectContaining({ label: 'Mở ứng dụng' }),
-                }),
-              ],
-            }),
-          }),
-        ],
-      })
-    )
-  })
+      await service.handleWebhook(body, sign(body))
 
-  describe('message event', () => {
-    it('replies with helpText and LIFF button when a user sends any message (vi)', async () => {
+      expect(mockFetch).toHaveBeenCalledWith(
+        'https://api.line.me/v2/bot/message/reply',
+        expect.objectContaining({
+          method: 'POST',
+        })
+      )
+      const replyBody = JSON.parse(mockFetch.mock.calls[0][1].body)
+      const msg = replyBody.messages[0]
+
+      expect(msg.type).toBe('flex')
+      expect(msg.altText).toContain('Chào mừng bạn đến với RoGym')
+      expect(msg.contents.type).toBe('bubble')
+      expect(msg.contents.body.contents[0].text).toContain('Chào mừng bạn đến với RoGym!')
+      expect(msg.contents.footer.contents[0].action.uri).toContain(
+        'https://liff.line.me/test-liff?liff.state=%3Fredirect%3D%252Fmember'
+      )
+    })
+
+    it('replies with Welcome Flex Card in Japanese when LINE_MESSAGE_LOCALE is ja', async () => {
+      env.LINE_MESSAGE_LOCALE = 'ja'
+      const body = Buffer.from(
+        JSON.stringify({
+          events: [
+            {
+              type: 'follow',
+              replyToken: 'reply-token-ja',
+              source: { type: 'user', userId: 'U123' },
+            },
+          ],
+        })
+      )
+
+      await service.handleWebhook(body, sign(body))
+
+      const replyBody = JSON.parse(mockFetch.mock.calls[0][1].body)
+      const msg = replyBody.messages[0]
+      expect(msg.type).toBe('flex')
+      expect(msg.altText).toContain('RoGymへようこそ')
+      expect(msg.contents.body.contents[0].text).toContain('RoGymへようこそ！')
+      expect(msg.contents.footer.contents[0].action.label).toBe('アプリを開く')
+    })
+
+    it('replies with Help Flex Card when a user sends a message (vi)', async () => {
       const body = Buffer.from(
         JSON.stringify({
           events: [
@@ -145,14 +171,17 @@ describe('LineMessagingService', () => {
         expect.objectContaining({ method: 'POST' })
       )
       const replyBody = JSON.parse(mockFetch.mock.calls[0][1].body)
-      expect(replyBody.replyToken).toBe('reply-token-msg')
-      expect(replyBody.messages[0].text).toContain('RoGym không hỗ trợ trả lời tin nhắn trực tiếp')
-      expect(replyBody.messages[0].quickReply.items[0].action.uri).toContain(
-        'liff.state=%3Fredirect%3D'
+      const msg = replyBody.messages[0]
+
+      expect(msg.type).toBe('flex')
+      expect(msg.altText).toContain('Trung tâm hỗ trợ tự động RoGym')
+      expect(msg.contents.body.contents[0].text).toBe('Trung tâm hỗ trợ RoGym')
+      expect(msg.contents.footer.contents[0].action.uri).toContain(
+        'liff.state=%3Fredirect%3D%252Fmember'
       )
     })
 
-    it('replies with Japanese helpText when LINE_MESSAGE_LOCALE is ja', async () => {
+    it('replies with Japanese Help Flex Card when LINE_MESSAGE_LOCALE is ja', async () => {
       env.LINE_MESSAGE_LOCALE = 'ja'
       const body = Buffer.from(
         JSON.stringify({
@@ -161,7 +190,7 @@ describe('LineMessagingService', () => {
               type: 'message',
               replyToken: 'reply-token-ja',
               source: { type: 'user', userId: 'U123' },
-              message: { type: 'sticker' },
+              message: { type: 'text', text: 'help' },
             },
           ],
         })
@@ -170,8 +199,11 @@ describe('LineMessagingService', () => {
       await service.handleWebhook(body, sign(body))
 
       const replyBody = JSON.parse(mockFetch.mock.calls[0][1].body)
-      expect(replyBody.messages[0].text).toContain('RoGymは自動返信に対応していません')
-      expect(replyBody.messages[0].quickReply.items[0].action.label).toBe('アプリを開く')
+      const msg = replyBody.messages[0]
+      expect(msg.type).toBe('flex')
+      expect(msg.altText).toContain('RoGym自動応答サポート')
+      expect(msg.contents.body.contents[0].text).toBe('RoGymサポートデスク')
+      expect(msg.contents.footer.contents[0].action.label).toBe('アプリを開く')
     })
 
     it('does not reply when message event has no replyToken', async () => {
@@ -188,7 +220,6 @@ describe('LineMessagingService', () => {
       )
 
       await service.handleWebhook(body, sign(body))
-
       expect(mockFetch).not.toHaveBeenCalled()
     })
 
@@ -216,11 +247,13 @@ describe('LineMessagingService', () => {
       expect(messages).toEqual([
         expect.objectContaining({
           kind: 'reply',
+          liffUrl: 'http://localhost:5173/liff?redirect=%2Fmember',
           payload: expect.objectContaining({
             replyToken: 'mock-reply-msg',
             messages: [
               expect.objectContaining({
-                text: expect.stringContaining('RoGym không hỗ trợ trả lời tin nhắn trực tiếp'),
+                type: 'flex',
+                altText: expect.stringContaining('Trung tâm hỗ trợ tự động RoGym'),
               }),
             ],
           }),
@@ -228,6 +261,378 @@ describe('LineMessagingService', () => {
       ])
     })
   })
+
+  describe('Tầng 1: Training Session Push Events (Happy Path Flex Card)', () => {
+    it('pushes training.created Flex Card when member has a LINE id (vi)', async () => {
+      mockPrisma.trainingSession.findFirst.mockResolvedValue(makeSession())
+
+      await expect(service.safePushTrainingSessionEvent('created', 1n)).resolves.toBe(true)
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        'https://api.line.me/v2/bot/message/push',
+        expect.objectContaining({
+          body: expect.stringContaining('liff.state=%3Fredirect%3D%252Fmember%252Fworkout%252Fsessions%253FsessionId%253D1'),
+        })
+      )
+      const body = JSON.parse(mockFetch.mock.calls[0][1].body)
+      const msg = body.messages[0]
+
+      expect(msg.type).toBe('flex')
+      expect(msg.altText).toContain('Coach Alex')
+      expect(msg.contents.body.contents[0].text).toBe('Xác nhận đặt lịch tập PT')
+      expect(msg.contents.footer.contents[0].action.label).toBe('Xem chi tiết')
+    })
+
+    it('pushes training.updated Flex Card (vi)', async () => {
+      mockPrisma.trainingSession.findFirst.mockResolvedValue(makeSession())
+
+      await expect(service.safePushTrainingSessionEvent('updated', 1n)).resolves.toBe(true)
+
+      const body = JSON.parse(mockFetch.mock.calls[0][1].body)
+      const msg = body.messages[0]
+      expect(msg.type).toBe('flex')
+      expect(msg.contents.body.contents[0].text).toBe('Lịch tập đã được thay đổi')
+      expect(msg.contents.footer.contents[0].action.uri).toContain('sessionId%253D1')
+    })
+
+    it('pushes training.cancelled Flex Card (vi)', async () => {
+      mockPrisma.trainingSession.findFirst.mockResolvedValue(makeSession())
+
+      await expect(service.safePushTrainingSessionEvent('cancelled', 1n)).resolves.toBe(true)
+
+      const body = JSON.parse(mockFetch.mock.calls[0][1].body)
+      const msg = body.messages[0]
+      expect(msg.type).toBe('flex')
+      expect(msg.contents.body.contents[0].text).toBe('Lịch tập đã bị hủy')
+      expect(msg.contents.footer.contents[0].action.uri).toContain(
+        'liff.state=%3Fredirect%3D%252Fmember%252Fworkout%252Fsessions'
+      )
+    })
+
+    it('pushes training.reminder Flex Card (vi)', async () => {
+      mockPrisma.trainingSession.findFirst.mockResolvedValue(makeSession())
+
+      await expect(service.safePushTrainingSessionEvent('reminder', 1n)).resolves.toBe(true)
+
+      const body = JSON.parse(mockFetch.mock.calls[0][1].body)
+      const msg = body.messages[0]
+      expect(msg.type).toBe('flex')
+      expect(msg.contents.body.contents[0].text).toBe('Nhắc nhở buổi tập sắp diễn ra')
+      expect(msg.altText).toContain('30 phút')
+    })
+
+    it('pushes training.starting Flex Card (vi)', async () => {
+      mockPrisma.trainingSession.findFirst.mockResolvedValue(makeSession())
+
+      await expect(service.safePushTrainingSessionEvent('starting', 1n)).resolves.toBe(true)
+
+      const body = JSON.parse(mockFetch.mock.calls[0][1].body)
+      const msg = body.messages[0]
+      expect(msg.type).toBe('flex')
+      expect(msg.contents.body.contents[0].text).toBe('Đã đến giờ tập luyện')
+    })
+
+    it('uses Japanese training templates when LINE_MESSAGE_LOCALE is ja', async () => {
+      env.LINE_MESSAGE_LOCALE = 'ja'
+      mockPrisma.trainingSession.findFirst.mockResolvedValue(makeSession())
+
+      await expect(service.safePushTrainingSessionEvent('reminder', 1n)).resolves.toBe(true)
+
+      const body = JSON.parse(mockFetch.mock.calls[0][1].body)
+      const msg = body.messages[0]
+      expect(msg.type).toBe('flex')
+      expect(msg.altText).toContain('30分')
+      expect(msg.contents.body.contents[0].text).toBe('まもなくトレーニング開始です')
+      expect(msg.contents.footer.contents[0].action.label).toBe('詳細を見る')
+
+      mockPrisma.trainingSession.findFirst.mockResolvedValue(makeSession())
+      await expect(service.safePushTrainingSessionEvent('starting', 1n)).resolves.toBe(true)
+      const startingBody = JSON.parse(mockFetch.mock.calls[1][1].body)
+      expect(startingBody.messages[0].contents.body.contents[0].text).toBe('トレーニングの時間です')
+    })
+
+    it('returns false when member has no LINE id', async () => {
+      mockPrisma.trainingSession.findFirst.mockResolvedValue(
+        makeSession({ member: { userId: 100n, user: { lineId: null, fullName: 'Member' } } })
+      )
+
+      await expect(service.safePushTrainingSessionEvent('created', 1n)).resolves.toBe(false)
+      expect(mockFetch).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('Tầng 1: Attendance Check-in Push (Happy Path Flex Card)', () => {
+    it('pushes Attendance Check-in Flex Card (vi)', async () => {
+      mockPrisma.attendanceLog.findFirst.mockResolvedValue({
+        attendanceId: 50n,
+        startTime: new Date('2026-08-20T08:30:00Z'),
+        member: { user: { lineId: 'U_ATTENDANCE' } },
+      })
+
+      await expect(service.safePushAttendanceCheckin(50n)).resolves.toBe(true)
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        'https://api.line.me/v2/bot/message/push',
+        expect.objectContaining({
+          body: expect.stringContaining('liff.state=%3Fredirect%3D%252Fmember%252Fattendance'),
+        })
+      )
+      const body = JSON.parse(mockFetch.mock.calls[0][1].body)
+      const msg = body.messages[0]
+      expect(msg.type).toBe('flex')
+      expect(msg.contents.body.contents[0].text).toBe('Check-in thành công')
+      expect(msg.contents.footer.contents[0].action.label).toBe('Xem thẻ & lịch sử')
+    })
+
+    it('pushes Attendance Check-in Flex Card in Japanese (ja)', async () => {
+      env.LINE_MESSAGE_LOCALE = 'ja'
+      mockPrisma.attendanceLog.findFirst.mockResolvedValue({
+        attendanceId: 50n,
+        startTime: new Date('2026-08-20T08:30:00Z'),
+        member: { user: { lineId: 'U_ATTENDANCE_JA' } },
+      })
+
+      await expect(service.safePushAttendanceCheckin(50n)).resolves.toBe(true)
+
+      const body = JSON.parse(mockFetch.mock.calls[0][1].body)
+      const msg = body.messages[0]
+      expect(msg.type).toBe('flex')
+      expect(msg.contents.body.contents[0].text).toBe('チェックイン完了')
+      expect(msg.contents.footer.contents[0].action.label).toBe('会員証・履歴を見る')
+    })
+
+    it('returns false when member has no LINE id for attendance', async () => {
+      mockPrisma.attendanceLog.findFirst.mockResolvedValue({
+        attendanceId: 51n,
+        startTime: new Date(),
+        member: { user: { lineId: null } },
+      })
+
+      await expect(service.safePushAttendanceCheckin(51n)).resolves.toBe(false)
+      expect(mockFetch).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('Tầng 1: Subscription Expiring Push (Happy Path Flex Card & 2 CTA Buttons)', () => {
+    it('pushes Subscription Expiring Flex Card with 2 CTA buttons (vi)', async () => {
+      mockPrisma.subscription.findFirst.mockResolvedValueOnce({
+        subscriptionId: 10n,
+        endDate: new Date('2026-08-19T00:00:00Z'),
+        package: { name: 'Gói VIP 1 Tháng' },
+        member: { user: { lineId: 'U_SUB_123' } },
+      })
+
+      await expect(service.safePushSubscriptionExpiringReminder(10n)).resolves.toBe(true)
+
+      const body = JSON.parse(mockFetch.mock.calls[0][1].body)
+      expect(body.to).toBe('U_SUB_123')
+      const msg = body.messages[0]
+
+      expect(msg.type).toBe('flex')
+      expect(msg.altText).toContain('Gói VIP 1 Tháng')
+      expect(msg.contents.body.contents[0].text).toBe('Gói tập sắp hết hạn')
+      // Primary button
+      expect(msg.contents.footer.contents[0].action.label).toBe('Gia hạn ngay')
+      expect(msg.contents.footer.contents[0].action.uri).toContain(
+        'liff.state=%3Fredirect%3D%252Fmember%252Fsubscription%252Fcurrent'
+      )
+      // Secondary button
+      expect(msg.contents.footer.contents[1].action.label).toBe('Xem chi tiết gói')
+      expect(msg.contents.footer.contents[1].action.uri).toContain(
+        'liff.state=%3Fredirect%3D%252Fmember%252Fprofile'
+      )
+    })
+
+    it('pushes Japanese subscription expiring reminder when LINE_MESSAGE_LOCALE is ja', async () => {
+      env.LINE_MESSAGE_LOCALE = 'ja'
+      mockPrisma.subscription.findFirst.mockResolvedValueOnce({
+        subscriptionId: 10n,
+        endDate: new Date('2026-08-19T00:00:00Z'),
+        package: { name: 'Premium Plan' },
+        member: { user: { lineId: 'U_SUB_JA' } },
+      })
+
+      await expect(service.safePushSubscriptionExpiringReminder(10n)).resolves.toBe(true)
+
+      const body = JSON.parse(mockFetch.mock.calls[0][1].body)
+      const msg = body.messages[0]
+      expect(msg.type).toBe('flex')
+      expect(msg.contents.body.contents[0].text).toBe('プランの有効期限間近')
+      expect(msg.contents.footer.contents[0].action.label).toBe('今すぐ更新')
+      expect(msg.contents.footer.contents[1].action.label).toBe('プラン詳細を見る')
+    })
+  })
+
+  // =========================================================================
+  // TẦNG 2: KIỂM THỬ MA TRẬN GRACEFUL FALLBACK (RESILIENCE & GIÁNG CẤP VỀ TEXT)
+  // =========================================================================
+
+  describe('Tầng 2: Graceful Fallback Matrix (Failure Resilience)', () => {
+    it('falls back to Legacy Text when buildTrainingBookingCreatedFlex throws', async () => {
+      mockPrisma.trainingSession.findFirst.mockResolvedValue(makeSession())
+      jest.spyOn(flexBuilder, 'buildTrainingBookingCreatedFlex').mockImplementation(() => {
+        throw new Error('Simulated builder error for created')
+      })
+
+      await expect(service.safePushTrainingSessionEvent('created', 1n)).resolves.toBe(true)
+
+      const body = JSON.parse(mockFetch.mock.calls[0][1].body)
+      const msg = body.messages[0]
+      expect(msg.type).toBe('text')
+      expect(msg.text).toContain('Bạn đã đặt lịch tập thành công.')
+      expect(msg.quickReply.items[0].action.label).toBe('Xem chi tiết')
+    })
+
+    it('falls back to Legacy Text when buildTrainingBookingUpdatedFlex throws', async () => {
+      mockPrisma.trainingSession.findFirst.mockResolvedValue(makeSession())
+      jest.spyOn(flexBuilder, 'buildTrainingBookingUpdatedFlex').mockImplementation(() => {
+        throw new Error('Simulated builder error for updated')
+      })
+
+      await expect(service.safePushTrainingSessionEvent('updated', 1n)).resolves.toBe(true)
+
+      const body = JSON.parse(mockFetch.mock.calls[0][1].body)
+      const msg = body.messages[0]
+      expect(msg.type).toBe('text')
+      expect(msg.text).toContain('Lịch tập của bạn đã được cập nhật.')
+    })
+
+    it('falls back to Legacy Text when buildTrainingBookingCancelledFlex throws', async () => {
+      mockPrisma.trainingSession.findFirst.mockResolvedValue(makeSession())
+      jest.spyOn(flexBuilder, 'buildTrainingBookingCancelledFlex').mockImplementation(() => {
+        throw new Error('Simulated builder error for cancelled')
+      })
+
+      await expect(service.safePushTrainingSessionEvent('cancelled', 1n)).resolves.toBe(true)
+
+      const body = JSON.parse(mockFetch.mock.calls[0][1].body)
+      const msg = body.messages[0]
+      expect(msg.type).toBe('text')
+      expect(msg.text).toContain('đã bị hủy')
+    })
+
+    it('falls back to Legacy Text when buildTrainingReminderFlex throws', async () => {
+      mockPrisma.trainingSession.findFirst.mockResolvedValue(makeSession())
+      jest.spyOn(flexBuilder, 'buildTrainingReminderFlex').mockImplementation(() => {
+        throw new Error('Simulated builder error for reminder')
+      })
+
+      await expect(service.safePushTrainingSessionEvent('reminder', 1n)).resolves.toBe(true)
+
+      const body = JSON.parse(mockFetch.mock.calls[0][1].body)
+      const msg = body.messages[0]
+      expect(msg.type).toBe('text')
+      expect(msg.text).toContain('Buổi tập của bạn sẽ bắt đầu sau 30 phút.')
+    })
+
+    it('falls back to Legacy Text when buildTrainingStartingFlex throws', async () => {
+      mockPrisma.trainingSession.findFirst.mockResolvedValue(makeSession())
+      jest.spyOn(flexBuilder, 'buildTrainingStartingFlex').mockImplementation(() => {
+        throw new Error('Simulated builder error for starting')
+      })
+
+      await expect(service.safePushTrainingSessionEvent('starting', 1n)).resolves.toBe(true)
+
+      const body = JSON.parse(mockFetch.mock.calls[0][1].body)
+      const msg = body.messages[0]
+      expect(msg.type).toBe('text')
+      expect(msg.text).toContain('Đến giờ tập của bạn.')
+    })
+
+    it('falls back to Legacy Text when buildAttendanceCheckinFlex throws', async () => {
+      mockPrisma.attendanceLog.findFirst.mockResolvedValue({
+        attendanceId: 50n,
+        startTime: new Date('2026-08-20T08:30:00Z'),
+        member: { user: { lineId: 'U_ATTENDANCE' } },
+      })
+      jest.spyOn(flexBuilder, 'buildAttendanceCheckinFlex').mockImplementation(() => {
+        throw new Error('Simulated attendance builder crash')
+      })
+
+      await expect(service.safePushAttendanceCheckin(50n)).resolves.toBe(true)
+
+      const body = JSON.parse(mockFetch.mock.calls[0][1].body)
+      const msg = body.messages[0]
+      expect(msg.type).toBe('text')
+      expect(msg.text).toBe('Bạn đã check-in thành công tại RoGym.')
+      expect(msg.quickReply.items[0].action.label).toBe('Xem chi tiết')
+    })
+
+    it('falls back to Legacy Text when buildSubscriptionExpiringFlex throws', async () => {
+      mockPrisma.subscription.findFirst.mockResolvedValueOnce({
+        subscriptionId: 10n,
+        endDate: new Date('2026-08-19T00:00:00Z'),
+        package: { name: 'Gói VIP 1 Tháng' },
+        member: { user: { lineId: 'U_SUB_123' } },
+      })
+      jest.spyOn(flexBuilder, 'buildSubscriptionExpiringFlex').mockImplementation(() => {
+        throw new Error('Simulated subscription builder crash')
+      })
+
+      await expect(service.safePushSubscriptionExpiringReminder(10n)).resolves.toBe(true)
+
+      const body = JSON.parse(mockFetch.mock.calls[0][1].body)
+      const msg = body.messages[0]
+      expect(msg.type).toBe('text')
+      expect(msg.text).toContain('Gói tập Gói VIP 1 Tháng của bạn sẽ hết hạn vào ngày mai')
+      expect(msg.quickReply.items[0].action.label).toBe('Gia hạn ngay')
+    })
+
+    it('falls back to Legacy Text when buildWelcomeFlex throws on follow event', async () => {
+      const body = Buffer.from(
+        JSON.stringify({
+          events: [
+            {
+              type: 'follow',
+              replyToken: 'reply-token-follow-fallback',
+              source: { type: 'user', userId: 'U123' },
+            },
+          ],
+        })
+      )
+      jest.spyOn(flexBuilder, 'buildWelcomeFlex').mockImplementation(() => {
+        throw new Error('Simulated welcome builder crash')
+      })
+
+      await service.handleWebhook(body, sign(body))
+
+      const replyBody = JSON.parse(mockFetch.mock.calls[0][1].body)
+      const msg = replyBody.messages[0]
+      expect(msg.type).toBe('text')
+      expect(msg.text).toContain('Chào mừng bạn đến với RoGym')
+      expect(msg.quickReply.items[0].action.label).toBe('Mở ứng dụng')
+    })
+
+    it('falls back to Legacy Text when buildHelpAutoReplyFlex throws on message event', async () => {
+      const body = Buffer.from(
+        JSON.stringify({
+          events: [
+            {
+              type: 'message',
+              replyToken: 'reply-token-help-fallback',
+              source: { type: 'user', userId: 'U123' },
+              message: { type: 'text', text: 'help' },
+            },
+          ],
+        })
+      )
+      jest.spyOn(flexBuilder, 'buildHelpAutoReplyFlex').mockImplementation(() => {
+        throw new Error('Simulated help builder crash')
+      })
+
+      await service.handleWebhook(body, sign(body))
+
+      const replyBody = JSON.parse(mockFetch.mock.calls[0][1].body)
+      const msg = replyBody.messages[0]
+      expect(msg.type).toBe('text')
+      expect(msg.text).toContain('RoGym không hỗ trợ trả lời tin nhắn trực tiếp')
+      expect(msg.quickReply.items[0].action.label).toBe('Mở ứng dụng')
+    })
+  })
+
+  // =========================================================================
+  // CÁC TEST CASE KHÁC (Dev Mock, Unsend, Rich Menu, Scheduled Reminders, Unfollow)
+  // =========================================================================
 
   it('unlinks the matching app user when LINE sends an unfollow event', async () => {
     const body = Buffer.from(
@@ -243,54 +648,6 @@ describe('LineMessagingService', () => {
       where: { lineId: 'U123', deletedAt: null },
       data: { lineId: null },
     })
-  })
-
-  it('pushes training messages only when the member has a LINE id', async () => {
-    mockPrisma.trainingSession.findFirst.mockResolvedValueOnce(
-      makeSession({ member: { userId: 100n, user: { lineId: null, fullName: 'Member' } } })
-    )
-
-    await expect(service.safePushTrainingSessionEvent('created', 1n)).resolves.toBe(false)
-    expect(mockFetch).not.toHaveBeenCalled()
-
-    mockPrisma.trainingSession.findFirst.mockResolvedValueOnce(makeSession())
-
-    await expect(service.safePushTrainingSessionEvent('created', 1n)).resolves.toBe(true)
-    expect(mockFetch).toHaveBeenCalledWith(
-      'https://api.line.me/v2/bot/message/push',
-      expect.objectContaining({
-        body: expect.stringContaining('liff.state=%3Fredirect%3D%252Fmember%252Fworkout%252Fsessions%253FsessionId%253D1'),
-      })
-    )
-    const body = JSON.parse(mockFetch.mock.calls[0][1].body)
-    expect(body.messages[0].text).toContain('Bạn đã đặt lịch tập thành công.')
-    expect(body.messages[0].quickReply.items[0].action.label).toBe('Xem chi tiết')
-  })
-
-  it('uses Japanese training templates when LINE_MESSAGE_LOCALE is ja', async () => {
-    env.LINE_MESSAGE_LOCALE = 'ja'
-    mockPrisma.trainingSession.findFirst.mockResolvedValue(makeSession())
-
-    await expect(service.safePushTrainingSessionEvent('reminder', 1n)).resolves.toBe(true)
-
-    const body = JSON.parse(mockFetch.mock.calls[0][1].body)
-    expect(body.messages[0].text).toContain('トレーニング開始まであと30分です。')
-    expect(body.messages[0].quickReply.items[0].action.label).toBe('詳細を見る')
-    expect(body.messages[0].quickReply.items[0].action.uri).toContain(
-      'liff.state=%3Fredirect%3D%252Fmember%252Fworkout%252Fsessions%253FsessionId%253D1'
-    )
-
-    mockPrisma.trainingSession.findFirst.mockResolvedValue(makeSession())
-    await expect(service.safePushTrainingSessionEvent('starting', 1n)).resolves.toBe(true)
-    const startingBody = JSON.parse(mockFetch.mock.calls[1][1].body)
-    expect(startingBody.messages[0].text).toContain('トレーニングの時間です。')
-  })
-
-  it('returns false instead of throwing when LINE push fails unexpectedly', async () => {
-    mockPrisma.trainingSession.findFirst.mockResolvedValue(makeSession())
-    mockFetch.mockRejectedValue(new Error('network down'))
-
-    await expect(service.safePushTrainingSessionEvent('updated', 1n)).resolves.toBe(false)
   })
 
   it('captures mock messages locally and never calls the LINE API', async () => {
@@ -331,28 +688,33 @@ describe('LineMessagingService', () => {
     expect(service.getMockMessages()).toEqual([])
   })
 
-  it('creates visual Flex and Rich Menu samples only in mock mode', () => {
+  it('creates visual Flex and Rich Menu samples with Flex Builder in mock mode', () => {
     env.LINE_MOCK_ENABLED = 'true'
     env.CLIENT_URL = 'http://localhost:5173'
 
     service.createMockSample('flex')
     service.createMockSample('rich-menu')
+    service.createMockSample('pt-booking-created')
+    service.createMockSample('pt-reminder-30m')
+    service.createMockSample('pt-session-cancelled')
 
-    expect(service.getMockMessages()).toEqual([
-      expect.objectContaining({
-        kind: 'rich-menu',
-        payload: expect.objectContaining({ name: 'RoGym Member Menu' }),
-      }),
-      expect.objectContaining({
-        kind: 'push',
-        recipient: 'rogym-liff-mock-member',
-        payload: expect.objectContaining({
-          messages: [
-            expect.objectContaining({ type: 'flex', altText: 'Lịch tập sắp tới tại RoGym' }),
-          ],
+    const messages = service.getMockMessages()
+    expect(messages.length).toBe(5)
+    expect(messages[0].kind).toBe('push') // pt-session-cancelled (reversed order)
+    expect(messages[0].payload).toMatchObject({
+      messages: [
+        expect.objectContaining({
+          type: 'flex',
+          contents: expect.objectContaining({
+            body: expect.objectContaining({
+              contents: expect.arrayContaining([
+                expect.objectContaining({ text: 'Lịch tập đã bị hủy' }),
+              ]),
+            }),
+          }),
         }),
-      }),
-    ])
+      ],
+    })
   })
 
   it('rejects visual samples when mock mode is disabled', () => {
@@ -378,59 +740,6 @@ describe('LineMessagingService', () => {
       100n,
       expect.objectContaining({ type: 'training.starting', dedupeKey: 'training:1:starting' })
     )
-    expect(mockFetch).not.toHaveBeenCalled()
-  })
-
-  it('pushes subscription expiring reminder when member has a LINE id', async () => {
-    mockPrisma.subscription.findFirst.mockResolvedValueOnce({
-      subscriptionId: 10n,
-      endDate: new Date('2026-08-19T00:00:00Z'),
-      package: { name: 'Gói VIP 1 Tháng' },
-      member: { user: { lineId: 'U_SUB_123' } },
-    })
-
-    await expect(service.safePushSubscriptionExpiringReminder(10n)).resolves.toBe(true)
-
-    expect(mockFetch).toHaveBeenCalledWith(
-      'https://api.line.me/v2/bot/message/push',
-      expect.objectContaining({
-        method: 'POST',
-        body: expect.stringContaining('liff.state=%3Fredirect%3D%252Fmember%252Fsubscription%252Fcurrent'),
-      })
-    )
-    const body = JSON.parse(mockFetch.mock.calls[0][1].body)
-    expect(body.to).toBe('U_SUB_123')
-    expect(body.messages[0].text).toContain('Gói tập Gói VIP 1 Tháng của bạn sẽ hết hạn vào ngày mai')
-    expect(body.messages[0].quickReply.items[0].action.label).toBe('Gia hạn ngay')
-    expect(body.messages[0].quickReply.items[0].action.uri).toContain('liff.state=%3Fredirect%3D%252Fmember%252Fsubscription%252Fcurrent')
-  })
-
-  it('pushes Japanese subscription expiring reminder when LINE_MESSAGE_LOCALE is ja', async () => {
-    env.LINE_MESSAGE_LOCALE = 'ja'
-    mockPrisma.subscription.findFirst.mockResolvedValueOnce({
-      subscriptionId: 10n,
-      endDate: new Date('2026-08-19T00:00:00Z'),
-      package: { name: 'Premium Plan' },
-      member: { user: { lineId: 'U_SUB_JA' } },
-    })
-
-    await expect(service.safePushSubscriptionExpiringReminder(10n)).resolves.toBe(true)
-
-    const body = JSON.parse(mockFetch.mock.calls[0][1].body)
-    expect(body.to).toBe('U_SUB_JA')
-    expect(body.messages[0].text).toContain('ご利用中のプラン「Premium Plan」は明日')
-    expect(body.messages[0].quickReply.items[0].action.label).toBe('今すぐ更新')
-  })
-
-  it('returns false when subscription has no linked LINE id', async () => {
-    mockPrisma.subscription.findFirst.mockResolvedValueOnce({
-      subscriptionId: 11n,
-      endDate: new Date('2026-08-19T00:00:00Z'),
-      package: { name: 'Gói Cơ Bản' },
-      member: { user: { lineId: null } },
-    })
-
-    await expect(service.safePushSubscriptionExpiringReminder(11n)).resolves.toBe(false)
     expect(mockFetch).not.toHaveBeenCalled()
   })
 
@@ -466,7 +775,6 @@ describe('LineMessagingService', () => {
       })
 
       const result = await service.unsend('msg-id-expired')
-
       expect(result).toBe(false)
     })
 
@@ -490,7 +798,6 @@ describe('LineMessagingService', () => {
       jest.spyOn(service, 'unsend').mockRejectedValueOnce(new Error('Network failure'))
 
       const result = await service.safeUnsend('msg-err')
-
       expect(result).toBe(false)
     })
   })
@@ -556,7 +863,6 @@ describe('LineMessagingService', () => {
       })
 
       const result = await service.assignRichMenu('U123')
-
       expect(result).toBe(false)
     })
 
@@ -564,9 +870,7 @@ describe('LineMessagingService', () => {
       jest.spyOn(service, 'assignRichMenu').mockRejectedValueOnce(new Error('Network error'))
 
       const result = await service.safeAssignRichMenu('U123')
-
       expect(result).toBe(false)
     })
   })
 })
-

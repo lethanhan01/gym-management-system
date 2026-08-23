@@ -825,16 +825,16 @@ describe('Member PT Booking Integration Suite (BR-01 -> BR-10 & Notifications)',
           'https://api.line.me/v2/bot/message/push',
           expect.objectContaining({
             method: 'POST',
-            body: expect.stringContaining('Bạn đã đặt lịch tập thành công.'),
+            body: expect.stringContaining('Xác nhận đặt lịch tập PT'),
           })
         )
 
         const payload = JSON.parse(mockFetch.mock.calls[0][1].body)
         expect(payload.to).toBe('U_VIET_USER')
-        expect(payload.messages[0].text).toContain('PT: Coach Minh')
-        expect(payload.messages[0].text).toContain('Phòng: Phòng VIP 1')
-        expect(payload.messages[0].quickReply.items[0].action.label).toBe('Xem chi tiết')
-        expect(payload.messages[0].quickReply.items[0].action.uri).toContain(
+        expect(payload.messages[0].type).toBe('flex')
+        expect(payload.messages[0].altText).toContain('Coach Minh')
+        expect(payload.messages[0].contents.footer.contents[0].action.label).toBe('Xem chi tiết')
+        expect(payload.messages[0].contents.footer.contents[0].action.uri).toContain(
           'https://liff.line.me/123456-abcdef?liff.state=%3Fredirect%3D%252Fmember%252Fworkout%252Fsessions%253FsessionId%253D888'
         )
       } finally {
@@ -887,16 +887,16 @@ describe('Member PT Booking Integration Suite (BR-01 -> BR-10 & Notifications)',
           'https://api.line.me/v2/bot/message/push',
           expect.objectContaining({
             method: 'POST',
-            body: expect.stringContaining('トレーニング予約が完了しました。'),
+            body: expect.stringContaining('トレーニング予約が完了しました'),
           })
         )
 
         const payload = JSON.parse(mockFetch.mock.calls[0][1].body)
         expect(payload.to).toBe('U_JAPAN_USER')
-        expect(payload.messages[0].text).toContain('PT: Coach Alex')
-        expect(payload.messages[0].text).toContain('ルーム: Room B')
-        expect(payload.messages[0].quickReply.items[0].action.label).toBe('詳細を見る')
-        expect(payload.messages[0].quickReply.items[0].action.uri).toContain(
+        expect(payload.messages[0].type).toBe('flex')
+        expect(payload.messages[0].altText).toContain('Coach Alex')
+        expect(payload.messages[0].contents.footer.contents[0].action.label).toBe('詳細を見る')
+        expect(payload.messages[0].contents.footer.contents[0].action.uri).toContain(
           'https://liff.line.me/123456-abcdef?liff.state=%3Fredirect%3D%252Fmember%252Fworkout%252Fsessions%253FsessionId%253D999'
         )
       } finally {

@@ -6,6 +6,21 @@ import { createHmac, timingSafeEqual } from 'crypto'
 import { NotificationsService } from '../notifications/notifications.service'
 import { PrismaService } from '../prisma/prisma.service'
 import { LINE_MOCK_USER_ID, LINE_MOCK_WEBHOOK_SECRET } from '../line-mock/constants'
+import {
+  buildAttendanceCheckinFlex,
+  buildHelpAutoReplyFlex,
+  buildSubscriptionExpiringFlex,
+  buildTrainingBookingCancelledFlex,
+  buildTrainingBookingCreatedFlex,
+  buildTrainingBookingUpdatedFlex,
+  buildTrainingReminderFlex,
+  buildTrainingStartingFlex,
+  buildWelcomeFlex,
+  LineFlexMessage,
+  LineMessageLocale,
+} from './line-flex-builder'
+
+export { LineMessageLocale }
 
 type LineWebhookBody = {
   events?: LineWebhookEvent[]
@@ -21,20 +36,22 @@ type LineWebhookEvent = {
   message?: { type: string; text?: string }
 }
 
-type LineMessage = {
-  type: 'text'
-  text: string
-  quickReply?: {
-    items: Array<{
-      type: 'action'
-      action: {
-        type: 'uri'
-        label: string
-        uri: string
+export type LineMessage =
+  | {
+      type: 'text'
+      text: string
+      quickReply?: {
+        items: Array<{
+          type: 'action'
+          action: {
+            type: 'uri'
+            label: string
+            uri: string
+          }
+        }>
       }
-    }>
-  }
-}
+    }
+  | LineFlexMessage
 
 export type LineMockOutboxMessage = {
   id: string
@@ -53,7 +70,6 @@ export type LineMockSample =
   | 'pt-session-cancelled'
 
 type TrainingLineEvent = 'created' | 'updated' | 'cancelled' | 'reminder' | 'starting'
-type LineMessageLocale = 'vi' | 'ja'
 
 const LINE_MESSAGE_TEMPLATES: Record<
   LineMessageLocale,
@@ -177,84 +193,30 @@ export class LineMessagingService {
     this.mockOutbox.length = 0
   }
 
-  createMockSample(type: LineMockSample, locale: LineMessageLocale = 'vi') {
+  createMockSample(type: LineMockSample, locale?: LineMessageLocale) {
     this.assertMockEnabled()
-    const targetLocale = locale === 'ja' ? 'ja' : 'vi'
-    const template = LINE_MESSAGE_TEMPLATES[targetLocale]
+    const targetLocale: LineMessageLocale = locale ?? this.getLocale()
 
-    if (type === 'flex') {
-      const liffUrl = this.buildLiffUrl('/member/workout/sessions')
+    if (type === 'flex' || type === 'pt-booking-created') {
+      const mockSessionId = '101'
+      const liffUrl = this.buildLiffUrl(`/member/workout/sessions?sessionId=${mockSessionId}`)
+      const flexMsg = buildTrainingBookingCreatedFlex(
+        {
+          sessionName: targetLocale === 'ja' ? 'パーソナルトレーニング' : 'Buổi tập PT cá nhân',
+          trainerName: 'Coach Alex',
+          roomName: targetLocale === 'ja' ? 'Cardio & Weights Room 01' : 'Phòng Cardio & Tạ 01',
+          when: targetLocale === 'ja' ? '2026/08/20 09:00' : '09:00 20/08/2026',
+        },
+        targetLocale,
+        liffUrl
+      )
       this.addMockOutbox({
         kind: 'push',
         recipient: LINE_MOCK_USER_ID,
         liffUrl,
         payload: {
           to: LINE_MOCK_USER_ID,
-          messages: [
-            {
-              type: 'flex',
-              altText:
-                targetLocale === 'ja' ? 'RoGymでの次のトレーニング' : 'Lịch tập sắp tới tại RoGym',
-              contents: {
-                type: 'bubble',
-                header: {
-                  type: 'box',
-                  layout: 'vertical',
-                  contents: [
-                    { type: 'text', text: 'ROGYM', weight: 'bold', color: '#16a34a', size: 'sm' },
-                  ],
-                },
-                body: {
-                  type: 'box',
-                  layout: 'vertical',
-                  spacing: 'md',
-                  contents: [
-                    {
-                      type: 'text',
-                      text: targetLocale === 'ja' ? 'PTセッション' : 'Buổi tập với PT',
-                      weight: 'bold',
-                      size: 'xl',
-                      wrap: true,
-                    },
-                    {
-                      type: 'text',
-                      text:
-                        targetLocale === 'ja'
-                          ? '本日 18:00 · Room A'
-                          : 'Hôm nay, 18:00 · Room A',
-                      color: '#6b7280',
-                      wrap: true,
-                    },
-                    { type: 'separator' },
-                    {
-                      type: 'text',
-                      text:
-                        targetLocale === 'ja'
-                          ? 'トレーニングの準備をしましょう。'
-                          : 'Chuẩn bị sẵn sàng cho buổi tập của bạn.',
-                      size: 'sm',
-                      wrap: true,
-                    },
-                  ],
-                },
-                footer: {
-                  type: 'box',
-                  layout: 'vertical',
-                  contents: [
-                    {
-                      type: 'button',
-                      style: 'primary',
-                      action: {
-                        type: 'uri',
-                        label: targetLocale === 'ja' ? 'スケジュールを見る' : 'Xem lịch tập',
-                        uri: liffUrl,
-                      },
-                    },
-                  ],
-                },
-              },
-            },
-          ],
+          messages: [flexMsg],
         },
       })
       return
@@ -295,77 +257,27 @@ export class LineMessagingService {
       return
     }
 
-    if (type === 'pt-booking-created') {
-      const mockSessionId = '101'
-      const liffUrl = this.buildLiffUrl(`/member/workout/sessions?sessionId=${mockSessionId}`)
-      const text = template.training.created({
-        trainerName: 'Coach Alex',
-        roomName: targetLocale === 'ja' ? 'Cardio & Weights Room 01' : 'Phòng Cardio & Tạ 01',
-        when: targetLocale === 'ja' ? '2026/08/20 09:00' : '09:00 20/08/2026',
-        reminderMinutes: 30,
-      })
-      this.addMockOutbox({
-        kind: 'push',
-        recipient: LINE_MOCK_USER_ID,
-        liffUrl,
-        payload: {
-          to: LINE_MOCK_USER_ID,
-          messages: [
-            {
-              type: 'text',
-              text,
-              quickReply: {
-                items: [
-                  {
-                    type: 'action',
-                    action: {
-                      type: 'uri',
-                      label: template.detailButton,
-                      uri: liffUrl,
-                    },
-                  },
-                ],
-              },
-            },
-          ],
-        },
-      })
-      return
-    }
-
     if (type === 'pt-reminder-30m') {
       const mockSessionId = '101'
       const liffUrl = this.buildLiffUrl(`/member/workout/sessions?sessionId=${mockSessionId}`)
-      const text = template.training.reminder({
-        trainerName: 'Coach Alex',
-        roomName: targetLocale === 'ja' ? 'Cardio & Weights Room 01' : 'Phòng Cardio & Tạ 01',
-        when: targetLocale === 'ja' ? '2026/08/20 09:00' : '09:00 20/08/2026',
-        reminderMinutes: 30,
-      })
+      const flexMsg = buildTrainingReminderFlex(
+        {
+          sessionName: targetLocale === 'ja' ? 'パーソナルトレーニング' : 'Buổi tập PT cá nhân',
+          trainerName: 'Coach Alex',
+          roomName: targetLocale === 'ja' ? 'Cardio & Weights Room 01' : 'Phòng Cardio & Tạ 01',
+          when: targetLocale === 'ja' ? '2026/08/20 09:00' : '09:00 20/08/2026',
+          reminderMinutes: 30,
+        },
+        targetLocale,
+        liffUrl
+      )
       this.addMockOutbox({
         kind: 'push',
         recipient: LINE_MOCK_USER_ID,
         liffUrl,
         payload: {
           to: LINE_MOCK_USER_ID,
-          messages: [
-            {
-              type: 'text',
-              text,
-              quickReply: {
-                items: [
-                  {
-                    type: 'action',
-                    action: {
-                      type: 'uri',
-                      label: template.detailButton,
-                      uri: liffUrl,
-                    },
-                  },
-                ],
-              },
-            },
-          ],
+          messages: [flexMsg],
         },
       })
       return
@@ -373,36 +285,22 @@ export class LineMessagingService {
 
     if (type === 'pt-session-cancelled') {
       const liffUrl = this.buildLiffUrl('/member/workout/sessions')
-      const text = template.training.cancelled({
-        trainerName: 'Coach Alex',
-        roomName: targetLocale === 'ja' ? 'Cardio & Weights Room 01' : 'Phòng Cardio & Tạ 01',
-        when: targetLocale === 'ja' ? '2026/08/20 09:00' : '09:00 20/08/2026',
-        reminderMinutes: 0,
-      })
+      const flexMsg = buildTrainingBookingCancelledFlex(
+        {
+          sessionName: targetLocale === 'ja' ? 'パーソナルトレーニング' : 'Buổi tập PT cá nhân',
+          trainerName: 'Coach Alex',
+          when: targetLocale === 'ja' ? '2026/08/20 09:00' : '09:00 20/08/2026',
+        },
+        targetLocale,
+        liffUrl
+      )
       this.addMockOutbox({
         kind: 'push',
         recipient: LINE_MOCK_USER_ID,
         liffUrl,
         payload: {
           to: LINE_MOCK_USER_ID,
-          messages: [
-            {
-              type: 'text',
-              text,
-              quickReply: {
-                items: [
-                  {
-                    type: 'action',
-                    action: {
-                      type: 'uri',
-                      label: template.detailButton,
-                      uri: liffUrl,
-                    },
-                  },
-                ],
-              },
-            },
-          ],
+          messages: [flexMsg],
         },
       })
       return
@@ -607,11 +505,20 @@ export class LineMessagingService {
     const lineUserId = event.source?.type === 'user' ? event.source.userId : undefined
     if (!lineUserId) return
 
+    const locale = this.getLocale()
+
     if (event.type === 'follow' && event.replyToken) {
-      const template = this.getMessageTemplate()
-      await this.replyMessage(event.replyToken, [
-        this.withLiffButton(template.followText, template.followButton, '/member'),
-      ])
+      let message: LineMessage
+      try {
+        message = buildWelcomeFlex(locale, this.buildLiffUrl('/member'))
+      } catch (error) {
+        this.logger.warn(
+          `Flex builder failed for webhook.follow: ${this.describeError(error)}, falling back to text`
+        )
+        const template = this.getMessageTemplate()
+        message = this.withLiffButton(template.followText, template.followButton, '/member')
+      }
+      await this.replyMessage(event.replyToken, [message])
       await this.safeAssignRichMenu(lineUserId)
       return
     }
@@ -628,10 +535,17 @@ export class LineMessagingService {
     }
 
     if (event.type === 'message' && event.replyToken) {
-      const template = this.getMessageTemplate()
-      await this.replyMessage(event.replyToken, [
-        this.withLiffButton(template.helpText, template.helpButton, '/member'),
-      ])
+      let message: LineMessage
+      try {
+        message = buildHelpAutoReplyFlex(locale, this.buildLiffUrl('/member'))
+      } catch (error) {
+        this.logger.warn(
+          `Flex builder failed for webhook.message: ${this.describeError(error)}, falling back to text`
+        )
+        const template = this.getMessageTemplate()
+        message = this.withLiffButton(template.helpText, template.helpButton, '/member')
+      }
+      await this.replyMessage(event.replyToken, [message])
     }
   }
 
@@ -650,19 +564,103 @@ export class LineMessagingService {
     if (!session?.member.user.lineId) return false
     if (kind === 'reminder' && session.status !== TrainingSessionStatus.scheduled) return false
 
-    return this.pushMessage(session.member.user.lineId, [
-      this.withLiffButton(
-        this.buildTrainingText(kind, {
-          trainerName: session.trainer.user.fullName,
-          roomName: session.room.name,
-          startTime: session.startTime,
-          reminderMinutes: this.getReminderMinutes(),
-          sessionName: session.planDay?.name,
-        }),
-        this.getMessageTemplate().detailButton,
-        this.buildTrainingRedirect(session.sessionId)
-      ),
-    ])
+    const locale = this.getLocale()
+    let message: LineMessage
+
+    try {
+      message = this.buildTrainingFlexMessage(kind, session, locale)
+    } catch (error) {
+      this.logger.warn(
+        `Flex builder failed for training.${kind} (sessionId=${sessionId.toString()}): ${this.describeError(error)}, falling back to text`
+      )
+      message = this.buildTrainingLegacyTextMessage(kind, session, locale)
+    }
+
+    return this.pushMessage(session.member.user.lineId, [message])
+  }
+
+  private buildTrainingFlexMessage(
+    kind: TrainingLineEvent,
+    session: {
+      sessionId: bigint
+      startTime: Date
+      trainer: { user: { fullName: string } }
+      room: { name: string }
+      planDay?: { name: string } | null
+    },
+    locale: LineMessageLocale
+  ): LineFlexMessage {
+    const template = this.getMessageTemplate()
+    const when = this.formatDateTime(session.startTime, template.dateLocale)
+    const sessionName = session.planDay?.name
+    const trainerName = session.trainer.user.fullName
+    const roomName = session.room.name
+    const redirectUrl = this.buildLiffUrl(this.buildTrainingRedirect(session.sessionId))
+
+    switch (kind) {
+      case 'created':
+        return buildTrainingBookingCreatedFlex(
+          { sessionName, when, trainerName, roomName },
+          locale,
+          redirectUrl
+        )
+      case 'updated':
+        return buildTrainingBookingUpdatedFlex(
+          { sessionName, when, trainerName, roomName },
+          locale,
+          redirectUrl
+        )
+      case 'cancelled':
+        return buildTrainingBookingCancelledFlex(
+          { sessionName, when, trainerName },
+          locale,
+          this.buildLiffUrl('/member/workout/sessions')
+        )
+      case 'reminder':
+        return buildTrainingReminderFlex(
+          {
+            sessionName,
+            when,
+            trainerName,
+            roomName,
+            reminderMinutes: this.getReminderMinutes(),
+          },
+          locale,
+          redirectUrl
+        )
+      case 'starting':
+        return buildTrainingStartingFlex(
+          { sessionName, when, trainerName, roomName },
+          locale,
+          redirectUrl
+        )
+    }
+  }
+
+  private buildTrainingLegacyTextMessage(
+    kind: TrainingLineEvent,
+    session: {
+      sessionId: bigint
+      startTime: Date
+      trainer: { user: { fullName: string } }
+      room: { name: string }
+      planDay?: { name: string } | null
+    },
+    locale: LineMessageLocale
+  ): LineMessage {
+    const template = LINE_MESSAGE_TEMPLATES[locale]
+    const text = this.buildTrainingText(kind, {
+      trainerName: session.trainer.user.fullName,
+      roomName: session.room.name,
+      startTime: session.startTime,
+      reminderMinutes: this.getReminderMinutes(),
+      sessionName: session.planDay?.name,
+    })
+    const redirect =
+      kind === 'cancelled'
+        ? '/member/workout/sessions'
+        : this.buildTrainingRedirect(session.sessionId)
+    return this.withLiffButton(text, template.detailButton, redirect)
   }
 
   private async pushAttendanceCheckin(attendanceId: bigint) {
@@ -676,13 +674,41 @@ export class LineMessagingService {
     })
     if (!attendance?.member.user.lineId) return false
 
-    return this.pushMessage(attendance.member.user.lineId, [
-      this.withLiffButton(
-        this.getMessageTemplate().attendanceCheckin,
-        this.getMessageTemplate().detailButton,
-        '/member/attendance'
-      ),
-    ])
+    const locale = this.getLocale()
+    let message: LineMessage
+
+    try {
+      message = this.buildAttendanceFlexMessage(attendance, locale)
+    } catch (error) {
+      this.logger.warn(
+        `Flex builder failed for attendance.checkin (attendanceId=${attendanceId.toString()}): ${this.describeError(error)}, falling back to text`
+      )
+      message = this.buildAttendanceLegacyTextMessage(locale)
+    }
+
+    return this.pushMessage(attendance.member.user.lineId, [message])
+  }
+
+  private buildAttendanceFlexMessage(
+    attendance: { startTime: Date },
+    locale: LineMessageLocale
+  ): LineFlexMessage {
+    const template = this.getMessageTemplate()
+    const checkinTime = this.formatDateTime(attendance.startTime, template.dateLocale)
+    return buildAttendanceCheckinFlex(
+      { checkinTime },
+      locale,
+      this.buildLiffUrl('/member/attendance')
+    )
+  }
+
+  private buildAttendanceLegacyTextMessage(locale: LineMessageLocale): LineMessage {
+    const template = LINE_MESSAGE_TEMPLATES[locale]
+    return this.withLiffButton(
+      template.attendanceCheckin,
+      template.detailButton,
+      '/member/attendance'
+    )
   }
 
   private async pushSubscriptionExpiringReminder(subscriptionId: bigint) {
@@ -697,16 +723,49 @@ export class LineMessagingService {
     })
     if (!subscription?.member.user.lineId) return false
 
+    const locale = this.getLocale()
+    let message: LineMessage
+
+    try {
+      message = this.buildSubscriptionExpiringFlexMessage(subscription, locale)
+    } catch (error) {
+      this.logger.warn(
+        `Flex builder failed for subscription.expiring_soon (subscriptionId=${subscriptionId.toString()}): ${this.describeError(error)}, falling back to text`
+      )
+      message = this.buildSubscriptionExpiringLegacyTextMessage(subscription, locale)
+    }
+
+    return this.pushMessage(subscription.member.user.lineId, [message])
+  }
+
+  private buildSubscriptionExpiringFlexMessage(
+    subscription: { endDate: Date; package?: { name: string } | null },
+    locale: LineMessageLocale
+  ): LineFlexMessage {
     const template = this.getMessageTemplate()
+    const endDateFormatted = this.formatDate(subscription.endDate, template.dateLocale)
+    return buildSubscriptionExpiringFlex(
+      {
+        packageName: subscription.package?.name ?? 'Gói tập',
+        endDate: endDateFormatted,
+      },
+      locale,
+      this.buildLiffUrl('/member/subscription/current'),
+      this.buildLiffUrl('/member/profile')
+    )
+  }
+
+  private buildSubscriptionExpiringLegacyTextMessage(
+    subscription: { endDate: Date; package?: { name: string } | null },
+    locale: LineMessageLocale
+  ): LineMessage {
+    const template = LINE_MESSAGE_TEMPLATES[locale]
     const endDateFormatted = this.formatDate(subscription.endDate, template.dateLocale)
     const text = template.subscriptionExpiring({
       packageName: subscription.package?.name ?? 'Gói tập',
       endDate: endDateFormatted,
     })
-
-    return this.pushMessage(subscription.member.user.lineId, [
-      this.withLiffButton(text, template.renewButton, '/member/subscription/current'),
-    ])
+    return this.withLiffButton(text, template.renewButton, '/member/subscription/current')
   }
 
   private buildTrainingText(
@@ -846,9 +905,13 @@ export class LineMessagingService {
     return `/member/workout/sessions?sessionId=${sessionId.toString()}`
   }
 
-  private getMessageTemplate() {
+  getLocale(): LineMessageLocale {
     const locale = this.config.get<string>('LINE_MESSAGE_LOCALE')
-    return LINE_MESSAGE_TEMPLATES[locale === 'ja' ? 'ja' : 'vi']
+    return locale === 'ja' ? 'ja' : 'vi'
+  }
+
+  private getMessageTemplate() {
+    return LINE_MESSAGE_TEMPLATES[this.getLocale()]
   }
 
   private formatDateTime(value: Date, locale: string) {
@@ -905,14 +968,31 @@ export class LineMessagingService {
   private findLiffUrl(payload: Record<string, unknown>): string | undefined {
     const messages = payload.messages
     if (!Array.isArray(messages)) return undefined
-    for (const message of messages) {
-      const items = (message as { quickReply?: { items?: unknown[] } }).quickReply?.items
-      if (!Array.isArray(items)) continue
-      for (const item of items) {
-        const uri = (item as { action?: { uri?: unknown } }).action?.uri
-        if (typeof uri === 'string') return uri
+
+    const extractUri = (obj: unknown): string | undefined => {
+      if (!obj || typeof obj !== 'object') return undefined
+      if (Array.isArray(obj)) {
+        for (const item of obj) {
+          const found = extractUri(item)
+          if (found) return found
+        }
+        return undefined
       }
+      const record = obj as Record<string, unknown>
+      if (
+        record.action &&
+        typeof record.action === 'object' &&
+        typeof (record.action as Record<string, unknown>).uri === 'string'
+      ) {
+        return (record.action as Record<string, unknown>).uri as string
+      }
+      for (const key of Object.keys(record)) {
+        const found = extractUri(record[key])
+        if (found) return found
+      }
+      return undefined
     }
-    return undefined
+
+    return extractUri(messages)
   }
 }
