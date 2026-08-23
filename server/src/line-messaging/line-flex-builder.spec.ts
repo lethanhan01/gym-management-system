@@ -233,7 +233,7 @@ describe('LineFlexBuilder, LineFlexTokens & LineFlexLocales (Phase 1)', () => {
       expect(Math.max(headerDepth, bodyDepth, footerDepth)).toBeLessThanOrEqual(10)
     })
 
-    it('1.6 buildFlexBubbleBase với heroImageUrl tạo thẻ mega, hero image cover và ẩn logo ROGYM ở header', () => {
+    it('1.6 buildFlexBubbleBase với heroImageUrl tạo thẻ kilo (nằm ngang hàng avatar), hero image cover và giữ full header (ROGYM + Badge)', () => {
       const message = buildFlexBubbleBase({
         badgeTone: 'success',
         badgeLabel: 'XÁC NHẬN',
@@ -244,7 +244,7 @@ describe('LineFlexBuilder, LineFlexTokens & LineFlexLocales (Phase 1)', () => {
         altText: 'Thông báo đặt lịch',
       })
 
-      expect(message.contents.size).toBe('mega')
+      expect(message.contents.size).toBe('kilo')
       expect(message.contents.hero).toEqual({
         type: 'image',
         url: 'https://rogym.vn/assets/cover_photo.jpg',
@@ -252,11 +252,12 @@ describe('LineFlexBuilder, LineFlexTokens & LineFlexLocales (Phase 1)', () => {
         aspectRatio: '20:13',
         aspectMode: 'cover',
       })
-      // Header khi có hero chỉ chứa badge căn phải (ẩn text ROGYM)
+      // Header có cả ROGYM và Badge
       const headerContents = message.contents.header?.contents || []
-      expect(headerContents).toHaveLength(1)
-      expect(headerContents[0].type).toBe('box')
-      expect(message.contents.header?.justifyContent).toBe('flex-end')
+      expect(headerContents).toHaveLength(2)
+      expect((headerContents[0] as { text: string }).text).toBe('ROGYM')
+      expect(headerContents[1].type).toBe('box')
+      expect(message.contents.header?.justifyContent).toBe('space-between')
     })
   })
 

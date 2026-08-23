@@ -255,22 +255,9 @@ export function buildFlexBubbleBase(params: FlexBubbleBaseParams): LineFlexMessa
 
   const rowBoxes = params.rows.map((row) => createKeyValueRow(row.label, row.value))
 
-  const headerContents: LineFlexComponent[] = []
-  if (!params.heroImageUrl) {
-    headerContents.push({
-      type: 'text',
-      text: 'ROGYM',
-      color: FLEX_THEME.brandGreen,
-      weight: 'bold',
-      size: 'sm',
-      flex: 0,
-    })
-  }
-  headerContents.push(createFlexBadge(params.badgeTone, params.badgeLabel))
-
   const bubble: LineFlexBubble = {
     type: 'bubble',
-    size: params.size || (params.heroImageUrl ? 'mega' : 'kilo'),
+    size: params.size || 'kilo',
     styles: {
       header: { backgroundColor: FLEX_THEME.bgCard },
       body: { backgroundColor: FLEX_THEME.bgCard },
@@ -280,8 +267,18 @@ export function buildFlexBubbleBase(params: FlexBubbleBaseParams): LineFlexMessa
       type: 'box',
       layout: 'horizontal',
       alignItems: 'center',
-      justifyContent: params.heroImageUrl ? 'flex-end' : 'space-between',
-      contents: headerContents,
+      justifyContent: 'space-between',
+      contents: [
+        {
+          type: 'text',
+          text: 'ROGYM',
+          color: FLEX_THEME.brandGreen,
+          weight: 'bold',
+          size: 'sm',
+          flex: 0,
+        },
+        createFlexBadge(params.badgeTone, params.badgeLabel),
+      ],
     },
     body: {
       type: 'box',
