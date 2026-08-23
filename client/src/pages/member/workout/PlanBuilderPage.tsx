@@ -12,7 +12,6 @@ import {
   Lock,
   Plus,
   Trash2,
-  X,
   Zap,
 } from 'lucide-react'
 import {
@@ -27,22 +26,17 @@ import {
   PageHeader,
   PageSkeleton,
   PageErrorState,
-  SearchToolbar,
 } from '@/components/ui'
 
 import { toast } from '@/lib/toast'
 import { getApiError, getApiErrorCode } from '@/lib/api-error'
 import workoutService, {
   type Exercise,
-  type ExerciseBodyPart,
-  type ExerciseMuscle,
-  type ExerciseEquipment,
   type WorkoutPlan,
   type WorkoutPlanDay,
 } from '@/services/workout.service'
 import { useAuthStore } from '@/stores/authStore'
-import { ExerciseFilterDropdown } from '@/components/workout/ExerciseUI'
-import { filterExercises } from '@/components/workout/exercise-data'
+import { ExerciseSearchPicker } from '@/components/workout/ExerciseSearchPicker'
 import { ExerciseTargetFields } from '@/components/workout/PlanBuilderUI'
 
 function formatSec(seconds: number | null | undefined) {
@@ -204,8 +198,6 @@ export default function MemberPlanBuilderPage() {
   const [loadingPlan, setLoadingPlan] = useState(Boolean(editPlanId))
   // Plans that are archived or already have workout logs can't be mutated structurally.
   const [writeBlocked, setWriteBlocked] = useState(false)
-  const [exercises, setExercises] = useState<Exercise[]>([])
-  const [loadingExercises, setLoadingExercises] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
 
@@ -256,16 +248,6 @@ export default function MemberPlanBuilderPage() {
       .catch((err) => setError(getApiError(err, t('workout.planBuilder.errorLoadEdit'))))
       .finally(() => setLoadingPlan(false))
   }, [editPlanId, loadPlan, t])
-
-  useEffect(() => {
-    if (phase !== 'build') return
-    setLoadingExercises(true)
-    workoutService
-      .getExercises({ pageSize: 100 })
-      .then((result) => setExercises(result.data))
-      .catch(() => setError(t('workout.planBuilder.errorLoadExercises')))
-      .finally(() => setLoadingExercises(false))
-  }, [phase, t])
 
   useEffect(() => {
     // Suggested plans only matter in the create flow (name phase)
@@ -693,112 +675,107 @@ export default function MemberPlanBuilderPage() {
       </div>
 
       {/* Days */}
-      {loadingExercises ? (
-        <PageSkeleton rows={3} />
-      ) : (
-
-        <div className="space-y-3">
-          {sortedDays.map((day) => (
-            <div key={day.planDayId} className="rogym-sx-013ea4c1">
-              {/* Day header */}
-              <div className="flex items-center justify-between px-4 py-3 rogym-sx-dd0d9e7c">
-                <div>
-                  <p className="font-semibold text-white">
-                    {t('workout.planBuilder.dayHeader', { n: day.dayNumber, name: day.name })}
-                  </p>
-                  <p className="text-xs rogym-sx-5e5c39ab">{day.exercises?.length ?? 0} {t('workout.planBuilder.unitExercises')}</p>
-                </div>
-                {readonly ? null : deleteDay?.planDayId === day.planDayId ? (
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs text-red-200">{t('workout.planBuilder.buttonDeleteDay')}</span>
-                    <Button
-                      variant="danger"
-                      size="sm"
-                      disabled={submitting}
-                      onClick={() => void removeDay(day)}
-                    >
-                      {t('workout.planBuilder.buttonDeleteDayConfirm')}
-                    </Button>
-                    <Button
-                      variant="outline-white"
-                      size="sm"
-                      onClick={() => setDeleteDay(null)}
-                    >
-                      {t('workout.planBuilder.buttonDeleteDayCancel')}
-                    </Button>
-                  </div>
-                ) : (
+      <div className="space-y-3">
+        {sortedDays.map((day) => (
+          <div key={day.planDayId} className="rogym-sx-013ea4c1">
+            {/* Day header */}
+            <div className="flex items-center justify-between px-4 py-3 rogym-sx-dd0d9e7c">
+              <div>
+                <p className="font-semibold text-white">
+                  {t('workout.planBuilder.dayHeader', { n: day.dayNumber, name: day.name })}
+                </p>
+                <p className="text-xs rogym-sx-5e5c39ab">{day.exercises?.length ?? 0} {t('workout.planBuilder.unitExercises')}</p>
+              </div>
+              {readonly ? null : deleteDay?.planDayId === day.planDayId ? (
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-red-200">{t('workout.planBuilder.buttonDeleteDay')}</span>
                   <Button
-                    variant="icon"
+                    variant="danger"
                     size="sm"
-                    onClick={() => setDeleteDay(day)}
-                    aria-label={t('workout.planBuilder.buttonDeleteDayConfirm')}
-                    leftIcon={<Trash2 size={15} />}
-                  />
-                )}
-              </div>
-
-              {/* Exercises */}
-              <div className="p-4">
-                {[...(day.exercises ?? [])]
-                  .sort((a, b) => a.orderIndex - b.orderIndex)
-                  .map((ex, idx) => (
-                    <div
-                      key={ex.planExerciseId}
-                      className="flex items-center gap-3 py-2 rogym-sx-6720cca7"
-                    >
-                      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-xs font-bold rogym-sx-252b3c13">
-                        {idx + 1}
-                      </span>
-                      <div className="min-w-0 flex-1">
-                        <p className="text-sm font-medium text-white">
-                          {ex.exercise?.name ?? t('workout.session.defaultExerciseName')}
-                        </p>
-                        <p className="text-xs rogym-sx-5e5c39ab">
-                          {ex.targetSets} sets ·{' '}
-                          {ex.targetReps
-                            ? `${ex.targetReps} reps`
-                            : `${ex.targetDurationSec ?? 0} ${t('workout.planBuilder.unitSeconds')}`}
-                          {ex.targetWeightKg ? ` · ${Number(ex.targetWeightKg)} kg` : ''}
-                        </p>
-                      </div>
-                      {!readonly && (
-                        <Button
-                          variant="icon"
-                          size="sm"
-                          onClick={() => void removeExercise(day.planDayId, ex.planExerciseId)}
-                          aria-label={t('workout.planBuilder.errorRemoveExercise')}
-                          leftIcon={<Trash2 size={13} />}
-                        />
-                      )}
-                    </div>
-                  ))}
-
-                {/* Add exercise inline */}
-                {readonly ? (
-                  (day.exercises?.length ?? 0) === 0 && (
-                    <p className="mt-2 text-xs rogym-sx-5e5c39ab">{t('workout.planBuilder.noExercisesInDay')}</p>
-                  )
-                ) : addingExerciseTo?.planDayId === day.planDayId ? (
-                  <AddExerciseForm
-                    day={day}
-                    exercises={exercises}
-                    submitting={submitting}
-                    onCancel={() => setAddingExerciseTo(null)}
-                    onSubmit={addExercise}
-                  />
-                ) : (
-                  <button
-                    type="button"
-                    className="rogym-text-link rogym-text-link--accent mt-3"
-                    onClick={() => setAddingExerciseTo(day)}
+                    disabled={submitting}
+                    onClick={() => void removeDay(day)}
                   >
-                    {t('workout.planBuilder.buttonAddExercise')}
-                  </button>
-                )}
-              </div>
+                    {t('workout.planBuilder.buttonDeleteDayConfirm')}
+                  </Button>
+                  <Button
+                    variant="outline-white"
+                    size="sm"
+                    onClick={() => setDeleteDay(null)}
+                  >
+                    {t('workout.planBuilder.buttonDeleteDayCancel')}
+                  </Button>
+                </div>
+              ) : (
+                <Button
+                  variant="icon"
+                  size="sm"
+                  onClick={() => setDeleteDay(day)}
+                  aria-label={t('workout.planBuilder.buttonDeleteDayConfirm')}
+                  leftIcon={<Trash2 size={15} />}
+                />
+              )}
             </div>
-          ))}
+
+            {/* Exercises */}
+            <div className="p-4">
+              {[...(day.exercises ?? [])]
+                .sort((a, b) => a.orderIndex - b.orderIndex)
+                .map((ex, idx) => (
+                  <div
+                    key={ex.planExerciseId}
+                    className="flex items-center gap-3 py-2 rogym-sx-6720cca7"
+                  >
+                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-xs font-bold rogym-sx-252b3c13">
+                      {idx + 1}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium text-white">
+                        {ex.exercise?.name ?? t('workout.session.defaultExerciseName')}
+                      </p>
+                      <p className="text-xs rogym-sx-5e5c39ab">
+                        {ex.targetSets} sets ·{' '}
+                        {ex.targetReps
+                          ? `${ex.targetReps} reps`
+                          : `${ex.targetDurationSec ?? 0} ${t('workout.planBuilder.unitSeconds')}`}
+                        {ex.targetWeightKg ? ` · ${Number(ex.targetWeightKg)} kg` : ''}
+                      </p>
+                    </div>
+                    {!readonly && (
+                      <Button
+                        variant="icon"
+                        size="sm"
+                        onClick={() => void removeExercise(day.planDayId, ex.planExerciseId)}
+                        aria-label={t('workout.planBuilder.errorRemoveExercise')}
+                        leftIcon={<Trash2 size={13} />}
+                      />
+                    )}
+                  </div>
+                ))}
+
+              {/* Add exercise inline */}
+              {readonly ? (
+                (day.exercises?.length ?? 0) === 0 && (
+                  <p className="mt-2 text-xs rogym-sx-5e5c39ab">{t('workout.planBuilder.noExercisesInDay')}</p>
+                )
+              ) : addingExerciseTo?.planDayId === day.planDayId ? (
+                <AddExerciseForm
+                  day={day}
+                  submitting={submitting}
+                  onCancel={() => setAddingExerciseTo(null)}
+                  onSubmit={addExercise}
+                />
+              ) : (
+                <button
+                  type="button"
+                  className="rogym-text-link rogym-text-link--accent mt-3"
+                  onClick={() => setAddingExerciseTo(day)}
+                >
+                  {t('workout.planBuilder.buttonAddExercise')}
+                </button>
+              )}
+            </div>
+          </div>
+        ))}
 
           {/* Add day */}
           {readonly ? (
@@ -822,7 +799,6 @@ export default function MemberPlanBuilderPage() {
             </Button>
           )}
         </div>
-      )}
 
       {/* Floating action bar — clears the desktop sidebar and mobile bottom navigation. */}
       <div className="fixed bottom-[calc(var(--rogym-bottom-nav-height)+var(--rogym-bottom-nav-center-action-clearance)+env(safe-area-inset-bottom,0px))] left-0 right-0 z-[45] px-4 py-3 rogym-sx-e122cbce md:bottom-0 md:left-20 md:z-auto md:px-6 md:py-4">
@@ -919,59 +895,22 @@ interface ExerciseTargets {
 
 function AddExerciseForm({
   day,
-  exercises,
   submitting,
   onCancel,
   onSubmit,
 }: {
   day: WorkoutPlanDay
-  exercises: Exercise[]
   submitting: boolean
   onCancel: () => void
   onSubmit: (day: WorkoutPlanDay, exercise: Exercise, targets: ExerciseTargets) => Promise<void>
 }) {
   const { t } = useTranslation('member')
-  const [exerciseId, setExerciseId] = useState('')
+  const [selectedExercise, setSelectedExercise] = useState<Exercise | null>(null)
   const [sets, setSets] = useState(3)
   const [reps, setReps] = useState(10)
   const [duration, setDuration] = useState(60)
   const [weight, setWeight] = useState('')
   const [restSeconds, setRestSeconds] = useState(60)
-  const [search, setSearch] = useState('')
-  const [bodyPartId, setBodyPartId] = useState<number | undefined>()
-  const [targetMuscleId, setTargetMuscleId] = useState<number | undefined>()
-  const [equipmentId, setEquipmentId] = useState<number | undefined>()
-  const [filterOpen, setFilterOpen] = useState(false)
-  
-  const [draftBodyPartId, setDraftBodyPartId] = useState<number | undefined>()
-  const [draftTargetMuscleId, setDraftTargetMuscleId] = useState<number | undefined>()
-  const [draftEquipmentId, setDraftEquipmentId] = useState<number | undefined>()
-
-  const [bodyParts, setBodyParts] = useState<ExerciseBodyPart[]>([])
-  const [muscles, setMuscles] = useState<ExerciseMuscle[]>([])
-  const [equipments, setEquipments] = useState<ExerciseEquipment[]>([])
-
-  useEffect(() => {
-    void Promise.all([
-      workoutService.getBodyParts(),
-      workoutService.getMuscles(),
-      workoutService.getEquipments(),
-    ]).then(([bp, mu, eq]) => {
-      setBodyParts(bp)
-      setMuscles(mu)
-      setEquipments(eq)
-    })
-  }, [])
-
-  const selectedExercise = useMemo(
-    () => exercises.find((exercise) => exercise.exerciseId === exerciseId) ?? null,
-    [exerciseId, exercises]
-  )
-  const filteredExercises = useMemo(
-    () => filterExercises(exercises, search, bodyPartId, targetMuscleId, equipmentId),
-    [bodyPartId, targetMuscleId, equipmentId, exercises, search]
-  )
-  const activeFilterCount = [bodyPartId, targetMuscleId, equipmentId].filter((v) => v !== undefined).length
 
   return (
     <form
@@ -984,77 +923,11 @@ function AddExerciseForm({
     >
       <div className="space-y-2">
         <span className="rogym-field-label block">{t('workout.planBuilder.addExercise.title')}</span>
-        <SearchToolbar
-          variant="plain"
-          layout="row"
-          value={search}
-          onChange={setSearch}
-          placeholder={t('workout.planBuilder.addExercise.searchPlaceholder')}
-          filters={
-            <ExerciseFilterDropdown
-              open={filterOpen}
-              onOpenChange={(open) => {
-                if (open) {
-                  setDraftBodyPartId(bodyPartId)
-                  setDraftTargetMuscleId(targetMuscleId)
-
-                  setDraftEquipmentId(equipmentId)
-                  setFilterOpen(true)
-                } else {
-                  setFilterOpen(false)
-                }
-              }}
-              activeCount={activeFilterCount}
-              bodyPartId={draftBodyPartId}
-              targetMuscleId={draftTargetMuscleId}
-              equipmentId={draftEquipmentId}
-              bodyParts={bodyParts}
-              muscles={muscles}
-              equipments={equipments}
-              onChange={(fields) => {
-                if ('bodyPartId' in fields) setDraftBodyPartId(fields.bodyPartId)
-                if ('targetMuscleId' in fields) setDraftTargetMuscleId(fields.targetMuscleId)
-                if ('equipmentId' in fields) setDraftEquipmentId(fields.equipmentId)
-              }}
-              onApply={() => {
-                setBodyPartId(draftBodyPartId)
-                setTargetMuscleId(draftTargetMuscleId)
-                setEquipmentId(draftEquipmentId)
-                setExerciseId('')
-                setFilterOpen(false)
-              }}
-            />
-          }
+        <ExerciseSearchPicker
+          selectedExercise={selectedExercise}
+          onSelectExercise={setSelectedExercise}
+          listMaxHeight="max-h-48"
         />
-        <div className="max-h-44 overflow-y-auto rounded-xl rogym-sx-9ff6a44e">
-          {filteredExercises.length === 0 ? (
-            <p className="py-4 text-center text-xs rogym-sx-5e5c39ab">{t('workout.planBuilder.addExercise.notFound')}</p>
-          ) : (
-            filteredExercises.map((exercise) => (
-              <button
-                key={exercise.exerciseId}
-                type="button"
-                onClick={() => setExerciseId(exercise.exerciseId)}
-                className={`rogym-exercise-option flex w-full items-center gap-3 px-3 py-2.5 text-left text-sm transition-colors hover:bg-white/5 ${
-                  exerciseId === exercise.exerciseId ? 'is-active' : ''
-                }`}
-              >
-                <span className="flex-1 font-medium">{exercise.name}</span>
-                {exercise.targetMuscle && (
-                  <span className="shrink-0 text-xs rogym-sx-5e5c39ab">{exercise.targetMuscle.name}</span>
-                )}
-              </button>
-            ))
-          )}
-        </div>
-        {selectedExercise && (
-          <div className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm rogym-sx-1fad55bf">
-            <span className="flex-1 font-medium rogym-sx-f27dac31">{selectedExercise.name}</span>
-            <button type="button" onClick={() => setExerciseId('')} aria-label="Bỏ chọn">
-              <X size={13} className="rogym-sx-5e5c39ab" />
-            </button>
-          </div>
-        )}
       </div>
       <ExerciseTargetFields
         isCardio={selectedExercise?.bodyPart?.name?.toLowerCase() === 'cardio'}
@@ -1079,7 +952,7 @@ function AddExerciseForm({
           variant="primary"
           size="sm"
           type="submit"
-          disabled={!exerciseId || submitting}
+          disabled={!selectedExercise || submitting}
           loading={submitting}
         >
           {submitting ? t('workout.planBuilder.addExercise.buttonAdding') : t('workout.planBuilder.addExercise.buttonAdd')}

@@ -467,6 +467,12 @@
         "submit": "Thêm bài tập",
         "fieldExercise": "Bài tập",
         "selectFromLib": "Chọn từ thư viện",
+        "searchPlaceholder": "Tìm theo tên bài tập...",
+        "loadMore": "Tải thêm bài tập",
+        "loading": "Đang tải bài tập...",
+        "notFound": "Không tìm thấy bài tập phù hợp",
+        "selected": "Đã chọn",
+        "resultsCount": "Hiển thị {{count}} / {{total}} bài tập",
         "fieldNotes": "Ghi chú kỹ thuật",
         "hint": "Mỗi bài cần có đủ số set, số rep nếu áp dụng, thời gian tập và thời gian nghỉ.",
         "illustrationAlt": "Minh họa {{name}}"
