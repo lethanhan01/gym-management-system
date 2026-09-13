@@ -1,15 +1,31 @@
 import api from './api'
 
+export interface FeedbackMemberInfo {
+  memberId: string
+  memberCode: string
+  fullName: string
+}
+
 export interface Feedback {
   feedbackId: string
   memberId: string
-  feedbackType: 'staff' | 'equipment' | 'service'
+  memberCode?: string
+  member?: FeedbackMemberInfo
+  feedbackType: 'staff' | 'facility' | 'equipment' | 'service'
   content: string
+  rating: number
+  tags: string[]
+  isAnonymous: boolean
+  imageUrls: string[]
   severity: 'low' | 'medium' | 'high'
   status: 'open' | 'in_progress' | 'resolved' | 'rejected'
   subjectStaffId: string | null
   subjectStaffName: string | null
   subjectEquipmentId: string | null
+  subjectEquipmentName: string | null
+  subjectRoomId: string | null
+  subjectRoomName: string | null
+  sessionId: string | null
   handledByStaffId: string | null
   handledAt: string | null
   response: string | null
@@ -17,18 +33,69 @@ export interface Feedback {
 }
 
 export interface CreateFeedbackDto {
-  memberId: string
-  feedbackType: 'staff' | 'equipment' | 'service'
+  memberId?: string
+  feedbackType: 'staff' | 'facility' | 'equipment' | 'service'
   content: string
-  severity: 'low' | 'medium' | 'high'
+  rating?: number
+  tags?: string[]
+  isAnonymous?: boolean
+  imageUrls?: string[]
+  severity?: 'low' | 'medium' | 'high'
   subjectStaffId?: string
   subjectEquipmentId?: string
+  subjectRoomId?: string
+  sessionId?: string
+}
+
+export interface FeedbackTrainerOption {
+  staffId: string
+  staffCode: string
+  fullName: string
+  phone?: string | null
+}
+
+export interface FeedbackSessionOption {
+  sessionId: string
+  trainerStaffId: string
+  trainerName: string
+  roomName: string
+  startTime: string
+  endTime: string
+}
+
+export interface FeedbackRoomOption {
+  roomId: string
+  roomCode: string
+  name: string
+  roomType?: string | null
+}
+
+export interface FeedbackEquipmentOption {
+  equipmentId: string
+  equipmentCode: string
+  name: string
+  roomId: string
+}
+
+export interface FeedbackOptions {
+  trainers: {
+    assigned: FeedbackTrainerOption[]
+    all: FeedbackTrainerOption[]
+  }
+  recentSessions: FeedbackSessionOption[]
+  rooms: FeedbackRoomOption[]
+  equipment: FeedbackEquipmentOption[]
+  quickTags: {
+    staff: { positive: string[]; negative: string[] }
+    facility: { positive: string[]; negative: string[] }
+  }
 }
 
 export const feedbackService = {
   list: async (params: {
     memberId?: string
     feedbackType?: string
+    rating?: number
     status?: string
     sort?: string
     page?: number
@@ -44,6 +111,11 @@ export const feedbackService = {
     }
   },
 
+  getOptions: async (): Promise<FeedbackOptions> => {
+    const res = await api.get<{ success: boolean; data: FeedbackOptions }>('/feedback/options')
+    return res.data.data
+  },
+
   getById: async (feedbackId: string): Promise<Feedback> => {
     const res = await api.get<{ success: boolean; data: Feedback }>(`/feedback/${feedbackId}`)
     return res.data.data
@@ -56,7 +128,7 @@ export const feedbackService = {
 
   updateStatus: async (
     feedbackId: string,
-    data: { status: string; resolutionNote?: string }
+    data: { status: string; resolutionNote?: string; severity?: string }
   ): Promise<Feedback> => {
     const res = await api.patch<{ success: boolean; data: Feedback }>(`/feedback/${feedbackId}/status`, data)
     return res.data.data

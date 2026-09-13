@@ -20,8 +20,15 @@ export class ListFeedbackDto {
   memberId?: string
 
   @IsOptional()
-  @IsEnum(['staff', 'equipment', 'service'])
+  @IsEnum(['staff', 'facility', 'equipment', 'service'])
   feedbackType?: string
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(5)
+  rating?: number
 
   @IsOptional()
   @IsEnum(['low', 'medium', 'high'])
@@ -42,6 +49,14 @@ export class ListFeedbackDto {
   @IsOptional()
   @IsString()
   subjectEquipmentId?: string
+
+  @IsOptional()
+  @IsString()
+  subjectRoomId?: string
+
+  @IsOptional()
+  @IsString()
+  sessionId?: string
 
   @IsOptional()
   @Type(() => Boolean)

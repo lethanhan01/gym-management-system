@@ -89,7 +89,7 @@ export function SegmentedControl({
             'data-[state=on]:bg-[var(--rogym-teal)] data-[state=on]:text-[var(--rogym-green-dark)] data-[state=on]:font-semibold data-[state=on]:shadow-[0_2px_8px_rgba(0,0,0,0.3)]',
             'disabled:pointer-events-none disabled:opacity-40',
             styles.item,
-            fullWidth && 'flex-1',
+            fullWidth && 'flex-1 min-w-0',
             itemClassName
           )}
         >

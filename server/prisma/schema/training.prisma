@@ -15,6 +15,7 @@ model TrainingSession {
   planDay        WorkoutPlanDay?       @relation(fields: [planDayId], references: [planDayId])
   room           GymRoom               @relation(fields: [roomId], references: [roomId])
   trainer        Staff                 @relation(fields: [trainerStaffId], references: [staffId])
+  feedbacks      Feedback[]            @relation("FeedbackSession")
 
   @@index([memberId, startTime(sort: Desc)])
   @@index([trainerStaffId, startTime(sort: Desc)])

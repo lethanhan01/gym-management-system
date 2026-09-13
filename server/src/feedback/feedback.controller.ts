@@ -30,6 +30,13 @@ import {
 export class FeedbackController {
   constructor(private readonly feedback: FeedbackService) {}
 
+  @Get('options')
+  @RequirePermission('feedback.create')
+  async getOptions(@CurrentUser() user: AuthenticatedUser) {
+    const result = await this.feedback.getFeedbackOptions(user.memberId)
+    return { success: true, data: result }
+  }
+
   @Get()
   @RequirePermission('feedback.read')
   async list(@Query() dto: ListFeedbackDto, @CurrentUser() user: AuthenticatedUser) {
@@ -49,6 +56,7 @@ export class FeedbackController {
       userId: user.userId,
       roles: user.roles,
       memberId: user.memberId,
+      staffId: user.staffId,
     })
     return { success: true, ...result }
   }

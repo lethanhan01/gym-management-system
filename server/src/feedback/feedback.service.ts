@@ -18,12 +18,16 @@ import { UpdateFeedbackStatusDto } from './dto/update-feedback-status.dto'
 
 const SLA_DAYS: Record<string, number> = { high: 1, medium: 3, low: 7 }
 
-interface FeedbackRow {
+export interface FeedbackRow {
   feedbackId: bigint
   memberId: bigint
   member: { memberCode: string; memberId: bigint; userId?: bigint; user: { fullName: string } }
   feedbackType: FeedbackType
   content: string
+  rating?: number | null
+  tags?: string[] | null
+  isAnonymous?: boolean | null
+  imageUrls?: string[] | null
   severity: FeedbackSeverity
   status: FeedbackStatus
   createdAt: Date
@@ -31,11 +35,15 @@ interface FeedbackRow {
   handledAt?: Date | null
   subjectStaffId?: bigint | null
   subjectEquipmentId?: bigint | null
+  subjectRoomId?: bigint | null
+  sessionId?: bigint | null
   resolutionNote?: string | null
   deletedAt?: Date | null
   handledByStaff?: { staffId: bigint; userId?: bigint; user: { fullName: string } } | null
   subjectStaff?: { staffId: bigint; user: { fullName: string } } | null
   subjectEquipment?: { equipmentId: bigint; name: string } | null
+  subjectRoom?: { roomId: bigint; name: string } | null
+  session?: { sessionId: bigint; startTime: Date; endTime: Date } | null
 }
 
 @Injectable()
@@ -60,11 +68,14 @@ export class FeedbackService {
       pageSize = 20,
       memberId,
       feedbackType,
+      rating,
       severity,
       status,
       handledByStaffId,
       subjectStaffId,
       subjectEquipmentId,
+      subjectRoomId,
+      sessionId,
       overdue,
       from,
       to,
@@ -90,10 +101,14 @@ export class FeedbackService {
     }
 
     if (feedbackType) where.feedbackType = feedbackType as FeedbackType
+    if (rating) where.rating = rating
     if (severity) where.severity = severity as FeedbackSeverity
     if (status) where.status = status as FeedbackStatus
     if (subjectStaffId) where.subjectStaffId = BigInt(subjectStaffId)
     if (subjectEquipmentId) where.subjectEquipmentId = BigInt(subjectEquipmentId)
+    if (subjectRoomId) where.subjectRoomId = BigInt(subjectRoomId)
+    if (sessionId) where.sessionId = BigInt(sessionId)
+
     if (from)
       where.createdAt = {
         ...(where.createdAt as object as Record<string, unknown>),
@@ -130,18 +145,30 @@ export class FeedbackService {
           member: {
             select: { memberId: true, memberCode: true, user: { select: { fullName: true } } },
           },
+          subjectStaff: {
+            select: { staffId: true, user: { select: { fullName: true } } },
+          },
+          subjectEquipment: {
+            select: { equipmentId: true, name: true },
+          },
+          subjectRoom: {
+            select: { roomId: true, name: true },
+          },
+          session: {
+            select: { sessionId: true, startTime: true, endTime: true },
+          },
         },
       }),
       this.prisma.feedback.count({ where }),
     ])
 
     return {
-      data: data.map((f) => this.serialize(f)),
+      data: data.map((f) => this.serialize(f as unknown as FeedbackRow, false, caller)),
       meta: { page, pageSize, totalItems: total, totalPages: Math.ceil(total / pageSize) },
     }
   }
 
-  async get(id: bigint, caller: { userId: bigint; roles: Role[]; memberId?: bigint }) {
+  async get(id: bigint, caller: { userId: bigint; roles: Role[]; memberId?: bigint; staffId?: bigint }) {
     const feedback = await this.prisma.feedback.findFirst({
       where: { feedbackId: id, deletedAt: null },
       include: {
@@ -151,6 +178,8 @@ export class FeedbackService {
         handledByStaff: { select: { staffId: true, user: { select: { fullName: true } } } },
         subjectStaff: { select: { staffId: true, user: { select: { fullName: true } } } },
         subjectEquipment: { select: { equipmentId: true, name: true } },
+        subjectRoom: { select: { roomId: true, name: true } },
+        session: { select: { sessionId: true, startTime: true, endTime: true } },
       },
     })
     if (!feedback)
@@ -168,7 +197,147 @@ export class FeedbackService {
       })
     }
 
-    return { data: this.serialize(feedback, true) }
+    return { data: this.serialize(feedback as unknown as FeedbackRow, true, caller) }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Options for feedback form
+  // ---------------------------------------------------------------------------
+
+  async getFeedbackOptions(memberId?: bigint) {
+    const allStaffWithUser = await this.prisma.staff.findMany({
+      where: { deletedAt: null },
+      select: {
+        staffId: true,
+        staffCode: true,
+        user: { select: { fullName: true, email: true, phone: true } },
+      },
+      orderBy: { staffCode: 'asc' },
+    })
+
+    const assignedTrainerIds = new Set<string>()
+    let recentSessions: Array<{
+      sessionId: string
+      trainerStaffId: string
+      trainerName: string
+      roomName: string
+      startTime: Date
+      endTime: Date
+    }> = []
+
+    if (memberId) {
+      const member = await this.prisma.member.findUnique({
+        where: { memberId },
+        select: { primaryTrainerId: true },
+      })
+      if (member?.primaryTrainerId) {
+        assignedTrainerIds.add(member.primaryTrainerId.toString())
+      }
+
+      const sessions = await this.prisma.trainingSession.findMany({
+        where: { memberId, deletedAt: null },
+        orderBy: { startTime: 'desc' },
+        take: 10,
+        include: {
+          trainer: { select: { staffId: true, user: { select: { fullName: true } } } },
+          room: { select: { name: true } },
+        },
+      })
+
+      sessions.forEach((s) => {
+        assignedTrainerIds.add(s.trainerStaffId.toString())
+      })
+
+      recentSessions = sessions.map((s) => ({
+        sessionId: s.sessionId.toString(),
+        trainerStaffId: s.trainerStaffId.toString(),
+        trainerName: s.trainer.user.fullName,
+        roomName: s.room.name,
+        startTime: s.startTime,
+        endTime: s.endTime,
+      }))
+    }
+
+    const allTrainers = allStaffWithUser.map((s) => ({
+      staffId: s.staffId.toString(),
+      staffCode: s.staffCode,
+      fullName: s.user.fullName,
+      phone: s.user.phone,
+    }))
+
+    const assignedTrainers = allTrainers.filter((t) => assignedTrainerIds.has(t.staffId))
+
+    const [rooms, equipment] = await Promise.all([
+      this.prisma.gymRoom.findMany({
+        select: { roomId: true, roomCode: true, name: true, roomType: true },
+        orderBy: { roomCode: 'asc' },
+      }),
+      this.prisma.equipment.findMany({
+        where: { status: 'active' },
+        select: { equipmentId: true, equipmentCode: true, name: true, roomId: true },
+        orderBy: { equipmentCode: 'asc' },
+      }),
+    ])
+
+    const quickTags = {
+      staff: {
+        positive: [
+          '#ChuyênMônCao',
+          '#NhiệtTìnhTậnTâm',
+          '#ĐúngGiờ',
+          '#ĐộngLựcTốt',
+          '#GiáoÁnPhùHợp',
+          '#TheoSátKỹThuật',
+        ],
+        negative: [
+          '#ĐếnMuộn',
+          '#HủyLịchSátGiờ',
+          '#TháiĐộChưaTốt',
+          '#DùngĐiệnThoạiKhiDạy',
+          '#BàiTậpQuáSức',
+          '#ÍtChỉDẫnKỹThuật',
+        ],
+      },
+      facility: {
+        positive: [
+          '#PhòngSạchSẽ',
+          '#MáyMócMớiÊm',
+          '#KhôngGianThoáng',
+          '#ĐiềuHòaMátMẻ',
+          '#ÂmNhạcVừaPhải',
+          '#PhòngTắmSạch',
+        ],
+        negative: [
+          '#MáyHỏngKẹtTạ',
+          '#VệSinhChưaSạch',
+          '#PhòngQuáNóng',
+          '#ThiếuTạPhụKiện',
+          '#MùiKhóChịu',
+          '#PhòngQuáĐông',
+        ],
+      },
+    }
+
+    return {
+      trainers: {
+        assigned: assignedTrainers,
+        all: allTrainers,
+      },
+      recentSessions,
+      rooms: rooms.map((r) => ({
+        roomId: r.roomId.toString(),
+        roomCode: r.roomCode,
+        name: r.name,
+        roomType: r.roomType,
+      })),
+      equipment: equipment.map((e) => ({
+        equipmentId: e.equipmentId.toString(),
+        equipmentCode: e.equipmentCode,
+        name: e.name,
+        roomId: e.roomId.toString(),
+      })),
+      quickTags,
+    }
   }
 
   // ---------------------------------------------------------------------------
@@ -210,21 +379,21 @@ export class FeedbackService {
       })
 
     const feedbackType = dto.feedbackType as FeedbackType
-    if (feedbackType === 'staff' && dto.subjectEquipmentId) {
+    if (feedbackType === 'staff' && (dto.subjectEquipmentId || dto.subjectRoomId)) {
       throw new BadRequestException({
         success: false,
         code: 'FEEDBACK_SUBJECT_MISMATCH',
-        message: 'feedbackType staff không được có subjectEquipmentId',
+        message: 'feedbackType staff không được có subjectEquipmentId hoặc subjectRoomId',
       })
     }
-    if (feedbackType === 'equipment' && dto.subjectStaffId) {
+    if ((feedbackType === 'equipment' || feedbackType === 'facility') && dto.subjectStaffId) {
       throw new BadRequestException({
         success: false,
         code: 'FEEDBACK_SUBJECT_MISMATCH',
-        message: 'feedbackType equipment không được có subjectStaffId',
+        message: 'feedbackType facility/equipment không được có subjectStaffId',
       })
     }
-    if (feedbackType === 'service' && (dto.subjectStaffId || dto.subjectEquipmentId)) {
+    if (feedbackType === 'service' && (dto.subjectStaffId || dto.subjectEquipmentId || dto.subjectRoomId)) {
       throw new BadRequestException({
         success: false,
         code: 'FEEDBACK_SUBJECT_MISMATCH',
@@ -232,14 +401,38 @@ export class FeedbackService {
       })
     }
 
+    // Auto-routing logic based on rating & severity
+    const rating = dto.rating ?? 5
+    let status: FeedbackStatus = FeedbackStatus.open
+    let severity: FeedbackSeverity = (dto.severity as FeedbackSeverity) ?? FeedbackSeverity.low
+
+    if (rating >= 4) {
+      status = FeedbackStatus.resolved
+      severity = (dto.severity as FeedbackSeverity) ?? FeedbackSeverity.low
+    } else if (rating === 3) {
+      status = FeedbackStatus.open
+      severity = (dto.severity as FeedbackSeverity) ?? FeedbackSeverity.medium
+    } else {
+      // rating 1 or 2
+      status = FeedbackStatus.open
+      severity = (dto.severity as FeedbackSeverity) ?? FeedbackSeverity.high
+    }
+
     const feedback = await this.prisma.feedback.create({
       data: {
         memberId,
         feedbackType,
         content: dto.content,
-        severity: (dto.severity ?? 'low') as FeedbackSeverity,
+        rating,
+        tags: dto.tags ?? [],
+        isAnonymous: dto.isAnonymous ?? false,
+        imageUrls: dto.imageUrls ?? [],
+        severity,
+        status,
         subjectStaffId: dto.subjectStaffId ? BigInt(dto.subjectStaffId) : null,
         subjectEquipmentId: dto.subjectEquipmentId ? BigInt(dto.subjectEquipmentId) : null,
+        subjectRoomId: dto.subjectRoomId ? BigInt(dto.subjectRoomId) : null,
+        sessionId: dto.sessionId ? BigInt(dto.sessionId) : null,
       },
       include: {
         member: {
@@ -250,6 +443,15 @@ export class FeedbackService {
             user: { select: { fullName: true } },
           },
         },
+        subjectStaff: {
+          select: { staffId: true, user: { select: { fullName: true } } },
+        },
+        subjectEquipment: {
+          select: { equipmentId: true, name: true },
+        },
+        subjectRoom: {
+          select: { roomId: true, name: true },
+        },
       },
     })
 
@@ -258,7 +460,7 @@ export class FeedbackService {
       action: 'feedback.create',
       resourceType: 'feedback',
       resourceId: feedback.feedbackId.toString(),
-      afterData: this.serialize(feedback) as unknown as Record<string, unknown>,
+      afterData: this.serialize(feedback as unknown as FeedbackRow) as unknown as Record<string, unknown>,
     })
 
     if (isMember) {
@@ -266,8 +468,11 @@ export class FeedbackService {
         ['owner', 'staff'],
         {
           type: 'feedback.created',
-          title: 'Phan hoi moi',
-          message: 'Co mot phan hoi moi tu hoi vien.',
+          title: rating >= 4 ? 'Đánh giá tích cực mới' : 'Phản hồi cần xử lý',
+          message:
+            rating >= 4
+              ? `Hội viên vừa đánh giá ${rating} sao.`
+              : `Có một phản hồi (${rating} sao) cần xử lý từ hội viên.`,
           resourceType: 'feedback',
           resourceId: feedback.feedbackId.toString(),
           dedupeKey: `feedback:${feedback.feedbackId.toString()}:created`,
@@ -276,7 +481,7 @@ export class FeedbackService {
       )
     }
 
-    return { data: this.serialize(feedback) }
+    return { data: this.serialize(feedback as unknown as FeedbackRow, false, caller) }
   }
 
   // ---------------------------------------------------------------------------
@@ -371,6 +576,7 @@ export class FeedbackService {
         },
         subjectStaff: { select: { staffId: true, user: { select: { fullName: true } } } },
         subjectEquipment: { select: { equipmentId: true, name: true } },
+        subjectRoom: { select: { roomId: true, name: true } },
       },
     })
 
@@ -396,7 +602,7 @@ export class FeedbackService {
       { excludeActorUserId: caller.userId }
     )
 
-    return { data: this.serialize(updated, true) }
+    return { data: this.serialize(updated as unknown as FeedbackRow, true, caller) }
   }
 
   // ---------------------------------------------------------------------------
@@ -472,6 +678,7 @@ export class FeedbackService {
         },
         subjectStaff: { select: { staffId: true, user: { select: { fullName: true } } } },
         subjectEquipment: { select: { equipmentId: true, name: true } },
+        subjectRoom: { select: { roomId: true, name: true } },
       },
     })
 
@@ -495,7 +702,7 @@ export class FeedbackService {
         type: newStatus === FeedbackStatus.resolved ? 'feedback.resolved' : 'feedback.rejected',
         title:
           newStatus === FeedbackStatus.resolved
-            ? 'Phan hoi da duoc xu ly'
+            ? 'Phan hoi da duoc giai quyet'
             : 'Phan hoi da bi tu choi',
         message:
           newStatus === FeedbackStatus.resolved
@@ -508,7 +715,7 @@ export class FeedbackService {
       await this.lineMessaging.safePushFeedbackResponded(id)
     }
 
-    return { data: this.serialize(updated, true) }
+    return { data: this.serialize(updated as unknown as FeedbackRow, true, caller) }
   }
 
   // ---------------------------------------------------------------------------
@@ -520,26 +727,58 @@ export class FeedbackService {
     return { dueAt, overdue: new Date() > dueAt }
   }
 
-  private serialize(f: FeedbackRow, detail = false) {
+  private serialize(
+    f: FeedbackRow,
+    detail = false,
+    caller?: { userId?: bigint; roles?: Role[]; memberId?: bigint; staffId?: bigint }
+  ) {
+    let memberData = {
+      memberId: f.member?.memberId ? f.member.memberId.toString() : f.memberId.toString(),
+      memberCode: f.member?.memberCode ?? '',
+      fullName: f.member?.user?.fullName ?? '',
+    }
+
+    const isAnonymous = f.isAnonymous ?? false
+    const isCallerAuthor = caller?.memberId && caller.memberId === f.memberId
+    const isCallerOwnerOrAdmin = caller?.roles?.includes('owner')
+    const isCallerTargetTrainer =
+      (caller?.roles?.includes('trainer') && !caller?.roles?.includes('owner')) ||
+      (caller?.staffId && f.subjectStaffId && caller.staffId === f.subjectStaffId)
+
+    if (isAnonymous && isCallerTargetTrainer && !isCallerAuthor && !isCallerOwnerOrAdmin) {
+      memberData = {
+        memberId: '',
+        memberCode: 'ANONYMOUS',
+        fullName: 'Hội viên ẩn danh',
+      }
+    }
+
     const base: Record<string, unknown> = {
       feedbackId: f.feedbackId.toString(),
-      memberId: f.memberId.toString(),
-      memberCode: f.member.memberCode,
+      memberId: memberData.memberId || f.memberId.toString(),
+      memberCode: memberData.memberCode,
       feedbackType: f.feedbackType,
       content: f.content,
+      rating: f.rating ?? 5,
+      tags: f.tags ?? [],
+      isAnonymous,
+      imageUrls: f.imageUrls ?? [],
       severity: f.severity,
       status: f.status,
       createdAt: f.createdAt,
+      subjectStaffId: f.subjectStaffId?.toString() ?? null,
+      subjectStaffName: f.subjectStaff?.user?.fullName ?? null,
+      subjectEquipmentId: f.subjectEquipmentId?.toString() ?? null,
+      subjectEquipmentName: f.subjectEquipment?.name ?? null,
+      subjectRoomId: f.subjectRoomId?.toString() ?? null,
+      subjectRoomName: f.subjectRoom?.name ?? null,
+      sessionId: f.sessionId?.toString() ?? null,
     }
 
     if (detail) {
       return {
         ...base,
-        member: {
-          memberId: f.member.memberId.toString(),
-          memberCode: f.member.memberCode,
-          fullName: f.member.user.fullName,
-        },
+        member: memberData,
         handledByStaff: f.handledByStaff
           ? {
               staffId: f.handledByStaff.staffId.toString(),
@@ -555,6 +794,19 @@ export class FeedbackService {
               name: f.subjectEquipment.name,
             }
           : null,
+        subjectRoom: f.subjectRoom
+          ? {
+              roomId: f.subjectRoom.roomId.toString(),
+              name: f.subjectRoom.name,
+            }
+          : null,
+        session: f.session
+          ? {
+              sessionId: f.session.sessionId.toString(),
+              startTime: f.session.startTime,
+              endTime: f.session.endTime,
+            }
+          : null,
         handledAt: f.handledAt,
         createdAt: f.createdAt,
         deletedAt: f.deletedAt,
@@ -564,10 +816,9 @@ export class FeedbackService {
 
     return {
       ...base,
+      member: memberData,
       handledByStaffId: f.handledByStaffId?.toString() ?? null,
       handledAt: f.handledAt,
-      subjectStaffId: f.subjectStaffId?.toString() ?? null,
-      subjectEquipmentId: f.subjectEquipmentId?.toString() ?? null,
       response: f.resolutionNote ?? null,
       sla: this.computeSLA(f.createdAt, f.severity),
     }

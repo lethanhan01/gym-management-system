@@ -117,8 +117,9 @@ const OpenFeedbackItem = memo(function OpenFeedbackItem({ feedback }: { feedback
     medium: t('dashboard.severity.medium'),
     high: t('dashboard.severity.high'),
   }
-  const feedbackTypeLabel = {
+  const feedbackTypeLabel: Record<string, string> = {
     staff: t('dashboard.feedbackType.staff'),
+    facility: t('dashboard.feedbackType.facility', { defaultValue: 'Cơ sở vật chất' }),
     equipment: t('dashboard.feedbackType.equipment'),
     service: t('dashboard.feedbackType.service'),
   }

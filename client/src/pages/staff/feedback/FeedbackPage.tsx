@@ -1,6 +1,6 @@
 import { FormEvent, useCallback, useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { ChevronLeft, ChevronRight, MessageSquare } from 'lucide-react'
+import { ChevronLeft, ChevronRight, MessageSquare, Star, EyeOff, User, Building2, X } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { getApiError } from '@/lib/api-error'
 import { formatDate } from '@/lib/date'
@@ -30,6 +30,15 @@ export default function StaffFeedbackPage() {
     { value: 'rejected', label: t('feedback.statusRejected') },
   ]
 
+  const RATING_FILTER_OPTIONS = [
+    { value: '', label: 'Tất cả mức sao' },
+    { value: '5', label: '⭐⭐⭐⭐⭐ 5 sao' },
+    { value: '4', label: '⭐⭐⭐⭐ 4 sao' },
+    { value: '3', label: '⭐⭐⭐ 3 sao' },
+    { value: '2', label: '⭐⭐ 2 sao' },
+    { value: '1', label: '⭐ 1 sao' },
+  ]
+
   const NEXT_STATUS_OPTIONS: Record<string, Array<{ value: string; label: string }>> = {
     open: [
       { value: 'in_progress', label: t('feedback.actionInProgress') },
@@ -39,11 +48,15 @@ export default function StaffFeedbackPage() {
       { value: 'resolved', label: t('feedback.actionResolved') },
       { value: 'rejected', label: t('feedback.actionReject') },
     ],
+    resolved: [
+      { value: 'resolved', label: 'Gửi phản hồi / Lời cảm ơn' },
+    ],
   }
 
   const [searchParams, setSearchParams] = useSearchParams()
   const status = searchParams.get('status') ?? ''
   const feedbackType = searchParams.get('type') ?? ''
+  const rating = searchParams.get('rating') ?? ''
   const page = Number(searchParams.get('page') ?? 1)
 
   const [data, setData] = useState<Feedback[]>([])
@@ -55,6 +68,7 @@ export default function StaffFeedbackPage() {
   const [nextStatus, setNextStatus] = useState('')
   const [response, setResponse] = useState('')
   const [saving, setSaving] = useState(false)
+  const [previewImage, setPreviewImage] = useState<string | null>(null)
 
   const load = useCallback(() => {
     setLoading(true)
@@ -63,6 +77,7 @@ export default function StaffFeedbackPage() {
       .list({
         status: status || undefined,
         feedbackType: feedbackType || undefined,
+        rating: rating ? Number(rating) : undefined,
         page,
         pageSize: 15,
         sort: 'createdAt:desc',
@@ -73,7 +88,7 @@ export default function StaffFeedbackPage() {
       })
       .catch((err) => setError(getApiError(err, t('feedback.loadFailed'))))
       .finally(() => setLoading(false))
-  }, [status, feedbackType, page, t])
+  }, [status, feedbackType, rating, page, t])
 
   useEffect(() => {
     load()
@@ -120,9 +135,10 @@ export default function StaffFeedbackPage() {
   }
 
   function feedbackTypeLabel(type: string) {
-    if (type === 'staff') return t('feedback.staff')
-    if (type === 'equipment') return t('feedback.equipment')
-    return t('feedback.service')
+    if (type === 'staff') return t('feedback.staff', { defaultValue: 'Huấn luyện viên' })
+    if (type === 'facility') return t('feedback.facility', { defaultValue: 'Cơ sở vật chất' })
+    if (type === 'equipment') return t('feedback.equipment', { defaultValue: 'Thiết bị' })
+    return t('feedback.service', { defaultValue: 'Dịch vụ' })
   }
 
   function severityLabel(severity: string) {
@@ -161,6 +177,7 @@ export default function StaffFeedbackPage() {
             </option>
           ))}
         </StaffSelect>
+
         <StaffSelect
           value={feedbackType}
           onValueChange={(value) => updateParam('type', value)}
@@ -168,8 +185,20 @@ export default function StaffFeedbackPage() {
         >
           <option value="">{t('feedback.typeAll')}</option>
           <option value="staff">{t('feedback.staff')}</option>
+          <option value="facility">{t('feedback.facility', { defaultValue: 'Cơ sở vật chất' })}</option>
           <option value="equipment">{t('feedback.equipment')}</option>
-          <option value="service">{t('feedback.service')}</option>
+        </StaffSelect>
+
+        <StaffSelect
+          value={rating}
+          onValueChange={(value) => updateParam('rating', value)}
+          ariaLabel="Lọc theo mức sao"
+        >
+          {RATING_FILTER_OPTIONS.map((opt) => (
+            <option key={opt.value} value={opt.value}>
+              {opt.label}
+            </option>
+          ))}
         </StaffSelect>
       </div>
 
@@ -184,55 +213,112 @@ export default function StaffFeedbackPage() {
         />
       ) : (
         <div className="grid gap-3">
-          {data.map((fb) => (
-            <button
-              key={fb.feedbackId}
-              type="button"
-              className="rogym-card rogym-card--compact rogym-card--interactive w-full p-5 text-left"
-              onClick={() => openDetail(fb)}
-            >
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex min-w-0 gap-3">
-                  <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[rgba(66,224,158,0.08)] rogym-text-accent">
-                    <MessageSquare size={17} />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-medium text-white">{fb.content}</p>
-                    <div className="mt-1 flex flex-wrap gap-2 text-xs rogym-text-dim">
-                      <span>{feedbackTypeLabel(fb.feedbackType)}</span>
-                      <span>·</span>
-                      <span>{formatDate(fb.createdAt)}</span>
-                      {fb.subjectStaffName && (
-                        <>
-                          <span>·</span>
-                          <span>{t('feedback.staffLabel', { name: fb.subjectStaffName })}</span>
-                        </>
+          {data.map((fb) => {
+            const score = fb.rating ?? 5
+            return (
+              <button
+                key={fb.feedbackId}
+                type="button"
+                className="rogym-card rogym-card--compact rogym-card--interactive w-full p-5 text-left transition-all"
+                onClick={() => openDetail(fb)}
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex min-w-0 gap-3">
+                    <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[rgba(66,224,158,0.08)] rogym-text-accent">
+                      <MessageSquare size={17} />
+                    </div>
+                    <div className="min-w-0 space-y-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        {/* Rating pill */}
+                        <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-400/10 border border-amber-400/20 text-amber-400 font-bold text-xs">
+                          <Star size={12} className="fill-amber-400 text-amber-400" />
+                          <span>{score}/5</span>
+                        </div>
+
+                        {fb.isAnonymous && (
+                          <span className="flex items-center gap-1 text-[11px] text-slate-400 font-medium px-2 py-0.5 rounded bg-white/5">
+                            <EyeOff size={11} />
+                            Ẩn danh
+                          </span>
+                        )}
+
+                        <span className="text-xs text-slate-400 font-medium">
+                          {fb.member?.fullName || 'Hội viên'}
+                        </span>
+                      </div>
+
+                      <p className="line-clamp-2 text-sm font-medium text-white">{fb.content}</p>
+
+                      {/* Quick Tags preview */}
+                      {fb.tags && fb.tags.length > 0 && (
+                        <div className="flex flex-wrap gap-1 pt-0.5">
+                          {fb.tags.map((tag) => (
+                            <span key={tag} className="text-[11px] px-2 py-0.5 rounded bg-white/5 text-slate-300">
+                              {tag}
+                            </span>
+                          ))}
+                        </div>
                       )}
+
+                      <div className="mt-1 flex flex-wrap items-center gap-2 text-xs rogym-text-dim">
+                        <span>{feedbackTypeLabel(fb.feedbackType)}</span>
+                        <span>·</span>
+                        <span>{formatDate(fb.createdAt)}</span>
+
+                        {fb.subjectStaffName && (
+                          <>
+                            <span>·</span>
+                            <span className="text-emerald-300 font-medium flex items-center gap-1">
+                              <User size={12} />
+                              HLV: {fb.subjectStaffName}
+                            </span>
+                          </>
+                        )}
+
+                        {fb.subjectRoomName && (
+                          <>
+                            <span>·</span>
+                            <span className="text-slate-300 flex items-center gap-1">
+                              <Building2 size={12} />
+                              {fb.subjectRoomName}
+                            </span>
+                          </>
+                        )}
+
+                        {fb.imageUrls && fb.imageUrls.length > 0 && (
+                          <>
+                            <span>·</span>
+                            <span className="text-sky-300 font-medium">📷 {fb.imageUrls.length} ảnh</span>
+                          </>
+                        )}
+                      </div>
                     </div>
                   </div>
+
+                  <div className="flex shrink-0 flex-col items-end gap-2">
+                    <StaffStatusBadge status={fb.status} />
+                    <span
+                      className="rogym-tone-badge is-compact"
+                      data-tone={severityTone(fb.severity)}
+                    >
+                      {severityLabel(fb.severity)}
+                    </span>
+                  </div>
                 </div>
-                <div className="flex shrink-0 flex-col items-end gap-2">
-                  <StaffStatusBadge status={fb.status} />
-                  <span
-                    className="rogym-tone-badge is-compact"
-                    data-tone={severityTone(fb.severity)}
-                  >
-                    {severityLabel(fb.severity)}
-                  </span>
-                </div>
-              </div>
-              {fb.response && (
-                <div className="mt-3 rounded-lg bg-white/[0.03] px-3 py-2 text-xs rogym-text-secondary line-clamp-2">
-                  {t('feedback.responseLabel', { text: fb.response })}
-                </div>
-              )}
-            </button>
-          ))}
+
+                {fb.response && (
+                  <div className="mt-3 rounded-lg bg-white/[0.03] px-3 py-2 text-xs rogym-text-secondary line-clamp-2">
+                    {t('feedback.responseLabel', { text: fb.response })}
+                  </div>
+                )}
+              </button>
+            )
+          })}
         </div>
       )}
 
       {totalPages > 1 && (
-        <div className="flex items-center justify-center gap-3">
+        <div className="flex items-center justify-center gap-3 mt-4">
           <button
             type="button"
             className="rogym-btn rogym-btn--icon rogym-btn--elevated"
@@ -289,8 +375,14 @@ export default function StaffFeedbackPage() {
         {selected && (
           <div className="space-y-5">
             <div className="space-y-3">
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <StaffStatusBadge status={selected.status} />
+
+                <div className="flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-400/10 border border-amber-400/20 text-amber-400 font-bold text-xs">
+                  <Star size={13} className="fill-amber-400 text-amber-400" />
+                  <span>{selected.rating ?? 5}/5 sao</span>
+                </div>
+
                 <span
                   className="rogym-tone-badge"
                   data-tone={severityTone(selected.severity)}
@@ -300,11 +392,85 @@ export default function StaffFeedbackPage() {
                 <span className="rogym-tone-badge" data-tone="info">
                   {feedbackTypeLabel(selected.feedbackType)}
                 </span>
+
+                {selected.isAnonymous && (
+                  <span className="flex items-center gap-1 text-xs px-2 py-0.5 rounded-md bg-white/10 text-slate-300">
+                    <EyeOff size={13} />
+                    Ẩn danh với HLV
+                  </span>
+                )}
               </div>
-              <p className="rounded-xl bg-white/[0.04] p-4 text-sm leading-6 text-white">
+
+              {/* Subject details in modal */}
+              <div className="flex flex-wrap gap-3 text-xs text-slate-300 bg-white/[0.02] p-3 rounded-lg border border-white/5">
+                <div>
+                  <span className="text-slate-400">Người gửi: </span>
+                  <span className="font-semibold text-white">
+                    {selected.member?.fullName || 'Hội viên'} ({selected.member?.memberCode || 'N/A'})
+                  </span>
+                </div>
+
+                {selected.subjectStaffName && (
+                  <div>
+                    <span className="text-slate-400">HLV liên quan: </span>
+                    <span className="font-semibold text-emerald-400">{selected.subjectStaffName}</span>
+                  </div>
+                )}
+
+                {selected.subjectRoomName && (
+                  <div>
+                    <span className="text-slate-400">Phòng tập: </span>
+                    <span className="font-semibold text-white">{selected.subjectRoomName}</span>
+                  </div>
+                )}
+
+                {selected.subjectEquipmentName && (
+                  <div>
+                    <span className="text-slate-400">Thiết bị: </span>
+                    <span className="font-semibold text-white">{selected.subjectEquipmentName}</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Tags in modal */}
+              {selected.tags && selected.tags.length > 0 && (
+                <div className="flex flex-wrap gap-1.5">
+                  {selected.tags.map((tag) => (
+                    <span key={tag} className="px-2.5 py-1 rounded-md text-xs font-semibold bg-emerald-500/15 text-emerald-300 border border-emerald-500/20">
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              )}
+
+              {/* Content */}
+              <p className="rounded-xl bg-white/[0.04] p-4 text-sm leading-6 text-white whitespace-pre-wrap">
                 {selected.content}
               </p>
-              <div className="flex justify-between text-xs rogym-text-dim">
+
+              {/* Images in modal */}
+              {selected.imageUrls && selected.imageUrls.length > 0 && (
+                <div>
+                  <span className="text-xs font-semibold uppercase tracking-wider text-slate-400 block mb-2">
+                    Hình ảnh minh chứng ({selected.imageUrls.length})
+                  </span>
+                  <div className="flex flex-wrap gap-2.5">
+                    {selected.imageUrls.map((img, idx) => (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => setPreviewImage(img)}
+                        className="relative h-20 w-32 rounded-lg overflow-hidden border border-white/10 hover:border-emerald-400 transition-all group"
+                      >
+                        <img src={img} alt="attachment" className="w-full h-full object-cover" />
+                        <div className="absolute inset-0 bg-black/30 group-hover:bg-transparent transition-colors" />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div className="flex justify-between text-xs rogym-text-dim pt-2">
                 <span>{t('feedback.sentAt', { date: formatDate(selected.createdAt) })}</span>
                 {selected.handledAt && (
                   <span>{t('feedback.handledAt', { date: formatDate(selected.handledAt) })}</span>
@@ -348,6 +514,32 @@ export default function StaffFeedbackPage() {
           </div>
         )}
       </StaffModal>
+
+      {/* Lightbox for staff */}
+      {previewImage && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
+          onClick={() => setPreviewImage(null)}
+        >
+          <div
+            className="relative max-w-3xl max-h-[85vh] rounded-2xl overflow-hidden bg-[#181d28] border border-white/15 p-2 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              type="button"
+              onClick={() => setPreviewImage(null)}
+              className="absolute top-4 right-4 p-1.5 rounded-full bg-black/60 text-white hover:bg-rose-600 transition-colors z-10"
+            >
+              <X size={18} />
+            </button>
+            <img
+              src={previewImage}
+              alt="full preview"
+              className="max-h-[75vh] w-auto rounded-xl object-contain"
+            />
+          </div>
+        </div>
+      )}
     </StaffPage>
   )
 }
