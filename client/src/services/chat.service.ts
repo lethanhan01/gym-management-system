@@ -135,6 +135,17 @@ class ChatService {
     return res.data.data
   }
 
+  /**
+   * Gửi tin nhắn văn bản qua REST API (dự phòng khi mất kết nối WebSocket)
+   */
+  async sendMessageRest(conversationId: string, content: string): Promise<ChatMessage> {
+    const res = await api.post<{
+      success: boolean
+      data: ChatMessage
+    }>(`/chat/conversations/${conversationId}/messages`, { content })
+    return res.data.data
+  }
+
   // ==========================================
   // WEBSOCKET REAL-TIME SOCKET MANAGER
   // ==========================================

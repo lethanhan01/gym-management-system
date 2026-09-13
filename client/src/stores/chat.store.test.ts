@@ -18,6 +18,8 @@ vi.mock('@/services/chat.service', () => ({
     joinConversation: vi.fn().mockResolvedValue({ success: true }),
     leaveConversation: vi.fn().mockResolvedValue({ success: true }),
     sendMessage: vi.fn(),
+    sendMessageRest: vi.fn(),
+    isConnected: vi.fn(() => true),
     sendTypingStart: vi.fn(),
     sendTypingStop: vi.fn(),
     markSeen: vi.fn().mockResolvedValue({ success: true }),

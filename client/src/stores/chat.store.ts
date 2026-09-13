@@ -352,19 +352,37 @@ export const useChatStore = create<ChatStoreState>((set, get) => ({
       }
     })
 
-    // 2. Gửi qua WebSocket
+    // 2. Gửi qua WebSocket, tự động fallback sang REST API nếu WebSocket chưa kết nối hoặc thất bại
     try {
-      const res = await chatService.sendMessage(conversationId, trimmed)
-      if (res.success && res.data) {
-        const confirmedMsg: ChatMessage = {
-          ...res.data,
-          isSender: true,
-          deliveryStatus: 'sent',
-        }
+      let confirmedMsg: ChatMessage | null = null
 
+      if (chatService.isConnected()) {
+        const res = await chatService.sendMessage(conversationId, trimmed)
+        if (res.success && res.data) {
+          confirmedMsg = {
+            ...res.data,
+            isSender: true,
+            deliveryStatus: 'sent',
+          }
+        }
+      }
+
+      // Fallback sang REST nếu WebSocket chưa kết nối hoặc gửi socket không thành công
+      if (!confirmedMsg) {
+        const restMsg = await chatService.sendMessageRest(conversationId, trimmed)
+        if (restMsg) {
+          confirmedMsg = {
+            ...restMsg,
+            isSender: true,
+            deliveryStatus: 'sent',
+          }
+        }
+      }
+
+      if (confirmedMsg) {
         set((state) => {
           const list = state.messagesByConversation[conversationId] || []
-          const updatedList = list.map((m) => (m.tempId === tempId ? confirmedMsg : m))
+          const updatedList = list.map((m) => (m.tempId === tempId ? confirmedMsg! : m))
 
           // Cập nhật conversation preview
           const updatedConvs = state.conversations.map((c) =>
@@ -372,7 +390,7 @@ export const useChatStore = create<ChatStoreState>((set, get) => ({
               ? {
                   ...c,
                   lastMessageContent: trimmed,
-                  lastMessageAt: confirmedMsg.createdAt,
+                  lastMessageAt: confirmedMsg!.createdAt,
                 }
               : c
           )
@@ -386,23 +404,14 @@ export const useChatStore = create<ChatStoreState>((set, get) => ({
           }
         })
       } else {
-        // Lỗi từ server
-        set((state) => {
-          const list = state.messagesByConversation[conversationId] || []
-          return {
-            messagesByConversation: {
-              ...state.messagesByConversation,
-              [conversationId]: list.map((m) =>
-                m.tempId === tempId
-                  ? { ...m, deliveryStatus: 'failed', errorText: res.message || 'Lỗi gửi tin' }
-                  : m
-              ),
-            },
-          }
-        })
+        throw new Error('Gửi tin nhắn thất bại')
       }
-    } catch {
-      // Lỗi mạng
+    } catch (err: unknown) {
+      const errorText =
+        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ||
+        (err as Error)?.message ||
+        'Mất kết nối mạng. Không thể gửi.'
+
       set((state) => {
         const list = state.messagesByConversation[conversationId] || []
         return {
@@ -413,7 +422,7 @@ export const useChatStore = create<ChatStoreState>((set, get) => ({
                 ? {
                     ...m,
                     deliveryStatus: 'failed',
-                    errorText: 'Mất kết nối mạng. Không thể gửi.',
+                    errorText,
                   }
                 : m
             ),
@@ -445,38 +454,49 @@ export const useChatStore = create<ChatStoreState>((set, get) => ({
     })
 
     try {
-      const res = await chatService.sendMessage(conversationId, target.content)
-      if (res.success && res.data) {
-        const confirmedMsg: ChatMessage = {
-          ...res.data,
-          isSender: true,
-          deliveryStatus: 'sent',
+      let confirmedMsg: ChatMessage | null = null
+
+      if (chatService.isConnected()) {
+        const res = await chatService.sendMessage(conversationId, target.content)
+        if (res.success && res.data) {
+          confirmedMsg = {
+            ...res.data,
+            isSender: true,
+            deliveryStatus: 'sent',
+          }
         }
+      }
+
+      if (!confirmedMsg) {
+        const restMsg = await chatService.sendMessageRest(conversationId, target.content)
+        if (restMsg) {
+          confirmedMsg = {
+            ...restMsg,
+            isSender: true,
+            deliveryStatus: 'sent',
+          }
+        }
+      }
+
+      if (confirmedMsg) {
         set((state) => {
           const currentList = state.messagesByConversation[conversationId] || []
           return {
             messagesByConversation: {
               ...state.messagesByConversation,
-              [conversationId]: currentList.map((m) => (m.tempId === tempId ? confirmedMsg : m)),
+              [conversationId]: currentList.map((m) => (m.tempId === tempId ? confirmedMsg! : m)),
             },
           }
         })
       } else {
-        set((state) => {
-          const currentList = state.messagesByConversation[conversationId] || []
-          return {
-            messagesByConversation: {
-              ...state.messagesByConversation,
-              [conversationId]: currentList.map((m) =>
-                m.tempId === tempId
-                  ? { ...m, deliveryStatus: 'failed', errorText: res.message }
-                  : m
-              ),
-            },
-          }
-        })
+        throw new Error('Gửi tin nhắn thất bại')
       }
-    } catch {
+    } catch (err: unknown) {
+      const errorText =
+        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ||
+        (err as Error)?.message ||
+        'Không thể gửi tin nhắn'
+
       set((state) => {
         const currentList = state.messagesByConversation[conversationId] || []
         return {
@@ -484,7 +504,11 @@ export const useChatStore = create<ChatStoreState>((set, get) => ({
             ...state.messagesByConversation,
             [conversationId]: currentList.map((m) =>
               m.tempId === tempId
-                ? { ...m, deliveryStatus: 'failed', errorText: 'Không thể gửi tin nhắn' }
+                ? {
+                    ...m,
+                    deliveryStatus: 'failed',
+                    errorText,
+                  }
                 : m
             ),
           },

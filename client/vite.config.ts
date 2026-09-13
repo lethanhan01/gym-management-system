@@ -83,6 +83,11 @@ export default defineConfig(({ command, mode }) => {
             })
           },
         },
+        '/socket.io': {
+          target: proxyTarget,
+          ws: true,
+          changeOrigin: true,
+        },
       },
     },
     build: {
