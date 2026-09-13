@@ -286,9 +286,9 @@ Cung cấp business logic xử lý hội thoại, tin nhắn, phân trang, tải
 Cung cấp khả năng giao tiếp thời gian thực hai chiều giữa Hội viên và Huấn luyện viên.
 
 #### Các bước thực hiện:
-- [ ] **Bước 3.1: Cài đặt thư viện WebSocket cho Server**
+- [x] **Bước 3.1: Cài đặt thư viện WebSocket cho Server**
   - Chạy: `npm install @nestjs/websockets @nestjs/platform-socket.io socket.io` tại thư mục `server`.
-- [ ] **Bước 3.2: Xây dựng `ChatGateway`**
+- [x] **Bước 3.2: Xây dựng `ChatGateway`**
   - **File tạo:** `server/src/chat/chat.gateway.ts`
   - Namespace: `/chat`
   - Triển khai `OnGatewayConnection`, `OnGatewayDisconnect`.
@@ -309,23 +309,24 @@ Cung cấp khả năng giao tiếp thời gian thực hai chiều giữa Hội v
 Đảm bảo độ tin cậy tuyệt đối cho logic hội thoại, bảo mật quyền truy cập và xử lý sự kiện WebSocket.
 
 #### Các bước thực hiện:
-- [ ] **Bước 4.1: Viết Unit Test cho `ChatService`**
-  - **File tạo:** `server/src/chat/chat.service.spec.ts`
+- [x] **Bước 4.1: Viết Unit Test cho `ChatService`**
+  - **File tạo:** `server/src/chat/chat.service.spec.ts` (22 tests passed)
   - Test cases:
     - Tạo mới và kích hoạt lại hội thoại giữa Member và Trainer.
     - Lấy danh sách hội thoại kèm unread count chính xác.
     - Gửi tin nhắn và cập nhật `lastMessageAt`, `lastMessageContent`.
     - Người gửi thu hồi tin nhắn (Hard Delete thành công); người khác thu hồi bị chặn lỗi `ForbiddenException`.
     - Chuyển trạng thái `archived` khi đổi PT và từ chối gửi tin nhắn trên hội thoại đã archived.
-- [ ] **Bước 4.2: Viết Unit Test cho `ChatGateway`**
-  - **File tạo:** `server/src/chat/chat.gateway.spec.ts`
+- [x] **Bước 4.2: Viết Unit Test cho `ChatGateway`**
+  - **File tạo:** `server/src/chat/chat.gateway.spec.ts` (18 tests passed)
   - Test cases:
     - Từ chối kết nối nếu thiếu hoặc sai JWT token.
     - Join room thành công khi user là thành viên hợp lệ của cuộc trò chuyện.
     - Nhận tin nhắn và emit sự kiện `new_message` tới đúng room.
     - Phát hiện typing và emit `user_typing`.
-- [ ] **Bước 4.3: Chạy test kiểm thử toàn bộ server**
-  - Chạy `npm test src/chat` để đảm bảo 100% test passed.
+- [x] **Bước 4.3: Chạy test kiểm thử toàn bộ server**
+  - Chạy `npm test src/chat` để đảm bảo 100% test passed (47/47 tests passed).
+
 
 ---
 

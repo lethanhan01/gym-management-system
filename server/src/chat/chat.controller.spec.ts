@@ -2,6 +2,7 @@ import { BadRequestException } from '@nestjs/common'
 import { Test, TestingModule } from '@nestjs/testing'
 import { AuthenticatedUser } from '../auth/types/jwt-payload.interface'
 import { ChatController } from './chat.controller'
+import { ChatGateway } from './chat.gateway'
 import { ChatService, ChatUploadedFile } from './chat.service'
 
 describe('ChatController', () => {
@@ -14,6 +15,12 @@ describe('ChatController', () => {
     uploadAttachmentAndCreateMessage: jest.Mock
     markAsRead: jest.Mock
     deleteMessage: jest.Mock
+  }
+  let chatGateway: {
+    broadcastNewMessage: jest.Mock
+    server: {
+      to: jest.Mock
+    }
   }
 
   const mockUser: AuthenticatedUser = {
@@ -34,13 +41,25 @@ describe('ChatController', () => {
       deleteMessage: jest.fn(),
     }
 
+    const mockEmit = jest.fn()
+    chatGateway = {
+      broadcastNewMessage: jest.fn().mockResolvedValue(undefined),
+      server: {
+        to: jest.fn().mockReturnValue({ emit: mockEmit }),
+      },
+    }
+
     const module: TestingModule = await Test.createTestingModule({
       controllers: [ChatController],
-      providers: [{ provide: ChatService, useValue: chatService }],
+      providers: [
+        { provide: ChatService, useValue: chatService },
+        { provide: ChatGateway, useValue: chatGateway },
+      ],
     }).compile()
 
     controller = module.get<ChatController>(ChatController)
   })
+
 
   describe('getConversations', () => {
     it('nen tra ve danh sach cuoc tro chuyen cua user', async () => {
@@ -82,7 +101,7 @@ describe('ChatController', () => {
   })
 
   describe('sendMessage', () => {
-    it('nen tao tin nhan van ban moi', async () => {
+    it('nen tao tin nhan van ban moi va broadcast websocket', async () => {
       const mockResult = { messageId: '10', content: 'Xin chao' }
       chatService.createMessage.mockResolvedValue(mockResult)
 
@@ -94,6 +113,7 @@ describe('ChatController', () => {
         'Xin chao',
         'text'
       )
+      expect(chatGateway.broadcastNewMessage).toHaveBeenCalledWith('1', mockResult)
       expect(res).toEqual({ success: true, data: mockResult })
     })
   })
@@ -105,7 +125,7 @@ describe('ChatController', () => {
       )
     })
 
-    it('nen upload anh va tao tin nhan image', async () => {
+    it('nen upload anh va tao tin nhan image va broadcast websocket', async () => {
       const mockFile: ChatUploadedFile = {
         filename: 'test.jpg',
         originalname: 'meal.jpg',
@@ -122,6 +142,7 @@ describe('ChatController', () => {
         BigInt(100),
         mockFile
       )
+      expect(chatGateway.broadcastNewMessage).toHaveBeenCalledWith('1', mockResult)
       expect(res).toEqual({ success: true, data: mockResult })
     })
   })
@@ -139,14 +160,16 @@ describe('ChatController', () => {
   })
 
   describe('deleteMessage', () => {
-    it('nen thu hoi tin nhan', async () => {
+    it('nen thu hoi tin nhan va broadcast message_deleted', async () => {
       const mockResult = { messageId: '10', conversationId: '1' }
       chatService.deleteMessage.mockResolvedValue(mockResult)
 
       const res = await controller.deleteMessage(10, mockUser)
 
       expect(chatService.deleteMessage).toHaveBeenCalledWith(BigInt(10), BigInt(100))
+      expect(chatGateway.server.to).toHaveBeenCalledWith('conv_1')
       expect(res).toEqual({ success: true, data: mockResult })
     })
   })
 })
+

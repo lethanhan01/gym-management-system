@@ -20,6 +20,7 @@ import * as fs from 'fs'
 import { CurrentUser } from '../auth/decorators/current-user.decorator'
 import { AuthenticatedUser } from '../auth/types/jwt-payload.interface'
 import { DatabaseRetryable } from '../common/decorators/database-retryable.decorator'
+import { ChatGateway } from './chat.gateway'
 import { ChatService, ChatUploadedFile } from './chat.service'
 import {
   QueryConversationsDto,
@@ -32,7 +33,10 @@ import {
 @Controller('chat')
 @DatabaseRetryable()
 export class ChatController {
-  constructor(private readonly chatService: ChatService) {}
+  constructor(
+    private readonly chatService: ChatService,
+    private readonly chatGateway: ChatGateway
+  ) {}
 
   /**
    * Lấy danh sách tất cả các cuộc trò chuyện của người dùng hiện tại (Member hoặc Trainer).
@@ -88,6 +92,7 @@ export class ChatController {
       dto.content,
       'text'
     )
+    await this.chatGateway.broadcastNewMessage(id.toString(), data)
     return { success: true, data }
   }
 
@@ -147,6 +152,7 @@ export class ChatController {
       user.userId,
       file
     )
+    await this.chatGateway.broadcastNewMessage(id.toString(), data)
     return { success: true, data }
   }
 
@@ -175,6 +181,13 @@ export class ChatController {
     @CurrentUser() user: AuthenticatedUser
   ) {
     const data = await this.chatService.deleteMessage(BigInt(id), user.userId)
+    if (data?.conversationId && this.chatGateway.server) {
+      this.chatGateway.server.to(`conv_${data.conversationId}`).emit('message_deleted', {
+        conversationId: data.conversationId,
+        messageId: data.messageId,
+      })
+    }
     return { success: true, data }
   }
 }
+
