@@ -297,13 +297,16 @@
       flex-direction: column;
       align-items: center;
       gap: 3px;
-      flex: 1;
-      padding: 8px 4px;
+      flex: 1 1 0px;
+      min-width: 0;
+      width: 0;
+      padding: 8px 2px;
       color: var(--rogym-text-dim);
       text-decoration: none;
       transition: color 150ms ease;
       min-height: 44px;
       justify-content: center;
+      box-sizing: border-box;
     }
 
     .rogym-bottom-nav--member .rogym-bottom-nav__item--center {
@@ -332,6 +335,7 @@
       background: #050807;
       color: var(--rogym-text-primary);
       box-shadow: 0 10px 24px rgba(0, 0, 0, 0.35);
+      transition: border-color 200ms ease, color 200ms ease, box-shadow 200ms ease, opacity 150ms ease;
     }
 
     .rogym-bottom-nav__item.is-active {
@@ -357,6 +361,18 @@
       box-shadow: 0 0 16px rgba(245, 158, 11, 0.35);
     }
 
+    .rogym-bottom-nav--member .rogym-bottom-nav__item--workout-completed svg {
+      border-color: var(--rogym-teal);
+      color: var(--rogym-teal);
+      box-shadow: 0 0 18px rgba(6, 195, 132, 0.4);
+    }
+
+    .rogym-bottom-nav--member .rogym-bottom-nav__item--workout-saving svg {
+      border-color: rgba(66, 224, 158, 0.5);
+      color: var(--rogym-teal);
+      box-shadow: 0 0 12px rgba(6, 195, 132, 0.25);
+    }
+
     @keyframes rogym-workout-running-pulse {
       0%, 100% {
         box-shadow: 0 10px 24px rgba(6, 195, 132, 0.3);
@@ -379,6 +395,10 @@
       font-weight: 600;
       letter-spacing: 0.01em;
       white-space: nowrap;
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      text-align: center;
     }
   }
 }

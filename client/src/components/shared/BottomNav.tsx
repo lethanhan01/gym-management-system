@@ -74,6 +74,7 @@ function useBottomNavItems(): { items: BottomNavItem[]; effectiveRole?: string }
           label: tMember('workout.createSession.buttonSaving'),
           variant: 'center',
           disabled: true,
+          className: 'rogym-bottom-nav__item--workout-saving',
         }
       case 'save-error':
         return {
@@ -88,6 +89,7 @@ function useBottomNavItems(): { items: BottomNavItem[]; effectiveRole?: string }
           label: tCommon('status.completed'),
           variant: 'center',
           disabled: true,
+          className: 'rogym-bottom-nav__item--workout-completed',
         }
       case 'idle':
       default:
@@ -158,6 +160,7 @@ export default function BottomNav() {
             <button
               key={itemKey}
               type="button"
+              data-no-sweep
               onClick={item.onClick}
               disabled={item.disabled}
               aria-label={item.label}

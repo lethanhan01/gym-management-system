@@ -5,7 +5,7 @@ import i18n from '@/lib/i18n'
 import { useAuthStore } from '@/stores/authStore'
 import workoutService, { type WorkoutAssignmentSummary, type WorkoutPlan } from '@/services/workout.service'
 import { trainingSessionService, type TrainingSessionDetail } from '@/services/training-session.service'
-import { getSessionDraftStorageKey, saveSessionDraft } from './create-session/sessionDraft'
+import { getSessionDraftStorageKey, saveSessionDraft, saveSessionRuntime } from './create-session/sessionDraft'
 import CreateWorkoutDaySessionPage from './CreateWorkoutDaySessionPage'
 
 vi.mock('@/services/workout.service', async () => {
@@ -102,5 +102,35 @@ describe('CreateWorkoutDaySessionPage', () => {
     renderPage('/member/workout/create-session/day/11?assignmentId=999')
     expect(await screen.findByText('Liên kết ngày tập không hợp lệ hoặc không còn khả dụng.')).toBeVisible()
     expect(workoutService.createLog).not.toHaveBeenCalled()
+  })
+
+  it('saves session log and transitions to completed screen when celebration closes', async () => {
+    vi.mocked(workoutService.createLog).mockResolvedValueOnce({} as any)
+    const day = plan.days![0]
+    saveSessionRuntime('10', day, assignment, '555', {
+      version: 1,
+      status: 'running',
+      segments: [{ kind: 'set', planExerciseId: '111', setIndex: 0, durationSec: 1 }],
+      config: { '111': { restSeconds: 0, sets: [{ actualReps: '10', actualWeightKg: '20', actualDurationSec: '1' }] } },
+      segmentIndex: 0,
+      segmentRemainingSec: 1,
+      totalRemainingSec: 1,
+      completionKey: 'comp-1',
+      loggedAt: null,
+    })
+
+    renderPage()
+    expect(await screen.findByText('Squat')).toBeVisible()
+
+    const resumeBtn = await screen.findByRole('button', { name: 'Tiếp tục buổi tập' })
+    fireEvent.click(resumeBtn)
+
+    await vi.waitFor(() => {
+      expect(workoutService.createLog).toHaveBeenCalledTimes(1)
+    }, { timeout: 3000 })
+
+    expect(await screen.findByText('Buổi tập hoàn tất!')).toBeVisible()
+    expect(screen.getByRole('button', { name: 'Về kế hoạch' })).toBeVisible()
+    expect(screen.getByRole('button', { name: 'Xem lịch sử' })).toBeVisible()
   })
 })
