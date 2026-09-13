@@ -10,6 +10,7 @@ import viStaff from '../locales/vi/staff.json'
 import viOwner from '../locales/vi/owner.json'
 import viHome from '../locales/vi/home.json'
 import viValidation from '../locales/vi/validation.json'
+import viChat from '../locales/vi/chat.json'
 
 import jaCommon from '../locales/ja/common.json'
 import jaAuth from '../locales/ja/auth.json'
@@ -19,6 +20,7 @@ import jaStaff from '../locales/ja/staff.json'
 import jaOwner from '../locales/ja/owner.json'
 import jaHome from '../locales/ja/home.json'
 import jaValidation from '../locales/ja/validation.json'
+import jaChat from '../locales/ja/chat.json'
 
 i18n
   .use(LanguageDetector)
@@ -28,10 +30,12 @@ i18n
       vi: {
         common: viCommon, auth: viAuth, member: viMember, trainer: viTrainer,
         staff: viStaff, owner: viOwner, home: viHome, validation: viValidation,
+        chat: viChat,
       },
       ja: {
         common: jaCommon, auth: jaAuth, member: jaMember, trainer: jaTrainer,
         staff: jaStaff, owner: jaOwner, home: jaHome, validation: jaValidation,
+        chat: jaChat,
       },
     },
     lng: localStorage.getItem('gym-locale') ?? 'vi',

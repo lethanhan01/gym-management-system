@@ -339,24 +339,29 @@ Cung cấp khả năng giao tiếp thời gian thực hai chiều giữa Hội v
 Xây dựng lớp quản lý kết nối socket và lưu trữ trạng thái chat phản ứng nhanh (reactive state) ở Frontend.
 
 #### Các bước thực hiện:
-- [ ] **Bước 5.1: Cài đặt thư viện Socket.io Client**
+- [x] **Bước 5.1: Cài đặt thư viện Socket.io Client**
   - Chạy `npm install socket.io-client` tại thư mục `client`.
-- [ ] **Bước 5.2: Xây dựng `chat.service.ts`**
-  - **File tạo:** `client/src/services/chat.service.ts`
+- [x] **Bước 5.2: Xây dựng Types (`@types/chat.ts`) và `chat.service.ts`**
+  - **File tạo:** `client/src/@types/chat.ts` & `client/src/services/chat.service.ts`
   - Các hàm gọi REST API: `getConversations`, `getActiveConversation`, `getMessages`, `uploadAttachment`, `deleteMessage`, `markAsRead`.
-  - Quản lý instance socket: kết nối, ngắt kết nối, phát và lắng nghe event.
-- [ ] **Bước 5.3: Xây dựng `chat.store.ts` (Zustand)**
+  - Quản lý instance socket: kết nối với JWT auth, ngắt kết nối, phát và lắng nghe realtime events (`join_conversation`, `send_message`, `typing_start`, `typing_stop`, `mark_seen`, `delete_message`).
+- [x] **Bước 5.3: Xây dựng `chat.store.ts` (Zustand)**
   - **File tạo:** `client/src/stores/chat.store.ts`
   - State:
     - `conversations`: Danh sách cuộc trò chuyện.
-    - `activeConversation`: Cuộc trò chuyện đang mở.
-    - `messages`: Danh sách tin nhắn của hội thoại hiện tại.
-    - `typingUsers`: Map lưu trạng thái ai đang gõ.
-    - `unreadCount`: Tổng số tin chưa đọc trên toàn app.
+    - `activeConversationId`: Cuộc trò chuyện đang mở.
+    - `messagesByConversation`: Bộ nhớ đệm tin nhắn theo từng cuộc trò chuyện.
+    - `typingUsers`: Quản lý danh sách ai đang gõ với auto cleanup timeout.
+    - `unreadTotal`: Tổng số tin chưa đọc trên toàn app.
     - `isFloatingOpen`: Trạng thái mở/đóng widget nổi.
-  - Actions: `setActiveConversation`, `fetchMessages`, `sendMessage`, `deleteMessage`, `markSeen`, `handleIncomingMessage`, `handleMessageDeleted`.
-- [ ] **Bước 5.4: Bổ sung từ điển đa ngôn ngữ (i18n)**
-  - **File sửa:** `client/src/locales/vi/chat.json`, `client/src/locales/en/chat.json`, `client/src/locales/ja/chat.json` (hoặc tích hợp vào `member.json` và `staff.json`).
+    - Tích hợp phát âm thanh chuông chime nhẹ qua Web Audio API Oscillator (`playNotificationSound`).
+    - Hỗ trợ Optimistic UI Updates khi gửi tin nhắn văn bản với delivery status `sending` $\rightarrow$ `sent` / `failed` (hỗ trợ `retrySendMessage`).
+- [x] **Bước 5.4: Bổ sung từ điển đa ngôn ngữ (i18n)**
+  - **Files tạo / sửa:** `client/src/locales/vi/chat.json`, `client/src/locales/ja/chat.json`, `client/src/lib/i18n.ts`, `client/src/@types/i18next.d.ts`.
+- [x] **Bước 5.5: Kiểm thử Unit Tests cho Client**
+  - **Files tạo:** `client/src/services/chat.service.test.ts` (15/15 passed) & `client/src/stores/chat.store.test.ts` (11/11 passed).
+  - Toàn bộ test suite client: 77/77 test suites passed (373/373 tests passed).
+  - `npm run build`: Build production bundle thành công 0 lỗi.
 
 ---
 

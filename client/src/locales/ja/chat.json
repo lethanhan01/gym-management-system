@@ -1,0 +1,43 @@
+{
+  "title": "チャット",
+  "chatWithTrainer": "専属トレーナーとチャット",
+  "chatWithMember": "会員とチャット",
+  "noActiveTrainer": "専属トレーナーが設定されていません",
+  "noActiveTrainerDesc": "チャットを開始するには、パーソナルトレーナーを登録または選択してください。",
+  "selectStudent": "チャットを開始する会員を選択してください",
+  "searchStudents": "名前または会員番号で検索...",
+  "searchConversations": "会話を検索...",
+  "noConversations": "チャット履歴がありません",
+  "noMessages": "メッセージはまだありません。挨拶を送ってみましょう！",
+  "inputPlaceholder": "メッセージを入力... (Enterで送信、Shift+Enterで改行)",
+  "send": "送信",
+  "sending": "送信中...",
+  "sent": "送信済み",
+  "seen": "既読",
+  "sendFailed": "送信失敗",
+  "retry": "再試行",
+  "deleteMessage": "メッセージを送信取消",
+  "deleteConfirmTitle": "このメッセージを取り消しますか？",
+  "deleteConfirmDesc": "メッセージは双方のチャットから完全に削除されます。この操作は取り消せません。",
+  "cancel": "キャンセル",
+  "confirmDelete": "取り消す",
+  "uploadImage": "画像を添付",
+  "uploading": "画像をアップロード中...",
+  "uploadError": "画像のアップロードに失敗しました。もう一度お試しください。",
+  "imageAttachment": "[画像]",
+  "viewImage": "画像を表示",
+  "typing": "{{name}} が入力中...",
+  "someoneTyping": "入力中...",
+  "status": {
+    "active": "アクティブ",
+    "archived": "アーカイブ済み（閲覧のみ）"
+  },
+  "archivedNotice": "この会話はトレーナーの変更によりアーカイブされました。履歴は閲覧可能ですが、新規メッセージは送信できません。",
+  "notifications": {
+    "newMessage": "{{name}} からの新規メッセージ",
+    "soundEnabled": "通知音をオンにする",
+    "soundDisabled": "通知音をオフにする"
+  },
+  "loadMore": "以前のメッセージを読み込む",
+  "loadingOlder": "以前のメッセージを読み込み中..."
+}

@@ -1,0 +1,43 @@
+{
+  "title": "Trò chuyện",
+  "chatWithTrainer": "Trò chuyện với Huấn luyện viên",
+  "chatWithMember": "Trò chuyện với Học viên",
+  "noActiveTrainer": "Bạn chưa có Huấn luyện viên chính",
+  "noActiveTrainerDesc": "Vui lòng chọn hoặc đăng ký dịch vụ Huấn luyện viên cá nhân để bắt đầu trao đổi.",
+  "selectStudent": "Chọn học viên để bắt đầu trò chuyện",
+  "searchStudents": "Tìm kiếm học viên theo tên hoặc mã...",
+  "searchConversations": "Tìm kiếm cuộc trò chuyện...",
+  "noConversations": "Chưa có cuộc trò chuyện nào",
+  "noMessages": "Chưa có tin nhắn nào. Hãy gửi lời chào đầu tiên!",
+  "inputPlaceholder": "Nhập tin nhắn... (Nhấn Enter để gửi, Shift+Enter để xuống dòng)",
+  "send": "Gửi",
+  "sending": "Đang gửi...",
+  "sent": "Đã gửi",
+  "seen": "Đã xem",
+  "sendFailed": "Gửi thất bại",
+  "retry": "Thử lại",
+  "deleteMessage": "Thu hồi tin nhắn",
+  "deleteConfirmTitle": "Thu hồi tin nhắn này?",
+  "deleteConfirmDesc": "Tin nhắn sẽ bị xóa vĩnh viễn khỏi cuộc trò chuyện của cả hai bên. Hành động này không thể hoàn tác.",
+  "cancel": "Hủy bỏ",
+  "confirmDelete": "Thu hồi",
+  "uploadImage": "Đính kèm hình ảnh",
+  "uploading": "Đang tải ảnh...",
+  "uploadError": "Tải ảnh lên thất bại. Vui lòng thử lại.",
+  "imageAttachment": "[Hình ảnh]",
+  "viewImage": "Xem ảnh",
+  "typing": "{{name}} đang nhập...",
+  "someoneTyping": "Đang nhập...",
+  "status": {
+    "active": "Đang hoạt động",
+    "archived": "Đã lưu trữ (Chỉ đọc)"
+  },
+  "archivedNotice": "Cuộc trò chuyện này đã được lưu trữ do thay đổi Huấn luyện viên. Bạn vẫn có thể xem lại lịch sử tư vấn nhưng không thể gửi thêm tin nhắn mới.",
+  "notifications": {
+    "newMessage": "Tin nhắn mới từ {{name}}",
+    "soundEnabled": "Bật âm thanh thông báo",
+    "soundDisabled": "Tắt âm thanh thông báo"
+  },
+  "loadMore": "Tải thêm tin nhắn cũ",
+  "loadingOlder": "Đang tải tin nhắn cũ..."
+}
