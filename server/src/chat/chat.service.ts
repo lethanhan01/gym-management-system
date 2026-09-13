@@ -96,16 +96,37 @@ export class ChatService {
       this.prisma.staff.findUnique({ where: { userId } }),
     ])
 
+    if (!member && !staff) {
+      return []
+    }
+
+    // Nếu là Trainer (staff): Đảm bảo tất cả các học viên đang được phân công cho PT này đều có cuộc trò chuyện active
+    if (staff) {
+      const assignedMembers = await this.prisma.member.findMany({
+        where: {
+          primaryTrainerId: staff.staffId,
+          deletedAt: null,
+          user: {
+            deletedAt: null,
+            status: 'active',
+          },
+        },
+        select: { memberId: true },
+      })
+
+      await Promise.all(
+        assignedMembers.map((m) =>
+          this.getOrCreateActiveConversation(m.memberId, staff.staffId)
+        )
+      )
+    }
+
     const whereConditions: Prisma.ChatConversationWhereInput[] = []
     if (member) {
       whereConditions.push({ memberId: member.memberId })
     }
     if (staff) {
       whereConditions.push({ trainerStaffId: staff.staffId })
-    }
-
-    if (whereConditions.length === 0) {
-      return []
     }
 
     const where: Prisma.ChatConversationWhereInput = {
@@ -170,6 +191,7 @@ export class ChatService {
             avatarUrl: participantUser.avatarFileId ? `/api/v1/files/${participantUser.avatarFileId}` : null,
             role: participantRole,
             memberId: isMember ? undefined : conv.member.memberId.toString(),
+            memberCode: isMember ? undefined : conv.member.memberCode,
             staffId: isMember ? conv.trainer.staffId.toString() : undefined,
             specialty: isMember ? conv.trainer.specialty : undefined,
           },
@@ -181,6 +203,16 @@ export class ChatService {
         }
       })
     )
+
+    // 3. Sắp xếp kết quả: Ưu tiên cuộc trò chuyện có tin nhắn mới nhất, các học viên chưa nhắn tin xếp sau theo createdAt mới nhất
+    results.sort((a, b) => {
+      if (a.lastMessageAt && b.lastMessageAt) {
+        return new Date(b.lastMessageAt).getTime() - new Date(a.lastMessageAt).getTime()
+      }
+      if (a.lastMessageAt && !b.lastMessageAt) return -1
+      if (!a.lastMessageAt && b.lastMessageAt) return 1
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    })
 
     return results
   }

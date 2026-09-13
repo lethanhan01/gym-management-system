@@ -72,22 +72,32 @@ export default function TrainerChatPage() {
 
     if (targetMemberId) {
       const found = conversations.find(
-        (c) => c.participant.memberId === targetMemberId || c.participant.userId === targetMemberId
+        (c) =>
+          c.participant.memberId === targetMemberId ||
+          c.participant.userId === targetMemberId ||
+          c.participant.memberCode === targetMemberId
       )
       if (found && activeConversationId !== found.conversationId) {
         void setActiveConversation(found.conversationId)
         setIsMobileChatOpen(true)
       }
+      return
+    }
+
+    // Tự động chọn cuộc trò chuyện đầu tiên trên Desktop nếu chưa chọn ai
+    if (!activeConversationId && conversations.length > 0) {
+      void setActiveConversation(conversations[0].conversationId)
     }
   }, [conversations, targetConvId, targetMemberId, activeConversationId, setActiveConversation])
 
-  // Lọc danh sách học viên theo từ khóa tìm kiếm
+  // Lọc danh sách học viên theo từ khóa tìm kiếm (Tên, Mã học viên, Member ID)
   const filteredConversations = useMemo(() => {
     const q = searchQuery.trim().toLowerCase()
     if (!q) return conversations
     return conversations.filter(
       (c) =>
         c.participant.fullName.toLowerCase().includes(q) ||
+        (c.participant.memberCode && c.participant.memberCode.toLowerCase().includes(q)) ||
         (c.participant.memberId && c.participant.memberId.toLowerCase().includes(q))
     )
   }, [conversations, searchQuery])
@@ -137,7 +147,7 @@ export default function TrainerChatPage() {
           <SearchInput
             value={searchQuery}
             onChange={setSearchQuery}
-            placeholder={t('searchStudents', 'Tìm theo tên học viên...')}
+            placeholder={t('searchStudents', 'Tìm theo tên, mã học viên...')}
             inputSize="sm"
           />
         </div>
@@ -172,6 +182,7 @@ export default function TrainerChatPage() {
           ) : (
             filteredConversations.map((conv) => {
               const isSelected = activeConversationId === conv.conversationId
+              const isNewConversation = !conv.lastMessageAt && !conv.lastMessageContent
               const timeAgo = conv.lastMessageAt
                 ? (() => {
                     try {
@@ -214,17 +225,25 @@ export default function TrainerChatPage() {
                       >
                         {conv.participant.fullName}
                       </h4>
-                      {timeAgo && (
+                      {timeAgo ? (
                         <span className="text-[10px] text-[var(--rogym-text-dim)] shrink-0">
                           {timeAgo}
                         </span>
-                      )}
+                      ) : isNewConversation ? (
+                        <Badge tone="primary" size="xs" className="text-[9px] px-1 py-0 h-4">
+                          Mới
+                        </Badge>
+                      ) : null}
                     </div>
                     <div className="flex items-center justify-between gap-2 mt-0.5">
                       <p
                         className={cn(
                           'text-xs truncate',
-                          conv.unreadCount > 0 ? 'text-white font-medium' : 'text-[var(--rogym-text-dim)]'
+                          conv.unreadCount > 0
+                            ? 'text-white font-medium'
+                            : isNewConversation
+                            ? 'text-[var(--rogym-text-dim)] italic'
+                            : 'text-[var(--rogym-text-dim)]'
                         )}
                       >
                         {conv.lastMessageContent || 'Chưa có tin nhắn'}

@@ -24,9 +24,17 @@ class ChatService {
   async getConversations(): Promise<ConversationSummary[]> {
     const res = await api.get<{
       success: boolean
-      data: { conversations: ConversationSummary[] }
+      data: ConversationSummary[] | { conversations: ConversationSummary[] }
     }>('/chat/conversations')
-    return res.data.data.conversations
+
+    const raw = res.data?.data
+    if (Array.isArray(raw)) {
+      return raw
+    }
+    if (raw && typeof raw === 'object' && Array.isArray((raw as { conversations?: ConversationSummary[] }).conversations)) {
+      return (raw as { conversations: ConversationSummary[] }).conversations
+    }
+    return []
   }
 
   /**
@@ -104,13 +112,18 @@ class ChatService {
 
     const res = await api.post<{
       success: boolean
-      data: { message: ChatMessage }
+      data: ChatMessage | { message: ChatMessage }
     }>(`/chat/conversations/${conversationId}/upload`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
     })
-    return res.data.data.message
+
+    const raw = res.data?.data
+    if (raw && typeof raw === 'object' && 'message' in raw && (raw as { message: ChatMessage }).message) {
+      return (raw as { message: ChatMessage }).message
+    }
+    return raw as ChatMessage
   }
 
   /**

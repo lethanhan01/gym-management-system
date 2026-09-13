@@ -42,12 +42,31 @@ describe('TrainerChatPage Component', () => {
       avatarUrl: null,
       role: 'member',
       memberId: 'mem-102',
+      memberCode: 'MB-102',
     },
     lastMessageContent: 'Thầy cho em hỏi lịch tập mai',
     lastMessageAt: '2026-09-12T15:00:00.000Z',
     unreadCount: 0,
     createdAt: '2026-09-02T00:00:00.000Z',
     updatedAt: '2026-09-12T15:00:00.000Z',
+  }
+
+  const mockStudent3: ConversationSummary = {
+    conversationId: 'conv-stu-3',
+    status: 'active',
+    participant: {
+      userId: 'user-stu-3',
+      fullName: 'Học viên Mới Chưa Nhắn',
+      avatarUrl: null,
+      role: 'member',
+      memberId: 'mem-103',
+      memberCode: 'MB-999',
+    },
+    lastMessageContent: null,
+    lastMessageAt: null,
+    unreadCount: 0,
+    createdAt: '2026-09-14T00:00:00.000Z',
+    updatedAt: '2026-09-14T00:00:00.000Z',
   }
 
   beforeEach(() => {
@@ -66,11 +85,12 @@ describe('TrainerChatPage Component', () => {
     })
 
     useChatStore.setState({
-      conversations: [mockStudent1, mockStudent2],
+      conversations: [mockStudent1, mockStudent2, mockStudent3],
       activeConversationId: 'conv-stu-1',
       messagesByConversation: {
         'conv-stu-1': [],
         'conv-stu-2': [],
+        'conv-stu-3': [],
       },
       hasMoreByConversation: {},
       typingUsers: {},
@@ -91,10 +111,13 @@ describe('TrainerChatPage Component', () => {
     expect(screen.getByText('Tin nhắn học viên')).toBeInTheDocument()
     expect(screen.getAllByText('Học viên Nguyễn Văn An').length).toBeGreaterThanOrEqual(1)
     expect(screen.getByText('Học viên Lê Bảo Bình')).toBeInTheDocument()
+    expect(screen.getByText('Học viên Mới Chưa Nhắn')).toBeInTheDocument()
+    expect(screen.getByText('Mới')).toBeInTheDocument()
+    expect(screen.getByText('Chưa có tin nhắn')).toBeInTheDocument()
     expect(screen.getByPlaceholderText(/tìm/i)).toBeInTheDocument()
   })
 
-  it('filters student list by search input', async () => {
+  it('filters student list by search input with student name or memberCode', async () => {
     render(
       <MemoryRouter>
         <TrainerChatPage />
@@ -102,12 +125,11 @@ describe('TrainerChatPage Component', () => {
     )
 
     const searchInput = screen.getByPlaceholderText(/tìm/i)
-    fireEvent.change(searchInput, { target: { value: 'Lê Bảo' } })
+    fireEvent.change(searchInput, { target: { value: 'MB-999' } })
 
     await waitFor(() => {
-      expect(screen.getByText('Học viên Lê Bảo Bình')).toBeInTheDocument()
-      // Nguyễn Văn An should no longer be in the left filtered list
-      expect(screen.getAllByText('Học viên Nguyễn Văn An').length).toBe(1) // only in the right header of active chat
+      expect(screen.getByText('Học viên Mới Chưa Nhắn')).toBeInTheDocument()
+      expect(screen.queryByText('Học viên Lê Bảo Bình')).not.toBeInTheDocument()
     })
   })
 

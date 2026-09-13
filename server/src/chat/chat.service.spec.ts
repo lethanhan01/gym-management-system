@@ -29,6 +29,7 @@ describe('ChatService', () => {
     }
     member: {
       findUnique: jest.Mock
+      findMany: jest.Mock
     }
     staff: {
       findUnique: jest.Mock
@@ -61,6 +62,7 @@ describe('ChatService', () => {
       },
       member: {
         findUnique: jest.fn(),
+        findMany: jest.fn(),
       },
       staff: {
         findUnique: jest.fn(),
@@ -313,6 +315,109 @@ describe('ChatService', () => {
           },
         },
       })
+    })
+
+    it('nen tu dong tao hoi thoai cho tat ca hoc vien duoc phan cong cho Trainer va tra ve memberCode', async () => {
+      prisma.member.findUnique.mockResolvedValue(null)
+      prisma.staff.findUnique.mockResolvedValue({ staffId: BigInt(2), userId: BigInt(200) })
+
+      // Mock 2 assigned members: 1 already has conversation, 1 new
+      prisma.member.findMany.mockResolvedValue([
+        { memberId: BigInt(1) },
+        { memberId: BigInt(2) },
+      ])
+
+      // Mock getOrCreateActiveConversation
+      prisma.chatConversation.findUnique
+        .mockResolvedValueOnce({
+          conversationId: BigInt(1),
+          memberId: BigInt(1),
+          trainerStaffId: BigInt(2),
+          status: ConversationStatus.active,
+        })
+        .mockResolvedValueOnce(null)
+
+      prisma.chatConversation.create.mockResolvedValueOnce({
+        conversationId: BigInt(2),
+        memberId: BigInt(2),
+        trainerStaffId: BigInt(2),
+        status: ConversationStatus.active,
+      })
+
+      const mockConvs = [
+        {
+          conversationId: BigInt(1),
+          memberId: BigInt(1),
+          trainerStaffId: BigInt(2),
+          status: ConversationStatus.active,
+          lastMessageContent: 'Tin nhan cu',
+          lastMessageAt: new Date('2026-09-13T10:00:00Z'),
+          memberLastReadAt: null,
+          trainerLastReadAt: new Date('2026-09-13T10:00:00Z'),
+          createdAt: new Date('2026-09-10T10:00:00Z'),
+          updatedAt: new Date('2026-09-13T10:00:00Z'),
+          member: {
+            memberId: BigInt(1),
+            memberCode: 'MB-001',
+            user: { userId: BigInt(101), fullName: 'Hoc vien Cu', avatarFileId: null },
+          },
+          trainer: {
+            staffId: BigInt(2),
+            specialty: 'Gym',
+            user: { userId: BigInt(200), fullName: 'Coach B', avatarFileId: null },
+          },
+        },
+        {
+          conversationId: BigInt(2),
+          memberId: BigInt(2),
+          trainerStaffId: BigInt(2),
+          status: ConversationStatus.active,
+          lastMessageContent: null,
+          lastMessageAt: null,
+          memberLastReadAt: null,
+          trainerLastReadAt: null,
+          createdAt: new Date('2026-09-14T00:00:00Z'),
+          updatedAt: new Date('2026-09-14T00:00:00Z'),
+          member: {
+            memberId: BigInt(2),
+            memberCode: 'MB-002',
+            user: { userId: BigInt(102), fullName: 'Hoc vien Moi', avatarFileId: null },
+          },
+          trainer: {
+            staffId: BigInt(2),
+            specialty: 'Gym',
+            user: { userId: BigInt(200), fullName: 'Coach B', avatarFileId: null },
+          },
+        },
+      ]
+
+      prisma.chatConversation.findMany.mockResolvedValue(mockConvs)
+      prisma.chatMessage.count.mockResolvedValue(0)
+
+      const result = await service.getConversationsForUser(BigInt(200))
+
+      expect(prisma.member.findMany).toHaveBeenCalledWith({
+        where: {
+          primaryTrainerId: BigInt(2),
+          deletedAt: null,
+          user: {
+            deletedAt: null,
+            status: 'active',
+          },
+        },
+        select: { memberId: true },
+      })
+      expect(result).toHaveLength(2)
+      // First is conv with message
+      expect(result[0].conversationId).toBe('1')
+      expect(result[0].participant.memberCode).toBe('MB-001')
+      expect(result[0].participant.fullName).toBe('Hoc vien Cu')
+      expect(result[0].lastMessageContent).toBe('Tin nhan cu')
+      // Second is new conv without message
+      expect(result[1].conversationId).toBe('2')
+      expect(result[1].participant.memberCode).toBe('MB-002')
+      expect(result[1].participant.fullName).toBe('Hoc vien Moi')
+      expect(result[1].lastMessageContent).toBeNull()
     })
   })
 

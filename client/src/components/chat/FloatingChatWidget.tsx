@@ -108,15 +108,31 @@ export function FloatingChatWidget() {
         <div className="fixed bottom-20 right-4 md:bottom-6 md:right-6 z-40">
           <button
             type="button"
+            data-no-sweep
             onClick={toggleFloating}
-            className="group relative flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-[var(--rogym-teal)] to-[var(--rogym-green)] text-black shadow-[0_8px_30px_rgba(66,224,158,0.35)] transition-all hover:scale-105 hover:shadow-[0_12px_36px_rgba(66,224,158,0.5)] active:scale-95 focus:outline-none"
+            className="group relative flex h-14 w-14 items-center justify-center rounded-full transition-all duration-300 hover:scale-110 active:scale-95 focus:outline-none focus:ring-2 focus:ring-[var(--rogym-teal)] ring-offset-2 ring-offset-[var(--rogym-bg-base)]"
+            style={{
+              backgroundColor: 'var(--rogym-teal)',
+              color: 'var(--rogym-green-dark)',
+              boxShadow: '0 8px 28px rgba(66, 224, 158, 0.45), 0 0 16px rgba(6, 195, 132, 0.35)',
+            }}
             aria-label="Mở khung trò chuyện"
           >
-            <MessageSquare size={26} className="transition-transform group-hover:scale-110" />
+            <MessageSquare
+              size={26}
+              style={{ color: 'var(--rogym-green-dark)' }}
+              className="transition-transform duration-300 group-hover:scale-110 stroke-[2.4]"
+            />
 
             {/* Badge số đỏ đếm unread count */}
             {unreadTotal > 0 && (
-              <span className="absolute -top-1 -right-1 flex h-6 min-w-6 items-center justify-center rounded-full bg-red-600 px-1.5 text-xs font-bold text-white ring-2 ring-[var(--rogym-bg-base)] shadow-md animate-pulse">
+              <span
+                className="absolute -top-1 -right-1 flex h-6 min-w-6 items-center justify-center rounded-full px-1.5 text-xs font-bold text-white shadow-md animate-pulse"
+                style={{
+                  backgroundColor: 'var(--rogym-error)',
+                  border: '2px solid var(--rogym-bg-base)',
+                }}
+              >
                 {unreadTotal > 99 ? '99+' : unreadTotal}
               </span>
             )}

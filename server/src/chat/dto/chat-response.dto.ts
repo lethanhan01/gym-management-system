@@ -4,6 +4,7 @@ export interface ConversationParticipant {
   avatarUrl: string | null
   role: 'member' | 'trainer'
   memberId?: string
+  memberCode?: string
   staffId?: string
   specialty?: string | null
 }
