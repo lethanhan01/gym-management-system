@@ -1,6 +1,7 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { render, screen, waitFor, fireEvent } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
+import i18n from '@/lib/i18n'
 import ChooseTrainerPage from './ChooseTrainerPage'
 import { memberService, type TrainerSummary } from '@/services/member.service'
 
@@ -52,6 +53,10 @@ describe('ChooseTrainerPage', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     vi.mocked(memberService.getAvailableTrainers).mockResolvedValue(sampleTrainers)
+  })
+
+  afterEach(async () => {
+    await i18n.changeLanguage('vi')
   })
 
   it('renders available trainers with ratings, specialty, and tags', async () => {
@@ -174,5 +179,30 @@ describe('ChooseTrainerPage', () => {
       expect(memberService.selfAssignTrainer).toHaveBeenCalledWith(1)
       expect(mockNavigate).toHaveBeenCalledWith('/member', { replace: true })
     })
+  })
+
+  it('renders properly in Japanese with localized tags, specialties, and button hints', async () => {
+    await i18n.changeLanguage('ja')
+
+    render(
+      <MemoryRouter>
+        <ChooseTrainerPage />
+      </MemoryRouter>
+    )
+
+    await waitFor(() => {
+      expect(screen.getByText('トレーナーを選択')).toBeInTheDocument()
+      expect(screen.getByText('Trần Văn Mạnh')).toBeInTheDocument()
+    })
+
+    // Localized specialty in Japanese
+    expect(screen.getByText('脂肪燃焼・体力向上')).toBeInTheDocument()
+
+    // Localized tags in Japanese
+    expect(screen.getByText('#親切・熱心')).toBeInTheDocument()
+    expect(screen.getByText('#フォーム指導充実')).toBeInTheDocument()
+
+    // Card hint in Japanese
+    expect(screen.getAllByText('タップして選択')[0]).toBeInTheDocument()
   })
 })

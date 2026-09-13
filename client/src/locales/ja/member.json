@@ -202,6 +202,16 @@
     "emptyTitle": "トレーナーがいません",
     "emptyDescription": "現在利用可能なPTがいません。",
     "selectedBadge": "選択中",
+    "cardSelectHint": "タップして選択",
+    "specialtyMap": {
+      "HIIT & Fat Loss": "HIIT・脂肪燃焼",
+      "Giảm mỡ & Thể lực": "脂肪燃焼・体力向上",
+      "Yoga & Pilates": "ヨガ・ピラティス",
+      "Master Powerlifter & Strength": "パワーリフティング・筋力強化",
+      "Functional Training & Bodybuilding": "機能的トレーニング・ボディビル",
+      "Personal Training & Fitness": "パーソナルトレーニング＆フィットネス",
+      "Tăng cơ & Cải thiện vóc dáng": "筋肥大・体型改善"
+    },
     "submitError": "このPTを選択できません。再試行してください。",
     "buttonBack": "戻る",
     "buttonProcessing": "処理中...",
@@ -594,9 +604,22 @@
       "Máy móc mới": "新しいマシン",
       "Máy hỏng": "マシンの故障",
       "Phòng bí": "換気不足",
-      "PhòngQuáNóng": "室温が高すぎる",
-      "MáyHỏng": "マシンの故障",
-      "NhiệtTình": "親切・熱心"
+      "NhiệtTình": "親切・熱心",
+      "Kỹ thuật tốt": "フォーム指導充実",
+      "KỹThuậtTốt": "フォーム指導充実",
+      "Hiệu quả cao": "効果的",
+      "HiệuQuảCao": "効果的",
+      "Tận tâm": "熱心・丁寧",
+      "TậnTâm": "熱心・丁寧",
+      "Năng lượng tích cực": "ポジティブ",
+      "NăngLượngTíchCực": "ポジティブ",
+      "Đốt mỡ tốt": "脂肪燃焼効果",
+      "ĐốtMỡTốt": "脂肪燃焼効果",
+      "#KỹThuậtTốt": "#フォーム指導充実",
+      "#HiệuQuảCao": "#効果的",
+      "#TậnTâm": "#熱心・丁寧",
+      "#NăngLượngTíchCực": "#ポジティブ",
+      "#ĐốtMỡTốt": "#脂肪燃焼効果"
     }
   },
   "progress": {

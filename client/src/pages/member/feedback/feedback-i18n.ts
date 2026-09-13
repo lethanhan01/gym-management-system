@@ -34,3 +34,20 @@ export function localizeTag(tag: string): string {
 
   return tag
 }
+
+/**
+ * Localizes a trainer specialty using member.json (chooseTrainer.specialtyMap).
+ * Falls back to original string if not mapped.
+ */
+export function localizeSpecialty(specialty?: string | null): string {
+  if (!specialty) return ''
+
+  const t = i18n.t.bind(i18n) as (key: string, options?: { defaultValue?: string }) => string
+  const translated = t(`member:chooseTrainer.specialtyMap.${specialty}`, { defaultValue: '' })
+  if (translated && translated !== `member:chooseTrainer.specialtyMap.${specialty}`) {
+    return translated
+  }
+
+  return specialty
+}
+

@@ -17,12 +17,13 @@ import {
   SearchInput,
   Select,
 } from '@/components/ui'
+import { localizeSpecialty, localizeTag } from '@/pages/member/feedback/feedback-i18n'
 import TrainerReviewsModal from './components/TrainerReviewsModal'
 
 type SortOption = 'ratingDesc' | 'reviewsDesc' | 'nameAsc'
 
 export default function ChooseTrainerPage() {
-  const { t } = useTranslation('member')
+  const { t, i18n } = useTranslation('member')
   const navigate = useNavigate()
   const [trainers, setTrainers] = useState<TrainerSummary[]>([])
   const [loading, setLoading] = useState(true)
@@ -90,13 +91,13 @@ export default function ChooseTrainerPage() {
         return (b.totalReviews ?? 0) - (a.totalReviews ?? 0)
       }
       if (sortBy === 'nameAsc') {
-        return a.fullName.localeCompare(b.fullName, 'vi')
+        return a.fullName.localeCompare(b.fullName, i18n.language)
       }
       return 0
     })
 
     return list
-  }, [trainers, searchQuery, sortBy])
+  }, [trainers, searchQuery, sortBy, i18n.language])
 
   return (
     <Page>
@@ -137,6 +138,7 @@ export default function ChooseTrainerPage() {
                 value={searchQuery}
                 onChange={setSearchQuery}
                 placeholder={t('chooseTrainer.searchPlaceholder')}
+                aria-label={t('chooseTrainer.searchPlaceholder')}
                 inputSize="md"
               />
             </div>
@@ -225,7 +227,7 @@ export default function ChooseTrainerPage() {
                         {trainer.specialty && (
                           <p className="text-xs text-[var(--rogym-teal)] font-medium flex items-center justify-center gap-1 pt-0.5">
                             <Award size={12} />
-                            <span>{trainer.specialty}</span>
+                            <span>{localizeSpecialty(trainer.specialty)}</span>
                           </p>
                         )}
                       </div>
@@ -258,7 +260,7 @@ export default function ChooseTrainerPage() {
                                 key={tg}
                                 className="text-[10px] px-1.5 py-0.5 rounded bg-white/5 text-white/70 border border-white/10"
                               >
-                                #{tg}
+                                #{localizeTag(tg)}
                               </span>
                             ))}
                           </div>
@@ -283,7 +285,7 @@ export default function ChooseTrainerPage() {
                       <span className="text-[11px] font-medium text-white/50">
                         {isSelected
                           ? t('chooseTrainer.selectedBadge')
-                          : t('chooseTrainer.buttonChoose')}
+                          : t('chooseTrainer.cardSelectHint')}
                       </span>
                     </div>
                   </Card>

@@ -19,6 +19,7 @@ import {
   Select,
   Skeleton,
 } from '@/components/ui'
+import { localizeSpecialty, localizeTag } from '@/pages/member/feedback/feedback-i18n'
 
 export interface TrainerReviewsModalProps {
   open: boolean
@@ -35,7 +36,7 @@ export default function TrainerReviewsModal({
   onChooseTrainer,
   isChoosing,
 }: TrainerReviewsModalProps) {
-  const { t } = useTranslation('member')
+  const { t, i18n } = useTranslation('member')
   const [detail, setDetail] = useState<TrainerReviewDetail | null>(null)
   const [loading, setLoading] = useState(false)
   const [loadingMore, setLoadingMore] = useState(false)
@@ -109,7 +110,8 @@ export default function TrainerReviewsModal({
   const formatDate = (isoString: string) => {
     try {
       const d = new Date(isoString)
-      return d.toLocaleDateString('vi-VN', {
+      const locale = i18n.language === 'ja' ? 'ja-JP' : 'vi-VN'
+      return d.toLocaleDateString(locale, {
         year: 'numeric',
         month: '2-digit',
         day: '2-digit',
@@ -175,7 +177,7 @@ export default function TrainerReviewsModal({
               <p className="text-xs text-[var(--rogym-teal)] font-medium flex items-center justify-center sm:justify-start gap-1">
                 <Award size={13} />
                 <span>
-                  {t('chooseTrainer.specialtyLabel')}: {trainer.specialty}
+                  {t('chooseTrainer.specialtyLabel')}: {localizeSpecialty(trainer.specialty)}
                 </span>
               </p>
             )}
@@ -251,7 +253,7 @@ export default function TrainerReviewsModal({
             <div className="flex flex-wrap gap-2">
               {stats.topTags.map((tag) => (
                 <Badge key={tag} tone="accent" size="sm">
-                  #{tag}
+                  #{localizeTag(tag)}
                 </Badge>
               ))}
             </div>
@@ -378,7 +380,7 @@ export default function TrainerReviewsModal({
                           key={tag}
                           className="text-[10px] px-2 py-0.5 rounded-md bg-white/5 text-white/60 border border-white/10"
                         >
-                          #{tag}
+                          #{localizeTag(tag)}
                         </span>
                       ))}
                     </div>

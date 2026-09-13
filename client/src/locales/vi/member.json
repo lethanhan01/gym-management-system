@@ -202,6 +202,16 @@
     "emptyTitle": "Chưa có huấn luyện viên",
     "emptyDescription": "Hệ thống hiện chưa có PT nào khả dụng.",
     "selectedBadge": "Đã chọn",
+    "cardSelectHint": "Nhấn để chọn",
+    "specialtyMap": {
+      "HIIT & Fat Loss": "HIIT & Giảm mỡ",
+      "Giảm mỡ & Thể lực": "Giảm mỡ & Thể lực",
+      "Yoga & Pilates": "Yoga & Pilates",
+      "Master Powerlifter & Strength": "Cử tạ & Sức mạnh",
+      "Functional Training & Bodybuilding": "Thể hình & Tập chức năng",
+      "Personal Training & Fitness": "Huấn luyện cá nhân & Thể hình",
+      "Tăng cơ & Cải thiện vóc dáng": "Tăng cơ & Cải thiện vóc dáng"
+    },
     "submitError": "Không thể chọn PT này. Vui lòng thử lại.",
     "buttonBack": "Quay lại",
     "buttonProcessing": "Đang xử lý...",
