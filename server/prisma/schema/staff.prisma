@@ -20,6 +20,7 @@ model Staff {
   createdWorkoutPlans  WorkoutPlan[]
   managedSubscriptions Subscription[]       @relation("SubscriptionTrainer")
   attendanceLogs       StaffAttendanceLog[]
+  chatConversations    ChatConversation[]
 
   @@map("staff")
 }

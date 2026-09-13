@@ -79,6 +79,8 @@ async function main(): Promise<void> {
     { name: 'WorkoutLog', run: () => prisma.workoutLog.count() },
     { name: 'WorkoutLogSet', run: () => prisma.workoutLogSet.count() },
     { name: 'File', run: () => prisma.file.count() },
+    { name: 'ChatConversation', run: () => prisma.chatConversation.count() },
+    { name: 'ChatMessage', run: () => prisma.chatMessage.count() },
   ]
 
   try {

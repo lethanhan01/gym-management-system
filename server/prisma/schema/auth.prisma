@@ -21,6 +21,7 @@ model User {
   otpThrottles    OtpRequestThrottle[]
   passwordResetGrant PasswordResetGrant?
   avatarFile      File?       @relation("UserAvatar", fields: [avatarFileId], references: [fileId])
+  chatMessages    ChatMessage[]
 
   @@map("users")
 }

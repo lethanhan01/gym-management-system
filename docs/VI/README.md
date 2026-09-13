@@ -21,6 +21,7 @@ Thư mục `docs/VI` tập hợp tài liệu tiếng Việt của dự án, từ
 | Đặc tả Hệ thống LINE Messaging API (Sự kiện & Dữ liệu gửi tin) | [line-messaging-specification.md](./line-messaging-specification.md) |
 | Kế hoạch Triển khai Nâng cấp LINE Flex Message (Phased Plan) | [line-flex-message-upgrade-plan.md](./line-flex-message-upgrade-plan.md) |
 | Lộ trình Chi tiết 5 Giai đoạn Nâng cấp LINE Flex (Phase 1-5) | [line-flex-upgrade/README.md](./line-flex-upgrade/README.md) |
+| Kế hoạch Triển khai Chat 1-1 Thời gian thực giữa Member và Trainer | [member-trainer-chat-implementation-plan.md](./Design/member-trainer-chat-implementation-plan.md) |
 
 ## 2. Phạm vi tài liệu hiện tại
 
