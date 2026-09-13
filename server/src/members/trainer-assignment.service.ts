@@ -7,6 +7,7 @@ import {
 import { FeedbackStatus, Prisma, SubscriptionStatus } from '@prisma/client'
 import { AuditService } from '../common/audit/audit.service'
 import { PrismaService } from '../prisma/prisma.service'
+import { ChatService } from '../chat/chat.service'
 
 function todayVN(): Date {
   const s = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' })
@@ -17,7 +18,8 @@ function todayVN(): Date {
 export class TrainerAssignmentService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly audit: AuditService
+    private readonly audit: AuditService,
+    private readonly chatService: ChatService
   ) {}
 
   async assignTrainer(memberId: bigint, trainerId: number | null | undefined, actorUserId: bigint) {
@@ -47,10 +49,21 @@ export class TrainerAssignmentService {
         })
     }
 
+    const oldTrainerId = member.primaryTrainerId
+    const newTrainerId = trainerId != null ? BigInt(trainerId) : null
+
     const updated = await this.prisma.member.update({
       where: { memberId },
-      data: { primaryTrainerId: trainerId != null ? BigInt(trainerId) : null },
+      data: { primaryTrainerId: newTrainerId },
     })
+
+    // Đồng bộ vòng đời hội thoại Chat
+    if (oldTrainerId && oldTrainerId !== newTrainerId) {
+      await this.chatService.archiveConversation(memberId, oldTrainerId)
+    }
+    if (newTrainerId) {
+      await this.chatService.getOrCreateActiveConversation(memberId, newTrainerId)
+    }
 
     this.audit.log({
       actorUserId,
@@ -332,19 +345,36 @@ export class TrainerAssignmentService {
           message: 'PT khong ton tai',
         })
 
+      const oldTrainerId = member.primaryTrainerId
+      const newTrainerId = BigInt(trainerId)
+
       await this.prisma.member.update({
         where: { memberId: member.memberId },
-        data: { primaryTrainerId: BigInt(trainerId) },
+        data: { primaryTrainerId: newTrainerId },
       })
+
+      // Đồng bộ vòng đời hội thoại Chat
+      if (oldTrainerId && oldTrainerId !== newTrainerId) {
+        await this.chatService.archiveConversation(member.memberId, oldTrainerId)
+      }
+      await this.chatService.getOrCreateActiveConversation(member.memberId, newTrainerId)
+
       return {
         data: { primaryTrainerId: trainerId.toString(), trainerName: trainer.user.fullName },
       }
     }
 
+    const oldTrainerId = member.primaryTrainerId
     await this.prisma.member.update({
       where: { memberId: member.memberId },
       data: { primaryTrainerId: null },
     })
+
+    // Đồng bộ vòng đời hội thoại Chat khi huỷ PT
+    if (oldTrainerId) {
+      await this.chatService.archiveConversation(member.memberId, oldTrainerId)
+    }
+
     return { data: { primaryTrainerId: null, trainerName: null } }
   }
 }

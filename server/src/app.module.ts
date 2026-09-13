@@ -18,6 +18,7 @@ import { ReportsModule } from './reports/reports.module'
 import { PermissionCacheModule } from './common/cache/permission-cache.module'
 import { NotificationsModule } from './notifications/notifications.module'
 import { LineMessagingModule } from './line-messaging/line-messaging.module'
+import { ChatModule } from './chat/chat.module'
 import { DatabaseRetryInterceptor } from './common/interceptors/database-retry.interceptor'
 
 @Module({
@@ -44,6 +45,7 @@ import { DatabaseRetryInterceptor } from './common/interceptors/database-retry.i
     ReportsModule,
     NotificationsModule,
     LineMessagingModule,
+    ChatModule,
   ],
   providers: [DatabaseRetryInterceptor],
 })

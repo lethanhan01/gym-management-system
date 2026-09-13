@@ -246,12 +246,14 @@ Xây dựng cấu trúc lưu trữ hội thoại và tin nhắn, liên kết ch�
 Cung cấp business logic xử lý hội thoại, tin nhắn, phân trang, tải ảnh và đồng bộ vòng đời khi đổi PT.
 
 #### Các bước thực hiện:
-- [ ] **Bước 2.1: Tạo thư mục module chat và DTOs**
+- [x] **Bước 2.1: Tạo thư mục module chat và DTOs**
   - **Files tạo:**
     - `server/src/chat/dto/send-message.dto.ts`
     - `server/src/chat/dto/query-messages.dto.ts`
+    - `server/src/chat/dto/query-conversations.dto.ts`
     - `server/src/chat/dto/chat-response.dto.ts`
-- [ ] **Bước 2.2: Xây dựng `ChatService`**
+    - `server/src/chat/dto/index.ts`
+- [x] **Bước 2.2: Xây dựng `ChatService`**
   - **File tạo:** `server/src/chat/chat.service.ts`
   - Phương thức:
     - `getOrCreateActiveConversation(memberId: bigint, trainerStaffId: bigint)`
@@ -261,18 +263,20 @@ Cung cấp business logic xử lý hội thoại, tin nhắn, phân trang, tải
     - `createMessage(conversationId: bigint, senderUserId: bigint, content: string, type: MessageType, fileId?: bigint)`
     - `deleteMessage(messageId: bigint, senderUserId: bigint)` (Hard delete)
     - `markAsRead(conversationId: bigint, userId: bigint)`
-- [ ] **Bước 2.3: Tích hợp vòng đời hội thoại vào `TrainerAssignmentService`**
+    - `uploadAttachmentAndCreateMessage(conversationId: bigint, userId: bigint, file: ChatUploadedFile)`
+- [x] **Bước 2.3: Tích hợp vòng đời hội thoại vào `TrainerAssignmentService`**
   - **File sửa:** `server/src/members/trainer-assignment.service.ts`
   - Khi member được gán PT mới hoặc tự gán PT (`assignTrainer`, `selfAssignTrainer`):
     - Nếu có PT cũ khác PT mới: gọi `chatService.archiveConversation(memberId, oldTrainerId)`.
     - Kích hoạt/tạo hội thoại với PT mới: gọi `chatService.getOrCreateActiveConversation(memberId, newTrainerId)`.
     - Nếu hủy PT (`trainerId == null`): gọi `chatService.archiveConversation(memberId, oldTrainerId)`.
-- [ ] **Bước 2.4: Xây dựng `ChatController`**
+- [x] **Bước 2.4: Xây dựng `ChatController`**
   - **File tạo:** `server/src/chat/chat.controller.ts`
   - Đăng ký các route GET / POST / DELETE / Upload với JWT Guard và User Context.
-- [ ] **Bước 2.5: Đăng ký `ChatModule`**
+- [x] **Bước 2.5: Đăng ký `ChatModule`**
   - **File tạo:** `server/src/chat/chat.module.ts`
-  - Import `ChatModule` vào `server/src/app.module.ts`.
+  - Import `ChatModule` vào `server/src/app.module.ts` và `server/src/members/members.module.ts`.
+  - Phục vụ static assets `/uploads` trong `server/src/main.ts`.
 
 ---
 

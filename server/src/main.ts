@@ -6,6 +6,8 @@ import type { NestExpressApplication } from '@nestjs/platform-express'
 import express from 'express'
 import helmet from 'helmet'
 import { AppModule } from './app.module'
+import { join } from 'path'
+import * as fs from 'fs'
 import { HttpExceptionFilter } from './common/filters/http-exception.filter'
 import { setupSwagger } from './common/swagger/swagger'
 import { DatabaseRetryInterceptor } from './common/interceptors/database-retry.interceptor'
@@ -29,7 +31,11 @@ async function bootstrap(): Promise<void> {
   app.use('/api/v1/line/webhook', express.raw({ type: 'application/json' }))
   app.use(express.json())
   app.use(express.urlencoded({ extended: true }))
-  app.use(helmet())
+  app.use(
+    helmet({
+      crossOriginResourcePolicy: { policy: 'cross-origin' },
+    })
+  )
   app.enableCors({
     origin: config.get<string>('CLIENT_URL') ?? 'http://localhost:5173',
     credentials: true,
@@ -47,6 +53,13 @@ async function bootstrap(): Promise<void> {
   app.useGlobalInterceptors(app.get(DatabaseRetryInterceptor))
   app.setGlobalPrefix('api/v1', { exclude: ['health', '/'] })
   setupSwagger(app)
+
+  const uploadsDir = join(process.cwd(), 'uploads')
+  const chatUploadsDir = join(uploadsDir, 'chat')
+  if (!fs.existsSync(chatUploadsDir)) {
+    fs.mkdirSync(chatUploadsDir, { recursive: true })
+  }
+  app.useStaticAssets(uploadsDir, { prefix: '/uploads/' })
 
   const port = config.get<number>('PORT') ?? 3000
   await app.listen(port)

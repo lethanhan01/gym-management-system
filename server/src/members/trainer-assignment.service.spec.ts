@@ -7,6 +7,10 @@ const mockPrisma = {
 }
 
 const mockAudit = { log: jest.fn() }
+const mockChatService = {
+  archiveConversation: jest.fn().mockResolvedValue(null),
+  getOrCreateActiveConversation: jest.fn().mockResolvedValue(null),
+}
 
 function makeMember(overrides: object = {}) {
   return {
@@ -34,9 +38,15 @@ describe('TrainerAssignmentService', () => {
   let service: TrainerAssignmentService
 
   beforeEach(() => {
-    service = new TrainerAssignmentService(mockPrisma as any, mockAudit as any)
+    service = new TrainerAssignmentService(
+      mockPrisma as any,
+      mockAudit as any,
+      mockChatService as any
+    )
     jest.clearAllMocks()
     mockAudit.log.mockReturnValue(undefined)
+    mockChatService.archiveConversation.mockResolvedValue(null)
+    mockChatService.getOrCreateActiveConversation.mockResolvedValue(null)
   })
 
   // ---------------------------------------------------------------------------
@@ -61,7 +71,7 @@ describe('TrainerAssignmentService', () => {
       })
     })
 
-    it('clears trainer when trainerId is null', async () => {
+    it('clears trainer when trainerId is null and archives chat', async () => {
       mockPrisma.member.findFirst.mockResolvedValue(makeMember({ primaryTrainerId: 5n }))
       mockPrisma.member.update.mockResolvedValue({ memberId: 10n, primaryTrainerId: null })
 
@@ -70,11 +80,12 @@ describe('TrainerAssignmentService', () => {
       expect(mockPrisma.member.update).toHaveBeenCalledWith(
         expect.objectContaining({ data: { primaryTrainerId: null } })
       )
+      expect(mockChatService.archiveConversation).toHaveBeenCalledWith(10n, 5n)
       expect(result.data.primaryTrainerId).toBeNull()
       expect(result.data.primaryTrainerName).toBeNull()
     })
 
-    it('assigns trainer and returns updated data', async () => {
+    it('assigns trainer, activates chat and returns updated data', async () => {
       mockPrisma.member.findFirst.mockResolvedValue(makeMember())
       mockPrisma.staff.findFirst.mockResolvedValue(makeTrainer())
       mockPrisma.member.update.mockResolvedValue({ memberId: 10n, primaryTrainerId: 5n })
@@ -83,9 +94,21 @@ describe('TrainerAssignmentService', () => {
 
       expect(result.data.primaryTrainerId).toBe('5')
       expect(result.data.primaryTrainerName).toBe('Trainer A')
+      expect(mockChatService.getOrCreateActiveConversation).toHaveBeenCalledWith(10n, 5n)
       expect(mockAudit.log).toHaveBeenCalledWith(
         expect.objectContaining({ action: 'member.assign-trainer' })
       )
+    })
+
+    it('archives old chat and creates new chat when changing trainer', async () => {
+      mockPrisma.member.findFirst.mockResolvedValue(makeMember({ primaryTrainerId: 3n }))
+      mockPrisma.staff.findFirst.mockResolvedValue(makeTrainer({ staffId: 5n }))
+      mockPrisma.member.update.mockResolvedValue({ memberId: 10n, primaryTrainerId: 5n })
+
+      await service.assignTrainer(10n, 5, 1n)
+
+      expect(mockChatService.archiveConversation).toHaveBeenCalledWith(10n, 3n)
+      expect(mockChatService.getOrCreateActiveConversation).toHaveBeenCalledWith(10n, 5n)
     })
   })
 
@@ -235,7 +258,7 @@ describe('TrainerAssignmentService', () => {
       })
     })
 
-    it('assigns trainer when subscription includes PT', async () => {
+    it('assigns trainer when subscription includes PT and activates chat', async () => {
       mockPrisma.member.findFirst.mockResolvedValue(
         makeMember({ memberId: 10n, subscriptions: [{ package: { includesPt: true } }] })
       )
@@ -246,15 +269,35 @@ describe('TrainerAssignmentService', () => {
 
       expect(result.data.primaryTrainerId).toBe('5')
       expect(result.data.trainerName).toBe('Trainer A')
+      expect(mockChatService.getOrCreateActiveConversation).toHaveBeenCalledWith(10n, 5n)
     })
 
-    it('clears trainer when trainerId is null', async () => {
-      mockPrisma.member.findFirst.mockResolvedValue(makeMember({ memberId: 10n }))
+    it('archives old chat and activates new chat when self changing trainer', async () => {
+      mockPrisma.member.findFirst.mockResolvedValue(
+        makeMember({
+          memberId: 10n,
+          primaryTrainerId: 3n,
+          subscriptions: [{ package: { includesPt: true } }],
+        })
+      )
+      mockPrisma.staff.findFirst.mockResolvedValue(makeTrainer({ staffId: 5n }))
+      mockPrisma.member.update.mockResolvedValue({ memberId: 10n, primaryTrainerId: 5n })
+
+      await service.selfAssignTrainer(1n, 5)
+
+      expect(mockChatService.archiveConversation).toHaveBeenCalledWith(10n, 3n)
+      expect(mockChatService.getOrCreateActiveConversation).toHaveBeenCalledWith(10n, 5n)
+    })
+
+    it('clears trainer and archives chat when trainerId is null', async () => {
+      mockPrisma.member.findFirst.mockResolvedValue(makeMember({ memberId: 10n, primaryTrainerId: 5n }))
       mockPrisma.member.update.mockResolvedValue({ memberId: 10n, primaryTrainerId: null })
 
       const result = await service.selfAssignTrainer(1n, null)
 
       expect(result.data.primaryTrainerId).toBeNull()
+      expect(mockChatService.archiveConversation).toHaveBeenCalledWith(10n, 5n)
     })
   })
 })
+
