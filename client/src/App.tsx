@@ -79,9 +79,11 @@ const ProgressPage = lazy(() => import('./pages/member/progress/ProgressPage'))
 const MyFeedbackPage = lazy(() => import('./pages/member/feedback/MyFeedbackPage'))
 const SendFeedbackPage = lazy(() => import('./pages/member/feedback/SendFeedbackPage'))
 const ChooseTrainerPage = lazy(() => import('./pages/member/ChooseTrainerPage'))
+const MemberChatPage = lazy(() => import('./pages/member/chat/MemberChatPage'))
 
 // Trainer
 const TrainerDashboardPage = lazy(() => import('./pages/trainer/DashboardPage'))
+const TrainerChatPage = lazy(() => import('./pages/trainer/chat/TrainerChatPage'))
 const TrainerProfilePage = lazy(() => import('./pages/trainer/ProfilePage'))
 const StudentsListPage = lazy(() => import('./pages/trainer/students/StudentsListPage'))
 const StudentDetailPage = lazy(() => import('./pages/trainer/students/StudentDetailPage'))
@@ -215,6 +217,7 @@ export default function App() {
             <Route path="/member/feedback" element={<MyFeedbackPage />} />
             <Route path="/member/feedback/send" element={<SendFeedbackPage />} />
             <Route path="/member/choose-trainer" element={<ChooseTrainerPage />} />
+            <Route path="/member/chat" element={<MemberChatPage />} />
           </Route>
         </Route>
 
@@ -228,6 +231,7 @@ export default function App() {
         >
           <Route path="/trainer" element={<TrainerDashboardPage />} />
           <Route path="/trainer/profile" element={<TrainerProfilePage />} />
+          <Route path="/trainer/chat" element={<TrainerChatPage />} />
           <Route path="/trainer/students" element={<StudentsListPage />} />
           <Route path="/trainer/students/:id" element={<StudentDetailPage />} />
           <Route path="/trainer/students/:id/progress" element={<AddProgressPage />} />

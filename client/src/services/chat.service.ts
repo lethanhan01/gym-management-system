@@ -35,9 +35,44 @@ class ChatService {
   async getActiveConversation(): Promise<ConversationSummary | null> {
     const res = await api.get<{
       success: boolean
-      data: { conversation: ConversationSummary | null }
+      data: {
+        conversation: (Omit<ConversationSummary, 'participant'> & { participant?: ConversationSummary['participant'] }) | null
+        primaryTrainer?: {
+          staffId: string
+          userId: string
+          fullName: string
+          avatarUrl: string | null
+          specialty?: string | null
+        } | null
+      }
     }>('/chat/conversations/active')
-    return res.data.data.conversation
+
+    const rawConv = res.data?.data?.conversation
+    const primaryTrainer = res.data?.data?.primaryTrainer
+    if (!rawConv) return null
+
+    const participant =
+      rawConv.participant ||
+      (primaryTrainer
+        ? {
+            userId: primaryTrainer.userId,
+            fullName: primaryTrainer.fullName,
+            avatarUrl: primaryTrainer.avatarUrl,
+            role: 'trainer' as const,
+            staffId: primaryTrainer.staffId,
+            specialty: primaryTrainer.specialty,
+          }
+        : {
+            userId: '',
+            fullName: 'Huấn luyện viên',
+            avatarUrl: null,
+            role: 'trainer' as const,
+          })
+
+    return {
+      ...rawConv,
+      participant,
+    }
   }
 
   /**

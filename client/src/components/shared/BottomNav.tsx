@@ -16,6 +16,7 @@ import {
   RotateCcw,
   Loader2,
   CheckCircle2,
+  MessageSquare,
 } from 'lucide-react'
 import { useAuthStore } from '@/stores/authStore'
 import { useSubscriptionStore } from '@/stores/subscriptionStore'
@@ -39,6 +40,7 @@ function useBottomNavItems(): { items: BottomNavItem[]; effectiveRole?: string }
   const controls = useWorkoutSessionControlStore((s) => s.controls)
   const { t: tCommon } = useTranslation('common')
   const { t: tMember } = useTranslation('member')
+  const { t: tChat } = useTranslation('chat')
   const role = user?.roles[0]
 
   // Owner có thể đang ở staff mode khi truy cập route /staff/*
@@ -119,6 +121,7 @@ function useBottomNavItems(): { items: BottomNavItem[]; effectiveRole?: string }
     ],
     trainer: [
       { to: '/trainer', icon: <LayoutDashboard size={22} />, label: tCommon('nav.dashboard'), end: true },
+      { to: '/trainer/chat', icon: <MessageSquare size={22} />, label: tChat('title', 'Tin nhắn') },
       { to: '/trainer/students', icon: <Users size={22} />, label: tCommon('nav.students') },
       { to: '/trainer/sessions', icon: <CalendarDays size={22} />, label: tCommon('nav.sessions') },
       { to: '/trainer/profile', icon: <User size={22} />, label: tCommon('nav.profile') },

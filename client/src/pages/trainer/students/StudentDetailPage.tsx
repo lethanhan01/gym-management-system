@@ -2,7 +2,7 @@ import { FormEvent, lazy, Suspense, useCallback, useEffect, useMemo, useState } 
 import { SessionDetailModal } from '@/components/trainer/SessionDetailModal'
 import { useParams, useSearchParams } from 'react-router-dom'
 import { Button, ButtonLink } from '@/components/ui/Button'
-import { ArrowLeft, CalendarPlus, ClipboardList, Plus, TrendingUp } from 'lucide-react'
+import { ArrowLeft, CalendarPlus, ClipboardList, MessageSquare, Plus, TrendingUp } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { DatePickerInput, TabsBar, ProgressBar, CardTitle } from '@/components/ui'
 import { getApiError } from '@/lib/api-error'
@@ -37,6 +37,7 @@ const StudentProgressChart = lazy(() => import('@/components/charts/StudentProgr
 
 export default function StudentDetailPage() {
   const { t } = useTranslation('trainer')
+  const { t: tChat } = useTranslation('chat')
   const { id = '' } = useParams()
   const [searchParams, setSearchParams] = useSearchParams()
   const tab = (searchParams.get('tab') as Tab) || 'overview'
@@ -192,6 +193,12 @@ trainingSessionService.getSessions({ memberId: id, pageSize: 100, sort: 'start_t
         description={`${student.email} · ${student.phone ?? t('students.detail.profile.noPhone')}`}
         actions={
           <>
+            <ButtonLink
+              variant="outline-green"
+              to={`/trainer/chat?memberId=${id}`}
+            >
+              <MessageSquare size={16} /> {tChat('title', 'Nhắn tin')}
+            </ButtonLink>
             <ButtonLink
               variant="outline-white"
               to={`/trainer/sessions/create?memberId=${id}`}

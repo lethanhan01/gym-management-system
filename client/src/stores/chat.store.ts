@@ -110,8 +110,8 @@ export const useChatStore = create<ChatStoreState>((set, get) => ({
   floatingConversationId: null,
   soundEnabled:
     typeof localStorage !== 'undefined'
-      ? localStorage.getItem('gym-chat-sound') !== 'false'
-      : true,
+      ? localStorage.getItem('gym-chat-sound') === 'true'
+      : false,
   isConnected: false,
   isLoadingConversations: false,
   isLoadingMessages: false,

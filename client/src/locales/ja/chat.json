@@ -39,5 +39,6 @@
     "soundDisabled": "通知音をオフにする"
   },
   "loadMore": "以前のメッセージを読み込む",
-  "loadingOlder": "以前のメッセージを読み込み中..."
+  "loadingOlder": "以前のメッセージを読み込み中...",
+  "downloadImage": "画像をダウンロード"
 }

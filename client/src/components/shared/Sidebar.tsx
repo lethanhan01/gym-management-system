@@ -3,6 +3,7 @@ import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '../../stores/authStore'
 import { useSubscriptionStore } from '../../stores/subscriptionStore'
+import { useChatStore } from '../../stores/chat.store'
 import roGymLogo from '@/assets/rogym_logo.svg'
 import {
   LayoutDashboard,
@@ -33,6 +34,7 @@ type NavItem = {
   label: string
   to: string
   icon: React.ReactNode
+  badge?: number | string
   children?: SubItem[]
 }
 
@@ -77,8 +79,22 @@ function NavItems({ sections, expanded }: { sections: NavSection[]; expanded: bo
                     } ${active ? 'bg-[var(--rogym-green)]/15 text-[var(--rogym-teal)]' : 'text-[var(--rogym-text-secondary)] hover:text-white'}`
                   }}
                 >
-                  <span className="shrink-0">{item.icon}</span>
-                  <span className="rogym-sidebar__label">{item.label}</span>
+                  <span className="shrink-0 relative">
+                    {item.icon}
+                    {!expanded && Boolean(item.badge) && (
+                      <span className="absolute -top-1 -right-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
+                        {Number(item.badge) > 99 ? '99+' : item.badge}
+                      </span>
+                    )}
+                  </span>
+                  <span className="rogym-sidebar__label flex-1 flex items-center justify-between">
+                    <span>{item.label}</span>
+                    {expanded && Boolean(item.badge) && (
+                      <span className="ml-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1.5 text-[10px] font-bold text-white">
+                        {Number(item.badge) > 99 ? '99+' : item.badge}
+                      </span>
+                    )}
+                  </span>
                 </NavLink>
 
                 {/* Sub-items — chỉ hiện khi expanded VÀ group đang active */}
@@ -141,11 +157,13 @@ export default function Sidebar({
   }, [pathname])
   const hasActiveSub = useSubscriptionStore((s) => s.hasActiveSub)
   const clearSubscription = useSubscriptionStore((s) => s.clear)
+  const unreadTotal = useChatStore((s) => s.unreadTotal)
   const { t: tMember } = useTranslation('member')
   const { t: tTrainer } = useTranslation('trainer')
   const { t: tStaff } = useTranslation('staff')
   const { t: tOwner } = useTranslation('owner')
   const { t: tCommon } = useTranslation('common')
+  const { t: tChat } = useTranslation('chat')
 
   // Clear subscription state on logout
   useEffect(() => {
@@ -203,6 +221,12 @@ export default function Sidebar({
         items: [
           { label: tCommon('nav.dashboard'), to: '/member', icon: <LayoutDashboard size={18} /> },
           {
+            label: tChat('title', 'Tin nhắn'),
+            to: '/member/chat',
+            icon: <MessageSquare size={18} />,
+            badge: unreadTotal > 0 ? unreadTotal : undefined,
+          },
+          {
             label: tMember('nav.subscriptionMenu'),
             to: memberSubTo,
             icon: <CreditCard size={18} />,
@@ -251,12 +275,18 @@ export default function Sidebar({
         ],
       },
     ]
-  }, [hasActiveSub, tMember, tCommon])
+  }, [hasActiveSub, unreadTotal, tMember, tCommon, tChat])
 
   const trainerSections: NavSection[] = [
     {
       items: [
         { label: tCommon('nav.dashboard'), to: '/trainer', icon: <LayoutDashboard size={18} /> },
+        {
+          label: tChat('title', 'Tin nhắn'),
+          to: '/trainer/chat',
+          icon: <MessageSquare size={18} />,
+          badge: unreadTotal > 0 ? unreadTotal : undefined,
+        },
         { label: tTrainer('nav.students'), to: '/trainer/students', icon: <Users size={18} /> },
         { label: tTrainer('nav.sessions'), to: '/trainer/sessions', icon: <CalendarDays size={18} /> },
         { label: tTrainer('nav.plans'), to: '/trainer/plans', icon: <BookOpen size={18} /> },

@@ -9,6 +9,7 @@ import {
   Calendar,
   CalendarX,
   ClipboardList,
+  MessageSquare,
   MessageSquareOff,
   User,
   Phone,
@@ -118,6 +119,7 @@ const PtInfoCard = memo(function PtInfoCard({
   loading,
   onChooseTrainer,
   onRemoveTrainer,
+  onChat,
 }: {
   trainerName: string | null
   trainerPhone?: string | null
@@ -126,8 +128,10 @@ const PtInfoCard = memo(function PtInfoCard({
   loading: boolean
   onChooseTrainer: () => void
   onRemoveTrainer: () => void
+  onChat: () => void
 }) {
   const { t } = useTranslation('member')
+  const { t: tChat } = useTranslation('chat')
 
   if (loading) return <Skeleton height={200} rounded="2xl" />
 
@@ -192,6 +196,14 @@ const PtInfoCard = memo(function PtInfoCard({
 
       {/* Actions */}
       <div className="flex flex-col gap-2 pt-1 border-t border-white/5">
+        <Button
+          variant="primary"
+          className="w-full text-sm flex items-center justify-center gap-2"
+          onClick={onChat}
+        >
+          <MessageSquare size={16} />
+          {tChat('title', 'Nhắn tin')}
+        </Button>
         <Button
           variant="outline-white"
           className="w-full text-sm"
@@ -533,6 +545,7 @@ export default function MemberDashboardPage() {
 
   const todayDescription = useMemo(() => todayFull(i18n.language), [i18n.language])
   const handleChooseTrainer = useCallback(() => navigate('/member/choose-trainer'), [navigate])
+  const handleChat = useCallback(() => navigate('/member/chat'), [navigate])
   const handleRemoveTrainer = useCallback(async () => {
     try {
       await memberService.selfAssignTrainer(null)
@@ -754,6 +767,7 @@ export default function MemberDashboardPage() {
             loading={loadingProfile}
             onChooseTrainer={handleChooseTrainer}
             onRemoveTrainer={handleRemoveTrainer}
+            onChat={handleChat}
           />
         </aside>
       </main>
