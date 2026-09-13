@@ -461,7 +461,9 @@
       "filterResolved": "Đã ghi nhận",
       "filterRejected": "Từ chối",
       "anonymousBadge": "Ẩn danh",
-      "viewImages": "Xem ảnh minh chứng ({{count}})"
+      "viewImages": "Xem ảnh minh chứng ({{count}})",
+      "trainerPrefix": "HLV: ",
+      "imageAltPreview": "Ảnh minh chứng đính kèm"
     },
     "send": {
       "title": "Đánh giá & Góp ý trải nghiệm",
@@ -488,6 +490,7 @@
       "selectEquipmentHint": "Chọn thiết bị nếu phản hồi liên quan đến sự cố hoặc hỏng hóc máy tập",
       "allRoomEquipment": "Không gắn với máy móc cụ thể",
       "ratingTitle": "Chấm điểm trải nghiệm của bạn",
+      "starAria": "{{count}} sao",
       "ratingDesc1": "Rất thất vọng",
       "ratingDesc2": "Chưa hài lòng",
       "ratingDesc3": "Bình thường / Tạm ổn",
@@ -518,6 +521,32 @@
         "equipment": "Thiết bị",
         "service": "Dịch vụ"
       }
+    },
+    "tagMap": {
+      "#ChuyênMônCao": "#ChuyênMônCao",
+      "#NhiệtTìnhTậnTâm": "#NhiệtTìnhTậnTâm",
+      "#ĐúngGiờ": "#ĐúngGiờ",
+      "#ĐộngLựcTốt": "#ĐộngLựcTốt",
+      "#GiáoÁnPhùHợp": "#GiáoÁnPhùHợp",
+      "#TheoSátKỹThuật": "#TheoSátKỹThuật",
+      "#ĐếnMuộn": "#ĐếnMuộn",
+      "#HủyLịchSátGiờ": "#HủyLịchSátGiờ",
+      "#TháiĐộChưaTốt": "#TháiĐộChưaTốt",
+      "#DùngĐiệnThoạiKhiDạy": "#DùngĐiệnThoạiKhiDạy",
+      "#BàiTậpQuáSức": "#BàiTậpQuáSức",
+      "#ÍtChỉDẫnKỹThuật": "#ÍtChỉDẫnKỹThuật",
+      "#PhòngSạchSẽ": "#PhòngSạchSẽ",
+      "#MáyMócMớiÊm": "#MáyMócMớiÊm",
+      "#KhôngGianThoáng": "#KhôngGianThoáng",
+      "#ĐiềuHòaMátMẻ": "#ĐiềuHòaMátMẻ",
+      "#ÂmNhạcVừaPhải": "#ÂmNhạcVừaPhải",
+      "#PhòngTắmSạch": "#PhòngTắmSạch",
+      "#MáyHỏngKẹtTạ": "#MáyHỏngKẹtTạ",
+      "#VệSinhChưaSạch": "#VệSinhChưaSạch",
+      "#PhòngQuáNóng": "#PhòngQuáNóng",
+      "#ThiếuTạPhụKiện": "#ThiếuTạPhụKiện",
+      "#MùiKhóChịu": "#MùiKhóChịu",
+      "#PhòngQuáĐông": "#PhòngQuáĐông"
     }
   },
   "progress": {

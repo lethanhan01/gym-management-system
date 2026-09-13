@@ -445,8 +445,9 @@
         "rejected": "却下"
       },
       "typeLabel": {
-        "staff": "スタッフ",
-        "equipment": "設備",
+        "staff": "トレーナー (PT)",
+        "facility": "施設・設備",
+        "equipment": "器具",
         "service": "サービス"
       },
       "severityLabel": {
@@ -458,7 +459,11 @@
       "filterOpen": "未処理",
       "filterInProgress": "処理中",
       "filterResolved": "解決済み",
-      "filterRejected": "却下"
+      "filterRejected": "却下",
+      "anonymousBadge": "匿名",
+      "viewImages": "添付写真を見る ({{count}})",
+      "trainerPrefix": "トレーナー: ",
+      "imageAltPreview": "添付写真のプレビュー"
     },
     "send": {
       "title": "フィードバックを送信",
@@ -476,6 +481,7 @@
       "assignedTrainerShort": "最近",
       "allTrainer": "全トレーナー",
       "allTrainerShort": "すべて",
+      "uploadAdd": "写真を追加",
       "selectSession": "関連セッション (任意)",
       "selectSessionHint": "特定のセッションに関するご意見の場合は選択してください",
       "noSessionSelected": "特定のセッションなし",
@@ -484,6 +490,7 @@
       "selectEquipmentHint": "器具の故障や不具合に関するフィードバックの場合に選択してください",
       "allRoomEquipment": "特定の器具なし",
       "ratingTitle": "体験の評価",
+      "starAria": "星{{count}}つ",
       "ratingDesc1": "非常に不満",
       "ratingDesc2": "不満",
       "ratingDesc3": "普通 / 妥協",
@@ -496,7 +503,6 @@
       "anonymousDesc": "トレーナーやスタッフにお名前は公開されません。",
       "uploadTitle": "写真添付 (任意・最大3枚)",
       "uploadHint": "器具の故障や設備状況などの参考写真を添付できます...",
-      "uploadAdd": "写真を追加",
       "removeImage": "削除",
       "buttonSubmitting": "送信中...",
       "buttonSubmit": "フィードバックを送信",
@@ -515,6 +521,44 @@
         "equipment": "器具",
         "service": "サービス"
       }
+    },
+    "tagMap": {
+      "#ChuyênMônCao": "#高い専門性",
+      "#NhiệtTìnhTậnTâm": "#親切・熱心",
+      "#ĐúngGiờ": "#時間厳守",
+      "#ĐộngLựcTốt": "#モチベーション向上",
+      "#GiáoÁnPhùHợp": "#適切なメニュー",
+      "#TheoSátKỹThuật": "#フォーム指導充実",
+      "#ĐếnMuộn": "#遅刻",
+      "#HủyLịchSátGiờ": "#直前キャンセル",
+      "#TháiĐộChưaTốt": "#態度に課題あり",
+      "#DùngĐiệnThoạiKhiDạy": "#指導中のスマホ利用",
+      "#BàiTậpQuáSức": "#負荷が高すぎる",
+      "#ÍtChỉDẫnKỹThuật": "#技術指導不足",
+      "#PhòngSạchSẽ": "#清潔な環境",
+      "#MáyMócMớiÊm": "#新しく静かなマシン",
+      "#KhôngGianThoáng": "#広々とした空間",
+      "#ĐiềuHòaMátMẻ": "#適切な室温・空調",
+      "#ÂmNhạcVừaPhải": "#心地よいBGM",
+      "#PhòngTắmSạch": "#シャワールーム清潔",
+      "#MáyHỏngKẹtTạ": "#マシンの故障・不具合",
+      "#VệSinhChưaSạch": "#清掃不足",
+      "#PhòngQuáNóng": "#室温が高すぎる",
+      "#ThiếuTạPhụKiện": "#器具・アタッチメント不足",
+      "#MùiKhóChịu": "#不快な臭い",
+      "#PhòngQuáĐông": "#混雑しすぎ",
+      "Nhiệt tình": "親切・熱心",
+      "Chuyên nghiệp": "プロフェッショナル",
+      "Đúng giờ": "時間厳守",
+      "Đi muộn": "遅刻",
+      "Thiếu nhiệt tình": "不親切",
+      "Sạch sẽ": "清潔",
+      "Máy móc mới": "新しいマシン",
+      "Máy hỏng": "マシンの故障",
+      "Phòng bí": "換気不足",
+      "PhòngQuáNóng": "室温が高すぎる",
+      "MáyHỏng": "マシンの故障",
+      "NhiệtTình": "親切・熱心"
     }
   },
   "progress": {

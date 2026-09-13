@@ -5,6 +5,7 @@ import { MemoryRouter } from 'react-router-dom'
 import SendFeedbackPage from './SendFeedbackPage'
 import { feedbackService } from '@/services/feedback.service'
 import { useAuthStore } from '@/stores/authStore'
+import i18n from '@/lib/i18n'
 
 vi.mock('@/services/feedback.service', () => ({
   feedbackService: {
@@ -53,7 +54,7 @@ const mockOptions = {
 }
 
 describe('SendFeedbackPage', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks()
     useAuthStore.setState({
       user: {
@@ -67,6 +68,7 @@ describe('SendFeedbackPage', () => {
       isAuthenticated: true,
     })
     vi.mocked(feedbackService.getOptions).mockResolvedValue(mockOptions)
+    await i18n.changeLanguage('vi')
   })
 
   it('renders correctly with SegmentedControl, FormFields, and Select components', async () => {
@@ -151,6 +153,72 @@ describe('SendFeedbackPage', () => {
     await waitFor(() => {
       expect(screen.getByText('Gần đây')).toBeDefined()
       expect(screen.getByText('Tất cả')).toBeDefined()
+    })
+  })
+
+  it('renders and submits properly in Japanese when language is switched to ja', async () => {
+    await i18n.changeLanguage('ja')
+    const user = userEvent.setup()
+
+    render(
+      <MemoryRouter>
+        <SendFeedbackPage />
+      </MemoryRouter>
+    )
+
+    await waitFor(() => {
+      expect(screen.getByText('フィードバックを送信')).toBeDefined()
+      expect(screen.getByText('サービス品質')).toBeDefined()
+    })
+
+    // Radio cards in Japanese
+    expect(screen.getByRole('radio', { name: /トレーナー \(PT\)/i })).toBeDefined()
+    expect(screen.getByRole('radio', { name: /施設・設備/i })).toBeDefined()
+
+    // Trainer scope labels in Japanese
+    expect(screen.getByText('最近')).toBeDefined()
+    expect(screen.getByText('すべて')).toBeDefined()
+
+    // Quick tags localized to Japanese
+    expect(screen.getByText('親切・熱心')).toBeDefined()
+    expect(screen.getByText('プロフェッショナル')).toBeDefined()
+
+    // Anonymous toggle in Japanese
+    expect(screen.getByText('匿名で送信する')).toBeDefined()
+
+    // Submit button in Japanese
+    const submitBtn = screen.getByRole('button', { name: /フィードバックを送信/i })
+    expect(submitBtn).toBeDefined()
+
+    // Enter content and submit
+    const textarea = screen.getByPlaceholderText(/具体的な感想やご意見をご記入ください/i)
+    await user.type(textarea, '丁寧な指導をありがとうございました。')
+
+    // Click quick tag (親切・熱心)
+    await user.click(screen.getByText('親切・熱心'))
+
+    vi.mocked(feedbackService.create).mockResolvedValue({
+      feedbackId: 'new-fb-1',
+      status: 'open',
+    } as any)
+
+    await user.click(submitBtn)
+
+    await waitFor(() => {
+      expect(feedbackService.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          memberId: '101',
+          feedbackType: 'staff',
+          content: '丁寧な指導をありがとうございました。',
+          tags: ['Nhiệt tình'], // Preserves raw tag value for backend
+        })
+      )
+    })
+
+    // Success screen in Japanese
+    await waitFor(() => {
+      expect(screen.getByText('送信が完了しました！')).toBeDefined()
+      expect(screen.getByText('マイフィードバックを見る')).toBeDefined()
     })
   })
 })

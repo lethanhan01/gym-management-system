@@ -5,6 +5,7 @@ import { MemoryRouter } from 'react-router-dom'
 import MyFeedbackPage from './MyFeedbackPage'
 import { feedbackService } from '@/services/feedback.service'
 import { useAuthStore } from '@/stores/authStore'
+import i18n from '@/lib/i18n'
 
 vi.mock('@/services/feedback.service', () => ({
   feedbackService: {
@@ -63,7 +64,7 @@ const mockFeedbacks = [
 ]
 
 describe('MyFeedbackPage', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks()
     useAuthStore.setState({
       user: {
@@ -80,6 +81,7 @@ describe('MyFeedbackPage', () => {
       data: mockFeedbacks,
       total: 2,
     })
+    await i18n.changeLanguage('vi')
   })
 
   it('renders cards with 5-layer layout: subject info, star score, status, and content bubble', async () => {
@@ -154,5 +156,38 @@ describe('MyFeedbackPage', () => {
     await waitFor(() => {
       expect(feedbackService.delete).toHaveBeenCalledWith('fb-1')
     })
+  })
+
+  it('renders all feedback details in Japanese when language is switched to ja', async () => {
+    await i18n.changeLanguage('ja')
+
+    render(
+      <MemoryRouter>
+        <MyFeedbackPage />
+      </MemoryRouter>
+    )
+
+    await waitFor(() => {
+      expect(screen.getByText('フィードバック')).toBeDefined()
+      expect(screen.getByText('マイフィードバック')).toBeDefined()
+      expect(screen.getByText('新しいフィードバックを送信')).toBeDefined()
+    })
+
+    // Trainer prefix in Japanese
+    expect(screen.getByText('トレーナー: Tran Quang Minh')).toBeDefined()
+
+    // Status badges in Japanese
+    expect(screen.getAllByText('未処理').length).toBeGreaterThanOrEqual(1)
+    expect(screen.getAllByText('解決済み').length).toBeGreaterThanOrEqual(1)
+
+    // Localized quick tags in Japanese
+    expect(screen.getByText('室温が高すぎる')).toBeDefined()
+    expect(screen.getByText('マシンの故障')).toBeDefined()
+
+    // Anonymous badge in Japanese
+    expect(screen.getByText('匿名')).toBeDefined()
+
+    // Admin response heading in Japanese
+    expect(screen.getByText(/運営からの返信:/i)).toBeDefined()
   })
 })

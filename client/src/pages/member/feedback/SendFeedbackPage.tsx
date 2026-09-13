@@ -36,6 +36,8 @@ import {
   type FeedbackSessionOption,
 } from '@/services/feedback.service'
 import { useAuthStore } from '@/stores/authStore'
+import { formatDate } from '@/lib/date'
+import { localizeTag } from './feedback-i18n'
 
 type FeedbackTarget = 'staff' | 'facility'
 
@@ -412,7 +414,7 @@ export default function SendFeedbackPage() {
                         <option value="">-- {t('feedback.send.noSessionSelected')} --</option>
                         {availableSessions.map((s) => (
                           <option key={s.sessionId} value={s.sessionId}>
-                            {new Date(s.startTime).toLocaleDateString('vi-VN')} ({s.roomName})
+                            {formatDate(s.startTime)} ({s.roomName})
                           </option>
                         ))}
                       </Select>
@@ -479,7 +481,7 @@ export default function SendFeedbackPage() {
                           onMouseEnter={() => setHoverRating(star)}
                           onMouseLeave={() => setHoverRating(0)}
                           className="p-1 sm:p-1.5 transition-transform hover:scale-110 active:scale-95 focus:outline-none touch-manipulation"
-                          aria-label={`${star} sao`}
+                          aria-label={t('feedback.send.starAria', { count: star })}
                         >
                           <Star
                             className={cn(
@@ -514,7 +516,7 @@ export default function SendFeedbackPage() {
                     {availableTags.map((tag) => (
                       <Chip
                         key={tag}
-                        label={tag}
+                        label={localizeTag(tag)}
                         size="md"
                         tone={isPositive ? 'accent' : 'warning'}
                         selected={selectedTags.includes(tag)}

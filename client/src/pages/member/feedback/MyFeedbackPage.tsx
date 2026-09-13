@@ -26,20 +26,12 @@ import {
   Pagination,
   type BadgeTone,
 } from '@/components/ui'
+import { formatDateTime } from '@/lib/date'
 import { feedbackService, type Feedback } from '@/services/feedback.service'
 import { useAuthStore } from '@/stores/authStore'
+import { localizeTag } from './feedback-i18n'
 
 const PAGE_SIZE = 8
-
-function fmtDate(iso: string) {
-  return new Date(iso).toLocaleDateString('vi-VN', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  })
-}
 
 export default function MyFeedbackPage() {
   const { t } = useTranslation('member')
@@ -116,7 +108,9 @@ export default function MyFeedbackPage() {
     if (fb.feedbackType === 'staff') {
       return {
         icon: <User size={18} className="text-emerald-400" />,
-        title: fb.subjectStaffName ? `HLV: ${fb.subjectStaffName}` : t('feedback.list.typeLabel.staff'),
+        title: fb.subjectStaffName
+          ? `${t('feedback.list.trainerPrefix', 'HLV: ')}${fb.subjectStaffName}`
+          : t('feedback.list.typeLabel.staff'),
         subtitle: null,
       }
     }
@@ -296,7 +290,7 @@ export default function MyFeedbackPage() {
                               key={tag}
                               className="px-2.5 py-0.5 rounded-md text-[11px] font-medium bg-white/5 text-slate-300 border border-white/10 select-none"
                             >
-                              {tag}
+                              {localizeTag(tag)}
                             </span>
                           ))}
                         </div>
@@ -337,7 +331,7 @@ export default function MyFeedbackPage() {
                     <footer className="pt-2 border-t border-white/5 flex items-center justify-between text-xs text-slate-400">
                       <div className="flex items-center gap-1.5">
                         <Clock size={12} className="shrink-0 text-slate-500" />
-                        <span>{t('feedback.list.sentAt', { date: fmtDate(fb.createdAt) })}</span>
+                        <span>{t('feedback.list.sentAt', { date: formatDateTime(fb.createdAt) })}</span>
                       </div>
 
                       {fb.isAnonymous && (
@@ -394,7 +388,7 @@ export default function MyFeedbackPage() {
                   </button>
                   <img
                     src={previewImage}
-                    alt="full preview"
+                    alt={t('feedback.list.imageAltPreview', 'attachment preview')}
                     className="max-h-[75vh] w-auto rounded-xl object-contain"
                   />
                 </div>
