@@ -310,7 +310,7 @@ Cung cấp khả năng giao tiếp thời gian thực hai chiều giữa Hội v
 
 #### Các bước thực hiện:
 - [x] **Bước 4.1: Viết Unit Test cho `ChatService`**
-  - **File tạo:** `server/src/chat/chat.service.spec.ts` (22 tests passed)
+  - **File tạo:** `server/src/chat/chat.service.spec.ts` (39 tests passed)
   - Test cases:
     - Tạo mới và kích hoạt lại hội thoại giữa Member và Trainer.
     - Lấy danh sách hội thoại kèm unread count chính xác.
@@ -318,14 +318,17 @@ Cung cấp khả năng giao tiếp thời gian thực hai chiều giữa Hội v
     - Người gửi thu hồi tin nhắn (Hard Delete thành công); người khác thu hồi bị chặn lỗi `ForbiddenException`.
     - Chuyển trạng thái `archived` khi đổi PT và từ chối gửi tin nhắn trên hội thoại đã archived.
 - [x] **Bước 4.2: Viết Unit Test cho `ChatGateway`**
-  - **File tạo:** `server/src/chat/chat.gateway.spec.ts` (18 tests passed)
+  - **File tạo:** `server/src/chat/chat.gateway.spec.ts` (37 tests passed)
   - Test cases:
     - Từ chối kết nối nếu thiếu hoặc sai JWT token.
     - Join room thành công khi user là thành viên hợp lệ của cuộc trò chuyện.
     - Nhận tin nhắn và emit sự kiện `new_message` tới đúng room.
     - Phát hiện typing và emit `user_typing`.
 - [x] **Bước 4.3: Chạy test kiểm thử toàn bộ server**
-  - Chạy `npm test src/chat` để đảm bảo 100% test passed (47/47 tests passed).
+  - **File tạo:** `server/src/chat/dto/chat-dto-validation.spec.ts` (21 tests passed) & `server/src/chat/chat.controller.spec.ts` (8 tests passed)
+  - Chạy `npm test src/chat` để đảm bảo 100% test passed (105/105 tests passed).
+  - Chạy `npm test` toàn server: 79/79 test suites passed (1224/1224 tests passed).
+  - Chạy `npx nest build`: Build thành công 0 lỗi.
 
 
 ---

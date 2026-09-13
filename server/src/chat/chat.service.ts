@@ -628,6 +628,32 @@ export class ChatService {
     userId: bigint,
     file: ChatUploadedFile
   ): Promise<ChatMessageResponseDto> {
+    if (!file) {
+      throw new BadRequestException({
+        success: false,
+        code: 'INVALID_FILE',
+        message: 'Tệp đính kèm không hợp lệ hoặc bị thiếu',
+      })
+    }
+
+    const allowedMimes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
+    if (!allowedMimes.includes(file.mimetype)) {
+      throw new BadRequestException({
+        success: false,
+        code: 'INVALID_FILE_TYPE',
+        message: 'Định dạng tệp không được hỗ trợ. Chỉ chấp nhận JPG, PNG, WEBP, GIF',
+      })
+    }
+
+    const maxSizeBytes = 5 * 1024 * 1024 // 5MB
+    if (file.size <= 0 || file.size > maxSizeBytes) {
+      throw new BadRequestException({
+        success: false,
+        code: 'INVALID_FILE_SIZE',
+        message: 'Kích thước tệp không hợp lệ (tối đa 5MB và không được rỗng)',
+      })
+    }
+
     const storagePath = `uploads/chat/${file.filename}`
     const publicUrl = `/uploads/chat/${file.filename}`
 
