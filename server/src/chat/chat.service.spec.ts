@@ -757,7 +757,7 @@ describe('ChatService', () => {
     })
 
     it('nen don dep ban ghi file khi thu hoi tin nhan co hinh anh', async () => {
-      ;(fs.existsSync as jest.Mock).mockReturnValue(true)
+      (fs.existsSync as jest.Mock).mockReturnValue(true)
 
       prisma.chatMessage.findUnique.mockResolvedValue({
         messageId: BigInt(777),

@@ -67,7 +67,7 @@ describe('ChatWindow Component', () => {
     window.HTMLElement.prototype.scrollIntoView = vi.fn()
   })
 
-  it('renders empty selection state when conversation is null', () => {
+  it('TC-CW-01: renders empty selection state when conversation is null', () => {
     render(
       <ChatWindow
         conversation={null}
@@ -79,7 +79,7 @@ describe('ChatWindow Component', () => {
     expect(screen.getByRole('heading', { name: /chọn/i })).toBeInTheDocument()
   })
 
-  it('renders empty messages state when messages list is empty', () => {
+  it('TC-CW-02: renders empty messages state when messages list is empty', () => {
     render(
       <ChatWindow
         conversation={mockConversation}
@@ -91,7 +91,7 @@ describe('ChatWindow Component', () => {
     expect(screen.getByText(/chưa có tin nhắn/i)).toBeInTheDocument()
   })
 
-  it('renders messages and participant information properly', () => {
+  it('TC-CW-03: renders messages and participant information properly', () => {
     render(
       <ChatWindow
         conversation={mockConversation}
@@ -105,7 +105,7 @@ describe('ChatWindow Component', () => {
     expect(screen.getByAltText('Đính kèm')).toBeInTheDocument()
   })
 
-  it('opens image preview modal when image message is clicked', async () => {
+  it('TC-CW-04: opens image preview modal when image message is clicked', async () => {
     render(
       <ChatWindow
         conversation={mockConversation}
@@ -123,7 +123,84 @@ describe('ChatWindow Component', () => {
     })
   })
 
-  it('renders typing indicator when another user is typing', () => {
+  it('TC-CW-05: handles unsend message flow with ConfirmDialog (Open, Cancel, Confirm)', async () => {
+    const onDelete = vi.fn().mockResolvedValue(undefined)
+
+    render(
+      <ChatWindow
+        conversation={mockConversation}
+        messages={mockMessages}
+        currentUserId="user-member"
+        onDeleteMessage={onDelete}
+      />
+    )
+
+    // Option buttons are only on user's own messages
+    const optionButtons = screen.getAllByLabelText(/tùy chọn tin nhắn/i)
+    expect(optionButtons.length).toBeGreaterThanOrEqual(1)
+
+    // Trigger opening dropdown with Enter keydown (Radix Dropdown trigger)
+    fireEvent.keyDown(optionButtons[0], { key: 'Enter', code: 'Enter' })
+
+    // Dropdown menu item "Thu hồi tin nhắn"
+    const deleteMenuItem = await screen.findByText(/thu hồi tin nhắn/i)
+    expect(deleteMenuItem).toBeInTheDocument()
+    fireEvent.click(deleteMenuItem)
+
+    // Confirm dialog should appear
+    expect(screen.getByText(/thu hồi tin nhắn này\?/i)).toBeInTheDocument()
+
+    // Test cancel
+    const cancelBtn = screen.getByRole('button', { name: /hủy/i })
+    fireEvent.click(cancelBtn)
+
+    await waitFor(() => {
+      expect(screen.queryByText(/thu hồi tin nhắn này\?/i)).not.toBeInTheDocument()
+    })
+    expect(onDelete).not.toHaveBeenCalled()
+
+    // Open again and confirm
+    fireEvent.keyDown(optionButtons[0], { key: 'Enter', code: 'Enter' })
+    const deleteMenuItem2 = await screen.findByText(/thu hồi tin nhắn/i)
+    fireEvent.click(deleteMenuItem2)
+
+    const confirmBtn = screen.getByRole('button', { name: /^thu hồi$/i })
+    fireEvent.click(confirmBtn)
+
+    await waitFor(() => {
+      expect(onDelete).toHaveBeenCalled()
+    })
+  })
+
+  it('TC-CW-06: does not show unsend option for messages from other users', () => {
+    const onlyOtherUserMessages: ChatMessage[] = [
+      {
+        messageId: 'msg-trainer-1',
+        conversationId: 'conv-1',
+        senderUserId: 'user-trainer',
+        senderName: 'HLV Nguyễn Văn A',
+        senderAvatarUrl: null,
+        isSender: false,
+        messageType: 'text',
+        content: 'Chào bạn!',
+        attachmentUrl: null,
+        createdAt: '2026-09-13T09:00:00.000Z',
+        deliveryStatus: 'sent',
+      },
+    ]
+
+    render(
+      <ChatWindow
+        conversation={mockConversation}
+        messages={onlyOtherUserMessages}
+        currentUserId="user-member"
+      />
+    )
+
+    expect(screen.queryByLabelText(/tùy chọn tin nhắn/i)).not.toBeInTheDocument()
+  })
+
+  it('TC-CW-07: renders typing indicator when another user is typing', () => {
     render(
       <ChatWindow
         conversation={mockConversation}
@@ -139,7 +216,7 @@ describe('ChatWindow Component', () => {
     expect(screen.getAllByText('HLV Nguyễn Văn A').length).toBeGreaterThanOrEqual(1)
   })
 
-  it('renders archived notice banner when conversation is archived', () => {
+  it('TC-CW-08: renders archived notice banner when conversation is archived', () => {
     const archivedConv: ConversationSummary = {
       ...mockConversation,
       status: 'archived',
@@ -156,7 +233,7 @@ describe('ChatWindow Component', () => {
     expect(screen.getByText(/lưu trữ/i)).toBeInTheDocument()
   })
 
-  it('renders retry button on failed messages', () => {
+  it('TC-CW-09: renders retry button on failed messages and calls onRetryMessage', () => {
     const failedMsg: ChatMessage = {
       messageId: 'temp-123',
       tempId: 'temp-123',
@@ -189,5 +266,25 @@ describe('ChatWindow Component', () => {
 
     fireEvent.click(retryBtn)
     expect(onRetry).toHaveBeenCalledWith('temp-123')
+  })
+
+  it('TC-CW-10: handles load more older messages button click', () => {
+    const onLoadMore = vi.fn()
+
+    render(
+      <ChatWindow
+        conversation={mockConversation}
+        messages={mockMessages}
+        currentUserId="user-member"
+        hasMore={true}
+        onLoadMore={onLoadMore}
+      />
+    )
+
+    const loadMoreBtn = screen.getByRole('button', { name: /tải thêm tin nhắn cũ/i })
+    expect(loadMoreBtn).toBeInTheDocument()
+
+    fireEvent.click(loadMoreBtn)
+    expect(onLoadMore).toHaveBeenCalledTimes(1)
   })
 })

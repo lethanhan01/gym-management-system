@@ -105,7 +105,7 @@ describe('CreateWorkoutDaySessionPage', () => {
   })
 
   it('saves session log and transitions to completed screen when celebration closes', async () => {
-    vi.mocked(workoutService.createLog).mockResolvedValueOnce({} as any)
+    vi.mocked(workoutService.createLog).mockResolvedValueOnce({} as unknown as Awaited<ReturnType<typeof workoutService.createLog>>)
     const day = plan.days![0]
     saveSessionRuntime('10', day, assignment, '555', {
       version: 1,

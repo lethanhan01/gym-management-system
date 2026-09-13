@@ -83,7 +83,7 @@ class ChatService {
     cursor?: string | null,
     limit = 30
   ): Promise<MessagesListResponse> {
-    const params: Record<string, any> = { limit }
+    const params: Record<string, string | number> = { limit }
     if (cursor) {
       params.cursor = cursor
     }

@@ -10,6 +10,7 @@ import {
   MessageBody,
   OnGatewayConnection,
   OnGatewayDisconnect,
+  OnGatewayInit,
   SubscribeMessage,
   WebSocketGateway,
   WebSocketServer,
@@ -51,7 +52,7 @@ export interface AuthenticatedSocket extends Socket {
     transform: true,
   })
 )
-export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
+export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
   server: Server
 
@@ -66,53 +67,99 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   ) {}
 
   /**
-   * Xử lý xác thực JWT handshake khi client kết nối tới namespace /chat
+   * Cấu hình Socket.IO Middleware để xác thực JWT ngay trong giai đoạn Handshake
+   */
+  afterInit(server: Server): void {
+    server.use(async (socket: Socket, next: (err?: Error) => void) => {
+      try {
+        let token: string | undefined =
+          (socket.handshake.auth?.token as string) ||
+          (socket.handshake.headers?.authorization as string) ||
+          (socket.handshake.query?.token as string)
+
+        if (!token) {
+          this.logger.warn(`[Socket ${socket.id}] Từ chối kết nối: Thiếu token`)
+          return next(new Error('UNAUTHORIZED_MISSING_TOKEN'))
+        }
+
+        if (token.startsWith('Bearer ')) {
+          token = token.slice(7).trim()
+        }
+
+        const secret = this.configService.get<string>('JWT_SECRET')
+        const payload = await this.jwtService.verifyAsync(token, { secret })
+
+        if (!payload?.sub) {
+          this.logger.warn(`[Socket ${socket.id}] Từ chối kết nối: Token payload không hợp lệ`)
+          return next(new Error('INVALID_TOKEN'))
+        }
+
+        const userId = BigInt(payload.sub)
+        const user = await this.usersService.findByIdWithRoles(userId)
+        if (!user || user.deletedAt || user.status !== UserStatus.active) {
+          this.logger.warn(`[Socket ${socket.id}] Từ chối kết nối: User không hợp lệ hoặc bị khóa`)
+          return next(new Error('USER_INACTIVE'))
+        }
+
+        socket.data = { user }
+        next()
+      } catch (err: any) {
+        this.logger.warn(`[Socket ${socket.id}] Lỗi xác thực JWT: ${err.message}`)
+        next(new Error(`AUTH_FAILED: ${err.message}`))
+      }
+    })
+  }
+
+  /**
+   * Xử lý sau khi client kết nối (hỗ trợ cả đã qua middleware lẫn kiểm thử gọi trực tiếp)
    */
   async handleConnection(client: Socket): Promise<void> {
     try {
-      // 1. Trích xuất token từ handshake auth, headers hoặc query
-      let token: string | undefined =
-        (client.handshake.auth?.token as string) ||
-        (client.handshake.headers?.authorization as string) ||
-        (client.handshake.query?.token as string)
+      let user = (client as AuthenticatedSocket).data?.user
 
-      if (!token) {
-        this.logger.warn(`[Socket ${client.id}] Từ chối kết nối: Thiếu token`)
-        client.disconnect(true)
-        return
+      if (!user) {
+        // 1. Trích xuất token từ handshake auth, headers hoặc query nếu chưa qua middleware
+        let token: string | undefined =
+          (client.handshake.auth?.token as string) ||
+          (client.handshake.headers?.authorization as string) ||
+          (client.handshake.query?.token as string)
+
+        if (!token) {
+          this.logger.warn(`[Socket ${client.id}] Từ chối kết nối: Thiếu token`)
+          client.disconnect(true)
+          return
+        }
+
+        if (token.startsWith('Bearer ')) {
+          token = token.slice(7).trim()
+        }
+
+        // 2. Xác thực chữ ký và thời hạn JWT
+        const secret = this.configService.get<string>('JWT_SECRET')
+        const payload = await this.jwtService.verifyAsync(token, { secret })
+
+        if (!payload?.sub) {
+          this.logger.warn(`[Socket ${client.id}] Từ chối kết nối: Token payload không hợp lệ`)
+          client.disconnect(true)
+          return
+        }
+
+        const userId = BigInt(payload.sub)
+
+        // 3. Nạp thông tin user từ DB
+        const dbUser = await this.usersService.findByIdWithRoles(userId)
+        if (!dbUser || dbUser.deletedAt || dbUser.status !== UserStatus.active) {
+          this.logger.warn(`[Socket ${client.id}] Từ chối kết nối: User không hợp lệ hoặc bị khóa`)
+          client.disconnect(true)
+          return
+        }
+
+        user = dbUser
+        ;(client as AuthenticatedSocket).data = { user }
       }
 
-      if (token.startsWith('Bearer ')) {
-        token = token.slice(7).trim()
-      }
-
-      // 2. Xác thực chữ ký và thời hạn JWT
-      const secret = this.configService.get<string>('JWT_SECRET')
-      const payload = await this.jwtService.verifyAsync(token, { secret })
-
-      if (!payload?.sub) {
-        this.logger.warn(`[Socket ${client.id}] Từ chối kết nối: Token payload không hợp lệ`)
-        client.disconnect(true)
-        return
-      }
-
-      const userId = BigInt(payload.sub)
-
-      // 3. Nạp thông tin user từ DB để đảm bảo tài khoản active và không bị xóa
-      const user = await this.usersService.findByIdWithRoles(userId)
-      if (!user || user.deletedAt || user.status !== UserStatus.active) {
-        this.logger.warn(`[Socket ${client.id}] Từ chối kết nối: User không hợp lệ hoặc bị khóa`)
-        client.disconnect(true)
-        return
-      }
-
-      // 4. Lưu thông tin user vào socket data và tham gia room cá nhân user_${userId}
-      const authClient = client as AuthenticatedSocket
-      authClient.data = { user }
       const userRoom = `user_${user.userId.toString()}`
       await client.join(userRoom)
-
-
       this.logger.log(`[Socket ${client.id}] User ${user.userId} (${user.fullName}) kết nối thành công, joined room ${userRoom}`)
     } catch (err: any) {
       this.logger.warn(`[Socket ${client.id}] Lỗi xác thực JWT: ${err.message}`)

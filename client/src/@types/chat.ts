@@ -72,7 +72,7 @@ export interface WsMessageDeletedPayload {
   messageId: string
 }
 
-export interface WsAckResponse<T = any> {
+export interface WsAckResponse<T = unknown> {
   success: boolean
   data?: T
   error?: string

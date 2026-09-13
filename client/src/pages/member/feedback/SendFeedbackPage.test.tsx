@@ -200,7 +200,7 @@ describe('SendFeedbackPage', () => {
     vi.mocked(feedbackService.create).mockResolvedValue({
       feedbackId: 'new-fb-1',
       status: 'open',
-    } as any)
+    } as unknown as Awaited<ReturnType<typeof feedbackService.create>>)
 
     await user.click(submitBtn)
 

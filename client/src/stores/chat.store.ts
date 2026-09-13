@@ -17,7 +17,7 @@ import type {
 export function playNotificationSound(): void {
   try {
     if (typeof window === 'undefined') return
-    const AudioCtx = window.AudioContext || (window as any).webkitAudioContext
+    const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext
     if (!AudioCtx) return
 
     const ctx = new AudioCtx()
@@ -94,7 +94,7 @@ interface ChatStoreState {
   clear: () => void
 }
 
-let typingDebounceTimer: any = null
+let typingDebounceTimer: ReturnType<typeof setTimeout> | null = null
 let unsubscribeListeners: Array<() => void> = []
 
 export const useChatStore = create<ChatStoreState>((set, get) => ({
@@ -526,7 +526,7 @@ export const useChatStore = create<ChatStoreState>((set, get) => ({
           isUploading: false,
         }
       })
-    } catch (err: any) {
+    } catch (err: unknown) {
       set({ isUploading: false })
       toast.error('Tải ảnh lên thất bại. Vui lòng thử lại.')
       throw err

@@ -1,6 +1,6 @@
 import { lazy, Suspense, useState, useRef, useEffect, useCallback, type ChangeEvent, type FormEvent, type KeyboardEvent } from 'react'
 import { Image, Smile, Send, X, Loader2 } from 'lucide-react'
-import type { EmojiClickData } from 'emoji-picker-react'
+import { Theme, type EmojiClickData } from 'emoji-picker-react'
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/Popover'
 import { Button } from '@/components/ui/Button'
 import { Tooltip } from '@/components/ui/Tooltip'
@@ -292,7 +292,7 @@ export function ChatInput({
                 }
               >
                 <LazyEmojiPicker
-                  theme={'dark' as any}
+                  theme={Theme.DARK}
                   onEmojiClick={handleEmojiClick}
                   lazyLoadEmojis
                   previewConfig={{ showPreview: false }}

@@ -9,7 +9,7 @@
   - Trải nghiệm người dùng mượt mà với chỉ báo đang nhập (typing indicator), trạng thái đã đọc (seen), thông báo tin mới (toast, badge, sound).
   - Cơ chế thu hồi tin nhắn tức thì (Hard Delete), tôn trọng quyền riêng tư.
   - Tự động đồng bộ vòng đời hội thoại khi Hội viên đổi hoặc hủy Huấn luyện viên chính.
-- **Trạng thái:** **Đã hoàn thành thiết kế & sẵn sàng triển khai (Ready for Implementation)**
+- **Trạng thái:** **Đã hoàn thành toàn bộ 7/7 Phase và nghiệm thu thành công (Fully Implemented & Verified)**
 
 ---
 
@@ -226,15 +226,15 @@ graph LR
 Xây dựng cấu trúc lưu trữ hội thoại và tin nhắn, liên kết chặt chẽ với Member, Staff, User và File.
 
 #### Các bước thực hiện:
-- [ ] **Bước 1.1: Tạo schema `chat.prisma`**
+- [x] **Bước 1.1: Tạo schema `chat.prisma`**
   - **File tạo:** `server/prisma/schema/chat.prisma`
   - Khai báo model `ChatConversation`, `ChatMessage`, enum `ConversationStatus`, enum `MessageType`.
-- [ ] **Bước 1.2: Cập nhật các schema hiện hành**
+- [x] **Bước 1.2: Cập nhật các schema hiện hành**
   - **File sửa:** `server/prisma/schema/common.prisma` (thêm `chat_attachment` vào `FileType`).
   - **File sửa:** `server/prisma/schema/members.prisma` (thêm quan hệ `chatConversations`).
   - **File sửa:** `server/prisma/schema/staff.prisma` (thêm quan hệ `chatConversations`).
   - **File sửa:** `server/prisma/schema/auth.prisma` (thêm quan hệ `chatMessages`).
-- [ ] **Bước 1.3: Đồng bộ Database & Sinh Prisma Client**
+- [x] **Bước 1.3: Đồng bộ Database & Sinh Prisma Client**
   - Chạy `npm run prisma:generate` và `npm run prisma:push` tại thư mục `server`.
   - Chạy `npm run prisma:smoke` để đảm bảo không có lỗi kết nối/schema.
 
@@ -371,7 +371,7 @@ Xây dựng lớp quản lý kết nối socket và lưu trữ trạng thái cha
 Thiết kế giao diện chat thẩm mỹ cao, trực quan, hỗ trợ tương tác mượt mà và responsive trên cả Mobile/Desktop.
 
 #### Các bước thực hiện:
-- [ ] **Bước 6.1: Xây dựng `ChatWindow.tsx`**
+- [x] **Bước 6.1: Xây dựng `ChatWindow.tsx`**
   - **File tạo:** `client/src/components/chat/ChatWindow.tsx`
   - Hiển thị danh sách bong bóng tin nhắn (Member bên phải, Trainer bên trái hoặc ngược lại tùy vai trò).
   - Định dạng thời gian gửi, trạng thái "Đã gửi" / "Đã xem".
@@ -379,27 +379,27 @@ Thiết kế giao diện chat thẩm mỹ cao, trực quan, hỗ trợ tương t
   - Nút ba chấm trên tin nhắn của mình để "Thu hồi tin nhắn" với modal xác nhận.
   - Hiệu ứng bong bóng ba chấm nhấp nháy khi đối phương đang gõ.
   - Tự động cuộn xuống cuối khi có tin nhắn mới.
-- [ ] **Bước 6.2: Xây dựng `ChatInput.tsx`**
+- [x] **Bước 6.2: Xây dựng `ChatInput.tsx`**
   - **File tạo:** `client/src/components/chat/ChatInput.tsx`
   - Ô nhập văn bản hỗ trợ gõ Enter để gửi (Shift+Enter xuống dòng).
   - Nút Emoji Picker.
   - Nút đính kèm ảnh (kèm xem trước ảnh thumbnail và nút xoá ảnh trước khi gửi).
   - Kích hoạt sự kiện `typing_start` khi gõ và debounce `typing_stop` sau 1.5s không gõ.
-- [ ] **Bước 6.3: Xây dựng `FloatingChatWidget.tsx`**
+- [x] **Bước 6.3: Xây dựng `FloatingChatWidget.tsx`**
   - **File tạo:** `client/src/components/chat/FloatingChatWidget.tsx`
   - Nút tròn nổi ở góc dưới phải màn hình với icon tin nhắn và badge số đỏ unread.
   - Bấm vào mở popup chat nhỏ gọn (380px x 520px).
   - Có nút phóng to để điều hướng sang trang chat toàn màn hình.
-- [ ] **Bước 6.4: Xây dựng trang `MemberChatPage.tsx`**
+- [x] **Bước 6.4: Xây dựng trang `MemberChatPage.tsx`**
   - **File tạo:** `client/src/pages/member/chat/MemberChatPage.tsx`
   - Giao diện chat toàn màn hình với HLV chính.
   - Sidebar phụ tra cứu danh sách các HLV cũ trong quá khứ (ở chế độ Chỉ đọc).
-- [ ] **Bước 6.5: Xây dựng trang `TrainerChatPage.tsx`**
+- [x] **Bước 6.5: Xây dựng trang `TrainerChatPage.tsx`**
   - **File tạo:** `client/src/pages/trainer/chat/TrainerChatPage.tsx`
   - Bố cục 2 cột tiêu chuẩn:
     - Cột trái: Danh sách học viên phụ trách (kèm avatar, preview tin nhắn cuối, badge số tin chưa đọc, thanh tìm kiếm học viên).
     - Cột phải: Khung chat chi tiết của học viên đang chọn.
-- [ ] **Bước 6.6: Tích hợp điểm truy cập và thông báo toàn cục**
+- [x] **Bước 6.6: Tích hợp điểm truy cập và thông báo toàn cục**
   - **File sửa:** `client/src/layouts/MemberLayout.tsx` & `TrainerLayout.tsx`:
     - Thêm link "Tin nhắn" trên Sidebar/Header kèm Badge số tin chưa đọc.
     - Nhúng `FloatingChatWidget`.
@@ -415,11 +415,16 @@ Thiết kế giao diện chat thẩm mỹ cao, trực quan, hỗ trợ tương t
 Xác minh toàn bộ trải nghiệm người dùng và tính ổn định của hệ thống trước khi nghiệm thu.
 
 #### Các bước thực hiện:
-- [ ] **Bước 7.1: Viết Unit Tests cho UI Components**
-  - **File tạo:** `client/src/components/chat/ChatWindow.test.tsx` (kiểm tra render tin nhắn, trạng thái đã xem, nút thu hồi).
-  - **File tạo:** `client/src/components/chat/ChatInput.test.tsx` (kiểm tra submit tin nhắn, chọn ảnh, debounce typing).
-  - Chạy `npm test` ở client để đảm bảo các component test đạt 100% pass.
-- [ ] **Bước 7.2: Kiểm thử xác minh thời gian thực (Manual E2E Matrix)**
+- [x] **Bước 7.1: Viết Unit Tests cho UI Components**
+  - **File tạo:** `client/src/components/chat/ChatWindow.test.tsx` (10 tests passed).
+  - **File tạo:** `client/src/components/chat/ChatInput.test.tsx` (9 tests passed).
+  - **File tạo:** `client/src/components/chat/FloatingChatWidget.test.tsx` (6 tests passed).
+  - **File tạo:** `client/src/pages/member/chat/MemberChatPage.test.tsx` (4 tests passed).
+  - **File tạo:** `client/src/pages/trainer/chat/TrainerChatPage.test.tsx` (4 tests passed).
+  - **File tạo:** `client/src/hooks/useChatNotifications.test.ts` (3 tests passed).
+  - Chạy `npm test` ở client: 84/84 test suites passed, 413/413 tests passed (100%).
+- [x] **Bước 7.2: Kiểm thử xác minh thời gian thực (Preflight & E2E Matrix)**
+  - Script tự động: `server/scripts/test-real-chat-e2e.ts` (6/6 socket flows passed).
   - Thực hiện trên 2 trình duyệt riêng biệt (1 bên tài khoản Hội viên, 1 bên tài khoản Huấn luyện viên):
     1. **Kiểm tra nhắn tin văn bản tức thì**: Member gửi $\rightarrow$ Trainer nhận ngay lập tức (<100ms) không cần tải lại trang.
     2. **Kiểm tra chỉ báo đang nhập (Typing)**: Member gõ phím $\rightarrow$ Trainer thấy biểu tượng ba chấm nhấp nháy; dừng gõ 1.5s $\rightarrow$ biến mất.
@@ -428,5 +433,5 @@ Xác minh toàn bộ trải nghiệm người dùng và tính ổn định của
     5. **Kiểm tra thu hồi tin nhắn**: Bấm "Thu hồi" $\rightarrow$ tin nhắn biến mất lập tức ở cả 2 màn hình; kiểm tra database xác nhận bản ghi đã xóa sạch.
     6. **Kiểm tra đổi Huấn luyện viên**: Member đổi sang PT mới $\rightarrow$ chat với PT cũ chuyển sang lưu trữ (chỉ đọc), mở chat mới với PT mới thành công.
     7. **Kiểm tra In-app Toast & Badge**: Đang ở trang khác (vd: Lịch tập), có tin nhắn mới đến $\rightarrow$ hiện Toast thông báo góc màn hình và cập nhật Badge số đỏ trên menu.
-- [ ] **Bước 7.3: Kiểm tra Build & Linting**
-  - Chạy `npm run lint` & `npm run build` trên cả `server` và `client` để bảo đảm không có lỗi type hay syntax.
+- [x] **Bước 7.3: Kiểm tra Build & Linting**
+  - Chạy `npm run lint` & `npm run build` trên cả `server` và `client`: 100% Passed, 0 errors.

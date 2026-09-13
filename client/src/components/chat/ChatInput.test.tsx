@@ -1,7 +1,15 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi, beforeEach } from 'vitest'
 import { ChatInput } from './ChatInput'
+import { toast } from 'sonner'
+
+vi.mock('sonner', () => ({
+  toast: {
+    error: vi.fn(),
+    success: vi.fn(),
+  },
+}))
 
 describe('ChatInput Component', () => {
   const defaultProps = {
@@ -17,7 +25,7 @@ describe('ChatInput Component', () => {
     window.URL.revokeObjectURL = vi.fn()
   })
 
-  it('renders input elements correctly', () => {
+  it('TC-CI-01: renders input elements correctly', () => {
     render(<ChatInput {...defaultProps} />)
 
     expect(screen.getByPlaceholderText(/nhập tin nhắn/i)).toBeInTheDocument()
@@ -26,7 +34,7 @@ describe('ChatInput Component', () => {
     expect(screen.getByLabelText(/gửi/i)).toBeInTheDocument()
   })
 
-  it('handles typing and triggers onTyping callback', async () => {
+  it('TC-CI-02: handles typing and triggers onTyping callback with debounce', async () => {
     const user = userEvent.setup()
     render(<ChatInput {...defaultProps} />)
 
@@ -37,7 +45,7 @@ describe('ChatInput Component', () => {
     expect(textarea).toHaveValue('Chào Huấn luyện viên')
   })
 
-  it('sends message on Enter keypress and clears input', async () => {
+  it('TC-CI-03: sends message on Enter keypress and clears input', async () => {
     const user = userEvent.setup()
     render(<ChatInput {...defaultProps} />)
 
@@ -50,7 +58,7 @@ describe('ChatInput Component', () => {
     })
   })
 
-  it('does not send message on Shift+Enter (allows newline)', async () => {
+  it('TC-CI-04: does not send message on Shift+Enter (allows newline)', async () => {
     const user = userEvent.setup()
     render(<ChatInput {...defaultProps} />)
 
@@ -61,7 +69,7 @@ describe('ChatInput Component', () => {
     expect(textarea).toHaveValue('Dòng 1\nDòng 2')
   })
 
-  it('handles image file selection and sending', async () => {
+  it('TC-CI-05: handles valid image file selection and sending', async () => {
     const user = userEvent.setup()
     render(<ChatInput {...defaultProps} />)
 
@@ -80,7 +88,31 @@ describe('ChatInput Component', () => {
     })
   })
 
-  it('cancels image selection when remove button (X) is clicked', async () => {
+  it('TC-CI-06: rejects file exceeding max size (5MB) and shows toast error', () => {
+    render(<ChatInput {...defaultProps} />)
+
+    const largeFile = new File(['dummy-large'], 'large-photo.jpg', { type: 'image/jpeg' })
+    Object.defineProperty(largeFile, 'size', { value: 6 * 1024 * 1024 })
+
+    const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement
+    fireEvent.change(fileInput, { target: { files: [largeFile] } })
+
+    expect(toast.error).toHaveBeenCalledWith(expect.stringMatching(/5MB/i))
+    expect(screen.queryByText('large-photo.jpg')).not.toBeInTheDocument()
+  })
+
+  it('TC-CI-07: rejects invalid file type and shows toast error', () => {
+    render(<ChatInput {...defaultProps} />)
+
+    const pdfFile = new File(['dummy-pdf'], 'document.pdf', { type: 'application/pdf' })
+    const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement
+    fireEvent.change(fileInput, { target: { files: [pdfFile] } })
+
+    expect(toast.error).toHaveBeenCalledWith(expect.stringMatching(/định dạng JPG, PNG, hoặc WebP/i))
+    expect(screen.queryByText('document.pdf')).not.toBeInTheDocument()
+  })
+
+  it('TC-CI-08: cancels image selection when remove button (X) is clicked', async () => {
     const user = userEvent.setup()
     render(<ChatInput {...defaultProps} />)
 
@@ -96,7 +128,7 @@ describe('ChatInput Component', () => {
     expect(screen.queryByText('form-tap.png')).not.toBeInTheDocument()
   })
 
-  it('disables input and actions when disabled prop is true', () => {
+  it('TC-CI-09: disables input and actions when disabled prop is true', () => {
     render(<ChatInput {...defaultProps} disabled={true} />)
 
     const textarea = screen.getByPlaceholderText(/nhập tin nhắn/i)
