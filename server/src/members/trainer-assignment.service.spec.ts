@@ -3,6 +3,7 @@ import { TrainerAssignmentService } from './trainer-assignment.service'
 const mockPrisma = {
   member: { findFirst: jest.fn(), update: jest.fn() },
   staff: { findFirst: jest.fn(), findMany: jest.fn() },
+  feedback: { findMany: jest.fn(), count: jest.fn() },
 }
 
 const mockAudit = { log: jest.fn() }
@@ -93,22 +94,102 @@ describe('TrainerAssignmentService', () => {
   // ---------------------------------------------------------------------------
 
   describe('getAvailableTrainers', () => {
-    it('returns list of trainer/pt staff', async () => {
+    it('returns list of trainer/pt staff with ratings and profile details', async () => {
       mockPrisma.staff.findMany.mockResolvedValue([
-        makeTrainer(),
+        makeTrainer({
+          specialty: 'Fat Loss',
+          experienceYears: 5,
+          bio: 'Great coach',
+        }),
         makeTrainer({
           staffId: 6n,
           staffCode: 'PT-002',
           position: 'pt',
-          user: { fullName: 'Trainer B' },
+          user: { fullName: 'Trainer B', avatarFileId: null },
         }),
+      ])
+      mockPrisma.feedback.findMany.mockResolvedValue([
+        { subjectStaffId: 5n, rating: 5, tags: ['Nhiệt tình', 'Kỹ thuật tốt'] },
+        { subjectStaffId: 5n, rating: 4, tags: ['Nhiệt tình'] },
       ])
 
       const result = await service.getAvailableTrainers()
 
       expect(result.data).toHaveLength(2)
       expect(result.data[0].staffId).toBe('5')
+      expect(result.data[0].ratingAverage).toBe(4.5)
+      expect(result.data[0].totalReviews).toBe(2)
+      expect(result.data[0].topTags).toEqual(['Nhiệt tình', 'Kỹ thuật tốt'])
+      expect(result.data[0].specialty).toBe('Fat Loss')
+      expect(result.data[0].experienceYears).toBe(5)
       expect(result.data[1].staffId).toBe('6')
+      expect(result.data[1].ratingAverage).toBeNull()
+      expect(result.data[1].totalReviews).toBe(0)
+    })
+  })
+
+  // ---------------------------------------------------------------------------
+  // getTrainerReviews
+  // ---------------------------------------------------------------------------
+
+  describe('getTrainerReviews', () => {
+    it('throws NotFoundException when trainer does not exist', async () => {
+      mockPrisma.staff.findFirst.mockResolvedValue(null)
+
+      await expect(service.getTrainerReviews(99n)).rejects.toMatchObject({
+        response: expect.objectContaining({ code: 'NOT_FOUND' }),
+      })
+    })
+
+    it('returns stats and paginated reviews with anonymity masking', async () => {
+      mockPrisma.staff.findFirst.mockResolvedValue(
+        makeTrainer({
+          specialty: 'Bodybuilding',
+          experienceYears: 7,
+          bio: 'Expert coach',
+        })
+      )
+      mockPrisma.feedback.findMany
+        .mockResolvedValueOnce([
+          { rating: 5, tags: ['Tận tâm'] },
+          { rating: 4, tags: ['Tận tâm', 'Đúng giờ'] },
+        ])
+        .mockResolvedValueOnce([
+          {
+            feedbackId: 101n,
+            rating: 5,
+            content: 'Tuyệt vời',
+            tags: ['Tận tâm'],
+            isAnonymous: true,
+            createdAt: new Date('2026-08-01T10:00:00Z'),
+            member: { user: { fullName: 'Secret Member', avatarFileId: 99n } },
+          },
+          {
+            feedbackId: 102n,
+            rating: 4,
+            content: 'Rất tốt',
+            tags: ['Đúng giờ'],
+            isAnonymous: false,
+            createdAt: new Date('2026-08-02T10:00:00Z'),
+            member: { user: { fullName: 'Public Member', avatarFileId: null } },
+          },
+        ])
+      mockPrisma.feedback.count.mockResolvedValue(2)
+
+      const result = await service.getTrainerReviews(5n, { page: 1, pageSize: 5 })
+
+      expect(result.data.trainer.staffId).toBe('5')
+      expect(result.data.trainer.specialty).toBe('Bodybuilding')
+      expect(result.data.stats.ratingAverage).toBe(4.5)
+      expect(result.data.stats.totalReviews).toBe(2)
+      expect(result.data.stats.ratingCounts['5']).toBe(1)
+      expect(result.data.stats.ratingCounts['4']).toBe(1)
+      expect(result.data.pagination.totalReviews).toBe(2)
+
+      // Anonymity verification:
+      expect(result.data.reviews[0].reviewerName).toBeNull()
+      expect(result.data.reviews[0].reviewerAvatarFileId).toBeNull()
+      expect(result.data.reviews[1].reviewerName).toBe('Public Member')
     })
   })
 

@@ -57,6 +57,24 @@ export class MembersController {
     return { success: true, ...result }
   }
 
+  /** Lấy chi tiết hồ sơ, đánh giá và nhận xét của một PT */
+  @Get('me/trainers/:staffId/reviews')
+  async getTrainerReviews(
+    @Param('staffId', ParseIntPipe) staffId: number,
+    @Query('page') page?: string,
+    @Query('pageSize') pageSize?: string,
+    @Query('rating') rating?: string,
+    @Query('sort') sort?: string
+  ) {
+    const result = await this.members.getTrainerReviews(BigInt(staffId), {
+      page: page ? Number(page) : undefined,
+      pageSize: pageSize ? Number(pageSize) : undefined,
+      rating: rating ? Number(rating) : undefined,
+      sort,
+    })
+    return { success: true, ...result }
+  }
+
   /** Member tự gán / hủy PT của mình */
   @Patch('me/trainer')
   @ApiOperation({ summary: 'Tự gán hoặc hủy huấn luyện viên của hội viên' })

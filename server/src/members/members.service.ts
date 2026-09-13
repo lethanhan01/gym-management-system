@@ -668,6 +668,13 @@ export class MembersService {
     return this.trainerAssignment.getAvailableTrainers()
   }
 
+  async getTrainerReviews(
+    staffId: bigint,
+    query?: { page?: number; pageSize?: number; rating?: number; sort?: string }
+  ) {
+    return this.trainerAssignment.getTrainerReviews(staffId, query)
+  }
+
   async selfAssignTrainer(actorUserId: bigint, trainerId: number | null) {
     return this.trainerAssignment.selfAssignTrainer(actorUserId, trainerId)
   }

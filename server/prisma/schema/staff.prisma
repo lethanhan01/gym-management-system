@@ -3,6 +3,9 @@ model Staff {
   userId               BigInt               @unique @map("user_id")
   staffCode            String               @unique @map("staff_code") @db.VarChar(30)
   position             String               @db.VarChar(50)
+  specialty            String?              @db.VarChar(100)
+  experienceYears      Int?                 @default(1) @map("experience_years")
+  bio                  String?              @db.Text
   deletedAt            DateTime?            @map("deleted_at") @db.Timestamp(6)
   createdExercises     Exercise[]
   handledFeedback      Feedback[]           @relation("FeedbackHandledBy")

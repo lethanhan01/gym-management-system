@@ -84,6 +84,53 @@ export interface TrainerSummary {
   staffCode: string
   fullName: string
   position: string
+  avatarFileId?: string | null
+  specialty?: string | null
+  experienceYears?: number | null
+  bio?: string | null
+  ratingAverage?: number | null
+  totalReviews?: number
+  topTags?: string[]
+}
+
+export interface TrainerReviewItem {
+  feedbackId: string
+  rating: number
+  content: string
+  tags: string[]
+  isAnonymous: boolean
+  reviewerName: string | null
+  reviewerAvatarFileId: string | null
+  createdAt: string
+}
+
+export interface TrainerReviewStats {
+  ratingAverage: number | null
+  totalReviews: number
+  ratingCounts: Record<string, number>
+  topTags: string[]
+}
+
+export interface TrainerReviewPagination {
+  page: number
+  pageSize: number
+  totalReviews: number
+  totalPages: number
+  hasMore: boolean
+}
+
+export interface TrainerReviewDetail {
+  trainer: TrainerSummary
+  stats: TrainerReviewStats
+  pagination: TrainerReviewPagination
+  reviews: TrainerReviewItem[]
+}
+
+export interface GetTrainerReviewsParams {
+  page?: number
+  pageSize?: number
+  rating?: number
+  sort?: 'newest' | 'highest' | 'lowest'
 }
 
 export interface ListMembersParams {
@@ -189,6 +236,17 @@ export const memberService = {
 
   getAvailableTrainers: async (): Promise<TrainerSummary[]> => {
     const res = await api.get<{ success: boolean; data: TrainerSummary[] }>('/members/me/trainers')
+    return res.data.data
+  },
+
+  getTrainerReviews: async (
+    staffId: string,
+    params?: GetTrainerReviewsParams
+  ): Promise<TrainerReviewDetail> => {
+    const res = await api.get<{ success: boolean; data: TrainerReviewDetail }>(
+      `/members/me/trainers/${staffId}/reviews`,
+      { params }
+    )
     return res.data.data
   },
 
