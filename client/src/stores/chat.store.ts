@@ -261,9 +261,13 @@ export const useChatStore = create<ChatStoreState>((set, get) => ({
     // Đánh dấu đã đọc
     get().markSeen(conversationId)
 
-    // Nếu chưa có tin nhắn trong cache -> tải trang đầu
+    // Fetch nếu: (1) chưa có cache, HOẶC (2) có cache nhưng chưa từng fetch đầy đủ từ API.
+    // hasMoreByConversation[id] chỉ được set bởi getMessages() API response.
+    // Nếu undefined → cache chỉ đến từ WebSocket realtime (handleIncomingMessage),
+    // không phải full history → phải fetch lại để hiển thị toàn bộ lịch sử.
     const cachedMessages = get().messagesByConversation[conversationId]
-    if (!cachedMessages) {
+    const hasFetchedFromApi = get().hasMoreByConversation[conversationId] !== undefined
+    if (!cachedMessages || !hasFetchedFromApi) {
       set({ isLoadingMessages: true })
       try {
         const res = await chatService.getMessages(conversationId)

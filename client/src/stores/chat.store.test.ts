@@ -128,7 +128,112 @@ describe('chat.store (Zustand)', () => {
     expect(useChatStore.getState().hasMoreByConversation['1']).toBe(true)
   })
 
+  it('setActiveConversation re-fetches messages when cache exists from WebSocket but hasMore flag is absent', async () => {
+    // Giả lập: cache tồn tại do WebSocket realtime push — handleIncomingMessage
+    // không set hasMoreByConversation, nên flag vắng mặt (undefined)
+    useChatStore.setState({
+      messagesByConversation: {
+        '1': [
+          {
+            messageId: '999',
+            conversationId: '1',
+            senderUserId: '10',
+            senderName: 'Trainer A',
+            senderAvatarUrl: null,
+            isSender: false,
+            messageType: 'text',
+            content: 'Chỉ là tin realtime từ WebSocket',
+            attachmentUrl: null,
+            createdAt: '2026-09-13T21:00:00.000Z',
+          },
+        ],
+      },
+      hasMoreByConversation: {}, // flag CHƯA tồn tại = chưa fetch từ API
+    })
+
+    const mockMessagesRes: MessagesListResponse = {
+      messages: [
+        {
+          messageId: '100',
+          conversationId: '1',
+          senderUserId: '10',
+          senderName: 'Trainer A',
+          senderAvatarUrl: null,
+          isSender: false,
+          messageType: 'text',
+          content: 'Tin đầu tiên trong lịch sử',
+          attachmentUrl: null,
+          createdAt: '2026-09-13T10:00:00.000Z',
+        },
+        {
+          messageId: '999',
+          conversationId: '1',
+          senderUserId: '10',
+          senderName: 'Trainer A',
+          senderAvatarUrl: null,
+          isSender: false,
+          messageType: 'text',
+          content: 'Chỉ là tin realtime từ WebSocket',
+          attachmentUrl: null,
+          createdAt: '2026-09-13T21:00:00.000Z',
+        },
+      ],
+      nextCursor: null,
+      hasMore: false,
+    }
+
+    vi.mocked(chatService.getMessages).mockResolvedValueOnce(mockMessagesRes)
+
+    await useChatStore.getState().setActiveConversation('1')
+
+    // API phải được gọi dù cache đã có (vì hasMore flag vắng mặt)
+    expect(chatService.getMessages).toHaveBeenCalledWith('1')
+
+    // Store phải có đầy đủ 2 messages từ API response (ghi đè cache cũ)
+    const msgs = useChatStore.getState().messagesByConversation['1']
+    expect(msgs).toHaveLength(2)
+    expect(msgs[0].messageId).toBe('100')
+    expect(msgs[1].messageId).toBe('999')
+
+    // Flag hasMore phải được set sau khi fetch
+    expect(useChatStore.getState().hasMoreByConversation['1']).toBe(false)
+  })
+
+  it('setActiveConversation skips API fetch when cache already has hasMore flag (fully fetched before)', async () => {
+    // Giả lập: cache tồn tại và đã có hasMore flag = đã fetch đầy đủ từ API trước đó
+    useChatStore.setState({
+      messagesByConversation: {
+        '1': [
+          {
+            messageId: '100',
+            conversationId: '1',
+            senderUserId: '10',
+            senderName: 'Trainer A',
+            senderAvatarUrl: null,
+            isSender: false,
+            messageType: 'text',
+            content: 'Tin đã có trong cache đầy đủ',
+            attachmentUrl: null,
+            createdAt: '2026-09-13T10:00:00.000Z',
+          },
+        ],
+      },
+      hasMoreByConversation: { '1': false }, // flag ĐÃ tồn tại = cache đầy đủ
+    })
+
+    await useChatStore.getState().setActiveConversation('1')
+
+    // API KHÔNG được gọi vì cache đã đầy đủ (hasMore flag tồn tại)
+    expect(chatService.getMessages).not.toHaveBeenCalled()
+
+    // Cache vẫn được giữ nguyên, không bị ghi đè
+    const msgs = useChatStore.getState().messagesByConversation['1']
+    expect(msgs).toHaveLength(1)
+    expect(msgs[0].messageId).toBe('100')
+  })
+
   it('loadMoreMessages prepends older messages without duplicates', async () => {
+
     // Initial messages
     useChatStore.setState({
       messagesByConversation: {

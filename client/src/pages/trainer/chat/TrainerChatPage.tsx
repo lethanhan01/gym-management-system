@@ -60,7 +60,8 @@ export default function TrainerChatPage() {
   const targetConvId = searchParams.get('conversationId')
 
   useEffect(() => {
-    if (conversations.length === 0) return
+    // Chờ fetch xong mới xử lý URL params để tránh race condition
+    if (isLoadingConversations) return
 
     if (targetConvId) {
       const found = conversations.find((c) => c.conversationId === targetConvId)
@@ -86,10 +87,11 @@ export default function TrainerChatPage() {
     }
 
     // Tự động chọn cuộc trò chuyện đầu tiên trên Desktop nếu chưa chọn ai
-    if (!activeConversationId && conversations.length > 0) {
+    // Chỉ auto-select khi không có URL param yêu cầu conversation cụ thể
+    if (!activeConversationId && !targetConvId && !targetMemberId && conversations.length > 0) {
       void setActiveConversation(conversations[0].conversationId)
     }
-  }, [conversations, targetConvId, targetMemberId, activeConversationId, setActiveConversation])
+  }, [conversations, isLoadingConversations, targetConvId, targetMemberId, activeConversationId, setActiveConversation])
 
   // Lọc danh sách học viên theo từ khóa tìm kiếm (Tên, Mã học viên, Member ID)
   const filteredConversations = useMemo(() => {
