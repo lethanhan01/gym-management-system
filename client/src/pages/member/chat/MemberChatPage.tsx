@@ -9,6 +9,7 @@ import {
   Sparkles,
 } from 'lucide-react'
 import { format, parseISO, isValid } from 'date-fns'
+import { vi, ja } from 'date-fns/locale'
 import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '@/stores/authStore'
 import { useChatStore } from '@/stores/chat.store'
@@ -22,7 +23,8 @@ import { ChatWindow } from '@/components/chat/ChatWindow'
 import { ChatInput } from '@/components/chat/ChatInput'
 
 export default function MemberChatPage() {
-  const { t } = useTranslation('chat')
+  const { t, i18n } = useTranslation('chat')
+  const isJa = i18n.language.startsWith('ja')
   const navigate = useNavigate()
 
   const user = useAuthStore((state) => state.user)
@@ -89,7 +91,7 @@ export default function MemberChatPage() {
               'noActiveTrainerDesc',
               'Vui lòng chọn hoặc đăng ký gói dịch vụ Huấn luyện viên cá nhân để bắt đầu trao đổi lịch tập và chế độ dinh dưỡng.'
             )}
-            actionLabel="Chọn Huấn luyện viên ngay"
+            actionLabel={t('chooseTrainerNow', 'Chọn Huấn luyện viên ngay')}
             onAction={() => navigate('/member/choose-trainer')}
             size="lg"
           />
@@ -122,14 +124,14 @@ export default function MemberChatPage() {
           <div className="flex items-center gap-3 min-w-0 flex-1">
             <Avatar
               src={currentConversation.participant?.avatarUrl}
-              name={currentConversation.participant?.fullName || 'Huấn luyện viên'}
+              name={currentConversation.participant?.fullName || t('trainer', 'Huấn luyện viên')}
               size="lg"
               status={isViewingArchived ? 'offline' : 'online'}
             />
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2">
                 <h2 className="text-base sm:text-lg font-bold text-white truncate">
-                  {currentConversation.participant?.fullName || 'Huấn luyện viên'}
+                  {currentConversation.participant?.fullName || t('trainer', 'Huấn luyện viên')}
                 </h2>
                 {isViewingArchived ? (
                   <Badge tone="warning" size="xs">
@@ -137,19 +139,21 @@ export default function MemberChatPage() {
                   </Badge>
                 ) : (
                   <Badge tone="success" size="xs">
-                    HLV chính
+                    {t('primaryTrainerBadge', 'HLV chính')}
                   </Badge>
                 )}
               </div>
               <p className="text-xs text-[var(--rogym-text-secondary)] truncate">
-                {currentConversation.participant?.specialty || 'Huấn luyện viên cá nhân'}
+                {currentConversation.participant?.specialty || t('personalTrainer', 'Huấn luyện viên cá nhân')}
               </p>
             </div>
           </div>
         ) : (
           <div className="flex items-center gap-2">
             <Dumbbell size={20} className="text-[var(--rogym-teal)]" />
-            <h2 className="text-base font-bold text-white">Trao đổi với Huấn luyện viên</h2>
+            <h2 className="text-base font-bold text-white">
+              {t('chatWithTrainer', 'Trao đổi với Huấn luyện viên')}
+            </h2>
           </div>
         )}
 
@@ -163,7 +167,7 @@ export default function MemberChatPage() {
               onClick={() => setActiveConversation(primaryConversation.conversationId)}
               leftIcon={<RotateCcw size={14} />}
             >
-              Về HLV chính
+              {t('backToPrimaryTrainer', 'Về HLV chính')}
             </Button>
           )}
 
@@ -175,7 +179,7 @@ export default function MemberChatPage() {
               onClick={() => setIsHistoryDrawerOpen(true)}
               leftIcon={<History size={14} />}
             >
-              HLV trước đây ({archivedConversations.length})
+              {t('previousTrainers', 'HLV trước đây')} ({archivedConversations.length})
             </Button>
           )}
 
@@ -187,7 +191,7 @@ export default function MemberChatPage() {
             leftIcon={<UserCheck size={14} />}
             className="text-[var(--rogym-teal)] hover:text-white"
           >
-            Đổi HLV
+            {t('changeTrainer', 'Đổi HLV')}
           </Button>
         </div>
       </div>
@@ -196,7 +200,10 @@ export default function MemberChatPage() {
       {isViewingArchived && (
         <div className="flex items-center justify-between border-b border-amber-500/20 bg-amber-500/10 px-4 py-2 text-xs text-amber-300">
           <span>
-            Bạn đang xem lại lịch sử tư vấn với <strong>{currentConversation?.participant?.fullName || 'Huấn luyện viên'}</strong> (Chế độ chỉ đọc).
+            {t('viewingArchivedNotice', {
+              name: currentConversation?.participant?.fullName || t('trainer', 'Huấn luyện viên'),
+              defaultValue: `Bạn đang xem lại lịch sử tư vấn với ${currentConversation?.participant?.fullName || 'Huấn luyện viên'} (Chế độ chỉ đọc).`,
+            })}
           </span>
           {primaryConversation && (
             <button
@@ -204,7 +211,7 @@ export default function MemberChatPage() {
               onClick={() => setActiveConversation(primaryConversation.conversationId)}
               className="font-semibold underline hover:text-white ml-2 shrink-0"
             >
-              Quay lại HLV chính
+              {t('backToPrimaryTrainer', 'Về HLV chính')}
             </button>
           )}
         </div>
@@ -254,8 +261,8 @@ export default function MemberChatPage() {
           <div className="flex h-full items-center justify-center p-6">
             <EmptyState
               icon={<Sparkles size={32} />}
-              title="Sẵn sàng trao đổi"
-              description="Khung chat sẽ kết nối với Huấn luyện viên của bạn."
+              title={t('readyToChatTitle', 'Sẵn sàng trao đổi')}
+              description={t('readyToChatDesc', 'Khung chat sẽ kết nối với Huấn luyện viên của bạn.')}
               size="md"
             />
           </div>
@@ -268,10 +275,13 @@ export default function MemberChatPage() {
           <SheetHeader className="p-4 sm:p-6 border-b border-white/5">
             <SheetTitle className="text-white flex items-center gap-2">
               <History size={18} className="text-[var(--rogym-teal)]" />
-              <span>Lịch sử Huấn luyện viên</span>
+              <span>{t('trainerHistoryTitle', 'Lịch sử Huấn luyện viên')}</span>
             </SheetTitle>
             <SheetDescription className="text-xs text-[var(--rogym-text-secondary)]">
-              Xem lại lịch sử tin nhắn, bài tập và lời khuyên dinh dưỡng từ các Huấn luyện viên trước đây.
+              {t(
+                'trainerHistoryDesc',
+                'Xem lại lịch sử tin nhắn, bài tập và lời khuyên dinh dưỡng từ các Huấn luyện viên trước đây.'
+              )}
             </SheetDescription>
           </SheetHeader>
 
@@ -282,7 +292,7 @@ export default function MemberChatPage() {
                 ? (() => {
                     try {
                       const d = parseISO(conv.lastMessageAt)
-                      return isValid(d) ? format(d, 'dd/MM/yyyy') : ''
+                      return isValid(d) ? format(d, isJa ? 'yyyy/MM/dd' : 'dd/MM/yyyy', { locale: isJa ? ja : vi }) : ''
                     } catch {
                       return ''
                     }
@@ -305,13 +315,13 @@ export default function MemberChatPage() {
                 >
                   <Avatar
                     src={conv.participant?.avatarUrl}
-                    name={conv.participant?.fullName || 'Huấn luyện viên'}
+                    name={conv.participant?.fullName || t('trainer', 'Huấn luyện viên')}
                     size="md"
                   />
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center justify-between gap-2">
                       <h4 className="text-sm font-semibold text-white truncate">
-                        {conv.participant?.fullName || 'Huấn luyện viên'}
+                        {conv.participant?.fullName || t('trainer', 'Huấn luyện viên')}
                       </h4>
                       {lastDate && (
                         <span className="text-[11px] text-[var(--rogym-text-dim)] shrink-0">
@@ -320,7 +330,7 @@ export default function MemberChatPage() {
                       )}
                     </div>
                     <p className="text-xs text-[var(--rogym-text-dim)] truncate mt-0.5">
-                      {conv.lastMessageContent || 'Không có tin nhắn gần đây'}
+                      {conv.lastMessageContent || t('noRecentMessages', 'Không có tin nhắn gần đây')}
                     </p>
                   </div>
                   <ChevronRight size={16} className="text-[var(--rogym-text-dim)] shrink-0" />

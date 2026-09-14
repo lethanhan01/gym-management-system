@@ -49,10 +49,14 @@ export function ChatInput({
   const adjustTextareaHeight = useCallback(() => {
     const el = textareaRef.current
     if (!el) return
+    if (!text) {
+      el.style.height = '40px'
+      return
+    }
     el.style.height = 'auto'
     const newHeight = Math.min(el.scrollHeight, 120)
     el.style.height = `${Math.max(newHeight, 40)}px`
-  }, [])
+  }, [text])
 
   useEffect(() => {
     adjustTextareaHeight()
@@ -113,13 +117,13 @@ export function ChatInput({
     if (!file) return
 
     if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
-      toast.error('Chỉ hỗ trợ file ảnh định dạng JPG, PNG, hoặc WebP.')
+      toast.error(t('invalidImageTypeError', 'Chỉ hỗ trợ file ảnh định dạng JPG, PNG, hoặc WebP.'))
       if (fileInputRef.current) fileInputRef.current.value = ''
       return
     }
 
     if (file.size > MAX_IMAGE_SIZE_BYTES) {
-      toast.error('Kích thước ảnh tối đa cho phép là 5MB.')
+      toast.error(t('maxImageSizeError', 'Kích thước ảnh tối đa cho phép là 5MB.'))
       if (fileInputRef.current) fileInputRef.current.value = ''
       return
     }
@@ -204,7 +208,7 @@ export function ChatInput({
   return (
     <div
       className={cn(
-        'relative flex flex-col rounded-2xl border border-[var(--rogym-border-teal-dim)] bg-[var(--rogym-bg-card)] p-2.5 transition-all shadow-lg',
+        'relative flex flex-col rounded-2xl border border-[var(--rogym-border-teal-dim)] bg-[var(--rogym-bg-card)] p-2 sm:p-2.5 transition-all shadow-lg',
         disabled ? 'opacity-60 pointer-events-none' : 'focus-within:border-[var(--rogym-teal)]/50',
         className
       )}
@@ -212,19 +216,19 @@ export function ChatInput({
       {/* Khung xem trước ảnh thumbnail nếu có ảnh được chọn */}
       {previewUrl && (
         <div className="mb-2 flex items-center gap-2 rounded-xl bg-black/40 p-2 border border-white/10 w-fit">
-          <div className="relative h-16 w-16 overflow-hidden rounded-lg border border-white/20">
+          <div className="relative h-14 w-14 sm:h-16 sm:w-16 overflow-hidden rounded-lg border border-white/20">
             <img src={previewUrl} alt="Preview" className="h-full w-full object-cover" />
             <button
               type="button"
               onClick={handleRemoveSelectedFile}
               className="absolute top-0.5 right-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-black/80 text-white hover:bg-red-600 transition-colors"
-              aria-label="Xóa ảnh"
+              aria-label={t('deletePhoto', 'Xóa ảnh')}
             >
               <X size={12} />
             </button>
           </div>
           <div className="flex flex-col text-xs pr-2">
-            <span className="font-medium text-white max-w-[150px] truncate">{selectedFile?.name}</span>
+            <span className="font-medium text-white max-w-[130px] sm:max-w-[160px] truncate">{selectedFile?.name}</span>
             <span className="text-[var(--rogym-text-secondary)]">
               {((selectedFile?.size || 0) / 1024).toFixed(0)} KB
             </span>
@@ -232,7 +236,7 @@ export function ChatInput({
         </div>
       )}
 
-      <div className="flex items-end gap-2">
+      <div className="flex items-end gap-1.5 sm:gap-2">
         {/* Nút đính kèm ảnh */}
         <input
           ref={fileInputRef}
@@ -247,33 +251,33 @@ export function ChatInput({
             type="button"
             variant="icon"
             size="sm"
-            className="h-10 w-10 shrink-0 p-0 text-[var(--rogym-text-secondary)] hover:text-white hover:bg-white/10 rounded-xl"
+            className="h-9 w-9 sm:h-10 sm:w-10 shrink-0 p-0 text-[var(--rogym-text-secondary)] hover:text-white hover:bg-white/10 rounded-xl"
             onClick={() => fileInputRef.current?.click()}
             disabled={disabled || isSending || isUploading}
-            aria-label="Đính kèm hình ảnh"
+            aria-label={t('uploadImage', 'Đính kèm hình ảnh')}
           >
-            <Image size={20} />
+            <Image size={19} />
           </Button>
         </Tooltip>
 
         {/* Nút chọn Emoji */}
         <Popover open={isEmojiOpen} onOpenChange={setIsEmojiOpen}>
-          <Tooltip content="Biểu tượng cảm xúc">
+          <Tooltip content={t('emojiPicker', 'Biểu tượng cảm xúc')}>
             <PopoverTrigger asChild>
               <Button
                 type="button"
                 variant="icon"
                 size="sm"
                 className={cn(
-                  'h-10 w-10 shrink-0 p-0 rounded-xl transition-colors',
+                  'h-9 w-9 sm:h-10 sm:w-10 shrink-0 p-0 rounded-xl transition-colors',
                   isEmojiOpen
                     ? 'text-[var(--rogym-teal)] bg-white/10'
                     : 'text-[var(--rogym-text-secondary)] hover:text-white hover:bg-white/10'
                 )}
                 disabled={disabled || isSending || isUploading}
-                aria-label="Chọn biểu tượng cảm xúc"
+                aria-label={t('emojiPicker', 'Biểu tượng cảm xúc')}
               >
-                <Smile size={20} />
+                <Smile size={19} />
               </Button>
             </PopoverTrigger>
           </Tooltip>
@@ -281,12 +285,12 @@ export function ChatInput({
             side="top"
             align="start"
             sideOffset={10}
-            className="p-0 border-0 bg-transparent shadow-2xl z-[100]"
+            className="p-0 border-0 bg-transparent shadow-2xl z-[100] max-w-[calc(100vw-32px)]"
           >
             {isEmojiOpen && (
               <Suspense
                 fallback={
-                  <div className="flex h-[360px] w-[320px] items-center justify-center rounded-2xl bg-[var(--rogym-bg-card)] border border-white/10 text-white shadow-2xl">
+                  <div className="flex h-[320px] w-[280px] sm:w-[320px] items-center justify-center rounded-2xl bg-[var(--rogym-bg-card)] border border-white/10 text-white shadow-2xl">
                     <Loader2 className="h-6 w-6 animate-spin text-[var(--rogym-teal)]" />
                   </div>
                 }
@@ -296,8 +300,9 @@ export function ChatInput({
                   onEmojiClick={handleEmojiClick}
                   lazyLoadEmojis
                   previewConfig={{ showPreview: false }}
-                  height={360}
-                  width={320}
+                  height={340}
+                  width="100%"
+                  style={{ maxWidth: '320px', width: '280px' }}
                 />
               </Suspense>
             )}
@@ -312,11 +317,11 @@ export function ChatInput({
           onKeyDown={handleKeyDown}
           placeholder={
             placeholder ||
-            t('inputPlaceholder', 'Nhập tin nhắn... (Enter để gửi, Shift+Enter xuống dòng)')
+            t('inputPlaceholder', 'Nhập tin nhắn...')
           }
           disabled={disabled || isSending || isUploading}
           rows={1}
-          className="flex-1 resize-none bg-transparent py-2 px-1 text-sm text-white placeholder:text-[var(--rogym-text-dim)] focus:outline-none min-h-[40px] max-h-[120px] leading-relaxed"
+          className="flex-1 resize-none bg-transparent py-2 px-2 text-sm text-white placeholder:text-[var(--rogym-text-dim)] focus:outline-none min-h-[40px] h-[40px] max-h-[120px] leading-5"
         />
 
         {/* Nút gửi */}
@@ -328,7 +333,7 @@ export function ChatInput({
             onClick={() => handleSubmit()}
             disabled={!canSubmit}
             loading={isSending || isUploading}
-            className="h-10 w-10 shrink-0 p-0 rounded-xl flex items-center justify-center"
+            className="h-9 w-9 sm:h-10 sm:w-10 shrink-0 p-0 rounded-xl flex items-center justify-center"
             aria-label={t('send', 'Gửi')}
           >
             {!isSending && !isUploading && <Send size={18} className="translate-x-[1px]" />}

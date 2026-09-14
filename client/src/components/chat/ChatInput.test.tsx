@@ -30,7 +30,7 @@ describe('ChatInput Component', () => {
 
     expect(screen.getByPlaceholderText(/nhập tin nhắn/i)).toBeInTheDocument()
     expect(screen.getByLabelText(/đính kèm hình ảnh/i)).toBeInTheDocument()
-    expect(screen.getByLabelText(/chọn biểu tượng cảm xúc/i)).toBeInTheDocument()
+    expect(screen.getByLabelText(/biểu tượng cảm xúc/i)).toBeInTheDocument()
     expect(screen.getByLabelText(/gửi/i)).toBeInTheDocument()
   })
 
@@ -134,7 +134,7 @@ describe('ChatInput Component', () => {
     const textarea = screen.getByPlaceholderText(/nhập tin nhắn/i)
     expect(textarea).toBeDisabled()
     expect(screen.getByLabelText(/đính kèm hình ảnh/i)).toBeDisabled()
-    expect(screen.getByLabelText(/chọn biểu tượng cảm xúc/i)).toBeDisabled()
+    expect(screen.getByLabelText(/biểu tượng cảm xúc/i)).toBeDisabled()
     expect(screen.getByLabelText(/gửi/i)).toBeDisabled()
   })
 })

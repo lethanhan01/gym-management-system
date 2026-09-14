@@ -12,7 +12,7 @@ import {
   ChevronUp,
 } from 'lucide-react'
 import { format, isToday, isYesterday, isValid, parseISO } from 'date-fns'
-import { vi } from 'date-fns/locale'
+import { vi, ja } from 'date-fns/locale'
 import { Avatar } from '@/components/ui/Avatar'
 import { Button } from '@/components/ui/Button'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
@@ -53,19 +53,6 @@ function formatMessageTime(dateStr: string): string {
   }
 }
 
-// Hàm format nhãn ngày phân nhóm
-function formatDateSeparator(dateStr: string): string {
-  try {
-    const d = typeof dateStr === 'string' ? parseISO(dateStr) : new Date(dateStr)
-    if (!isValid(d)) return ''
-    if (isToday(d)) return 'Hôm nay'
-    if (isYesterday(d)) return 'Hôm qua'
-    return format(d, 'EEEE, dd/MM/yyyy', { locale: vi })
-  } catch {
-    return dateStr
-  }
-}
-
 export function ChatWindow({
   conversation,
   messages,
@@ -79,7 +66,8 @@ export function ChatWindow({
   onDeleteMessage,
   onRetryMessage,
 }: ChatWindowProps) {
-  const { t } = useTranslation('chat')
+  const { t, i18n } = useTranslation('chat')
+  const isJa = i18n.language.startsWith('ja')
   const scrollContainerRef = useRef<HTMLDivElement | null>(null)
   const bottomAnchorRef = useRef<HTMLDivElement | null>(null)
 
@@ -89,6 +77,22 @@ export function ChatWindow({
   // Modal xác nhận thu hồi
   const [deletingMessageId, setDeletingMessageId] = useState<string | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
+
+  // Hàm format nhãn ngày phân nhóm
+  const formatDateSeparator = (dateStr: string): string => {
+    try {
+      const d = typeof dateStr === 'string' ? parseISO(dateStr) : new Date(dateStr)
+      if (!isValid(d)) return ''
+      if (isToday(d)) return t('today', 'Hôm nay')
+      if (isYesterday(d)) return t('yesterday', 'Hôm qua')
+      if (isJa) {
+        return format(d, 'yyyy年MM月dd日 (EEEE)', { locale: ja })
+      }
+      return format(d, 'EEEE, dd/MM/yyyy', { locale: vi })
+    } catch {
+      return dateStr
+    }
+  }
 
   // Phân nhóm tin nhắn theo ngày
   const groupedMessages = useMemo(() => {
@@ -154,7 +158,10 @@ export function ChatWindow({
         <EmptyState
           icon={<MessageSquare size={36} />}
           title={t('selectStudent', 'Chọn cuộc trò chuyện để bắt đầu')}
-          description="Chọn một cuộc trò chuyện từ danh sách hoặc nhắn tin trực tiếp với Huấn luyện viên."
+          description={t(
+            'selectStudentDesc',
+            'Chọn một cuộc trò chuyện từ danh sách hoặc nhắn tin trực tiếp với Huấn luyện viên.'
+          )}
           size="lg"
         />
       </div>
@@ -224,7 +231,7 @@ export function ChatWindow({
             <EmptyState
               icon={<Sparkles size={28} />}
               title={t('noMessages', 'Chưa có tin nhắn nào')}
-              description="Hãy gửi lời chào đầu tiên để bắt đầu trao đổi!"
+              description={t('noMessagesDesc', 'Hãy gửi lời chào đầu tiên để bắt đầu trao đổi!')}
               size="sm"
             />
           </div>
@@ -266,7 +273,7 @@ export function ChatWindow({
                   {!isMine && (
                     <Avatar
                       src={msg.senderAvatarUrl || conversation.participant?.avatarUrl}
-                      name={msg.senderName || conversation.participant?.fullName || 'Người gửi'}
+                      name={msg.senderName || conversation.participant?.fullName || t('sender', 'Người gửi')}
                       size="sm"
                       className="mb-1 shrink-0"
                     />
@@ -281,7 +288,7 @@ export function ChatWindow({
                             variant="icon"
                             size="sm"
                             className="h-7 w-7 p-0 text-[var(--rogym-text-dim)] hover:text-white rounded-lg"
-                            aria-label="Tùy chọn tin nhắn"
+                            aria-label={t('deleteMessage', 'Tùy chọn tin nhắn')}
                           >
                             <MoreVertical size={14} />
                           </Button>
@@ -312,7 +319,7 @@ export function ChatWindow({
                     {/* Hiển thị tên người gửi nếu là tin đối phương */}
                     {!isMine && (
                       <div className="mb-1 text-xs font-semibold text-[var(--rogym-teal)]">
-                        {msg.senderName || conversation.participant?.fullName || 'Người gửi'}
+                        {msg.senderName || conversation.participant?.fullName || t('sender', 'Người gửi')}
                       </div>
                     )}
 
@@ -325,7 +332,7 @@ export function ChatWindow({
                         >
                           <img
                             src={msg.attachmentUrl}
-                            alt="Đính kèm"
+                            alt="Attachment"
                             className="w-full h-auto object-cover rounded-xl transition-transform duration-200 group-hover/img:scale-105"
                             loading="lazy"
                           />
@@ -333,7 +340,7 @@ export function ChatWindow({
                             {t('viewImage', 'Xem ảnh')}
                           </div>
                         </div>
-                        {msg.content && msg.content !== '[Hình ảnh]' && (
+                        {msg.content && msg.content !== '[Hình ảnh]' && msg.content !== '[画像]' && (
                           <p className="text-sm whitespace-pre-wrap break-words mt-1 leading-relaxed">
                             {msg.content}
                           </p>
@@ -399,7 +406,7 @@ export function ChatWindow({
             />
             <div className="flex items-center gap-1.5 rounded-2xl bg-[var(--rogym-bg-card)] border border-white/5 py-2 px-3">
               <span className="font-medium text-white/80">{activeTypers[0].fullName}</span>
-              <span className="text-[var(--rogym-text-dim)]">{t('someoneTyping', 'đang nhập')}</span>
+              <span className="text-[var(--rogym-text-dim)]">{t('someoneTyping', 'đang nhập...')}</span>
               <span className="flex gap-1 items-center ml-1">
                 <span className="h-1.5 w-1.5 rounded-full bg-[var(--rogym-teal)] animate-bounce [animation-delay:-0.3s]" />
                 <span className="h-1.5 w-1.5 rounded-full bg-[var(--rogym-teal)] animate-bounce [animation-delay:-0.15s]" />

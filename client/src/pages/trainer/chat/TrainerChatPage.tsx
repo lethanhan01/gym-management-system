@@ -8,7 +8,7 @@ import {
   ExternalLink,
 } from 'lucide-react'
 import { formatDistanceToNow, parseISO, isValid } from 'date-fns'
-import { vi } from 'date-fns/locale'
+import { vi, ja } from 'date-fns/locale'
 import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '@/stores/authStore'
 import { useChatStore } from '@/stores/chat.store'
@@ -23,7 +23,8 @@ import { ChatInput } from '@/components/chat/ChatInput'
 import { cn } from '@/lib/utils'
 
 export default function TrainerChatPage() {
-  const { t } = useTranslation('chat')
+  const { t, i18n } = useTranslation('chat')
+  const isJa = i18n.language.startsWith('ja')
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
 
@@ -136,7 +137,9 @@ export default function TrainerChatPage() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Users size={18} className="text-[var(--rogym-teal)]" />
-              <h2 className="text-base font-bold text-white">Tin nhắn học viên</h2>
+              <h2 className="text-base font-bold text-white">
+                {t('studentMessages', 'Tin nhắn học viên')}
+              </h2>
             </div>
             <Badge tone="primary" size="xs">
               {conversations.length}
@@ -170,11 +173,21 @@ export default function TrainerChatPage() {
             <div className="flex h-full items-center justify-center p-4">
               <EmptyState
                 icon={<Search size={28} />}
-                title={searchQuery ? 'Không tìm thấy học viên' : t('noConversations', 'Chưa có cuộc trò chuyện nào')}
+                title={
+                  searchQuery
+                    ? t('noSearchResult', 'Không tìm thấy học viên')
+                    : t('noConversations', 'Chưa có cuộc trò chuyện nào')
+                }
                 description={
                   searchQuery
-                    ? `Không có kết quả nào phù hợp với từ khóa "${searchQuery}"`
-                    : 'Danh sách học viên sẽ xuất hiện khi bạn được phân công hướng dẫn.'
+                    ? t('noSearchResultDesc', {
+                        query: searchQuery,
+                        defaultValue: `Không có kết quả nào phù hợp với từ khóa "${searchQuery}"`,
+                      })
+                    : t(
+                        'noConversationsTrainerDesc',
+                        'Danh sách học viên sẽ xuất hiện khi bạn được phân công phụ trách.'
+                      )
                 }
                 size="sm"
               />
@@ -188,7 +201,7 @@ export default function TrainerChatPage() {
                     try {
                       const d = parseISO(conv.lastMessageAt)
                       return isValid(d)
-                        ? formatDistanceToNow(d, { addSuffix: true, locale: vi })
+                        ? formatDistanceToNow(d, { addSuffix: true, locale: isJa ? ja : vi })
                         : ''
                     } catch {
                       return ''
@@ -231,7 +244,7 @@ export default function TrainerChatPage() {
                         </span>
                       ) : isNewConversation ? (
                         <Badge tone="primary" size="xs" className="text-[9px] px-1 py-0 h-4">
-                          Mới
+                          {t('newBadge', 'Mới')}
                         </Badge>
                       ) : null}
                     </div>
@@ -246,7 +259,7 @@ export default function TrainerChatPage() {
                             : 'text-[var(--rogym-text-dim)]'
                         )}
                       >
-                        {conv.lastMessageContent || 'Chưa có tin nhắn'}
+                        {conv.lastMessageContent || t('noMessagesShort', 'Chưa có tin nhắn')}
                       </p>
                       {conv.unreadCount > 0 && (
                         <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-bold text-white shrink-0 shadow-sm">
@@ -280,7 +293,7 @@ export default function TrainerChatPage() {
                   size="sm"
                   onClick={() => setIsMobileChatOpen(false)}
                   className="md:hidden h-8 w-8 text-[var(--rogym-text-secondary)] hover:text-white shrink-0"
-                  aria-label="Quay lại danh sách"
+                  aria-label={t('studentList', 'Quay lại danh sách')}
                 >
                   <ArrowLeft size={16} />
                 </Button>
@@ -296,11 +309,11 @@ export default function TrainerChatPage() {
                       {currentConversation.participant.fullName}
                     </h3>
                     <Badge tone="muted" size="xs">
-                      Học viên
+                      {t('student', 'Học viên')}
                     </Badge>
                   </div>
                   <p className="text-xs text-[var(--rogym-text-secondary)] truncate">
-                    Hội viên phụ trách
+                    {t('managedStudent', 'Hội viên phụ trách')}
                   </p>
                 </div>
               </div>
@@ -316,7 +329,7 @@ export default function TrainerChatPage() {
                   leftIcon={<ExternalLink size={14} />}
                   className="text-[var(--rogym-teal)] hover:text-white shrink-0"
                 >
-                  Hồ sơ học viên
+                  {t('studentProfile', 'Hồ sơ học viên')}
                 </Button>
               )}
             </div>
@@ -361,7 +374,10 @@ export default function TrainerChatPage() {
             <EmptyState
               icon={<MessageSquare size={40} />}
               title={t('selectStudent', 'Chọn học viên để bắt đầu trò chuyện')}
-              description="Chọn một học viên từ danh sách bên trái để xem lịch sử và trao đổi trực tiếp."
+              description={t(
+                'selectStudentDesc',
+                'Chọn một cuộc trò chuyện từ danh sách hoặc nhắn tin trực tiếp với Huấn luyện viên.'
+              )}
               size="lg"
             />
           </div>

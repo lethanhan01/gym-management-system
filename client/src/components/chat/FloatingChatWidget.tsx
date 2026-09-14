@@ -9,7 +9,7 @@ import {
   Users,
 } from 'lucide-react'
 import { formatDistanceToNow, parseISO, isValid } from 'date-fns'
-import { vi } from 'date-fns/locale'
+import { vi, ja } from 'date-fns/locale'
 import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '@/stores/authStore'
 import { useChatStore } from '@/stores/chat.store'
@@ -23,7 +23,8 @@ import { ChatInput } from './ChatInput'
 import { cn } from '@/lib/utils'
 
 export function FloatingChatWidget() {
-  const { t } = useTranslation('chat')
+  const { t, i18n } = useTranslation('chat')
+  const isJa = i18n.language.startsWith('ja')
   const navigate = useNavigate()
   const location = useLocation()
 
@@ -116,7 +117,7 @@ export function FloatingChatWidget() {
               color: 'var(--rogym-green-dark)',
               boxShadow: '0 8px 28px rgba(66, 224, 158, 0.45), 0 0 16px rgba(6, 195, 132, 0.35)',
             }}
-            aria-label="Mở khung trò chuyện"
+            aria-label={t('openChat', 'Mở khung trò chuyện')}
           >
             <MessageSquare
               size={26}
@@ -144,7 +145,7 @@ export function FloatingChatWidget() {
       {isFloatingOpen && (
         <div
           data-testid="floating-chat-card"
-          className="fixed bottom-20 right-4 md:bottom-6 md:right-6 z-50 flex h-[520px] max-h-[82vh] w-[calc(100vw-32px)] sm:w-[380px] flex-col overflow-hidden rounded-2xl border border-[var(--rogym-border-teal-dim)] bg-[var(--rogym-bg-card)] shadow-[var(--rogym-shadow-glass)] backdrop-blur-2xl animate-in zoom-in-95 duration-200"
+          className="fixed bottom-20 right-4 md:bottom-6 md:right-6 z-50 flex h-[500px] sm:h-[520px] max-h-[78vh] sm:max-h-[82vh] w-[calc(100vw-32px)] sm:w-[380px] flex-col overflow-hidden rounded-2xl border border-[var(--rogym-border-teal-dim)] bg-[var(--rogym-bg-card)] shadow-[var(--rogym-shadow-glass)] backdrop-blur-2xl animate-in zoom-in-95 duration-200"
         >
           {/* Header Popup */}
           <div className="flex items-center justify-between border-b border-white/10 px-4 py-3 bg-[var(--rogym-bg-card)]/90 backdrop-blur-md">
@@ -158,7 +159,7 @@ export function FloatingChatWidget() {
                   setActiveConversation(null)
                 }}
                 className="h-8 w-8 text-[var(--rogym-text-secondary)] hover:text-white"
-                aria-label="Danh sách học viên"
+                aria-label={t('studentList', 'Danh sách học viên')}
               >
                 <ArrowLeft size={16} />
               </Button>
@@ -170,16 +171,16 @@ export function FloatingChatWidget() {
                 <>
                   <Avatar
                     src={currentConversation.participant?.avatarUrl}
-                    name={currentConversation.participant?.fullName || 'Huấn luyện viên'}
+                    name={currentConversation.participant?.fullName || t('trainer', 'Huấn luyện viên')}
                     size="sm"
                     status="online"
                   />
                   <div className="min-w-0 flex-1">
                     <h3 className="text-sm font-semibold text-white truncate">
-                      {currentConversation.participant?.fullName || 'Huấn luyện viên'}
+                      {currentConversation.participant?.fullName || t('trainer', 'Huấn luyện viên')}
                     </h3>
                     <p className="text-[11px] text-[var(--rogym-teal)] truncate">
-                      Huấn luyện viên cá nhân
+                      {t('personalTrainer', 'Huấn luyện viên cá nhân')}
                     </p>
                   </div>
                 </>
@@ -187,15 +188,15 @@ export function FloatingChatWidget() {
                 <>
                   <Avatar
                     src={currentConversation.participant?.avatarUrl}
-                    name={currentConversation.participant?.fullName || 'Học viên'}
+                    name={currentConversation.participant?.fullName || t('student', 'Học viên')}
                     size="sm"
                   />
                   <div className="min-w-0 flex-1">
                     <h3 className="text-sm font-semibold text-white truncate">
-                      {currentConversation.participant?.fullName || 'Học viên'}
+                      {currentConversation.participant?.fullName || t('student', 'Học viên')}
                     </h3>
                     <p className="text-[11px] text-[var(--rogym-text-dim)] truncate">
-                      Học viên
+                      {t('student', 'Học viên')}
                     </p>
                   </div>
                 </>
@@ -205,7 +206,7 @@ export function FloatingChatWidget() {
                     {isMember ? <Dumbbell size={16} /> : <Users size={16} />}
                   </div>
                   <h3 className="text-sm font-semibold text-white">
-                    {isMember ? t('chatWithTrainer', 'Trao đổi với HLV') : 'Tin nhắn học viên'}
+                    {isMember ? t('chatWithTrainer', 'Trao đổi với HLV') : t('studentMessages', 'Tin nhắn học viên')}
                   </h3>
                   {unreadTotal > 0 && (
                     <Badge tone="primary" size="sm">
@@ -222,9 +223,9 @@ export function FloatingChatWidget() {
                 variant="icon"
                 size="sm"
                 onClick={handleExpandToFullPage}
-                title="Mở toàn màn hình"
+                title={t('fullscreen', 'Mở toàn màn hình')}
                 className="h-8 w-8 text-[var(--rogym-text-secondary)] hover:text-white"
-                aria-label="Mở toàn màn hình"
+                aria-label={t('fullscreen', 'Mở toàn màn hình')}
               >
                 <Maximize2 size={15} />
               </Button>
@@ -232,9 +233,9 @@ export function FloatingChatWidget() {
                 variant="icon"
                 size="sm"
                 onClick={closeFloating}
-                title="Đóng"
+                title={t('close', 'Đóng')}
                 className="h-8 w-8 text-[var(--rogym-text-secondary)] hover:text-white"
-                aria-label="Đóng"
+                aria-label={t('close', 'Đóng')}
               >
                 <X size={16} />
               </Button>
@@ -291,7 +292,7 @@ export function FloatingChatWidget() {
                         'noActiveTrainerDesc',
                         'Vui lòng chọn hoặc đăng ký dịch vụ Huấn luyện viên cá nhân để bắt đầu trao đổi.'
                       )}
-                      actionLabel="Chọn HLV ngay"
+                      actionLabel={t('chooseTrainerNow', 'Chọn Huấn luyện viên ngay')}
                       onAction={() => {
                         closeFloating()
                         navigate('/member/choose-trainer')
@@ -326,7 +327,10 @@ export function FloatingChatWidget() {
                         <EmptyState
                           icon={<Users size={32} />}
                           title={t('noConversations', 'Chưa có cuộc trò chuyện nào')}
-                          description="Danh sách học viên sẽ xuất hiện khi bạn được phân công phụ trách."
+                          description={t(
+                            'noConversationsTrainerDesc',
+                            'Danh sách học viên sẽ xuất hiện khi bạn được phân công phụ trách.'
+                          )}
                           size="sm"
                         />
                       </div>
@@ -337,7 +341,7 @@ export function FloatingChatWidget() {
                               try {
                                 const d = parseISO(conv.lastMessageAt)
                                 return isValid(d)
-                                  ? formatDistanceToNow(d, { addSuffix: true, locale: vi })
+                                  ? formatDistanceToNow(d, { addSuffix: true, locale: isJa ? ja : vi })
                                   : ''
                               } catch {
                                 return ''
@@ -362,13 +366,13 @@ export function FloatingChatWidget() {
                           >
                             <Avatar
                               src={conv.participant?.avatarUrl}
-                              name={conv.participant?.fullName || 'Người dùng'}
+                              name={conv.participant?.fullName || t('student', 'Học viên')}
                               size="md"
                             />
                             <div className="min-w-0 flex-1">
                               <div className="flex items-center justify-between gap-1">
                                 <h4 className="text-xs font-semibold text-white truncate">
-                                  {conv.participant?.fullName || 'Người dùng'}
+                                  {conv.participant?.fullName || t('student', 'Học viên')}
                                 </h4>
                                 {timeAgo && (
                                   <span className="text-[10px] text-[var(--rogym-text-dim)] shrink-0">
@@ -378,7 +382,7 @@ export function FloatingChatWidget() {
                               </div>
                               <div className="flex items-center justify-between gap-1 mt-0.5">
                                 <p className="text-[11px] text-[var(--rogym-text-secondary)] truncate">
-                                  {conv.lastMessageContent || 'Chưa có tin nhắn'}
+                                  {conv.lastMessageContent || t('noMessagesShort', 'Chưa có tin nhắn')}
                                 </p>
                                 {conv.unreadCount > 0 && (
                                   <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-bold text-white shrink-0">
@@ -440,4 +444,3 @@ export function FloatingChatWidget() {
 }
 
 export default FloatingChatWidget
-
