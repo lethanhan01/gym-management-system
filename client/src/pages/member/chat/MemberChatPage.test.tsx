@@ -15,6 +15,23 @@ vi.mock('react-router-dom', async () => {
   }
 })
 
+vi.mock('@/services/member.service', () => ({
+  memberService: {
+    getTrainerReviews: vi.fn().mockResolvedValue({
+      trainer: {
+        staffId: 'pt-staff-1',
+        staffCode: 'ST001',
+        fullName: 'HLV Trần Văn Nam',
+        position: 'trainer',
+        specialty: 'Tăng cơ & Giảm mỡ',
+      },
+      stats: { ratingAverage: null, totalReviews: 0, ratingCounts: {}, topTags: [] },
+      pagination: { page: 1, pageSize: 5, totalReviews: 0, totalPages: 0, hasMore: false },
+      reviews: [],
+    }),
+  },
+}))
+
 describe('MemberChatPage Component', () => {
   const mockActiveConversation: ConversationSummary = {
     conversationId: 'conv-active-1',
@@ -25,6 +42,7 @@ describe('MemberChatPage Component', () => {
       avatarUrl: null,
       role: 'trainer',
       specialty: 'Tăng cơ & Giảm mỡ',
+      staffId: 'pt-staff-1',
     },
     lastMessageContent: 'Chào bạn, hôm nay tập chân nhé',
     lastMessageAt: '2026-09-13T10:00:00.000Z',
@@ -192,7 +210,7 @@ describe('MemberChatPage Component', () => {
     })
   })
 
-  it('navigates to choose trainer page when "Đổi HLV" is clicked', async () => {
+  it('opens trainer profile modal and closes it via close X button in header', async () => {
     render(
       <MemoryRouter>
         <MemberChatPage />
@@ -200,12 +218,29 @@ describe('MemberChatPage Component', () => {
     )
 
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: /đổi hlv/i })).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: /hồ sơ & đánh giá hlv/i })).toBeInTheDocument()
     })
 
-    const changePtBtn = screen.getByRole('button', { name: /đổi hlv/i })
-    fireEvent.click(changePtBtn)
+    const profileBtn = screen.getByRole('button', { name: /hồ sơ & đánh giá hlv/i })
+    fireEvent.click(profileBtn)
 
-    expect(mockedNavigate).toHaveBeenCalledWith('/member/choose-trainer')
+    // Modal mở: kiểm tra dialog xuất hiện
+    await waitFor(() => {
+      expect(screen.getByRole('dialog')).toBeInTheDocument()
+    })
+
+    // Navigate sang choose-trainer KHÔNG được gọi
+    expect(mockedNavigate).not.toHaveBeenCalledWith('/member/choose-trainer')
+
+    // Ở chế độ readOnly: KHÔNG có nút "Chọn HLV này"
+    expect(screen.queryByRole('button', { name: /chọn hlv này/i })).not.toBeInTheDocument()
+
+    // Đóng modal bằng nút đóng X ở góc trên bên phải
+    const closeXBtn = screen.getByRole('button', { name: /đóng/i })
+    fireEvent.click(closeXBtn)
+
+    await waitFor(() => {
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    })
   })
 })

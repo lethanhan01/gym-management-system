@@ -4,7 +4,8 @@ import {
   Dumbbell,
   History,
   RotateCcw,
-  UserCheck,
+  Eye,
+  Award,
   ChevronRight,
   Sparkles,
   CreditCard,
@@ -23,6 +24,7 @@ import { Skeleton } from '@/components/ui/Skeleton'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/Sheet'
 import { ChatWindow } from '@/components/chat/ChatWindow'
 import { ChatInput } from '@/components/chat/ChatInput'
+import TrainerReviewsModal, { type TrainerModalTarget } from '@/pages/member/components/TrainerReviewsModal'
 
 export default function MemberChatPage() {
   const { t, i18n } = useTranslation('chat')
@@ -54,6 +56,7 @@ export default function MemberChatPage() {
 
   const [isInitialLoading, setIsInitialLoading] = useState(true)
   const [isHistoryDrawerOpen, setIsHistoryDrawerOpen] = useState(false)
+  const [isTrainerProfileOpen, setIsTrainerProfileOpen] = useState(false)
 
   // Cuộc trò chuyện với HLV chính hiện tại (status === 'active')
   const primaryConversation = useMemo(() => {
@@ -73,6 +76,19 @@ export default function MemberChatPage() {
     }
     return primaryConversation || null
   }, [conversations, activeConversationId, primaryConversation])
+
+  // Dữ liệu HLV cơ bản để mở TrainerReviewsModal
+  // Modal sẽ tự fetch đầy đủ 100% dữ liệu từ Backend API (detail.trainer)
+  const trainerForModal = useMemo((): TrainerModalTarget | null => {
+    const p = primaryConversation?.participant
+    if (!p?.staffId) return null
+    return {
+      staffId: p.staffId,
+      fullName: p.fullName,
+      avatarUrl: p.avatarUrl ?? null,
+      specialty: p.specialty ?? null,
+    }
+  }, [primaryConversation])
 
   // Tải danh sách và tự động kết nối hội thoại active khi vào trang
   useEffect(() => {
@@ -262,7 +278,7 @@ export default function MemberChatPage() {
         <div className="flex h-full items-center justify-center p-6">
           <div className="w-full max-w-lg rounded-2xl border border-white/10 bg-black/20 p-8 text-center shadow-xl backdrop-blur-sm">
             <EmptyState
-              icon={<UserCheck size={40} className="text-[var(--rogym-teal)]" />}
+              icon={<Award size={40} className="text-[var(--rogym-teal)]" />}
               title={t('noPtPackageTitle', 'Gói tập hiện tại không bao gồm Huấn luyện viên')}
               description={t(
                 'noPtPackageDesc',
@@ -392,16 +408,16 @@ export default function MemberChatPage() {
             </Tooltip>
           )}
 
-          {/* Nút đổi PT: Chỉ hiển thị khi đang ở trạng thái READY và không xem lưu trữ */}
-          {memberChatEligibility === 'READY' && !isViewingArchived && (
-            <Tooltip content={t('changeTrainer', 'Đổi HLV')}>
+          {/* Nút xem hồ sơ & đánh giá HLV: Hiển thị khi READY, không xem archived, và có staffId */}
+          {memberChatEligibility === 'READY' && !isViewingArchived && trainerForModal && (
+            <Tooltip content={t('viewTrainerProfile', 'Hồ sơ & đánh giá HLV')}>
               <button
                 type="button"
-                onClick={() => navigate('/member/choose-trainer')}
-                className="flex h-9 w-9 items-center justify-center rounded-full text-[var(--rogym-teal)] hover:text-emerald-400 hover:bg-white/10 active:scale-95 transition-all shrink-0"
-                aria-label={t('changeTrainer', 'Đổi HLV')}
+                onClick={() => setIsTrainerProfileOpen(true)}
+                className="flex h-8 w-8 items-center justify-center rounded-full text-[var(--rogym-text-secondary)] hover:text-white hover:bg-white/10 active:scale-95 transition-all shrink-0"
+                aria-label={t('viewTrainerProfile', 'Hồ sơ & đánh giá HLV')}
               >
-                <UserCheck size={18} />
+                <Eye size={16} />
               </button>
             </Tooltip>
           )}
@@ -505,6 +521,14 @@ export default function MemberChatPage() {
           </div>
         </SheetContent>
       </Sheet>
+
+      {/* Modal xem hồ sơ & đánh giá HLV hiện tại (read-only, không có nút Chọn HLV) */}
+      <TrainerReviewsModal
+        open={isTrainerProfileOpen}
+        onClose={() => setIsTrainerProfileOpen(false)}
+        trainer={trainerForModal}
+        readOnly
+      />
     </div>
   )
 }

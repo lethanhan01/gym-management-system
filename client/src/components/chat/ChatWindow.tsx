@@ -284,14 +284,13 @@ export function ChatWindow({
                     <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center mb-1">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button
-                            variant="icon"
-                            size="sm"
-                            className="h-7 w-7 p-0 text-[var(--rogym-text-dim)] hover:text-white rounded-lg"
-                            aria-label={t('deleteMessage', 'Tùy chọn tin nhắn')}
+                          <button
+                            type="button"
+                            className="flex h-8 w-8 items-center justify-center rounded-full text-[var(--rogym-text-secondary)] hover:text-white hover:bg-white/10 active:scale-95 transition-all shrink-0"
+                            aria-label={t('messageOptions', 'Tùy chọn tin nhắn')}
                           >
-                            <MoreVertical size={14} />
-                          </Button>
+                            <MoreVertical size={16} />
+                          </button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" side="top">
                           <DropdownMenuItem
@@ -332,7 +331,7 @@ export function ChatWindow({
                         >
                           <img
                             src={msg.attachmentUrl}
-                            alt="Attachment"
+                            alt="Đính kèm"
                             className="w-full h-auto object-cover rounded-xl transition-transform duration-200 group-hover/img:scale-105"
                             loading="lazy"
                           />

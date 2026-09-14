@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Star, Award, Sparkles, MessageSquare, Clock } from 'lucide-react'
 import {
@@ -14,19 +14,31 @@ import {
   Chip,
   EmptyState,
   Modal,
-  ModalFooter,
   ProgressBar,
   Select,
   Skeleton,
 } from '@/components/ui'
 import { localizeSpecialty, localizeTag } from '@/pages/member/feedback/feedback-i18n'
 
+export interface TrainerModalTarget {
+  staffId: string
+  fullName?: string
+  avatarUrl?: string | null
+  avatarFileId?: string | null
+  position?: string
+  specialty?: string | null
+  experienceYears?: number | null
+  bio?: string | null
+  staffCode?: string
+}
+
 export interface TrainerReviewsModalProps {
   open: boolean
   onClose: () => void
-  trainer: TrainerSummary | null
-  onChooseTrainer: (trainerId: string) => Promise<void>
-  isChoosing: boolean
+  trainer: TrainerModalTarget | TrainerSummary | null
+  onChooseTrainer?: (trainerId: string) => Promise<void>
+  isChoosing?: boolean
+  readOnly?: boolean
 }
 
 export default function TrainerReviewsModal({
@@ -34,7 +46,8 @@ export default function TrainerReviewsModal({
   onClose,
   trainer,
   onChooseTrainer,
-  isChoosing,
+  isChoosing = false,
+  readOnly = false,
 }: TrainerReviewsModalProps) {
   const { t, i18n } = useTranslation('member')
   const [detail, setDetail] = useState<TrainerReviewDetail | null>(null)
@@ -43,6 +56,23 @@ export default function TrainerReviewsModal({
   const [error, setError] = useState<string | null>(null)
   const [selectedRating, setSelectedRating] = useState<number | null>(null)
   const [sort, setSort] = useState<'newest' | 'highest' | 'lowest'>('newest')
+
+  // Hợp nhất dữ liệu: ưu tiên dữ liệu đầy đủ nhận từ API Backend (detail.trainer)
+  const activeTrainer = useMemo(() => {
+    if (!trainer) return null
+    if (!detail?.trainer) return trainer
+    return {
+      ...trainer,
+      ...detail.trainer,
+      avatarUrl:
+        trainer.avatarUrl ??
+        (detail.trainer.avatarFileId ? `/api/v1/files/${detail.trainer.avatarFileId}` : null),
+    }
+  }, [detail?.trainer, trainer])
+
+  const trainerAvatarSrc = activeTrainer?.avatarFileId
+    ? `/api/v1/files/${activeTrainer.avatarFileId}`
+    : (activeTrainer?.avatarUrl ?? null)
 
   const fetchReviews = useCallback(
     async (staffId: string, page = 1, append = false) => {
@@ -121,7 +151,7 @@ export default function TrainerReviewsModal({
     }
   }
 
-  if (!trainer) return null
+  if (!trainer || !activeTrainer) return null
 
   const stats = detail?.stats
   const reviews = detail?.reviews ?? []
@@ -132,26 +162,26 @@ export default function TrainerReviewsModal({
       onClose={onClose}
       size="2xl"
       title={t('chooseTrainer.modal.title')}
+      contentClassName="flex flex-col max-h-[90vh] overflow-hidden"
+      bodyClassName="overflow-y-auto p-4 sm:p-6 flex-1 min-h-0"
       footer={
-        <ModalFooter>
-          <Button variant="outline-white" onClick={onClose}>
-            {t('chooseTrainer.modal.buttonClose')}
-          </Button>
+        !readOnly && onChooseTrainer && activeTrainer ? (
           <Button
             variant="primary"
             loading={isChoosing}
-            onClick={() => onChooseTrainer(trainer.staffId)}
+            onClick={() => onChooseTrainer(activeTrainer.staffId)}
           >
             {t('chooseTrainer.modal.buttonChooseTrainer')}
           </Button>
-        </ModalFooter>
+        ) : undefined
       }
     >
-      <div className="flex flex-col gap-6 max-h-[75vh] overflow-y-auto pr-1">
+      <div className="flex flex-col gap-6">
         {/* Profile Header */}
         <section className="flex flex-col sm:flex-row items-center sm:items-start gap-4 p-4 rounded-2xl bg-white/[0.04] border border-white/10">
           <Avatar
-            name={trainer.fullName}
+            src={trainerAvatarSrc}
+            name={activeTrainer.fullName}
             size="xl"
             shape="circle"
             tone="teal"
@@ -160,31 +190,40 @@ export default function TrainerReviewsModal({
           <div className="flex-1 text-center sm:text-left space-y-1.5">
             <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
               <h3 className="text-lg font-bold text-white tracking-wide">
-                {trainer.fullName}
+                {activeTrainer.fullName}
               </h3>
-              <Badge tone="accent" size="sm">
-                {t('chooseTrainer.positionLabel.' + trainer.position, trainer.position)}
-              </Badge>
-              {trainer.experienceYears && trainer.experienceYears > 0 ? (
+              {activeTrainer.staffCode && (
+                <Badge tone="muted" size="sm">
+                  {activeTrainer.staffCode}
+                </Badge>
+              )}
+              {activeTrainer.position && (
+                <Badge tone="accent" size="sm">
+                  {t('chooseTrainer.positionLabel.' + activeTrainer.position, activeTrainer.position)}
+                </Badge>
+              )}
+              {activeTrainer.experienceYears && activeTrainer.experienceYears > 0 ? (
                 <Badge tone="muted" size="sm">
                   <Clock size={12} className="mr-1 inline" />
-                  {t('chooseTrainer.experienceYears', { count: trainer.experienceYears })}
+                  {t('chooseTrainer.experienceYears', { count: activeTrainer.experienceYears })}
                 </Badge>
               ) : null}
             </div>
 
-            {trainer.specialty && (
+            {activeTrainer.specialty && (
               <p className="text-xs text-[var(--rogym-teal)] font-medium flex items-center justify-center sm:justify-start gap-1">
                 <Award size={13} />
                 <span>
-                  {t('chooseTrainer.specialtyLabel')}: {localizeSpecialty(trainer.specialty)}
+                  {t('chooseTrainer.specialtyLabel')}: {localizeSpecialty(activeTrainer.specialty)}
                 </span>
               </p>
             )}
 
-            <p className="text-xs rogym-text-secondary pt-1 leading-relaxed">
-              {trainer.bio || t('chooseTrainer.modal.noBio')}
-            </p>
+            {activeTrainer.bio && activeTrainer.bio.trim() ? (
+              <p className="text-xs rogym-text-secondary pt-1 leading-relaxed">
+                {activeTrainer.bio}
+              </p>
+            ) : null}
           </div>
         </section>
 
@@ -345,6 +384,7 @@ export default function TrainerReviewsModal({
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex items-center gap-2.5">
                       <Avatar
+                        src={!r.isAnonymous && r.reviewerAvatarFileId ? `/api/v1/files/${r.reviewerAvatarFileId}` : null}
                         name={r.reviewerName || t('chooseTrainer.modal.anonymousUser')}
                         size="sm"
                         shape="circle"
@@ -355,11 +395,6 @@ export default function TrainerReviewsModal({
                           <p className="text-xs font-semibold text-white">
                             {r.reviewerName || t('chooseTrainer.modal.anonymousUser')}
                           </p>
-                          {r.isAnonymous && (
-                            <Badge tone="muted" size="xs">
-                              {t('chooseTrainer.modal.anonymousUser')}
-                            </Badge>
-                          )}
                         </div>
                         <p className="text-[10px] rogym-text-secondary">
                           {formatDate(r.createdAt)}
