@@ -31,6 +31,9 @@ describe('ChatService', () => {
       findUnique: jest.Mock
       findMany: jest.Mock
     }
+    subscription: {
+      findFirst: jest.Mock
+    }
     staff: {
       findUnique: jest.Mock
     }
@@ -63,6 +66,9 @@ describe('ChatService', () => {
       member: {
         findUnique: jest.fn(),
         findMany: jest.fn(),
+      },
+      subscription: {
+        findFirst: jest.fn(),
       },
       staff: {
         findUnique: jest.fn(),
@@ -430,20 +436,60 @@ describe('ChatService', () => {
       )
     })
 
-    it('nen tra ve null neu member khong co PT chinh', async () => {
+    it('nen tra ve NO_ACTIVE_SUBSCRIPTION neu member khong co subscription nao dang active', async () => {
       prisma.member.findUnique.mockResolvedValue({
         memberId: BigInt(1),
         primaryTrainerId: null,
         primaryTrainer: null,
       })
+      prisma.subscription.findFirst.mockResolvedValue(null)
 
       const res = await service.getActiveConversationForMember(BigInt(100))
 
+      expect(res.eligibility).toBe('NO_ACTIVE_SUBSCRIPTION')
       expect(res.conversation).toBeNull()
       expect(res.primaryTrainer).toBeNull()
     })
 
-    it('nen tra ve conversation va thong tin PT chinh khi member co primary trainer', async () => {
+    it('nen tra ve NO_PT_PACKAGE neu goi tap hien tai khong bao gom PT', async () => {
+      prisma.member.findUnique.mockResolvedValue({
+        memberId: BigInt(1),
+        primaryTrainerId: null,
+        primaryTrainer: null,
+      })
+      prisma.subscription.findFirst.mockResolvedValue({
+        subscriptionId: BigInt(10),
+        status: 'active',
+        package: { includesPt: false },
+      })
+
+      const res = await service.getActiveConversationForMember(BigInt(100))
+
+      expect(res.eligibility).toBe('NO_PT_PACKAGE')
+      expect(res.conversation).toBeNull()
+      expect(res.primaryTrainer).toBeNull()
+    })
+
+    it('nen tra ve PT_NOT_SELECTED neu goi tap co PT nhung member chua chon PT', async () => {
+      prisma.member.findUnique.mockResolvedValue({
+        memberId: BigInt(1),
+        primaryTrainerId: null,
+        primaryTrainer: null,
+      })
+      prisma.subscription.findFirst.mockResolvedValue({
+        subscriptionId: BigInt(10),
+        status: 'active',
+        package: { includesPt: true },
+      })
+
+      const res = await service.getActiveConversationForMember(BigInt(100))
+
+      expect(res.eligibility).toBe('PT_NOT_SELECTED')
+      expect(res.conversation).toBeNull()
+      expect(res.primaryTrainer).toBeNull()
+    })
+
+    it('nen tra ve READY va tu dong khoi tao conversation khi member co goi PT va da co PT chinh', async () => {
       prisma.member.findUnique.mockResolvedValue({
         memberId: BigInt(1),
         primaryTrainerId: BigInt(20),
@@ -453,6 +499,11 @@ describe('ChatService', () => {
           specialty: 'Gym',
           user: { userId: BigInt(200), fullName: 'Coach B', avatarFileId: null },
         },
+      })
+      prisma.subscription.findFirst.mockResolvedValue({
+        subscriptionId: BigInt(10),
+        status: 'active',
+        package: { includesPt: true },
       })
       prisma.chatConversation.findUnique.mockResolvedValue({
         conversationId: BigInt(1),
@@ -469,6 +520,7 @@ describe('ChatService', () => {
 
       const res = await service.getActiveConversationForMember(BigInt(100))
 
+      expect(res.eligibility).toBe('READY')
       expect(res.conversation?.conversationId).toBe('1')
       expect(res.primaryTrainer?.fullName).toBe('Coach B')
       expect(res.primaryTrainer?.staffId).toBe('20')

@@ -7,6 +7,8 @@ import {
   UserCheck,
   ChevronRight,
   Sparkles,
+  CreditCard,
+  Users,
 } from 'lucide-react'
 import { format, parseISO, isValid } from 'date-fns'
 import { vi, ja } from 'date-fns/locale'
@@ -37,6 +39,7 @@ export default function MemberChatPage() {
   const isLoadingConversations = useChatStore((state) => state.isLoadingConversations)
   const isLoadingMessages = useChatStore((state) => state.isLoadingMessages)
   const isUploading = useChatStore((state) => state.isUploading)
+  const memberChatEligibility = useChatStore((state) => state.memberChatEligibility)
 
   const sendMessage = useChatStore((state) => state.sendMessage)
   const retrySendMessage = useChatStore((state) => state.retrySendMessage)
@@ -44,10 +47,12 @@ export default function MemberChatPage() {
   const deleteMessage = useChatStore((state) => state.deleteMessage)
   const sendTyping = useChatStore((state) => state.sendTyping)
   const loadMoreMessages = useChatStore((state) => state.loadMoreMessages)
+  const fetchConversations = useChatStore((state) => state.fetchConversations)
   const fetchActiveMemberConversation = useChatStore(
     (state) => state.fetchActiveMemberConversation
   )
 
+  const [isInitialLoading, setIsInitialLoading] = useState(true)
   const [isHistoryDrawerOpen, setIsHistoryDrawerOpen] = useState(false)
 
   // Cuộc trò chuyện với HLV chính hiện tại (status === 'active')
@@ -60,45 +65,35 @@ export default function MemberChatPage() {
     return conversations.filter((c) => c.status === 'archived')
   }, [conversations])
 
-  // Cuộc trò chuyện đang xem trên màn hình (có thể là active hoặc 1 trong các archived)
+  // Cuộc trò chuyện đang xem trên màn hình (active hoặc 1 trong các archived)
   const currentConversation = useMemo(() => {
     if (activeConversationId) {
-      return conversations.find((c) => c.conversationId === activeConversationId) || null
+      const found = conversations.find((c) => c.conversationId === activeConversationId)
+      if (found) return found
     }
-    return primaryConversation
+    return primaryConversation || null
   }, [conversations, activeConversationId, primaryConversation])
 
-  // Tự động load hoặc chọn active conversation khi vào trang
+  // Tải danh sách và tự động kết nối hội thoại active khi vào trang
   useEffect(() => {
-    if (conversations.length === 0) {
-      void fetchActiveMemberConversation()
-    } else if (!activeConversationId && primaryConversation) {
-      void setActiveConversation(primaryConversation.conversationId)
+    let isMounted = true
+    setIsInitialLoading(true)
+
+    Promise.all([
+      fetchConversations(),
+      fetchActiveMemberConversation(),
+    ]).finally(() => {
+      if (isMounted) {
+        setIsInitialLoading(false)
+      }
+    })
+
+    return () => {
+      isMounted = false
     }
-  }, [conversations.length, activeConversationId, primaryConversation, fetchActiveMemberConversation, setActiveConversation])
+  }, [fetchConversations, fetchActiveMemberConversation])
 
   const isViewingArchived = currentConversation?.status === 'archived'
-
-  // Xử lý khi hội viên chưa có HLV chính và chưa có bất kỳ cuộc trò chuyện nào
-  if (!isLoadingConversations && conversations.length === 0 && !primaryConversation) {
-    return (
-      <div className="flex h-[calc(100vh-140px)] w-full items-center justify-center p-4">
-        <div className="w-full max-w-lg rounded-2xl border border-white/10 bg-[var(--rogym-bg-card)] p-8 text-center shadow-2xl">
-          <EmptyState
-            icon={<Dumbbell size={40} className="text-[var(--rogym-teal)]" />}
-            title={t('noActiveTrainer', 'Bạn chưa có Huấn luyện viên chính')}
-            description={t(
-              'noActiveTrainerDesc',
-              'Vui lòng chọn hoặc đăng ký gói dịch vụ Huấn luyện viên cá nhân để bắt đầu trao đổi lịch tập và chế độ dinh dưỡng.'
-            )}
-            actionLabel={t('chooseTrainerNow', 'Chọn Huấn luyện viên ngay')}
-            onAction={() => navigate('/member/choose-trainer')}
-            size="lg"
-          />
-        </div>
-      </div>
-    )
-  }
 
   const activeMessages = currentConversation
     ? messagesByConversation[currentConversation.conversationId] || []
@@ -108,55 +103,261 @@ export default function MemberChatPage() {
     ? typingUsers[currentConversation.conversationId] || {}
     : {}
 
+  // =========================================================================
+  // RENDER HEADER
+  // =========================================================================
+  const renderHeader = () => {
+    if (isInitialLoading) {
+      return (
+        <div className="flex items-center gap-3">
+          <Skeleton className="h-11 w-11 rounded-full" />
+          <div className="space-y-1.5">
+            <Skeleton className="h-4 w-36" />
+            <Skeleton className="h-3 w-24" />
+          </div>
+        </div>
+      )
+    }
+
+    if (isViewingArchived && currentConversation) {
+      return (
+        <div className="flex items-center gap-3 min-w-0 flex-1">
+          <Avatar
+            src={currentConversation.participant?.avatarUrl}
+            name={currentConversation.participant?.fullName || t('trainer', 'Huấn luyện viên')}
+            size="md"
+            status="offline"
+            className="shrink-0"
+          />
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2 min-w-0">
+              <h2 className="text-sm sm:text-base font-bold text-white truncate">
+                {currentConversation.participant?.fullName || t('trainer', 'Huấn luyện viên')}
+              </h2>
+              <Badge tone="warning" size="xs" className="shrink-0">
+                {t('status.archived', 'Đã lưu trữ')}
+              </Badge>
+            </div>
+            <p className="text-xs text-[var(--rogym-text-secondary)] truncate">
+              {currentConversation.participant?.specialty || t('personalTrainer', 'Huấn luyện viên cá nhân')}
+            </p>
+          </div>
+        </div>
+      )
+    }
+
+    if (memberChatEligibility === 'READY' && currentConversation) {
+      return (
+        <div className="flex items-center gap-3 min-w-0 flex-1">
+          <Avatar
+            src={currentConversation.participant?.avatarUrl}
+            name={currentConversation.participant?.fullName || t('trainer', 'Huấn luyện viên')}
+            size="md"
+            status="online"
+            className="shrink-0"
+          />
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2 min-w-0">
+              <h2 className="text-sm sm:text-base font-bold text-white truncate">
+                {currentConversation.participant?.fullName || t('trainer', 'Huấn luyện viên')}
+              </h2>
+              <Badge tone="success" size="xs" className="shrink-0">
+                {t('primaryTrainerBadge', 'HLV chính')}
+              </Badge>
+            </div>
+            <p className="text-xs text-[var(--rogym-text-secondary)] truncate">
+              {currentConversation.participant?.specialty || t('personalTrainer', 'Huấn luyện viên cá nhân')}
+            </p>
+          </div>
+        </div>
+      )
+    }
+
+    // Default header cho các trạng thái chưa đủ điều kiện
+    return (
+      <div className="flex items-center gap-2">
+        <Dumbbell size={20} className="text-[var(--rogym-teal)] shrink-0" />
+        <h2 className="text-base font-bold text-white truncate">
+          {t('chatWithTrainer', 'Trao đổi với Huấn luyện viên')}
+        </h2>
+      </div>
+    )
+  }
+
+  // =========================================================================
+  // RENDER CONTENT BODY
+  // =========================================================================
+  const renderContentBody = () => {
+    if (isInitialLoading) {
+      return (
+        <div className="flex-1 p-6 space-y-4">
+          <div className="flex items-start gap-3">
+            <Skeleton className="h-9 w-9 rounded-full shrink-0" />
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-28" />
+              <Skeleton className="h-16 w-64 rounded-2xl" />
+            </div>
+          </div>
+          <div className="flex items-start justify-end gap-3">
+            <div className="space-y-2 flex flex-col items-end">
+              <Skeleton className="h-12 w-48 rounded-2xl" />
+            </div>
+          </div>
+          <div className="flex items-start gap-3">
+            <Skeleton className="h-9 w-9 rounded-full shrink-0" />
+            <div className="space-y-2">
+              <Skeleton className="h-20 w-72 rounded-2xl" />
+            </div>
+          </div>
+        </div>
+      )
+    }
+
+    // Nếu đang xem hội thoại lưu trữ cũ (chế độ chỉ đọc)
+    if (isViewingArchived && currentConversation) {
+      return (
+        <ChatWindow
+          conversation={currentConversation}
+          messages={activeMessages}
+          currentUserId={String(user?.userId || '')}
+          isLoading={isLoadingMessages}
+          hasMore={hasMoreByConversation[currentConversation.conversationId] || false}
+          typingUsers={activeTypingForRoom}
+          className="flex-1"
+          onLoadMore={() => loadMoreMessages(currentConversation.conversationId)}
+          onDeleteMessage={(msgId) =>
+            deleteMessage(currentConversation.conversationId, msgId)
+          }
+          onRetryMessage={(tempId) =>
+            retrySendMessage(currentConversation.conversationId, tempId)
+          }
+        />
+      )
+    }
+
+    // 1. Trạng thái chưa có gói tập hoạt động
+    if (memberChatEligibility === 'NO_ACTIVE_SUBSCRIPTION') {
+      return (
+        <div className="flex h-full items-center justify-center p-6">
+          <div className="w-full max-w-lg rounded-2xl border border-white/10 bg-black/20 p-8 text-center shadow-xl backdrop-blur-sm">
+            <EmptyState
+              icon={<CreditCard size={40} className="text-[var(--rogym-teal)]" />}
+              title={t('noActiveSubTitle', 'Bạn chưa có gói tập hoạt động')}
+              description={t(
+                'noActiveSubDesc',
+                'Vui lòng đăng ký gói tập để sử dụng dịch vụ và kết nối trao đổi với Huấn luyện viên cá nhân.'
+              )}
+              actionLabel={t('subscribeNow', 'Đăng ký gói tập ngay')}
+              onAction={() => navigate('/member/subscription/setup')}
+              size="lg"
+            />
+          </div>
+        </div>
+      )
+    }
+
+    // 2. Trạng thái gói tập không có PT
+    if (memberChatEligibility === 'NO_PT_PACKAGE') {
+      return (
+        <div className="flex h-full items-center justify-center p-6">
+          <div className="w-full max-w-lg rounded-2xl border border-white/10 bg-black/20 p-8 text-center shadow-xl backdrop-blur-sm">
+            <EmptyState
+              icon={<UserCheck size={40} className="text-[var(--rogym-teal)]" />}
+              title={t('noPtPackageTitle', 'Gói tập hiện tại không bao gồm Huấn luyện viên')}
+              description={t(
+                'noPtPackageDesc',
+                'Nâng cấp lên gói tập có Huấn luyện viên cá nhân (PT) để được tư vấn lộ trình, bài tập và trao đổi trực tiếp 1:1.'
+              )}
+              actionLabel={t('upgradePtPackage', 'Nâng cấp gói tập có PT')}
+              onAction={() => navigate('/member/subscription/setup')}
+              size="lg"
+            />
+          </div>
+        </div>
+      )
+    }
+
+    // 3. Trạng thái có gói PT nhưng chưa chọn PT
+    if (memberChatEligibility === 'PT_NOT_SELECTED') {
+      return (
+        <div className="flex h-full items-center justify-center p-6">
+          <div className="w-full max-w-lg rounded-2xl border border-white/10 bg-black/20 p-8 text-center shadow-xl backdrop-blur-sm">
+            <EmptyState
+              icon={<Users size={40} className="text-[var(--rogym-teal)]" />}
+              title={t('ptNotSelectedTitle', 'Bạn chưa chọn Huấn luyện viên cá nhân')}
+              description={t(
+                'ptNotSelectedDesc',
+                'Gói tập của bạn đã sẵn sàng hỗ trợ 1:1. Hãy chọn Huấn luyện viên phù hợp để bắt đầu lộ trình tập luyện!'
+              )}
+              actionLabel={t('selectTrainerNow', 'Chọn Huấn luyện viên ngay')}
+              onAction={() => navigate('/member/choose-trainer')}
+              size="lg"
+            />
+          </div>
+        </div>
+      )
+    }
+
+    // 4. Trạng thái đủ điều kiện READY: Đã có cuộc trò chuyện active
+    if (currentConversation) {
+      return (
+        <>
+          <ChatWindow
+            conversation={currentConversation}
+            messages={activeMessages}
+            currentUserId={String(user?.userId || '')}
+            isLoading={isLoadingMessages}
+            hasMore={hasMoreByConversation[currentConversation.conversationId] || false}
+            typingUsers={activeTypingForRoom}
+            className="flex-1"
+            onLoadMore={() => loadMoreMessages(currentConversation.conversationId)}
+            onDeleteMessage={(msgId) =>
+              deleteMessage(currentConversation.conversationId, msgId)
+            }
+            onRetryMessage={(tempId) =>
+              retrySendMessage(currentConversation.conversationId, tempId)
+            }
+          />
+
+          {currentConversation.status === 'active' && (
+            <div className="p-3 sm:p-4 border-t border-white/5 bg-[var(--rogym-bg-card)]">
+              <ChatInput
+                conversationId={currentConversation.conversationId}
+                isUploading={isUploading}
+                onSendMessage={(content) =>
+                  sendMessage(currentConversation.conversationId, content)
+                }
+                onSendImage={(file) =>
+                  sendImage(currentConversation.conversationId, file)
+                }
+                onTyping={(isTyping) =>
+                  sendTyping(currentConversation.conversationId, isTyping)
+                }
+              />
+            </div>
+          )}
+        </>
+      )
+    }
+
+    // Fallback nếu không khớp trạng thái nào
+    return (
+      <div className="flex h-full items-center justify-center p-6">
+        <EmptyState
+          icon={<Sparkles size={32} />}
+          title={t('readyToChatTitle', 'Sẵn sàng trao đổi')}
+          description={t('readyToChatDesc', 'Khung chat sẽ kết nối với Huấn luyện viên của bạn.')}
+          size="md"
+        />
+      </div>
+    )
+  }
+
   return (
     <div className="flex h-[calc(100vh-120px)] md:h-[calc(100vh-100px)] w-full flex-col overflow-hidden rounded-2xl border border-[var(--rogym-border-teal-dim)] bg-[var(--rogym-bg-card)] shadow-[var(--rogym-shadow-glass)]">
       {/* Header trang Chat */}
       <div className="flex items-center justify-between border-b border-white/10 px-4 py-3 sm:px-6 sm:py-3.5 bg-[var(--rogym-bg-card)]/90 backdrop-blur-md">
-        {isLoadingConversations && !currentConversation ? (
-          <div className="flex items-center gap-3">
-            <Skeleton className="h-11 w-11 rounded-full" />
-            <div className="space-y-1.5">
-              <Skeleton className="h-4 w-36" />
-              <Skeleton className="h-3 w-24" />
-            </div>
-          </div>
-        ) : currentConversation ? (
-          <div className="flex items-center gap-3 min-w-0 flex-1">
-            <Avatar
-              src={currentConversation.participant?.avatarUrl}
-              name={currentConversation.participant?.fullName || t('trainer', 'Huấn luyện viên')}
-              size="md"
-              status={isViewingArchived ? 'offline' : 'online'}
-              className="shrink-0"
-            />
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-2 min-w-0">
-                <h2 className="text-sm sm:text-base font-bold text-white truncate">
-                  {currentConversation.participant?.fullName || t('trainer', 'Huấn luyện viên')}
-                </h2>
-                {isViewingArchived ? (
-                  <Badge tone="warning" size="xs" className="shrink-0">
-                    {t('status.archived', 'Đã lưu trữ')}
-                  </Badge>
-                ) : (
-                  <Badge tone="success" size="xs" className="shrink-0">
-                    {t('primaryTrainerBadge', 'HLV chính')}
-                  </Badge>
-                )}
-              </div>
-              <p className="text-xs text-[var(--rogym-text-secondary)] truncate">
-                {currentConversation.participant?.specialty || t('personalTrainer', 'Huấn luyện viên cá nhân')}
-              </p>
-            </div>
-          </div>
-        ) : (
-          <div className="flex items-center gap-2">
-            <Dumbbell size={20} className="text-[var(--rogym-teal)] shrink-0" />
-            <h2 className="text-base font-bold text-white truncate">
-              {t('chatWithTrainer', 'Trao đổi với Huấn luyện viên')}
-            </h2>
-          </div>
-        )}
+        {renderHeader()}
 
         {/* Các nút hành động Header */}
         <div className="flex items-center gap-1 sm:gap-1.5 shrink-0 ml-2">
@@ -174,7 +375,7 @@ export default function MemberChatPage() {
             </Tooltip>
           )}
 
-          {/* Nút mở Lịch sử HLV cũ */}
+          {/* Nút mở Lịch sử HLV cũ (nếu có lịch sử lưu trữ) */}
           {archivedConversations.length > 0 && (
             <Tooltip content={`${t('previousTrainers', 'HLV trước đây')} (${archivedConversations.length})`}>
               <button
@@ -191,17 +392,19 @@ export default function MemberChatPage() {
             </Tooltip>
           )}
 
-          {/* Nút đổi PT */}
-          <Tooltip content={t('changeTrainer', 'Đổi HLV')}>
-            <button
-              type="button"
-              onClick={() => navigate('/member/choose-trainer')}
-              className="flex h-9 w-9 items-center justify-center rounded-full text-[var(--rogym-teal)] hover:text-emerald-400 hover:bg-white/10 active:scale-95 transition-all shrink-0"
-              aria-label={t('changeTrainer', 'Đổi HLV')}
-            >
-              <UserCheck size={18} />
-            </button>
-          </Tooltip>
+          {/* Nút đổi PT: Chỉ hiển thị khi đang ở trạng thái READY và không xem lưu trữ */}
+          {memberChatEligibility === 'READY' && !isViewingArchived && (
+            <Tooltip content={t('changeTrainer', 'Đổi HLV')}>
+              <button
+                type="button"
+                onClick={() => navigate('/member/choose-trainer')}
+                className="flex h-9 w-9 items-center justify-center rounded-full text-[var(--rogym-teal)] hover:text-emerald-400 hover:bg-white/10 active:scale-95 transition-all shrink-0"
+                aria-label={t('changeTrainer', 'Đổi HLV')}
+              >
+                <UserCheck size={18} />
+              </button>
+            </Tooltip>
+          )}
         </div>
       </div>
 
@@ -228,54 +431,7 @@ export default function MemberChatPage() {
 
       {/* Khung tin nhắn chính */}
       <div className="flex-1 overflow-hidden flex flex-col">
-        {currentConversation ? (
-          <>
-            <ChatWindow
-              conversation={currentConversation}
-              messages={activeMessages}
-              currentUserId={String(user?.userId || '')}
-              isLoading={isLoadingMessages}
-              hasMore={hasMoreByConversation[currentConversation.conversationId] || false}
-              typingUsers={activeTypingForRoom}
-              className="flex-1"
-              onLoadMore={() => loadMoreMessages(currentConversation.conversationId)}
-              onDeleteMessage={(msgId) =>
-                deleteMessage(currentConversation.conversationId, msgId)
-              }
-              onRetryMessage={(tempId) =>
-                retrySendMessage(currentConversation.conversationId, tempId)
-              }
-            />
-
-            {/* Ô nhập tin nhắn (chỉ hiển thị khi cuộc trò chuyện active) */}
-            {currentConversation.status === 'active' && (
-              <div className="p-3 sm:p-4 border-t border-white/5 bg-[var(--rogym-bg-card)]">
-                <ChatInput
-                  conversationId={currentConversation.conversationId}
-                  isUploading={isUploading}
-                  onSendMessage={(content) =>
-                    sendMessage(currentConversation.conversationId, content)
-                  }
-                  onSendImage={(file) =>
-                    sendImage(currentConversation.conversationId, file)
-                  }
-                  onTyping={(isTyping) =>
-                    sendTyping(currentConversation.conversationId, isTyping)
-                  }
-                />
-              </div>
-            )}
-          </>
-        ) : (
-          <div className="flex h-full items-center justify-center p-6">
-            <EmptyState
-              icon={<Sparkles size={32} />}
-              title={t('readyToChatTitle', 'Sẵn sàng trao đổi')}
-              description={t('readyToChatDesc', 'Khung chat sẽ kết nối với Huấn luyện viên của bạn.')}
-              size="md"
-            />
-          </div>
-        )}
+        {renderContentBody()}
       </div>
 
       {/* Drawer xem danh sách các HLV cũ trong quá khứ */}

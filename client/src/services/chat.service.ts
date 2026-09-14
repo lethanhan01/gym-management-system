@@ -11,6 +11,24 @@ import type {
   WsUserStopTypingPayload,
 } from '@/@types/chat'
 
+export type MemberChatEligibility =
+  | 'NO_ACTIVE_SUBSCRIPTION'
+  | 'NO_PT_PACKAGE'
+  | 'PT_NOT_SELECTED'
+  | 'READY'
+
+export interface ActiveMemberConversationResult {
+  eligibility: MemberChatEligibility
+  conversation: ConversationSummary | null
+  primaryTrainer?: {
+    staffId: string
+    userId: string
+    fullName: string
+    avatarUrl: string | null
+    specialty?: string | null
+  } | null
+}
+
 class ChatService {
   private socket: Socket | null = null
 
@@ -38,12 +56,13 @@ class ChatService {
   }
 
   /**
-   * Lấy cuộc trò chuyện đang hoạt động với PT chính của Hội viên
+   * Lấy cuộc trò chuyện đang hoạt động với PT chính của Hội viên kèm phân loại eligibility
    */
-  async getActiveConversation(): Promise<ConversationSummary | null> {
+  async getActiveConversation(): Promise<ActiveMemberConversationResult> {
     const res = await api.get<{
       success: boolean
       data: {
+        eligibility?: MemberChatEligibility
         conversation: (Omit<ConversationSummary, 'participant'> & { participant?: ConversationSummary['participant'] }) | null
         primaryTrainer?: {
           staffId: string
@@ -55,9 +74,17 @@ class ChatService {
       }
     }>('/chat/conversations/active')
 
+    const eligibility = res.data?.data?.eligibility ?? 'NO_ACTIVE_SUBSCRIPTION'
     const rawConv = res.data?.data?.conversation
     const primaryTrainer = res.data?.data?.primaryTrainer
-    if (!rawConv) return null
+
+    if (!rawConv) {
+      return {
+        eligibility,
+        conversation: null,
+        primaryTrainer: primaryTrainer ?? null,
+      }
+    }
 
     const participant =
       rawConv.participant ||
@@ -78,8 +105,12 @@ class ChatService {
           })
 
     return {
-      ...rawConv,
-      participant,
+      eligibility,
+      conversation: {
+        ...rawConv,
+        participant,
+      },
+      primaryTrainer: primaryTrainer ?? null,
     }
   }
 

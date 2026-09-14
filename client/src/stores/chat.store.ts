@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { toast } from 'sonner'
-import chatService from '@/services/chat.service'
+import chatService, { type MemberChatEligibility } from '@/services/chat.service'
 import { useAuthStore } from './authStore'
 import type {
   ChatMessage,
@@ -62,8 +62,10 @@ interface ChatStoreState {
   isLoadingConversations: boolean
   isLoadingMessages: boolean
   isUploading: boolean
+  memberChatEligibility: MemberChatEligibility | null
 
   // Actions
+  setMemberChatEligibility: (eligibility: MemberChatEligibility | null) => void
   initSocket: (token?: string) => void
   cleanupSocket: () => void
   setSoundEnabled: (enabled: boolean) => void
@@ -116,6 +118,11 @@ export const useChatStore = create<ChatStoreState>((set, get) => ({
   isLoadingConversations: false,
   isLoadingMessages: false,
   isUploading: false,
+  memberChatEligibility: null,
+
+  setMemberChatEligibility: (eligibility: MemberChatEligibility | null) => {
+    set({ memberChatEligibility: eligibility })
+  },
 
   setSoundEnabled: (enabled: boolean) => {
     if (typeof localStorage !== 'undefined') {
@@ -212,7 +219,9 @@ export const useChatStore = create<ChatStoreState>((set, get) => ({
    */
   fetchActiveMemberConversation: async () => {
     try {
-      const conv = await chatService.getActiveConversation()
+      const res = await chatService.getActiveConversation()
+      set({ memberChatEligibility: res.eligibility })
+      const conv = res.conversation
       if (conv) {
         set((state) => {
           const exists = state.conversations.some((c) => c.conversationId === conv.conversationId)
@@ -223,6 +232,7 @@ export const useChatStore = create<ChatStoreState>((set, get) => ({
             : [conv, ...state.conversations]
           return { conversations: updated }
         })
+        await get().setActiveConversation(conv.conversationId)
       }
       return conv
     } catch {
@@ -807,6 +817,7 @@ export const useChatStore = create<ChatStoreState>((set, get) => ({
       unreadTotal: 0,
       isFloatingOpen: false,
       floatingConversationId: null,
+      memberChatEligibility: null,
     })
   },
 }))

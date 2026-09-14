@@ -75,5 +75,14 @@
   "noSearchResultDesc": "「{{query}}」に一致する結果は見つかりませんでした",
   "noMessagesShort": "メッセージがありません",
   "managedStudent": "担当受講生",
-  "sender": "送信者"
+  "sender": "送信者",
+  "noActiveSubTitle": "有効なプランがありません",
+  "noActiveSubDesc": "サービスを利用してパーソナルトレーナーと相談を開始するには、プランの登録が必要です。",
+  "subscribeNow": "今すぐプランに登録",
+  "noPtPackageTitle": "現在のプランには専属トレーナーが含まれていません",
+  "noPtPackageDesc": "専属トレーナー（PT）付きプランにアップグレードすると、個別のトレーニングメニューや食事指導などの1対1サポートを受けられます。",
+  "upgradePtPackage": "PT付きプランにアップグレード",
+  "ptNotSelectedTitle": "専属トレーナーが選択されていません",
+  "ptNotSelectedDesc": "ご契約中のプランは1対1指導に対応しています。希望のトレーナーを選択してトレーニングを始めましょう！",
+  "selectTrainerNow": "今すぐトレーナーを選択"
 }

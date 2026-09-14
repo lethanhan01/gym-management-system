@@ -23,6 +23,30 @@ export interface ChatUploadedFile {
   path?: string
 }
 
+export type MemberChatEligibility =
+  | 'NO_ACTIVE_SUBSCRIPTION'
+  | 'NO_PT_PACKAGE'
+  | 'PT_NOT_SELECTED'
+  | 'READY'
+
+export interface ActiveMemberConversationResponse {
+  eligibility: MemberChatEligibility
+  conversation: ConversationSummaryDto | null
+  primaryTrainer: {
+    staffId: string
+    userId: string
+    fullName: string
+    avatarUrl: string | null
+    position?: string | null
+    specialty?: string | null
+  } | null
+}
+
+function todayVN(): Date {
+  const s = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' })
+  return new Date(s)
+}
+
 @Injectable()
 export class ChatService {
   constructor(private readonly prisma: PrismaService) {}
@@ -219,8 +243,11 @@ export class ChatService {
 
   /**
    * Lấy cuộc trò chuyện active hiện tại của Member với Huấn luyện viên chính.
+   * Phân loại điều kiện theo Subscription (4 trạng thái).
    */
-  async getActiveConversationForMember(userId: bigint) {
+  async getActiveConversationForMember(
+    userId: bigint
+  ): Promise<ActiveMemberConversationResponse> {
     const member = await this.prisma.member.findUnique({
       where: { userId },
       include: {
@@ -246,10 +273,45 @@ export class ChatService {
       })
     }
 
-    if (!member.primaryTrainerId || !member.primaryTrainer) {
-      return { conversation: null, primaryTrainer: null }
+    // 1. Kiểm tra Subscription đang hoạt động
+    const activeSubscription = await this.prisma.subscription.findFirst({
+      where: {
+        memberId: member.memberId,
+        status: 'active',
+        deletedAt: null,
+        endDate: { gte: todayVN() },
+      },
+      include: { package: true },
+      orderBy: { endDate: 'desc' },
+    })
+
+    if (!activeSubscription) {
+      return {
+        eligibility: 'NO_ACTIVE_SUBSCRIPTION',
+        conversation: null,
+        primaryTrainer: null,
+      }
     }
 
+    // 2. Kiểm tra gói tập có bao gồm PT hay không
+    if (!activeSubscription.package?.includesPt) {
+      return {
+        eligibility: 'NO_PT_PACKAGE',
+        conversation: null,
+        primaryTrainer: null,
+      }
+    }
+
+    // 3. Kiểm tra đã chọn PT chính hay chưa
+    if (!member.primaryTrainerId || !member.primaryTrainer) {
+      return {
+        eligibility: 'PT_NOT_SELECTED',
+        conversation: null,
+        primaryTrainer: null,
+      }
+    }
+
+    // 4. Đủ điều kiện (READY): Tự động khởi tạo / kích hoạt cuộc trò chuyện active
     const conversation = await this.getOrCreateActiveConversation(
       member.memberId,
       member.primaryTrainerId
@@ -265,10 +327,23 @@ export class ChatService {
       },
     })
 
+    const trainerParticipant = {
+      userId: member.primaryTrainer.user.userId.toString(),
+      fullName: member.primaryTrainer.user.fullName,
+      avatarUrl: member.primaryTrainer.user.avatarFileId
+        ? `/api/v1/files/${member.primaryTrainer.user.avatarFileId}`
+        : null,
+      role: 'trainer' as const,
+      staffId: member.primaryTrainer.staffId.toString(),
+      specialty: member.primaryTrainer.specialty,
+    }
+
     return {
+      eligibility: 'READY',
       conversation: {
         conversationId: conversation.conversationId.toString(),
         status: conversation.status,
+        participant: trainerParticipant,
         lastMessageContent: conversation.lastMessageContent,
         lastMessageAt: conversation.lastMessageAt ? conversation.lastMessageAt.toISOString() : null,
         unreadCount,

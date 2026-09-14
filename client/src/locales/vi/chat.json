@@ -75,5 +75,14 @@
   "noSearchResultDesc": "Không có kết quả nào phù hợp với từ khóa \"{{query}}\"",
   "noMessagesShort": "Chưa có tin nhắn",
   "managedStudent": "Hội viên phụ trách",
-  "sender": "Người gửi"
+  "sender": "Người gửi",
+  "noActiveSubTitle": "Bạn chưa có gói tập hoạt động",
+  "noActiveSubDesc": "Vui lòng đăng ký gói tập để sử dụng dịch vụ và kết nối trao đổi với Huấn luyện viên cá nhân.",
+  "subscribeNow": "Đăng ký gói tập ngay",
+  "noPtPackageTitle": "Gói tập hiện tại không bao gồm Huấn luyện viên",
+  "noPtPackageDesc": "Nâng cấp lên gói tập có Huấn luyện viên cá nhân (PT) để được tư vấn lộ trình, bài tập và trao đổi trực tiếp 1:1.",
+  "upgradePtPackage": "Nâng cấp gói tập có PT",
+  "ptNotSelectedTitle": "Bạn chưa chọn Huấn luyện viên cá nhân",
+  "ptNotSelectedDesc": "Gói tập của bạn đã sẵn sàng hỗ trợ 1:1. Hãy chọn Huấn luyện viên phù hợp để bắt đầu lộ trình tập luyện!",
+  "selectTrainerNow": "Chọn Huấn luyện viên ngay"
 }

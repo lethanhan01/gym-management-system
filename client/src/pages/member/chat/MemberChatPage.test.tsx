@@ -77,26 +77,31 @@ describe('MemberChatPage Component', () => {
       isLoadingConversations: false,
       isLoadingMessages: false,
       isUploading: false,
+      memberChatEligibility: 'READY',
+      fetchConversations: vi.fn().mockResolvedValue(undefined),
       fetchActiveMemberConversation: vi.fn().mockResolvedValue(mockActiveConversation),
     })
   })
 
-  it('renders active primary trainer chat interface', () => {
+  it('renders active primary trainer chat interface when READY', async () => {
     render(
       <MemoryRouter>
         <MemberChatPage />
       </MemoryRouter>
     )
 
-    expect(screen.getByText('HLV Trần Văn Nam')).toBeInTheDocument()
-    expect(screen.getByText('HLV chính')).toBeInTheDocument()
-    expect(screen.getByPlaceholderText(/nhập tin nhắn/i)).toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.getByText('HLV Trần Văn Nam')).toBeInTheDocument()
+      expect(screen.getByText('HLV chính')).toBeInTheDocument()
+      expect(screen.getByPlaceholderText(/nhập tin nhắn/i)).toBeInTheDocument()
+    })
   })
 
-  it('renders empty state when member has no trainer', () => {
+  it('renders empty state when member has NO_ACTIVE_SUBSCRIPTION', async () => {
     useChatStore.setState({
       conversations: [],
       activeConversationId: null,
+      memberChatEligibility: 'NO_ACTIVE_SUBSCRIPTION',
     })
 
     render(
@@ -105,7 +110,54 @@ describe('MemberChatPage Component', () => {
       </MemoryRouter>
     )
 
-    expect(screen.getByText(/bạn chưa có huấn luyện viên chính/i)).toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.getByText(/bạn chưa có gói tập hoạt động/i)).toBeInTheDocument()
+    })
+
+    const subscribeBtn = screen.getByRole('button', { name: /đăng ký gói tập ngay/i })
+    fireEvent.click(subscribeBtn)
+    expect(mockedNavigate).toHaveBeenCalledWith('/member/subscription/setup')
+  })
+
+  it('renders empty state when member has NO_PT_PACKAGE', async () => {
+    useChatStore.setState({
+      conversations: [],
+      activeConversationId: null,
+      memberChatEligibility: 'NO_PT_PACKAGE',
+    })
+
+    render(
+      <MemoryRouter>
+        <MemberChatPage />
+      </MemoryRouter>
+    )
+
+    await waitFor(() => {
+      expect(screen.getByText(/gói tập hiện tại không bao gồm huấn luyện viên/i)).toBeInTheDocument()
+    })
+
+    const upgradeBtn = screen.getByRole('button', { name: /nâng cấp gói tập có pt/i })
+    fireEvent.click(upgradeBtn)
+    expect(mockedNavigate).toHaveBeenCalledWith('/member/subscription/setup')
+  })
+
+  it('renders empty state when member has PT_NOT_SELECTED', async () => {
+    useChatStore.setState({
+      conversations: [],
+      activeConversationId: null,
+      memberChatEligibility: 'PT_NOT_SELECTED',
+    })
+
+    render(
+      <MemoryRouter>
+        <MemberChatPage />
+      </MemoryRouter>
+    )
+
+    await waitFor(() => {
+      expect(screen.getByText(/bạn chưa chọn huấn luyện viên cá nhân/i)).toBeInTheDocument()
+    })
+
     const chooseBtn = screen.getByRole('button', { name: /chọn huấn luyện viên ngay/i })
     fireEvent.click(chooseBtn)
     expect(mockedNavigate).toHaveBeenCalledWith('/member/choose-trainer')
@@ -117,6 +169,10 @@ describe('MemberChatPage Component', () => {
         <MemberChatPage />
       </MemoryRouter>
     )
+
+    await waitFor(() => {
+      expect(screen.getByText('HLV Trần Văn Nam')).toBeInTheDocument()
+    })
 
     const historyBtn = screen.getByRole('button', { name: /hlv trước đây/i })
     fireEvent.click(historyBtn)
@@ -136,12 +192,16 @@ describe('MemberChatPage Component', () => {
     })
   })
 
-  it('navigates to choose trainer page when "Đổi HLV" is clicked', () => {
+  it('navigates to choose trainer page when "Đổi HLV" is clicked', async () => {
     render(
       <MemoryRouter>
         <MemberChatPage />
       </MemoryRouter>
     )
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /đổi hlv/i })).toBeInTheDocument()
+    })
 
     const changePtBtn = screen.getByRole('button', { name: /đổi hlv/i })
     fireEvent.click(changePtBtn)
