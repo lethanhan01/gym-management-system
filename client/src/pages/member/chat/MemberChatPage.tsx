@@ -14,8 +14,8 @@ import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '@/stores/authStore'
 import { useChatStore } from '@/stores/chat.store'
 import { Avatar } from '@/components/ui/Avatar'
-import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
+import { Tooltip } from '@/components/ui/Tooltip'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/Sheet'
@@ -125,20 +125,21 @@ export default function MemberChatPage() {
             <Avatar
               src={currentConversation.participant?.avatarUrl}
               name={currentConversation.participant?.fullName || t('trainer', 'Huấn luyện viên')}
-              size="lg"
+              size="md"
               status={isViewingArchived ? 'offline' : 'online'}
+              className="shrink-0"
             />
             <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-2">
-                <h2 className="text-base sm:text-lg font-bold text-white truncate">
+              <div className="flex items-center gap-2 min-w-0">
+                <h2 className="text-sm sm:text-base font-bold text-white truncate">
                   {currentConversation.participant?.fullName || t('trainer', 'Huấn luyện viên')}
                 </h2>
                 {isViewingArchived ? (
-                  <Badge tone="warning" size="xs">
+                  <Badge tone="warning" size="xs" className="shrink-0">
                     {t('status.archived', 'Đã lưu trữ')}
                   </Badge>
                 ) : (
-                  <Badge tone="success" size="xs">
+                  <Badge tone="success" size="xs" className="shrink-0">
                     {t('primaryTrainerBadge', 'HLV chính')}
                   </Badge>
                 )}
@@ -150,49 +151,57 @@ export default function MemberChatPage() {
           </div>
         ) : (
           <div className="flex items-center gap-2">
-            <Dumbbell size={20} className="text-[var(--rogym-teal)]" />
-            <h2 className="text-base font-bold text-white">
+            <Dumbbell size={20} className="text-[var(--rogym-teal)] shrink-0" />
+            <h2 className="text-base font-bold text-white truncate">
               {t('chatWithTrainer', 'Trao đổi với Huấn luyện viên')}
             </h2>
           </div>
         )}
 
         {/* Các nút hành động Header */}
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-1 sm:gap-1.5 shrink-0 ml-2">
           {/* Nút quay lại HLV chính nếu đang xem hội thoại lưu trữ cũ */}
           {isViewingArchived && primaryConversation && (
-            <Button
-              variant="outline-green"
-              size="sm"
-              onClick={() => setActiveConversation(primaryConversation.conversationId)}
-              leftIcon={<RotateCcw size={14} />}
-            >
-              {t('backToPrimaryTrainer', 'Về HLV chính')}
-            </Button>
+            <Tooltip content={t('backToPrimaryTrainer', 'Về HLV chính')}>
+              <button
+                type="button"
+                onClick={() => setActiveConversation(primaryConversation.conversationId)}
+                className="flex h-9 w-9 items-center justify-center rounded-full text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10 active:scale-95 transition-all shrink-0"
+                aria-label={t('backToPrimaryTrainer', 'Về HLV chính')}
+              >
+                <RotateCcw size={18} />
+              </button>
+            </Tooltip>
           )}
 
           {/* Nút mở Lịch sử HLV cũ */}
           {archivedConversations.length > 0 && (
-            <Button
-              variant="outline-white"
-              size="sm"
-              onClick={() => setIsHistoryDrawerOpen(true)}
-              leftIcon={<History size={14} />}
-            >
-              {t('previousTrainers', 'HLV trước đây')} ({archivedConversations.length})
-            </Button>
+            <Tooltip content={`${t('previousTrainers', 'HLV trước đây')} (${archivedConversations.length})`}>
+              <button
+                type="button"
+                onClick={() => setIsHistoryDrawerOpen(true)}
+                className="relative flex h-9 w-9 items-center justify-center rounded-full text-[var(--rogym-text-secondary)] hover:text-white hover:bg-white/10 active:scale-95 transition-all shrink-0"
+                aria-label={`${t('previousTrainers', 'HLV trước đây')} (${archivedConversations.length})`}
+              >
+                <History size={18} />
+                <span className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--rogym-teal)] text-[9px] font-bold text-black px-1 shadow-sm">
+                  {archivedConversations.length}
+                </span>
+              </button>
+            </Tooltip>
           )}
 
           {/* Nút đổi PT */}
-          <Button
-            variant="text"
-            size="sm"
-            onClick={() => navigate('/member/choose-trainer')}
-            leftIcon={<UserCheck size={14} />}
-            className="text-[var(--rogym-teal)] hover:text-white"
-          >
-            {t('changeTrainer', 'Đổi HLV')}
-          </Button>
+          <Tooltip content={t('changeTrainer', 'Đổi HLV')}>
+            <button
+              type="button"
+              onClick={() => navigate('/member/choose-trainer')}
+              className="flex h-9 w-9 items-center justify-center rounded-full text-[var(--rogym-teal)] hover:text-emerald-400 hover:bg-white/10 active:scale-95 transition-all shrink-0"
+              aria-label={t('changeTrainer', 'Đổi HLV')}
+            >
+              <UserCheck size={18} />
+            </button>
+          </Tooltip>
         </div>
       </div>
 

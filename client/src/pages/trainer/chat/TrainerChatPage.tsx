@@ -13,8 +13,8 @@ import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '@/stores/authStore'
 import { useChatStore } from '@/stores/chat.store'
 import { Avatar } from '@/components/ui/Avatar'
-import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
+import { Tooltip } from '@/components/ui/Tooltip'
 import { SearchInput } from '@/components/ui/SearchInput'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { Skeleton } from '@/components/ui/Skeleton'
@@ -285,30 +285,32 @@ export default function TrainerChatPage() {
         {currentConversation ? (
           <>
             {/* Header khung chat học viên */}
-            <div className="flex items-center justify-between border-b border-white/5 px-4 py-3 sm:px-6 bg-[var(--rogym-bg-card)]/90 backdrop-blur-md">
+            <div className="flex items-center justify-between border-b border-white/5 px-4 py-3 sm:px-6 bg-[var(--rogym-bg-card)]/90 backdrop-blur-md gap-3">
               <div className="flex items-center gap-3 min-w-0 flex-1">
                 {/* Nút quay lại trên Mobile */}
-                <Button
-                  variant="icon"
-                  size="sm"
-                  onClick={() => setIsMobileChatOpen(false)}
-                  className="md:hidden h-8 w-8 text-[var(--rogym-text-secondary)] hover:text-white shrink-0"
-                  aria-label={t('studentList', 'Quay lại danh sách')}
-                >
-                  <ArrowLeft size={16} />
-                </Button>
+                <Tooltip content={t('studentList', 'Quay lại danh sách')}>
+                  <button
+                    type="button"
+                    onClick={() => setIsMobileChatOpen(false)}
+                    className="md:hidden flex h-8 w-8 items-center justify-center rounded-full text-[var(--rogym-text-secondary)] hover:text-white hover:bg-white/10 active:scale-95 transition-all shrink-0"
+                    aria-label={t('studentList', 'Quay lại danh sách')}
+                  >
+                    <ArrowLeft size={18} />
+                  </button>
+                </Tooltip>
 
                 <Avatar
                   src={currentConversation.participant.avatarUrl}
                   name={currentConversation.participant.fullName}
                   size="md"
+                  className="shrink-0"
                 />
                 <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2">
-                    <h3 className="text-base font-bold text-white truncate">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <h3 className="text-sm sm:text-base font-bold text-white truncate">
                       {currentConversation.participant.fullName}
                     </h3>
-                    <Badge tone="muted" size="xs">
+                    <Badge tone="muted" size="xs" className="shrink-0">
                       {t('student', 'Học viên')}
                     </Badge>
                   </div>
@@ -320,17 +322,18 @@ export default function TrainerChatPage() {
 
               {/* Nút xem chi tiết học viên */}
               {currentConversation.participant.memberId && (
-                <Button
-                  variant="text"
-                  size="sm"
-                  onClick={() =>
-                    navigate(`/trainer/students/${currentConversation.participant.memberId}`)
-                  }
-                  leftIcon={<ExternalLink size={14} />}
-                  className="text-[var(--rogym-teal)] hover:text-white shrink-0"
-                >
-                  {t('studentProfile', 'Hồ sơ học viên')}
-                </Button>
+                <Tooltip content={t('studentProfile', 'Hồ sơ học viên')} side="bottom">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      navigate(`/trainer/students/${currentConversation.participant.memberId}`)
+                    }
+                    className="flex h-9 w-9 items-center justify-center rounded-full text-[var(--rogym-teal)] hover:text-emerald-400 hover:bg-white/10 active:scale-95 transition-all shrink-0 ml-2"
+                    aria-label={t('studentProfile', 'Hồ sơ học viên')}
+                  >
+                    <ExternalLink size={18} />
+                  </button>
+                </Tooltip>
               )}
             </div>
 

@@ -2,7 +2,6 @@ import { lazy, Suspense, useState, useRef, useEffect, useCallback, type ChangeEv
 import { Image, Smile, Send, X, Loader2 } from 'lucide-react'
 import { Theme, type EmojiClickData } from 'emoji-picker-react'
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/Popover'
-import { Button } from '@/components/ui/Button'
 import { Tooltip } from '@/components/ui/Tooltip'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
@@ -208,8 +207,8 @@ export function ChatInput({
   return (
     <div
       className={cn(
-        'relative flex flex-col rounded-2xl border border-[var(--rogym-border-teal-dim)] bg-[var(--rogym-bg-card)] p-2 sm:p-2.5 transition-all shadow-lg',
-        disabled ? 'opacity-60 pointer-events-none' : 'focus-within:border-[var(--rogym-teal)]/50',
+        'relative flex flex-col rounded-2xl border border-white/10 bg-white/[0.04] p-1.5 sm:p-2 transition-all shadow-sm focus-within:border-[var(--rogym-teal)]/40 focus-within:bg-white/[0.06]',
+        disabled ? 'opacity-60 pointer-events-none' : '',
         className
       )}
     >
@@ -236,7 +235,7 @@ export function ChatInput({
         </div>
       )}
 
-      <div className="flex items-end gap-1.5 sm:gap-2">
+      <div className="flex items-end gap-1 sm:gap-1.5">
         {/* Nút đính kèm ảnh */}
         <input
           ref={fileInputRef}
@@ -247,38 +246,34 @@ export function ChatInput({
           disabled={disabled || isSending || isUploading}
         />
         <Tooltip content={t('uploadImage', 'Đính kèm hình ảnh')}>
-          <Button
+          <button
             type="button"
-            variant="icon"
-            size="sm"
-            className="h-9 w-9 sm:h-10 sm:w-10 shrink-0 p-0 text-[var(--rogym-text-secondary)] hover:text-white hover:bg-white/10 rounded-xl"
             onClick={() => fileInputRef.current?.click()}
             disabled={disabled || isSending || isUploading}
             aria-label={t('uploadImage', 'Đính kèm hình ảnh')}
+            className="flex h-9 w-9 items-center justify-center rounded-full text-[var(--rogym-text-secondary)] hover:text-white hover:bg-white/10 active:scale-95 transition-all shrink-0 disabled:opacity-40 disabled:pointer-events-none"
           >
-            <Image size={19} />
-          </Button>
+            <Image size={20} />
+          </button>
         </Tooltip>
 
         {/* Nút chọn Emoji */}
         <Popover open={isEmojiOpen} onOpenChange={setIsEmojiOpen}>
           <Tooltip content={t('emojiPicker', 'Biểu tượng cảm xúc')}>
             <PopoverTrigger asChild>
-              <Button
+              <button
                 type="button"
-                variant="icon"
-                size="sm"
+                disabled={disabled || isSending || isUploading}
+                aria-label={t('emojiPicker', 'Biểu tượng cảm xúc')}
                 className={cn(
-                  'h-9 w-9 sm:h-10 sm:w-10 shrink-0 p-0 rounded-xl transition-colors',
+                  'flex h-9 w-9 items-center justify-center rounded-full transition-all active:scale-95 shrink-0 disabled:opacity-40 disabled:pointer-events-none',
                   isEmojiOpen
                     ? 'text-[var(--rogym-teal)] bg-white/10'
                     : 'text-[var(--rogym-text-secondary)] hover:text-white hover:bg-white/10'
                 )}
-                disabled={disabled || isSending || isUploading}
-                aria-label={t('emojiPicker', 'Biểu tượng cảm xúc')}
               >
-                <Smile size={19} />
-              </Button>
+                <Smile size={20} />
+              </button>
             </PopoverTrigger>
           </Tooltip>
           <PopoverContent
@@ -321,23 +316,29 @@ export function ChatInput({
           }
           disabled={disabled || isSending || isUploading}
           rows={1}
-          className="flex-1 resize-none bg-transparent py-2 px-2 text-sm text-white placeholder:text-[var(--rogym-text-dim)] focus:outline-none min-h-[40px] h-[40px] max-h-[120px] leading-5"
+          className="flex-1 resize-none bg-transparent py-2 px-2.5 text-sm text-white placeholder:text-[var(--rogym-text-dim)] focus:outline-none min-h-[38px] h-[38px] max-h-[120px] leading-5"
         />
 
         {/* Nút gửi */}
         <Tooltip content={t('send', 'Gửi')}>
-          <Button
+          <button
             type="button"
-            variant="primary"
-            size="sm"
             onClick={() => handleSubmit()}
             disabled={!canSubmit}
-            loading={isSending || isUploading}
-            className="h-9 w-9 sm:h-10 sm:w-10 shrink-0 p-0 rounded-xl flex items-center justify-center"
             aria-label={t('send', 'Gửi')}
+            className={cn(
+              'flex h-9 w-9 items-center justify-center rounded-full transition-all shrink-0',
+              canSubmit
+                ? 'text-[var(--rogym-teal)] hover:text-emerald-400 hover:bg-[var(--rogym-teal)]/15 active:scale-95 cursor-pointer'
+                : 'text-white/25 cursor-not-allowed pointer-events-none'
+            )}
           >
-            {!isSending && !isUploading && <Send size={18} className="translate-x-[1px]" />}
-          </Button>
+            {isSending || isUploading ? (
+              <Loader2 className="h-5 w-5 animate-spin text-[var(--rogym-teal)]" />
+            ) : (
+              <Send size={19} className="translate-x-[0.5px]" />
+            )}
+          </button>
         </Tooltip>
       </div>
     </div>
