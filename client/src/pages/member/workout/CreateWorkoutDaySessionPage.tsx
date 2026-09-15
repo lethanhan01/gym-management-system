@@ -198,6 +198,7 @@ export default function CreateWorkoutDaySessionPage() {
       clearSessionRuntime(memberId, loaded.day, loaded.assignment, sessionId)
       runtimeRef.current = null
       setRuntime(null)
+      setStatus('completed')
       setCelebrationSeconds(5)
       setIsFocusModalOpen(true)
     } catch (caught) {
@@ -207,6 +208,29 @@ export default function CreateWorkoutDaySessionPage() {
       persistRuntime(failed)
     }
   }, [loaded, memberId, persistRuntime, sessionId, t])
+
+  useEffect(() => {
+    if (celebrationSeconds === null) return
+    if (celebrationSeconds <= 0) {
+      setIsFocusModalOpen(false)
+      setCelebrationSeconds(null)
+      return
+    }
+    const timer = window.setInterval(() => {
+      setCelebrationSeconds((prev) => {
+        if (prev === null || prev <= 1) {
+          window.clearInterval(timer)
+          setIsFocusModalOpen(false)
+          return null
+        }
+        return prev - 1
+      })
+    }, 1000)
+
+    return () => {
+      window.clearInterval(timer)
+    }
+  }, [celebrationSeconds])
 
   const handleTimelineComplete = useCallback((completedRuntime: SessionTimerRuntime) => {
     deadlineRef.current = null
@@ -282,6 +306,7 @@ export default function CreateWorkoutDaySessionPage() {
 
   const handleCloseFocusModal = useCallback(() => {
     setIsFocusModalOpen(false)
+    setCelebrationSeconds(null)
   }, [])
 
   const skipRest = useCallback(() => {

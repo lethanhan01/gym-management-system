@@ -20,6 +20,7 @@ export interface LoginResult {
     staffId?: string // ◄── Thêm trường này vào interface kết quả trả về
     memberId?: string // ◄── Thêm trường này vào interface kết quả trả về
     memberCode?: string
+    avatarUrl?: string | null
   }
 }
 
@@ -138,6 +139,10 @@ export class AuthService {
     })
 
     // 3. TRẢ VỀ RESPONSE: Trả thêm dữ liệu phẳng ra ngoài object user nếu client muốn dùng trực tiếp
+    const avatarUrl = user.avatarFileId
+      ? `/api/v1/files/${user.avatarFileId}`
+      : (user.avatarUrl ?? null)
+
     return {
       accessToken,
       user: {
@@ -148,6 +153,7 @@ export class AuthService {
         staffId: staff?.staffId ? staff.staffId.toString() : undefined,
         memberId: memberRecord?.memberId ? memberRecord.memberId.toString() : undefined,
         memberCode: memberRecord?.memberCode ?? undefined,
+        avatarUrl,
       },
     }
   }
@@ -196,7 +202,10 @@ export class AuthService {
     return this.lineOAuth.lineLogin(idToken, ctx)
   }
 
-  async linkLine(userId: bigint, idToken: string): Promise<{ lineName: string }> {
+  async linkLine(
+    userId: bigint,
+    idToken: string
+  ): Promise<{ lineName: string; avatarUrl?: string | null }> {
     return this.lineOAuth.linkLine(userId, idToken)
   }
 

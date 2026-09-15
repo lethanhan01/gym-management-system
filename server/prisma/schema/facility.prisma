@@ -7,6 +7,7 @@ model GymRoom {
   description      String?           @db.VarChar(255)
   equipment        Equipment[]
   trainingSessions TrainingSession[]
+  feedbacks        Feedback[]        @relation("FeedbackSubjectRoom")
 
   @@map("gym_rooms")
 }

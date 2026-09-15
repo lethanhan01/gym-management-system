@@ -181,5 +181,36 @@ describe('MemberProfilePage', () => {
       }))
     })
   })
+
+  it('renders LINE avatar image when member has avatarUrl', async () => {
+    const mockAvatar = 'https://profile.line-scdn.net/abcxyz123'
+    const mockData: MemberProfile = {
+      memberId: '10',
+      userId: '1',
+      fullName: 'Le Thanh An',
+      memberCode: 'MEM-2026-000009',
+      email: 'user@example.com',
+      phone: '0901234567',
+      dateOfBirth: null,
+      address: null,
+      primaryTrainerId: null,
+      trainerName: null,
+      avatarUrl: mockAvatar,
+      createdAt: '2026-01-01T00:00:00.000Z',
+    }
+    vi.mocked(memberService.getProfile).mockResolvedValue(mockData)
+
+    render(
+      <MemoryRouter>
+        <MemberProfilePage />
+      </MemoryRouter>
+    )
+
+    await waitFor(() => {
+      const avatarImg = screen.getByAltText('Le Thanh An')
+      expect(avatarImg).toBeInTheDocument()
+      expect(avatarImg).toHaveAttribute('src', mockAvatar)
+    })
+  })
 })
 

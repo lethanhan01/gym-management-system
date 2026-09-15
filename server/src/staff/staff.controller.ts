@@ -12,7 +12,13 @@ import {
   Post,
   UseGuards,
   Query,
+  UseInterceptors,
+  UploadedFile,
 } from '@nestjs/common'
+import { FileInterceptor } from '@nestjs/platform-express'
+import { diskStorage } from 'multer'
+import { extname, join } from 'path'
+import * as fs from 'fs'
 import { PermissionsGuard } from '../common/guards/permissions.guard'
 import { RequirePermission } from '../common/decorators/require-permission.decorator'
 import { DatabaseRetryable } from '../common/decorators/database-retryable.decorator'
@@ -21,6 +27,7 @@ import { AuthenticatedUser } from '../auth/types/jwt-payload.interface'
 import { StaffService, ListStaffQuery } from './staff.service'
 import { CreateStaffDto } from './dto/create-staff.dto'
 import { UpdateStaffDto } from './dto/update-staff.dto'
+import { UpdateMyProfileDto } from './dto/update-my-profile.dto'
 import { CreateScheduleDto } from './dto/create-schedule.dto'
 import { GetStaffAttendanceDto } from './dto/staff-attendance.dto'
 
@@ -42,6 +49,84 @@ export class StaffController {
     const data = await this.svc.get(user.staffId)
     return { success: true, data }
   }
+
+  @Patch('me')
+  async updateMe(
+    @Body() dto: UpdateMyProfileDto,
+    @CurrentUser() user: AuthenticatedUser
+  ) {
+    if (!user.staffId) {
+      throw new BadRequestException({
+        success: false,
+        code: 'STAFF_PROFILE_MISSING',
+        message: 'Tai khoan khong co staff profile',
+      })
+    }
+    const data = await this.svc.updateMyProfile(user.staffId, user.userId, dto)
+    return { success: true, data }
+  }
+
+  @Post('me/avatar')
+  @UseInterceptors(
+    FileInterceptor('avatar', {
+      storage: diskStorage({
+        destination: (_req, _file, cb) => {
+          const dir = join(process.cwd(), 'uploads', 'avatars')
+          if (!fs.existsSync(dir)) {
+            fs.mkdirSync(dir, { recursive: true })
+          }
+          cb(null, dir)
+        },
+        filename: (_req, file, cb) => {
+          const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9)
+          const ext = extname(file.originalname).toLowerCase()
+          cb(null, `avatar-${uniqueSuffix}${ext}`)
+        },
+      }),
+      limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
+      fileFilter: (_req, file, cb) => {
+        if (!file.mimetype.match(/\/(jpg|jpeg|png|webp)$/i)) {
+          return cb(
+            new BadRequestException({
+              success: false,
+              code: 'INVALID_FILE_TYPE',
+              message: 'Định dạng file không hợp lệ. Chỉ chấp nhận JPG, PNG, WebP',
+            }),
+            false
+          )
+        }
+        cb(null, true)
+      },
+    })
+  )
+  async uploadAvatar(
+    @UploadedFile() file: Express.Multer.File,
+    @CurrentUser() user: AuthenticatedUser
+  ) {
+    if (!user.staffId) {
+      throw new BadRequestException({
+        success: false,
+        code: 'STAFF_PROFILE_MISSING',
+        message: 'Tai khoan khong co staff profile',
+      })
+    }
+    const data = await this.svc.uploadAvatar(user.staffId, user.userId, file)
+    return { success: true, data }
+  }
+
+  @Delete('me/avatar')
+  async removeAvatar(@CurrentUser() user: AuthenticatedUser) {
+    if (!user.staffId) {
+      throw new BadRequestException({
+        success: false,
+        code: 'STAFF_PROFILE_MISSING',
+        message: 'Tai khoan khong co staff profile',
+      })
+    }
+    const data = await this.svc.removeAvatar(user.staffId, user.userId)
+    return { success: true, data }
+  }
+
 
   @Get()
   @RequirePermission('staff.read')

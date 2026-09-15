@@ -80,6 +80,10 @@ export class AuthController {
     if (!user) {
       throw new NotFoundException('Tài khoản không tồn tại')
     }
+    const avatarUrl = user.avatarFileId
+      ? `/api/v1/files/${user.avatarFileId}`
+      : (user.avatarUrl ?? null)
+
     return {
       success: true,
       data: {
@@ -93,6 +97,7 @@ export class AuthController {
         memberId: user.memberId?.toString() ?? null,
         memberCode: user.memberCode ?? null,
         lineLinked: !!user.lineId,
+        avatarUrl,
       },
     }
   }

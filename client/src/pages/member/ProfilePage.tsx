@@ -58,6 +58,7 @@ export default function MemberProfilePage() {
   const { t } = useTranslation('member')
   const navigate = useNavigate()
   const user = useAuthStore((state) => state.user)
+  const setUser = useAuthStore((state) => state.setUser)
   const clearAuth = useAuthStore((state) => state.clearAuth)
   const clearSubscription = useSubscriptionStore((state) => state.clear)
   const [profile, setProfile] = useState<MemberProfile | null>(null)
@@ -186,8 +187,15 @@ export default function MemberProfilePage() {
       }
       const idToken = liff.getIDToken()
       if (!idToken) throw new Error(t('profile.lineGetTokenFailed'))
-      await authService.linkLine(idToken)
+      const linkRes = await authService.linkLine(idToken)
       setLineLinked(true)
+      const newAvatar = linkRes.avatarUrl ?? null
+      if (newAvatar) {
+        if (user) setUser({ ...user, avatarUrl: newAvatar, lineLinked: true })
+        if (profile) setProfile({ ...profile, avatarUrl: newAvatar })
+      } else {
+        if (user) setUser({ ...user, lineLinked: true })
+      }
     } catch (err) {
       setLineError(getApiError(err, t('profile.lineLinkFailed')))
     } finally {
@@ -201,6 +209,8 @@ export default function MemberProfilePage() {
     try {
       await authService.unlinkLine()
       setLineLinked(false)
+      if (user) setUser({ ...user, avatarUrl: null, lineLinked: false })
+      if (profile) setProfile({ ...profile, avatarUrl: null })
     } catch (err) {
       setLineError(getApiError(err, t('profile.lineUnlinkFailed')))
     } finally {
@@ -219,6 +229,7 @@ export default function MemberProfilePage() {
   const isLineAccount = isSyntheticLineEmail(rawEmail)
   const displayName = profile?.fullName ?? user?.fullName ?? '--'
   const memberCodeText = profile?.memberCode ?? '--'
+  const memberAvatarSrc = profile?.avatarUrl ?? user?.avatarUrl ?? null
 
   return (
     <MemberPage className="space-y-6">
@@ -250,7 +261,16 @@ export default function MemberProfilePage() {
             <header className="mb-6 border-b border-white/5 pb-5">
               <CardHeader
                 responsive={false}
-                icon={<Avatar name={displayName} size="lg" shape="rounded" tone="teal" border />}
+                icon={
+                  <Avatar
+                    src={memberAvatarSrc}
+                    name={displayName}
+                    size="lg"
+                    shape="rounded"
+                    tone="teal"
+                    border
+                  />
+                }
                 actions={
                   !isEditing && (
                     <Button

@@ -7,6 +7,7 @@ const mockService = {
   getMember: jest.fn(),
   updateMember: jest.fn(),
   getAvailableTrainers: jest.fn(),
+  getTrainerReviews: jest.fn(),
   selfAssignTrainer: jest.fn(),
   recordSelfProgress: jest.fn(),
   createMember: jest.fn(),
@@ -76,6 +77,21 @@ describe('MembersController', () => {
       ;(mockService.getAvailableTrainers as jest.Mock).mockResolvedValue(serviceResult)
       const res = await ctrl.getAvailableTrainers()
       expect(mockService.getAvailableTrainers).toHaveBeenCalled()
+      expect(res).toEqual({ success: true, ...serviceResult })
+    })
+  })
+
+  describe('getTrainerReviews', () => {
+    it('delegates to getTrainerReviews and wraps success', async () => {
+      const serviceResult = { data: { trainer: { id: '5' }, reviews: [] } }
+      ;(mockService.getTrainerReviews as jest.Mock).mockResolvedValue(serviceResult)
+      const res = await ctrl.getTrainerReviews(5, '1', '5', '5', 'highest')
+      expect(mockService.getTrainerReviews).toHaveBeenCalledWith(5n, {
+        page: 1,
+        pageSize: 5,
+        rating: 5,
+        sort: 'highest',
+      })
       expect(res).toEqual({ success: true, ...serviceResult })
     })
   })

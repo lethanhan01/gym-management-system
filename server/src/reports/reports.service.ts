@@ -207,7 +207,7 @@ export class ReportsService {
             deletedAt: null,
             createdAt: { gte: range.start, lt: range.endExclusive },
           },
-          select: { subjectStaffId: true, severity: true },
+          select: { subjectStaffId: true, severity: true, rating: true },
         }),
       ])
 
@@ -225,11 +225,11 @@ export class ReportsService {
         attendanceMap.get(key)!.push({ checkIn: a.checkIn, checkOut: a.checkOut })
       }
 
-      const feedbackMap = new Map<string, { severity: string }[]>()
+      const feedbackMap = new Map<string, { severity: string; rating: number }[]>()
       for (const f of feedbackRows) {
         const key = (f.subjectStaffId as bigint).toString()
         if (!feedbackMap.has(key)) feedbackMap.set(key, [])
-        feedbackMap.get(key)!.push({ severity: f.severity })
+        feedbackMap.get(key)!.push({ severity: f.severity, rating: f.rating ?? 5 })
       }
 
       const rows = staff.map((s) => {
@@ -263,6 +263,14 @@ export class ReportsService {
                   100
               ) / 100
 
+        const totalRatings = feedback.length
+        const avgRating =
+          feedback.length === 0
+            ? null
+            : Math.round(
+                (feedback.reduce((sum, f) => sum + (f.rating ?? 5), 0) / feedback.length) * 10
+              ) / 10
+
         return {
           staffId: s.staffId.toString(),
           staffCode: s.staffCode,
@@ -270,6 +278,8 @@ export class ReportsService {
           position: s.position,
           shiftsWorked: schedules.length,
           avgFeedbackSeverityScore: avg,
+          avgRating,
+          totalRatings,
           performancePercent,
           actualMinutes,
           expectedMinutes,
@@ -403,7 +413,7 @@ export class ReportsService {
             deletedAt: null,
             createdAt: { gte: range.start, lt: range.endExclusive },
           },
-          select: { subjectStaffId: true, severity: true },
+          select: { subjectStaffId: true, severity: true, rating: true },
         }),
       ])
 
@@ -413,11 +423,11 @@ export class ReportsService {
           sessionCountMap.set(g.trainerStaffId as bigint, g._count._all)
         }
       }
-      const feedbackMap = new Map<string, { severity: string }[]>()
+      const feedbackMap = new Map<string, { severity: string; rating: number }[]>()
       for (const f of feedbackRows) {
         const key = (f.subjectStaffId as bigint).toString()
         if (!feedbackMap.has(key)) feedbackMap.set(key, [])
-        feedbackMap.get(key)!.push({ severity: f.severity })
+        feedbackMap.get(key)!.push({ severity: f.severity, rating: f.rating ?? 5 })
       }
 
       const rows = staff.map((s) => {
@@ -436,12 +446,22 @@ export class ReportsService {
                   100
               ) / 100
 
+        const totalRatings = feedback.length
+        const avgRating =
+          feedback.length === 0
+            ? null
+            : Math.round(
+                (feedback.reduce((sum, f) => sum + (f.rating ?? 5), 0) / feedback.length) * 10
+              ) / 10
+
         return {
           staffId: s.staffId.toString(),
           staffCode: s.staffCode,
           fullName: s.user.fullName,
           completedSessions,
           avgFeedbackSeverityScore: avg,
+          avgRating,
+          totalRatings,
         }
       })
 

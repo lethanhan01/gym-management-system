@@ -3,7 +3,12 @@ import { ConfigService } from '@nestjs/config'
 import { JwtService } from '@nestjs/jwt'
 import { UserStatus } from '@prisma/client'
 import { LineOAuthService } from './line-oauth.service'
-import { LINE_MOCK_ID_TOKEN, LINE_MOCK_USER_EMAIL, LINE_MOCK_USER_ID } from '../line-mock/constants'
+import {
+  LINE_MOCK_ID_TOKEN,
+  LINE_MOCK_USER_EMAIL,
+  LINE_MOCK_USER_ID,
+  LINE_MOCK_USER_PICTURE,
+} from '../line-mock/constants'
 import { PrismaService } from '../prisma/prisma.service'
 import { AuditService } from '../common/audit/audit.service'
 import { UsersService } from './users.service'
@@ -29,6 +34,8 @@ const user = {
   roles: ['member'],
   status: UserStatus.active,
   lineId: LINE_MOCK_USER_ID,
+  avatarUrl: LINE_MOCK_USER_PICTURE,
+  avatarFileId: null,
 }
 
 const prisma = {
@@ -157,7 +164,7 @@ describe('LineOAuthService LIFF Mock & JWKS Verification', () => {
 
     expect(prisma.user.update).toHaveBeenCalledWith({
       where: { userId: 1n },
-      data: { lineId: LINE_MOCK_USER_ID },
+      data: { lineId: LINE_MOCK_USER_ID, avatarUrl: LINE_MOCK_USER_PICTURE },
     })
     expect(prisma.user.create).not.toHaveBeenCalled()
     expect(audit.log).toHaveBeenCalledWith(
@@ -248,5 +255,40 @@ describe('LineOAuthService LIFF Mock & JWKS Verification', () => {
       response: expect.objectContaining({ code: 'ACCOUNT_DELETED' }),
     })
     expect(prisma.user.update).not.toHaveBeenCalled()
+  })
+
+  it('links LINE and saves avatarUrl to the user record', async () => {
+    users.findByLineIdWithRoles.mockResolvedValue(null)
+    users.findByLineIdIncludingDeleted.mockResolvedValue(null)
+
+    const res = await service.linkLine(1n, LINE_MOCK_ID_TOKEN)
+    expect(res).toEqual({
+      lineName: 'LIFF Mock Member',
+      avatarUrl: LINE_MOCK_USER_PICTURE,
+    })
+    expect(prisma.user.update).toHaveBeenCalledWith({
+      where: { userId: 1n },
+      data: { lineId: LINE_MOCK_USER_ID, avatarUrl: LINE_MOCK_USER_PICTURE },
+    })
+  })
+
+  it('unlinks LINE and resets lineId and avatarUrl to null', async () => {
+    await service.unlinkLine(1n)
+    expect(prisma.user.update).toHaveBeenCalledWith({
+      where: { userId: 1n },
+      data: { lineId: null, avatarUrl: null },
+    })
+  })
+
+  it('auto-syncs avatarUrl when user logs in and profile picture has changed', async () => {
+    const userWithOldAvatar = { ...user, avatarUrl: 'https://old.url/avatar.jpg' }
+    users.findByLineIdWithRoles.mockResolvedValue(userWithOldAvatar)
+
+    const res = await service.lineLogin(LINE_MOCK_ID_TOKEN)
+    expect(res.user.avatarUrl).toBe(LINE_MOCK_USER_PICTURE)
+    expect(prisma.user.update).toHaveBeenCalledWith({
+      where: { userId: 1n },
+      data: { avatarUrl: LINE_MOCK_USER_PICTURE },
+    })
   })
 })

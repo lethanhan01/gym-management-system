@@ -7,17 +7,22 @@ import {
   NotFoundException,
 } from '@nestjs/common'
 import bcrypt from 'bcryptjs'
-import { Prisma, UserStatus } from '@prisma/client'
+import { Prisma, UserStatus, FeedbackStatus } from '@prisma/client'
+
 import { AuthenticatedUser } from '../auth/types/jwt-payload.interface'
 import { AuditService } from '../common/audit/audit.service'
 import { normalizeEmail } from '../common/normalization'
 import { PrismaService } from '../prisma/prisma.service'
+import { join } from 'path'
+import * as fs from 'fs'
 import { CreateStaffDto } from './dto/create-staff.dto'
 import { UpdateStaffDto } from './dto/update-staff.dto'
+import { UpdateMyProfileDto } from './dto/update-my-profile.dto'
 import { CreateScheduleDto } from './dto/create-schedule.dto'
 import { GetStaffAttendanceDto } from './dto/staff-attendance.dto'
 import { StaffAttendanceService } from './staff-attendance.service'
 import { StaffScheduleService } from './staff-schedule.service'
+
 
 export interface ListStaffQuery {
   page?: number
@@ -181,7 +186,29 @@ export class StaffService {
         code: 'STAFF_NOT_FOUND',
         message: 'Staff khong ton tai',
       })
-    return this.serializeStaff(s, s.user)
+
+    let ratings: { ratingAverage: number | null; totalReviews: number } | undefined
+    if (s.position === 'trainer' || s.position === 'pt') {
+      const feedbacks = this.prisma.feedback?.findMany
+        ? await this.prisma.feedback.findMany({
+            where: {
+              subjectStaffId: s.staffId,
+              feedbackType: 'staff',
+              deletedAt: null,
+              status: { not: FeedbackStatus.rejected },
+            },
+            select: { rating: true },
+          })
+        : []
+      const totalReviews = feedbacks.length
+      const ratingAverage =
+        totalReviews > 0
+          ? Math.round((feedbacks.reduce((acc, cur) => acc + cur.rating, 0) / totalReviews) * 10) / 10
+          : null
+      ratings = { ratingAverage, totalReviews }
+    }
+
+    return this.serializeStaff(s, s.user, ratings)
   }
 
   async update(staffId: bigint, dto: UpdateStaffDto, actorUserId: bigint) {
@@ -217,6 +244,9 @@ export class StaffService {
         })
       staffUpdates.position = dto.position
     }
+    if (dto.specialty !== undefined) staffUpdates.specialty = dto.specialty
+    if (dto.experienceYears !== undefined) staffUpdates.experienceYears = dto.experienceYears
+    if (dto.bio !== undefined) staffUpdates.bio = dto.bio
 
     await this.prisma.$transaction(async (tx) => {
       if (Object.keys(userUpdates).length > 0)
@@ -235,6 +265,184 @@ export class StaffService {
     })
     return this.get(staffId)
   }
+
+  async updateMyProfile(staffId: bigint, userId: bigint, dto: UpdateMyProfileDto) {
+    const s = await this.prisma.staff.findFirst({
+      where: { staffId, deletedAt: null },
+      include: { user: true },
+    })
+    if (!s) {
+      throw new NotFoundException({
+        success: false,
+        code: 'STAFF_NOT_FOUND',
+        message: 'Staff profile không tồn tại',
+      })
+    }
+
+    const userUpdates: Prisma.UserUpdateInput = {}
+    const staffUpdates: Prisma.StaffUpdateInput = {}
+
+    if (dto.fullName !== undefined) {
+      const trimmed = dto.fullName.trim()
+      if (trimmed.length < 2 || trimmed.length > 200) {
+        throw new BadRequestException({
+          success: false,
+          code: 'VALIDATION_ERROR',
+          message: 'Họ và tên phải từ 2 đến 200 ký tự',
+        })
+      }
+      userUpdates.fullName = trimmed
+    }
+
+    if (dto.phone !== undefined) {
+      userUpdates.phone = dto.phone?.trim() || null
+    }
+
+    if (dto.specialty !== undefined) {
+      staffUpdates.specialty = dto.specialty?.trim() || null
+    }
+
+    if (dto.experienceYears !== undefined) {
+      staffUpdates.experienceYears = dto.experienceYears
+    }
+
+    if (dto.bio !== undefined) {
+      staffUpdates.bio = dto.bio?.trim() || null
+    }
+
+    await this.prisma.$transaction(async (tx) => {
+      if (Object.keys(userUpdates).length > 0) {
+        await tx.user.update({ where: { userId }, data: userUpdates })
+      }
+      if (Object.keys(staffUpdates).length > 0) {
+        await tx.staff.update({ where: { staffId }, data: staffUpdates })
+      }
+    })
+
+    this.audit.log({
+      actorUserId: userId,
+      action: 'staff.update_profile',
+      resourceType: 'staff',
+      resourceId: staffId.toString(),
+      beforeData: this.serializeStaff(s, s.user) as unknown as Record<string, unknown>,
+      afterData: dto as unknown as Record<string, unknown>,
+    })
+
+    return this.get(staffId)
+  }
+
+  async uploadAvatar(staffId: bigint, userId: bigint, file: Express.Multer.File) {
+    if (!file) {
+      throw new BadRequestException({
+        success: false,
+        code: 'FILE_REQUIRED',
+        message: 'Vui lòng chọn file hình ảnh',
+      })
+    }
+
+    const user = await this.prisma.user.findUnique({ where: { userId } })
+    if (!user) {
+      throw new NotFoundException({
+        success: false,
+        code: 'USER_NOT_FOUND',
+        message: 'Người dùng không tồn tại',
+      })
+    }
+
+    const storagePath = `uploads/avatars/${file.filename}`
+    const publicUrl = `/uploads/avatars/${file.filename}`
+
+    const createdFile = await this.prisma.file.create({
+      data: {
+        ownerUserId: userId,
+        fileType: 'avatar',
+        storagePath,
+        publicUrl,
+        mimeType: file.mimetype,
+        sizeBytes: BigInt(file.size),
+      },
+    })
+
+    const oldAvatarFileId = user.avatarFileId
+
+    await this.prisma.user.update({
+      where: { userId },
+      data: { avatarFileId: createdFile.fileId },
+    })
+
+    if (oldAvatarFileId) {
+      try {
+        const oldFile = await this.prisma.file.findUnique({ where: { fileId: oldAvatarFileId } })
+        if (oldFile) {
+          await this.prisma.file.delete({ where: { fileId: oldAvatarFileId } })
+          const oldPath = join(process.cwd(), oldFile.storagePath)
+          if (fs.existsSync(oldPath)) {
+            fs.unlinkSync(oldPath)
+          }
+        }
+      } catch {
+        // Ignored
+      }
+    }
+
+    this.audit.log({
+      actorUserId: userId,
+      action: 'user.upload_avatar',
+      resourceType: 'user',
+      resourceId: userId.toString(),
+      afterData: { avatarFileId: createdFile.fileId.toString() },
+    })
+
+    return {
+      avatarFileId: createdFile.fileId.toString(),
+      avatarUrl: `/api/v1/files/${createdFile.fileId}`,
+    }
+  }
+
+  async removeAvatar(staffId: bigint, userId: bigint) {
+    const user = await this.prisma.user.findUnique({ where: { userId } })
+    if (!user) {
+      throw new NotFoundException({
+        success: false,
+        code: 'USER_NOT_FOUND',
+        message: 'Người dùng không tồn tại',
+      })
+    }
+
+    const oldAvatarFileId = user.avatarFileId
+    if (!oldAvatarFileId) {
+      return { success: true }
+    }
+
+    await this.prisma.user.update({
+      where: { userId },
+      data: { avatarFileId: null },
+    })
+
+    try {
+      const oldFile = await this.prisma.file.findUnique({ where: { fileId: oldAvatarFileId } })
+      if (oldFile) {
+        await this.prisma.file.delete({ where: { fileId: oldAvatarFileId } })
+        const oldPath = join(process.cwd(), oldFile.storagePath)
+        if (fs.existsSync(oldPath)) {
+          fs.unlinkSync(oldPath)
+        }
+      }
+    } catch {
+      // Ignored
+    }
+
+    this.audit.log({
+      actorUserId: userId,
+      action: 'user.remove_avatar',
+      resourceType: 'user',
+      resourceId: userId.toString(),
+      beforeData: { avatarFileId: oldAvatarFileId.toString() },
+    })
+
+    return { success: true }
+  }
+
 
   async delete(staffId: bigint, actorUserId: bigint) {
     const s = await this.prisma.staff.findFirst({
@@ -361,10 +569,21 @@ export class StaffService {
       userId: bigint
       staffCode: string
       position: string
+      specialty?: string | null
+      experienceYears?: number | null
+      bio?: string | null
       deletedAt?: Date | null
     },
-    user: { fullName: string; email: string; phone?: string | null; status?: string }
+    user: {
+      fullName: string
+      email: string
+      phone?: string | null
+      status?: string
+      avatarFileId?: bigint | null
+    },
+    ratings?: { ratingAverage: number | null; totalReviews: number }
   ) {
+    const avatarFileId = user.avatarFileId ? user.avatarFileId.toString() : null
     return {
       staffId: s.staffId.toString(),
       userId: s.userId.toString(),
@@ -374,6 +593,13 @@ export class StaffService {
       email: user.email,
       phone: user.phone ?? null,
       status: s.deletedAt ? 'deleted' : user.status,
+      specialty: s.specialty ?? null,
+      experienceYears: s.experienceYears ?? null,
+      bio: s.bio ?? null,
+      avatarFileId,
+      avatarUrl: avatarFileId ? `/api/v1/files/${avatarFileId}` : null,
+      ratingAverage: ratings?.ratingAverage ?? null,
+      totalReviews: ratings?.totalReviews ?? 0,
       deletedAt: s.deletedAt ?? null,
     }
   }

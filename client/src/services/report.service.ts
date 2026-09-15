@@ -41,6 +41,8 @@ export interface StaffPerformanceItem {
   fullName: string
   completedSessions: number
   avgFeedbackSeverityScore: number | null
+  avgRating?: number | null
+  totalRatings?: number
 }
 
 export interface EmployeePerformanceItem {
@@ -50,6 +52,8 @@ export interface EmployeePerformanceItem {
   position: string
   shiftsWorked: number
   avgFeedbackSeverityScore: number | null
+  avgRating?: number | null
+  totalRatings?: number
   performancePercent: number
   actualMinutes: number
   expectedMinutes: number

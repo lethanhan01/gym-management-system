@@ -16,6 +16,7 @@ import {
   RotateCcw,
   Loader2,
   CheckCircle2,
+  MessageSquare,
 } from 'lucide-react'
 import { useAuthStore } from '@/stores/authStore'
 import { useSubscriptionStore } from '@/stores/subscriptionStore'
@@ -39,6 +40,7 @@ function useBottomNavItems(): { items: BottomNavItem[]; effectiveRole?: string }
   const controls = useWorkoutSessionControlStore((s) => s.controls)
   const { t: tCommon } = useTranslation('common')
   const { t: tMember } = useTranslation('member')
+  const { t: tChat } = useTranslation('chat')
   const role = user?.roles[0]
 
   // Owner có thể đang ở staff mode khi truy cập route /staff/*
@@ -74,6 +76,7 @@ function useBottomNavItems(): { items: BottomNavItem[]; effectiveRole?: string }
           label: tMember('workout.createSession.buttonSaving'),
           variant: 'center',
           disabled: true,
+          className: 'rogym-bottom-nav__item--workout-saving',
         }
       case 'save-error':
         return {
@@ -88,6 +91,7 @@ function useBottomNavItems(): { items: BottomNavItem[]; effectiveRole?: string }
           label: tCommon('status.completed'),
           variant: 'center',
           disabled: true,
+          className: 'rogym-bottom-nav__item--workout-completed',
         }
       case 'idle':
       default:
@@ -117,6 +121,7 @@ function useBottomNavItems(): { items: BottomNavItem[]; effectiveRole?: string }
     ],
     trainer: [
       { to: '/trainer', icon: <LayoutDashboard size={22} />, label: tCommon('nav.dashboard'), end: true },
+      { to: '/trainer/chat', icon: <MessageSquare size={22} />, label: tChat('title', 'Tin nhắn') },
       { to: '/trainer/students', icon: <Users size={22} />, label: tCommon('nav.students') },
       { to: '/trainer/sessions', icon: <CalendarDays size={22} />, label: tCommon('nav.sessions') },
       { to: '/trainer/profile', icon: <User size={22} />, label: tCommon('nav.profile') },
@@ -158,6 +163,7 @@ export default function BottomNav() {
             <button
               key={itemKey}
               type="button"
+              data-no-sweep
               onClick={item.onClick}
               disabled={item.disabled}
               aria-label={item.label}

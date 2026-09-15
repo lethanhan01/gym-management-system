@@ -197,6 +197,7 @@ const mockMailer = {
 const mockTrainerAssignmentService = {
   assignTrainer: jest.fn(),
   getAvailableTrainers: jest.fn(),
+  getTrainerReviews: jest.fn(),
   selfAssignTrainer: jest.fn(),
 }
 
@@ -535,6 +536,24 @@ describe('MembersService', () => {
       const result = await service.getAvailableTrainers()
 
       expect(mockTrainerAssignmentService.getAvailableTrainers).toHaveBeenCalled()
+      expect(result).toBe(expected)
+    })
+  })
+
+  describe('getTrainerReviews', () => {
+    it('delegates to trainerAssignmentService and returns its result', async () => {
+      const expected = {
+        data: {
+          trainer: { staffId: '1' },
+          stats: {},
+          reviews: [],
+        },
+      }
+      mockTrainerAssignmentService.getTrainerReviews.mockResolvedValue(expected)
+
+      const result = await service.getTrainerReviews(1n, { page: 1 })
+
+      expect(mockTrainerAssignmentService.getTrainerReviews).toHaveBeenCalledWith(1n, { page: 1 })
       expect(result).toBe(expected)
     })
   })

@@ -28,7 +28,8 @@ model File {
   deletedAt   DateTime? @map("deleted_at") @db.Timestamp(6)
   createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamp(6)
   owner       User      @relation("FileOwner", fields: [ownerUserId], references: [userId])
-  avatarOf    User[]    @relation("UserAvatar")
+  avatarOf     User[]        @relation("UserAvatar")
+  chatMessages ChatMessage[] @relation("ChatAttachmentFile")
 
   @@index([ownerUserId, fileType])
   @@map("files")
@@ -38,6 +39,7 @@ enum FileType {
   avatar
   document
   equipment_doc
+  chat_attachment
 
   @@map("file_type")
 }

@@ -1,0 +1,52 @@
+model ChatConversation {
+  conversationId     BigInt             @id @default(autoincrement()) @map("conversation_id")
+  memberId           BigInt             @map("member_id")
+  trainerStaffId     BigInt             @map("trainer_staff_id")
+  status             ConversationStatus @default(active)
+  lastMessageContent String?            @map("last_message_content") @db.VarChar(500)
+  lastMessageAt      DateTime?          @map("last_message_at") @db.Timestamp(6)
+  memberLastReadAt   DateTime?          @map("member_last_read_at") @db.Timestamp(6)
+  trainerLastReadAt  DateTime?          @map("trainer_last_read_at") @db.Timestamp(6)
+  createdAt          DateTime           @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt          DateTime           @updatedAt @map("updated_at") @db.Timestamp(6)
+
+  member             Member             @relation(fields: [memberId], references: [memberId])
+  trainer            Staff              @relation(fields: [trainerStaffId], references: [staffId])
+  messages           ChatMessage[]
+
+  @@unique([memberId, trainerStaffId])
+  @@index([memberId, status])
+  @@index([trainerStaffId, status])
+  @@map("chat_conversations")
+}
+
+model ChatMessage {
+  messageId        BigInt           @id @default(autoincrement()) @map("message_id")
+  conversationId   BigInt           @map("conversation_id")
+  senderUserId     BigInt           @map("sender_user_id")
+  messageType      MessageType      @default(text) @map("message_type")
+  content          String           @db.Text
+  attachmentFileId BigInt?          @map("attachment_file_id")
+  createdAt        DateTime         @default(now()) @map("created_at") @db.Timestamp(6)
+
+  conversation     ChatConversation @relation(fields: [conversationId], references: [conversationId], onDelete: Cascade)
+  senderUser       User             @relation(fields: [senderUserId], references: [userId])
+  attachmentFile   File?            @relation("ChatAttachmentFile", fields: [attachmentFileId], references: [fileId], onDelete: SetNull)
+
+  @@index([conversationId, createdAt(sort: Desc)])
+  @@map("chat_messages")
+}
+
+enum ConversationStatus {
+  active
+  archived
+
+  @@map("conversation_status")
+}
+
+enum MessageType {
+  text
+  image
+
+  @@map("chat_message_type")
+}

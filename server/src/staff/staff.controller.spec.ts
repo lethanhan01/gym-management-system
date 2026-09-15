@@ -17,6 +17,9 @@ const mockService = {
   attendanceCheckIn: jest.fn(),
   attendanceCheckOut: jest.fn(),
   getMyAttendance: jest.fn(),
+  updateMyProfile: jest.fn(),
+  uploadAvatar: jest.fn(),
+  removeAvatar: jest.fn(),
 } as unknown as StaffService
 
 const ctrl = new StaffController(mockService)
@@ -51,6 +54,56 @@ describe('StaffController', () => {
       expect(mockService.get).not.toHaveBeenCalled()
     })
   })
+
+  describe('updateMe', () => {
+    it('delegates to updateMyProfile with user.staffId and user.userId', async () => {
+      const dto = { fullName: 'Updated Coach', specialty: 'Yoga' }
+      const updated = { staffId: '3', fullName: 'Updated Coach' }
+      ;(mockService.updateMyProfile as jest.Mock).mockResolvedValue(updated)
+
+      const res = await ctrl.updateMe(dto, staffUser)
+      expect(mockService.updateMyProfile).toHaveBeenCalledWith(staffUser.staffId, staffUser.userId, dto)
+      expect(res).toEqual({ success: true, data: updated })
+    })
+
+    it('throws BadRequestException when user has no staffId', async () => {
+      await expect(ctrl.updateMe({}, ownerUser)).rejects.toBeInstanceOf(BadRequestException)
+      expect(mockService.updateMyProfile).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('uploadAvatar', () => {
+    it('delegates to uploadAvatar with user.staffId and user.userId', async () => {
+      const mockFile = { filename: 'test.jpg' } as any
+      const result = { avatarFileId: '10', avatarUrl: '/api/v1/files/10' }
+      ;(mockService.uploadAvatar as jest.Mock).mockResolvedValue(result)
+
+      const res = await ctrl.uploadAvatar(mockFile, staffUser)
+      expect(mockService.uploadAvatar).toHaveBeenCalledWith(staffUser.staffId, staffUser.userId, mockFile)
+      expect(res).toEqual({ success: true, data: result })
+    })
+
+    it('throws BadRequestException when user has no staffId', async () => {
+      await expect(ctrl.uploadAvatar({} as any, ownerUser)).rejects.toBeInstanceOf(BadRequestException)
+      expect(mockService.uploadAvatar).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('removeAvatar', () => {
+    it('delegates to removeAvatar with user.staffId and user.userId', async () => {
+      (mockService.removeAvatar as jest.Mock).mockResolvedValue({ success: true })
+
+      const res = await ctrl.removeAvatar(staffUser)
+      expect(mockService.removeAvatar).toHaveBeenCalledWith(staffUser.staffId, staffUser.userId)
+      expect(res).toEqual({ success: true, data: { success: true } })
+    })
+
+    it('throws BadRequestException when user has no staffId', async () => {
+      await expect(ctrl.removeAvatar(ownerUser)).rejects.toBeInstanceOf(BadRequestException)
+      expect(mockService.removeAvatar).not.toHaveBeenCalled()
+    })
+  })
+
 
   describe('list', () => {
     it('delegates to list and wraps success', async () => {

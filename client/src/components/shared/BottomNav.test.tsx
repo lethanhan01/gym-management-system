@@ -146,4 +146,21 @@ describe('BottomNav component', () => {
     renderBottomNav('/member/workout/create-session/day/5')
     expect(screen.getByRole('button', { name: 'セッション停止' })).toBeInTheDocument()
   })
+
+  it('renders completed button with data-no-sweep and workout-completed class', () => {
+    useWorkoutSessionControlStore.getState().setControls({
+      status: 'completed',
+      startTimer: vi.fn(),
+      pauseTimer: vi.fn(),
+      resumeTimer: vi.fn(),
+      retrySave: vi.fn(),
+    })
+
+    renderBottomNav('/member/workout/create-session/day/5')
+    const completedBtn = screen.getByRole('button', { name: /Hoàn thành/i })
+    expect(completedBtn).toBeInTheDocument()
+    expect(completedBtn).toBeDisabled()
+    expect(completedBtn).toHaveAttribute('data-no-sweep')
+    expect(completedBtn).toHaveClass('rogym-bottom-nav__item--workout-completed')
+  })
 })

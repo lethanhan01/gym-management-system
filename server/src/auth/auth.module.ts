@@ -48,6 +48,7 @@ import { JwtStrategy } from './strategies/jwt.strategy'
     { provide: APP_GUARD, useClass: RolesGuard },
   ],
   // Shared authentication utilities consumed by feature modules.
-  exports: [OtpService, MailerService],
+  exports: [OtpService, MailerService, UsersService, JwtModule],
 })
 export class AuthModule {}
+

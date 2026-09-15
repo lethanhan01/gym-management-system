@@ -19,6 +19,7 @@ model Member {
   trainingSessions    TrainingSession[]
   workoutLogs         WorkoutLog[]
   createdWorkoutPlans WorkoutPlan[]       @relation("MemberCreatedPlans")
+  chatConversations   ChatConversation[]
 
   @@index([createdAt(sort: Desc)])
   @@map("members")

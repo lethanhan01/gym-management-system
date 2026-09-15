@@ -1,4 +1,4 @@
-import { IsISO8601, IsNotEmpty, IsOptional, IsString } from 'class-validator'
+import { IsISO8601, IsNotEmpty, IsString } from 'class-validator'
 
 export class CreateMemberBookingDto {
   @IsISO8601()
@@ -9,11 +9,12 @@ export class CreateMemberBookingDto {
   @IsNotEmpty()
   endTime!: string
 
-  @IsOptional()
+  @IsNotEmpty({ message: 'assignmentId khong duoc de trong' })
   @IsString()
-  assignmentId?: string
+  assignmentId!: string
 
-  @IsOptional()
+  @IsNotEmpty({ message: 'planDayId khong duoc de trong' })
   @IsString()
-  planDayId?: string
+  planDayId!: string
 }
+

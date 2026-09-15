@@ -173,10 +173,17 @@ function PerformancePieCard({
         </p>
       </div>
 
-      <OwnerBadge
-        label={scoreLabel(emp.avgFeedbackSeverityScore)}
-        color={scoreColor(emp.avgFeedbackSeverityScore)}
-      />
+      {emp.avgRating != null ? (
+        <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-400/10 border border-amber-400/20 text-xs font-semibold text-amber-400">
+          <span>⭐ {emp.avgRating}/5</span>
+          <span className="text-[10px] text-slate-400 font-normal">({emp.totalRatings ?? 0} lượt)</span>
+        </div>
+      ) : (
+        <OwnerBadge
+          label={scoreLabel(emp.avgFeedbackSeverityScore)}
+          color={scoreColor(emp.avgFeedbackSeverityScore)}
+        />
+      )}
 
       <button
         className="rogym-btn rogym-btn--secondary w-full text-xs"

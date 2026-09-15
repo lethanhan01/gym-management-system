@@ -591,20 +591,50 @@
   "profile": {
     "title": "トレーナープロフィール",
     "eyebrow": "アカウント",
-    "description": "あなたの人事情報と勤務スケジュールです。",
+    "description": "RoGymでの個人情報、専門スキル、ブランディングを管理します。",
+    "avatar": {
+      "change": "新しい写真をアップロード",
+      "remove": "写真を削除",
+      "uploading": "アップロード中...",
+      "hint": "JPG、PNG、またはWebP形式。最大5MB。",
+      "removeConfirmTitle": "アバターの削除",
+      "removeConfirmDesc": "アバター画像を削除してデフォルトのアバターに戻しますか？",
+      "removeSuccess": "アバター画像を削除しました。",
+      "uploadSuccess": "アバター画像を更新しました。"
+    },
     "personalInfo": {
       "title": "個人情報",
       "fullName": "氏名",
       "staffCode": "スタッフコード",
-      "email": "メール",
+      "email": "メールアドレス",
       "phone": "電話番号",
       "position": "役職",
       "noPhone": "未登録"
     },
+    "professionalInfo": {
+      "title": "専門能力",
+      "specialty": "主な専門分野",
+      "specialtyPlaceholder": "例: HIIT＆脂肪燃焼、ヨガ、筋力向上...",
+      "specialtySuggestions": "人気の専門分野:",
+      "experienceYears": "指導経験年数",
+      "experienceYearsPlaceholder": "例: 3",
+      "years": "年",
+      "bio": "自己紹介・指導理念",
+      "bioPlaceholder": "受講生へのメッセージ、指導方針や経験について記入してください...",
+      "noBio": "自己紹介はまだ登録されていません。",
+      "noSpecialty": "専門分野未設定"
+    },
+    "preview": {
+      "title": "会員向けプレビューカード",
+      "badge": "公開表示",
+      "description": "会員がトレーナー一覧を閲覧する際に表示されるカードのプレビューです。",
+      "reviewsCount": "{{count}} 件のレビュー",
+      "newBadge": "新規"
+    },
     "actions": {
-      "edit": "編集",
+      "edit": "プロフィールを編集",
       "cancel": "キャンセル",
-      "save": "保存",
+      "save": "変更を保存",
       "logout": "ログアウト"
     },
     "changePassword": {
@@ -615,10 +645,18 @@
       "submit": "パスワードを更新",
       "success": "パスワードが正常に変更されました。"
     },
+    "success": {
+      "saved": "プロフィールを更新しました。"
+    },
     "error": {
       "loadFailed": "トレーナープロフィールを読み込めませんでした。",
       "saveFailed": "保存に失敗しました。",
       "nameRequired": "氏名は必須です。",
+      "nameInvalid": "氏名は2〜200文字で入力してください。",
+      "experienceInvalid": "指導経験年数は0〜50の範囲で入力してください。",
+      "bioTooLong": "自己紹介は1,000文字以内で入力してください。",
+      "avatarSize": "画像ファイルサイズは5MB以下にしてください。",
+      "avatarFormat": "JPG、PNG、またはWebP形式の画像ファイルのみ受け付けています。",
       "passwordMismatch": "確認用パスワードが一致しません。",
       "passwordTooShort": "新しいパスワードは8文字以上必要です。",
       "changePasswordFailed": "パスワードを変更できませんでした。"

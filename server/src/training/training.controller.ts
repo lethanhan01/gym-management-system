@@ -85,6 +85,20 @@ export class TrainingController {
     return { success: true, ...result }
   }
 
+  @Get('training-sessions/member-booking/plan-days')
+  @DatabaseRetryable()
+  @RequirePermission('session.book')
+  async getMemberBookingPlanDays(@CurrentUser() user: AuthenticatedUser) {
+    const result = await this.bookings.getActivePlanForBooking({
+      userId: user.userId,
+      roles: user.roles,
+      staffId: user.staffId,
+      memberId: user.memberId,
+    })
+    return { success: true, data: result }
+  }
+
+
   @Get('training-sessions/trainer-availability-for-trainer')
   @DatabaseRetryable()
   @RequirePermission('session.manage')

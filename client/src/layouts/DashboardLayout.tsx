@@ -14,6 +14,8 @@ import {
 } from '@/stores/subscriptionStore'
 import { authService } from '@/services/auth.service'
 import { useSubscriptionExpiry } from '@/hooks/useSubscriptionExpiry'
+import { useChatNotifications } from '@/hooks/useChatNotifications'
+import { FloatingChatWidget } from '@/components/chat/FloatingChatWidget'
 
 const MEMBER_SUBSCRIPTION_SETUP_PATH = '/member/subscription/setup'
 const EXPIRED_MEMBER_ALLOWED_PATHS = new Set([
@@ -109,6 +111,8 @@ export default function DashboardLayout() {
     }, 3000)
   })
 
+  useChatNotifications()
+
   useEffect(
     () => () => {
       if (toastTimerRef.current) clearTimeout(toastTimerRef.current)
@@ -166,6 +170,7 @@ export default function DashboardLayout() {
         </main>
       </div>
       <BottomNav />
+      <FloatingChatWidget />
     </div>
   )
 }

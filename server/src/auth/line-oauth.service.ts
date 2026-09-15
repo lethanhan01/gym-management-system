@@ -19,6 +19,7 @@ import {
   LINE_MOCK_USER_EMAIL,
   LINE_MOCK_USER_ID,
   LINE_MOCK_USER_NAME,
+  LINE_MOCK_USER_PICTURE,
 } from '../line-mock/constants'
 import { createRemoteJWKSet, jwtVerify, type JWTPayload } from 'jose'
 
@@ -96,6 +97,16 @@ export class LineOAuthService {
     // 3. Tao moi neu chua co tai khoan
     if (!user) {
       user = await this.createMemberFromLine(profile, ctx)
+    } else {
+      // Auto-sync avatar from LINE if changed or removed
+      const targetAvatarUrl = profile.picture ?? null
+      if (user.avatarUrl !== targetAvatarUrl) {
+        await this.prisma.user.update({
+          where: { userId: user.userId },
+          data: { avatarUrl: targetAvatarUrl },
+        })
+        user.avatarUrl = targetAvatarUrl
+      }
     }
 
     // 4. LINE login chi danh cho member
@@ -158,6 +169,10 @@ export class LineOAuthService {
       userAgent: ctx.userAgent,
     })
 
+    const resolvedAvatarUrl = user.avatarFileId
+      ? `/api/v1/files/${user.avatarFileId}`
+      : (user.avatarUrl ?? null)
+
     return {
       accessToken,
       user: {
@@ -168,11 +183,15 @@ export class LineOAuthService {
         staffId: staff?.staffId ? staff.staffId.toString() : undefined,
         memberId: memberRecord?.memberId ? memberRecord.memberId.toString() : undefined,
         memberCode: memberRecord?.memberCode ?? undefined,
+        avatarUrl: resolvedAvatarUrl,
       },
     }
   }
 
-  async linkLine(userId: bigint, idToken: string): Promise<{ lineName: string }> {
+  async linkLine(
+    userId: bigint,
+    idToken: string
+  ): Promise<{ lineName: string; avatarUrl?: string | null }> {
     const profile = await this.verifyLineToken(idToken)
 
     const existing = await this.users.findByLineIdWithRoles(profile.sub)
@@ -185,10 +204,12 @@ export class LineOAuthService {
       if (includingDeleted && includingDeleted.userId !== userId) throw this.lineAlreadyLinked()
     }
 
+    const targetAvatarUrl = profile.picture ?? null
+
     try {
       await this.prisma.user.update({
         where: { userId },
-        data: { lineId: profile.sub },
+        data: { lineId: profile.sub, avatarUrl: targetAvatarUrl },
       })
     } catch (err) {
       if (!this.hasUniqueTarget(err, 'line')) throw err
@@ -200,13 +221,13 @@ export class LineOAuthService {
     }
 
     this.logger.log(`User ${userId} linked LINE account: ${profile.sub}`)
-    return { lineName: profile.name }
+    return { lineName: profile.name, avatarUrl: targetAvatarUrl }
   }
 
   async unlinkLine(userId: bigint): Promise<void> {
     await this.prisma.user.update({
       where: { userId },
-      data: { lineId: null },
+      data: { lineId: null, avatarUrl: null },
     })
     this.logger.log(`User ${userId} unlinked LINE account`)
   }
@@ -224,6 +245,7 @@ export class LineOAuthService {
         sub: LINE_MOCK_USER_ID,
         name: LINE_MOCK_USER_NAME,
         email: LINE_MOCK_USER_EMAIL,
+        picture: LINE_MOCK_USER_PICTURE,
       }
     }
 
@@ -325,6 +347,7 @@ export class LineOAuthService {
             fullName: profile.name,
             passwordHash: null,
             lineId: profile.sub,
+            avatarUrl: profile.picture ?? null,
             status: UserStatus.active,
             emailVerifiedAt: new Date(),
           },
@@ -345,10 +368,11 @@ export class LineOAuthService {
     profile: LineProfile,
     ctx: RequestContext
   ): Promise<UserWithRoles> {
+    const targetAvatarUrl = profile.picture ?? user.avatarUrl ?? null
     try {
       await this.prisma.user.update({
         where: { userId: user.userId },
-        data: { lineId: profile.sub },
+        data: { lineId: profile.sub, avatarUrl: targetAvatarUrl },
       })
     } catch (err) {
       if (!this.hasUniqueTarget(err, 'line')) throw err
@@ -368,7 +392,7 @@ export class LineOAuthService {
       ipAddress: ctx.ip,
       userAgent: ctx.userAgent,
     })
-    return { ...user, lineId: profile.sub }
+    return { ...user, lineId: profile.sub, avatarUrl: targetAvatarUrl }
   }
 
   private async resolveCreateConflict(
