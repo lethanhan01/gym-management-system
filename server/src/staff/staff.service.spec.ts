@@ -125,8 +125,15 @@ let tx: ReturnType<typeof makeTx>
 const mockPrisma = {
   user: {
     findFirst: jest.fn(),
+    findUnique: jest.fn(),
     update: jest.fn(),
   },
+  file: {
+    create: jest.fn(),
+    findUnique: jest.fn(),
+    delete: jest.fn(),
+  },
+
   staff: {
     findFirst: jest.fn(),
     findMany: jest.fn(),
@@ -146,8 +153,12 @@ const mockPrisma = {
     findMany: jest.fn(),
     count: jest.fn(),
   },
+  feedback: {
+    findMany: jest.fn().mockResolvedValue([]),
+  },
   $transaction: jest.fn(),
 }
+
 
 const mockAudit = {
   log: jest.fn(),
@@ -554,4 +565,117 @@ describe('StaffService', () => {
       expect(result).toBe(expected)
     })
   })
+
+  // -------------------------------------------------------------------------
+  // updateMyProfile
+  // -------------------------------------------------------------------------
+  describe('updateMyProfile', () => {
+    it('throws NotFoundException when staff not found', async () => {
+      mockPrisma.staff.findFirst.mockResolvedValue(null)
+      await expect(service.updateMyProfile(99n, 1n, {})).rejects.toThrow('Staff profile không tồn tại')
+    })
+
+    it('throws BadRequestException when fullName is invalid', async () => {
+      mockPrisma.staff.findFirst.mockResolvedValue({ staffId: 3n, userId: 1n, user: {} })
+      await expect(service.updateMyProfile(3n, 1n, { fullName: 'A' })).rejects.toThrow(
+        'Họ và tên phải từ 2 đến 200 ký tự'
+      )
+    })
+
+    it('updates staff profile fields and user fields in transaction', async () => {
+      const mockStaff = {
+        staffId: 3n,
+        userId: 1n,
+        staffCode: 'S003',
+        position: 'trainer',
+        specialty: 'Gym',
+        experienceYears: 2,
+        bio: 'Old bio',
+        user: { fullName: 'Coach Old', email: 'coach@test.com', phone: '0901' },
+      }
+      mockPrisma.staff.findFirst.mockResolvedValue(mockStaff)
+      mockPrisma.$transaction.mockImplementation(async (cb: (tx: any) => Promise<any>) => {
+        return cb({
+          user: { update: jest.fn().mockResolvedValue({}) },
+          staff: { update: jest.fn().mockResolvedValue({}) },
+        })
+      })
+
+      const dto = {
+        fullName: 'Coach New',
+        phone: '0909999999',
+        specialty: 'Yoga & Pilates',
+        experienceYears: 5,
+        bio: 'New bio',
+      }
+
+      const res = await service.updateMyProfile(3n, 1n, dto)
+      expect(res).toBeDefined()
+      expect(mockAudit.log).toHaveBeenCalledWith(
+        expect.objectContaining({
+          action: 'staff.update_profile',
+          actorUserId: 1n,
+          resourceId: '3',
+        })
+      )
+    })
+  })
+
+  // -------------------------------------------------------------------------
+  // uploadAvatar
+  // -------------------------------------------------------------------------
+  describe('uploadAvatar', () => {
+    it('throws BadRequestException when file is missing', async () => {
+      await expect(service.uploadAvatar(3n, 1n, null as any)).rejects.toThrow('Vui lòng chọn file hình ảnh')
+    })
+
+    it('creates file record and updates user avatarFileId', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue({ userId: 1n, avatarFileId: null })
+      mockPrisma.file.create.mockResolvedValue({ fileId: 50n, filename: 'avatar.png' })
+      mockPrisma.user.update.mockResolvedValue({})
+
+      const mockFile = {
+        filename: 'avatar-123.png',
+        mimetype: 'image/png',
+        size: 1024,
+      } as Express.Multer.File
+
+      const res = await service.uploadAvatar(3n, 1n, mockFile)
+      expect(res).toEqual({
+        avatarFileId: '50',
+        avatarUrl: '/api/v1/files/50',
+      })
+      expect(mockPrisma.user.update).toHaveBeenCalledWith({
+        where: { userId: 1n },
+        data: { avatarFileId: 50n },
+      })
+    })
+  })
+
+  // -------------------------------------------------------------------------
+  // removeAvatar
+  // -------------------------------------------------------------------------
+  describe('removeAvatar', () => {
+    it('sets avatarFileId to null when user has avatar', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue({ userId: 1n, avatarFileId: 50n })
+      mockPrisma.file.findUnique.mockResolvedValue({ fileId: 50n, storagePath: 'non-existent.png' })
+      mockPrisma.file.delete.mockResolvedValue({})
+      mockPrisma.user.update.mockResolvedValue({})
+
+      const res = await service.removeAvatar(3n, 1n)
+      expect(res).toEqual({ success: true })
+      expect(mockPrisma.user.update).toHaveBeenCalledWith({
+        where: { userId: 1n },
+        data: { avatarFileId: null },
+      })
+    })
+
+    it('returns success immediately if user has no avatar', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue({ userId: 1n, avatarFileId: null })
+      const res = await service.removeAvatar(3n, 1n)
+      expect(res).toEqual({ success: true })
+      expect(mockPrisma.user.update).not.toHaveBeenCalled()
+    })
+  })
 })
+

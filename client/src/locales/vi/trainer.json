@@ -589,22 +589,52 @@
     }
   },
   "profile": {
-    "title": "Hồ sơ trainer",
+    "title": "Hồ sơ Huấn luyện viên",
     "eyebrow": "Tài khoản",
-    "description": "Thông tin nhân sự và lịch làm việc của bạn.",
+    "description": "Quản lý thông tin cá nhân, năng lực chuyên môn và thương hiệu của bạn tại RoGym.",
+    "avatar": {
+      "change": "Tải ảnh mới",
+      "remove": "Gỡ ảnh",
+      "uploading": "Đang tải ảnh...",
+      "hint": "Định dạng JPG, PNG hoặc WebP. Dung lượng tối đa 5MB.",
+      "removeConfirmTitle": "Gỡ ảnh đại diện",
+      "removeConfirmDesc": "Bạn có chắc chắn muốn xóa ảnh đại diện và quay về hình đại diện mặc định?",
+      "removeSuccess": "Đã gỡ ảnh đại diện.",
+      "uploadSuccess": "Cập nhật ảnh đại diện thành công."
+    },
     "personalInfo": {
       "title": "Thông tin cá nhân",
-      "fullName": "Họ tên",
+      "fullName": "Họ và tên",
       "staffCode": "Mã nhân viên",
-      "email": "Email",
-      "phone": "Điện thoại",
-      "position": "Chức vụ",
+      "email": "Email tài khoản",
+      "phone": "Số điện thoại",
+      "position": "Vị trí / Chức danh",
       "noPhone": "Chưa cập nhật"
     },
+    "professionalInfo": {
+      "title": "Năng lực chuyên môn",
+      "specialty": "Chuyên môn chính",
+      "specialtyPlaceholder": "Ví dụ: HIIT & Giảm mỡ, Yoga, Tăng cơ...",
+      "specialtySuggestions": "Gợi ý phổ biến:",
+      "experienceYears": "Số năm kinh nghiệm",
+      "experienceYearsPlaceholder": "Ví dụ: 3",
+      "years": "năm",
+      "bio": "Giới thiệu bản thân & Triết lý huấn luyện",
+      "bioPlaceholder": "Chia sẻ về định hướng, kinh nghiệm giảng dạy hoặc phương châm tập luyện dành cho học viên...",
+      "noBio": "Chưa có phần giới thiệu bản thân.",
+      "noSpecialty": "Chưa cập nhật chuyên môn"
+    },
+    "preview": {
+      "title": "Thẻ xem trước cho Hội viên",
+      "badge": "Hiển thị công khai",
+      "description": "Đây là cách hồ sơ của bạn hiển thị khi học viên duyệt danh sách Huấn luyện viên.",
+      "reviewsCount": "{{count}} đánh giá",
+      "newBadge": "Mới"
+    },
     "actions": {
-      "edit": "Chỉnh sửa",
-      "cancel": "Hủy",
-      "save": "Lưu",
+      "edit": "Chỉnh sửa hồ sơ",
+      "cancel": "Hủy bỏ",
+      "save": "Lưu thay đổi",
       "logout": "Đăng xuất"
     },
     "changePassword": {
@@ -615,10 +645,18 @@
       "submit": "Cập nhật mật khẩu",
       "success": "Đổi mật khẩu thành công."
     },
+    "success": {
+      "saved": "Cập nhật hồ sơ thành công."
+    },
     "error": {
       "loadFailed": "Không thể tải hồ sơ trainer.",
       "saveFailed": "Lưu thất bại.",
-      "nameRequired": "Họ tên không được trống.",
+      "nameRequired": "Họ tên không được để trống.",
+      "nameInvalid": "Họ tên phải từ 2 đến 200 ký tự.",
+      "experienceInvalid": "Số năm kinh nghiệm phải từ 0 đến 50.",
+      "bioTooLong": "Tiểu sử không được vượt quá 1.000 ký tự.",
+      "avatarSize": "Kích thước ảnh không được vượt quá 5MB.",
+      "avatarFormat": "Chỉ chấp nhận file ảnh định dạng JPG, PNG hoặc WebP.",
       "passwordMismatch": "Mật khẩu xác nhận không khớp.",
       "passwordTooShort": "Mật khẩu mới cần ít nhất 8 ký tự.",
       "changePasswordFailed": "Không thể đổi mật khẩu."

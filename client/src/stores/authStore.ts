@@ -14,7 +14,9 @@ export interface AuthUser {
   memberId?: string | null
   memberCode?: string | null
   lineLinked?: boolean
+  avatarUrl?: string | null
 }
+
 
 export type AuthProvider = 'credentials' | 'line'
 

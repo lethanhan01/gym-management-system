@@ -56,10 +56,15 @@ async function bootstrap(): Promise<void> {
 
   const uploadsDir = join(process.cwd(), 'uploads')
   const chatUploadsDir = join(uploadsDir, 'chat')
+  const avatarsUploadsDir = join(uploadsDir, 'avatars')
   if (!fs.existsSync(chatUploadsDir)) {
     fs.mkdirSync(chatUploadsDir, { recursive: true })
   }
+  if (!fs.existsSync(avatarsUploadsDir)) {
+    fs.mkdirSync(avatarsUploadsDir, { recursive: true })
+  }
   app.useStaticAssets(uploadsDir, { prefix: '/uploads/' })
+
 
   const port = config.get<number>('PORT') ?? 3000
   await app.listen(port)

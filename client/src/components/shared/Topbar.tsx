@@ -74,15 +74,25 @@ export default function Topbar({ className }: { className?: string } = {}) {
       <div ref={dropdownRef} className="rogym-sx-50666a57">
         <button
           onClick={() => setOpen((v) => !v)}
-          className={`rogym-topbar__avatar ${open ? 'is-open' : ''}`}
+          className={`rogym-topbar__avatar ${open ? 'is-open' : ''} overflow-hidden`}
         >
-          {initials}
+          {user?.avatarUrl ? (
+            <img src={user.avatarUrl} alt={user.fullName} className="w-full h-full object-cover" />
+          ) : (
+            initials
+          )}
         </button>
 
         {open && (
           <div className="rogym-sx-f10cbe0f">
             <div className="rogym-sx-3d17be38">
-              <div className="rogym-sx-09581911">{initials}</div>
+              <div className="rogym-sx-09581911 overflow-hidden">
+                {user?.avatarUrl ? (
+                  <img src={user.avatarUrl} alt={user.fullName} className="w-full h-full object-cover" />
+                ) : (
+                  initials
+                )}
+              </div>
               <div className="rogym-sx-2cd52ab9">
                 <div className="rogym-sx-ac999974">{user?.fullName}</div>
                 <div className="rogym-sx-f57809e3">
@@ -90,6 +100,7 @@ export default function Topbar({ className }: { className?: string } = {}) {
                 </div>
               </div>
             </div>
+
 
             <div className="rogym-sx-df676766">
               <DropdownItem icon={<User size={15} />} onClick={goProfile}>

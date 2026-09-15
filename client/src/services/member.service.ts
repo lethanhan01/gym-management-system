@@ -85,6 +85,7 @@ export interface TrainerSummary {
   fullName: string
   position: string
   avatarFileId?: string | null
+  avatarUrl?: string | null
   specialty?: string | null
   experienceYears?: number | null
   bio?: string | null
@@ -92,6 +93,7 @@ export interface TrainerSummary {
   totalReviews?: number
   topTags?: string[]
 }
+
 
 export interface TrainerReviewItem {
   feedbackId: string

@@ -21,6 +21,8 @@ import { LineMessagingModule } from './line-messaging/line-messaging.module'
 import { ChatModule } from './chat/chat.module'
 import { DatabaseRetryInterceptor } from './common/interceptors/database-retry.interceptor'
 
+import { FilesController } from './common/files.controller'
+
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -47,6 +49,8 @@ import { DatabaseRetryInterceptor } from './common/interceptors/database-retry.i
     LineMessagingModule,
     ChatModule,
   ],
+  controllers: [FilesController],
   providers: [DatabaseRetryInterceptor],
 })
 export class AppModule {}
+
