@@ -291,4 +291,60 @@ describe('LineOAuthService LIFF Mock & JWKS Verification', () => {
       data: { avatarUrl: LINE_MOCK_USER_PICTURE },
     })
   })
+
+  it('lineLogin succeeds even if prisma.user.update for avatar fails (error isolation)', async () => {
+    const userWithOldAvatar = { ...user, avatarUrl: 'https://old.url/avatar.jpg' }
+    users.findByLineIdWithRoles.mockResolvedValue(userWithOldAvatar)
+    prisma.user.update.mockRejectedValueOnce(new Error('DB connection dropped'))
+
+    const res = await service.lineLogin(LINE_MOCK_ID_TOKEN)
+    expect(res.accessToken).toBe('app-jwt')
+    expect(res.user.userId).toBe('1')
+    expect(prisma.user.update).toHaveBeenCalledWith({
+      where: { userId: 1n },
+      data: { avatarUrl: LINE_MOCK_USER_PICTURE },
+    })
+  })
+
+  it('lineLogin skips avatar sync when picture URL exceeds 1000 characters', async () => {
+    const longUrl = 'https://profile.line-scdn.net/' + 'a'.repeat(1001)
+    const userWithOldAvatar = { ...user, avatarUrl: 'https://old.url/avatar.jpg' }
+    users.findByLineIdWithRoles.mockResolvedValue(userWithOldAvatar)
+
+    // Bypass mock verification and return payload with long picture
+    env.LINE_MOCK_ENABLED = 'false'
+    ;(jwtVerify as jest.Mock).mockResolvedValueOnce({
+      payload: {
+        sub: LINE_MOCK_USER_ID,
+        name: 'Mock Member',
+        email: 'member@gym.local',
+        picture: longUrl,
+      },
+    })
+
+    const res = await service.lineLogin('long-url-token')
+    expect(res.accessToken).toBe('app-jwt')
+    // Avatar sync should have been skipped to avoid Postgres VarChar(1000) overflow
+    expect(prisma.user.update).not.toHaveBeenCalled()
+  })
+
+  it('lineLogin does not attempt avatar sync if user is locked', async () => {
+    const lockedUser = { ...user, status: UserStatus.locked }
+    users.findByLineIdWithRoles.mockResolvedValue(lockedUser)
+
+    await expect(service.lineLogin(LINE_MOCK_ID_TOKEN)).rejects.toMatchObject({
+      response: expect.objectContaining({ code: 'ACCOUNT_LOCKED' }),
+    })
+    expect(prisma.user.update).not.toHaveBeenCalled()
+  })
+
+  it('lineLogin does not attempt avatar sync if user role is not member', async () => {
+    const trainerUser = { ...user, roles: ['trainer' as const] }
+    users.findByLineIdWithRoles.mockResolvedValue(trainerUser)
+
+    await expect(service.lineLogin(LINE_MOCK_ID_TOKEN)).rejects.toMatchObject({
+      response: expect.objectContaining({ code: 'LINE_LOGIN_MEMBER_ONLY' }),
+    })
+    expect(prisma.user.update).not.toHaveBeenCalled()
+  })
 })

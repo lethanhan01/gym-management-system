@@ -39,13 +39,10 @@ interface LineIdTokenPayload extends JWTPayload {
 @Injectable()
 export class LineOAuthService {
   private readonly logger = new Logger(LineOAuthService.name)
-  private readonly lineJWKS = createRemoteJWKSet(
-    new URL('https://api.line.me/oauth2/v2.1/certs'),
-    {
-      cacheMaxAge: 24 * 60 * 60 * 1000,
-      cooldownDuration: 30 * 1000,
-    }
-  )
+  private readonly lineJWKS = createRemoteJWKSet(new URL('https://api.line.me/oauth2/v2.1/certs'), {
+    cacheMaxAge: 24 * 60 * 60 * 1000,
+    cooldownDuration: 30 * 1000,
+  })
 
   constructor(
     private readonly prisma: PrismaService,
@@ -97,16 +94,6 @@ export class LineOAuthService {
     // 3. Tao moi neu chua co tai khoan
     if (!user) {
       user = await this.createMemberFromLine(profile, ctx)
-    } else {
-      // Auto-sync avatar from LINE if changed or removed
-      const targetAvatarUrl = profile.picture ?? null
-      if (user.avatarUrl !== targetAvatarUrl) {
-        await this.prisma.user.update({
-          where: { userId: user.userId },
-          data: { avatarUrl: targetAvatarUrl },
-        })
-        user.avatarUrl = targetAvatarUrl
-      }
     }
 
     // 4. LINE login chi danh cho member
@@ -169,9 +156,26 @@ export class LineOAuthService {
       userAgent: ctx.userAgent,
     })
 
+    // 7. Auto-sync avatar an toan, khong lam gian doan dang nhap neu co loi
+    let currentAvatarUrl = user.avatarUrl
+    const targetAvatar = this.sanitizeAvatarUrl(profile.picture)
+    if (targetAvatar !== undefined && targetAvatar !== user.avatarUrl) {
+      try {
+        await this.prisma.user.update({
+          where: { userId: user.userId },
+          data: { avatarUrl: targetAvatar },
+        })
+        currentAvatarUrl = targetAvatar
+      } catch (syncErr) {
+        this.logger.warn(
+          `Failed to auto-sync LINE avatar for userId=${user.userId}: ${syncErr instanceof Error ? syncErr.message : String(syncErr)}`
+        )
+      }
+    }
+
     const resolvedAvatarUrl = user.avatarFileId
       ? `/api/v1/files/${user.avatarFileId}`
-      : (user.avatarUrl ?? null)
+      : (currentAvatarUrl ?? null)
 
     return {
       accessToken,
@@ -204,7 +208,7 @@ export class LineOAuthService {
       if (includingDeleted && includingDeleted.userId !== userId) throw this.lineAlreadyLinked()
     }
 
-    const targetAvatarUrl = profile.picture ?? null
+    const targetAvatarUrl = this.sanitizeAvatarUrl(profile.picture) ?? null
 
     try {
       await this.prisma.user.update({
@@ -347,7 +351,7 @@ export class LineOAuthService {
             fullName: profile.name,
             passwordHash: null,
             lineId: profile.sub,
-            avatarUrl: profile.picture ?? null,
+            avatarUrl: this.sanitizeAvatarUrl(profile.picture) ?? null,
             status: UserStatus.active,
             emailVerifiedAt: new Date(),
           },
@@ -368,7 +372,9 @@ export class LineOAuthService {
     profile: LineProfile,
     ctx: RequestContext
   ): Promise<UserWithRoles> {
-    const targetAvatarUrl = profile.picture ?? user.avatarUrl ?? null
+    const sanitizedAvatar = this.sanitizeAvatarUrl(profile.picture)
+    const targetAvatarUrl =
+      sanitizedAvatar !== undefined ? sanitizedAvatar : (user.avatarUrl ?? null)
     try {
       await this.prisma.user.update({
         where: { userId: user.userId },
@@ -482,6 +488,26 @@ export class LineOAuthService {
   private sameEmail(user: UserWithRoles, profile: LineProfile): boolean {
     const email = profile.email ?? `line_${profile.sub}@line.local`
     return (user.emailNormalized ?? user.email).trim().toLowerCase() === email.trim().toLowerCase()
+  }
+
+  /**
+   * Chuẩn hóa và kiểm tra an toàn URL avatar từ LINE profile trước khi lưu vào DB.
+   * - undefined: LINE không cung cấp claim picture -> giữ nguyên avatar hiện tại.
+   * - chuỗi rỗng / khoảng trắng: trả về null.
+   * - vượt quá 1000 ký tự (giới hạn VarChar(1000)): bỏ qua để tránh lỗi P2000 Postgres.
+   */
+  private sanitizeAvatarUrl(picture?: string | null): string | null | undefined {
+    if (picture === undefined) return undefined
+    if (picture === null) return null
+    const trimmed = picture.trim()
+    if (trimmed.length === 0) return null
+    if (trimmed.length > 1000) {
+      this.logger.warn(
+        `LINE avatar URL exceeds 1000 characters (${trimmed.length} chars), skipping avatar sync`
+      )
+      return undefined
+    }
+    return trimmed
   }
 
   private lineAlreadyLinked(): ConflictException {
