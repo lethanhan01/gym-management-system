@@ -91,7 +91,7 @@ describe('StaffController', () => {
 
   describe('removeAvatar', () => {
     it('delegates to removeAvatar with user.staffId and user.userId', async () => {
-      ;(mockService.removeAvatar as jest.Mock).mockResolvedValue({ success: true })
+      (mockService.removeAvatar as jest.Mock).mockResolvedValue({ success: true })
 
       const res = await ctrl.removeAvatar(staffUser)
       expect(mockService.removeAvatar).toHaveBeenCalledWith(staffUser.staffId, staffUser.userId)

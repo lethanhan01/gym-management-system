@@ -129,7 +129,7 @@ describe('TrainerProfilePage', () => {
   })
 
   it('handles password change submission', async () => {
-    vi.mocked(authService.changePassword).mockResolvedValue({ success: true } as any)
+    vi.mocked(authService.changePassword).mockResolvedValue(undefined)
 
     const { container } = render(
       <MemoryRouter>

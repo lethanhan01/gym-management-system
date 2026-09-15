@@ -112,7 +112,7 @@ export default function TrainerReviewsModal({
       return
     }
     fetchReviews(trainer.staffId, 1, false)
-  }, [open, trainer?.staffId, selectedRating, sort])
+  }, [open, trainer, fetchReviews])
 
   const handleLoadMore = () => {
     if (!trainer || !detail || !detail.pagination.hasMore || loadingMore) return

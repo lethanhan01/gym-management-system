@@ -713,7 +713,7 @@ export default function TrainerProfilePage() {
                 {/* Bio snippet on card */}
                 {liveBio ? (
                   <p className="text-xs text-white/70 italic line-clamp-3 bg-white/[0.02] p-2.5 rounded-lg border border-white/5 w-full text-center mt-1">
-                    "{liveBio}"
+                    &ldquo;{liveBio}&rdquo;
                   </p>
                 ) : (
                   <p className="text-[11px] text-white/40 italic mt-1">

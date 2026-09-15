@@ -38,7 +38,6 @@ export default function MemberChatPage() {
   const messagesByConversation = useChatStore((state) => state.messagesByConversation)
   const hasMoreByConversation = useChatStore((state) => state.hasMoreByConversation)
   const typingUsers = useChatStore((state) => state.typingUsers)
-  const isLoadingConversations = useChatStore((state) => state.isLoadingConversations)
   const isLoadingMessages = useChatStore((state) => state.isLoadingMessages)
   const isUploading = useChatStore((state) => state.isUploading)
   const memberChatEligibility = useChatStore((state) => state.memberChatEligibility)
