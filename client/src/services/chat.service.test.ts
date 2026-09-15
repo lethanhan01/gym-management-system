@@ -84,7 +84,11 @@ describe('ChatService', () => {
 
       const res = await chatService.getActiveConversation()
       expect(api.get).toHaveBeenCalledWith('/chat/conversations/active')
-      expect(res).toEqual(mockActiveConv)
+      expect(res).toEqual({
+        eligibility: 'NO_ACTIVE_SUBSCRIPTION',
+        conversation: mockActiveConv,
+        primaryTrainer: null,
+      })
     })
 
     it('getMessages fetches message history with cursor pagination', async () => {

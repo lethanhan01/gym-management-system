@@ -80,7 +80,12 @@ describe('trainingSessionService contract', () => {
   })
 
   it('books a session', async () => {
-    const payload = { startTime: '2026-08-18T08:00:00.000Z', endTime: '2026-08-18T09:00:00.000Z', assignmentId: '2' }
+    const payload = {
+      startTime: '2026-08-18T08:00:00.000Z',
+      endTime: '2026-08-18T09:00:00.000Z',
+      assignmentId: '2',
+      planDayId: '1',
+    }
     vi.mocked(api.post).mockResolvedValue({ data: { success: true, data: session } } as never)
 
     await expect(trainingSessionService.bookSession(payload)).resolves.toEqual(session)
