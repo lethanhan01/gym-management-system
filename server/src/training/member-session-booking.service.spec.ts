@@ -39,6 +39,9 @@ describe('MemberSessionBookingService', () => {
       trainingSession: { findMany: jest.fn(), findFirst: jest.fn(), count: jest.fn(), create: jest.fn(), update: jest.fn() },
       subscription: { findFirst: jest.fn() },
       gymRoom: { findMany: jest.fn() },
+      memberWorkoutPlan: { findFirst: jest.fn() },
+      workoutPlanDay: { findFirst: jest.fn() },
+      workoutLog: { findFirst: jest.fn().mockResolvedValue(null), findMany: jest.fn().mockResolvedValue([]) },
       $transaction: jest.fn((cb) => cb(mockPrisma)),
     }
     mockAudit = { log: jest.fn() }
@@ -46,7 +49,7 @@ describe('MemberSessionBookingService', () => {
     mockScheduling = {
       checkOverlap: jest.fn().mockResolvedValue(undefined),
       findAvailableRoom: jest.fn().mockResolvedValue({ roomId: 1n, name: 'Room 1' }),
-      resolveSessionPlanLink: jest.fn().mockResolvedValue(null),
+      resolveSessionPlanLink: jest.fn().mockResolvedValue({ assignmentId: 50n, planDayId: 100n }),
     }
     mockPresenter = {
       serializeSession: jest.fn((s) => ({ ...s, sessionId: s.sessionId?.toString() ?? '1' })),
@@ -117,17 +120,112 @@ describe('MemberSessionBookingService', () => {
     })
   })
 
+  describe('getActivePlanForBooking', () => {
+    it('throws ForbiddenException when memberId cannot be resolved', async () => {
+      mockCallerResolver.resolveMemberId.mockResolvedValue(null)
+      await expect(service.getActivePlanForBooking(makeCaller())).rejects.toThrow(ForbiddenException)
+    })
+
+    it('returns hasPtBenefit=false when no active subscription exists', async () => {
+      mockPrisma.member.findFirst.mockResolvedValue({
+        memberId: 10n,
+        primaryTrainerId: 20n,
+        primaryTrainer: { staffId: 20n, user: { fullName: 'Coach Sarah' } },
+      })
+      mockPrisma.subscription.findFirst.mockResolvedValue(null)
+
+      const res = await service.getActivePlanForBooking(makeCaller())
+      expect(res.hasPtBenefit).toBe(false)
+      expect(res.subscriptionReason).toBe('NO_ACTIVE_SUBSCRIPTION')
+    })
+
+    it('returns hasPtBenefit=false when subscription does not include PT', async () => {
+      mockPrisma.member.findFirst.mockResolvedValue({
+        memberId: 10n,
+        primaryTrainerId: 20n,
+        primaryTrainer: { staffId: 20n, user: { fullName: 'Coach Sarah' } },
+      })
+      mockPrisma.subscription.findFirst.mockResolvedValue({
+        subscriptionId: 1n,
+        package: { name: 'Basic Gym', includesPt: false },
+      })
+
+      const res = await service.getActivePlanForBooking(makeCaller())
+      expect(res.hasPtBenefit).toBe(false)
+      expect(res.subscriptionReason).toBe('SUBSCRIPTION_WITHOUT_PT')
+      expect(res.packageName).toBe('Basic Gym')
+    })
+
+    it('returns hasActivePlan=false when member has no plan assigned by primary trainer', async () => {
+      mockPrisma.member.findFirst.mockResolvedValue({
+        memberId: 10n,
+        primaryTrainerId: 20n,
+        primaryTrainer: { staffId: 20n, user: { fullName: 'Coach Sarah' } },
+      })
+      mockPrisma.subscription.findFirst.mockResolvedValue({
+        subscriptionId: 1n,
+        package: { name: 'VIP PT', includesPt: true },
+      })
+      mockPrisma.memberWorkoutPlan.findFirst.mockResolvedValue(null)
+
+      const res = await service.getActivePlanForBooking(makeCaller())
+      expect(res.hasPtBenefit).toBe(true)
+      expect(res.hasActivePlan).toBe(false)
+      expect(res.reason).toBe('NO_PT_ASSIGNED_PLAN')
+    })
+
+    it('returns days with completed, scheduled, available statuses', async () => {
+      mockPrisma.member.findFirst.mockResolvedValue({
+        memberId: 10n,
+        primaryTrainerId: 20n,
+        primaryTrainer: { staffId: 20n, user: { fullName: 'Coach Sarah' } },
+      })
+      mockPrisma.subscription.findFirst.mockResolvedValue({
+        subscriptionId: 1n,
+        package: { name: 'VIP PT', includesPt: true },
+      })
+      mockPrisma.memberWorkoutPlan.findFirst.mockResolvedValue({
+        assignmentId: 50n,
+        plan: {
+          planId: 5n,
+          name: '4-Day Split',
+          days: [
+            { planDayId: 101n, dayNumber: 1, weekNumber: 1, dayOfWeek: 2, name: 'Chest', exercises: [{ planExerciseId: 1n }] },
+            { planDayId: 102n, dayNumber: 2, weekNumber: 1, dayOfWeek: 4, name: 'Back', exercises: [{ planExerciseId: 2n }] },
+            { planDayId: 103n, dayNumber: 3, weekNumber: 1, dayOfWeek: 6, name: 'Legs', exercises: [{ planExerciseId: 3n }] },
+          ],
+        },
+      })
+      mockPrisma.workoutLog.findMany.mockResolvedValue([{ planDayId: 101n }])
+      mockPrisma.trainingSession.findMany.mockResolvedValue([
+        { planDayId: 102n, status: 'scheduled' },
+      ])
+
+      const res = await service.getActivePlanForBooking(makeCaller())
+      expect(res.hasPtBenefit).toBe(true)
+      expect(res.hasActivePlan).toBe(true)
+      expect(res.days).toHaveLength(3)
+      expect(res.days[0]).toMatchObject({ planDayId: '101', status: 'completed' })
+      expect(res.days[1]).toMatchObject({ planDayId: '102', status: 'scheduled' })
+      expect(res.days[2]).toMatchObject({ planDayId: '103', status: 'available' })
+      expect(res.allCompletedOrScheduled).toBe(false)
+    })
+  })
+
   describe('bookSessionByMember', () => {
     const validStart = futureTime(60 * 24) // 1 day in future
     const validEnd = new Date(validStart.getTime() + 60 * 60 * 1000)
+    const validDto = {
+      startTime: validStart.toISOString(),
+      endTime: validEnd.toISOString(),
+      assignmentId: '50',
+      planDayId: '100',
+    }
 
     it('throws ForbiddenException if memberId is not resolved', async () => {
       mockCallerResolver.resolveMemberId.mockResolvedValue(null)
       await expect(
-        service.bookSessionByMember(
-          { startTime: validStart.toISOString(), endTime: validEnd.toISOString() },
-          makeCaller()
-        )
+        service.bookSessionByMember(validDto, makeCaller())
       ).rejects.toThrow(ForbiddenException)
     })
 
@@ -135,7 +233,7 @@ describe('MemberSessionBookingService', () => {
       const invalidEnd = new Date(validStart.getTime() + 45 * 60 * 1000)
       await expect(
         service.bookSessionByMember(
-          { startTime: validStart.toISOString(), endTime: invalidEnd.toISOString() },
+          { ...validDto, endTime: invalidEnd.toISOString() },
           makeCaller()
         )
       ).rejects.toMatchObject({
@@ -148,7 +246,7 @@ describe('MemberSessionBookingService', () => {
       const eightDaysEnd = new Date(eightDaysAhead.getTime() + 60 * 60 * 1000)
       await expect(
         service.bookSessionByMember(
-          { startTime: eightDaysAhead.toISOString(), endTime: eightDaysEnd.toISOString() },
+          { ...validDto, startTime: eightDaysAhead.toISOString(), endTime: eightDaysEnd.toISOString() },
           makeCaller()
         )
       ).rejects.toMatchObject({
@@ -165,10 +263,7 @@ describe('MemberSessionBookingService', () => {
       mockPrisma.trainingSession.count.mockResolvedValue(3)
 
       await expect(
-        service.bookSessionByMember(
-          { startTime: validStart.toISOString(), endTime: validEnd.toISOString() },
-          makeCaller()
-        )
+        service.bookSessionByMember(validDto, makeCaller())
       ).rejects.toMatchObject({
         response: expect.objectContaining({ code: 'BOOKING_LIMIT_EXCEEDED' }),
       })
@@ -184,12 +279,28 @@ describe('MemberSessionBookingService', () => {
       mockPrisma.subscription.findFirst.mockResolvedValue(null)
 
       await expect(
-        service.bookSessionByMember(
-          { startTime: validStart.toISOString(), endTime: validEnd.toISOString() },
-          makeCaller()
-        )
+        service.bookSessionByMember(validDto, makeCaller())
       ).rejects.toMatchObject({
         response: expect.objectContaining({ code: 'MEMBER_HAS_NO_ACTIVE_SUBSCRIPTION' }),
+      })
+    })
+
+    it('throws ForbiddenException (SUBSCRIPTION_DOES_NOT_INCLUDE_PT) when subscription has no PT', async () => {
+      mockPrisma.member.findFirst.mockResolvedValue({
+        memberId: 10n,
+        primaryTrainerId: 20n,
+        primaryTrainer: { staffId: 20n, deletedAt: null },
+      })
+      mockPrisma.trainingSession.count.mockResolvedValue(0)
+      mockPrisma.subscription.findFirst.mockResolvedValue({
+        subscriptionId: 1n,
+        package: { includesPt: false },
+      })
+
+      await expect(
+        service.bookSessionByMember(validDto, makeCaller())
+      ).rejects.toMatchObject({
+        response: expect.objectContaining({ code: 'SUBSCRIPTION_DOES_NOT_INCLUDE_PT' }),
       })
     })
 
@@ -200,18 +311,78 @@ describe('MemberSessionBookingService', () => {
         primaryTrainer: { staffId: 20n, deletedAt: null },
       })
       mockPrisma.trainingSession.count.mockResolvedValue(0)
-      mockPrisma.subscription.findFirst.mockResolvedValue({ subscriptionId: 1n })
+      mockPrisma.subscription.findFirst.mockResolvedValue({ subscriptionId: 1n, package: { includesPt: true } })
       mockScheduling.findAvailableRoom.mockResolvedValue(null)
 
       await expect(
-        service.bookSessionByMember(
-          { startTime: validStart.toISOString(), endTime: validEnd.toISOString() },
-          makeCaller()
-        )
+        service.bookSessionByMember(validDto, makeCaller())
       ).rejects.toMatchObject({
         response: expect.objectContaining({ code: 'NO_ROOM_AVAILABLE' }),
       })
     })
+
+    it('throws BadRequestException (WORKOUT_ASSIGNMENT_INVALID) when plan not assigned by primary trainer', async () => {
+      mockPrisma.member.findFirst.mockResolvedValue({
+        memberId: 10n,
+        primaryTrainerId: 20n,
+        primaryTrainer: { staffId: 20n, deletedAt: null },
+      })
+      mockPrisma.trainingSession.count.mockResolvedValue(0)
+      mockPrisma.subscription.findFirst.mockResolvedValue({ subscriptionId: 1n, package: { includesPt: true } })
+      mockScheduling.findAvailableRoom.mockResolvedValue({ roomId: 5n, name: 'Room 5' })
+      mockScheduling.resolveSessionPlanLink.mockResolvedValue({ assignmentId: 50n, planDayId: 100n })
+      mockPrisma.memberWorkoutPlan.findFirst.mockResolvedValue(null)
+
+      await expect(
+        service.bookSessionByMember(validDto, makeCaller())
+      ).rejects.toMatchObject({
+        response: expect.objectContaining({ code: 'WORKOUT_ASSIGNMENT_INVALID' }),
+      })
+    })
+
+    it('throws ConflictException (WORKOUT_PLAN_DAY_ALREADY_COMPLETED) when day was already completed', async () => {
+      mockPrisma.member.findFirst.mockResolvedValue({
+        memberId: 10n,
+        primaryTrainerId: 20n,
+        primaryTrainer: { staffId: 20n, deletedAt: null },
+      })
+      mockPrisma.trainingSession.count.mockResolvedValue(0)
+      mockPrisma.subscription.findFirst.mockResolvedValue({ subscriptionId: 1n, package: { includesPt: true } })
+      mockScheduling.findAvailableRoom.mockResolvedValue({ roomId: 5n, name: 'Room 5' })
+      mockScheduling.resolveSessionPlanLink.mockResolvedValue({ assignmentId: 50n, planDayId: 100n })
+      mockPrisma.memberWorkoutPlan.findFirst.mockResolvedValue({ assignmentId: 50n })
+      mockPrisma.workoutLog.findFirst.mockResolvedValue({ logId: 1n })
+
+      await expect(
+        service.bookSessionByMember(validDto, makeCaller())
+      ).rejects.toMatchObject({
+        response: expect.objectContaining({ code: 'WORKOUT_PLAN_DAY_ALREADY_COMPLETED' }),
+      })
+    })
+
+    it('throws ConflictException (WORKOUT_PLAN_DAY_ALREADY_SCHEDULED) when day has pending scheduled session', async () => {
+      mockPrisma.member.findFirst.mockResolvedValue({
+        memberId: 10n,
+        primaryTrainerId: 20n,
+        primaryTrainer: { staffId: 20n, deletedAt: null },
+      })
+      mockPrisma.trainingSession.count.mockResolvedValue(0)
+      mockPrisma.subscription.findFirst.mockResolvedValue({ subscriptionId: 1n, package: { includesPt: true } })
+      mockScheduling.findAvailableRoom.mockResolvedValue({ roomId: 5n, name: 'Room 5' })
+      mockScheduling.resolveSessionPlanLink.mockResolvedValue({ assignmentId: 50n, planDayId: 100n })
+      mockPrisma.memberWorkoutPlan.findFirst.mockResolvedValue({ assignmentId: 50n })
+      mockPrisma.workoutLog.findFirst.mockResolvedValue(null)
+      mockPrisma.trainingSession.findFirst
+        .mockResolvedValueOnce(null) // completed session check -> null
+        .mockResolvedValueOnce({ sessionId: 99n }) // scheduled session check -> found
+
+      await expect(
+        service.bookSessionByMember(validDto, makeCaller())
+      ).rejects.toMatchObject({
+        response: expect.objectContaining({ code: 'WORKOUT_PLAN_DAY_ALREADY_SCHEDULED' }),
+      })
+    })
+
 
     it('successfully books session, logs audit, and sends notification', async () => {
       mockPrisma.member.findFirst.mockResolvedValue({
@@ -220,17 +391,23 @@ describe('MemberSessionBookingService', () => {
         primaryTrainer: { staffId: 20n, deletedAt: null },
       })
       mockPrisma.trainingSession.count.mockResolvedValue(1)
-      mockPrisma.subscription.findFirst.mockResolvedValue({ subscriptionId: 1n })
+      mockPrisma.subscription.findFirst.mockResolvedValue({ subscriptionId: 1n, package: { includesPt: true } })
       mockScheduling.findAvailableRoom.mockResolvedValue({ roomId: 5n, name: 'Room 5' })
+      mockScheduling.resolveSessionPlanLink.mockResolvedValue({ assignmentId: 50n, planDayId: 100n })
+      mockPrisma.memberWorkoutPlan.findFirst.mockResolvedValue({ assignmentId: 50n })
+      mockPrisma.workoutLog.findFirst.mockResolvedValue(null)
+      mockPrisma.trainingSession.findFirst.mockResolvedValue(null)
       mockPrisma.trainingSession.create.mockResolvedValue({
         sessionId: 100n,
         memberId: 10n,
         trainerStaffId: 20n,
         roomId: 5n,
+        assignmentId: 50n,
+        planDayId: 100n,
       })
 
       const res = await service.bookSessionByMember(
-        { startTime: validStart.toISOString(), endTime: validEnd.toISOString() },
+        validDto,
         makeCaller()
       )
 
@@ -241,6 +418,7 @@ describe('MemberSessionBookingService', () => {
       expect(mockNotifications.notifyCreated).toHaveBeenCalled()
     })
   })
+
 
   describe('cancelBookingByMember', () => {
     it('throws NotFoundException when session is not found', async () => {

@@ -19,9 +19,11 @@ const mockService = {
   deleteProgress: jest.fn(),
   deviceAccessEvent: jest.fn(),
   getTrainerAvailability: jest.fn(),
+  getActivePlanForBooking: jest.fn(),
   bookSessionByMember: jest.fn(),
   cancelBookingByMember: jest.fn(),
 }
+
 
 const ctrl = new TrainingController(
   mockService as any,
@@ -76,11 +78,27 @@ describe('TrainingController', () => {
     })
   })
 
+  describe('getMemberBookingPlanDays', () => {
+    it('delegates to getActivePlanForBooking and wraps success', async () => {
+      const serviceResult = { hasActivePlan: true, days: [] }
+      ;(mockService.getActivePlanForBooking as jest.Mock).mockResolvedValue(serviceResult)
+      const res = await ctrl.getMemberBookingPlanDays(memberUser)
+      expect(mockService.getActivePlanForBooking).toHaveBeenCalledWith(ctx(memberUser))
+      expect(res).toEqual({ success: true, data: serviceResult })
+    })
+  })
+
   describe('bookSession', () => {
+
     it('delegates to bookSessionByMember and wraps success', async () => {
       const serviceResult = { data: { sessionId: '10' } }
       ;(mockService.bookSessionByMember as jest.Mock).mockResolvedValue(serviceResult)
-      const dto = { startTime: '2026-08-18T09:00:00.000Z', endTime: '2026-08-18T10:00:00.000Z' }
+      const dto = {
+        startTime: '2026-08-18T09:00:00.000Z',
+        endTime: '2026-08-18T10:00:00.000Z',
+        assignmentId: '50',
+        planDayId: '100',
+      }
       const res = await ctrl.bookSession(dto, memberUser)
       expect(mockService.bookSessionByMember).toHaveBeenCalledWith(dto, ctx(memberUser))
       expect(res).toEqual({ success: true, ...serviceResult })

@@ -133,6 +133,8 @@ describe('Member PT Booking (Integration / E2E)', () => {
       const payload = {
         startTime: '2026-08-18T09:00:00.000Z',
         endTime: '2026-08-18T10:00:00.000Z',
+        assignmentId: '50',
+        planDayId: '100',
       }
       const mockCreated = {
         sessionId: '10',

@@ -2,21 +2,23 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import {
+  CheckCircle2,
   Clock,
   Dumbbell,
   Loader2,
   User,
+  AlertCircle,
+  CalendarDays,
 } from 'lucide-react'
-import { Alert, Button, Modal, Select, Skeleton } from '@/components/ui'
+import { Alert, Button, Modal, Skeleton } from '@/components/ui'
 import { toast } from '@/lib/toast'
 import { getApiError, getApiErrorCode } from '@/lib/api-error'
 import {
   trainingSessionService,
+  type MemberActivePlanBookingData,
   type TrainerAvailabilityData,
   type TrainerAvailabilitySlot,
 } from '@/services/training-session.service'
-import workoutService, { type WorkoutPlan } from '@/services/workout.service'
-import { useAuthStore } from '@/stores/authStore'
 
 function formatDateKey(date: Date): string {
   const y = date.getFullYear()
@@ -60,7 +62,6 @@ export function BookPtSessionModal({
   const { t, i18n } = useTranslation('member')
   const locale = i18n.language
   const navigate = useNavigate()
-  const { user } = useAuthStore()
 
   const availableDays = useMemo(() => getNext7Days(), [])
   const [selectedDate, setSelectedDate] = useState<string>(() => availableDays[0]?.dateStr ?? '')
@@ -72,45 +73,26 @@ export function BookPtSessionModal({
   const [noSubscription, setNoSubscription] = useState(false)
   const [bookingLoading, setBookingLoading] = useState(false)
 
-  // Optional workout plan linkage
-  const [activePlan, setActivePlan] = useState<{
-    assignmentId: string
-    plan: WorkoutPlan
-  } | null>(null)
+  // Plan linkage state
+  const [planBookingData, setPlanBookingData] = useState<MemberActivePlanBookingData | null>(null)
+  const [loadingPlan, setLoadingPlan] = useState(false)
   const [selectedPlanDayId, setSelectedPlanDayId] = useState<string>('')
 
-  const memberId = user?.memberId
-
-  // Load member active workout plan
-  useEffect(() => {
-    if (!open || !memberId) return
-    let isMounted = true
-
-    async function loadActivePlan() {
-      try {
-        const assignments = await workoutService.getAssignments(memberId!, {
-          status: 'active',
-          limit: 1,
-        })
-        if (!isMounted || !assignments.length) return
-        const activeAssignment = assignments[0]
-        const planDetail = await workoutService.getPlan(activeAssignment.planId)
-        if (isMounted) {
-          setActivePlan({
-            assignmentId: activeAssignment.assignmentId,
-            plan: planDetail,
-          })
-        }
-      } catch {
-        // Plan linking is optional, silently ignore
+  // Load member active workout plan for booking
+  const fetchPlanBookingData = useCallback(async () => {
+    setLoadingPlan(true)
+    try {
+      const data = await trainingSessionService.getActivePlanDaysForBooking()
+      setPlanBookingData(data)
+      if (!data.hasPtBenefit && data.subscriptionReason === 'NO_ACTIVE_SUBSCRIPTION') {
+        setNoSubscription(true)
       }
+    } catch {
+      // If fetching fails, let the booking check handle it or keep current state
+    } finally {
+      setLoadingPlan(false)
     }
-
-    void loadActivePlan()
-    return () => {
-      isMounted = false
-    }
-  }, [open, memberId])
+  }, [])
 
   // Load trainer availability
   const fetchAvailability = useCallback(async (dateStr: string) => {
@@ -137,25 +119,27 @@ export function BookPtSessionModal({
       setSelectedSlot(null)
       setSelectedPlanDayId('')
       setNoSubscription(false)
+      setPlanBookingData(null)
       return
     }
+    void fetchPlanBookingData()
     if (selectedDate) {
       setSelectedSlot(null)
       setNoSubscription(false)
       void fetchAvailability(selectedDate)
     }
-  }, [open, selectedDate, fetchAvailability])
+  }, [open, selectedDate, fetchAvailability, fetchPlanBookingData])
 
   const handleBooking = async () => {
-    if (!selectedSlot) return
+    if (!selectedSlot || !selectedPlanDayId || !planBookingData?.assignmentId) return
     setBookingLoading(true)
     setNoSubscription(false)
     try {
       await trainingSessionService.bookSession({
         startTime: selectedSlot.startTime,
         endTime: selectedSlot.endTime,
-        assignmentId: activePlan && selectedPlanDayId ? activePlan.assignmentId : undefined,
-        planDayId: selectedPlanDayId || undefined,
+        assignmentId: planBookingData.assignmentId,
+        planDayId: selectedPlanDayId,
       })
       toast.success(t('workout.schedule.booking.successToast'))
       onSuccess()
@@ -169,6 +153,15 @@ export function BookPtSessionModal({
       } else if (code === 'MEMBER_HAS_NO_ACTIVE_SUBSCRIPTION') {
         setNoSubscription(true)
         toast.error(t('workout.schedule.booking.noSubscriptionWarning'))
+      } else if (code === 'SUBSCRIPTION_DOES_NOT_INCLUDE_PT') {
+        toast.error(t('workout.schedule.booking.noPtBenefitWarning'))
+        void fetchPlanBookingData()
+      } else if (code === 'WORKOUT_PLAN_DAY_ALREADY_COMPLETED') {
+        toast.error(t('workout.schedule.booking.errorDayCompleted'))
+        void fetchPlanBookingData()
+      } else if (code === 'WORKOUT_PLAN_DAY_ALREADY_SCHEDULED') {
+        toast.error(t('workout.schedule.booking.errorDayScheduled'))
+        void fetchPlanBookingData()
       } else if (code === 'BOOKING_LIMIT_EXCEEDED') {
         toast.error(t('workout.schedule.booking.bookingLimitWarning'))
       } else {
@@ -178,6 +171,29 @@ export function BookPtSessionModal({
       setBookingLoading(false)
     }
   }
+
+  const isNoPtBenefit =
+    Boolean(planBookingData && !planBookingData.hasPtBenefit && planBookingData.subscriptionReason === 'SUBSCRIPTION_WITHOUT_PT')
+
+  const isNoActiveSubscription =
+    noSubscription || Boolean(planBookingData && !planBookingData.hasPtBenefit && planBookingData.subscriptionReason === 'NO_ACTIVE_SUBSCRIPTION')
+
+  const isNoActivePlan =
+    Boolean(planBookingData && planBookingData.hasPtBenefit && !planBookingData.hasActivePlan)
+
+  const isAllDaysCompletedOrScheduled =
+    Boolean(planBookingData && planBookingData.hasPtBenefit && planBookingData.hasActivePlan && planBookingData.allCompletedOrScheduled)
+
+  const canSubmit = Boolean(
+    selectedSlot &&
+    selectedPlanDayId &&
+    !bookingLoading &&
+    !noTrainer &&
+    scheduledCount < 3 &&
+    planBookingData?.hasPtBenefit &&
+    planBookingData?.hasActivePlan &&
+    !planBookingData?.allCompletedOrScheduled
+  )
 
   return (
     <Modal
@@ -197,7 +213,7 @@ export function BookPtSessionModal({
           <Button
             variant="primary"
             onClick={() => void handleBooking()}
-            disabled={!selectedSlot || bookingLoading || noTrainer || scheduledCount >= 3 || noSubscription}
+            disabled={!canSubmit}
             loading={bookingLoading}
           >
             {t('workout.schedule.booking.confirmBtn')}
@@ -233,8 +249,31 @@ export function BookPtSessionModal({
           <Alert tone="warning" description={t('workout.schedule.booking.noTrainer')} />
         )}
 
+        {/* Subscription Without PT Warning */}
+        {isNoPtBenefit && (
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 rounded-xl border border-rose-500/30 bg-rose-500/10 p-3.5 sm:p-4">
+            <div className="flex items-start gap-2.5">
+              <AlertCircle className="h-5 w-5 shrink-0 text-rose-400 mt-0.5" />
+              <p className="text-xs sm:text-sm font-medium text-rose-300 leading-relaxed">
+                {t('workout.schedule.booking.noPtBenefitWarning')}
+              </p>
+            </div>
+            <Button
+              variant="primary"
+              size="sm"
+              className="shrink-0 whitespace-nowrap"
+              onClick={() => {
+                onClose()
+                navigate('/member/subscription/current')
+              }}
+            >
+              {t('workout.schedule.booking.upgradePackageBtn')} →
+            </Button>
+          </div>
+        )}
+
         {/* Inactive Subscription Warning */}
-        {noSubscription && (
+        {isNoActiveSubscription && !isNoPtBenefit && (
           <div className="flex flex-col sm:flex-row items-center justify-between gap-3 rounded-xl border border-amber-500/30 bg-amber-500/10 p-3.5 sm:p-4">
             <p className="text-xs sm:text-sm font-medium text-amber-300">
               {t('workout.schedule.booking.noSubscriptionWarning')}
@@ -245,7 +284,7 @@ export function BookPtSessionModal({
               className="shrink-0 whitespace-nowrap"
               onClick={() => {
                 onClose()
-                navigate('/member/membership')
+                navigate('/member/subscription/current')
               }}
             >
               {t('workout.schedule.booking.goToPackagesBtn')} →
@@ -253,8 +292,39 @@ export function BookPtSessionModal({
           </div>
         )}
 
+        {/* No Active Plan Warning */}
+        {isNoActivePlan && (
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 rounded-xl border border-amber-500/30 bg-amber-500/10 p-3.5 sm:p-4">
+            <div className="flex items-start gap-2.5">
+              <CalendarDays className="h-5 w-5 shrink-0 text-amber-400 mt-0.5" />
+              <p className="text-xs sm:text-sm font-medium text-amber-300 leading-relaxed">
+                {t('workout.schedule.booking.noActivePlanWarning')}
+              </p>
+            </div>
+            <Button
+              variant="secondary"
+              size="sm"
+              className="shrink-0 whitespace-nowrap"
+              onClick={() => {
+                onClose()
+                navigate('/member/workout/plan')
+              }}
+            >
+              {t('workout.schedule.booking.goToPlanBtn')} →
+            </Button>
+          </div>
+        )}
+
+        {/* All Days Completed / Scheduled Warning */}
+        {isAllDaysCompletedOrScheduled && (
+          <Alert
+            tone="warning"
+            description={t('workout.schedule.booking.allDaysCompletedWarning')}
+          />
+        )}
+
         {/* Horizontal 7-day Date Picker */}
-        {!noTrainer && (
+        {!noTrainer && !isNoPtBenefit && !isNoActiveSubscription && (
           <div className="space-y-1.5">
             <label className="text-xs font-bold uppercase tracking-wider text-white/60">
               {t('workout.schedule.booking.selectDate')}
@@ -294,7 +364,7 @@ export function BookPtSessionModal({
         )}
 
         {/* Slot Grid */}
-        {!noTrainer && (
+        {!noTrainer && !isNoPtBenefit && !isNoActiveSubscription && (
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
               <label className="text-xs font-bold uppercase tracking-wider text-white/60">
@@ -369,32 +439,100 @@ export function BookPtSessionModal({
           </div>
         )}
 
-        {/* Optional Workout Plan Assignment Link */}
-        {!noTrainer && activePlan && activePlan.plan.days?.length ? (
-          <div className="space-y-1.5 rounded-xl border border-white/10 bg-white/[0.02] p-3 sm:p-3.5">
-            <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-white/70">
-              <Dumbbell size={14} className="text-[var(--rogym-accent)]" />
-              <span>{t('workout.schedule.booking.workoutPlanOptional')}</span>
+        {/* Required Workout Plan Day Selection */}
+        {!noTrainer && !isNoPtBenefit && !isNoActiveSubscription && planBookingData?.hasActivePlan && (
+          <div className="space-y-2.5 rounded-xl border border-white/10 bg-white/[0.02] p-3 sm:p-3.5">
+            <div className="flex flex-wrap items-center justify-between gap-1.5">
+              <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-white/80">
+                <Dumbbell size={14} className="text-[var(--rogym-accent)]" />
+                <span>{t('workout.schedule.booking.workoutPlanRequired')}</span>
+                <span className="text-rose-400 font-bold">*</span>
+              </div>
+              {planBookingData.planName && (
+                <span className="truncate max-w-[220px] rounded-md border border-[var(--rogym-accent)]/20 bg-[var(--rogym-accent)]/10 px-2 py-0.5 text-[11px] font-semibold text-[var(--rogym-accent)]">
+                  {planBookingData.planName}
+                </span>
+              )}
             </div>
-            <p className="text-xs text-white/50 truncate">
-              {activePlan.plan.name}
+            <p className="text-xs text-white/50">
+              {t('workout.schedule.booking.workoutPlanRequiredDesc')}
             </p>
-            <Select
-              value={selectedPlanDayId}
-              onValueChange={(val) => setSelectedPlanDayId(val)}
-              className="w-full"
-            >
-              <option value="">{t('workout.schedule.booking.noPlanSelected')}</option>
-              {activePlan.plan.days.map((day) => (
-                <option key={day.planDayId} value={day.planDayId}>
-                  {day.name || `Ngày ${day.dayNumber} · Tuần ${day.weekNumber}`}
-                </option>
-              ))}
-            </Select>
+
+            {loadingPlan ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 py-1">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <Skeleton key={i} height={68} rounded="xl" />
+                ))}
+              </div>
+            ) : planBookingData.days?.length ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
+                {planBookingData.days.map((day) => {
+                  const isSelected = selectedPlanDayId === day.planDayId
+                  const isCompleted = day.status === 'completed'
+                  const isScheduled = day.status === 'scheduled'
+                  const isAvailable = day.status === 'available'
+
+                  return (
+                    <button
+                      key={day.planDayId}
+                      type="button"
+                      disabled={!isAvailable}
+                      onClick={() => setSelectedPlanDayId(day.planDayId)}
+                      className={`relative flex flex-col justify-between rounded-xl p-3 text-left transition-all ${
+                        isSelected
+                          ? 'border border-[var(--rogym-accent)] bg-[var(--rogym-accent)]/15 text-white shadow-md ring-1 ring-[var(--rogym-accent)]'
+                          : isAvailable
+                            ? 'border border-white/10 bg-white/[0.02] text-white hover:border-[var(--rogym-accent)]/40 hover:bg-white/[0.05]'
+                            : isCompleted
+                              ? 'cursor-not-allowed border border-white/5 bg-white/[0.01] text-white/40 opacity-60'
+                              : 'cursor-not-allowed border border-amber-500/20 bg-amber-500/[0.03] text-white/50 opacity-75'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <span className={`text-sm font-semibold truncate ${isSelected ? 'text-[var(--rogym-accent)]' : 'text-white'}`}>
+                          {day.name || t('workout.schedule.dayWeek', { day: day.dayNumber, week: day.weekNumber })}
+                        </span>
+                        {isCompleted && (
+                          <span className="inline-flex shrink-0 items-center gap-1 rounded-md border border-emerald-500/20 bg-emerald-500/10 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-400">
+                            <CheckCircle2 size={11} />
+                            {t('workout.schedule.booking.dayStatusCompleted')}
+                          </span>
+                        )}
+                        {isScheduled && (
+                          <span className="inline-flex shrink-0 items-center gap-1 rounded-md border border-amber-500/20 bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-semibold text-amber-300">
+                            <Clock size={11} />
+                            {t('workout.schedule.booking.dayStatusScheduled')}
+                          </span>
+                        )}
+                        {isAvailable && (
+                          <span className={`inline-flex shrink-0 items-center gap-1 rounded-md border px-1.5 py-0.5 text-[10px] font-semibold ${
+                            isSelected
+                              ? 'border-[var(--rogym-accent)]/40 bg-[var(--rogym-accent)]/20 text-[var(--rogym-accent)] font-bold'
+                              : 'border-sky-500/20 bg-sky-500/10 text-sky-400'
+                          }`}>
+                            {t('workout.schedule.booking.dayStatusAvailable')}
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="mt-2 flex items-center justify-between text-xs text-white/50">
+                        <span>
+                          {t('workout.schedule.booking.dayExercisesCount', { count: day.exerciseCount })}
+                        </span>
+                        {day.notes && (
+                          <span className="truncate max-w-[130px] italic text-white/40 text-[11px]">
+                            {day.notes}
+                          </span>
+                        )}
+                      </div>
+                    </button>
+                  )
+                })}
+              </div>
+            ) : null}
           </div>
-        ) : null}
+        )}
       </div>
     </Modal>
   )
 }
-

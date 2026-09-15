@@ -65,19 +65,37 @@ describe('Member PT Booking Integration Suite (BR-01 -> BR-10 & Notifications)',
         update: jest.fn(),
       },
       subscription: {
-        findFirst: jest.fn(),
+        findFirst: jest.fn().mockResolvedValue({
+          subscriptionId: 100n,
+          status: 'active',
+          package: { includesPt: true },
+        }),
       },
       gymRoom: {
         findMany: jest.fn().mockResolvedValue([{ roomId: 1n, name: 'Room 1' }]),
       },
       memberWorkoutPlan: {
-        findFirst: jest.fn(),
+        findFirst: jest.fn().mockResolvedValue({
+          assignmentId: 77n,
+          planId: 1n,
+          memberId: 10n,
+          assignedByStaffId: 5n,
+          status: 'active',
+        }),
       },
       workoutPlanDay: {
-        findFirst: jest.fn(),
+        findFirst: jest.fn().mockResolvedValue({
+          planDayId: 88n,
+          planId: 1n,
+        }),
+      },
+      workoutLog: {
+        findFirst: jest.fn().mockResolvedValue(null),
+        findMany: jest.fn().mockResolvedValue([]),
       },
       $transaction: jest.fn((callback) => callback(mockPrisma)),
     }
+
 
     mockAudit = {
       log: jest.fn().mockResolvedValue(undefined),
@@ -171,6 +189,7 @@ describe('Member PT Booking Integration Suite (BR-01 -> BR-10 & Notifications)',
         subscriptionId: 100n,
         memberId: 10n,
         status: 'active',
+        package: { includesPt: true },
         startDate: new Date('2026-01-01'),
         endDate: new Date('2026-12-31'),
       })
@@ -189,8 +208,8 @@ describe('Member PT Booking Integration Suite (BR-01 -> BR-10 & Notifications)',
         memberId: 10n,
         trainerStaffId: 5n,
         roomId: 1n,
-        assignmentId: null,
-        planDayId: null,
+        assignmentId: 77n,
+        planDayId: 88n,
         startTime: new Date(startTime),
         endTime: new Date(endTime),
         status: TrainingSessionStatus.scheduled,
@@ -215,9 +234,10 @@ describe('Member PT Booking Integration Suite (BR-01 -> BR-10 & Notifications)',
       mockPrisma.trainingSession.create.mockResolvedValue(createdSession)
 
       const result = await bookingService.bookSessionByMember(
-        { startTime, endTime },
+        { startTime, endTime, assignmentId: '77', planDayId: '88' },
         makeCaller()
       )
+
 
       // Assertions for BR-01
       expect(result.data.status).toBe('scheduled')
@@ -276,7 +296,7 @@ describe('Member PT Booking Integration Suite (BR-01 -> BR-10 & Notifications)',
       const endTime = addDays(1, 11)
 
       await expect(
-        bookingService.bookSessionByMember({ startTime, endTime }, makeCaller())
+        bookingService.bookSessionByMember({ startTime, endTime, assignmentId: '77', planDayId: '88' }, makeCaller())
       ).rejects.toMatchObject({
         response: expect.objectContaining({
           code: 'NO_PRIMARY_TRAINER',
@@ -310,7 +330,7 @@ describe('Member PT Booking Integration Suite (BR-01 -> BR-10 & Notifications)',
       const endTime = new Date(new Date(startTime).getTime() + 30 * 60 * 1000).toISOString()
 
       await expect(
-        bookingService.bookSessionByMember({ startTime, endTime }, makeCaller())
+        bookingService.bookSessionByMember({ startTime, endTime, assignmentId: '77', planDayId: '88' }, makeCaller())
       ).rejects.toMatchObject({
         response: expect.objectContaining({
           code: 'INVALID_DURATION',
@@ -319,12 +339,14 @@ describe('Member PT Booking Integration Suite (BR-01 -> BR-10 & Notifications)',
     })
 
     it('throws 400 INVALID_BOOKING_TIME if slot starts in less than 5 minutes (or in the past)', async () => {
-      const startTime = new Date(Date.now() + 2 * 60 * 1000).toISOString()
-      const endTime = new Date(Date.now() + 62 * 60 * 1000).toISOString()
+      const base = Date.now()
+      const startTime = new Date(base + 2 * 60 * 1000).toISOString()
+      const endTime = new Date(base + 62 * 60 * 1000).toISOString()
 
       await expect(
-        bookingService.bookSessionByMember({ startTime, endTime }, makeCaller())
+        bookingService.bookSessionByMember({ startTime, endTime, assignmentId: '77', planDayId: '88' }, makeCaller())
       ).rejects.toMatchObject({
+
         response: expect.objectContaining({
           code: 'INVALID_BOOKING_TIME',
         }),
@@ -336,7 +358,7 @@ describe('Member PT Booking Integration Suite (BR-01 -> BR-10 & Notifications)',
       const endTime = addDays(8, 11)
 
       await expect(
-        bookingService.bookSessionByMember({ startTime, endTime }, makeCaller())
+        bookingService.bookSessionByMember({ startTime, endTime, assignmentId: '77', planDayId: '88' }, makeCaller())
       ).rejects.toMatchObject({
         response: expect.objectContaining({
           code: 'INVALID_BOOKING_TIME',
@@ -363,7 +385,7 @@ describe('Member PT Booking Integration Suite (BR-01 -> BR-10 & Notifications)',
       mockPrisma.trainingSession.count.mockResolvedValue(3)
 
       await expect(
-        bookingService.bookSessionByMember({ startTime, endTime }, makeCaller())
+        bookingService.bookSessionByMember({ startTime, endTime, assignmentId: '77', planDayId: '88' }, makeCaller())
       ).rejects.toMatchObject({
         response: expect.objectContaining({
           code: 'BOOKING_LIMIT_EXCEEDED',
@@ -391,10 +413,36 @@ describe('Member PT Booking Integration Suite (BR-01 -> BR-10 & Notifications)',
       mockPrisma.subscription.findFirst.mockResolvedValue(null)
 
       await expect(
-        bookingService.bookSessionByMember({ startTime, endTime }, makeCaller())
+        bookingService.bookSessionByMember({ startTime, endTime, assignmentId: '77', planDayId: '88' }, makeCaller())
       ).rejects.toMatchObject({
         response: expect.objectContaining({
           code: 'MEMBER_HAS_NO_ACTIVE_SUBSCRIPTION',
+        }),
+      })
+    })
+
+    it('throws 403 SUBSCRIPTION_DOES_NOT_INCLUDE_PT when subscription does not include PT benefit', async () => {
+      const startTime = addDays(2, 14)
+      const endTime = addDays(2, 15)
+
+      mockPrisma.member.findFirst.mockResolvedValue({
+        memberId: 10n,
+        primaryTrainerId: 5n,
+        primaryTrainer: { staffId: 5n, deletedAt: null },
+      })
+      mockPrisma.trainingSession.count.mockResolvedValue(0)
+
+      mockPrisma.subscription.findFirst.mockResolvedValue({
+        subscriptionId: 100n,
+        status: 'active',
+        package: { includesPt: false },
+      })
+
+      await expect(
+        bookingService.bookSessionByMember({ startTime, endTime, assignmentId: '77', planDayId: '88' }, makeCaller())
+      ).rejects.toMatchObject({
+        response: expect.objectContaining({
+          code: 'SUBSCRIPTION_DOES_NOT_INCLUDE_PT',
         }),
       })
     })
@@ -414,6 +462,7 @@ describe('Member PT Booking Integration Suite (BR-01 -> BR-10 & Notifications)',
       mockPrisma.subscription.findFirst.mockResolvedValue({
         subscriptionId: 100n,
         status: 'active',
+        package: { includesPt: true },
       })
     })
 
@@ -431,7 +480,7 @@ describe('Member PT Booking Integration Suite (BR-01 -> BR-10 & Notifications)',
       })
 
       await expect(
-        bookingService.bookSessionByMember({ startTime, endTime }, makeCaller())
+        bookingService.bookSessionByMember({ startTime, endTime, assignmentId: '77', planDayId: '88' }, makeCaller())
       ).rejects.toMatchObject({
         response: expect.objectContaining({
           code: 'TRAINER_TIME_OVERLAP',
@@ -455,7 +504,7 @@ describe('Member PT Booking Integration Suite (BR-01 -> BR-10 & Notifications)',
         })
 
       await expect(
-        bookingService.bookSessionByMember({ startTime, endTime }, makeCaller())
+        bookingService.bookSessionByMember({ startTime, endTime, assignmentId: '77', planDayId: '88' }, makeCaller())
       ).rejects.toMatchObject({
         response: expect.objectContaining({
           code: 'MEMBER_TIME_OVERLAP',
@@ -474,13 +523,14 @@ describe('Member PT Booking Integration Suite (BR-01 -> BR-10 & Notifications)',
       mockPrisma.gymRoom.findMany.mockResolvedValue([])
 
       await expect(
-        bookingService.bookSessionByMember({ startTime, endTime }, makeCaller())
+        bookingService.bookSessionByMember({ startTime, endTime, assignmentId: '77', planDayId: '88' }, makeCaller())
       ).rejects.toMatchObject({
         response: expect.objectContaining({
           code: 'NO_ROOM_AVAILABLE',
         }),
       })
     })
+
   })
 
   // ───────────────────────────────────────────────────────────────────────────
@@ -507,6 +557,7 @@ describe('Member PT Booking Integration Suite (BR-01 -> BR-10 & Notifications)',
       mockPrisma.subscription.findFirst.mockResolvedValue({
         subscriptionId: 100n,
         status: 'active',
+        package: { includesPt: true },
       })
       mockPrisma.trainingSession.findFirst.mockResolvedValue(null)
       mockPrisma.gymRoom.findMany.mockResolvedValue([
@@ -517,11 +568,15 @@ describe('Member PT Booking Integration Suite (BR-01 -> BR-10 & Notifications)',
       mockPrisma.memberWorkoutPlan.findFirst.mockResolvedValue({
         assignmentId: 77n,
         planId: 1n,
+        memberId: 10n,
+        assignedByStaffId: 5n,
+        status: 'active',
       })
       mockPrisma.workoutPlanDay.findFirst.mockResolvedValue({
         planDayId: 88n,
         planId: 1n,
       })
+
 
       const createdSession = {
         sessionId: 1001n,

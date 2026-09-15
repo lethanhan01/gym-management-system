@@ -94,11 +94,34 @@ export interface TrainerAvailabilityData {
   slots: TrainerAvailabilitySlot[]
 }
 
+export interface BookingPlanDay {
+  planDayId: string
+  dayNumber: number
+  weekNumber: number
+  dayOfWeek: number
+  name: string
+  notes: string | null
+  exerciseCount: number
+  status: 'available' | 'completed' | 'scheduled'
+}
+
+export interface MemberActivePlanBookingData {
+  hasPtBenefit: boolean
+  subscriptionReason?: 'NO_ACTIVE_SUBSCRIPTION' | 'SUBSCRIPTION_WITHOUT_PT'
+  hasActivePlan: boolean
+  allCompletedOrScheduled: boolean
+  trainerStaffId: string | null
+  assignmentId?: string
+  planId?: string
+  planName?: string
+  days: BookingPlanDay[]
+}
+
 export interface CreateMemberBookingPayload {
   startTime: string
   endTime: string
-  assignmentId?: string
-  planDayId?: string
+  assignmentId: string
+  planDayId: string
 }
 
 export const trainingSessionService = {
@@ -187,6 +210,13 @@ export const trainingSessionService = {
       `/training-sessions/trainer-availability-for-trainer?${params.toString()}`
     )
     return res.data
+  },
+
+  getActivePlanDaysForBooking: async (): Promise<MemberActivePlanBookingData> => {
+    const res = await api.get<{ success: boolean; data: MemberActivePlanBookingData }>(
+      '/training-sessions/member-booking/plan-days'
+    )
+    return res.data.data
   },
 
   bookSession: async (payload: CreateMemberBookingPayload): Promise<TrainingSession> => {
