@@ -74,11 +74,13 @@ export const authService = {
     return { user: user as AuthUser, token: accessToken }
   },
 
-  linkLine: async (idToken: string): Promise<{ lineName: string }> => {
-    const res = await api.post<{ success: boolean; data: { lineName: string } }>(
-      '/auth/line-link',
-      { idToken },
-    )
+  linkLine: async (
+    idToken: string
+  ): Promise<{ lineName: string; avatarUrl?: string | null }> => {
+    const res = await api.post<{
+      success: boolean
+      data: { lineName: string; avatarUrl?: string | null }
+    }>('/auth/line-link', { idToken })
     return res.data.data
   },
 

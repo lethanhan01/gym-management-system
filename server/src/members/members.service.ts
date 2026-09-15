@@ -589,8 +589,19 @@ export class MembersService {
 
   private serializeMember(
     member: Member,
-    user: { fullName: string; email: string; phone: string | null; status: string }
+    user: {
+      fullName: string
+      email: string
+      phone: string | null
+      status: string
+      avatarFileId?: bigint | null
+      avatarUrl?: string | null
+    }
   ) {
+    const avatarUrl = user.avatarFileId
+      ? `/api/v1/files/${user.avatarFileId}`
+      : (user.avatarUrl ?? null)
+
     return {
       memberId: member.memberId.toString(),
       memberCode: member.memberCode,
@@ -603,6 +614,7 @@ export class MembersService {
       address: member.address,
       primaryTrainerId: member.primaryTrainerId?.toString() ?? null,
       createdAt: member.createdAt,
+      avatarUrl,
     }
   }
 
@@ -641,6 +653,9 @@ export class MembersService {
       trainerName: member.primaryTrainer?.user.fullName ?? null,
       emailVerifiedAt: member.user.emailVerifiedAt,
       avatarFileId: member.user.avatarFileId?.toString() ?? null,
+      avatarUrl: member.user.avatarFileId
+        ? `/api/v1/files/${member.user.avatarFileId}`
+        : (member.user.avatarUrl ?? null),
       primaryTrainer: member.primaryTrainer
         ? {
             staffId: member.primaryTrainer.staffId.toString(),

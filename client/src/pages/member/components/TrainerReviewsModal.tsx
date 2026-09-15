@@ -384,7 +384,14 @@ export default function TrainerReviewsModal({
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex items-center gap-2.5">
                       <Avatar
-                        src={!r.isAnonymous && r.reviewerAvatarFileId ? `/api/v1/files/${r.reviewerAvatarFileId}` : null}
+                        src={
+                          !r.isAnonymous
+                            ? (r.reviewerAvatarUrl ??
+                                (r.reviewerAvatarFileId
+                                  ? `/api/v1/files/${r.reviewerAvatarFileId}`
+                                  : null))
+                            : null
+                        }
                         name={r.reviewerName || t('chooseTrainer.modal.anonymousUser')}
                         size="sm"
                         shape="circle"

@@ -8,6 +8,7 @@ model User {
   status          UserStatus  @default(pending_verification)
   createdAt       DateTime    @default(now()) @map("created_at") @db.Timestamp(6)
   avatarFileId    BigInt?     @map("avatar_file_id")
+  avatarUrl       String?     @map("avatar_url") @db.VarChar(1000)
   deletedAt       DateTime?   @map("deleted_at") @db.Timestamp(6)
   emailVerifiedAt DateTime?   @map("email_verified_at") @db.Timestamp(6)
   lineId          String?     @unique @map("line_id") @db.VarChar(50)

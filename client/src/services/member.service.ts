@@ -11,6 +11,8 @@ export interface MemberProfile {
   address: string | null
   primaryTrainerId: string | null
   trainerName: string | null
+  avatarFileId?: string | null
+  avatarUrl?: string | null
   primaryTrainer?: {
     staffId: string
     staffCode: string
@@ -103,6 +105,7 @@ export interface TrainerReviewItem {
   isAnonymous: boolean
   reviewerName: string | null
   reviewerAvatarFileId: string | null
+  reviewerAvatarUrl?: string | null
   createdAt: string
 }
 

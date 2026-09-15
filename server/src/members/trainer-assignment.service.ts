@@ -90,7 +90,7 @@ export class TrainerAssignmentService {
   async getAvailableTrainers() {
     const trainers = await this.prisma.staff.findMany({
       where: { deletedAt: null, OR: [{ position: 'trainer' }, { position: 'pt' }] },
-      include: { user: { select: { fullName: true, avatarFileId: true } } },
+      include: { user: { select: { fullName: true, avatarFileId: true, avatarUrl: true } } },
       orderBy: { staffCode: 'asc' },
     })
 
@@ -152,6 +152,9 @@ export class TrainerAssignmentService {
           fullName: t.user.fullName,
           position: t.position,
           avatarFileId: t.user.avatarFileId?.toString() ?? null,
+          avatarUrl: t.user.avatarFileId
+            ? `/api/v1/files/${t.user.avatarFileId}`
+            : (t.user.avatarUrl ?? null),
           specialty: t.specialty ?? null,
           experienceYears: t.experienceYears ?? null,
           bio: t.bio ?? null,
@@ -169,7 +172,7 @@ export class TrainerAssignmentService {
   ) {
     const trainer = await this.prisma.staff.findFirst({
       where: { staffId, deletedAt: null, OR: [{ position: 'trainer' }, { position: 'pt' }] },
-      include: { user: { select: { fullName: true, avatarFileId: true } } },
+      include: { user: { select: { fullName: true, avatarFileId: true, avatarUrl: true } } },
     })
     if (!trainer) {
       throw new NotFoundException({
@@ -250,7 +253,7 @@ export class TrainerAssignmentService {
         include: {
           member: {
             include: {
-              user: { select: { fullName: true, avatarFileId: true } },
+              user: { select: { fullName: true, avatarFileId: true, avatarUrl: true } },
             },
           },
         },
@@ -265,6 +268,11 @@ export class TrainerAssignmentService {
       isAnonymous: r.isAnonymous,
       reviewerName: r.isAnonymous ? null : (r.member?.user?.fullName ?? null),
       reviewerAvatarFileId: r.isAnonymous ? null : (r.member?.user?.avatarFileId?.toString() ?? null),
+      reviewerAvatarUrl: r.isAnonymous
+        ? null
+        : (r.member?.user?.avatarFileId
+            ? `/api/v1/files/${r.member.user.avatarFileId}`
+            : (r.member?.user?.avatarUrl ?? null)),
       createdAt: r.createdAt.toISOString(),
     }))
 
@@ -276,6 +284,9 @@ export class TrainerAssignmentService {
           fullName: trainer.user.fullName,
           position: trainer.position,
           avatarFileId: trainer.user.avatarFileId?.toString() ?? null,
+          avatarUrl: trainer.user.avatarFileId
+            ? `/api/v1/files/${trainer.user.avatarFileId}`
+            : (trainer.user.avatarUrl ?? null),
           specialty: trainer.specialty,
           experienceYears: trainer.experienceYears,
           bio: trainer.bio,

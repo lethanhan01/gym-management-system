@@ -168,6 +168,7 @@ export class ChatService {
                 userId: true,
                 fullName: true,
                 avatarFileId: true,
+                avatarUrl: true,
               },
             },
           },
@@ -179,6 +180,7 @@ export class ChatService {
                 userId: true,
                 fullName: true,
                 avatarFileId: true,
+                avatarUrl: true,
               },
             },
           },
@@ -212,7 +214,9 @@ export class ChatService {
           participant: {
             userId: participantUser.userId.toString(),
             fullName: participantUser.fullName,
-            avatarUrl: participantUser.avatarFileId ? `/api/v1/files/${participantUser.avatarFileId}` : null,
+            avatarUrl: participantUser.avatarFileId
+              ? `/api/v1/files/${participantUser.avatarFileId}`
+              : (participantUser.avatarUrl ?? null),
             role: participantRole,
             memberId: isMember ? undefined : conv.member.memberId.toString(),
             memberCode: isMember ? undefined : conv.member.memberCode,
@@ -258,6 +262,7 @@ export class ChatService {
                 userId: true,
                 fullName: true,
                 avatarFileId: true,
+                avatarUrl: true,
               },
             },
           },
@@ -332,7 +337,7 @@ export class ChatService {
       fullName: member.primaryTrainer.user.fullName,
       avatarUrl: member.primaryTrainer.user.avatarFileId
         ? `/api/v1/files/${member.primaryTrainer.user.avatarFileId}`
-        : null,
+        : (member.primaryTrainer.user.avatarUrl ?? null),
       role: 'trainer' as const,
       staffId: member.primaryTrainer.staffId.toString(),
       specialty: member.primaryTrainer.specialty,
@@ -356,7 +361,7 @@ export class ChatService {
         fullName: member.primaryTrainer.user.fullName,
         avatarUrl: member.primaryTrainer.user.avatarFileId
           ? `/api/v1/files/${member.primaryTrainer.user.avatarFileId}`
-          : null,
+          : (member.primaryTrainer.user.avatarUrl ?? null),
         position: member.primaryTrainer.position,
         specialty: member.primaryTrainer.specialty,
       },
@@ -433,6 +438,7 @@ export class ChatService {
             userId: true,
             fullName: true,
             avatarFileId: true,
+            avatarUrl: true,
           },
         },
         attachmentFile: {
@@ -472,7 +478,7 @@ export class ChatService {
           senderName: msg.senderUser.fullName,
           senderAvatarUrl: msg.senderUser.avatarFileId
             ? `/api/v1/files/${msg.senderUser.avatarFileId}`
-            : null,
+            : (msg.senderUser.avatarUrl ?? null),
           isSender: msg.senderUserId === userId,
           messageType: msg.messageType,
           content: msg.content,
@@ -550,6 +556,7 @@ export class ChatService {
               userId: true,
               fullName: true,
               avatarFileId: true,
+              avatarUrl: true,
             },
           },
           attachmentFile: {
@@ -585,7 +592,7 @@ export class ChatService {
       senderName: message.senderUser.fullName,
       senderAvatarUrl: message.senderUser.avatarFileId
         ? `/api/v1/files/${message.senderUser.avatarFileId}`
-        : null,
+        : (message.senderUser.avatarUrl ?? null),
       isSender: true,
       messageType: message.messageType,
       content: message.content,

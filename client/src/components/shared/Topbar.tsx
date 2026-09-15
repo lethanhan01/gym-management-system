@@ -9,11 +9,16 @@ import NotificationBell from '@/components/shared/NotificationBell';
 
 
 export default function Topbar({ className }: { className?: string } = {}) {
-  const [open, setOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
   const user = useAuthStore((state) => state.user);
   const clearAuth = useAuthStore((state) => state.clearAuth);
   const clearSubscription = useSubscriptionStore((state) => state.clear);
+  const [open, setOpen] = useState(false);
+  const [imgError, setImgError] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setImgError(false);
+  }, [user?.avatarUrl]);
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const { t: tCommon } = useTranslation('common');
@@ -76,8 +81,13 @@ export default function Topbar({ className }: { className?: string } = {}) {
           onClick={() => setOpen((v) => !v)}
           className={`rogym-topbar__avatar ${open ? 'is-open' : ''} overflow-hidden`}
         >
-          {user?.avatarUrl ? (
-            <img src={user.avatarUrl} alt={user.fullName} className="w-full h-full object-cover" />
+          {user?.avatarUrl && !imgError ? (
+            <img
+              src={user.avatarUrl}
+              alt={user.fullName}
+              className="w-full h-full object-cover"
+              onError={() => setImgError(true)}
+            />
           ) : (
             initials
           )}
@@ -87,8 +97,13 @@ export default function Topbar({ className }: { className?: string } = {}) {
           <div className="rogym-sx-f10cbe0f">
             <div className="rogym-sx-3d17be38">
               <div className="rogym-sx-09581911 overflow-hidden">
-                {user?.avatarUrl ? (
-                  <img src={user.avatarUrl} alt={user.fullName} className="w-full h-full object-cover" />
+                {user?.avatarUrl && !imgError ? (
+                  <img
+                    src={user.avatarUrl}
+                    alt={user.fullName}
+                    className="w-full h-full object-cover"
+                    onError={() => setImgError(true)}
+                  />
                 ) : (
                   initials
                 )}
