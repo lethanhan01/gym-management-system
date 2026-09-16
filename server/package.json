@@ -6,6 +6,7 @@
     "dev": "node scripts/dev-server.js",
     "dev:line-mock": "node scripts/dev-line-mock.js",
     "build": "npm run db:safety:check && prisma db push && nest build",
+    "build:docker": "prisma generate && nest build",
     "config:check": "node dist/config/check.js",
     "prestart": "npm run config:check",
     "start": "node dist/main.js",

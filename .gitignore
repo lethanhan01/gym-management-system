@@ -24,6 +24,7 @@ coverage/
 .env.*
 !.env.example
 !.env.liff-mock.example
+!.env.docker.example
 
 # Logs
 logs/
