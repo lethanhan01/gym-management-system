@@ -8,9 +8,9 @@ WORKDIR /app
 # Cache dependency layer
 COPY package*.json ./
 
-# Install only production dependencies with BuildKit cache
-RUN --mount=type=cache,target=/root/.npm \
-    npm ci --omit=dev && npm cache clean --force
+# Install only production dependencies with BuildKit locked cache
+RUN --mount=type=cache,target=/root/.npm,sharing=locked \
+    npm ci --omit=dev
 
 # ==============================================================================
 # STAGE 2: BUILDER & COMPILATION (builder)
@@ -25,9 +25,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     openssl \
     && rm -rf /var/lib/apt/lists/*
 
-# Install all dependencies (including devDependencies) with BuildKit cache
+# Install all dependencies (including devDependencies) with BuildKit locked cache
 COPY package*.json ./
-RUN --mount=type=cache,target=/root/.npm \
+RUN --mount=type=cache,target=/root/.npm,sharing=locked \
     npm ci
 
 # Copy Prisma schema and generate client (isolated layer)
