@@ -52,7 +52,9 @@ async function bootstrap(): Promise<void> {
   )
   app.useGlobalFilters(new HttpExceptionFilter())
   app.useGlobalInterceptors(app.get(DatabaseRetryInterceptor))
-  app.setGlobalPrefix('api/v1', { exclude: ['health', '/'] })
+  app.setGlobalPrefix('api/v1', {
+    exclude: ['/', 'health', 'health/live', 'health/ready'],
+  })
   setupSwagger(app)
 
   const uploadsDir = join(process.cwd(), 'uploads')
