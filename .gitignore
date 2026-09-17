@@ -42,6 +42,10 @@ pnpm-debug.log*
 # Emergency database snapshots (may contain production data)
 server/backups/
 
+# Local file uploads
+uploads/
+server/uploads/
+
 # OS
 .DS_Store
 Thumbs.db

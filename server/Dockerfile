@@ -60,7 +60,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # Security Hardening: Tạo thư mục uploads với quyền sở hữu của user node
 RUN mkdir -p /app/uploads/chat /app/uploads/avatars && \
-    chown -R node:node /app/uploads
+    chown -R node:node /app/uploads && \
+    chmod -R 775 /app/uploads
 
 # Copy production node_modules from deps-prod stage (read-only for node)
 COPY --from=deps-prod /app/node_modules ./node_modules

@@ -17,7 +17,7 @@ services:
 
     # Persistent storage for user uploads (avatars, chat media)
     volumes:
-      - ./uploads:/app/uploads
+      - server_uploads:/app/uploads
 
     # Resource limits tailored for 4GB VPS (protecting host monitoring stack)
     deploy:
@@ -43,3 +43,7 @@ services:
       timeout: 5s
       retries: 3
       start_period: 20s
+
+volumes:
+  server_uploads:
+    name: gym_server_uploads
