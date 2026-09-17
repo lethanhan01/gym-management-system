@@ -12,6 +12,8 @@ const DOCS_PATH = 'docs'
 const PUBLIC_PATHS = new Set([
   '/',
   '/health',
+  '/health/live',
+  '/health/ready',
   '/auth/login',
   '/auth/forgot-password',
   '/auth/reset-password',
@@ -64,7 +66,7 @@ const successResponse = {
 
 const tagForPath = (path: string): string => {
   const route = path.replace(API_PREFIX, '')
-  if (route === '/' || route === '/health') return 'Health'
+  if (route === '/' || route === '/health' || route.startsWith('/health/')) return 'Health'
   if (route.startsWith('/auth')) return 'Auth'
   if (route.startsWith('/line')) return 'LINE'
   if (route.startsWith('/devices')) return 'Devices'
