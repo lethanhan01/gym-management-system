@@ -1,0 +1,40 @@
+# Git
+.git
+.gitignore
+
+# Dependencies & Build artifacts
+node_modules
+dist
+coverage
+*.tsbuildinfo
+
+# Secrets & Environment configs
+.env
+.env.*
+!.env.example
+!.env.docker.example
+
+# Local storage & Logs
+uploads
+logs
+*.log
+npm-debug.log*
+
+# IDE & Editor configs
+.idea
+.vscode
+*.sublime-*
+
+# Documentation, Testing & Configs
+README.md
+docs
+test
+scripts
+**/*.spec.ts
+**/*.spec.js
+**/*.test.ts
+.eslintrc*
+.prettier*
+.editorconfig
+.nvmrc
+prisma/migrations

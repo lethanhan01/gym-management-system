@@ -1,0 +1,46 @@
+services:
+  gym-server:
+    image: ghcr.io/lethanhan01/gym-management-system/server:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: gym-server
+    restart: unless-stopped
+    init: true
+
+    # Load environment file from host
+    env_file:
+      - .env
+
+    # Bind strictly to host 127.0.0.1 for reverse proxying via host Nginx
+    ports:
+      - "127.0.0.1:3000:3000"
+
+    # Persistent storage for user uploads (avatars, chat media)
+    volumes:
+      - ./uploads:/app/uploads
+
+    # Resource limits tailored for 4GB VPS (protecting host monitoring stack)
+    deploy:
+      resources:
+        limits:
+          cpus: "0.75"
+          memory: 512M
+        reservations:
+          cpus: "0.25"
+          memory: 256M
+
+    # Docker log rotation to avoid filling up VPS disk
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+    # Container healthcheck (liveness probe to prevent cascade restart storms)
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/health/live').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
