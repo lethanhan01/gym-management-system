@@ -1,7 +1,7 @@
 # ==============================================================================
 # CONFIGURATION & GLOBAL ARGS
 # ==============================================================================
-ARG NODE_VERSION=20.18-bookworm-slim
+ARG NODE_VERSION=22-bookworm-slim
 
 # ==============================================================================
 # STAGE 1: PRODUCTION DEPENDENCIES (deps-prod)
@@ -51,6 +51,7 @@ WORKDIR /app
 # Runtime environment settings
 ENV NODE_ENV=production
 ENV PORT=3000
+ENV NODE_OPTIONS="--experimental-require-module"
 
 # Install tini for robust PID 1 signal forwarding and zombie process reaping
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -84,9 +85,10 @@ EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
   CMD node -e "fetch('http://127.0.0.1:3000/health/live').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"
 
-# Entrypoint manages signals (SIGTERM/SIGINT) and zombie processes
-ENTRYPOINT ["tini", "--"]
+# Entrypoint manages signals (SIGTERM/SIGINT) and zombie processes (-s for subreaper)
+ENTRYPOINT ["tini", "-s", "--"]
 
 # Start application with Node V8 memory constraint for 4GB VPS (container memory 512MB)
 CMD ["node", "--max-old-space-size=384", "dist/main.js"]
+
 

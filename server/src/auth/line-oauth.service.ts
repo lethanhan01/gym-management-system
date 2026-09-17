@@ -21,7 +21,38 @@ import {
   LINE_MOCK_USER_NAME,
   LINE_MOCK_USER_PICTURE,
 } from '../line-mock/constants'
-import { createRemoteJWKSet, jwtVerify, type JWTPayload } from 'jose'
+import type { JWTPayload, createRemoteJWKSet, jwtVerify } from 'jose'
+
+type JoseModule = {
+  createRemoteJWKSet: typeof createRemoteJWKSet
+  jwtVerify: typeof jwtVerify
+}
+
+let joseModulePromise: Promise<JoseModule> | null = null
+
+const loadJose = async (): Promise<JoseModule> => {
+  if (!joseModulePromise) {
+    joseModulePromise = (async () => {
+      try {
+        // In Jest or Node environments where require() works
+        // eslint-disable-next-line @typescript-eslint/no-var-requires
+        return require('jose') as JoseModule
+      } catch (err: unknown) {
+        if (
+          err &&
+          typeof err === 'object' &&
+          'code' in err &&
+          (err as { code: string }).code === 'ERR_REQUIRE_ESM'
+        ) {
+          // Native dynamic import prevents tsc from emitting require()
+          return (Function('return import("jose")')()) as Promise<JoseModule>
+        }
+        throw err
+      }
+    })()
+  }
+  return joseModulePromise
+}
 
 interface LineProfile {
   sub: string
@@ -39,10 +70,18 @@ interface LineIdTokenPayload extends JWTPayload {
 @Injectable()
 export class LineOAuthService {
   private readonly logger = new Logger(LineOAuthService.name)
-  private readonly lineJWKS = createRemoteJWKSet(new URL('https://api.line.me/oauth2/v2.1/certs'), {
-    cacheMaxAge: 24 * 60 * 60 * 1000,
-    cooldownDuration: 30 * 1000,
-  })
+  private lineJWKS: ReturnType<typeof createRemoteJWKSet> | null = null
+
+  private async getLineJWKS(): Promise<ReturnType<typeof createRemoteJWKSet>> {
+    if (!this.lineJWKS) {
+      const { createRemoteJWKSet: createJWKS } = await loadJose()
+      this.lineJWKS = createJWKS(new URL('https://api.line.me/oauth2/v2.1/certs'), {
+        cacheMaxAge: 24 * 60 * 60 * 1000,
+        cooldownDuration: 30 * 1000,
+      })
+    }
+    return this.lineJWKS
+  }
 
   constructor(
     private readonly prisma: PrismaService,
@@ -264,7 +303,9 @@ export class LineOAuthService {
 
     // 1. Thu verify token offline qua JWKS cache (giam latency roundtrip)
     try {
-      const { payload } = await jwtVerify<LineIdTokenPayload>(idToken, this.lineJWKS, {
+      const { jwtVerify } = await loadJose()
+      const jwks = await this.getLineJWKS()
+      const { payload } = await jwtVerify<LineIdTokenPayload>(idToken, jwks, {
         issuer: 'https://access.line.me',
         audience: channelId,
       })

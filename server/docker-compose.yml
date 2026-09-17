@@ -6,7 +6,6 @@ services:
       dockerfile: Dockerfile
     container_name: gym-server
     restart: unless-stopped
-    init: true
 
     # Load environment file from host
     env_file:
