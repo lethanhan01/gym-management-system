@@ -25,6 +25,7 @@ async function bootstrap(): Promise<void> {
     bodyParser: false,
     bufferLogs: true,
   })
+  app.enableShutdownHooks()
 
   const config = app.get(ConfigService)
 
