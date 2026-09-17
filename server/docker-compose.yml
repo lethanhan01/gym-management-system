@@ -14,7 +14,7 @@ services:
 
     # Bind strictly to host 127.0.0.1 for reverse proxying via host Nginx
     ports:
-      - "127.0.0.1:3000:3000"
+      - "127.0.0.1:${HOST_PORT:-3001}:3000"
 
     # Persistent storage for user uploads (avatars, chat media)
     volumes:
