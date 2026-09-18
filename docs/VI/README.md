@@ -22,6 +22,7 @@ Thư mục `docs/VI` tập hợp tài liệu tiếng Việt của dự án, từ
 | Kế hoạch Triển khai Nâng cấp LINE Flex Message (Phased Plan) | [line-flex-message-upgrade-plan.md](./line-flex-message-upgrade-plan.md) |
 | Lộ trình Chi tiết 5 Giai đoạn Nâng cấp LINE Flex (Phase 1-5) | [line-flex-upgrade/README.md](./line-flex-upgrade/README.md) |
 | Kế hoạch Triển khai Chat 1-1 Thời gian thực giữa Member và Trainer | [member-trainer-chat-implementation-plan.md](./Design/member-trainer-chat-implementation-plan.md) |
+| Kế hoạch Nâng cấp & Tối ưu hóa Frontend (Client Production-Ready) | [fe-optimization-production-plan.md](./fe-optimization-production-plan.md) |
 
 ## 2. Phạm vi tài liệu hiện tại
 
@@ -31,7 +32,7 @@ Thư mục `docs/VI` tập hợp tài liệu tiếng Việt của dự án, từ
 | Kiến trúc | `Architecture.md` mô tả thiết kế và luồng xử lý cho **UC01–UC12**, gồm các nhánh đăng ký hội viên và gia hạn/hủy gói. |
 | Cơ sở dữ liệu | `Database.md` mô tả PostgreSQL v1.2 với **29 bảng nghiệp vụ**, ERD, data dictionary, quan hệ, enum, soft delete và DDL tham chiếu. |
 | API | Bộ Markdown gồm **10 module, 134 endpoint nghiệp vụ**. `openapi.yaml` hiện mới bao phủ một phần API (**35 path, 56 operation**), nên hãy ưu tiên README API và tài liệu module khi tra contract. |
-| UI/UX | Có tài liệu tổng quan role–screen và đặc tả hierarchy riêng cho **Member, Trainer, Staff, Owner**. |
+| UI/UX & Frontend | Có tài liệu tổng quan role–screen, đặc tả hierarchy cho 4 vai trò và [kế hoạch nâng cấp FE Production-Ready](./fe-optimization-production-plan.md). |
 | Class diagram | `Class_Diagram/images` chứa ảnh class diagram theo **UC01–UC10**. |
 | Kiểm thử và chất lượng | Có hướng dẫn Postman tổng quát/chuyên biệt, tài liệu coverage–CI–SonarQube và các báo cáo SOLID, coupling, cohesion của backend. |
 
@@ -40,6 +41,7 @@ Thư mục `docs/VI` tập hợp tài liệu tiếng Việt của dự án, từ
 ```text
 docs/VI/
 ├── README.md
+├── fe-optimization-production-plan.md
 ├── line-unfollow-guide.md
 ├── line-messaging-specification.md
 ├── line-flex-message-upgrade-plan.md
