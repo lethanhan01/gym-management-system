@@ -87,5 +87,15 @@
   .rogym-font-display {
     font-family: var(--rogym-font-display);
   }
+
+  /* Utility ẩn thanh cuộn nhưng vẫn cho phép cuộn nội dung qua gesture/touch/wheel (Zero Layout Shift) */
+  .no-scrollbar {
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none; /* Firefox */
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none; /* Chrome, Safari, WebKit */
+  }
 }
 
