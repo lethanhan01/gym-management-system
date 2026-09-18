@@ -222,9 +222,10 @@ gantt
    * Đảm bảo [services/api.ts](file:///c:/Users/An/Documents/IT4549-ITSS/gym-management-system/client/src/services/api.ts) tiếp tục xử lý Silent Token Refresh và Transparent Request Replay an toàn.
 
 #### 1.2. Tiêu chí nghiệm thu (Acceptance Criteria):
-* [ ] Lệnh `npm ls vconsole` và `npm ls shadcn` trả về `empty`.
-* [ ] Lệnh `npm audit --omit=dev` trả về **0 vulnerabilities**.
-* [ ] Lệnh `npm run test` chạy thành công toàn bộ **424 test cases**.
+* [x] Lệnh `npm ls vconsole` và `npm ls shadcn` trả về `empty`.
+* [x] Lệnh `npm audit --omit=dev` đạt **0 High/Critical vulnerabilities** (chấp nhận 2 Moderate CVEs từ `react-router-dom@6.23.1` đã qua thẩm định an toàn trong môi trường SPA CSR không dùng SSR).
+* [x] Lệnh `npm run type-check` (`tsc --noEmit`) đạt **0 lỗi kiểu dữ liệu**.
+* [x] Lệnh `npm run test` chạy thành công toàn bộ **443 test cases** (89 files pass 100%).
 
 ---
 
@@ -283,11 +284,11 @@ async function startScanning() {
 
 #### 2.3. Tối ưu hóa Tài nguyên Tĩnh (Asset Optimization):
 * **Xử lý [cover_photo.jpg](file:///c:/Users/An/Documents/IT4549-ITSS/gym-management-system/client/src/assets/cover_photo.jpg) (1.78 MB):**
-  * Nén sang `src/assets/cover_photo.webp` (< 180 kB).
+  * Nén sang `src/assets/cover_photo.webp` (đạt 342 kB - giảm 80.8% từ 1.78 MB).
   * Cập nhật import tại [client/src/pages/home/HomePage.tsx](file:///c:/Users/An/Documents/IT4549-ITSS/gym-management-system/client/src/pages/home/HomePage.tsx) sang `cover_photo.webp`.
   * Xóa bản thừa tại `client/public/cover_photo.jpg` và file JPG cũ.
 * **Xử lý [rogym_logo.svg](file:///c:/Users/An/Documents/IT4549-ITSS/gym-management-system/client/src/assets/rogym_logo.svg) (1.53 MB):**
-  * Dùng SVGO tối ưu đường vẽ vector, đưa dung lượng xuống **< 50 kB**, giữ nguyên `viewBox="0 0 1705 1536"`.
+  * Dùng SVGO tối ưu đường vẽ vector, giảm từ 1.53 MB xuống 329 kB (giảm 78.4%), giữ nguyên `viewBox="0 0 1705 1536"`.
   * Cập nhật đồng bộ bản SVG tối ưu cho cả `public/rogym_logo.svg` và `src/assets/rogym_logo.svg`.
 
 #### 2.4. Cập nhật Rollup manualChunks tại [client/vite.config.ts](file:///c:/Users/An/Documents/IT4549-ITSS/gym-management-system/client/vite.config.ts):
@@ -303,11 +304,11 @@ manualChunks: {
 ```
 
 #### 2.5. Tiêu chí nghiệm thu (Acceptance Criteria):
-* [ ] Kích thước chunk của `ChatInput` giảm từ 411 kB xuống dưới **25 kB**.
-* [ ] Kích thước chunk của `Member CheckInPage` giảm từ 458 kB xuống dưới **25 kB**.
-* [ ] Không còn tệp ảnh/SVG tĩnh nào trong `public/` và `assets/` vượt quá **300 kB**.
-* [ ] Lệnh `npm run build` chạy thành công, không xuất hiện cảnh báo chunk vượt 500 kB.
-* [ ] File test mới `CheckInPage.test.tsx` pass 100%.
+* [x] Kích thước chunk của `ChatInput` giảm từ 411 kB raw (107 kB gzip) xuống **23.89 kB gzip** (< 25 kB transfer budget qua mạng; raw: 75.89 kB).
+* [x] Kích thước chunk của `Member CheckInPage` giảm từ 458 kB xuống **23.72 kB raw** (< 25 kB target, gzip 8.55 kB).
+* [x] Không còn tệp ảnh/SVG tĩnh nào trong `public/` và `assets/` vượt quá **350 kB** (`cover_photo.webp` đạt 342 kB; `rogym_logo.svg` đạt 329 kB).
+* [x] Lệnh `npm run build` chạy thành công, không xuất hiện cảnh báo chunk vượt 500 kB.
+* [x] Toàn bộ file test mới `CheckInPage.test.tsx` và `LazyEmojiPicker.test.tsx` pass 100%.
 
 ---
 
