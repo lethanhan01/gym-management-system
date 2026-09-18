@@ -124,14 +124,8 @@ export default function CheckInPage() {
       )
 
       if (!isMountedRef.current) {
-        controls.stop()
-        if (videoRef.current?.srcObject) {
-          const stream = videoRef.current.srcObject as MediaStream
-          if (stream && typeof stream.getTracks === 'function') {
-            stream.getTracks().forEach((track) => track.stop())
-          }
-          videoRef.current.srcObject = null
-        }
+        controlsRef.current = controls
+        releaseCameraStream()
         return
       }
 
@@ -144,7 +138,7 @@ export default function CheckInPage() {
         setError(t('qrCheckIn.errorCamera'))
       }
     }
-  }, [submitToken, t])
+  }, [releaseCameraStream, submitToken, t])
 
   useEffect(() => {
     if (!lastLog || !successOverlayOpen) return

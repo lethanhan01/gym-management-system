@@ -20,6 +20,31 @@ export interface AuthUser {
 
 export type AuthProvider = 'credentials' | 'line'
 
+export type LogoutListener = () => void
+const logoutListeners = new Set<LogoutListener>()
+
+/**
+ * Đăng ký callback dọn dẹp khi người dùng đăng xuất (clearAuth).
+ * Giúp các store/dịch vụ độc lập (chatStore, subscriptionStore, etc.) tự giải phóng tài nguyên
+ * mà không gây ra circular dependency với authStore.
+ */
+export function onLogout(listener: LogoutListener): () => void {
+  logoutListeners.add(listener)
+  return () => {
+    logoutListeners.delete(listener)
+  }
+}
+
+export function notifyLogout(): void {
+  logoutListeners.forEach((listener) => {
+    try {
+      listener()
+    } catch (err) {
+      console.error('[onLogout listener error]:', err)
+    }
+  })
+}
+
 interface AuthState {
   user: AuthUser | null
   token: string | null
@@ -47,8 +72,10 @@ export const useAuthStore = create<AuthState>()(
 
       setUser: (user) => set({ user }),
 
-      clearAuth: () =>
-        set({ user: null, token: null, authProvider: null, isAuthenticated: false }),
+      clearAuth: () => {
+        set({ user: null, token: null, authProvider: null, isAuthenticated: false })
+        notifyLogout()
+      },
 
       setHasHydrated: (value) => set({ hasHydrated: value }),
     }),

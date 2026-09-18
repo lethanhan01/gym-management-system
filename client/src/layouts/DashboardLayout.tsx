@@ -178,7 +178,6 @@ export default function DashboardLayout() {
             <ErrorBoundary
               resetKeys={[location.pathname]}
               onNavigateHome={() => navigate(getDashboardHome())}
-              onReset={() => {}}
             >
               <Outlet />
             </ErrorBoundary>

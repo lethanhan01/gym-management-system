@@ -32,6 +32,41 @@ vi.mock('@/services/member.service', () => ({
   },
 }))
 
+vi.mock('@/services/chat.service', () => ({
+  default: {
+    getConversations: vi.fn().mockResolvedValue([]),
+    getActiveConversation: vi.fn().mockResolvedValue({ eligibility: 'READY', conversation: null }),
+    connect: vi.fn(),
+    disconnect: vi.fn(),
+    onNewMessage: vi.fn(() => () => {}),
+    onUserTyping: vi.fn(() => () => {}),
+    onUserStopTyping: vi.fn(() => () => {}),
+    onMessagesSeen: vi.fn(() => () => {}),
+    onMessageDeleted: vi.fn(() => () => {}),
+    onConnect: vi.fn(() => () => {}),
+    onDisconnect: vi.fn(() => () => {}),
+    joinConversation: vi.fn().mockResolvedValue({ success: true }),
+    leaveConversation: vi.fn().mockResolvedValue({ success: true }),
+    markSeen: vi.fn().mockResolvedValue({ success: true }),
+  },
+  chatService: {
+    getConversations: vi.fn().mockResolvedValue([]),
+    getActiveConversation: vi.fn().mockResolvedValue({ eligibility: 'READY', conversation: null }),
+    connect: vi.fn(),
+    disconnect: vi.fn(),
+    onNewMessage: vi.fn(() => () => {}),
+    onUserTyping: vi.fn(() => () => {}),
+    onUserStopTyping: vi.fn(() => () => {}),
+    onMessagesSeen: vi.fn(() => () => {}),
+    onMessageDeleted: vi.fn(() => () => {}),
+    onConnect: vi.fn(() => () => {}),
+    onDisconnect: vi.fn(() => () => {}),
+    joinConversation: vi.fn().mockResolvedValue({ success: true }),
+    leaveConversation: vi.fn().mockResolvedValue({ success: true }),
+    markSeen: vi.fn().mockResolvedValue({ success: true }),
+  },
+}))
+
 describe('MemberChatPage Component', () => {
   const mockActiveConversation: ConversationSummary = {
     conversationId: 'conv-active-1',
