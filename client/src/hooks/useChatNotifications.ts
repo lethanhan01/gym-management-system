@@ -52,7 +52,8 @@ export function useChatNotifications() {
     }
 
     return () => {
-      // Khi unmount hoàn toàn hoặc đổi token
+      cleanupSocket()
+      initializedTokenRef.current = null
     }
   }, [
     isEligible,

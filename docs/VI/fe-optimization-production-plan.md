@@ -446,9 +446,9 @@ export class ErrorBoundary extends Component<Props, State> {
 * **Object URLs:** Đảm bảo `ChatInput.tsx` gọi `URL.revokeObjectURL(previewUrl)` khi đổi file hoặc unmount.
 
 #### 3.5. Tiêu chí nghiệm thu (Acceptance Criteria):
-* [ ] Component ném `throw new Error()` hiển thị Fallback UI đẹp mắt, không có màn hình trắng.
-* [ ] Rời khỏi trang Check-in tắt camera hoàn toàn, không để lại indicator camera trên trình duyệt.
-* [ ] Unit test cho ErrorBoundary pass 100%.
+* [x] Component ném `throw new Error()` hiển thị Fallback UI đẹp mắt, không có màn hình trắng.
+* [x] Rời khỏi trang Check-in tắt camera hoàn toàn, không để lại indicator camera trên trình duyệt.
+* [x] Unit test cho ErrorBoundary pass 100%.
 
 ---
 

@@ -100,6 +100,7 @@ export default defineConfig(({ command, mode }) => {
             'vendor-ui': ['lucide-react', 'clsx', 'tailwind-merge'],
             'vendor-emoji': ['emoji-picker-react'],
             'vendor-scanner': ['@zxing/browser'],
+            'vendor-i18n': ['i18next', 'react-i18next', 'i18next-browser-languagedetector'],
           },
         },
       },

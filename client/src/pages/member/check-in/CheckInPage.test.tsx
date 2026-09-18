@@ -113,4 +113,49 @@ describe('Member CheckInPage Component', () => {
 
     expect(mockStop).toHaveBeenCalled()
   })
+
+  it('TC-CK-05: stops active MediaStream tracks and sets video.srcObject to null on unmount', async () => {
+    const mockTrackStop = vi.fn()
+    const mockStream = {
+      getTracks: () => [{ stop: mockTrackStop }],
+    }
+
+    const { unmount, container } = render(
+      <MemoryRouter>
+        <CheckInPage />
+      </MemoryRouter>
+    )
+
+    const videoElement = container.querySelector('video') as HTMLVideoElement
+    expect(videoElement).not.toBeNull()
+    Object.defineProperty(videoElement, 'srcObject', {
+      value: mockStream,
+      writable: true,
+      configurable: true,
+    })
+
+    await waitFor(() => {
+      expect(mockDecodeCallback).not.toBeNull()
+    })
+
+    unmount()
+
+    expect(mockTrackStop).toHaveBeenCalledTimes(1)
+    expect(videoElement.srcObject).toBeNull()
+  })
+
+  it('TC-CK-06: displays starting loader while scanner is starting up', () => {
+    // Delay decodeFromVideoDevice resolution to inspect starting state
+    mockDecodeFromVideoDevice.mockReturnValueOnce(new Promise(() => {}))
+
+    render(
+      <MemoryRouter>
+        <CheckInPage />
+      </MemoryRouter>
+    )
+
+    const loader = screen.getByTestId('camera-starting-loader')
+    expect(loader).toBeInTheDocument()
+    expect(loader).toHaveTextContent(/đang mở camera/i)
+  })
 })

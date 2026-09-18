@@ -8,6 +8,7 @@ import SubscriptionRequired from './components/shared/SubscriptionRequired'
 import AuthLayout from './layouts/AuthLayout'
 import { Toaster } from 'sonner'
 import { FullScreenLoader } from './components/shared/Spinner'
+import { ErrorBoundary } from './components/shared/ErrorBoundary'
 import { isLiffMockEnabled } from './lib/liff'
 
 const DashboardLayout = lazy(() => import('./layouts/DashboardLayout'))
@@ -146,7 +147,8 @@ export default function App() {
         mobileOffset="12px"
       />
       <Analytics />
-      <Routes>
+      <ErrorBoundary>
+        <Routes>
         {/* Public */}
         <Route path="/" element={<HomePage />} />
         <Route path="/programs" element={<ProgramsPage />} />
@@ -304,6 +306,7 @@ export default function App() {
         {/* Fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+      </ErrorBoundary>
     </Suspense>
   )
 }

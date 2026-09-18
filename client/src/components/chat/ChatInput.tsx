@@ -72,6 +72,16 @@ export function ChatInput({
     }
   }, [previewUrl])
 
+  // Dọn dẹp debounce typing timer khi unmount
+  useEffect(() => {
+    return () => {
+      if (typingTimerRef.current) {
+        clearTimeout(typingTimerRef.current)
+        typingTimerRef.current = null
+      }
+    }
+  }, [])
+
   // Bắt sự kiện typing và debounce
   const handleTextChange = (e: ChangeEvent<HTMLTextAreaElement>) => {
     const val = e.target.value

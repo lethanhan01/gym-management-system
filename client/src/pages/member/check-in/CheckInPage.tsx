@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { IScannerControls } from '@zxing/browser'
-import { CheckCircle2, History, RefreshCcw } from 'lucide-react'
+import { CheckCircle2, History, RefreshCcw, Loader2 } from 'lucide-react'
 import {
   Button,
   ButtonLink,
@@ -20,6 +20,7 @@ type ScanState = 'idle' | 'starting' | 'scanning' | 'blocked' | 'stopped'
 export default function CheckInPage() {
   const { t } = useTranslation('member')
   const videoRef = useRef<HTMLVideoElement | null>(null)
+  const activeVideoRef = useRef<HTMLVideoElement | null>(null)
   const controlsRef = useRef<IScannerControls | null>(null)
   const submittedRef = useRef(false)
   const checkingRef = useRef(false)
@@ -30,24 +31,35 @@ export default function CheckInPage() {
   const [successOverlayOpen, setSuccessOverlayOpen] = useState(false)
   const isMountedRef = useRef(true)
 
+  const releaseCameraStream = useCallback(() => {
+    controlsRef.current?.stop()
+    controlsRef.current = null
+    const video = videoRef.current || activeVideoRef.current
+    if (video?.srcObject) {
+      const stream = video.srcObject as MediaStream
+      if (stream && typeof stream.getTracks === 'function') {
+        stream.getTracks().forEach((track) => track.stop())
+      }
+      video.srcObject = null
+    }
+  }, [])
+
   useEffect(() => {
     isMountedRef.current = true
     return () => {
       isMountedRef.current = false
-      controlsRef.current?.stop()
-      controlsRef.current = null
+      releaseCameraStream()
     }
-  }, [])
+  }, [releaseCameraStream])
 
   useEffect(() => {
     checkingRef.current = checking
   }, [checking])
 
   const stopScanner = useCallback(() => {
-    controlsRef.current?.stop()
-    controlsRef.current = null
+    releaseCameraStream()
     setScanState((state) => (state === 'scanning' || state === 'starting' ? 'stopped' : state))
-  }, [])
+  }, [releaseCameraStream])
 
   const closeSuccessOverlay = useCallback(() => {
     setSuccessOverlayOpen(false)
@@ -113,6 +125,13 @@ export default function CheckInPage() {
 
       if (!isMountedRef.current) {
         controls.stop()
+        if (videoRef.current?.srcObject) {
+          const stream = videoRef.current.srcObject as MediaStream
+          if (stream && typeof stream.getTracks === 'function') {
+            stream.getTracks().forEach((track) => track.stop())
+          }
+          videoRef.current.srcObject = null
+        }
         return
       }
 
@@ -164,7 +183,10 @@ export default function CheckInPage() {
         <Card as="article" variant="compact" padding="none" className="overflow-hidden">
           <div className="relative aspect-[4/3] min-h-[280px] overflow-hidden bg-black">
             <video
-              ref={videoRef}
+              ref={(el) => {
+                videoRef.current = el
+                if (el) activeVideoRef.current = el
+              }}
               className="absolute inset-0 h-full w-full object-cover"
               muted
               playsInline
@@ -182,6 +204,18 @@ export default function CheckInPage() {
                     ? t('qrCheckIn.statusBlocked')
                     : t('qrCheckIn.statusStopped')}
             </div>
+
+            {scanState === 'starting' && (
+              <div
+                data-testid="camera-starting-loader"
+                className="absolute inset-0 z-15 flex flex-col items-center justify-center gap-3 bg-black/60 backdrop-blur-xs text-white"
+              >
+                <Loader2 className="h-8 w-8 animate-spin text-[var(--rogym-teal)]" />
+                <span className="text-xs font-medium text-[var(--rogym-text-secondary)]">
+                  {t('qrCheckIn.statusStarting')}
+                </span>
+              </div>
+            )}
           </div>
 
           <footer className="flex flex-wrap items-center gap-3 p-5">
