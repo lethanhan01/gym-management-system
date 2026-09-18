@@ -532,9 +532,23 @@ export const queryKeys = {
    * Bổ sung `QueryClientProvider` vào `ChooseTrainerPage.test.tsx` để bảo đảm test tiếp tục pass 100%.
 
 #### 4.5. Tiêu chí nghiệm thu (Acceptance Criteria):
-* [ ] Chuyển qua lại giữa PaymentPage và ChooseTrainerPage không gửi lại HTTP request khi cache còn tươi.
-* [ ] Các màn hình có đủ trạng thái Loading, Error và Data.
-* [ ] 100% 426+ unit tests pass thành công (bao gồm `PaymentPage.test.tsx`).
+* [x] Chuyển qua lại giữa PaymentPage và ChooseTrainerPage không gửi lại HTTP request khi cache còn tươi.
+* [x] Các màn hình có đủ trạng thái Loading, Error và Data.
+* [x] Tích hợp cơ chế dọn dẹp cache `onLogout(() => queryClient.clear())` tại `main.tsx` bảo đảm không rò rỉ dữ liệu phiên giữa các tài khoản.
+* [x] 100% 426+ unit tests pass thành công (bao gồm `PaymentPage.test.tsx`, tổng 460/460 tests PASS).
+
+#### 4.6. Phase 4.B - Backlog Cải tiến Dữ liệu Mở rộng (Post-Milestone 5 Tech Debt):
+> **Mục tiêu:** Mở rộng TanStack Query cho các trang còn lại thuộc phân hệ Hội viên & Gói tập nhằm giải quyết triệt để rủi ro phân mảnh cache và thống nhất nguồn dữ liệu duy nhất (Single Source of Truth).
+
+1. **Chuyển đổi `CurrentPackagePage.tsx`:**
+   * Xây dựng custom hook `useMemberSubscriptionQuery(memberId)` đọc từ `subscriptionService.getByMember(memberId)`.
+   * Thay thế lệnh gọi thủ công `Promise.allSettled` trong `useEffect` bằng TanStack Query song song.
+   * Đảm bảo khi `PaymentPage.tsx` hoàn tất thanh toán và gọi `queryClient.invalidateQueries({ queryKey: queryKeys.subscription.member(memberId) })`, trang `CurrentPackagePage` tự động đồng bộ tức thì.
+2. **Chuyển đổi `SubscriptionSetupPage.tsx` & `RenewPackagePage.tsx`:**
+   * Tái sử dụng hook `useActivePackagesQuery()` thay vì gọi trực tiếp `packageService.list({ status: 'active' })`.
+   * Tái sử dụng `useMemberSubscriptionQuery(memberId)` để kiểm tra trạng thái gói hiện tại.
+3. **Chuyển đổi mutation dạng khai báo (`useMutation`):**
+   * Đóng gói các thao tác mua gói, thanh toán và gán PT thành custom mutations với `onSuccess` tự động kích hoạt `invalidateQueries`.
 
 ---
 

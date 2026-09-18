@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { BrowserRouter } from 'react-router-dom'
 import App from './App'
 import { isLineInAppBrowser } from './lib/line-browser'
+import { onLogout } from './stores/authStore'
 import './styles/globals.css'
 
 const queryClient = new QueryClient({
@@ -16,6 +17,11 @@ const queryClient = new QueryClient({
       refetchOnWindowFocus: false,
     },
   },
+})
+
+// Dọn dẹp toàn bộ TanStack Query cache khi người dùng đăng xuất để tránh rò rỉ dữ liệu phiên
+onLogout(() => {
+  queryClient.clear()
 })
 
 // LIFF Endpoint URL đang là root '/' nên LINE thả callback về '/?liff.state=/liff&code=...'.
