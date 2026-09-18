@@ -1,4 +1,4 @@
-import { BadRequestException, Controller, Headers, Post, Req } from '@nestjs/common'
+import { BadRequestException, Controller, Headers, HttpCode, HttpStatus, Post, Req } from '@nestjs/common'
 import { Request } from 'express'
 import { Public } from '../auth/decorators/public.decorator'
 import { LineMessagingService } from './line-messaging.service'
@@ -9,6 +9,7 @@ export class LineMessagingController {
 
   @Public()
   @Post('webhook')
+  @HttpCode(HttpStatus.OK)
   async webhook(@Req() req: Request, @Headers('x-line-signature') signature?: string) {
     if (!Buffer.isBuffer(req.body)) {
       throw new BadRequestException({
