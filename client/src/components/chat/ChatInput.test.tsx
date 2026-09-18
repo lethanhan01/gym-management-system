@@ -137,4 +137,22 @@ describe('ChatInput Component', () => {
     expect(screen.getByLabelText(/biểu tượng cảm xúc/i)).toBeDisabled()
     expect(screen.getByLabelText(/gửi/i)).toBeDisabled()
   })
+
+  it('TC-CI-10: cancels pending typing timer when unmounted without emitting false on unmount', () => {
+    vi.useFakeTimers()
+    const onTyping = vi.fn()
+    const { unmount } = render(<ChatInput {...defaultProps} onTyping={onTyping} />)
+
+    const textarea = screen.getByPlaceholderText(/nhập tin nhắn/i)
+    fireEvent.change(textarea, { target: { value: 'A' } })
+
+    expect(onTyping).toHaveBeenCalledWith(true)
+
+    unmount()
+    vi.advanceTimersByTime(2000)
+
+    // onTyping(false) should not be dispatched post unmount
+    expect(onTyping).not.toHaveBeenCalledWith(false)
+    vi.useRealTimers()
+  })
 })

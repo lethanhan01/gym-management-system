@@ -1,6 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { render, screen, waitFor, fireEvent } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
+import { QueryClientProvider, type QueryClient } from '@tanstack/react-query'
+import { createTestQueryClient } from '@/test/query-test-utils'
 import i18n from '@/lib/i18n'
 import ChooseTrainerPage from './ChooseTrainerPage'
 import { memberService, type TrainerSummary } from '@/services/member.service'
@@ -49,6 +51,17 @@ const sampleTrainers: TrainerSummary[] = [
   },
 ]
 
+function renderPage(queryClient?: QueryClient) {
+  const client = queryClient ?? createTestQueryClient()
+  return render(
+    <QueryClientProvider client={client}>
+      <MemoryRouter>
+        <ChooseTrainerPage />
+      </MemoryRouter>
+    </QueryClientProvider>
+  )
+}
+
 describe('ChooseTrainerPage', () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -60,11 +73,7 @@ describe('ChooseTrainerPage', () => {
   })
 
   it('renders available trainers with ratings, specialty, and tags', async () => {
-    render(
-      <MemoryRouter>
-        <ChooseTrainerPage />
-      </MemoryRouter>
-    )
+    renderPage()
 
     await waitFor(() => {
       expect(screen.getByText('Trần Văn Mạnh')).toBeInTheDocument()
@@ -82,11 +91,7 @@ describe('ChooseTrainerPage', () => {
   })
 
   it('filters trainers by search query', async () => {
-    render(
-      <MemoryRouter>
-        <ChooseTrainerPage />
-      </MemoryRouter>
-    )
+    renderPage()
 
     await waitFor(() => {
       expect(screen.getByText('Trần Văn Mạnh')).toBeInTheDocument()
@@ -131,11 +136,7 @@ describe('ChooseTrainerPage', () => {
       ],
     })
 
-    render(
-      <MemoryRouter>
-        <ChooseTrainerPage />
-      </MemoryRouter>
-    )
+    renderPage()
 
     await waitFor(() => {
       expect(screen.getByText('Trần Văn Mạnh')).toBeInTheDocument()
@@ -157,11 +158,10 @@ describe('ChooseTrainerPage', () => {
       trainerName: 'Trần Văn Mạnh',
     })
 
-    render(
-      <MemoryRouter>
-        <ChooseTrainerPage />
-      </MemoryRouter>
-    )
+    const queryClient = createTestQueryClient()
+    const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries')
+
+    renderPage(queryClient)
 
     await waitFor(() => {
       expect(screen.getByText('Trần Văn Mạnh')).toBeInTheDocument()
@@ -177,6 +177,7 @@ describe('ChooseTrainerPage', () => {
 
     await waitFor(() => {
       expect(memberService.selfAssignTrainer).toHaveBeenCalledWith(1)
+      expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['trainers'] })
       expect(mockNavigate).toHaveBeenCalledWith('/member', { replace: true })
     })
   })
@@ -184,11 +185,7 @@ describe('ChooseTrainerPage', () => {
   it('renders properly in Japanese with localized tags, specialties, and button hints', async () => {
     await i18n.changeLanguage('ja')
 
-    render(
-      <MemoryRouter>
-        <ChooseTrainerPage />
-      </MemoryRouter>
-    )
+    renderPage()
 
     await waitFor(() => {
       expect(screen.getByText('トレーナーを選択')).toBeInTheDocument()
@@ -204,5 +201,43 @@ describe('ChooseTrainerPage', () => {
 
     // Card hint in Japanese
     expect(screen.getAllByText('タップして選択')[0]).toBeInTheDocument()
+  })
+
+  it('renders loading skeleton while query is loading', () => {
+    vi.mocked(memberService.getAvailableTrainers).mockImplementation(
+      () => new Promise(() => {})
+    )
+    const { container } = renderPage()
+    expect(container.querySelector('.animate-pulse')).toBeInTheDocument()
+  })
+
+  it('renders PageErrorState when loading trainers fails and allows retry', async () => {
+    vi.mocked(memberService.getAvailableTrainers).mockRejectedValueOnce(new Error('Fetch error'))
+
+    renderPage()
+
+    await waitFor(() => {
+      expect(screen.getByText('Đã có lỗi khi tải danh sách huấn luyện viên.')).toBeInTheDocument()
+    })
+
+    // Now mock success for retry
+    vi.mocked(memberService.getAvailableTrainers).mockResolvedValueOnce(sampleTrainers)
+    const retryBtn = screen.getByRole('button', { name: /thử lại/i })
+    fireEvent.click(retryBtn)
+
+    await waitFor(() => {
+      expect(screen.getByText('Trần Văn Mạnh')).toBeInTheDocument()
+    })
+  })
+
+  it('renders PageEmptyState when trainer list is empty', async () => {
+    vi.mocked(memberService.getAvailableTrainers).mockResolvedValue([])
+
+    renderPage()
+
+    await waitFor(() => {
+      expect(screen.getByText('Chưa có huấn luyện viên')).toBeInTheDocument()
+      expect(screen.getByText('Hệ thống hiện chưa có PT nào khả dụng.')).toBeInTheDocument()
+    })
   })
 })

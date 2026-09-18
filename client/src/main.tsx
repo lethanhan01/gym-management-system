@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { BrowserRouter } from 'react-router-dom'
 import App from './App'
 import { isLineInAppBrowser } from './lib/line-browser'
+import { onLogout } from './stores/authStore'
 import './styles/globals.css'
 
 const queryClient = new QueryClient({
@@ -12,8 +13,15 @@ const queryClient = new QueryClient({
     queries: {
       retry: 1,
       staleTime: 1000 * 60 * 5, // 5 minutes
+      gcTime: 1000 * 60 * 30, // 30 minutes garbage collection (Gate 4)
+      refetchOnWindowFocus: false,
     },
   },
+})
+
+// Dọn dẹp toàn bộ TanStack Query cache khi người dùng đăng xuất để tránh rò rỉ dữ liệu phiên
+onLogout(() => {
+  queryClient.clear()
 })
 
 // LIFF Endpoint URL đang là root '/' nên LINE thả callback về '/?liff.state=/liff&code=...'.

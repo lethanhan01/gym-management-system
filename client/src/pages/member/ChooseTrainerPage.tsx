@@ -1,8 +1,11 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, Star, Clock, Award, Eye } from 'lucide-react'
 import { memberService, type TrainerSummary } from '@/services/member.service'
+import { useQueryClient } from '@tanstack/react-query'
+import { queryKeys } from '@/lib/query-keys'
+import { useAvailableTrainersQuery } from '@/hooks/queries/useAvailableTrainersQuery'
 import {
   Alert,
   Avatar,
@@ -12,6 +15,7 @@ import {
   EmptyState,
   Page,
   PageEmptyState,
+  PageErrorState,
   PageHeader,
   PageSkeleton,
   SearchInput,
@@ -25,9 +29,8 @@ type SortOption = 'ratingDesc' | 'reviewsDesc' | 'nameAsc'
 export default function ChooseTrainerPage() {
   const { t, i18n } = useTranslation('member')
   const navigate = useNavigate()
-  const [trainers, setTrainers] = useState<TrainerSummary[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(false)
+  const queryClient = useQueryClient()
+  const { data: trainers = [], isLoading, isError, refetch } = useAvailableTrainersQuery()
   const [selected, setSelected] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState('')
@@ -39,19 +42,6 @@ export default function ChooseTrainerPage() {
   // Review Modal state
   const [reviewTrainer, setReviewTrainer] = useState<TrainerSummary | null>(null)
 
-  useEffect(() => {
-    memberService
-      .getAvailableTrainers()
-      .then((data) => {
-        setTrainers(data)
-        setLoading(false)
-      })
-      .catch(() => {
-        setError(true)
-        setLoading(false)
-      })
-  }, [])
-
   async function handleConfirm(trainerIdToAssign?: string) {
     const targetId = trainerIdToAssign ?? selected
     if (!targetId) return
@@ -60,6 +50,7 @@ export default function ChooseTrainerPage() {
     setSubmitting(true)
     try {
       await memberService.selfAssignTrainer(Number(targetId))
+      queryClient.invalidateQueries({ queryKey: queryKeys.trainers.all })
       navigate('/member', { replace: true })
     } catch {
       setSubmitError(t('chooseTrainer.submitError'))
@@ -117,12 +108,12 @@ export default function ChooseTrainerPage() {
         }
       />
 
-      {loading ? (
+      {isLoading ? (
         <PageSkeleton rows={4} />
-      ) : error ? (
-        <PageEmptyState
-          title={t('chooseTrainer.errorTitle')}
-          description={t('chooseTrainer.errorDescription')}
+      ) : isError ? (
+        <PageErrorState
+          message={t('chooseTrainer.errorDescription')}
+          onRetry={() => refetch()}
         />
       ) : trainers.length === 0 ? (
         <PageEmptyState

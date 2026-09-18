@@ -1,13 +1,15 @@
 import { lazy, Suspense, useState, useRef, useEffect, useCallback, type ChangeEvent, type FormEvent, type KeyboardEvent } from 'react'
 import { Image, Smile, Send, X, Loader2 } from 'lucide-react'
-import { Theme, type EmojiClickData } from 'emoji-picker-react'
+import type { EmojiClickData } from 'emoji-picker-react'
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/Popover'
 import { Tooltip } from '@/components/ui/Tooltip'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 
-const LazyEmojiPicker = lazy(() => import('emoji-picker-react'))
+const LazyEmojiPicker = lazy(() =>
+  import('./LazyEmojiPicker').then((mod) => ({ default: mod.LazyEmojiPicker }))
+)
 
 export interface ChatInputProps {
   conversationId?: string
@@ -69,6 +71,16 @@ export function ChatInput({
       }
     }
   }, [previewUrl])
+
+  // Dọn dẹp debounce typing timer khi unmount
+  useEffect(() => {
+    return () => {
+      if (typingTimerRef.current) {
+        clearTimeout(typingTimerRef.current)
+        typingTimerRef.current = null
+      }
+    }
+  }, [])
 
   // Bắt sự kiện typing và debounce
   const handleTextChange = (e: ChangeEvent<HTMLTextAreaElement>) => {
@@ -285,20 +297,12 @@ export function ChatInput({
             {isEmojiOpen && (
               <Suspense
                 fallback={
-                  <div className="flex h-[320px] w-[280px] sm:w-[320px] items-center justify-center rounded-2xl bg-[var(--rogym-bg-card)] border border-white/10 text-white shadow-2xl">
+                  <div className="flex h-[340px] w-[280px] sm:w-[320px] items-center justify-center rounded-2xl bg-[var(--rogym-bg-card)] border border-white/10 text-white shadow-2xl">
                     <Loader2 className="h-6 w-6 animate-spin text-[var(--rogym-teal)]" />
                   </div>
                 }
               >
-                <LazyEmojiPicker
-                  theme={Theme.DARK}
-                  onEmojiClick={handleEmojiClick}
-                  lazyLoadEmojis
-                  previewConfig={{ showPreview: false }}
-                  height={340}
-                  width="100%"
-                  style={{ maxWidth: '320px', width: '280px' }}
-                />
+                <LazyEmojiPicker onEmojiClick={handleEmojiClick} />
               </Suspense>
             )}
           </PopoverContent>

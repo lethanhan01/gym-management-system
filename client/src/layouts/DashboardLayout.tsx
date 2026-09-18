@@ -6,6 +6,7 @@ import Topbar from '@/components/shared/Topbar'
 import BottomNav from '@/components/shared/BottomNav'
 import { toast } from '@/lib/toast'
 import { PageLoader } from '@/components/shared/Spinner'
+import { ErrorBoundary } from '@/components/shared/ErrorBoundary'
 import { Button } from '@/components/ui/Button'
 import { useAuthStore } from '@/stores/authStore'
 import {
@@ -125,6 +126,15 @@ export default function DashboardLayout() {
   // Trạng thái drawer mobile — chỉ có hiệu lực khi viewport < 768px
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
 
+  const getDashboardHome = () => {
+    const role = user?.roles[0]
+    if (role === 'member') return '/member'
+    if (role === 'trainer') return '/trainer'
+    if (role === 'staff') return '/staff'
+    if (role === 'owner') return '/owner'
+    return '/'
+  }
+
   return (
     <div
       className={`rogym-dashboard-layout min-h-screen bg-[#080e0b] ${showSidebar ? 'has-sidebar' : ''}`}
@@ -165,7 +175,12 @@ export default function DashboardLayout() {
 
         <main className="flex-1 overflow-auto px-4 sm:px-6 pt-20 pb-24 md:px-6 md:pt-20 md:pb-6">
           <Suspense fallback={<PageLoader />}>
-            <Outlet />
+            <ErrorBoundary
+              resetKeys={[location.pathname]}
+              onNavigateHome={() => navigate(getDashboardHome())}
+            >
+              <Outlet />
+            </ErrorBoundary>
           </Suspense>
         </main>
       </div>

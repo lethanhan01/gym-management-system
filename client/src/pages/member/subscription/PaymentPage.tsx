@@ -1,14 +1,17 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import {
   Check, Calendar, ChevronDown, UserCheck, UserX,
 } from 'lucide-react'
-import packageService, { type Package } from '@/services/package.service'
+import { type Package } from '@/services/package.service'
 import paymentService, { type PaymentMethod } from '@/services/payment.service'
 import subscriptionService from '@/services/subscription.service'
 import { useAuthStore } from '@/stores/authStore'
 import { useSubscriptionStore } from '@/stores/subscriptionStore'
+import { useQueryClient } from '@tanstack/react-query'
+import { queryKeys } from '@/lib/query-keys'
+import { useActivePackagesQuery } from '@/hooks/queries/useActivePackagesQuery'
 import {
   Alert,
   Badge,
@@ -16,6 +19,7 @@ import {
   Card,
   Page,
   PageEmptyState,
+  PageErrorState,
   PageHeader,
   PageSkeleton,
 } from '@/components/ui'
@@ -25,8 +29,8 @@ import { parsePackageBenefits } from '@/lib/package'
 
 export default function PaymentPage() {
   const { t } = useTranslation('member')
-  const [packages, setPackages] = useState<Package[]>([])
-  const [loading, setLoading]   = useState(true)
+  const queryClient = useQueryClient()
+  const { data: packages = [], isLoading, isError, refetch } = useActivePackagesQuery()
   const [selected, setSelected] = useState<Package | null>(null)
   const [method, setMethod]     = useState<PaymentMethod>('cash')
   const [paying, setPaying]     = useState(false)
@@ -37,13 +41,6 @@ export default function PaymentPage() {
   const user = useAuthStore(state => state.user)
   const isAuthenticated = useAuthStore(state => state.isAuthenticated)
   const setResolvedStatus = useSubscriptionStore((s) => s.setResolvedStatus)
-
-  useEffect(() => {
-    packageService.list({ status: 'active' })
-      .then(r => setPackages(r.data))
-      .catch(() => setPackages([]))
-      .finally(() => setLoading(false))
-  }, [])
 
   function handleSelect(pkg: Package) {
     setSelected(pkg)
@@ -68,6 +65,9 @@ export default function PaymentPage() {
         amount: Number(selected.price),
       })
       setResolvedStatus(true, user.memberId)
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.subscription.member(user.memberId),
+      })
       navigate('/member', { state: { paymentSuccess: true } })
     } catch (err) {
       const e = err as { response?: { status?: number; data?: { message?: string } } }
@@ -94,8 +94,15 @@ export default function PaymentPage() {
 
       <main>
         {/* Package grid */}
-        {loading ? (
+        {isLoading ? (
           <PageSkeleton rows={4} />
+        ) : isError ? (
+          <PageErrorState
+            message={t('subscription.payment.errorLoadingPackages', {
+              defaultValue: 'Không thể tải danh sách gói tập. Vui lòng thử lại.',
+            })}
+            onRetry={() => refetch()}
+          />
         ) : packages.length === 0 ? (
           <PageEmptyState
             title={t('subscription.payment.emptyPackages')}

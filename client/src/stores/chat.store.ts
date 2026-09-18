@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { toast } from 'sonner'
 import chatService, { type MemberChatEligibility } from '@/services/chat.service'
-import { useAuthStore } from './authStore'
+import { useAuthStore, onLogout } from './authStore'
 import type {
   ChatMessage,
   ConversationSummary,
@@ -825,3 +825,9 @@ export const useChatStore = create<ChatStoreState>((set, get) => ({
     })
   },
 }))
+
+// Tự động dọn dẹp kết nối socket và giải phóng bộ nhớ chat khi người dùng đăng xuất (Gate 4 Zero-Leak)
+onLogout(() => {
+  useChatStore.getState().clear()
+})
+
