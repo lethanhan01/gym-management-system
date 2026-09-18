@@ -113,7 +113,7 @@ describe('LineMessagingController', () => {
       .set('x-line-signature', sign(body))
       .send(bodyText)
 
-    expect(res.status).toBe(201)
+    expect(res.status).toBe(200)
     expect(res.body).toEqual({
       success: true,
       data: { processedEvents: 0, enabled: true },
