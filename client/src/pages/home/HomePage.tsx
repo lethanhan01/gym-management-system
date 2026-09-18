@@ -16,7 +16,7 @@ import {
   type LucideIcon,
 } from 'lucide-react'
 
-import heroImage from '@/assets/cover_photo.jpg'
+import heroImage from '@/assets/cover_photo.webp'
 import powerlift from '@/assets/powerlifting.jpg'
 import hiit from '@/assets/hiittraining.jpg'
 import pt1 from '@/assets/trainer1.jpg'
@@ -83,8 +83,8 @@ const HeroSection = memo(function HeroSection() {
         <img
           src={heroImage}
           alt=""
-          width={2560}
-          height={1440}
+          width={1920}
+          height={1080}
           fetchPriority="high"
           loading="eager"
           decoding="async"

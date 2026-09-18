@@ -98,6 +98,8 @@ export default defineConfig(({ command, mode }) => {
             'vendor-query': ['@tanstack/react-query'],
             'vendor-charts': ['recharts'],
             'vendor-ui': ['lucide-react', 'clsx', 'tailwind-merge'],
+            'vendor-emoji': ['emoji-picker-react'],
+            'vendor-scanner': ['@zxing/browser'],
           },
         },
       },

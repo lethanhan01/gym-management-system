@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { BrowserQRCodeReader, type IScannerControls } from '@zxing/browser'
+import type { IScannerControls } from '@zxing/browser'
 import { CheckCircle2, History, RefreshCcw } from 'lucide-react'
 import {
   Button,
@@ -28,6 +28,16 @@ export default function CheckInPage() {
   const [error, setError] = useState<string | null>(null)
   const [lastLog, setLastLog] = useState<AttendanceLog | null>(null)
   const [successOverlayOpen, setSuccessOverlayOpen] = useState(false)
+  const isMountedRef = useRef(true)
+
+  useEffect(() => {
+    isMountedRef.current = true
+    return () => {
+      isMountedRef.current = false
+      controlsRef.current?.stop()
+      controlsRef.current = null
+    }
+  }, [])
 
   useEffect(() => {
     checkingRef.current = checking
@@ -88,6 +98,9 @@ export default function CheckInPage() {
     setScanState('starting')
 
     try {
+      const { BrowserQRCodeReader } = await import('@zxing/browser')
+      if (!isMountedRef.current) return
+
       const reader = new BrowserQRCodeReader()
       const controls = await reader.decodeFromVideoDevice(
         undefined,
@@ -97,12 +110,20 @@ export default function CheckInPage() {
           if (text) void submitToken(text)
         }
       )
+
+      if (!isMountedRef.current) {
+        controls.stop()
+        return
+      }
+
       controlsRef.current = controls
       setScanState('scanning')
     } catch {
-      setSuccessOverlayOpen(false)
-      setScanState('blocked')
-      setError(t('qrCheckIn.errorCamera'))
+      if (isMountedRef.current) {
+        setSuccessOverlayOpen(false)
+        setScanState('blocked')
+        setError(t('qrCheckIn.errorCamera'))
+      }
     }
   }, [submitToken, t])
 
