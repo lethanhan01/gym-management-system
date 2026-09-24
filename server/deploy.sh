@@ -15,8 +15,8 @@ fi
 echo "📦 Đang build container gym-server..."
 docker compose build --pull gym-server
 
-echo "🔄 Khởi động lại container..."
-docker compose up -d gym-server
+echo "🔄 Khởi động lại container (buộc tạo mới container với config mới nhất)..."
+docker compose up -d --force-recreate gym-server
 
 # 3. Đợi container khởi động và kiểm tra Healthcheck
 echo "⏳ Đang kiểm tra trạng thái sức khỏe container (tối đa 45s)..."
