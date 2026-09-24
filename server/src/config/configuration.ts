@@ -198,9 +198,11 @@ function validateDatabaseConnectionConfig(
       )
     }
   }
-  if (url.searchParams.get('connection_limit') !== '5') {
+  const connLimit = url.searchParams.get('connection_limit')
+  const connLimitNum = Number(connLimit)
+  if (!connLimit || !Number.isInteger(connLimitNum) || connLimitNum < 1) {
     throw new Error(
-      'Invalid environment configuration:\n  - DATABASE_URL: connection_limit=5 is required'
+      'Invalid environment configuration:\n  - DATABASE_URL: connection_limit must be a positive integer'
     )
   }
   if (url.searchParams.get('pgbouncer') === 'true') {
