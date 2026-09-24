@@ -166,15 +166,37 @@ function validateDatabaseConnectionConfig(
       'Invalid environment configuration:\n  - DATABASE_URL: must use postgres or postgresql'
     )
   }
-  if (url.port !== '5432') {
+  if (url.port === '6543') {
+    throw new Error(
+      'Invalid environment configuration:\n  - DATABASE_URL: persistent connections must not use the :6543 transaction pooler; use the Supavisor Session pooler URL (port 5432) or a direct URL'
+    )
+  }
+  if (mode === 'supavisor-session' && url.port !== '5432') {
     throw new Error(
       'Invalid environment configuration:\n  - DATABASE_URL: persistent connections must use port 5432; use the Supavisor Session pooler URL (or a direct URL), not the :6543 transaction pooler'
     )
   }
-  if (url.searchParams.get('sslmode') !== 'require') {
-    throw new Error(
-      'Invalid environment configuration:\n  - DATABASE_URL: sslmode=require is required'
-    )
+  if (url.port) {
+    const portNum = Number(url.port)
+    if (!Number.isInteger(portNum) || portNum < 1 || portNum > 65535) {
+      throw new Error(
+        'Invalid environment configuration:\n  - DATABASE_URL: port must be a valid port number (1-65535)'
+      )
+    }
+  }
+  const sslmode = url.searchParams.get('sslmode')
+  if (mode === 'supavisor-session') {
+    if (sslmode !== 'require') {
+      throw new Error(
+        'Invalid environment configuration:\n  - DATABASE_URL: sslmode=require is required'
+      )
+    }
+  } else if (mode === 'direct') {
+    if (!sslmode || !['require', 'prefer', 'disable'].includes(sslmode)) {
+      throw new Error(
+        'Invalid environment configuration:\n  - DATABASE_URL: sslmode must be require, prefer, or disable for direct mode'
+      )
+    }
   }
   if (url.searchParams.get('connection_limit') !== '5') {
     throw new Error(
@@ -192,12 +214,23 @@ function validateDatabaseConnectionConfig(
     )
   }
 
-  const isDirect = /^db\.[a-z0-9-]+\.supabase\.co$/i.test(url.hostname)
   const isSessionPooler = url.hostname.endsWith('.pooler.supabase.com')
-  if ((mode === 'direct' && !isDirect) || (mode === 'supavisor-session' && !isSessionPooler)) {
+  if (mode === 'supavisor-session' && !isSessionPooler) {
     throw new Error(
       `Invalid environment configuration:\n  - DATABASE_URL: does not match DB_CONNECTION_MODE=${mode}`
     )
+  }
+  if (mode === 'direct') {
+    if (isSessionPooler) {
+      throw new Error(
+        `Invalid environment configuration:\n  - DATABASE_URL: does not match DB_CONNECTION_MODE=${mode}`
+      )
+    }
+    if (!url.hostname.trim()) {
+      throw new Error(
+        'Invalid environment configuration:\n  - DATABASE_URL: hostname is required'
+      )
+    }
   }
 
   // `raw` is deliberately accepted so validation remains tied to boot-time

@@ -4,6 +4,7 @@ import {
   ForbiddenException,
   Injectable,
   InternalServerErrorException,
+  Logger,
   NotFoundException,
   ServiceUnavailableException,
 } from '@nestjs/common'
@@ -53,6 +54,8 @@ function isOwnerOrStaff(user: Pick<AuthenticatedUser, 'roles'>): boolean {
 
 @Injectable()
 export class MembersService {
+  private readonly logger = new Logger(MembersService.name)
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly audit: AuditService,

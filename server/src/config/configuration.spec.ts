@@ -149,6 +149,107 @@ describe('validateConfig database connection', () => {
       'DB_CONNECTION_MODE'
     )
   })
+
+  it('accepts a valid VPS direct URL with custom domain name', () => {
+    const config = validateConfig({
+      ...base(),
+      DB_CONNECTION_MODE: 'direct',
+      DATABASE_URL:
+        'postgresql://gym_admin:vps_secret@db.mygymvps.com:5432/gym_db?sslmode=require&connection_limit=5&application_name=gym-api',
+    })
+
+    expect(config.DB_CONNECTION_MODE).toBe('direct')
+    expect(config.DATABASE_URL).toContain('db.mygymvps.com')
+  })
+
+  it('accepts a valid VPS direct URL with IPv4 address and custom port', () => {
+    const config = validateConfig({
+      ...base(),
+      DB_CONNECTION_MODE: 'direct',
+      DATABASE_URL:
+        'postgresql://postgres:secret123@103.123.45.67:5433/backup_db?sslmode=require&connection_limit=5&application_name=gym-api',
+    })
+
+    expect(config.DB_CONNECTION_MODE).toBe('direct')
+    expect(config.DATABASE_URL).toContain('103.123.45.67:5433')
+  })
+
+  it('accepts a valid VPS direct URL with sslmode=disable (VPN / internal network)', () => {
+    const config = validateConfig({
+      ...base(),
+      DB_CONNECTION_MODE: 'direct',
+      DATABASE_URL:
+        'postgresql://rogym:secret@10.66.66.1:5432/rogym?sslmode=disable&connection_limit=5&application_name=gym-api',
+    })
+
+    expect(config.DB_CONNECTION_MODE).toBe('direct')
+    expect(config.DATABASE_URL).toContain('sslmode=disable')
+  })
+
+  it('accepts a valid VPS direct URL with sslmode=prefer', () => {
+    const config = validateConfig({
+      ...base(),
+      DB_CONNECTION_MODE: 'direct',
+      DATABASE_URL:
+        'postgresql://rogym:secret@10.66.66.1:5432/rogym?sslmode=prefer&connection_limit=5&application_name=gym-api',
+    })
+
+    expect(config.DB_CONNECTION_MODE).toBe('direct')
+    expect(config.DATABASE_URL).toContain('sslmode=prefer')
+  })
+
+  it('rejects invalid sslmode in direct mode', () => {
+    expect(() =>
+      validateConfig({
+        ...base(),
+        DB_CONNECTION_MODE: 'direct',
+        DATABASE_URL:
+          'postgresql://rogym:secret@10.66.66.1:5432/rogym?sslmode=invalid&connection_limit=5&application_name=gym-api',
+      })
+    ).toThrow('sslmode must be require, prefer, or disable for direct mode')
+  })
+
+  it('rejects sslmode=disable in supavisor-session mode', () => {
+    expect(() =>
+      validateConfig({
+        ...base(),
+        DB_CONNECTION_MODE: 'supavisor-session',
+        DATABASE_URL: validUrl.replace('sslmode=require', 'sslmode=disable'),
+      })
+    ).toThrow('sslmode=require is required')
+  })
+
+  it('rejects pooler hostname when DB_CONNECTION_MODE is direct', () => {
+    expect(() =>
+      validateConfig({
+        ...base(),
+        DB_CONNECTION_MODE: 'direct',
+        DATABASE_URL: validUrl,
+      })
+    ).toThrow('does not match DB_CONNECTION_MODE=direct')
+  })
+
+  it('rejects transaction pooler port 6543 in direct mode', () => {
+    expect(() =>
+      validateConfig({
+        ...base(),
+        DB_CONNECTION_MODE: 'direct',
+        DATABASE_URL:
+          'postgresql://postgres:secret@db.example.com:6543/gym?sslmode=require&connection_limit=5&application_name=gym-api',
+      })
+    ).toThrow('persistent connections must not use the :6543 transaction pooler')
+  })
+
+  it('rejects port 0 as invalid port number', () => {
+    expect(() =>
+      validateConfig({
+        ...base(),
+        DB_CONNECTION_MODE: 'direct',
+        DATABASE_URL:
+          'postgresql://postgres:secret@db.example.com:0/gym?sslmode=require&connection_limit=5&application_name=gym-api',
+      })
+    ).toThrow('port must be a valid port number')
+  })
 })
 
 describe('validateConfig ExerciseDB sync', () => {
