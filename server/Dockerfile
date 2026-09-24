@@ -10,6 +10,13 @@ FROM node:${NODE_VERSION} AS builder
 
 WORKDIR /app
 
+# Install OpenSSL & CA certificates for reliable Prisma Query Engine detection
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    openssl \
+    ca-certificates \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
 # Cache dependency layer for full installation
 COPY package*.json ./
 RUN --mount=type=cache,target=/root/.npm,sharing=locked \
