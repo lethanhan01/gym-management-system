@@ -1,4 +1,4 @@
-import { defineConfig, loadEnv, type Plugin } from 'vite'
+import { createLogger, defineConfig, loadEnv, type Plugin } from 'vite'
 import react from '@vitejs/plugin-react'
 import path from 'path'
 
@@ -49,7 +49,20 @@ export default defineConfig(({ command, mode }) => {
   const proxyTarget = env.API_PROXY_TARGET || DEFAULT_API_PROXY_TARGET
   const usesDevProxy = !env.VITE_API_URL
 
+  const customLogger = createLogger()
+  const originalError = customLogger.error.bind(customLogger)
+  customLogger.error = (msg, options) => {
+    if (
+      msg.includes('ws proxy socket error') &&
+      (msg.includes('ECONNRESET') || msg.includes('ECONNABORTED') || msg.includes('EPIPE'))
+    ) {
+      return
+    }
+    originalError(msg, options)
+  }
+
   return {
+    customLogger,
     plugins: [
       react(),
       ...(command === 'serve' && usesDevProxy ? [waitForBackend(proxyTarget)] : []),
@@ -68,7 +81,7 @@ export default defineConfig(({ command, mode }) => {
           configure: (proxy) => {
             proxy.on('error', (err, _req, res) => {
               const code = (err as { code?: string }).code
-              if (code === 'ECONNRESET' || code === 'ECONNREFUSED') {
+              if (code === 'ECONNRESET' || code === 'ECONNABORTED' || code === 'ECONNREFUSED') {
                 if ('writeHead' in res && !res.headersSent) {
                   res.writeHead(502, { 'Content-Type': 'application/json' })
                   res.end(
@@ -87,6 +100,14 @@ export default defineConfig(({ command, mode }) => {
           target: proxyTarget,
           ws: true,
           changeOrigin: true,
+          configure: (proxy) => {
+            proxy.on('error', (err) => {
+              const code = (err as { code?: string })?.code
+              if (code === 'ECONNRESET' || code === 'ECONNABORTED' || code === 'EPIPE') {
+                return
+              }
+            })
+          },
         },
       },
     },

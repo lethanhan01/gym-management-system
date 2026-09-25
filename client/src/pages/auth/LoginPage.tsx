@@ -11,6 +11,7 @@ import {
   classifySubscriptionCheckError,
   useSubscriptionStore,
 } from '@/stores/subscriptionStore'
+import { getApiError, isNetworkError } from '@/lib/api-error'
 import { AuthShell, BtnPrimary, TextLink, MutedLink, Field, PasswordField, ErrorMsg } from './_authui'
 
 const roleRouteMap: Record<string, string> = {
@@ -97,23 +98,33 @@ export default function LoginPage() {
       }
     } catch (err) {
       console.error('[LoginPage] login error:', err)
-      const response = (err as { response?: { status?: number; data?: { code?: string } } })?.response
+      const response = (err as { response?: { status?: number; data?: { code?: string; message?: string } } })?.response
       if (response?.status === 403 && response.data?.code === 'EMAIL_NOT_VERIFIED') {
         navigate('/member/verify-email', { state: { email: email.trim().toLowerCase() } })
         return
       }
-      // Chỉ hiển thị "invalid credentials" khi lỗi 401 từ server
-      // Các lỗi khác (subscription, navigation...) không nên hiển thị thông báo này
-      const isAuthError =
-        response?.status === 401 ||
-        (err instanceof Error && err.message?.toLowerCase().includes('unauthorized'))
-      if (isAuthError) {
-        setError(t('login.invalidCredentials'))
-      } else {
-        setError(t('login.invalidCredentials'))
-        // Ghi chú: lỗi này không phải do sai credentials, nhưng hiển thị message chung
-        // để tránh lộ thông tin kỹ thuật ra ngoài
+
+      if (isNetworkError(err)) {
+        setError(t('login.networkError'))
+        return
       }
+
+      if (response?.status === 401) {
+        setError(t('login.invalidCredentials'))
+        return
+      }
+
+      if (response?.status === 403) {
+        setError(response.data?.message || t('login.accountLocked'))
+        return
+      }
+
+      if (response?.status && response.status >= 500) {
+        setError(t('login.serverError'))
+        return
+      }
+
+      setError(getApiError(err, t('login.invalidCredentials')))
     } finally {
       setLoading(false)
     }

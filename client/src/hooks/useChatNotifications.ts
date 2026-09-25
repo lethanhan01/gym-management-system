@@ -28,6 +28,9 @@ export function useChatNotifications() {
       user?.roles.some((r) => r === 'member' || r === 'trainer' || (r as string) === 'pt')
   )
 
+  const rolesKey = (user?.roles ?? []).slice().sort().join(',')
+  const isMember = Boolean(user?.roles.includes('member'))
+
   useEffect(() => {
     if (!isEligible || !token) {
       if (initializedTokenRef.current) {
@@ -47,23 +50,29 @@ export function useChatNotifications() {
     void fetchConversations()
 
     // Nếu là hội viên, nạp cuộc trò chuyện với PT chính
-    if (user?.roles.includes('member')) {
+    if (isMember) {
       void fetchActiveMemberConversation()
-    }
-
-    return () => {
-      cleanupSocket()
-      initializedTokenRef.current = null
     }
   }, [
     isEligible,
     token,
-    user?.roles,
+    rolesKey,
+    isMember,
     initSocket,
     cleanupSocket,
     fetchConversations,
     fetchActiveMemberConversation,
   ])
+
+  // Dọn dẹp socket khi unmount component (hoặc khi rời layout dashboard)
+  useEffect(() => {
+    return () => {
+      if (initializedTokenRef.current) {
+        cleanupSocket()
+        initializedTokenRef.current = null
+      }
+    }
+  }, [cleanupSocket])
 
   return {
     isEligible,

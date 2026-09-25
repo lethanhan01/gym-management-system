@@ -25,7 +25,7 @@ export function getApiError(error: unknown, fallback?: string): string {
   }
 
   if (isNetworkError(error) && !error.response?.data?.message && !error.response?.data?.code) {
-    return fallback ?? i18n.t('error.network', { ns: 'common' })
+    return i18n.t('error.network', { ns: 'common' }) || fallback || defaultFallback
   }
 
   const payload = error.response?.data
@@ -33,11 +33,12 @@ export function getApiError(error: unknown, fallback?: string): string {
     return i18n.t(`error.api.${payload.code}`, payload.code, { ns: 'common' })
   }
 
+  const message = payload?.message
+  if (Array.isArray(message) && message.length > 0) return message.join(', ')
+  if (typeof message === 'string' && message.trim().length > 0) return message
+
   if (fallback) return fallback
 
-  const message = payload?.message
-  if (Array.isArray(message)) return message.join(', ')
-  if (message) return message
   return defaultFallback
 }
 

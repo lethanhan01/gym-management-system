@@ -210,7 +210,11 @@ class ChatService {
 
     const baseUrl =
       import.meta.env.VITE_WS_URL ||
-      (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000')
+      (import.meta.env.DEV
+        ? 'http://localhost:3000'
+        : typeof window !== 'undefined'
+          ? window.location.origin
+          : 'http://localhost:3000')
 
     // Kết nối tới namespace /chat
     const socketUrl = `${baseUrl.replace(/\/+$/, '')}/chat`
