@@ -3,12 +3,29 @@ import { ArrowLeft, Mail } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { authService } from "@/services/auth.service";
+import { getApiError, isNetworkError } from "@/lib/api-error";
 import { AuthShell, BtnPrimary, TextLink, Field, ErrorMsg, G, T } from "./_authui";
 
 function ForgotView({ onSent }: { onSent: (email: string) => void }) {
   const [email, setEmail] = useState(""); const [loading, setLoading] = useState(false); const [error, setError] = useState("");
   const navigate = useNavigate(); const { t } = useTranslation("auth");
-  async function handleSubmit(event: React.FormEvent) { event.preventDefault(); setError(""); setLoading(true); try { await authService.forgotPassword(email); onSent(email.trim().toLowerCase()); } catch { setError(t("forgotPassword.emailNotFound")); } finally { setLoading(false); } }
+  async function handleSubmit(event: React.FormEvent) {
+    event.preventDefault();
+    setError("");
+    setLoading(true);
+    try {
+      await authService.forgotPassword(email);
+      onSent(email.trim().toLowerCase());
+    } catch (err) {
+      if (isNetworkError(err)) {
+        setError(t("login.networkError"));
+      } else {
+        setError(getApiError(err, t("forgotPassword.emailNotFound")));
+      }
+    } finally {
+      setLoading(false);
+    }
+  }
   return <form onSubmit={handleSubmit} className="flex flex-col gap-5">
     <button type="button" onClick={() => navigate("/login")} className="rogym-text-link rogym-text-link--muted rogym-sx-26e7fe5a"><ArrowLeft size={14} strokeWidth={2} /><span>{t("forgotPassword.backToLogin")}</span></button>
     <div className="text-center my-2"><div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4 rogym-sx-cd8c4f95"><Mail size={24} color={T} strokeWidth={1.5} /></div><h1 className="rogym-sx-28816d54">{t("forgotPassword.title")}</h1><p className="rogym-sx-a29e4e5b">{t("forgotPassword.subtitle")}</p></div>

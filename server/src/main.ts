@@ -37,8 +37,31 @@ async function bootstrap(): Promise<void> {
       crossOriginResourcePolicy: { policy: 'cross-origin' },
     })
   )
+  const clientUrlEnv = config.get<string>('CLIENT_URL') ?? 'http://localhost:5173'
+  const allowedOrigins = clientUrlEnv
+    .split(',')
+    .map((url) => url.trim().replace(/\/+$/, ''))
+    .filter(Boolean)
+
   app.enableCors({
-    origin: config.get<string>('CLIENT_URL') ?? 'http://localhost:5173',
+    origin: (origin, callback) => {
+      // Allow requests with no origin (such as mobile apps, curl, server-to-server)
+      if (!origin) return callback(null, true)
+
+      const cleanOrigin = origin.trim().replace(/\/+$/, '')
+
+      const isExplicitlyAllowed = allowedOrigins.includes(cleanOrigin)
+      const isVercelDeploy =
+        cleanOrigin.startsWith('https://') && cleanOrigin.endsWith('.vercel.app')
+      const isLocalhost =
+        /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(cleanOrigin)
+
+      if (isExplicitlyAllowed || isVercelDeploy || isLocalhost) {
+        callback(null, true)
+      } else {
+        callback(new Error(`Origin ${origin} not allowed by CORS`))
+      }
+    },
     credentials: true,
   })
 

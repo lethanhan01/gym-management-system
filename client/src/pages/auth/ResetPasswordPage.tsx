@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { Mail } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { authService } from "@/services/auth.service";
+import { getApiError, isNetworkError } from "@/lib/api-error";
 import { AuthShell, BtnPrimary, ErrorMsg } from "./_authui";
 import { OtpInput, OTP_LENGTH, ResendOtpButton } from "./OtpInput";
 
@@ -18,11 +19,33 @@ export default function ResetPasswordPage() {
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault(); if (!isFull) return;
     setError(""); setLoading(true);
-    try { await authService.verifyResetOtp(email, otp); navigate("/reset-password/new-password", { replace: true }); }
-    catch { setError(t("resetPassword.invalidOtp")); setDigits(Array(OTP_LENGTH).fill("")); }
-    finally { setLoading(false); }
+    try {
+      await authService.verifyResetOtp(email, otp);
+      navigate("/reset-password/new-password", { replace: true });
+    } catch (err) {
+      if (isNetworkError(err)) {
+        setError(t("login.networkError"));
+      } else {
+        setError(getApiError(err, t("resetPassword.invalidOtp")));
+      }
+      setDigits(Array(OTP_LENGTH).fill(""));
+    } finally {
+      setLoading(false);
+    }
   }
-  async function handleResend() { try { await authService.forgotPassword(email); setDigits(Array(OTP_LENGTH).fill("")); } catch { setError(t("resetPassword.resendFailed")); } }
+
+  async function handleResend() {
+    try {
+      await authService.forgotPassword(email);
+      setDigits(Array(OTP_LENGTH).fill(""));
+    } catch (err) {
+      if (isNetworkError(err)) {
+        setError(t("login.networkError"));
+      } else {
+        setError(getApiError(err, t("resetPassword.resendFailed")));
+      }
+    }
+  }
 
   return <AuthShell backTo="/forgot-password" backLabel={t("resetPassword.backLabel")}><form onSubmit={handleSubmit} className="flex flex-col gap-6">
     <div className="flex flex-col items-center text-center gap-3"><div className="w-14 h-14 rounded-2xl flex items-center justify-center rogym-sx-cd8c4f95"><Mail size={24} className="rogym-text-accent" strokeWidth={1.5} /></div><div><h1 className="rogym-sx-4d6285f7">{t("resetPassword.title")}</h1><p className="rogym-sx-a29e4e5b">{t("resetPassword.subtitle")}</p><p className="rogym-verify-email">{email}</p></div></div>

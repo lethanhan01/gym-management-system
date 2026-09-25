@@ -44,4 +44,9 @@ describe('api-error utility', () => {
     expect(isApiConflict(conflictErr)).toBe(true)
     expect(getApiErrorCode(conflictErr)).toBe('EMAIL_IN_USE')
   })
+
+  it('prefers payload message over generic fallback when available', () => {
+    const bizErr = createAxiosError(400, { message: 'Email đã tồn tại trong hệ thống' })
+    expect(getApiError(bizErr, 'Lỗi tạo tài khoản')).toBe('Email đã tồn tại trong hệ thống')
+  })
 })
