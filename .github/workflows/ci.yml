@@ -219,7 +219,7 @@ jobs:
 
   deploy-server:
     name: Server (Deploy to VPS via Self-hosted Runner)
-    runs-on: [self-hosted, gym-server]
+    runs-on: [self-hosted]
     needs: [server-docker]
     if: >-
       github.event_name != 'pull_request' &&
