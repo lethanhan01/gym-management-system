@@ -1,6 +1,6 @@
 services:
   gym-server:
-    image: ghcr.io/lethanhan01/gym-management-system/server:latest
+    image: ${SERVER_IMAGE:-ghcr.io/lethanhan01/gym-management-system/server:latest}
     build:
       context: .
       dockerfile: Dockerfile
