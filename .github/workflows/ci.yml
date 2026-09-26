@@ -249,12 +249,12 @@ jobs:
 
           # 1. Xác định thư mục chứa mã nguồn và file .env trên VPS
           DEPLOY_DIR="${CONFIGURED_DEPLOY_PATH:-}"
-          if [ -z "$DEPLOY_DIR" ]; then
-            if [ -f "$HOME/gym-management-system/server/.env" ]; then
+          if [[ -z "$DEPLOY_DIR" ]]; then
+            if [[ -f "$HOME/gym-management-system/server/.env" ]]; then
               DEPLOY_DIR="$HOME/gym-management-system/server"
-            elif [ -f "/opt/gym-management-system/server/.env" ]; then
+            elif [[ -f "/opt/gym-management-system/server/.env" ]]; then
               DEPLOY_DIR="/opt/gym-management-system/server"
-            elif [ -f "$GITHUB_WORKSPACE/server/.env" ]; then
+            elif [[ -f "$GITHUB_WORKSPACE/server/.env" ]]; then
               DEPLOY_DIR="$GITHUB_WORKSPACE/server"
             else
               echo "❌ Lỗi: Không thể tự động phát hiện thư mục deploy có file .env!"
@@ -273,7 +273,7 @@ jobs:
           chmod +x ./deploy.sh
           mkdir -p ./prisma
           cp -r "$GITHUB_WORKSPACE/server/prisma/"* ./prisma/
-          if [ -f "$GITHUB_WORKSPACE/server/prisma.config.ts" ]; then
+          if [[ -f "$GITHUB_WORKSPACE/server/prisma.config.ts" ]]; then
             cp "$GITHUB_WORKSPACE/server/prisma.config.ts" ./prisma.config.ts
           fi
 

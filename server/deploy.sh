@@ -6,7 +6,7 @@ echo "🚀 BẮT ĐẦU QUY TRÌNH DEPLOY GYM-SERVER TRÊN VPS"
 echo "=================================================="
 
 # 1. Kiểm tra file .env
-if [ ! -f .env ]; then
+if [[ ! -f .env ]]; then
   echo "❌ Lỗi: Không tìm thấy file .env tại thư mục $(pwd)!"
   exit 1
 fi
@@ -20,7 +20,7 @@ echo "🎯 Target image: $TARGET_IMAGE"
 
 # Lưu lại Image ID hiện tại để phục vụ rollback nếu deploy gặp sự cố
 PREV_IMAGE_ID=$(docker inspect --format='{{.Image}}' gym-server 2>/dev/null || true)
-if [ -n "$PREV_IMAGE_ID" ]; then
+if [[ -n "$PREV_IMAGE_ID" ]]; then
   echo "📸 Đã ghi nhận image hiện tại để rollback nếu cần: $PREV_IMAGE_ID"
 fi
 
@@ -28,7 +28,7 @@ fi
 rollback() {
   echo ""
   echo "🚨 PHÁT HIỆN SỰ CỐ TRONG QUÁ TRÌNH DEPLOY!"
-  if [ -n "$PREV_IMAGE_ID" ]; then
+  if [[ -n "$PREV_IMAGE_ID" ]]; then
     echo "⏪ Đang tiến hành tự động Rollback về image trước đó: $PREV_IMAGE_ID..."
     docker tag "$PREV_IMAGE_ID" "$TARGET_IMAGE" || true
     docker compose up -d --force-recreate gym-server
@@ -40,11 +40,11 @@ rollback() {
 }
 
 # 2. Đồng bộ Schema Prisma Database (nếu được bật)
-if [ "$RUN_PRISMA_PUSH" = "true" ]; then
+if [[ "$RUN_PRISMA_PUSH" == "true" ]]; then
   echo "🔄 Đang chạy đồng bộ lược đồ cơ sở dữ liệu (prisma db push)..."
   if command -v npx >/dev/null 2>&1; then
-    # Load .env và thực thi prisma db push
-    if npx prisma db push --skip-generate; then
+    # Load .env và thực thi prisma db push với flag --no-install để ngăn npx tải package từ Internet
+    if npx --no-install prisma db push --skip-generate; then
       echo "✅ Đồng bộ Prisma schema thành công!"
     else
       echo "❌ Lỗi: Đồng bộ Prisma schema thất bại!"
@@ -56,7 +56,7 @@ if [ "$RUN_PRISMA_PUSH" = "true" ]; then
 fi
 
 # 3. Kéo (Pull) hoặc Build container
-if [ "$DEPLOY_MODE" = "pull" ]; then
+if [[ "$DEPLOY_MODE" == "pull" ]]; then
   echo "📥 Đang kéo image mới nhất từ GitHub Container Registry..."
   docker compose pull gym-server
 else
@@ -72,9 +72,9 @@ docker compose up -d --force-recreate gym-server
 echo "⏳ Đang kiểm tra trạng thái sức khỏe container (tối đa 45s)..."
 RETRIES=15
 HEALTH_OK=false
-until [ "$RETRIES" -le 0 ]; do
+until [[ "$RETRIES" -le 0 ]]; do
   STATUS=$(docker inspect --format='{{json .State.Health.Status}}' gym-server 2>/dev/null || echo '"starting"')
-  if [ "$STATUS" = '"healthy"' ]; then
+  if [[ "$STATUS" == '"healthy"' ]]; then
     echo "✅ Container gym-server đã HEALTHY và sẵn sàng!"
     HEALTH_OK=true
     break
@@ -84,7 +84,7 @@ until [ "$RETRIES" -le 0 ]; do
   RETRIES=$((RETRIES - 1))
 done
 
-if [ "$HEALTH_OK" = false ]; then
+if [[ "$HEALTH_OK" == false ]]; then
   echo "❌ Lỗi: Container không đạt trạng thái healthy sau 45s. Chi tiết logs gần nhất:"
   docker compose logs --tail=50 gym-server
   rollback
@@ -94,7 +94,7 @@ fi
 echo "🔍 Đang kiểm tra kết nối Database & Prisma Engine (/health/ready)..."
 READY_RETRIES=10
 READY_OK=false
-until [ "$READY_RETRIES" -le 0 ]; do
+until [[ "$READY_RETRIES" -le 0 ]]; do
   if docker compose exec -T gym-server node -e "fetch('http://127.0.0.1:3000/health/ready').then(r => { if (!r.ok) process.exit(1); return r.json(); }).then(data => { if (data.status === 'ok') process.exit(0); else process.exit(1); }).catch(() => process.exit(1))" 2>/dev/null; then
     echo "✅ Database & Prisma Engine đã sẵn sàng (/health/ready: OK)!"
     READY_OK=true
@@ -105,7 +105,7 @@ until [ "$READY_RETRIES" -le 0 ]; do
   READY_RETRIES=$((READY_RETRIES - 1))
 done
 
-if [ "$READY_OK" = false ]; then
+if [[ "$READY_OK" == false ]]; then
   echo "❌ Lỗi: Database hoặc Prisma Engine không phản hồi sẵn sàng sau deploy. Chi tiết logs:"
   docker compose logs --tail=50 gym-server
   rollback
