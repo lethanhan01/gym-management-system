@@ -13,7 +13,7 @@ import {
 export class CreateEquipmentDto {
   @IsOptional()
   @IsString()
-  @Matches(/^EQP-[0-9]{6}$/, { message: 'equipmentCode phải có dạng EQP-XXXXXX' })
+  @Matches(/^EQP-\d{6}$/, { message: 'equipmentCode phải có dạng EQP-XXXXXX' })
   equipmentCode?: string
 
   @IsOptional()

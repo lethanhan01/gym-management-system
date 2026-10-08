@@ -23,7 +23,7 @@ export function ComponentPlaygroundCard({
   children,
   codeSnippet,
   className,
-}: ComponentPlaygroundCardProps) {
+}: Readonly<ComponentPlaygroundCardProps>) {
   const [showCode, setShowCode] = useState(false)
   const [copied, setCopied] = useState(false)
 

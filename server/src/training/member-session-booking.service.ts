@@ -161,7 +161,7 @@ export class MemberSessionBookingService {
       },
     })
 
-    if (!assignment || !assignment.plan) {
+    if (!assignment?.plan) {
       return {
         hasPtBenefit: true,
         hasActivePlan: false,
@@ -250,7 +250,7 @@ export class MemberSessionBookingService {
 
     const startTime = new Date(dto.startTime)
     const endTime = new Date(dto.endTime)
-    if (isNaN(startTime.getTime()) || isNaN(endTime.getTime()) || endTime <= startTime) {
+    if (Number.isNaN(startTime.getTime()) || Number.isNaN(endTime.getTime()) || endTime <= startTime) {
       throw new BadRequestException({
         success: false,
         code: 'VALIDATION_ERROR',
@@ -290,8 +290,7 @@ export class MemberSessionBookingService {
       })
 
       if (
-        !member ||
-        !member.primaryTrainerId ||
+        !member?.primaryTrainerId ||
         !member.primaryTrainer ||
         member.primaryTrainer.deletedAt
       ) {
@@ -353,9 +352,7 @@ export class MemberSessionBookingService {
         startTime,
         endTime,
         'TRAINER_TIME_OVERLAP',
-        undefined,
-        undefined,
-        tx
+        { tx }
       )
 
       await this.scheduling.checkOverlap(
@@ -364,9 +361,7 @@ export class MemberSessionBookingService {
         startTime,
         endTime,
         'MEMBER_TIME_OVERLAP',
-        undefined,
-        memberId,
-        tx
+        { memberId, tx }
       )
 
       const availableRoom = await this.scheduling.findAvailableRoom(startTime, endTime, tx)

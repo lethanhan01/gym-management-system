@@ -1,5 +1,5 @@
 import * as dotenv from 'dotenv'
-import * as path from 'path'
+import * as path from 'node:path'
 
 // Nạp file môi trường
 dotenv.config({ path: path.resolve(__dirname, '../.env') })
@@ -227,7 +227,7 @@ async function main(): Promise<void> {
     const dbMsg = await prisma.chatMessage.findUnique({
       where: { messageId: BigInt(trainerReceived.messageId) },
     })
-    if (!dbMsg || dbMsg.content !== testContent) {
+    if (dbMsg?.content !== testContent) {
       throw new Error('CSDL không lưu tin nhắn chính xác.')
     }
     console.log('  [PASS] CSDL xác nhận lưu tin nhắn trong bảng `chat_messages` thành công.')
@@ -269,7 +269,7 @@ async function main(): Promise<void> {
       messageId: trainerReceived.messageId,
     })
 
-    const [del1, del2] = await Promise.all([memberDeletePromise, trainerDeletePromise])
+    const [del1] = await Promise.all([memberDeletePromise, trainerDeletePromise])
     console.log(`  [PASS] Cả Member và Trainer nhận được message_deleted cho ID: ${del1.messageId}`)
 
     // Xác nhận trong CSDL thật đã bị Hard Delete hoàn toàn

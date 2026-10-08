@@ -67,7 +67,7 @@ export function StaffScheduleCalendar<TSchedule extends StaffScheduleCalendarEnt
   emptyDayAction,
   emptyShiftMessage,
   headerAction,
-}: StaffScheduleCalendarProps<TSchedule>) {
+}: Readonly<StaffScheduleCalendarProps<TSchedule>>) {
   const { t, i18n } = useTranslation('common')
   const locale = i18n.language === 'ja' ? 'ja-JP' : 'vi-VN'
 
@@ -166,10 +166,10 @@ export function StaffScheduleCalendar<TSchedule extends StaffScheduleCalendarEnt
 
         <div className="space-y-1">
           {grid.map((row, rowIndex) => (
-            <div key={rowIndex} className="grid grid-cols-7 gap-1">
+            <div key={`cal-row-${targetYear}-${targetMonth}-${rowIndex}`} className="grid grid-cols-7 gap-1">
               {row.map((day, columnIndex) => {
                 if (day === null) {
-                  return <div key={columnIndex} className="h-[52px] rounded-xl" />
+                  return <div key={`empty-cell-${targetYear}-${targetMonth}-${rowIndex}-${columnIndex}`} className="h-[52px] rounded-xl" />
                 }
 
                 const date = `${targetYear}-${String(targetMonth + 1).padStart(2, '0')}-${String(
@@ -181,7 +181,7 @@ export function StaffScheduleCalendar<TSchedule extends StaffScheduleCalendarEnt
 
                 return (
                   <button
-                    key={columnIndex}
+                    key={`date-cell-${date}`}
                     type="button"
                     onClick={() => onSelectedDateChange(selected ? null : date)}
                     className={cn(

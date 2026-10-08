@@ -60,7 +60,7 @@ export function WorkoutFocusModal({
   onResume,
   onSkipRest,
   celebrationSeconds,
-}: WorkoutFocusModalProps) {
+}: Readonly<WorkoutFocusModalProps>) {
   const { t } = useTranslation('member')
 
   if (!open) return null
@@ -370,8 +370,8 @@ export function WorkoutFocusModal({
 
           {instructions && instructions.length > 0 ? (
             <ol className="list-decimal space-y-1.5 pl-4 text-xs leading-relaxed text-white/80">
-              {instructions.map((step, index) => (
-                <li key={index} className="pl-0.5">
+              {instructions.map((step) => (
+                <li key={step} className="pl-0.5">
                   {step}
                 </li>
               ))}

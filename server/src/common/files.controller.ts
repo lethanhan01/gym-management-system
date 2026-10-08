@@ -7,8 +7,8 @@ import {
   Res,
 } from '@nestjs/common'
 import type { Response } from 'express'
-import { join } from 'path'
-import * as fs from 'fs'
+import { join } from 'node:path'
+import * as fs from 'node:fs'
 import { PrismaService } from '../prisma/prisma.service'
 
 @Controller('files')

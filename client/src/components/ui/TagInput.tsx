@@ -81,6 +81,8 @@ export const TagInput = forwardRef<HTMLDivElement, TagInputProps>(
     return (
       <div
         ref={ref}
+        role="group"
+        aria-label="Danh sách thẻ"
         onClick={() => inputRef.current?.focus()}
         onKeyDown={(e) => {
           if (e.target === e.currentTarget && (e.key === 'Enter' || e.key === ' ')) {

@@ -118,7 +118,6 @@ export const Card = forwardRef<HTMLElement, CardProps>(
           ref={ref as React.Ref<HTMLAnchorElement>}
           className={baseClasses}
           aria-disabled={disabled}
-          aria-selected={selected}
           aria-busy={loading}
           {...(props as HTMLAttributes<HTMLAnchorElement>)}
         >
@@ -134,7 +133,6 @@ export const Card = forwardRef<HTMLElement, CardProps>(
           ref={ref as React.Ref<HTMLAnchorElement>}
           className={baseClasses}
           aria-disabled={disabled}
-          aria-selected={selected}
           aria-busy={loading}
           {...(props as HTMLAttributes<HTMLAnchorElement>)}
         >
@@ -182,7 +180,7 @@ export function CardHeader({
   className,
   children,
   ...props
-}: CardHeaderProps) {
+}: Readonly<CardHeaderProps>) {
   return (
     <div
       className={cn(
@@ -250,7 +248,7 @@ export function CardTitle({
   className,
   children,
   ...props
-}: CardTitleProps) {
+}: Readonly<CardTitleProps>) {
   return (
     <Comp
       className={cn(
@@ -280,7 +278,7 @@ export function CardDescription({
   className,
   children,
   ...props
-}: CardDescriptionProps) {
+}: Readonly<CardDescriptionProps>) {
   return (
     <p
       className={cn(
@@ -343,7 +341,7 @@ export function CardMedia({
   className,
   children,
   ...props
-}: CardMediaProps) {
+}: Readonly<CardMediaProps>) {
   return (
     <div
       className={cn(
@@ -410,7 +408,7 @@ export function CardContent({
   className,
   children,
   ...props
-}: CardContentProps) {
+}: Readonly<CardContentProps>) {
   return (
     <div
       className={cn(
@@ -447,7 +445,7 @@ export function CardFooter({
   className,
   children,
   ...props
-}: CardFooterProps) {
+}: Readonly<CardFooterProps>) {
   return (
     <div
       className={cn(
@@ -486,7 +484,7 @@ export function CardRibbon({
   className,
   children,
   ...props
-}: CardRibbonProps) {
+}: Readonly<CardRibbonProps>) {
   return (
     <span
       className={cn(
@@ -522,7 +520,7 @@ export function CardSkeleton({
   hasFooter = false,
   className,
   ...props
-}: CardSkeletonProps) {
+}: Readonly<CardSkeletonProps>) {
   return (
     <div
       className={cn(
@@ -543,9 +541,9 @@ export function CardSkeleton({
           </div>
         )}
         <div className="space-y-2 pt-2">
-          {Array.from({ length: lines }).map((_, i) => (
+          {Array.from({ length: lines }, (_, idx) => `card-skel-line-${idx + 1}`).map((lineKey, i) => (
             <div
-              key={i}
+              key={lineKey}
               className={cn(
                 'h-3.5 rounded bg-white/5',
                 i === lines - 1 ? 'w-4/5' : 'w-full'

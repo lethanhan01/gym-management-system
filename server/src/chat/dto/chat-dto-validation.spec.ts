@@ -18,7 +18,7 @@ describe('Chat DTO Validation', () => {
     it('nen hop le khi noi dung tin nhan dung dinh dang', async () => {
       const dto = plainToInstance(SendMessageDto, { content: 'Xin chào huấn luyện viên!' })
       const errors = await validate(dto)
-      expect(errors.length).toBe(0)
+      expect(errors).toHaveLength(0)
     })
 
     it('nen bao loi khi content bi de trong', async () => {
@@ -47,14 +47,14 @@ describe('Chat DTO Validation', () => {
     it('nen hop le voi payload rong (su dung limit mac dinh)', async () => {
       const dto = plainToInstance(QueryMessagesDto, {})
       const errors = await validate(dto)
-      expect(errors.length).toBe(0)
+      expect(errors).toHaveLength(0)
       expect(dto.limit).toBe(50)
     })
 
     it('nen hop le khi co cursor va limit hop le', async () => {
       const dto = plainToInstance(QueryMessagesDto, { cursor: '150', limit: 25 })
       const errors = await validate(dto)
-      expect(errors.length).toBe(0)
+      expect(errors).toHaveLength(0)
       expect(dto.cursor).toBe('150')
       expect(dto.limit).toBe(25)
     })
@@ -62,7 +62,7 @@ describe('Chat DTO Validation', () => {
     it('nen transform chuoi limit sang kieu so', async () => {
       const dto = plainToInstance(QueryMessagesDto, { limit: '30' })
       const errors = await validate(dto)
-      expect(errors.length).toBe(0)
+      expect(errors).toHaveLength(0)
       expect(dto.limit).toBe(30)
     })
 
@@ -85,19 +85,19 @@ describe('Chat DTO Validation', () => {
     it('nen hop le khi status la active', async () => {
       const dto = plainToInstance(QueryConversationsDto, { status: ConversationStatus.active })
       const errors = await validate(dto)
-      expect(errors.length).toBe(0)
+      expect(errors).toHaveLength(0)
     })
 
     it('nen hop le khi status la archived', async () => {
       const dto = plainToInstance(QueryConversationsDto, { status: ConversationStatus.archived })
       const errors = await validate(dto)
-      expect(errors.length).toBe(0)
+      expect(errors).toHaveLength(0)
     })
 
     it('nen hop le khi status khong duoc truyen', async () => {
       const dto = plainToInstance(QueryConversationsDto, {})
       const errors = await validate(dto)
-      expect(errors.length).toBe(0)
+      expect(errors).toHaveLength(0)
     })
 
     it('nen bao loi khi status la gia tri enum khong hop le', async () => {
@@ -116,7 +116,7 @@ describe('Chat DTO Validation', () => {
           content: 'Tin nhắn WS',
         })
         const errors = await validate(dto)
-        expect(errors.length).toBe(0)
+        expect(errors).toHaveLength(0)
       })
 
       it('nen bao loi khi thieu conversationId', async () => {
@@ -140,8 +140,8 @@ describe('Chat DTO Validation', () => {
       it('nen hop le khi co conversationId', async () => {
         const joinDto = plainToInstance(WsJoinConversationDto, { conversationId: '1' })
         const leaveDto = plainToInstance(WsLeaveConversationDto, { conversationId: '1' })
-        expect((await validate(joinDto)).length).toBe(0)
-        expect((await validate(leaveDto)).length).toBe(0)
+        expect(await validate(joinDto)).toHaveLength(0)
+        expect(await validate(leaveDto)).toHaveLength(0)
       })
 
       it('nen bao loi khi conversationId rong', async () => {
@@ -154,8 +154,8 @@ describe('Chat DTO Validation', () => {
       it('nen hop le khi co conversationId', async () => {
         const typingDto = plainToInstance(WsTypingDto, { conversationId: '1' })
         const seenDto = plainToInstance(WsMarkSeenDto, { conversationId: '1' })
-        expect((await validate(typingDto)).length).toBe(0)
-        expect((await validate(seenDto)).length).toBe(0)
+        expect(await validate(typingDto)).toHaveLength(0)
+        expect(await validate(seenDto)).toHaveLength(0)
       })
     })
 
@@ -166,7 +166,7 @@ describe('Chat DTO Validation', () => {
           messageId: '100',
         })
         const errors = await validate(dto)
-        expect(errors.length).toBe(0)
+        expect(errors).toHaveLength(0)
       })
 
       it('nen bao loi khi thieu messageId', async () => {

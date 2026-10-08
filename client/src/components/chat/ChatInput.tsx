@@ -23,7 +23,7 @@ export interface ChatInputProps {
 }
 
 const MAX_IMAGE_SIZE_BYTES = 5 * 1024 * 1024 // 5MB
-const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp']
+const ALLOWED_IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp'])
 
 export function ChatInput({
   conversationId: _conversationId,
@@ -34,7 +34,7 @@ export function ChatInput({
   onSendMessage,
   onSendImage,
   onTyping,
-}: ChatInputProps) {
+}: Readonly<ChatInputProps>) {
   const { t } = useTranslation('chat')
   const [text, setText] = useState('')
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
@@ -127,7 +127,7 @@ export function ChatInput({
     const file = e.target.files?.[0]
     if (!file) return
 
-    if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
+    if (!ALLOWED_IMAGE_TYPES.has(file.type)) {
       toast.error(t('invalidImageTypeError', 'Chỉ hỗ trợ file ảnh định dạng JPG, PNG, hoặc WebP.'))
       if (fileInputRef.current) fileInputRef.current.value = ''
       return

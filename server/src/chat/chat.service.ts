@@ -5,8 +5,8 @@ import {
   NotFoundException,
 } from '@nestjs/common'
 import { ConversationStatus, MessageType, Prisma } from '@prisma/client'
-import * as fs from 'fs'
-import { join } from 'path'
+import * as fs from 'node:fs'
+import { join } from 'node:path'
 import { PrismaService } from '../prisma/prisma.service'
 import {
   ChatMessageResponseDto,
@@ -601,61 +601,29 @@ export class ChatService {
     }
   }
 
-  /**
-   * Thu hồi tin nhắn (Hard delete) - chỉ người gửi mới có quyền.
-   */
-  async deleteMessage(messageId: bigint, senderUserId: bigint) {
-    const message = await this.prisma.chatMessage.findUnique({
-      where: { messageId },
-    })
-
-    if (!message) {
-      throw new NotFoundException({
-        success: false,
-        code: 'NOT_FOUND',
-        message: 'Tin nhắn không tồn tại',
+  private async cleanupAttachmentFile(attachmentFileId: bigint | null): Promise<void> {
+    if (!attachmentFileId) return
+    try {
+      const fileRecord = await this.prisma.file.findUnique({
+        where: { fileId: attachmentFileId },
       })
-    }
-
-    if (message.senderUserId !== senderUserId) {
-      throw new ForbiddenException({
-        success: false,
-        code: 'FORBIDDEN',
-        message: 'Chỉ người gửi mới có quyền thu hồi tin nhắn này',
-      })
-    }
-
-    const conversationId = message.conversationId
-    const attachmentFileId = message.attachmentFileId
-
-    // 1. Xóa tin nhắn khỏi DB
-    await this.prisma.chatMessage.delete({
-      where: { messageId },
-    })
-
-    // 2. Nếu tin nhắn có đính kèm file, dọn dẹp bản ghi File và file vật lý trên đĩa
-    if (attachmentFileId) {
-      try {
-        const fileRecord = await this.prisma.file.findUnique({
+      if (fileRecord) {
+        await this.prisma.file.delete({
           where: { fileId: attachmentFileId },
         })
-        if (fileRecord) {
-          await this.prisma.file.delete({
-            where: { fileId: attachmentFileId },
-          })
-          if (fileRecord.storagePath) {
-            const diskPath = join(process.cwd(), fileRecord.storagePath)
-            if (fs.existsSync(diskPath)) {
-              fs.unlinkSync(diskPath)
-            }
+        if (fileRecord.storagePath) {
+          const diskPath = join(process.cwd(), fileRecord.storagePath)
+          if (fs.existsSync(diskPath)) {
+            fs.unlinkSync(diskPath)
           }
         }
-      } catch {
-        // Log hoặc bỏ qua nếu file đã bị xóa trước đó
       }
+    } catch {
+      // Log hoặc bỏ qua nếu file đã bị xóa trước đó
     }
+  }
 
-    // 3. Cập nhật lại lastMessageContent của conversation nếu tin bị xóa là tin mới nhất
+  private async syncConversationLastMessage(conversationId: bigint): Promise<void> {
     const latestRemainingMessage = await this.prisma.chatMessage.findFirst({
       where: { conversationId },
       orderBy: { createdAt: 'desc' },
@@ -683,10 +651,42 @@ export class ChatService {
         },
       })
     }
+  }
+
+  /**
+   * Thu hồi tin nhắn (Hard delete) - chỉ người gửi mới có quyền.
+   */
+  async deleteMessage(messageId: bigint, senderUserId: bigint) {
+    const message = await this.prisma.chatMessage.findUnique({
+      where: { messageId },
+    })
+
+    if (!message) {
+      throw new NotFoundException({
+        success: false,
+        code: 'NOT_FOUND',
+        message: 'Tin nhắn không tồn tại',
+      })
+    }
+
+    if (message.senderUserId !== senderUserId) {
+      throw new ForbiddenException({
+        success: false,
+        code: 'FORBIDDEN',
+        message: 'Chỉ người gửi mới có quyền thu hồi tin nhắn này',
+      })
+    }
+
+    await this.prisma.chatMessage.delete({
+      where: { messageId },
+    })
+
+    await this.cleanupAttachmentFile(message.attachmentFileId)
+    await this.syncConversationLastMessage(message.conversationId)
 
     return {
       messageId: messageId.toString(),
-      conversationId: conversationId.toString(),
+      conversationId: message.conversationId.toString(),
     }
   }
 

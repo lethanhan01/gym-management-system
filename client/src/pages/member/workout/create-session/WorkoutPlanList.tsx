@@ -23,12 +23,12 @@ function WorkoutPlanCard({
   plan,
   onStartDay,
   onEditDay,
-}: {
+}: Readonly<{
   assignment: WorkoutAssignmentSummary
   plan: WorkoutPlan | null
   onStartDay: DayAction
   onEditDay: DayAction
-}) {
+}>) {
   const { t } = useTranslation('member')
   const [expanded, setExpanded] = useState(false)
   const isPT = !!assignment.assignedByStaffId
@@ -144,7 +144,7 @@ export function WorkoutPlanList({
   onCreatePlan,
   onStartDay,
   onEditDay,
-}: {
+}: Readonly<{
   assignments: WorkoutAssignmentSummary[]
   fullPlans: Map<string, WorkoutPlan>
   loading: boolean
@@ -153,7 +153,7 @@ export function WorkoutPlanList({
   onCreatePlan: () => void
   onStartDay: DayAction
   onEditDay: DayAction
-}) {
+}>) {
   const { t } = useTranslation('member')
 
   if (loading) return <PageSkeleton rows={5} />

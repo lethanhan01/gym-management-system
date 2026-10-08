@@ -4,11 +4,11 @@ export function ProfilePasswordField({
   label,
   value,
   onChange,
-}: {
+}: Readonly<{
   label: string
   value: string
   onChange: (value: string) => void
-}) {
+}>) {
   return (
     <FormField label={label} required>
       <Input

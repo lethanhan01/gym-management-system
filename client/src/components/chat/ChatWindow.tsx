@@ -65,7 +65,7 @@ export function ChatWindow({
   onLoadMore,
   onDeleteMessage,
   onRetryMessage,
-}: ChatWindowProps) {
+}: Readonly<ChatWindowProps>) {
   const { t, i18n } = useTranslation('chat')
   const isJa = i18n.language.startsWith('ja')
   const scrollContainerRef = useRef<HTMLDivElement | null>(null)

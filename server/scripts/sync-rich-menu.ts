@@ -5,8 +5,8 @@
  * Usage:
  *   npx ts-node scripts/sync-rich-menu.ts [--dry-run] [--locale ja|vi] [--clean]
  */
-import * as fs from 'fs'
-import * as path from 'path'
+import * as fs from 'node:fs'
+import * as path from 'node:path'
 import * as dotenv from 'dotenv'
 
 // Load environment configurations
@@ -51,7 +51,7 @@ function resolveLiffBaseUrl(): string {
   const envLiffUrl = process.env.LINE_LIFF_URL || process.env.VITE_LIFF_URL
   const envLiffId = process.env.LINE_LIFF_ID || process.env.VITE_LIFF_ID
 
-  if (envLiffUrl && envLiffUrl.startsWith('http')) {
+  if (envLiffUrl?.startsWith('http')) {
     return envLiffUrl.replace(/\/+$/, '')
   }
 

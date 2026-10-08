@@ -4,11 +4,11 @@ export function ProfileInfoRow({
   label,
   value,
   isPlaceholder,
-}: {
+}: Readonly<{
   label: string
   value: ReactNode
   isPlaceholder?: boolean
-}) {
+}>) {
   const isString = typeof value === 'string'
   const isMuted =
     isPlaceholder ||

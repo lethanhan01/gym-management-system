@@ -83,7 +83,7 @@
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 10px;
     outline: none;
-    background: rgba(255, 255, 255, 0.05);
+    background: #141d18;
     color: #fff;
     font-family: var(--rogym-font-body);
     font-size: 14px;

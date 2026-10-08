@@ -43,11 +43,11 @@ function IslandGroup<T extends string>({
   options,
   value,
   onChange,
-}: {
+}: Readonly<{
   options: { value: T; label: string }[]
   value: T
   onChange: (val: T) => void
-}) {
+}>) {
   return (
     <div className="inline-flex rounded-xl p-1 bg-white/5 border border-white/10 gap-1">
       {options.map(opt => (

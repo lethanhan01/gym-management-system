@@ -1,8 +1,10 @@
 import {
   createContext,
   forwardRef,
+  useCallback,
   useContext,
   useId,
+  useMemo,
   useState,
   type ButtonHTMLAttributes,
   type HTMLAttributes,
@@ -61,23 +63,29 @@ export const Tabs = forwardRef<HTMLDivElement, TabsProps>(
     const isControlled = controlledValue !== undefined
     const currentValue = isControlled ? controlledValue : uncontrolledValue
 
-    const handleValueChange = (val: string) => {
-      if (!isControlled) {
-        setUncontrolledValue(val)
-      }
-      onValueChange?.(val)
-    }
+    const handleValueChange = useCallback(
+      (val: string) => {
+        if (!isControlled) {
+          setUncontrolledValue(val)
+        }
+        onValueChange?.(val)
+      },
+      [isControlled, onValueChange]
+    )
+
+    const tabsContextValue = useMemo<TabsContextValue>(
+      () => ({
+        value: currentValue,
+        onValueChange: handleValueChange,
+        variant,
+        size,
+        baseId,
+      }),
+      [currentValue, handleValueChange, variant, size, baseId]
+    )
 
     return (
-      <TabsContext.Provider
-        value={{
-          value: currentValue,
-          onValueChange: handleValueChange,
-          variant,
-          size,
-          baseId,
-        }}
-      >
+      <TabsContext.Provider value={tabsContextValue}>
         <div ref={ref} className={cn('w-full', className)} {...props}>
           {children}
         </div>

@@ -1,7 +1,7 @@
 import { Injectable, Logger, OnModuleInit, ServiceUnavailableException } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { ExerciseSource, ExerciseSyncRunStatus, Prisma } from '@prisma/client'
-import { randomUUID } from 'crypto'
+import { randomUUID } from 'node:crypto'
 import { PrismaService } from '../../prisma/prisma.service'
 import { ExerciseDbV2Client, NormalizedExerciseDbExercise } from './exercise-db-v2.client'
 import {
@@ -162,13 +162,10 @@ export class ExerciseCatalogSyncService implements OnModuleInit {
     if (!owned) throw new Error('Exercise catalog sync lease was lost')
   }
 
-  private async upsertBatch(
+  private async upsertLookups(
     tx: Prisma.TransactionClient,
-    items: NormalizedExerciseDbExercise[],
-    runId: bigint,
-    counters: Record<string, number>
+    items: NormalizedExerciseDbExercise[]
   ) {
-    // Step 1: Collect all unique lookup values from this batch
     const bodyParts = [...new Set(items.map((i) => i.bodyPart).filter((x): x is string => !!x))]
     const muscles = [
       ...new Set([
@@ -180,7 +177,6 @@ export class ExerciseCatalogSyncService implements OnModuleInit {
       ...new Set(items.map((i) => i.equipmentName).filter((x): x is string => !!x)),
     ]
 
-    // Step 2: Upsert lookup tables and build ID maps
     const bodyPartMap = new Map<string, number>()
     for (const name of bodyParts) {
       const record = await tx.exerciseBodyPart.upsert({
@@ -211,7 +207,14 @@ export class ExerciseCatalogSyncService implements OnModuleInit {
       equipmentMap.set(name, record.equipmentId)
     }
 
-    // Step 3: Check existing exercises for change detection
+    return { bodyPartMap, muscleMap, equipmentMap }
+  }
+
+  private async countItemChanges(
+    tx: Prisma.TransactionClient,
+    items: NormalizedExerciseDbExercise[],
+    counters: Record<string, number>
+  ) {
     const existing = await tx.exercise.findMany({
       where: {
         source: ExerciseSource.exercisedb,
@@ -227,13 +230,52 @@ export class ExerciseCatalogSyncService implements OnModuleInit {
     )
 
     for (const item of items) {
-      if (!existingMap.has(item.externalId)) counters.insertedCount++
-      else if (existingMap.get(item.externalId)!.hash === item.contentHash)
+      if (!existingMap.has(item.externalId)) {
+        counters.insertedCount++
+      } else if (existingMap.get(item.externalId)!.hash === item.contentHash) {
         counters.unchangedCount++
-      else counters.updatedCount++
+      } else {
+        counters.updatedCount++
+      }
     }
+  }
 
-    // Step 4: Upsert exercises with FK IDs
+  private async upsertSecondaryMuscles(
+    tx: Prisma.TransactionClient,
+    items: NormalizedExerciseDbExercise[],
+    exerciseIdByExternalId: Map<string | null, bigint>,
+    muscleMap: Map<string, number>
+  ) {
+    for (const item of items) {
+      const exerciseId = exerciseIdByExternalId.get(item.externalId)
+      if (!exerciseId) continue
+
+      await tx.exerciseSecondaryMuscle.deleteMany({ where: { exerciseId } })
+
+      if (item.secondaryMuscles.length > 0) {
+        const secondaryRows = item.secondaryMuscles
+          .map((name) => muscleMap.get(name))
+          .filter((id): id is number => id !== undefined)
+        if (secondaryRows.length > 0) {
+          await tx.exerciseSecondaryMuscle.createMany({
+            data: secondaryRows.map((muscleId) => ({ exerciseId, muscleId })),
+            skipDuplicates: true,
+          })
+        }
+      }
+    }
+  }
+
+  private async upsertBatch(
+    tx: Prisma.TransactionClient,
+    items: NormalizedExerciseDbExercise[],
+    runId: bigint,
+    counters: Record<string, number>
+  ) {
+    const { bodyPartMap, muscleMap, equipmentMap } = await this.upsertLookups(tx, items)
+
+    await this.countItemChanges(tx, items, counters)
+
     const now = new Date()
     const instructionsJson = (instructions: string[]) =>
       instructions.length ? JSON.stringify(instructions) : null
@@ -268,8 +310,6 @@ export class ExerciseCatalogSyncService implements OnModuleInit {
         "catalog_visible" = true
     `)
 
-    // Step 5: Upsert secondary muscles junction table
-    // Fetch exerciseIds of the just-upserted exercises
     const upserted = await tx.exercise.findMany({
       where: {
         source: ExerciseSource.exercisedb,
@@ -279,25 +319,6 @@ export class ExerciseCatalogSyncService implements OnModuleInit {
     })
     const exerciseIdByExternalId = new Map(upserted.map((e) => [e.externalId, e.exerciseId]))
 
-    for (const item of items) {
-      const exerciseId = exerciseIdByExternalId.get(item.externalId)
-      if (!exerciseId) continue
-
-      // Delete stale secondary muscles for this exercise
-      await tx.exerciseSecondaryMuscle.deleteMany({ where: { exerciseId } })
-
-      // Insert current secondary muscles
-      if (item.secondaryMuscles.length > 0) {
-        const secondaryRows = item.secondaryMuscles
-          .map((name) => muscleMap.get(name))
-          .filter((id): id is number => id !== undefined)
-        if (secondaryRows.length > 0) {
-          await tx.exerciseSecondaryMuscle.createMany({
-            data: secondaryRows.map((muscleId) => ({ exerciseId, muscleId })),
-            skipDuplicates: true,
-          })
-        }
-      }
-    }
+    await this.upsertSecondaryMuscles(tx, items, exerciseIdByExternalId, muscleMap)
   }
 }

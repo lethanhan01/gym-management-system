@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
-import { createHash } from 'crypto'
+import { createHash } from 'node:crypto'
 
 const EXERCISEDB_EXERCISES_URL = new URL('https://exercisedb.p.rapidapi.com/exercises')
 const EXERCISEDB_RAPIDAPI_HOST = 'exercisedb.p.rapidapi.com'
@@ -19,6 +19,68 @@ export interface NormalizedExerciseDbExercise {
   contentHash: string
 }
 
+function validatePageSize(configSize?: number, optionSize?: number): number {
+  const size = optionSize ?? Number(configSize ?? 50)
+  if (!Number.isSafeInteger(size) || size < 1) {
+    throw new Error('ExerciseDB page size must be a positive integer')
+  }
+  return size
+}
+
+function checkPageConsistency(
+  items: unknown[],
+  size: number,
+  offset: number,
+  strictPagination: boolean,
+  shortPageSeen: boolean
+): { shouldStop: boolean; isShortPage: boolean } {
+  if (strictPagination && shortPageSeen && items.length > 0) {
+    throw new Error(
+      `ExerciseDB returned records after a short page at offset ${offset}; pagination is unstable`
+    )
+  }
+  if (items.length === 0) return { shouldStop: true, isShortPage: false }
+  if (strictPagination) {
+    if (items.length > size) {
+      throw new Error(`ExerciseDB returned ${items.length} records for requested page size ${size}`)
+    }
+    return { shouldStop: false, isShortPage: items.length < size }
+  }
+  return { shouldStop: items.length < size, isShortPage: false }
+}
+
+async function fetchWithTimeout(url: URL, apiKey: string, timeoutMs: number): Promise<Response> {
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), timeoutMs)
+  try {
+    return await fetch(url, {
+      headers: {
+        'x-rapidapi-key': apiKey,
+        'x-rapidapi-host': EXERCISEDB_RAPIDAPI_HOST,
+        Accept: 'application/json',
+      },
+      signal: controller.signal,
+    })
+  } finally {
+    clearTimeout(timer)
+  }
+}
+
+async function parseResponseJson(response: Response): Promise<unknown> {
+  try {
+    return await response.json()
+  } catch {
+    throw new Error('ExerciseDB returned invalid JSON')
+  }
+}
+
+async function buildResponseError(response: Response, url: URL, apiKey: string): Promise<Error> {
+  const preview = sanitize((await response.text()).slice(0, RESPONSE_PREVIEW_LIMIT), apiKey)
+  return new Error(
+    `ExerciseDB request failed (${response.status}) at ${url.hostname}${url.pathname}: ${preview || '<empty response>'}`
+  )
+}
+
 @Injectable()
 export class ExerciseDbV2Client {
   constructor(private readonly config: ConfigService) {}
@@ -32,10 +94,9 @@ export class ExerciseDbV2Client {
   ): AsyncGenerator<NormalizedExerciseDbExercise[]> {
     const key = this.config.get<string>('EXERCISEDB_API_KEY')
     if (!this.isEnabled() || !key) throw new Error('ExerciseDB sync is not configured')
-    const size = options.pageSize ?? Number(this.config.get<number>('EXERCISEDB_PAGE_SIZE') ?? 50)
-    if (!Number.isSafeInteger(size) || size < 1)
-      throw new Error('ExerciseDB page size must be a positive integer')
+    const size = validatePageSize(this.config.get<number>('EXERCISEDB_PAGE_SIZE'), options.pageSize)
     let shortPageSeen = false
+
     for (let offset = 0; ; offset += size) {
       const url = new URL(EXERCISEDB_EXERCISES_URL)
       url.searchParams.set('limit', String(size))
@@ -46,20 +107,19 @@ export class ExerciseDbV2Client {
       const payload = await this.request(url, key)
       const items = Array.isArray(payload) ? payload : null
       if (!items) throw new Error('ExerciseDB returned an invalid exercises payload')
-      if (options.strictPagination && shortPageSeen && items.length > 0) {
-        throw new Error(
-          `ExerciseDB returned records after a short page at offset ${offset}; pagination is unstable`
-        )
+
+      const { shouldStop, isShortPage } = checkPageConsistency(
+        items,
+        size,
+        offset,
+        Boolean(options.strictPagination),
+        shortPageSeen
+      )
+      if (isShortPage) shortPageSeen = true
+      if (items.length > 0) {
+        yield items.map((item: Record<string, unknown>) => normalize(item))
       }
-      if (items.length === 0) return
-      yield items.map((item: Record<string, unknown>) => normalize(item))
-      if (options.strictPagination) {
-        if (items.length > size)
-          throw new Error(
-            `ExerciseDB returned ${items.length} records for requested page size ${size}`
-          )
-        if (items.length < size) shortPageSeen = true
-      } else if (items.length < size) return
+      if (shouldStop) return
     }
   }
 
@@ -67,39 +127,22 @@ export class ExerciseDbV2Client {
     const retries = this.config.get<number>('EXERCISEDB_RETRY_LIMIT') ?? 3
     const timeout = this.config.get<number>('EXERCISEDB_TIMEOUT_MS') ?? 15000
     let last: unknown
+
     for (let attempt = 0; attempt <= retries; attempt++) {
-      const controller = new AbortController()
-      const timer = setTimeout(() => controller.abort(), timeout)
       let response: Response
       try {
-        response = await fetch(url, {
-          headers: {
-            'x-rapidapi-key': apiKey,
-            'x-rapidapi-host': EXERCISEDB_RAPIDAPI_HOST,
-            Accept: 'application/json',
-          },
-          signal: controller.signal,
-        })
+        response = await fetchWithTimeout(url, apiKey, timeout)
       } catch (error) {
         last = new Error(`ExerciseDB network request failed: ${sanitize(String(error), apiKey)}`)
         if (attempt < retries) await wait(250 * 2 ** attempt)
         continue
-      } finally {
-        clearTimeout(timer)
       }
 
       if (response.ok) {
-        try {
-          return await response.json()
-        } catch {
-          throw new Error('ExerciseDB returned invalid JSON')
-        }
+        return parseResponseJson(response)
       }
 
-      const preview = sanitize((await response.text()).slice(0, RESPONSE_PREVIEW_LIMIT), apiKey)
-      const error = new Error(
-        `ExerciseDB request failed (${response.status}) at ${url.hostname}${url.pathname}: ${preview || '<empty response>'}`
-      )
+      const error = await buildResponseError(response, url, apiKey)
       if (response.status !== 429 && response.status < 500) throw error
       last = error
       if (attempt < retries) await wait(retryDelay(response, attempt))

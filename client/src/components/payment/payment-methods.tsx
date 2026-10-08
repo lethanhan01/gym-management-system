@@ -5,10 +5,10 @@ import { METHOD_ICON } from './payment-method-data'
 export function PaymentMethodIcon({
   method,
   size = 18,
-}: {
+}: Readonly<{
   method: PaymentMethod
   size?: number
-}) {
+}>) {
   const Icon = METHOD_ICON[method] ?? Banknote
   return <Icon size={size} />
 }

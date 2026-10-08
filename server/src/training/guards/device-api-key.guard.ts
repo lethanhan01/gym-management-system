@@ -1,6 +1,6 @@
 import { Injectable, CanActivate, ExecutionContext, UnauthorizedException } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
-import { timingSafeEqual } from 'crypto'
+import { timingSafeEqual } from 'node:crypto'
 
 @Injectable()
 export class DeviceApiKeyGuard implements CanActivate {
@@ -21,8 +21,8 @@ export class DeviceApiKeyGuard implements CanActivate {
     try {
       const bufKey = Buffer.from(key, 'utf8')
       const bufExpected = Buffer.from(expectedKey, 'utf8')
-      if (bufKey.length !== bufExpected.length) throw new Error()
-      if (!timingSafeEqual(bufKey, bufExpected)) throw new Error()
+      if (bufKey.length !== bufExpected.length) throw new Error('Invalid key length')
+      if (!timingSafeEqual(bufKey, bufExpected)) throw new Error('Key mismatch')
     } catch {
       throw new UnauthorizedException({
         success: false,

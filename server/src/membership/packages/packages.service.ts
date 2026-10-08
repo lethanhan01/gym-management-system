@@ -1,3 +1,4 @@
+import { randomInt } from 'node:crypto'
 import {
   ConflictException,
   Injectable,
@@ -14,6 +15,62 @@ import { ListPackagesDto } from './dto/list-packages.dto'
 
 const CODE_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
 
+function buildPackageListWhere(dto: ListPackagesDto, callerRoles: Role[]): Prisma.PackageWhereInput {
+  const { minDuration, maxDuration, minPrice, maxPrice, search } = dto
+  const hasManage = callerRoles.some((r) => r === 'owner' || r === 'staff')
+  const isMember = callerRoles.includes('member')
+  const where: Prisma.PackageWhereInput = {}
+
+  if (isMember || !hasManage) {
+    where.status = PackageStatus.active
+    where.deletedAt = null
+  } else {
+    const requestedStatus = dto.status
+    const includeDeleted =
+      dto.includeDeleted === true ||
+      String(dto.includeDeleted) === 'true' ||
+      requestedStatus === 'deleted'
+    if (requestedStatus === 'deleted') {
+      where.deletedAt = { not: null }
+    } else {
+      if (requestedStatus) where.status = requestedStatus as PackageStatus
+      if (!includeDeleted) where.deletedAt = null
+    }
+  }
+
+  if (minDuration !== undefined || maxDuration !== undefined) {
+    where.durationDays = {
+      ...(minDuration !== undefined ? { gte: minDuration } : {}),
+      ...(maxDuration !== undefined ? { lte: maxDuration } : {}),
+    }
+  }
+
+  if (minPrice !== undefined || maxPrice !== undefined) {
+    where.price = {
+      ...(minPrice !== undefined ? { gte: new Prisma.Decimal(minPrice) } : {}),
+      ...(maxPrice !== undefined ? { lte: new Prisma.Decimal(maxPrice) } : {}),
+    }
+  }
+
+  if (search) {
+    where.OR = [
+      { name: { contains: search, mode: 'insensitive' } },
+      { packageCode: { contains: search, mode: 'insensitive' } },
+    ]
+  }
+
+  return where
+}
+
+function resolvePackageOrderBy(sort = 'created_at:desc'): Prisma.PackageOrderByWithRelationInput {
+  const [sortField, sortDir] = sort.split(':')
+  const toCamel = (s: string) =>
+    s.replace(/_([a-z])/g, (_, c: string) => (c as string).toUpperCase())
+  return {
+    [toCamel(sortField ?? 'createdAt')]: sortDir === 'asc' ? 'asc' : 'desc',
+  } as Prisma.PackageOrderByWithRelationInput
+}
+
 @Injectable()
 export class PackagesService {
   constructor(
@@ -22,76 +79,19 @@ export class PackagesService {
   ) {}
 
   async listPackages(dto: ListPackagesDto, callerRoles: Role[]) {
-    const {
-      page = 1,
-      pageSize = 20,
-      minDuration,
-      maxDuration,
-      minPrice,
-      maxPrice,
-      search,
-      sort = 'created_at:desc',
-    } = dto
+    const { page = 1, pageSize = 20, sort = 'created_at:desc' } = dto
+    const where = buildPackageListWhere(dto, callerRoles)
+    const orderBy = resolvePackageOrderBy(sort)
 
-    const hasManage = callerRoles.some((r) => r === 'owner' || r === 'staff')
-    const isMember = callerRoles.includes('member')
-
-    const where: Prisma.PackageWhereInput = {}
-
-    // Members and non-manage roles only see active, non-deleted packages
-    if (isMember || !hasManage) {
-      where.status = PackageStatus.active
-      where.deletedAt = null
-    } else {
-      // Support a special `status=deleted` query: treat it as requesting deleted items
-      const requestedStatus = dto.status
-      const includeDeleted =
-        dto.includeDeleted === true ||
-        String(dto.includeDeleted) === 'true' ||
-        requestedStatus === 'deleted'
-      if (requestedStatus === 'deleted') {
-        where.deletedAt = { not: null }
-      } else {
-        if (requestedStatus) where.status = requestedStatus as PackageStatus
-        if (!includeDeleted) where.deletedAt = null
-      }
-    }
-
-    if (minDuration !== undefined || maxDuration !== undefined) {
-      where.durationDays = {
-        ...(minDuration !== undefined ? { gte: minDuration } : {}),
-        ...(maxDuration !== undefined ? { lte: maxDuration } : {}),
-      }
-    }
-
-    if (minPrice !== undefined || maxPrice !== undefined) {
-      where.price = {
-        ...(minPrice !== undefined ? { gte: new Prisma.Decimal(minPrice) } : {}),
-        ...(maxPrice !== undefined ? { lte: new Prisma.Decimal(maxPrice) } : {}),
-      }
-    }
-
-    if (search) {
-      where.OR = [
-        { name: { contains: search, mode: 'insensitive' } },
-        { packageCode: { contains: search, mode: 'insensitive' } },
-      ]
-    }
-
-    const [sortField, sortDir] = sort.split(':')
-    const toCamel = (s: string) =>
-      s.replace(/_([a-z])/g, (_, c: string) => (c as string).toUpperCase())
-    const orderBy = {
-      [toCamel(sortField ?? 'createdAt')]: sortDir === 'asc' ? 'asc' : 'desc',
-    } as Prisma.PackageOrderByWithRelationInput
-
-    const data = await this.prisma.package.findMany({
-      where,
-      skip: (page - 1) * pageSize,
-      take: pageSize,
-      orderBy,
-    })
-    const total = await this.prisma.package.count({ where })
+    const [data, total] = await Promise.all([
+      this.prisma.package.findMany({
+        where,
+        skip: (page - 1) * pageSize,
+        take: pageSize,
+        orderBy,
+      }),
+      this.prisma.package.count({ where }),
+    ])
 
     return { data: data.map(this.serializePackage), meta: { page, pageSize, total } }
   }
@@ -267,7 +267,7 @@ export class PackagesService {
     for (let attempt = 0; attempt < 10; attempt++) {
       const suffix = Array.from(
         { length: 4 },
-        () => CODE_CHARS[Math.floor(Math.random() * CODE_CHARS.length)]
+        () => CODE_CHARS[randomInt(0, CODE_CHARS.length)]
       ).join('')
       const code = `PKG-${suffix}`
       const existing = await this.prisma.package.findFirst({

@@ -17,30 +17,11 @@ export class WorkoutLogsService {
     private readonly audit: AuditService
   ) {}
 
-  async create(dto: CreateWorkoutLogDto, user: AuthenticatedUser) {
-    const member = await this.resolveCallerMember(user)
-    if (!member) {
-      throw new ForbiddenException('Khong tim thay member profile')
-    }
-
-    if (dto.clientCompletionKey) {
-      const existing = await this.prisma.workoutLog.findFirst({
-        where: { memberId: member.memberId, clientCompletionKey: dto.clientCompletionKey },
-        include: {
-          planDay: true,
-          sets: {
-            include: { planExercise: { include: { exercise: true } } },
-            orderBy: { setNumber: 'asc' },
-          },
-        },
-      })
-      if (existing) return existing
-    }
-
+  private async validateWorkoutAssignmentAndPlan(dto: CreateWorkoutLogDto, memberId: bigint) {
     const assignment = await this.prisma.memberWorkoutPlan.findFirst({
       where: {
         assignmentId: BigInt(dto.assignmentId),
-        memberId: member.memberId,
+        memberId,
       },
       include: {
         plan: true,
@@ -89,6 +70,31 @@ export class WorkoutLogsService {
       }
     }
 
+    return { assignment, planDay }
+  }
+
+  async create(dto: CreateWorkoutLogDto, user: AuthenticatedUser) {
+    const member = await this.resolveCallerMember(user)
+    if (!member) {
+      throw new ForbiddenException('Khong tim thay member profile')
+    }
+
+    if (dto.clientCompletionKey) {
+      const existing = await this.prisma.workoutLog.findFirst({
+        where: { memberId: member.memberId, clientCompletionKey: dto.clientCompletionKey },
+        include: {
+          planDay: true,
+          sets: {
+            include: { planExercise: { include: { exercise: true } } },
+            orderBy: { setNumber: 'asc' },
+          },
+        },
+      })
+      if (existing) return existing
+    }
+
+    const { assignment, planDay } = await this.validateWorkoutAssignmentAndPlan(dto, member.memberId)
+
     let created = true
     let result
     try {
@@ -134,8 +140,8 @@ export class WorkoutLogsService {
           },
         })
       })
-    } catch (caught) {
-      if (!dto.clientCompletionKey || !this.isCompletionKeyConflict(caught)) throw caught
+    } catch (error_) {
+      if (!dto.clientCompletionKey || !this.isCompletionKeyConflict(error_)) throw error_
       const existing = await this.prisma.workoutLog.findFirst({
         where: { memberId: member.memberId, clientCompletionKey: dto.clientCompletionKey },
         include: {
@@ -146,7 +152,7 @@ export class WorkoutLogsService {
           },
         },
       })
-      if (!existing) throw caught
+      if (!existing) throw error_
       created = false
       result = existing
     }

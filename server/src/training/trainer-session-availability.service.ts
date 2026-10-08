@@ -44,9 +44,9 @@ export class TrainerSessionAvailabilityService {
 
     // Parse date to UTC range (with VN timezone offset = UTC-7)
     const [yStr, mStr, dStr] = date.split('-')
-    const year = parseInt(yStr, 10)
-    const month = parseInt(mStr, 10) - 1
-    const day = parseInt(dStr, 10)
+    const year = Number.parseInt(yStr, 10)
+    const month = Number.parseInt(mStr, 10) - 1
+    const day = Number.parseInt(dStr, 10)
 
     const dayStart = new Date(Date.UTC(year, month, day, 0 - 7, 0, 0, 0))
     const dayEnd = new Date(Date.UTC(year, month, day, 24 - 7, 0, 0, 0))

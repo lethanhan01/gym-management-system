@@ -1,9 +1,5 @@
 import {
-  Card,
-  Modal,
-  StatCard,
   StatusBadge,
-  Select,
   type StatusTone,
 } from '@/components/ui'
 
@@ -17,21 +13,20 @@ export {
   SearchToolbar as StaffSearchToolbar,
   SearchInput as StaffSearchInput,
   SubmitButton,
+  Card as StaffCard,
+  StatCard as StaffStatCard,
+  Modal as StaffModal,
+  Select as StaffSelect,
 } from '@/components/ui'
-
-export const StaffCard = Card
-export const StaffStatCard = StatCard
-export const StaffModal = Modal
-export const StaffSelect = Select
 
 export function StaffStatusBadge({
   status,
   tone,
   label,
-}: {
+}: Readonly<{
   status: string
   tone?: StatusTone
   label?: string
-}) {
+}>) {
   return <StatusBadge status={status} tone={tone} label={label} />
 }

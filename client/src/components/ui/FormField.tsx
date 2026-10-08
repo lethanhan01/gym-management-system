@@ -1,6 +1,7 @@
 import {
   forwardRef,
   useId,
+  useMemo,
   type HTMLAttributes,
   type ReactNode,
 } from 'react'
@@ -46,15 +47,18 @@ export const FormField = forwardRef<HTMLDivElement, FormFieldProps>(
     const hintId = `${id}-hint`
     const hasError = !!error
 
-    const contextValue: FormFieldContextValue = {
-      id,
-      errorId,
-      hintId,
-      hasError,
-      error,
-      required,
-      disabled,
-    }
+    const contextValue = useMemo<FormFieldContextValue>(
+      () => ({
+        id,
+        errorId,
+        hintId,
+        hasError,
+        error,
+        required,
+        disabled,
+      }),
+      [id, errorId, hintId, hasError, error, required, disabled]
+    )
 
     return (
       <FormFieldContext.Provider value={contextValue}>

@@ -1,11 +1,11 @@
 import { BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common'
 import { Test, TestingModule } from '@nestjs/testing'
 import { ConversationStatus, MessageType } from '@prisma/client'
-import * as fs from 'fs'
+import * as fs from 'node:fs'
 import { PrismaService } from '../prisma/prisma.service'
 import { ChatService, ChatUploadedFile } from './chat.service'
 
-jest.mock('fs', () => ({
+jest.mock('node:fs', () => ({
   existsSync: jest.fn(),
   unlinkSync: jest.fn(),
 }))

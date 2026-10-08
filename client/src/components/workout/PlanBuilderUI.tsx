@@ -23,13 +23,13 @@ export function NumberField({
   min,
   onChange,
   className,
-}: {
+}: Readonly<{
   label: string
   value: number
   min: number
   onChange: (value: number) => void
   className?: string
-}) {
+}>) {
   return (
     <label className={cn('block space-y-2', className)}>
       <span className="rogym-field-label">{label}</span>
@@ -54,7 +54,7 @@ export function ExerciseTargetFields({
   compact = false,
   restOutsideGrid = false,
   weightPlaceholder,
-}: {
+}: Readonly<{
   isCardio?: boolean
   values: ExerciseTargetValues
   onChange: ExerciseTargetChangeHandlers
@@ -63,7 +63,7 @@ export function ExerciseTargetFields({
   compact?: boolean
   restOutsideGrid?: boolean
   weightPlaceholder?: string
-}) {
+}>) {
   const { t } = useTranslation('member')
   const fieldClassName = compact ? 'space-y-1.5' : undefined
   const showReps = !isCardio

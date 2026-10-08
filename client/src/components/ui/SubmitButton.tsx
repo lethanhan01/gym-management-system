@@ -13,7 +13,7 @@ export function SubmitButton({
   size = 'default',
   form,
   ...props
-}: SubmitButtonProps) {
+}: Readonly<SubmitButtonProps>) {
   return (
     <Button
       type="submit"

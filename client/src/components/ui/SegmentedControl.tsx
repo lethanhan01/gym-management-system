@@ -47,7 +47,7 @@ export function SegmentedControl({
   disabled = false,
   className,
   itemClassName,
-}: SegmentedControlProps) {
+}: Readonly<SegmentedControlProps>) {
   const styles = sizeClasses[size]
   const isControlled = value !== undefined
   const [internalValue, setInternalValue] = React.useState(

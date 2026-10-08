@@ -70,11 +70,11 @@ function AttendanceTooltip({
   log,
   locale,
   align = 'left',
-}: {
+}: Readonly<{
   log: AttendanceLog
   locale: string
   align?: 'left' | 'right'
-}) {
+}>) {
   return (
     <div
       className={`rogym-session-tooltip pointer-events-none absolute top-full z-30 mt-1 min-w-[140px] rounded-xl p-3 shadow-2xl ${
@@ -124,13 +124,13 @@ function AttendanceCalendarView({
   locale,
   onPrevMonth,
   onNextMonth,
-}: {
+}: Readonly<{
   logs: AttendanceLog[]
   month: Date
   locale: string
   onPrevMonth: () => void
   onNextMonth: () => void
-}) {
+}>) {
   const dowLabels = useMemo(() => getDowLabels(locale), [locale])
   const byDate = useMemo(() => {
     const map = new Map<string, AttendanceLog[]>()
@@ -202,13 +202,13 @@ function AttendanceCalendarView({
       {/* Weeks */}
       <div className="space-y-0.5">
         {grid.map((row, ri) => (
-          <div key={ri} className="grid grid-cols-7">
+          <div key={`cal-row-${fmtMonthYear(month, locale)}-${ri}`} className="grid grid-cols-7">
             {row.map((cell, ci) => {
               const isToday = cell.key === today
               const cellLogs = cell.key ? (byDate.get(cell.key) ?? []) : []
               return (
                 <div
-                  key={ci}
+                  key={cell.key ? `cell-${cell.key}` : `empty-${ri}-${ci}`}
                   className={`rogym-calendar-cell relative min-h-[68px] p-1 ${
                     isToday ? 'is-today' : ''
                   }`}
@@ -254,7 +254,7 @@ function AttendanceListSidebar({
   onToChange,
   loading,
   error,
-}: {
+}: Readonly<{
   logs: AttendanceLog[]
   from: string
   to: string
@@ -262,7 +262,7 @@ function AttendanceListSidebar({
   onToChange: (v: string) => void
   loading: boolean
   error: string | null
-}) {
+}>) {
   const { t, i18n } = useTranslation('member')
   const locale = i18n.language
   const METHOD_LABEL: Record<string, { label: string; tone: BadgeTone }> = {

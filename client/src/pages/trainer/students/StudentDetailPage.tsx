@@ -664,7 +664,7 @@ trainingSessionService.getSessions({ memberId: id, pageSize: 100, sort: 'start_t
   )
 }
 
-function Info({ label, value }: { label: string; value: string }) {
+function Info({ label, value }: Readonly<{ label: string; value: string }>) {
   return (
     <div className="flex items-start justify-between gap-5 border-b border-white/5 py-3 last:border-0">
       <span className="text-sm rogym-text-dim">{label}</span>

@@ -52,7 +52,7 @@ export class PaymentsService {
       where: { subscriptionId, deletedAt: null },
       include: { package: true, member: { include: { user: true } } },
     })
-    if (!sub || sub.memberId !== memberId) {
+    if (sub?.memberId !== memberId) {
       throw new BadRequestException({
         success: false,
         code: 'FK_CONSTRAINT',
@@ -186,41 +186,7 @@ export class PaymentsService {
       }
     }
 
-    if (isOwnerOrStaff(caller)) {
-      if (memberId) where.memberId = BigInt(memberId)
-    } else if (caller.roles.includes('member')) {
-      const selfMemberId = await this.resolveCallerMemberId(caller)
-      if (memberId && BigInt(memberId) !== selfMemberId) {
-        throw new ForbiddenException({
-          success: false,
-          code: 'FORBIDDEN',
-          message: 'Member chi duoc xem payment cua chinh minh',
-        })
-      }
-      where.memberId = selfMemberId
-      if (subscriptionId) {
-        await this.assertSubscriptionBelongsToMember(BigInt(subscriptionId), selfMemberId)
-      }
-    } else if (caller.roles.includes('trainer')) {
-      if (!caller.staffId)
-        throw new ForbiddenException({
-          success: false,
-          code: 'FORBIDDEN',
-          message: 'Khong tim thay staff profile',
-        })
-      if (memberId) {
-        await this.assertTrainerOwnsMember(BigInt(memberId), caller.staffId)
-        where.memberId = BigInt(memberId)
-      } else {
-        where.member = { primaryTrainerId: caller.staffId }
-      }
-    } else {
-      throw new ForbiddenException({
-        success: false,
-        code: 'FORBIDDEN',
-        message: 'Khong co quyen xem payments',
-      })
-    }
+    await this.applyCallerPaymentScope(where, memberId, subscriptionId, caller)
 
     const orderBy = this.buildOrder(sort)
     const data = await this.prisma.payment.findMany({
@@ -306,6 +272,57 @@ export class PaymentsService {
     return member.memberId
   }
 
+  private async applyCallerPaymentScope(
+    where: Prisma.PaymentWhereInput,
+    memberId: number | string | bigint | undefined,
+    subscriptionId: number | string | bigint | undefined,
+    caller: AuthenticatedUser
+  ) {
+    if (isOwnerOrStaff(caller)) {
+      if (memberId) where.memberId = BigInt(memberId)
+      return
+    }
+
+    if (caller.roles.includes('member')) {
+      const selfMemberId = await this.resolveCallerMemberId(caller)
+      if (memberId && BigInt(memberId) !== selfMemberId) {
+        throw new ForbiddenException({
+          success: false,
+          code: 'FORBIDDEN',
+          message: 'Member chi duoc xem payment cua chinh minh',
+        })
+      }
+      where.memberId = selfMemberId
+      if (subscriptionId) {
+        await this.assertSubscriptionBelongsToMember(BigInt(subscriptionId), selfMemberId)
+      }
+      return
+    }
+
+    if (caller.roles.includes('trainer')) {
+      if (!caller.staffId) {
+        throw new ForbiddenException({
+          success: false,
+          code: 'FORBIDDEN',
+          message: 'Khong tim thay staff profile',
+        })
+      }
+      if (memberId) {
+        await this.assertTrainerOwnsMember(BigInt(memberId), caller.staffId)
+        where.memberId = BigInt(memberId)
+      } else {
+        where.member = { primaryTrainerId: caller.staffId }
+      }
+      return
+    }
+
+    throw new ForbiddenException({
+      success: false,
+      code: 'FORBIDDEN',
+      message: 'Khong co quyen xem payments',
+    })
+  }
+
   private async notifyPaymentResult(args: {
     paymentId: bigint
     subscriptionId: bigint
@@ -316,16 +333,18 @@ export class PaymentsService {
     actorUserId: bigint
   }) {
     const isSuccess = args.status === PaymentStatus.success
-    const memberTitle = !isSuccess
-      ? 'Thanh toan that bai'
-      : args.subscriptionActivated
-        ? 'Thanh toan thanh cong'
-        : 'Da ghi nhan thanh toan'
-    const memberMessage = !isSuccess
-      ? `Thanh toan cho goi ${args.packageName ?? ''} khong thanh cong.`
-      : args.subscriptionActivated
-        ? `Thanh toan thanh cong, goi ${args.packageName ?? ''} da duoc kich hoat.`
-        : `Thanh toan cho goi ${args.packageName ?? ''} da duoc ghi nhan va dang cho kich hoat.`
+    let memberTitle = 'Thanh toan that bai'
+    let memberMessage = `Thanh toan cho goi ${args.packageName ?? ''} khong thanh cong.`
+
+    if (isSuccess) {
+      if (args.subscriptionActivated) {
+        memberTitle = 'Thanh toan thanh cong'
+        memberMessage = `Thanh toan thanh cong, goi ${args.packageName ?? ''} da duoc kich hoat.`
+      } else {
+        memberTitle = 'Da ghi nhan thanh toan'
+        memberMessage = `Thanh toan cho goi ${args.packageName ?? ''} da duoc ghi nhan va dang cho kich hoat.`
+      }
+    }
 
     await this.notifications.safeNotifyUser(args.memberUserId, {
       type: isSuccess ? 'payment.success' : 'payment.failed',
@@ -368,7 +387,7 @@ export class PaymentsService {
     const sub = await this.prisma.subscription.findFirst({
       where: { subscriptionId, deletedAt: null },
     })
-    if (!sub || sub.memberId !== memberId) {
+    if (sub?.memberId !== memberId) {
       throw new ForbiddenException({
         success: false,
         code: 'FORBIDDEN',
@@ -379,7 +398,7 @@ export class PaymentsService {
 
   private async assertTrainerOwnsMember(memberId: bigint, staffId: bigint) {
     const member = await this.prisma.member.findFirst({ where: { memberId, deletedAt: null } })
-    if (!member || member.primaryTrainerId !== staffId) {
+    if (member?.primaryTrainerId !== staffId) {
       throw new ForbiddenException({
         success: false,
         code: 'FORBIDDEN',

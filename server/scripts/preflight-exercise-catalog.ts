@@ -1,6 +1,6 @@
 import 'reflect-metadata'
-import { mkdir, writeFile } from 'fs/promises'
-import { dirname, resolve } from 'path'
+import { mkdir, writeFile } from 'node:fs/promises'
+import { dirname, resolve } from 'node:path'
 import { ExerciseCatalogManifest } from '../src/workout/exercises/exercise-catalog-manifest'
 import { preflightExerciseCatalog } from '../src/workout/exercises/exercise-catalog-preflight'
 import { ExerciseDbV2Client } from '../src/workout/exercises/exercise-db-v2.client'

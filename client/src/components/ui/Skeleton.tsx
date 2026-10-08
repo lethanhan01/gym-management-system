@@ -85,7 +85,7 @@ export const SkeletonText = forwardRef<HTMLDivElement, SkeletonTextProps>(
     },
     ref
   ) => {
-    const lineArray = Array.from({ length: lines })
+    const lineKeys = Array.from({ length: lines }, (_, i) => `skeleton-line-${i + 1}`)
     const gapClass = GAP_CLASSES[gap] ?? 'space-y-2'
 
     return (
@@ -95,11 +95,11 @@ export const SkeletonText = forwardRef<HTMLDivElement, SkeletonTextProps>(
         className={cn('flex flex-col w-full', gapClass, className)}
         {...props}
       >
-        {lineArray.map((_, index) => {
+        {lineKeys.map((lineKey, index) => {
           const isLast = index === lines - 1
           return (
             <Skeleton
-              key={index}
+              key={lineKey}
               height={lineHeight}
               width={isLast && lines > 1 ? lastLineWidth : '100%'}
               rounded="md"

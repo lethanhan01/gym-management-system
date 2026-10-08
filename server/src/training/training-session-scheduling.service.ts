@@ -1,6 +1,13 @@
 import { BadRequestException, ConflictException, Injectable } from '@nestjs/common'
 import { Prisma, TrainingSessionStatus, WorkoutAssignmentStatus } from '@prisma/client'
 import { PrismaService } from '../prisma/prisma.service'
+
+export interface CheckOverlapOptions {
+  excludeId?: bigint
+  memberId?: bigint
+  tx?: Prisma.TransactionClient
+}
+
 @Injectable()
 export class TrainingSessionSchedulingService {
   constructor(private readonly prisma: PrismaService) {}
@@ -108,16 +115,22 @@ export class TrainingSessionSchedulingService {
 
     return { assignmentId, planDayId }
   }
+
   async checkOverlap(
     roomId: bigint | null,
     trainerStaffId: bigint | null,
     startTime: Date,
     endTime: Date,
     errorCode: string,
-    excludeId?: bigint,
-    memberId?: bigint,
-    tx?: Prisma.TransactionClient
+    optionsOrExcludeId?: CheckOverlapOptions | bigint,
+    legacyMemberId?: bigint
   ) {
+    const options: CheckOverlapOptions =
+      typeof optionsOrExcludeId === 'bigint'
+        ? { excludeId: optionsOrExcludeId, memberId: legacyMemberId }
+        : (optionsOrExcludeId ?? {})
+
+    const { excludeId, memberId, tx } = options
     const client = tx ?? this.prisma
     const where: Prisma.TrainingSessionWhereInput = {
       status: { not: TrainingSessionStatus.cancelled },

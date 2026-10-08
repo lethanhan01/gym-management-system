@@ -1,9 +1,5 @@
 import {
-  Card,
-  Modal,
-  StatCard,
   StatusBadge,
-  SearchInput,
   type StatusTone,
 } from '@/components/ui'
 
@@ -18,16 +14,15 @@ export {
   Pagination as OwnerPagination,
   SearchToolbar as OwnerSearchToolbar,
   SubmitButton as OwnerSubmitButton,
+  Card as OwnerCard,
+  StatCard as OwnerStatCard,
+  Modal as OwnerModal,
+  SearchInput as OwnerSearchInput,
 } from '@/components/ui'
 
 export { OwnerDateRangeFilter } from '@/components/shared/OwnerDateRangeFilter'
 
-export const OwnerCard = Card
-export const OwnerStatCard = StatCard
-export const OwnerModal = Modal
-export const OwnerSearchInput = SearchInput
-
-export function OwnerBadge({ label, color }: { label: string; color: string }) {
+export function OwnerBadge({ label, color }: Readonly<{ label: string; color: string }>) {
   return (
     <span
       className="rogym-tone-badge is-compact"
@@ -42,10 +37,10 @@ export function OwnerStatusBadge({
   status,
   tone,
   label,
-}: {
+}: Readonly<{
   status: string
   tone?: StatusTone
   label?: string
-}) {
+}>) {
   return <StatusBadge status={status} tone={tone} label={label} />
 }

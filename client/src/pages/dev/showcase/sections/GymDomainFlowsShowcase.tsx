@@ -243,8 +243,8 @@ export function GymDomainFlowsShowcase() {
                   Hướng dẫn kỹ thuật thực hiện chuẩn:
                 </h5>
                 <ol className="list-decimal list-inside space-y-1.5 text-xs text-white/70">
-                  {activeExerciseModal.instructions?.map((step, idx) => (
-                    <li key={idx}>{step}</li>
+                  {activeExerciseModal.instructions?.map((step) => (
+                    <li key={step}>{step}</li>
                   ))}
                 </ol>
               </div>

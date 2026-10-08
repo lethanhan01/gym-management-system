@@ -1,7 +1,7 @@
 /* eslint-disable no-console */
 import 'reflect-metadata'
-import { existsSync } from 'fs'
-import { resolve } from 'path'
+import { existsSync } from 'node:fs'
+import { resolve } from 'node:path'
 import { config as loadDotenv } from 'dotenv'
 import { validateConfig } from './configuration'
 

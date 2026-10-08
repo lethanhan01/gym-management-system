@@ -231,8 +231,8 @@ export default function MemberExercisesPage() {
             <div className="max-h-48 overflow-y-auto pr-2 mb-4">
               <p className="mb-2 text-sm font-semibold text-white">{t('workout.exercises.fieldInstructions', 'Instructions')}</p>
               <ol className="list-decimal space-y-1.5 pl-5 text-sm leading-6 rogym-text-secondary">
-                {detail.instructions.map((step, idx) => (
-                  <li key={idx} className="pl-1">{step}</li>
+                {detail.instructions.map((step) => (
+                  <li key={step} className="pl-1">{step}</li>
                 ))}
               </ol>
             </div>

@@ -28,7 +28,7 @@ export default function ResetPasswordPage() {
       } else {
         setError(getApiError(err, t("resetPassword.invalidOtp")));
       }
-      setDigits(Array(OTP_LENGTH).fill(""));
+      setDigits(new Array(OTP_LENGTH).fill(""));
     } finally {
       setLoading(false);
     }
@@ -37,7 +37,7 @@ export default function ResetPasswordPage() {
   async function handleResend() {
     try {
       await authService.forgotPassword(email);
-      setDigits(Array(OTP_LENGTH).fill(""));
+      setDigits(new Array(OTP_LENGTH).fill(""));
     } catch (err) {
       if (isNetworkError(err)) {
         setError(t("login.networkError"));

@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next'
 import { cn } from '@/lib/utils'
 
 // Vòng tròn xoay dùng chung cho mọi trạng thái lazy-load / loading.
-export function Spinner({ size = 24, className }: { size?: number; className?: string }) {
+export function Spinner({ size = 24, className }: Readonly<{ size?: number; className?: string }>) {
   return (
     <span
       aria-hidden="true"
@@ -20,15 +20,14 @@ export function PageLoader({
   className,
   minHeight = '60vh',
   size = 36,
-}: {
+}: Readonly<{
   className?: string
   minHeight?: string
   size?: number
-}) {
+}>) {
   const { t } = useTranslation('common')
   return (
-    <div
-      role="status"
+    <output
       aria-label={t('loading')}
       className={cn(
         'flex w-full items-center justify-center text-[var(--rogym-green)]',
@@ -37,7 +36,7 @@ export function PageLoader({
       style={{ minHeight }}
     >
       <Spinner size={size} />
-    </div>
+    </output>
   )
 }
 
@@ -45,12 +44,11 @@ export function PageLoader({
 export function FullScreenLoader() {
   const { t } = useTranslation('common')
   return (
-    <div
-      role="status"
+    <output
       aria-label={t('loading')}
       className="flex min-h-screen w-full items-center justify-center bg-[var(--rogym-bg-base)] text-[var(--rogym-green)]"
     >
       <Spinner size={44} />
-    </div>
+    </output>
   )
 }

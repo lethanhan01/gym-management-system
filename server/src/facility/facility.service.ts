@@ -270,7 +270,7 @@ export class FacilityService {
     const rows = await this.prisma.gymRoom.findMany({ select: { roomCode: true } })
     const maxNum = rows.reduce((max, { roomCode }) => {
       const n = Number.parseInt(roomCode.replace(/^ROOM-0*/, ''), 10)
-      return isNaN(n) ? max : Math.max(max, n)
+      return Number.isNaN(n) ? max : Math.max(max, n)
     }, 0)
     for (let i = 1; i <= 20; i++) {
       const code = `ROOM-${String(maxNum + i).padStart(3, '0')}`

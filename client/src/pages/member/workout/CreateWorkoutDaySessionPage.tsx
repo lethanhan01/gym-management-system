@@ -64,7 +64,7 @@ function reduceRunningRuntime(runtime: SessionTimerRuntime, now: number, deadlin
   }
 }
 
-function RestBreak({ segment, active, completed }: { segment: TimerSegment; active: boolean; completed: boolean }) {
+function RestBreak({ segment, active, completed }: Readonly<{ segment: TimerSegment; active: boolean; completed: boolean }>) {
   const { t } = useTranslation('member')
   const label = t('workout.createSession.restBreak', { seconds: segment.durationSec })
   return (
@@ -201,9 +201,9 @@ export default function CreateWorkoutDaySessionPage() {
       setStatus('completed')
       setCelebrationSeconds(5)
       setIsFocusModalOpen(true)
-    } catch (caught) {
+    } catch (error_) {
       const failed = { ...saving, status: 'save-error' as const }
-      setSubmitError(getApiError(caught, t('workout.createSession.errorSave')))
+      setSubmitError(getApiError(error_, t('workout.createSession.errorSave')))
       setStatus('save-error')
       persistRuntime(failed)
     }
@@ -286,7 +286,7 @@ export default function CreateWorkoutDaySessionPage() {
 
   const pauseTimer = useCallback(() => {
     const current = runtimeRef.current
-    if (!current || current.status !== 'running') return
+    if (current?.status !== 'running') return
     deadlineRef.current = null
     setStatus('paused')
     persistRuntime({ ...current, status: 'paused' })
@@ -294,7 +294,7 @@ export default function CreateWorkoutDaySessionPage() {
 
   const resumeTimer = useCallback(() => {
     const current = runtimeRef.current
-    if (!current || current.status !== 'paused') return
+    if (current?.status !== 'paused') return
     deadlineRef.current = Date.now() + current.segmentRemainingSec * 1000
     setStatus('running')
     persistRuntime({ ...current, status: 'running' })
@@ -462,7 +462,7 @@ export default function CreateWorkoutDaySessionPage() {
                   const restActive = isRestAfter && runtime?.segmentIndex === setSegmentIndex + 1
                   const restCompleted = isRestAfter && (runtime?.segmentIndex ?? -1) > setSegmentIndex + 1
                   return (
-                    <Fragment key={setIndex}>
+                    <Fragment key={`${exercise.planExerciseId}-set-${setIndex + 1}`}>
                       <div
                         className={`grid grid-cols-[40px_1fr_1fr] items-center gap-2 rounded-lg p-2 text-sm ${
                           isActive ? 'bg-cyan-400/15 ring-1 ring-cyan-300/40' : 'bg-white/[0.03]'

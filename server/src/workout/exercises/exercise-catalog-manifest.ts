@@ -1,4 +1,4 @@
-import { createHash } from 'crypto'
+import { createHash } from 'node:crypto'
 import { NormalizedExerciseDbExercise } from './exercise-db-v2.client'
 
 export const EXERCISEDB_PAGE_SIZE = 10

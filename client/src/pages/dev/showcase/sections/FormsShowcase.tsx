@@ -92,8 +92,9 @@ export function FormsShowcase() {
         controls={
           <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 w-full items-center text-xs">
             <div>
-              <label className="text-white/60 block mb-1">Input Size</label>
+              <label htmlFor="input-size-select" className="text-white/60 block mb-1">Input Size</label>
               <Select
+                id="input-size-select"
                 value={inputSize}
                 onValueChange={(val) => setInputSize(val as 'sm' | 'md' | 'lg')}
               >

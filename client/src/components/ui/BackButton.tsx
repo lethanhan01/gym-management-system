@@ -21,7 +21,7 @@ export function BackButton({
   size = 'compact',
   className,
   iconOnly = false,
-}: BackButtonProps) {
+}: Readonly<BackButtonProps>) {
   const navigate = useNavigate()
 
   if (to) {

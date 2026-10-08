@@ -12,13 +12,18 @@ type CountQuery = {
 const sleep = (milliseconds: number) =>
   new Promise<void>((resolve) => setTimeout(resolve, milliseconds))
 
+function extractErrorCode(error: unknown): string | undefined {
+  if (error instanceof Prisma.PrismaClientKnownRequestError) {
+    return error.code
+  }
+  if (error instanceof Prisma.PrismaClientInitializationError) {
+    return error.errorCode
+  }
+  return undefined
+}
+
 function isTransientConnectionError(error: unknown): boolean {
-  const code =
-    error instanceof Prisma.PrismaClientKnownRequestError
-      ? error.code
-      : error instanceof Prisma.PrismaClientInitializationError
-        ? error.errorCode
-        : undefined
+  const code = extractErrorCode(error)
 
   if (code === 'P1001' || code === 'P1002') {
     return true

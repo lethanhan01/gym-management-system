@@ -72,7 +72,7 @@ function hashTone(name?: string): Exclude<AvatarTone, 'auto'> {
   if (!name) return 'teal'
   let hash = 0
   for (let i = 0; i < name.length; i++) {
-    hash = name.charCodeAt(i) + ((hash << 5) - hash)
+    hash = (name.codePointAt(i) ?? 0) + ((hash << 5) - hash)
   }
   const index = Math.abs(hash) % AUTO_TONES.length
   return AUTO_TONES[index]
@@ -179,13 +179,15 @@ export const AvatarGroup = forwardRef<HTMLDivElement, AvatarGroupProps>(
         className={cn('inline-flex items-center -space-x-2.5', className)}
         {...props}
       >
-        {visibleAvatars.map((child, index) =>
-          cloneElement(child as React.ReactElement<AvatarProps>, {
-            key: index,
+        {visibleAvatars.map((child, index) => {
+          const childProps = (child as React.ReactElement<AvatarProps>).props
+          const childKey = child.key ?? childProps?.name ?? childProps?.src ?? childProps?.alt ?? `avatar-${index}`
+          return cloneElement(child as React.ReactElement<AvatarProps>, {
+            key: childKey,
             size,
-            className: cn('ring-2 ring-[var(--rogym-bg-base)]', (child.props as AvatarProps).className),
+            className: cn('ring-2 ring-[var(--rogym-bg-base)]', childProps?.className),
           })
-        )}
+        })}
 
         {remainingCount > 0 && (
           <div

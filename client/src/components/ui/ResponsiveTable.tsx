@@ -46,7 +46,7 @@ export function ResponsiveTable<T>({
   pagination,
   className,
   onRowClick,
-}: ResponsiveTableProps<T>) {
+}: Readonly<ResponsiveTableProps<T>>) {
   if (loading) {
     return <PageSkeleton rows={skeletonRows} />
   }

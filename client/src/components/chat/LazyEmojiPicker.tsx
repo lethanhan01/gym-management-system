@@ -13,17 +13,16 @@ export interface LazyEmojiPickerProps {
  * LazyEmojiPicker: Tải động emoji-picker-react khi người dùng mở popover.
  * Chiều cao cố định 340px với Skeleton fallback giúp triệt tiêu hoàn toàn Layout Shift (CLS = 0).
  */
-export function LazyEmojiPicker({ onEmojiClick }: LazyEmojiPickerProps) {
+export function LazyEmojiPicker({ onEmojiClick }: Readonly<LazyEmojiPickerProps>) {
   return (
     <Suspense
       fallback={
-        <div
-          role="status"
+        <output
           aria-label="Loading emoji picker"
           className="flex h-[340px] w-[280px] sm:w-[320px] items-center justify-center rounded-2xl bg-[var(--rogym-bg-card)] border border-white/10 text-white shadow-2xl"
         >
           <Loader2 className="h-6 w-6 animate-spin text-[var(--rogym-teal)]" />
-        </div>
+        </output>
       }
     >
       <EmojiPicker

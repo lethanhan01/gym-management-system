@@ -7,8 +7,6 @@
  */
 
 import { PrismaService } from '../src/prisma/prisma.service'
-import { TrainingService } from '../src/training/training.service'
-import { Caller } from '../src/auth/types/caller.interface'
 
 async function simulateBookingConcurrency() {
   // eslint-disable-next-line no-console
@@ -29,7 +27,7 @@ async function simulateBookingConcurrency() {
     },
   })
 
-  if (!memberA || !memberA.primaryTrainerId) {
+  if (!memberA?.primaryTrainerId) {
     // eslint-disable-next-line no-console
     console.warn('⚠️ [Concurrency Test] Skipped: No active member with primaryTrainer found in DB.')
     await prisma.$disconnect()

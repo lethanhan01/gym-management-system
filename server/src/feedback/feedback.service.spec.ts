@@ -389,9 +389,9 @@ describe('FeedbackService', () => {
       ])
 
       const res = await service.getFeedbackOptions(1n)
-      expect(res.trainers.assigned.length).toBe(1)
-      expect(res.rooms.length).toBe(1)
-      expect(res.equipment.length).toBe(1)
+      expect(res.trainers.assigned).toHaveLength(1)
+      expect(res.rooms).toHaveLength(1)
+      expect(res.equipment).toHaveLength(1)
       expect(res.quickTags.staff.positive.length).toBeGreaterThan(0)
     })
   })

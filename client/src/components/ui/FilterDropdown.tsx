@@ -47,7 +47,7 @@ export function FilterDropdown({
   className,
   size = 'md',
   triggerClassName,
-}: FilterDropdownProps) {
+}: Readonly<FilterDropdownProps>) {
   const { t: tc } = useTranslation('common')
   const displayTitle = title ?? tc('filter.title', 'Bộ lọc')
   return (
@@ -80,14 +80,9 @@ export function FilterDropdown({
       {open && (
         <>
           <div
-            role="button"
-            tabIndex={-1}
-            aria-label="Đóng bộ lọc"
+            aria-hidden="true"
             className="fixed inset-0 z-10"
             onClick={() => onOpenChange(false)}
-            onKeyDown={(e) => {
-              if (e.key === 'Escape') onOpenChange(false)
-            }}
           />
           <div className="absolute right-0 top-full z-20 mt-2 min-w-[260px] rounded-2xl border border-[var(--rogym-border-teal-dim)] bg-[var(--rogym-bg-card)] p-5 shadow-[0_12px_40px_rgba(0,0,0,0.6)] backdrop-blur-xl">
             {displayTitle && <p className="mb-4 text-sm font-bold text-white">{displayTitle}</p>}

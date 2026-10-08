@@ -70,27 +70,35 @@ export const Chip = React.forwardRef<HTMLDivElement, ChipProps>(
     const isInteractive = !!onClick && !disabled
     const toneStyle = selected ? toneClasses[tone].selected : toneClasses[tone].default
 
+    if (isInteractive && !removable) {
+      return (
+        <button
+          ref={ref as any}
+          type="button"
+          disabled={disabled}
+          onClick={onClick as any}
+          className={cn(
+            'inline-flex items-center justify-center font-medium border transition-all select-none',
+            toneStyle,
+            sizeClasses[size],
+            'cursor-pointer active:scale-95',
+            className
+          )}
+          {...(props as any)}
+        >
+          {icon && <span className="shrink-0">{icon}</span>}
+          <span className="truncate">{label}</span>
+        </button>
+      )
+    }
+
     return (
       <div
         ref={ref}
-        role={isInteractive ? 'button' : undefined}
-        tabIndex={isInteractive ? 0 : undefined}
-        onClick={disabled ? undefined : onClick}
-        onKeyDown={
-          isInteractive
-            ? (e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault()
-                  onClick?.(e as unknown as React.MouseEvent<HTMLDivElement>)
-                }
-              }
-            : undefined
-        }
         className={cn(
           'inline-flex items-center justify-center font-medium border transition-all select-none',
           toneStyle,
           sizeClasses[size],
-          isInteractive && 'cursor-pointer active:scale-95',
           disabled && 'opacity-40 cursor-not-allowed pointer-events-none',
           className
         )}
@@ -101,7 +109,7 @@ export const Chip = React.forwardRef<HTMLDivElement, ChipProps>(
         {removable && onRemove && (
           <button
             type="button"
-            tabIndex={-1}
+            tabIndex={0}
             disabled={disabled}
             onClick={(e) => {
               e.stopPropagation()

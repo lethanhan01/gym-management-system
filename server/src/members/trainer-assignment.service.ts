@@ -260,21 +260,26 @@ export class TrainerAssignmentService {
       }),
     ])
 
-    const sanitizedReviews = reviews.map((r) => ({
-      feedbackId: r.feedbackId.toString(),
-      rating: r.rating,
-      content: r.content,
-      tags: r.tags,
-      isAnonymous: r.isAnonymous,
-      reviewerName: r.isAnonymous ? null : (r.member?.user?.fullName ?? null),
-      reviewerAvatarFileId: r.isAnonymous ? null : (r.member?.user?.avatarFileId?.toString() ?? null),
-      reviewerAvatarUrl: r.isAnonymous
-        ? null
-        : (r.member?.user?.avatarFileId
-            ? `/api/v1/files/${r.member.user.avatarFileId}`
-            : (r.member?.user?.avatarUrl ?? null)),
-      createdAt: r.createdAt.toISOString(),
-    }))
+    const sanitizedReviews = reviews.map((r) => {
+      let reviewerAvatarUrl: string | null = null
+      if (!r.isAnonymous) {
+        reviewerAvatarUrl = r.member?.user?.avatarFileId
+          ? `/api/v1/files/${r.member.user.avatarFileId}`
+          : (r.member?.user?.avatarUrl ?? null)
+      }
+
+      return {
+        feedbackId: r.feedbackId.toString(),
+        rating: r.rating,
+        content: r.content,
+        tags: r.tags,
+        isAnonymous: r.isAnonymous,
+        reviewerName: r.isAnonymous ? null : (r.member?.user?.fullName ?? null),
+        reviewerAvatarFileId: r.isAnonymous ? null : (r.member?.user?.avatarFileId?.toString() ?? null),
+        reviewerAvatarUrl,
+        createdAt: r.createdAt.toISOString(),
+      }
+    })
 
     return {
       data: {

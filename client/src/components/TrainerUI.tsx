@@ -1,10 +1,7 @@
 import { useTranslation } from 'react-i18next'
 import {
-  Card,
-  Modal,
-  StatCard,
-  StatusBadge,
   Select,
+  StatusBadge,
   type StatusTone,
 } from '@/components/ui'
 
@@ -20,22 +17,21 @@ export {
   SearchToolbar as TrainerSearchToolbar,
   SearchInput as TrainerSearchInput,
   SubmitButton,
+  Card as TrainerCard,
+  StatCard as TrainerStatCard,
+  Modal as TrainerModal,
+  Select as TrainerSelect,
 } from '@/components/ui'
-
-export const TrainerCard = Card
-export const TrainerStatCard = StatCard
-export const TrainerModal = Modal
-export const TrainerSelect = Select
 
 export function TrainerStatusBadge({
   status,
   tone,
   label,
-}: {
+}: Readonly<{
   status: string
   tone?: StatusTone
   label?: string
-}) {
+}>) {
   return <StatusBadge status={status} tone={tone} label={label} />
 }
 
@@ -44,12 +40,12 @@ export function StudentCombobox({
   value,
   onChange,
   disabled,
-}: {
+}: Readonly<{
   students: TrainerStudentSummary[]
   value: string
   onChange: (value: string) => void
   disabled?: boolean
-}) {
+}>) {
   const { t } = useTranslation('trainer')
   return (
     <Select value={value} onValueChange={onChange} disabled={disabled}>

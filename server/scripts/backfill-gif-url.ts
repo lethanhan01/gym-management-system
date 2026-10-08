@@ -12,8 +12,8 @@
  *   npx dotenv-cli -e .env -- ts-node --transpile-only scripts/backfill-gif-url.ts
  */
 
-import { readFileSync } from 'fs'
-import { resolve } from 'path'
+import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
 import { PrismaClient } from '@prisma/client'
 
 const RAW_BASE = 'https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/main/videos'
@@ -30,7 +30,7 @@ function buildIdToGifUrl(files: { name: string }[]): Map<string, string> {
   for (const file of files) {
     if (!file.name.endsWith('.gif')) continue
     // Pattern: {id}-{hash}.gif  e.g. "0001-2gPfomN.gif"
-    const match = file.name.match(/^(\d{4})-/)
+    const match = /^(\d{4})-/.exec(file.name)
     if (!match) {
       console.warn(`Skipping unexpected filename: ${file.name}`)
       continue

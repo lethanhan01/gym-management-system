@@ -1,6 +1,6 @@
 import 'reflect-metadata'
-import { readFile } from 'fs/promises'
-import { resolve } from 'path'
+import { readFile } from 'node:fs/promises'
+import { resolve } from 'node:path'
 import { NestFactory } from '@nestjs/core'
 import { AppModule } from '../src/app.module'
 import { ExerciseCatalogManifest, assertManifestShape } from '../src/workout/exercises/exercise-catalog-manifest'

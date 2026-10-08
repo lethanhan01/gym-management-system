@@ -229,7 +229,7 @@ export default function MembersPage() {
   )
 }
 
-function StaffHeader({ total }: { total: number }) {
+function StaffHeader({ total }: Readonly<{ total: number }>) {
   const { t } = useTranslation('staff')
   return (
     <PageHeader

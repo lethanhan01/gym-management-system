@@ -10,7 +10,7 @@ export interface ChatImageModalProps {
   onClose: () => void
 }
 
-export function ChatImageModal({ open, imageUrl, altText = 'Chi tiết hình ảnh', onClose }: ChatImageModalProps) {
+export function ChatImageModal({ open, imageUrl, altText = 'Chi tiết hình ảnh', onClose }: Readonly<ChatImageModalProps>) {
   const { t } = useTranslation('chat')
 
   if (!imageUrl) return null
@@ -25,7 +25,7 @@ export function ChatImageModal({ open, imageUrl, altText = 'Chi tiết hình ả
       link.download = `gym-chat-image-${Date.now()}.png`
       document.body.appendChild(link)
       link.click()
-      document.body.removeChild(link)
+      link.remove()
       window.URL.revokeObjectURL(blobUrl)
     } catch {
       // Fallback nếu có CORS hạn chế: mở trong tab mới

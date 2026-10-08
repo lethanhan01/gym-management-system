@@ -7,7 +7,7 @@ export function databaseErrorCode(error: unknown): string | undefined {
   if (error instanceof Prisma.PrismaClientInitializationError) return error.errorCode
 
   const message = error instanceof Error ? error.message : String(error)
-  const match = message.match(/\b(P\d{4}|ECONNRESET|ECONNREFUSED|ETIMEDOUT)\b/i)
+  const match = /\b(P\d{4}|ECONNRESET|ECONNREFUSED|ETIMEDOUT)\b/i.exec(message)
   return match?.[1]?.toUpperCase()
 }
 

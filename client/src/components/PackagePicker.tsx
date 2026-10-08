@@ -27,21 +27,30 @@ function PackageImageLightbox({
   onClose,
   onPrevious,
   onNext,
-}: {
+}: Readonly<{
   images: GalleryImage[]
   activeIndex: number | null
   onClose: () => void
   onPrevious: () => void
   onNext: () => void
-}) {
+}>) {
   const dialogRef = useRef<HTMLDialogElement>(null)
   const [isClosing, setIsClosing] = useState(false)
 
   useEffect(() => {
     const dialog = dialogRef.current
-    if (activeIndex === null || !dialog || dialog.open) return
-    dialog.showModal()
-  }, [activeIndex])
+    if (activeIndex === null || !dialog) return
+    if (!dialog.open) {
+      dialog.showModal()
+    }
+    const handleClick = (event: MouseEvent) => {
+      if (event.target === dialog) requestClose()
+    }
+    dialog.addEventListener('click', handleClick)
+    return () => {
+      dialog.removeEventListener('click', handleClick)
+    }
+  }, [activeIndex, isClosing])
 
   function finishClose() {
     const dialog = dialogRef.current
@@ -79,15 +88,6 @@ function PackageImageLightbox({
         requestClose()
       }}
       onClose={handleNativeClose}
-      onKeyDown={(event) => {
-        if (event.key === 'Escape') {
-          event.preventDefault()
-          requestClose()
-        }
-      }}
-      onClick={(event) => {
-        if (event.target === event.currentTarget) requestClose()
-      }}
     >
       {image && (
         <div className="rogym-package-lightbox__content">
@@ -147,7 +147,7 @@ export function PackagePicker({
   endDate,
   endDateLabel,
   onContinue,
-}: {
+}: Readonly<{
   packages: Package[]
   selectedId: string
   onSelect: (packageId: string) => void
@@ -156,10 +156,10 @@ export function PackagePicker({
   endDate: Date | null
   endDateLabel: string
   onContinue: () => void
-}) {
+}>) {
   const { t } = useTranslation('member')
   const [activeImageIndex, setActiveImageIndex] = useState<number | null>(null)
-  const galleryRef = useRef<HTMLDivElement>(null)
+  const galleryRef = useRef<HTMLUListElement>(null)
   const cardRefs = useRef(new Map<string, HTMLElement>())
   const hasInitialSelectionRef = useRef(false)
   const previousSelectedIdRef = useRef<string | null>(null)
@@ -290,10 +290,9 @@ export function PackagePicker({
   return (
     <div className="rogym-package-picker space-y-5">
       <div className="rogym-package-carousel">
-        <div
+        <ul
           ref={galleryRef}
           className="rogym-package-gallery"
-          role="list"
           aria-label={t('packagePicker.galleryLabel')}
           tabIndex={0}
           onScroll={handleGalleryScroll}
@@ -305,14 +304,13 @@ export function PackagePicker({
           const image = galleryImages[index]
 
           return (
-            <article
+            <li
               key={clonePosition ? `${clonePosition}-${item.packageId}` : item.packageId}
               ref={isClone ? undefined : (node) => {
                 if (node) cardRefs.current.set(item.packageId, node)
                 else cardRefs.current.delete(item.packageId)
               }}
               className={`rogym-package-gallery__card ${isSelected ? 'is-selected' : ''} ${isClone ? 'is-carousel-clone' : ''}`}
-              role="listitem"
               aria-hidden={isClone || undefined}
               data-package-id={item.packageId}
               data-carousel-clone={clonePosition}
@@ -360,10 +358,10 @@ export function PackagePicker({
                   </button>
                 </>
               )}
-            </article>
+            </li>
           )
           })}
-        </div>
+        </ul>
       </div>
 
       <div className="rogym-package-picker__details rogym-card rogym-card--compact p-5 sm:p-6">

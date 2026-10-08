@@ -88,10 +88,11 @@ export class TrainingSessionNotificationService {
     )
   }
   async notifyCompleted(session: SessionRow) {
+    const planDaySuffix = session.planDay?.name ? ` "${session.planDay.name}"` : ''
     await this.notifications.safeNotifyUser(session.member.userId, {
       type: 'training.completed',
       title: 'Buoi tap da hoan thanh',
-      message: `Buoi tap${session.planDay?.name ? ` "${session.planDay.name}"` : ''} voi PT ${session.trainer.user.fullName} da duoc danh dau hoan thanh.`,
+      message: `Buoi tap${planDaySuffix} voi PT ${session.trainer.user.fullName} da duoc danh dau hoan thanh.`,
       resourceType: 'training_session',
       resourceId: session.sessionId.toString(),
       metadata: { trainerName: session.trainer.user.fullName, sessionName: session.planDay?.name },

@@ -4,6 +4,7 @@ import type {
 } from '@/services/workout.service'
 
 export interface SessionSetConfig {
+  id?: string
   actualReps: string
   actualWeightKg: string
   actualDurationSec: string

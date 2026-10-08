@@ -13,7 +13,7 @@ import {
 export class CreateRoomDto {
   @IsOptional()
   @IsString()
-  @Matches(/^RM-[0-9]{3}$/, { message: 'roomCode phải có dạng RM-XXX' })
+  @Matches(/^RM-\d{3}$/, { message: 'roomCode phải có dạng RM-XXX' })
   roomCode?: string
 
   @IsString()

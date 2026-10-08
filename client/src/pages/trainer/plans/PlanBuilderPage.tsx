@@ -106,7 +106,7 @@ export default function TrainerPlanBuilderPage() {
       .sort(([weekA], [weekB]) => weekA - weekB)
       .map(([week, days]) => ({
         week,
-        days: days.sort((a, b) => a.dayOfWeek - b.dayOfWeek),
+        days: [...days].sort((a, b) => a.dayOfWeek - b.dayOfWeek),
       }))
   }, [plan?.days])
 
@@ -703,13 +703,13 @@ function PlanMetadataForm({
   readonly,
   submitting,
   onSave,
-}: {
+}: Readonly<{
   name: string
   description: string
   readonly: boolean
   submitting: boolean
   onSave: (name: string, description: string) => Promise<void>
-}) {
+}>) {
   const { t } = useTranslation('trainer')
   const [name, setName] = useState(initialName)
   const [description, setDescription] = useState(initialDescription)

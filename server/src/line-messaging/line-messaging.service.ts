@@ -2,7 +2,7 @@ import { BadRequestException, Injectable, Logger, UnauthorizedException } from '
 import { ConfigService } from '@nestjs/config'
 import { Cron } from '@nestjs/schedule'
 import { TrainingSessionStatus } from '@prisma/client'
-import { createHmac, timingSafeEqual } from 'crypto'
+import { createHmac, timingSafeEqual } from 'node:crypto'
 import { NotificationsService } from '../notifications/notifications.service'
 import { PrismaService } from '../prisma/prisma.service'
 import { LINE_MOCK_USER_ID, LINE_MOCK_WEBHOOK_SECRET } from '../line-mock/constants'
@@ -31,7 +31,7 @@ type LineWebhookBody = {
 }
 
 type LineWebhookEvent = {
-  type: 'follow' | 'unfollow' | 'message' | string
+  type: 'follow' | 'unfollow' | 'message' | (string & {})
   replyToken?: string
   source?: {
     type?: string
@@ -133,25 +133,40 @@ const LINE_MESSAGE_TEMPLATES: Record<
     attendanceCheckin: 'Bạn đã check-in thành công tại RoGym.',
     subscriptionExpiring: ({ packageName, endDate }) =>
       `Gói tập ${packageName} của bạn sẽ hết hạn vào ngày mai (${endDate}). Vui lòng gia hạn để tiếp tục sử dụng dịch vụ tại RoGym.`,
-    paymentSuccess: ({ packageName, amount, paymentMethod, paymentCode }) =>
-      `Thanh toán thành công gói tập ${packageName}.\nSố tiền: ${amount}${
-        paymentMethod ? `\nPhương thức: ${paymentMethod}` : ''
-      }${paymentCode ? `\nMã GD: ${paymentCode}` : ''}`,
-    trainingCompleted: ({ trainerName, sessionName }) =>
-      `Buổi tập${sessionName ? ` "${sessionName}"` : ''} với PT ${trainerName} đã hoàn thành.\nCảm ơn bạn đã tập luyện cùng RoGym! Hãy dành chút thời gian đánh giá chất lượng buổi tập nhé.`,
-    feedbackResponded: ({ feedbackTitle }) =>
-      `Góp ý${feedbackTitle ? ` "${feedbackTitle}"` : ''} của bạn đã nhận được phản hồi từ Ban quản lý RoGym.`,
+    paymentSuccess: ({ packageName, amount, paymentMethod, paymentCode }) => {
+      const methodStr = paymentMethod ? `\nPhương thức: ${paymentMethod}` : ''
+      const codeStr = paymentCode ? `\nMã GD: ${paymentCode}` : ''
+      return `Thanh toán thành công gói tập ${packageName}.\nSố tiền: ${amount}${methodStr}${codeStr}`
+    },
+    trainingCompleted: ({ trainerName, sessionName }) => {
+      const nameStr = sessionName ? ` "${sessionName}"` : ''
+      return `Buổi tập${nameStr} với PT ${trainerName} đã hoàn thành.\nCảm ơn bạn đã tập luyện cùng RoGym! Hãy dành chút thời gian đánh giá chất lượng buổi tập nhé.`
+    },
+    feedbackResponded: ({ feedbackTitle }) => {
+      const titleStr = feedbackTitle ? ` "${feedbackTitle}"` : ''
+      return `Góp ý${titleStr} của bạn đã nhận được phản hồi từ Ban quản lý RoGym.`
+    },
     training: {
-      created: ({ trainerName, roomName, when, sessionName }) =>
-        `Bạn đã đặt lịch tập thành công.\n${sessionName ? `Nội dung: ${sessionName}\n` : ''}Thời gian: ${when}\nPT: ${trainerName}\nPhòng: ${roomName}`,
-      updated: ({ trainerName, roomName, when, sessionName }) =>
-        `Lịch tập của bạn đã được cập nhật.\n${sessionName ? `Nội dung mới: ${sessionName}\n` : ''}Thời gian mới: ${when}\nPT: ${trainerName}\nPhòng: ${roomName}`,
-      cancelled: ({ trainerName, when, sessionName }) =>
-        `Lịch tập${sessionName ? ` "${sessionName}"` : ''} với PT ${trainerName} vào ${when} đã bị hủy.`,
-      reminder: ({ trainerName, roomName, when, reminderMinutes, sessionName }) =>
-        `Buổi tập của bạn sẽ bắt đầu sau ${reminderMinutes} phút.\n${sessionName ? `Nội dung: ${sessionName}\n` : ''}Thời gian: ${when}\nPT: ${trainerName}\nPhòng: ${roomName}`,
-      starting: ({ trainerName, roomName, when, sessionName }) =>
-        `Đến giờ tập của bạn.\n${sessionName ? `Nội dung: ${sessionName}\n` : ''}Thời gian: ${when}\nPT: ${trainerName}\nPhòng: ${roomName}`,
+      created: ({ trainerName, roomName, when, sessionName }) => {
+        const nameStr = sessionName ? `Nội dung: ${sessionName}\n` : ''
+        return `Bạn đã đặt lịch tập thành công.\n${nameStr}Thời gian: ${when}\nPT: ${trainerName}\nPhòng: ${roomName}`
+      },
+      updated: ({ trainerName, roomName, when, sessionName }) => {
+        const nameStr = sessionName ? `Nội dung mới: ${sessionName}\n` : ''
+        return `Lịch tập của bạn đã được cập nhật.\n${nameStr}Thời gian mới: ${when}\nPT: ${trainerName}\nPhòng: ${roomName}`
+      },
+      cancelled: ({ trainerName, when, sessionName }) => {
+        const nameStr = sessionName ? ` "${sessionName}"` : ''
+        return `Lịch tập${nameStr} với PT ${trainerName} vào ${when} đã bị hủy.`
+      },
+      reminder: ({ trainerName, roomName, when, reminderMinutes, sessionName }) => {
+        const nameStr = sessionName ? `Nội dung: ${sessionName}\n` : ''
+        return `Buổi tập của bạn sẽ bắt đầu sau ${reminderMinutes} phút.\n${nameStr}Thời gian: ${when}\nPT: ${trainerName}\nPhòng: ${roomName}`
+      },
+      starting: ({ trainerName, roomName, when, sessionName }) => {
+        const nameStr = sessionName ? `Nội dung: ${sessionName}\n` : ''
+        return `Đến giờ tập của bạn.\n${nameStr}Thời gian: ${when}\nPT: ${trainerName}\nPhòng: ${roomName}`
+      },
     },
   },
   ja: {
@@ -168,25 +183,40 @@ const LINE_MESSAGE_TEMPLATES: Record<
     attendanceCheckin: 'RoGymでのチェックインが完了しました。',
     subscriptionExpiring: ({ packageName, endDate }) =>
       `ご利用中のプラン「${packageName}」は明日（${endDate}）に有効期限が切れます。継続してご利用いただくには更新手続きをお願いいたします。`,
-    paymentSuccess: ({ packageName, amount, paymentMethod, paymentCode }) =>
-      `プラン「${packageName}」のお支払いが完了しました。\nお支払い金額: ${amount}${
-        paymentMethod ? `\nお支払い方法: ${paymentMethod}` : ''
-      }${paymentCode ? `\n決済番号: ${paymentCode}` : ''}`,
-    trainingCompleted: ({ trainerName, sessionName }) =>
-      `PT ${trainerName} とのトレーニングセッション${sessionName ? `（${sessionName}）` : ''}が完了しました。\nRoGymをご利用いただきありがとうございます！セッションの評価にご協力ください。`,
-    feedbackResponded: ({ feedbackTitle }) =>
-      `ご意見${feedbackTitle ? `「${feedbackTitle}」` : ''}への返答がRoGym管理者より届きました。`,
+    paymentSuccess: ({ packageName, amount, paymentMethod, paymentCode }) => {
+      const methodStr = paymentMethod ? `\nお支払い方法: ${paymentMethod}` : ''
+      const codeStr = paymentCode ? `\n決済番号: ${paymentCode}` : ''
+      return `プラン「${packageName}」のお支払いが完了しました。\nお支払い金額: ${amount}${methodStr}${codeStr}`
+    },
+    trainingCompleted: ({ trainerName, sessionName }) => {
+      const nameStr = sessionName ? `（${sessionName}）` : ''
+      return `PT ${trainerName} とのトレーニングセッション${nameStr}が完了しました。\nRoGymをご利用いただきありがとうございます！セッションの評価にご協力ください。`
+    },
+    feedbackResponded: ({ feedbackTitle }) => {
+      const titleStr = feedbackTitle ? `「${feedbackTitle}」` : ''
+      return `ご意見${titleStr}への返答がRoGym管理者より届きました。`
+    },
     training: {
-      created: ({ trainerName, roomName, when, sessionName }) =>
-        `トレーニング予約が完了しました。\n${sessionName ? `内容: ${sessionName}\n` : ''}日時: ${when}\nPT: ${trainerName}\nルーム: ${roomName}`,
-      updated: ({ trainerName, roomName, when, sessionName }) =>
-        `トレーニング予約が更新されました。\n${sessionName ? `新しい内容: ${sessionName}\n` : ''}新しい日時: ${when}\nPT: ${trainerName}\nルーム: ${roomName}`,
-      cancelled: ({ trainerName, when, sessionName }) =>
-        `PT ${trainerName} との ${when} のトレーニング予約${sessionName ? `（${sessionName}）` : ''}はキャンセルされました。`,
-      reminder: ({ trainerName, roomName, when, reminderMinutes, sessionName }) =>
-        `トレーニング開始まであと${reminderMinutes}分です。\n${sessionName ? `内容: ${sessionName}\n` : ''}日時: ${when}\nPT: ${trainerName}\nルーム: ${roomName}`,
-      starting: ({ trainerName, roomName, when, sessionName }) =>
-        `トレーニングの時間です。\n${sessionName ? `内容: ${sessionName}\n` : ''}日時: ${when}\nPT: ${trainerName}\nルーム: ${roomName}`,
+      created: ({ trainerName, roomName, when, sessionName }) => {
+        const nameStr = sessionName ? `内容: ${sessionName}\n` : ''
+        return `トレーニング予約が完了しました。\n${nameStr}日時: ${when}\nPT: ${trainerName}\nルーム: ${roomName}`
+      },
+      updated: ({ trainerName, roomName, when, sessionName }) => {
+        const nameStr = sessionName ? `新しい内容: ${sessionName}\n` : ''
+        return `トレーニング予約が更新されました。\n${nameStr}新しい日時: ${when}\nPT: ${trainerName}\nルーム: ${roomName}`
+      },
+      cancelled: ({ trainerName, when, sessionName }) => {
+        const nameStr = sessionName ? `（${sessionName}）` : ''
+        return `PT ${trainerName} との ${when} のトレーニング予約${nameStr}はキャンセルされました。`
+      },
+      reminder: ({ trainerName, roomName, when, reminderMinutes, sessionName }) => {
+        const nameStr = sessionName ? `内容: ${sessionName}\n` : ''
+        return `トレーニング開始まであと${reminderMinutes}分です。\n${nameStr}日時: ${when}\nPT: ${trainerName}\nルーム: ${roomName}`
+      },
+      starting: ({ trainerName, roomName, when, sessionName }) => {
+        const nameStr = sessionName ? `内容: ${sessionName}\n` : ''
+        return `トレーニングの時間です。\n${nameStr}日時: ${when}\nPT: ${trainerName}\nルーム: ${roomName}`
+      },
     },
   },
 }
@@ -237,10 +267,7 @@ export class LineMessagingService {
     this.mockOutbox.length = 0
   }
 
-  createMockSample(type: LineMockSample, locale?: LineMessageLocale) {
-    this.assertMockEnabled()
-    const targetLocale: LineMessageLocale = locale ?? this.getLocale()
-
+  private createMockTrainingSample(type: LineMockSample, targetLocale: LineMessageLocale): boolean {
     if (type === 'flex' || type === 'pt-booking-created') {
       const mockSessionId = '101'
       const liffUrl = this.buildLiffUrl(`/member/workout/sessions?sessionId=${mockSessionId}`)
@@ -264,7 +291,7 @@ export class LineMessagingService {
           messages: [flexMsg],
         },
       })
-      return
+      return true
     }
 
     if (type === 'pt-booking-updated') {
@@ -289,7 +316,7 @@ export class LineMessagingService {
           messages: [flexMsg],
         },
       })
-      return
+      return true
     }
 
     if (type === 'pt-booking-cancelled' || type === 'pt-session-cancelled') {
@@ -312,7 +339,7 @@ export class LineMessagingService {
           messages: [flexMsg],
         },
       })
-      return
+      return true
     }
 
     if (type === 'pt-reminder-30m') {
@@ -338,7 +365,7 @@ export class LineMessagingService {
           messages: [flexMsg],
         },
       })
-      return
+      return true
     }
 
     if (type === 'pt-session-starting') {
@@ -363,7 +390,7 @@ export class LineMessagingService {
           messages: [flexMsg],
         },
       })
-      return
+      return true
     }
 
     if (type === 'pt-training-completed') {
@@ -389,9 +416,13 @@ export class LineMessagingService {
           messages: [flexMsg],
         },
       })
-      return
+      return true
     }
 
+    return false
+  }
+
+  private createMockServiceSample(type: LineMockSample, targetLocale: LineMessageLocale): boolean {
     if (type === 'attendance-checkin') {
       const liffUrl = this.buildLiffUrl('/member/attendance')
       const flexMsg = buildAttendanceCheckinFlex(
@@ -411,7 +442,7 @@ export class LineMessagingService {
           messages: [flexMsg],
         },
       })
-      return
+      return true
     }
 
     if (type === 'subscription-expiring') {
@@ -435,7 +466,7 @@ export class LineMessagingService {
           messages: [flexMsg],
         },
       })
-      return
+      return true
     }
 
     if (type === 'payment-success') {
@@ -461,7 +492,7 @@ export class LineMessagingService {
           messages: [flexMsg],
         },
       })
-      return
+      return true
     }
 
     if (type === 'feedback-responded') {
@@ -487,9 +518,13 @@ export class LineMessagingService {
           messages: [flexMsg],
         },
       })
-      return
+      return true
     }
 
+    return false
+  }
+
+  private createMockMenuSample(type: LineMockSample, targetLocale: LineMessageLocale) {
     if (type === 'welcome') {
       const liffUrl = this.buildLiffUrl('/member')
       const flexMsg = buildWelcomeFlex(targetLocale, liffUrl, this.getCoverImageUrl())
@@ -550,8 +585,16 @@ export class LineMessagingService {
           ],
         },
       })
-      return
     }
+  }
+
+  createMockSample(type: LineMockSample, locale?: LineMessageLocale) {
+    this.assertMockEnabled()
+    const targetLocale: LineMessageLocale = locale ?? this.getLocale()
+
+    if (this.createMockTrainingSample(type, targetLocale)) return
+    if (this.createMockServiceSample(type, targetLocale)) return
+    this.createMockMenuSample(type, targetLocale)
   }
 
   async simulateMockEvent(type: 'follow' | 'unfollow') {
@@ -1247,11 +1290,7 @@ export class LineMessagingService {
     const respondedAt = feedback.handledAt
       ? this.formatDateTime(feedback.handledAt, template.dateLocale)
       : this.formatDateTime(new Date(), template.dateLocale)
-    const feedbackTitle = feedback.content
-      ? feedback.content.length > 30
-        ? feedback.content.slice(0, 30) + '...'
-        : feedback.content
-      : undefined
+    const feedbackTitle = formatFeedbackTitle(feedback.content)
     const responderName = feedback.handledByStaff?.user.fullName
 
     return buildFeedbackRespondedFlex(
@@ -1272,11 +1311,7 @@ export class LineMessagingService {
     locale: LineMessageLocale
   ): LineMessage {
     const template = LINE_MESSAGE_TEMPLATES[locale]
-    const feedbackTitle = feedback.content
-      ? feedback.content.length > 30
-        ? feedback.content.slice(0, 30) + '...'
-        : feedback.content
-      : undefined
+    const feedbackTitle = formatFeedbackTitle(feedback.content)
     const text = template.feedbackResponded({ feedbackTitle })
     return this.withLiffButton(text, template.feedbackButton, '/member/feedback')
   }
@@ -1339,7 +1374,7 @@ export class LineMessagingService {
 
   private async postLine(endpoint: 'reply' | 'push', body: unknown) {
     if (this.isMockEnabled()) {
-      const payload = JSON.parse(JSON.stringify(body)) as Record<string, unknown>
+      const payload = structuredClone(body) as Record<string, unknown>
       this.addMockOutbox({
         kind: endpoint,
         recipient: this.getMockRecipient(endpoint, payload),
@@ -1520,3 +1555,9 @@ export class LineMessagingService {
     return extractUri(messages)
   }
 }
+
+function formatFeedbackTitle(content?: string): string | undefined {
+  if (!content) return undefined
+  return content.length > 30 ? `${content.slice(0, 30)}...` : content
+}
+

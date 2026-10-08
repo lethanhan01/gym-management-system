@@ -224,7 +224,7 @@ export class AuthService {
     ctx: RequestContext = {}
   ): Promise<void> {
     const user = await this.prisma.user.findUnique({ where: { userId } })
-    if (!user || !user.passwordHash) throw new UnauthorizedException('Không tìm thấy tài khoản')
+    if (!user?.passwordHash) throw new UnauthorizedException('Không tìm thấy tài khoản')
 
     const isValid = await bcrypt.compare(currentPassword, user.passwordHash)
     if (!isValid) throw new UnauthorizedException('Mật khẩu hiện tại không đúng')

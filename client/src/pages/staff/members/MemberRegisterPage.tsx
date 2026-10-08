@@ -37,7 +37,7 @@ interface PaymentFormData {
   transactionReference: string
 }
 
-function StepIndicator({ current }: { current: number }) {
+function StepIndicator({ current }: Readonly<{ current: number }>) {
   const { t } = useTranslation('staff')
 
   const STEPS = [
@@ -94,11 +94,11 @@ function Step1({
   data,
   onChange,
   onNext,
-}: {
+}: Readonly<{
   data: MemberFormData
   onChange: (d: MemberFormData) => void
   onNext: () => void
-}) {
+}>) {
   const { t } = useTranslation('staff')
   const [error, setError] = useState<string | null>(null)
 
@@ -229,12 +229,12 @@ function Step2({
   onSelect,
   onBack,
   onNext,
-}: {
+}: Readonly<{
   selected: Package | null
   onSelect: (pkg: Package) => void
   onBack: () => void
   onNext: () => void
-}) {
+}>) {
   const { t } = useTranslation('staff')
   const [packages, setPackages] = useState<Package[]>([])
   const [loading, setLoading] = useState(true)
@@ -337,7 +337,7 @@ function Step3({
   onBack,
   onSubmit,
   submitting,
-}: {
+}: Readonly<{
   member: MemberFormData
   pkg: Package
   data: PaymentFormData
@@ -345,7 +345,7 @@ function Step3({
   onBack: () => void
   onSubmit: () => void
   submitting: boolean
-}) {
+}>) {
   const { t } = useTranslation('staff')
 
   const PAYMENT_METHODS: { value: PaymentMethod; label: string }[] = [

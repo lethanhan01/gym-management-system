@@ -77,7 +77,7 @@ export function DatePickerInput({
   required = false,
   className,
   error,
-}: DatePickerInputProps) {
+}: Readonly<DatePickerInputProps>) {
   const { t, i18n } = useTranslation('common')
   const calendarLocale = i18n.language === 'ja' ? ja : vi
   const [open, setOpen] = useState(false)

@@ -184,7 +184,7 @@ export default function TrainerProfilePage() {
     let expNum: number | null = null
     if (editExperienceYears !== '') {
       expNum = Number(editExperienceYears)
-      if (isNaN(expNum) || expNum < 0 || expNum > 50) {
+      if (Number.isNaN(expNum) || expNum < 0 || expNum > 50) {
         toast.error(t('profile.error.experienceInvalid'))
         return
       }
@@ -520,7 +520,7 @@ export default function TrainerProfilePage() {
                         value={editExperienceYears}
                         onChange={(e) =>
                           setEditExperienceYears(
-                            e.target.value === '' ? '' : Math.max(0, parseInt(e.target.value, 10))
+                            e.target.value === '' ? '' : Math.max(0, Number.parseInt(e.target.value, 10))
                           )
                         }
                         placeholder={t('profile.professionalInfo.experienceYearsPlaceholder')}

@@ -31,26 +31,24 @@ type JoseModule = {
 let joseModulePromise: Promise<JoseModule> | null = null
 
 const loadJose = async (): Promise<JoseModule> => {
-  if (!joseModulePromise) {
-    joseModulePromise = (async () => {
-      try {
-        // In Jest or Node environments where require() works
-        // eslint-disable-next-line @typescript-eslint/no-var-requires
-        return require('jose') as JoseModule
-      } catch (err: unknown) {
-        if (
-          err &&
-          typeof err === 'object' &&
-          'code' in err &&
-          (err as { code: string }).code === 'ERR_REQUIRE_ESM'
-        ) {
-          // Native dynamic import prevents tsc from emitting require()
-          return (Function('return import("jose")')()) as Promise<JoseModule>
-        }
-        throw err
+  joseModulePromise ??= (async () => {
+    try {
+      // In Jest or Node environments where require() works
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      return require('jose') as JoseModule
+    } catch (err: unknown) {
+      if (
+        err &&
+        typeof err === 'object' &&
+        'code' in err &&
+        (err as { code: string }).code === 'ERR_REQUIRE_ESM'
+      ) {
+        // Native dynamic import prevents tsc from emitting require()
+        return (new Function('return import("jose")')()) as Promise<JoseModule>
       }
-    })()
-  }
+      throw err
+    }
+  })()
   return joseModulePromise
 }
 
@@ -95,9 +93,10 @@ export class LineOAuthService {
   // LINE LIFF Login
   // ---------------------------------------------------------------------------
 
-  async lineLogin(idToken: string, ctx: RequestContext = {}): Promise<LoginResult> {
-    const profile = await this.verifyLineToken(idToken)
-
+  private async resolveOrCreateLineUser(
+    profile: LineProfile,
+    ctx: RequestContext
+  ): Promise<UserWithRoles> {
     // 1. Tim theo lineId
     let user = await this.users.findByLineIdWithRoles(profile.sub)
     if (!user) {
@@ -131,11 +130,14 @@ export class LineOAuthService {
     }
 
     // 3. Tao moi neu chua co tai khoan
-    if (!user) {
-      user = await this.createMemberFromLine(profile, ctx)
-    }
+    user ??= await this.createMemberFromLine(profile, ctx)
+    return user
+  }
 
-    // 4. LINE login chi danh cho member
+  private async validateLineLoginEligibility(
+    user: UserWithRoles,
+    ctx: RequestContext
+  ): Promise<void> {
     if (user.roles.length === 0 || !user.roles.every((r) => r === 'member')) {
       throw new ForbiddenException({
         success: false,
@@ -144,8 +146,6 @@ export class LineOAuthService {
       })
     }
 
-    // LINE auth = danh tinh da xac thuc qua LINE — khong yeu cau emailVerifiedAt (pending_verification duoc phep)
-    // 5. Kiem tra status
     if (user.status === UserStatus.locked) {
       await this.audit.log({
         actorUserId: user.userId,
@@ -170,8 +170,36 @@ export class LineOAuthService {
         message: 'Vui lòng xác thực email trước khi đăng nhập',
       })
     }
+  }
 
-    // 6. Issue JWT, including profile ids so Self-owned endpoints can enforce access.
+  private async syncLineAvatar(user: UserWithRoles, profile: LineProfile): Promise<string | null> {
+    let currentAvatarUrl = user.avatarUrl
+    const targetAvatar = this.sanitizeAvatarUrl(profile.picture)
+    if (targetAvatar !== undefined && targetAvatar !== user.avatarUrl) {
+      try {
+        await this.prisma.user.update({
+          where: { userId: user.userId },
+          data: { avatarUrl: targetAvatar },
+        })
+        currentAvatarUrl = targetAvatar
+      } catch (syncErr) {
+        this.logger.warn(
+          `Failed to auto-sync LINE avatar for userId=${user.userId}: ${syncErr instanceof Error ? syncErr.message : String(syncErr)}`
+        )
+      }
+    }
+
+    return user.avatarFileId
+      ? `/api/v1/files/${user.avatarFileId}`
+      : (currentAvatarUrl ?? null)
+  }
+
+  async lineLogin(idToken: string, ctx: RequestContext = {}): Promise<LoginResult> {
+    const profile = await this.verifyLineToken(idToken)
+    const user = await this.resolveOrCreateLineUser(profile, ctx)
+    await this.validateLineLoginEligibility(user, ctx)
+
+    // Issue JWT, including profile ids so Self-owned endpoints can enforce access.
     const [staff, memberRecord] = await Promise.all([
       this.prisma.staff.findFirst({ where: { userId: user.userId, deletedAt: null } }),
       this.prisma.member.findFirst({ where: { userId: user.userId, deletedAt: null } }),
@@ -195,26 +223,7 @@ export class LineOAuthService {
       userAgent: ctx.userAgent,
     })
 
-    // 7. Auto-sync avatar an toan, khong lam gian doan dang nhap neu co loi
-    let currentAvatarUrl = user.avatarUrl
-    const targetAvatar = this.sanitizeAvatarUrl(profile.picture)
-    if (targetAvatar !== undefined && targetAvatar !== user.avatarUrl) {
-      try {
-        await this.prisma.user.update({
-          where: { userId: user.userId },
-          data: { avatarUrl: targetAvatar },
-        })
-        currentAvatarUrl = targetAvatar
-      } catch (syncErr) {
-        this.logger.warn(
-          `Failed to auto-sync LINE avatar for userId=${user.userId}: ${syncErr instanceof Error ? syncErr.message : String(syncErr)}`
-        )
-      }
-    }
-
-    const resolvedAvatarUrl = user.avatarFileId
-      ? `/api/v1/files/${user.avatarFileId}`
-      : (currentAvatarUrl ?? null)
+    const resolvedAvatarUrl = await this.syncLineAvatar(user, profile)
 
     return {
       accessToken,
@@ -522,7 +531,12 @@ export class LineOAuthService {
 
   private hasUniqueTarget(err: unknown, field: 'email' | 'line'): boolean {
     const target = (err as Prisma.PrismaClientKnownRequestError | undefined)?.meta?.target
-    const values = Array.isArray(target) ? target : target ? [target] : []
+    let values: unknown[] = []
+    if (Array.isArray(target)) {
+      values = target
+    } else if (target) {
+      values = [target]
+    }
     return values.some((value) => String(value).toLowerCase().includes(field))
   }
 

@@ -11,12 +11,12 @@ export function SessionConfigModal({
   initialConfig,
   onClose,
   onSave,
-}: {
+}: Readonly<{
   day: WorkoutPlanDay
   initialConfig?: SessionDayConfig
   onClose: () => void
   onSave: (config: SessionDayConfig) => void
-}) {
+}>) {
   const { t } = useTranslation('member')
   const [config, setConfig] = useState(() => makeSessionDayConfig(day, initialConfig))
   const exercises = day.exercises ? [...day.exercises].sort((a, b) => a.orderIndex - b.orderIndex) : []
@@ -51,7 +51,7 @@ export function SessionConfigModal({
       const source = exerciseConfig.sets[exerciseConfig.sets.length - 1] ?? fallback
       return {
         ...previous,
-        [planExerciseId]: { ...exerciseConfig, sets: [...exerciseConfig.sets, { ...source }] },
+        [planExerciseId]: { ...exerciseConfig, sets: [...exerciseConfig.sets, { ...source, id: crypto.randomUUID() }] },
       }
     })
   }
@@ -101,7 +101,7 @@ export function SessionConfigModal({
               </h3>
               <div className="space-y-3">
                 {currentConfig.sets.map((set, setIndex) => (
-                  <div key={setIndex} className="rounded-lg border border-white/5 p-3">
+                  <div key={`set-${exercise.planExerciseId}-${setIndex}`} className="rounded-lg border border-white/5 p-3">
                     <div className="mb-3 flex items-center justify-between gap-3">
                       <p className="text-sm font-medium text-white">
                         {t('workout.createSession.setLabel', { number: setIndex + 1 })}

@@ -41,7 +41,7 @@ export function FilterBar({
   extraActions,
   className,
   size = 'md',
-}: FilterBarProps) {
+}: Readonly<FilterBarProps>) {
   const [filterOpen, setFilterOpen] = useState(false)
 
   return (

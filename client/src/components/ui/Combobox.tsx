@@ -64,7 +64,7 @@ export function Combobox({
   ariaLabel,
   required,
   size = 'md',
-}: ComboboxProps) {
+}: Readonly<ComboboxProps>) {
   const formField = useFormField()
   const isControlled = value !== undefined
   const [internalValue, setInternalValue] = useState(defaultValue)
@@ -161,8 +161,6 @@ export function Combobox({
             <div className="flex items-center gap-1 shrink-0 rogym-text-dim">
               {clearable && selectedOption && !effectiveDisabled && (
                 <span
-                  role="button"
-                  tabIndex={0}
                   onClick={handleClear}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' || e.key === ' ') {

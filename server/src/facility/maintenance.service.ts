@@ -226,12 +226,12 @@ export class MaintenanceService {
         include: { reportedByStaff: { include: { user: true } } },
       })
 
-      const equipmentStatus =
-        nextStatus === MaintenanceStatus.repairing
-          ? EquipmentStatus.repairing
-          : nextStatus === MaintenanceStatus.resolved
-            ? EquipmentStatus.active
-            : EquipmentStatus.retired
+      let equipmentStatus: EquipmentStatus = EquipmentStatus.retired
+      if (nextStatus === MaintenanceStatus.repairing) {
+        equipmentStatus = EquipmentStatus.repairing
+      } else if (nextStatus === MaintenanceStatus.resolved) {
+        equipmentStatus = EquipmentStatus.active
+      }
       const equipment = await tx.equipment.update({
         where: { equipmentId: existing.equipmentId },
         data: { status: equipmentStatus },
