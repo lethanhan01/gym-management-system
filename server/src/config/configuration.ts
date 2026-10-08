@@ -140,7 +140,7 @@ function validateExerciseDbConfig(config: EnvironmentVariables) {
 
 function validateDatabaseConnectionConfig(
   config: EnvironmentVariables,
-  raw: Record<string, unknown>
+  _raw: Record<string, unknown>
 ) {
   const requestedMode = config.DB_CONNECTION_MODE?.trim() as DatabaseConnectionMode | undefined
   if (config.NODE_ENV === NodeEnv.Production && !requestedMode) {
@@ -234,10 +234,6 @@ function validateDatabaseConnectionConfig(
       )
     }
   }
-
-  // `raw` is deliberately accepted so validation remains tied to boot-time
-  // environment values instead of mutating the database URL at runtime.
-  void raw
 }
 
 function validateSmtpConfig(config: EnvironmentVariables) {

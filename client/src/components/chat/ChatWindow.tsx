@@ -325,8 +325,9 @@ export function ChatWindow({
                     {/* Nội dung tin nhắn: Text hoặc Image */}
                     {msg.messageType === 'image' && msg.attachmentUrl ? (
                       <div className="space-y-1">
-                        <div
-                          className="relative overflow-hidden rounded-xl cursor-pointer group/img max-h-[300px] border border-white/10"
+                        <button
+                          type="button"
+                          className="relative overflow-hidden rounded-xl cursor-pointer group/img max-h-[300px] border border-white/10 w-full text-left p-0 bg-transparent block"
                           onClick={() => setSelectedImage(msg.attachmentUrl)}
                         >
                           <img
@@ -338,7 +339,7 @@ export function ChatWindow({
                           <div className="absolute inset-0 bg-black/30 opacity-0 group-hover/img:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-medium">
                             {t('viewImage', 'Xem ảnh')}
                           </div>
-                        </div>
+                        </button>
                         {msg.content && msg.content !== '[Hình ảnh]' && msg.content !== '[画像]' && (
                           <p className="text-sm whitespace-pre-wrap break-words mt-1 leading-relaxed">
                             {msg.content}

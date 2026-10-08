@@ -19,9 +19,10 @@ export function FeedbackShowcase() {
   const handlePromiseToast = () => {
     toast.promise(
       new Promise((resolve, reject) => {
-        setTimeout(() => {
-          Math.random() > 0.3 ? resolve('Hoàn tất') : reject(new Error('Lỗi máy chủ'))
-        }, 2000)
+          const randomVal = typeof crypto !== 'undefined' && typeof crypto.getRandomValues === 'function'
+            ? crypto.getRandomValues(new Uint8Array(1))[0] / 255
+            : 0.5
+          randomVal > 0.3 ? resolve('Hoàn tất') : reject(new Error('Lỗi máy chủ'))
       }),
       {
         loading: 'Đang đồng bộ dữ liệu điểm danh máy quẹt thẻ RFID...',

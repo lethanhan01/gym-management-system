@@ -97,7 +97,9 @@ const TodaySessionRow = memo(function TodaySessionRow({
                 type="button"
                 aria-label={t('sessions.startWith', { name: session.memberName })}
                 disabled={isLoading}
-                onClick={() => void onUpdateStatus(session.sessionId, 'in_progress')}
+                onClick={() => {
+                  onUpdateStatus(session.sessionId, 'in_progress')
+                }}
                 className="rogym-inline-action rogym-inline-action--start"
                 data-no-sweep
               >
@@ -110,7 +112,9 @@ const TodaySessionRow = memo(function TodaySessionRow({
                 type="button"
                 aria-label={t('sessions.completeWith', { name: session.memberName })}
                 disabled={isLoading}
-                onClick={() => void onUpdateStatus(session.sessionId, 'completed')}
+                onClick={() => {
+                  onUpdateStatus(session.sessionId, 'completed')
+                }}
                 className="rogym-inline-action rogym-inline-action--complete"
                 data-no-sweep
               >

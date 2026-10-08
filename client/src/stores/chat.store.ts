@@ -338,7 +338,10 @@ export const useChatStore = create<ChatStoreState>((set, get) => ({
     if (!trimmed) return
 
     const currentUser = useAuthStore.getState().user
-    const tempId = `temp-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`
+    const randomSuffix = typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+      ? crypto.randomUUID().slice(0, 8)
+      : Date.now().toString(36)
+    const tempId = `temp-${Date.now()}-${randomSuffix}`
 
     const optimisticMessage: ChatMessage = {
       messageId: tempId,

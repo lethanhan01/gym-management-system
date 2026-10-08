@@ -372,12 +372,19 @@ export default function MyFeedbackPage() {
             {/* Image Lightbox Modal */}
             {previewImage && (
               <div
+                role="dialog"
+                aria-modal="true"
+                tabIndex={-1}
                 className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
-                onClick={() => setPreviewImage(null)}
+                onClick={(e) => {
+                  if (e.target === e.currentTarget) setPreviewImage(null)
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Escape') setPreviewImage(null)
+                }}
               >
                 <div
                   className="relative max-w-3xl max-h-[85vh] rounded-2xl overflow-hidden bg-[#181d28] border border-white/15 p-2 shadow-2xl"
-                  onClick={(e) => e.stopPropagation()}
                 >
                   <button
                     type="button"

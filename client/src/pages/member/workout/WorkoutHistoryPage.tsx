@@ -237,8 +237,16 @@ export default function WorkoutHistoryPage() {
                 >
                   {/* Log header */}
                   <header
+                    role="button"
+                    tabIndex={0}
                     className="flex cursor-pointer items-center justify-between p-4"
                     onClick={() => toggleLog(log.logId)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault()
+                        toggleLog(log.logId)
+                      }
+                    }}
                   >
                     <div className="flex items-center gap-3">
                       <div

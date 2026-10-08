@@ -74,7 +74,8 @@ function stopChild(child) {
   if (!child.pid || child.exitCode !== null) return
 
   if (process.platform === 'win32') {
-    spawnSync('taskkill', ['/PID', String(child.pid), '/T', '/F'], {
+    const taskkillCmd = process.env.SystemRoot ? `${process.env.SystemRoot}\\System32\\taskkill.exe` : 'taskkill'
+    spawnSync(taskkillCmd, ['/PID', String(child.pid), '/T', '/F'], {
       stdio: 'ignore',
       windowsHide: true,
     })
@@ -86,7 +87,8 @@ function stopChild(child) {
 
 function openBrowser(url) {
   if (process.platform === 'win32') {
-    const browser = spawn('cmd', ['/c', 'start', '', url], {
+    const cmd = process.env.ComSpec || 'cmd.exe'
+    const browser = spawn(cmd, ['/c', 'start', '', url], {
       detached: true,
       stdio: 'ignore',
       windowsHide: true,

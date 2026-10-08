@@ -19,6 +19,7 @@ import { FileInterceptor } from '@nestjs/platform-express'
 import { diskStorage } from 'multer'
 import { extname, join } from 'path'
 import * as fs from 'fs'
+import { randomBytes } from 'crypto'
 import { PermissionsGuard } from '../common/guards/permissions.guard'
 import { RequirePermission } from '../common/decorators/require-permission.decorator'
 import { DatabaseRetryable } from '../common/decorators/database-retryable.decorator'
@@ -78,7 +79,7 @@ export class StaffController {
           cb(null, dir)
         },
         filename: (_req, file, cb) => {
-          const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9)
+          const uniqueSuffix = `${Date.now()}-${randomBytes(8).toString('hex')}`
           const ext = extname(file.originalname).toLowerCase()
           cb(null, `avatar-${uniqueSuffix}${ext}`)
         },

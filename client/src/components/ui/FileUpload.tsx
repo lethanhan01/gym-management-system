@@ -124,7 +124,15 @@ export const FileUpload = forwardRef<HTMLDivElement, FileUploadProps>(
             className="hidden"
           />
           <div
+            role="button"
+            tabIndex={effectiveDisabled ? -1 : 0}
             onClick={() => !effectiveDisabled && inputRef.current?.click()}
+            onKeyDown={(e) => {
+              if ((e.key === 'Enter' || e.key === ' ') && !effectiveDisabled) {
+                e.preventDefault()
+                inputRef.current?.click()
+              }
+            }}
             className={cn(
               'group relative flex h-20 w-20 cursor-pointer items-center justify-center overflow-hidden rounded-full border-2 border-dashed border-white/20 bg-white/[0.03] transition-all',
               'hover:border-[var(--rogym-teal)] hover:bg-white/[0.06]',
@@ -178,10 +186,18 @@ export const FileUpload = forwardRef<HTMLDivElement, FileUploadProps>(
         />
 
         <div
+          role="button"
+          tabIndex={effectiveDisabled ? -1 : 0}
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
           onClick={() => !effectiveDisabled && inputRef.current?.click()}
+          onKeyDown={(e) => {
+            if ((e.key === 'Enter' || e.key === ' ') && !effectiveDisabled) {
+              e.preventDefault()
+              inputRef.current?.click()
+            }
+          }}
           className={cn(
             'group relative flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-white/15 bg-white/[0.02] p-6 text-center transition-all duration-150 cursor-pointer',
             'hover:border-[var(--rogym-teal)]/50 hover:bg-white/[0.04]',

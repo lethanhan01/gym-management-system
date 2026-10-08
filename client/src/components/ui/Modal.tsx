@@ -81,6 +81,10 @@ export function Modal({
       role="dialog"
       aria-modal="true"
       aria-labelledby="modal-title"
+      tabIndex={-1}
+      onKeyDown={(e) => {
+        if (e.key === 'Escape') onClose()
+      }}
       onClick={(e) => {
         if (closeOnOutsideClick && e.target === e.currentTarget) {
           onClose()

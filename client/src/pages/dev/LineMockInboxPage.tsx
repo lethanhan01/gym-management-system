@@ -378,7 +378,7 @@ function FlexPreview({
   if (root.type === 'carousel') {
     return (
       <div className="flex gap-3 overflow-x-auto pb-2">
-        {recordList(root.contents).map(renderBubble)}
+        {recordList(root.contents).map((bubble, index) => renderBubble(bubble, index))}
       </div>
     )
   }
@@ -882,9 +882,10 @@ function LineMobileChatMessageBubble({
 
                   {/* LIFF Link Preview Card if message contains LIFF link */}
                   {hasLiffUrl && (
-                    <div
+                    <button
+                      type="button"
                       onClick={() => onSelectUrl('/liff?redirect=/member/profile')}
-                      className="mt-2.5 cursor-pointer overflow-hidden rounded-xl border border-white/10 bg-[#1d1d1d] p-2.5 transition-all hover:bg-[#222]"
+                      className="mt-2.5 w-full text-left cursor-pointer overflow-hidden rounded-xl border border-white/10 bg-[#1d1d1d] p-2.5 transition-all hover:bg-[#222]"
                     >
                       <div className="flex items-center gap-1.5 text-xs font-bold text-white">
                         <span>Gym Management</span>
@@ -893,7 +894,7 @@ function LineMobileChatMessageBubble({
                       <p className="mt-1 text-[11px] text-white/60">
                         Chạm vào đây để mở liên kết này.
                       </p>
-                    </div>
+                    </button>
                   )}
 
                   {quickReply.length > 0 && (

@@ -150,18 +150,22 @@ function buildSubRichMenuDefinition(liffBaseUrl: string, locale: 'ja' | 'vi' = '
   }
 }
 
+function sanitizeLog(value: unknown): string {
+  return String(value).replace(/[\r\n\t]/g, ' ')
+}
+
 async function uploadImage(richMenuId: string, imagePath: string, channelAccessToken: string) {
   if (!fs.existsSync(imagePath)) {
-    console.error(`\n[Error] Image file not found at: ${imagePath}`)
+    console.error(`\n[Error] Image file not found at: ${sanitizeLog(imagePath)}`)
     console.error('LINE Messaging API requires a valid PNG or JPEG image (2500x843) to be uploaded.')
     process.exit(1)
   }
 
-  console.log(`[Upload] Uploading image from: ${imagePath}...`)
+  console.log(`[Upload] Uploading image from: ${sanitizeLog(imagePath)}...`)
   const imageBuffer = fs.readFileSync(imagePath)
   const contentType = imagePath.endsWith('.png') ? 'image/png' : 'image/jpeg'
 
-  const uploadRes = await fetch(`https://api-data.line.me/v2/bot/richmenu/${richMenuId}/content`, {
+  const uploadRes = await fetch(`https://api-data.line.me/v2/bot/richmenu/${encodeURIComponent(richMenuId)}/content`, {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${channelAccessToken}`,
@@ -172,14 +176,16 @@ async function uploadImage(richMenuId: string, imagePath: string, channelAccessT
 
   if (!uploadRes.ok) {
     const uploadError = await uploadRes.text()
-    console.error(`[Error] Image upload failed for ${richMenuId} (${uploadRes.status}): ${uploadError}`)
+    console.error(`[Error] Image upload failed for ${sanitizeLog(richMenuId)} (${uploadRes.status}): ${sanitizeLog(uploadError)}`)
     process.exit(1)
   }
-  console.log(`✓ Image uploaded successfully for Rich Menu ${richMenuId}`)
+  console.log(`✓ Image uploaded successfully for Rich Menu ${sanitizeLog(richMenuId)}`)
 }
 
 async function upsertAlias(aliasId: string, richMenuId: string, channelAccessToken: string) {
-  const updateRes = await fetch(`https://api.line.me/v2/bot/richmenu/alias/${aliasId}`, {
+  const safeAlias = encodeURIComponent(aliasId)
+  const safeRichMenuId = encodeURIComponent(richMenuId)
+  const updateRes = await fetch(`https://api.line.me/v2/bot/richmenu/alias/${safeAlias}`, {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${channelAccessToken}`,
@@ -189,7 +195,7 @@ async function upsertAlias(aliasId: string, richMenuId: string, channelAccessTok
   })
 
   if (updateRes.ok) {
-    console.log(`✓ Updated Alias '${aliasId}' -> ${richMenuId}`)
+    console.log(`✓ Updated Alias '${sanitizeLog(aliasId)}' -> ${sanitizeLog(richMenuId)}`)
     return
   }
 
@@ -204,9 +210,9 @@ async function upsertAlias(aliasId: string, richMenuId: string, channelAccessTok
 
   if (!createAliasRes.ok) {
     const errText = await createAliasRes.text()
-    console.warn(`[Warning] Failed to set Alias '${aliasId}' (${createAliasRes.status}): ${errText}`)
+    console.warn(`[Warning] Failed to set Alias '${sanitizeLog(aliasId)}' (${createAliasRes.status}): ${sanitizeLog(errText)}`)
   } else {
-    console.log(`✓ Created Alias '${aliasId}' -> ${richMenuId}`)
+    console.log(`✓ Created Alias '${sanitizeLog(aliasId)}' -> ${sanitizeLog(richMenuId)}`)
   }
 }
 
@@ -270,12 +276,12 @@ async function main() {
     body: JSON.stringify(mainPayload),
   })
   if (!mainRes.ok) {
-    console.error(`[Error] Failed to create main rich menu (${mainRes.status}): ${await mainRes.text()}`)
+    console.error(`[Error] Failed to create main rich menu (${mainRes.status}): ${sanitizeLog(await mainRes.text())}`)
     process.exit(1)
   }
   const mainData = (await mainRes.json()) as { richMenuId: string }
   const mainRichMenuId = mainData.richMenuId
-  console.log(`✓ Main Rich Menu created with ID: ${mainRichMenuId}`)
+  console.log(`✓ Main Rich Menu created with ID: ${sanitizeLog(mainRichMenuId)}`)
 
   // Step 2: Create Sub Rich Menu
   console.log('\n[Step 2/5] Creating Sub Rich Menu on LINE platform...')
@@ -285,12 +291,12 @@ async function main() {
     body: JSON.stringify(subPayload),
   })
   if (!subRes.ok) {
-    console.error(`[Error] Failed to create sub rich menu (${subRes.status}): ${await subRes.text()}`)
+    console.error(`[Error] Failed to create sub rich menu (${subRes.status}): ${sanitizeLog(await subRes.text())}`)
     process.exit(1)
   }
   const subData = (await subRes.json()) as { richMenuId: string }
   const subRichMenuId = subData.richMenuId
-  console.log(`✓ Sub Rich Menu created with ID: ${subRichMenuId}`)
+  console.log(`✓ Sub Rich Menu created with ID: ${sanitizeLog(subRichMenuId)}`)
 
   // Step 3: Upload Images
   console.log('\n[Step 3/5] Uploading images...')
@@ -307,21 +313,21 @@ async function main() {
 
   // Step 5: Set Main Rich Menu as Default
   console.log('\n[Step 5/5] Setting Main Rich Menu as default for all users...')
-  const defaultRes = await fetch(`https://api.line.me/v2/bot/user/all/richmenu/${mainRichMenuId}`, {
+  const defaultRes = await fetch(`https://api.line.me/v2/bot/user/all/richmenu/${encodeURIComponent(mainRichMenuId)}`, {
     method: 'POST',
     headers: { Authorization: `Bearer ${token}` },
   })
 
   if (!defaultRes.ok) {
-    console.error(`[Error] Failed to set default rich menu (${defaultRes.status}): ${await defaultRes.text()}`)
+    console.error(`[Error] Failed to set default rich menu (${defaultRes.status}): ${sanitizeLog(await defaultRes.text())}`)
     process.exit(1)
   }
   console.log('✓ Successfully set Main Rich Menu as default!')
 
   console.log('\n====================================================')
   console.log('  Dynamic Switch Rich Menu Synchronization Completed!')
-  console.log(`  Main Rich Menu ID: ${mainRichMenuId}`)
-  console.log(`  Sub Rich Menu ID:  ${subRichMenuId}`)
+  console.log(`  Main Rich Menu ID: ${sanitizeLog(mainRichMenuId)}`)
+  console.log(`  Sub Rich Menu ID:  ${sanitizeLog(subRichMenuId)}`)
   console.log(`  Main Alias:        ${MAIN_ALIAS}`)
   console.log(`  Sub Alias:         ${SUB_ALIAS}`)
   console.log('====================================================')

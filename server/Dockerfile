@@ -20,17 +20,17 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Cache dependency layer for full installation
 COPY package*.json ./
 RUN --mount=type=cache,target=/root/.npm,sharing=locked \
-    npm ci
+    npm ci --ignore-scripts
 
 # Generate Prisma Client & native query engine
 COPY prisma.config.ts ./
 COPY prisma/schema ./prisma/schema/
-RUN npx prisma generate
+RUN ./node_modules/.bin/prisma generate
 
 # Compile TypeScript source code to JavaScript in dist/
 COPY tsconfig*.json nest-cli.json ./
 COPY src ./src/
-RUN npx nest build
+RUN ./node_modules/.bin/nest build
 
 # ==============================================================================
 # STAGE 2: PRODUCTION DEPENDENCIES BUNDLE (deps-prod)
@@ -49,7 +49,14 @@ COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=builder /app/node_modules/@prisma/client ./node_modules/@prisma/client
 
 # Safe static cleanup: eliminate sourcemaps, markdown, and documentation files to save ~30MB
-RUN find node_modules -type f \( -name "*.map" -o -name "*.d.ts.map" -o -name "*.md" -o -name "CHANGELOG*" -o -name "README*" -o -name "LICENSE*" \) -delete && \
+RUN find node_modules -type f \( \
+        -name "*.map" \
+        -o -name "*.d.ts.map" \
+        -o -name "*.md" \
+        -o -name "CHANGELOG*" \
+        -o -name "README*" \
+        -o -name "LICENSE*" \
+    \) -delete && \
     find node_modules -type d \( -name ".github" -o -name "docs" \) -exec rm -rf {} + 2>/dev/null || true
 
 # ==============================================================================

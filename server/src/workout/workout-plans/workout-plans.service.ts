@@ -918,7 +918,7 @@ export class WorkoutPlansService {
   private assertValidStatusTransition(
     currentStatus: WorkoutPlanStatus,
     nextStatus: WorkoutPlanStatus,
-    planId: bigint
+    _planId: bigint
   ) {
     if (currentStatus === nextStatus) {
       return
@@ -938,7 +938,6 @@ export class WorkoutPlansService {
     }
 
     if (currentStatus === WorkoutPlanStatus.draft && nextStatus === WorkoutPlanStatus.active) {
-      void planId
       // no-op here, day count checked by caller
       return
     }

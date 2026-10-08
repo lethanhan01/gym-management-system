@@ -162,9 +162,15 @@ export function Combobox({
               {clearable && selectedOption && !effectiveDisabled && (
                 <span
                   role="button"
-                  tabIndex={-1}
+                  tabIndex={0}
                   onClick={handleClear}
-                  className="p-0.5 rounded-md hover:bg-white/10 hover:text-white transition-colors"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault()
+                      handleClear(e as unknown as React.MouseEvent)
+                    }
+                  }}
+                  className="p-0.5 rounded-md hover:bg-white/10 hover:text-white transition-colors cursor-pointer"
                   aria-label="Xóa lựa chọn"
                 >
                   <X size={14} />

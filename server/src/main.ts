@@ -37,10 +37,18 @@ async function bootstrap(): Promise<void> {
       crossOriginResourcePolicy: { policy: 'cross-origin' },
     })
   )
+  const stripTrailingSlash = (url: string) => {
+    let end = url.length
+    while (end > 0 && url[end - 1] === '/') {
+      end--
+    }
+    return url.slice(0, end)
+  }
+
   const clientUrlEnv = config.get<string>('CLIENT_URL') ?? 'http://localhost:5173'
   const allowedOrigins = clientUrlEnv
     .split(',')
-    .map((url) => url.trim().replace(/\/+$/, ''))
+    .map((url) => stripTrailingSlash(url.trim()))
     .filter(Boolean)
 
   app.enableCors({
@@ -48,7 +56,7 @@ async function bootstrap(): Promise<void> {
       // Allow requests with no origin (such as mobile apps, curl, server-to-server)
       if (!origin) return callback(null, true)
 
-      const cleanOrigin = origin.trim().replace(/\/+$/, '')
+      const cleanOrigin = stripTrailingSlash(origin.trim())
 
       const isExplicitlyAllowed = allowedOrigins.includes(cleanOrigin)
       const isVercelDeploy =

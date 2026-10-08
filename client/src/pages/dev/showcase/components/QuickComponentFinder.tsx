@@ -54,9 +54,10 @@ export function QuickComponentFinder({ onSelectComponent }: QuickComponentFinder
   return (
     <div className="relative w-full max-w-xl">
       {/* Quick Search Trigger Bar */}
-      <div
+      <button
+        type="button"
         onClick={() => setIsOpen(true)}
-        className="flex items-center justify-between rounded-xl border border-white/15 bg-white/[0.04] px-4 py-2.5 text-sm text-white/70 shadow-inner backdrop-blur-md transition-all hover:border-[var(--rogym-teal)] hover:bg-white/[0.07] cursor-pointer group"
+        className="w-full flex items-center justify-between rounded-xl border border-white/15 bg-white/[0.04] px-4 py-2.5 text-sm text-white/70 shadow-inner backdrop-blur-md transition-all hover:border-[var(--rogym-teal)] hover:bg-white/[0.07] cursor-pointer group text-left"
       >
         <div className="flex items-center gap-2.5">
           <Search size={16} className="text-[var(--rogym-teal)] transition-transform group-hover:scale-110" />
@@ -68,14 +69,20 @@ export function QuickComponentFinder({ onSelectComponent }: QuickComponentFinder
             <span>+ K</span>
           </kbd>
         </div>
-      </div>
+      </button>
 
       {/* Floating Modal Palette */}
       {isOpen && (
         <>
           <div
+            role="button"
+            tabIndex={-1}
+            aria-label="Đóng tìm kiếm"
             className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm transition-opacity"
             onClick={() => setIsOpen(false)}
+            onKeyDown={(e) => {
+              if (e.key === 'Escape') setIsOpen(false)
+            }}
           />
           <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 w-[92vw] max-w-2xl rounded-2xl border border-white/15 bg-[#14181f] p-4 shadow-2xl shadow-black/80 animate-in fade-in zoom-in-95 duration-150">
             <div className="relative mb-3">
