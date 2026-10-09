@@ -102,7 +102,7 @@ export default function CreateSessionPage() {
   function formatDisplayDateTime(iso: string) {
     if (!iso) return ''
     const d = new Date(iso)
-    if (isNaN(d.getTime())) return ''
+    if (Number.isNaN(d.getTime())) return ''
     return d.toLocaleString(currentLocale, {
       year: 'numeric',
       month: '2-digit',

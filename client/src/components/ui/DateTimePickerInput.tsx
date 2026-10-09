@@ -77,7 +77,7 @@ export function DateTimePickerInput({
   className,
   minuteStep = 5,
   error,
-}: DateTimePickerInputProps) {
+}: Readonly<DateTimePickerInputProps>) {
   const { t, i18n } = useTranslation('common')
   const effectivePlaceholder = placeholder ?? t('datePicker.placeholder')
   const calendarLocale = i18n.language === 'ja' ? ja : vi
@@ -88,8 +88,8 @@ export function DateTimePickerInput({
   const validDate = parsedDate && isValid(parsedDate) ? parsedDate : undefined
 
   const [hStr, mStr] = timePart ? timePart.split(':') : ['', '']
-  const selectedHour = hStr ? parseInt(hStr, 10) : undefined
-  const selectedMinute = mStr ? parseInt(mStr, 10) : undefined
+  const selectedHour = hStr ? Number.parseInt(hStr, 10) : undefined
+  const selectedMinute = mStr ? Number.parseInt(mStr, 10) : undefined
 
   const parsedMin = min ? parse(min.slice(0, 10), 'yyyy-MM-dd', new Date()) : undefined
   const parsedMax = max ? parse(max.slice(0, 10), 'yyyy-MM-dd', new Date()) : undefined
@@ -147,7 +147,6 @@ export function DateTimePickerInput({
           type="button"
           disabled={disabled}
           aria-label={ariaLabel}
-          aria-invalid={!!error}
           className={cn(
             'rogym-input flex items-center justify-between gap-2 text-left',
             !displayValue && 'text-white/20',

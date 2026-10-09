@@ -43,10 +43,10 @@ function todayKey() {
 function AttendanceTooltip({
   log,
   align = 'left',
-}: {
+}: Readonly<{
   log: StaffAttendanceLog
   align?: 'left' | 'right'
-}) {
+}>) {
   const { t } = useTranslation('staff')
 
   function fmtDuration(totalMinutes: number) {
@@ -113,7 +113,7 @@ function AttendanceCalendarView({
   loading,
   error,
   onRetry,
-}: {
+}: Readonly<{
   logs: StaffAttendanceLog[]
   month: Date
   onPrevMonth: () => void
@@ -121,7 +121,7 @@ function AttendanceCalendarView({
   loading: boolean
   error: string | null
   onRetry: () => void
-}) {
+}>) {
   const { t } = useTranslation('staff')
 
   const byDate = useMemo(() => {
@@ -196,13 +196,13 @@ function AttendanceCalendarView({
       ) : (
         <div className="space-y-0.5 min-w-[320px]">
           {grid.map((row, ri) => (
-            <div key={ri} className="grid grid-cols-7">
+            <div key={`cal-row-${fmtMonthYear(month)}-${ri}`} className="grid grid-cols-7">
               {row.map((cell, ci) => {
                 const isToday = cell.key === today
                 const cellLogs = cell.key ? (byDate.get(cell.key) ?? []) : []
                 return (
                   <div
-                    key={ci}
+                    key={cell.key ? `cell-${cell.key}` : `empty-${ri}-${ci}`}
                     className={`rogym-calendar-cell relative min-h-[68px] p-1 ${
                       isToday ? 'is-today' : ''
                     }`}
@@ -253,12 +253,12 @@ function CheckInCard({
   loading,
   onCheckIn,
   onCheckOut,
-}: {
+}: Readonly<{
   openLog: StaffAttendanceLog | null
   loading: boolean
   onCheckIn: () => void
   onCheckOut: () => void
-}) {
+}>) {
   const { t } = useTranslation('staff')
   const [elapsed, setElapsed] = useState('')
 

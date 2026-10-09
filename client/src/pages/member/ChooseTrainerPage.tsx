@@ -67,7 +67,7 @@ export default function ChooseTrainerPage() {
       list = list.filter(
         (tr) =>
           tr.fullName.toLowerCase().includes(q) ||
-          (tr.specialty && tr.specialty.toLowerCase().includes(q))
+          tr.specialty?.toLowerCase().includes(q)
       )
     }
 

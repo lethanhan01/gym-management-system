@@ -21,11 +21,11 @@ function EditGroupModal({
   group,
   onClose,
   onUpdated,
-}: {
+}: Readonly<{
   group: Group
   onClose: () => void
   onUpdated: (g: Group) => void
-}) {
+}>) {
   const { t } = useTranslation('owner')
   const { t: tCommon } = useTranslation('common')
   const [description, setDescription] = useState(group.description ?? '')
@@ -56,14 +56,15 @@ function EditGroupModal({
   }
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
-      role="dialog"
-      aria-modal="true"
-    >
-      <div className="w-full max-w-md rounded-2xl border border-white/10 bg-[var(--rogym-bg-card)] shadow-2xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="edit-group-title"
+        className="w-full max-w-md rounded-2xl border border-white/10 bg-[var(--rogym-bg-card)] shadow-2xl"
+      >
         <div className="flex items-center justify-between border-b border-white/5 px-6 py-4">
-          <h2 className="text-lg font-bold text-white">{t('rbac.groups.editModal.title')}</h2>
+          <h2 id="edit-group-title" className="text-lg font-bold text-white">{t('rbac.groups.editModal.title')}</h2>
           <button
             type="button"
             className="rogym-btn rogym-btn--icon rogym-btn--elevated"
@@ -113,12 +114,12 @@ function PermissionsModal({
   allPermissions,
   onClose,
   onSaved,
-}: {
+}: Readonly<{
   group: GroupDetail
   allPermissions: Permission[]
   onClose: () => void
   onSaved?: () => void
-}) {
+}>) {
   const { t } = useTranslation('owner')
   const { t: tCommon } = useTranslation('common')
   const [selected, setSelected] = useState<Set<string>>(
@@ -166,14 +167,15 @@ function PermissionsModal({
   }
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
-      role="dialog"
-      aria-modal="true"
-    >
-      <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl border border-white/10 bg-[var(--rogym-bg-card)] shadow-2xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="perms-modal-title"
+        className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl border border-white/10 bg-[var(--rogym-bg-card)] shadow-2xl"
+      >
         <div className="flex items-center justify-between border-b border-white/5 px-6 py-4">
-          <h2 className="text-lg font-bold text-white">{t('rbac.groups.permsModal.title', { name: group.name })}</h2>
+          <h2 id="perms-modal-title" className="text-lg font-bold text-white">{t('rbac.groups.permsModal.title', { name: group.name })}</h2>
           <button
             type="button"
             className="rogym-btn rogym-btn--icon rogym-btn--elevated"

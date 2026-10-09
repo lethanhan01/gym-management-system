@@ -70,9 +70,10 @@ export function formatTimer(seconds: number) {
 
 export function createCompletionKey() {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') return crypto.randomUUID()
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (letter) => {
-    const random = Math.floor(Math.random() * 16)
-    const value = letter === 'x' ? random : (random & 0x3) | 0x8
-    return value.toString(16)
-  })
+  if (typeof crypto !== 'undefined' && typeof crypto.getRandomValues === 'function') {
+    const arr = new Uint8Array(16)
+    crypto.getRandomValues(arr)
+    return Array.from(arr, (b) => b.toString(16).padStart(2, '0')).join('')
+  }
+  return `key-${Date.now().toString(16)}`
 }

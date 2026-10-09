@@ -1,4 +1,4 @@
-import { createHash } from 'crypto'
+import { createHash } from 'node:crypto'
 import { NormalizedExerciseDbExercise } from './exercise-db-v2.client'
 
 export const EXERCISEDB_PAGE_SIZE = 10
@@ -18,7 +18,7 @@ export interface ExerciseCatalogManifest {
 export function externalIdHash(
   items: Iterable<Pick<NormalizedExerciseDbExercise, 'externalId'>>
 ): string {
-  const ids = [...items].map((item) => item.externalId).sort()
+  const ids = [...items].map((item) => item.externalId).sort((a, b) => a.localeCompare(b))
   return createHash('sha256').update(ids.join('\n')).digest('hex')
 }
 

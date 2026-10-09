@@ -1,10 +1,5 @@
 import {
-  Card,
-  Modal,
-  StatCard,
   StatusBadge,
-  Badge,
-  Select,
   type StatusTone,
   type BadgeTone,
 } from '@/components/ui'
@@ -26,23 +21,22 @@ export {
   ConfirmDialog as MemberConfirmDialog,
   Table as MemberTable,
   ResponsiveTable as MemberResponsiveTable,
+  Card as MemberCard,
+  StatCard as MemberStatCard,
+  Modal as MemberModal,
+  Select as MemberSelect,
+  Badge as MemberBadge,
 } from '@/components/ui'
-
-export const MemberCard = Card
-export const MemberStatCard = StatCard
-export const MemberModal = Modal
-export const MemberSelect = Select
-export const MemberBadge = Badge
 
 export function MemberStatusBadge({
   status,
   tone,
   label,
-}: {
+}: Readonly<{
   status: string
   tone?: StatusTone | BadgeTone
   label?: string
-}) {
+}>) {
   return <StatusBadge status={status} tone={tone} label={label} />
 }
 

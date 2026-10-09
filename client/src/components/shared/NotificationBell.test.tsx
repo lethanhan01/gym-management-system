@@ -106,6 +106,11 @@ describe('NotificationBell', () => {
     vi.mocked(notificationService.markAllRead).mockResolvedValue(1)
   })
 
+  afterEach(() => {
+    vi.useRealTimers()
+    vi.unstubAllGlobals()
+  })
+
   it('renders unread badge, and automatically marks all as read when opened', async () => {
     renderBell()
 
@@ -135,11 +140,6 @@ describe('NotificationBell', () => {
     fireEvent.click(await screen.findByRole('button', { name: 'Thông báo' }))
 
     expect((await screen.findByRole('region', { name: 'Thông báo' })).parentElement?.parentElement).toBe(document.body)
-  })
-
-  afterEach(() => {
-    vi.useRealTimers()
-    vi.unstubAllGlobals()
   })
 
   it('marks all notifications as read from the panel action', async () => {

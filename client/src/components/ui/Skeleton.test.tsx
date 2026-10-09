@@ -14,7 +14,7 @@ describe('Skeleton Component', () => {
   it('renders SkeletonText with specified line count', () => {
     const { container } = render(<SkeletonText lines={4} />)
     const lines = container.querySelectorAll('.animate-pulse')
-    expect(lines.length).toBe(4)
+    expect(lines).toHaveLength(4)
   })
 
   it('renders SkeletonCircle with circular rounded styling', () => {

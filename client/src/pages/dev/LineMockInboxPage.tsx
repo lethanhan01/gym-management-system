@@ -131,174 +131,200 @@ function QuickReply({
   })
 }
 
+const TEXT_SIZE_MAP: Record<string, string> = {
+  xxs: 'text-[10px]',
+  xs: 'text-[11px]',
+  sm: 'text-xs sm:text-sm',
+  md: 'text-sm',
+  lg: 'text-base font-semibold',
+  xl: 'text-lg font-bold',
+  xxl: 'text-xl font-bold',
+}
+
+function getTextSizeClass(size?: string): string {
+  return TEXT_SIZE_MAP[size ?? ''] ?? 'text-xs sm:text-sm'
+}
+
+const BOX_SPACING_MAP: Record<string, string> = {
+  xs: 'gap-1',
+  sm: 'gap-1.5',
+  md: 'gap-2.5',
+  lg: 'gap-3.5',
+  xl: 'gap-4',
+}
+
+function getBoxGapClass(spacing?: string, horizontal?: boolean): string {
+  if (spacing && BOX_SPACING_MAP[spacing]) return BOX_SPACING_MAP[spacing]
+  return horizontal ? 'gap-2' : 'gap-1.5'
+}
+
+const BOX_MARGIN_MAP: Record<string, string> = {
+  xs: 'mt-1',
+  sm: 'mt-1.5',
+  md: 'mt-2.5',
+  lg: 'mt-3.5',
+}
+
+function getBoxMarginClass(margin?: string): string {
+  return BOX_MARGIN_MAP[margin ?? ''] ?? ''
+}
+
+function getBoxRoundedClass(cornerRadius?: string): string {
+  if (cornerRadius === 'xxl' || cornerRadius === 'xl') return 'rounded-full'
+  if (cornerRadius === 'md' || cornerRadius === 'lg') return 'rounded-lg'
+  if (cornerRadius === 'sm') return 'rounded-md'
+  return ''
+}
+
+function getBoxAlignClass(alignItems?: string): string {
+  if (alignItems === 'center') return 'items-center'
+  if (alignItems === 'flex-start') return 'items-start'
+  if (alignItems === 'flex-end') return 'items-end'
+  return ''
+}
+
+function getBoxJustifyClass(justifyContent?: string): string {
+  if (justifyContent === 'space-between') return 'justify-between'
+  if (justifyContent === 'center') return 'justify-center'
+  if (justifyContent === 'flex-end') return 'justify-end'
+  return ''
+}
+
+function getSeparatorMarginClass(margin?: string): string {
+  if (margin === 'md') return 'my-2.5'
+  if (margin === 'lg') return 'my-3.5'
+  return 'my-2'
+}
+
+function FlexTextComponent({ component }: Readonly<{ component: JsonRecord }>) {
+  const text = stringValue(component.text) ?? ''
+  const size = stringValue(component.size)
+  const color = stringValue(component.color)
+  const weight = stringValue(component.weight)
+  const flex = typeof component.flex === 'number' ? component.flex : undefined
+  const wrap = component.wrap !== false
+  const align = stringValue(component.align)
+  const sizeClass = getTextSizeClass(size)
+
+  let alignClass = ''
+  if (align === 'center') alignClass = 'text-center'
+  else if (align === 'end') alignClass = 'text-right'
+
+  return (
+    <p
+      className={`${wrap ? 'whitespace-pre-wrap break-words' : 'truncate'} ${
+        weight === 'bold' ? 'font-bold' : 'font-normal'
+      } ${sizeClass} ${alignClass}`}
+      style={{
+        color: color || undefined,
+        flex: flex !== undefined ? `${flex} ${flex} 0%` : undefined,
+      }}
+    >
+      {text}
+    </p>
+  )
+}
+
+function FlexBoxComponent({
+  component,
+  onSelectUrl,
+}: Readonly<{
+  component: JsonRecord
+  onSelectUrl?: (url: string, label?: string) => void
+}>) {
+  const layout = stringValue(component.layout) ?? 'vertical'
+  const horizontal = layout === 'horizontal' || layout === 'baseline'
+  const bg = stringValue(component.backgroundColor)
+  const flex = typeof component.flex === 'number' ? component.flex : undefined
+  const gapClass = getBoxGapClass(stringValue(component.spacing), horizontal)
+  const marginClass = getBoxMarginClass(stringValue(component.margin))
+  const roundedClass = getBoxRoundedClass(stringValue(component.cornerRadius))
+  const alignClass = getBoxAlignClass(stringValue(component.alignItems))
+  const justifyClass = getBoxJustifyClass(stringValue(component.justifyContent))
+
+  return (
+    <div
+      className={`flex ${horizontal ? 'flex-row' : 'flex-col'} ${gapClass} ${marginClass} ${roundedClass} ${alignClass} ${justifyClass}`}
+      style={{
+        backgroundColor: bg || undefined,
+        flex: flex !== undefined ? `${flex} ${flex} 0%` : undefined,
+        paddingTop: stringValue(component.paddingTop),
+        paddingBottom: stringValue(component.paddingBottom),
+        paddingLeft: stringValue(component.paddingStart) || stringValue(component.paddingAll),
+        paddingRight: stringValue(component.paddingEnd) || stringValue(component.paddingAll),
+      }}
+    >
+      {recordList(component.contents).map((child, index) => (
+        <FlexComponent
+          key={`${stringValue(child.type) ?? 'component'}-${index}`}
+          component={child}
+          onSelectUrl={onSelectUrl}
+        />
+      ))}
+    </div>
+  )
+}
+
+function FlexButtonComponent({
+  component,
+  onSelectUrl,
+}: Readonly<{
+  component: JsonRecord
+  onSelectUrl?: (url: string, label?: string) => void
+}>) {
+  const action = isRecord(component.action) ? component.action : undefined
+  const label = stringValue(action?.label) ?? 'Action'
+  const uri = stringValue(action?.uri) ?? ''
+  const style = stringValue(component.style) ?? 'primary'
+
+  return (
+    <button
+      type="button"
+      onClick={() => {
+        if (uri && onSelectUrl) {
+          onSelectUrl(uri, label)
+        }
+      }}
+      className={`w-full rounded-xl py-2.5 px-3 text-center text-xs sm:text-sm font-extrabold transition-all active:scale-[0.98] cursor-pointer shadow-md ${
+        style === 'primary'
+          ? 'bg-[#06c384] text-[#00492f] hover:bg-[#08d891] hover:shadow-emerald-500/20'
+          : 'border border-[#42e09e]/50 bg-[#42e09e]/10 text-[#42e09e] hover:bg-[#42e09e]/20'
+      }`}
+    >
+      {label}
+    </button>
+  )
+}
+
+function FlexSeparatorComponent({ component }: Readonly<{ component: JsonRecord }>) {
+  const color = stringValue(component.color) || '#1a2520'
+  const marginClass = getSeparatorMarginClass(stringValue(component.margin))
+  return <hr className={`w-full border-t ${marginClass}`} style={{ borderColor: color }} />
+}
+
 function FlexComponent({
   component,
   onSelectUrl,
-}: {
+}: Readonly<{
   component: JsonRecord
   onSelectUrl?: (url: string, label?: string) => void
-}) {
+}>) {
   const type = stringValue(component.type)
 
   if (type === 'text') {
-    const text = stringValue(component.text) ?? ''
-    const size = stringValue(component.size)
-    const color = stringValue(component.color)
-    const weight = stringValue(component.weight)
-    const flex = typeof component.flex === 'number' ? component.flex : undefined
-    const wrap = component.wrap !== false
-    const align = stringValue(component.align)
-
-    const sizeClass =
-      size === 'xxs'
-        ? 'text-[10px]'
-        : size === 'xs'
-        ? 'text-[11px]'
-        : size === 'sm'
-        ? 'text-xs sm:text-sm'
-        : size === 'md'
-        ? 'text-sm'
-        : size === 'lg'
-        ? 'text-base font-semibold'
-        : size === 'xl'
-        ? 'text-lg font-bold'
-        : size === 'xxl'
-        ? 'text-xl font-bold'
-        : 'text-xs sm:text-sm'
-
-    return (
-      <p
-        className={`${wrap ? 'whitespace-pre-wrap break-words' : 'truncate'} ${
-          weight === 'bold' ? 'font-bold' : 'font-normal'
-        } ${sizeClass} ${align === 'center' ? 'text-center' : align === 'end' ? 'text-right' : ''}`}
-        style={{
-          color: color || undefined,
-          flex: flex !== undefined ? `${flex} ${flex} 0%` : undefined,
-        }}
-      >
-        {text}
-      </p>
-    )
+    return <FlexTextComponent component={component} />
   }
 
   if (type === 'box') {
-    const layout = stringValue(component.layout) ?? 'vertical'
-    const horizontal = layout === 'horizontal' || layout === 'baseline'
-    const bg = stringValue(component.backgroundColor)
-    const cornerRadius = stringValue(component.cornerRadius)
-    const flex = typeof component.flex === 'number' ? component.flex : undefined
-    const alignItems = stringValue(component.alignItems)
-    const justifyContent = stringValue(component.justifyContent)
-    const spacing = stringValue(component.spacing)
-    const margin = stringValue(component.margin)
-
-    const gapClass =
-      spacing === 'xs'
-        ? 'gap-1'
-        : spacing === 'sm'
-        ? 'gap-1.5'
-        : spacing === 'md'
-        ? 'gap-2.5'
-        : spacing === 'lg'
-        ? 'gap-3.5'
-        : spacing === 'xl'
-        ? 'gap-4'
-        : horizontal
-        ? 'gap-2'
-        : 'gap-1.5'
-
-    const marginClass =
-      margin === 'xs'
-        ? 'mt-1'
-        : margin === 'sm'
-        ? 'mt-1.5'
-        : margin === 'md'
-        ? 'mt-2.5'
-        : margin === 'lg'
-        ? 'mt-3.5'
-        : ''
-
-    const roundedClass =
-      cornerRadius === 'xxl' || cornerRadius === 'xl'
-        ? 'rounded-full'
-        : cornerRadius === 'md' || cornerRadius === 'lg'
-        ? 'rounded-lg'
-        : cornerRadius === 'sm'
-        ? 'rounded-md'
-        : ''
-
-    const alignClass =
-      alignItems === 'center'
-        ? 'items-center'
-        : alignItems === 'flex-start'
-        ? 'items-start'
-        : alignItems === 'flex-end'
-        ? 'items-end'
-        : ''
-
-    const justifyClass =
-      justifyContent === 'space-between'
-        ? 'justify-between'
-        : justifyContent === 'center'
-        ? 'justify-center'
-        : justifyContent === 'flex-end'
-        ? 'justify-end'
-        : ''
-
-    return (
-      <div
-        className={`flex ${horizontal ? 'flex-row' : 'flex-col'} ${gapClass} ${marginClass} ${roundedClass} ${alignClass} ${justifyClass}`}
-        style={{
-          backgroundColor: bg || undefined,
-          flex: flex !== undefined ? `${flex} ${flex} 0%` : undefined,
-          paddingTop: stringValue(component.paddingTop),
-          paddingBottom: stringValue(component.paddingBottom),
-          paddingLeft: stringValue(component.paddingStart) || stringValue(component.paddingAll),
-          paddingRight: stringValue(component.paddingEnd) || stringValue(component.paddingAll),
-        }}
-      >
-        {recordList(component.contents).map((child, index) => (
-          <FlexComponent
-            key={`${stringValue(child.type) ?? 'component'}-${index}`}
-            component={child}
-            onSelectUrl={onSelectUrl}
-          />
-        ))}
-      </div>
-    )
+    return <FlexBoxComponent component={component} onSelectUrl={onSelectUrl} />
   }
 
   if (type === 'button') {
-    const action = isRecord(component.action) ? component.action : undefined
-    const label = stringValue(action?.label) ?? 'Action'
-    const uri = stringValue(action?.uri) ?? ''
-    const style = stringValue(component.style) ?? 'primary'
-
-    return (
-      <button
-        type="button"
-        onClick={() => {
-          if (uri && onSelectUrl) {
-            onSelectUrl(uri, label)
-          }
-        }}
-        className={`w-full rounded-xl py-2.5 px-3 text-center text-xs sm:text-sm font-extrabold transition-all active:scale-[0.98] cursor-pointer shadow-md ${
-          style === 'primary'
-            ? 'bg-[#06c384] text-[#00492f] hover:bg-[#08d891] hover:shadow-emerald-500/20'
-            : 'border border-[#42e09e]/50 bg-[#42e09e]/10 text-[#42e09e] hover:bg-[#42e09e]/20'
-        }`}
-      >
-        {label}
-      </button>
-    )
+    return <FlexButtonComponent component={component} onSelectUrl={onSelectUrl} />
   }
 
   if (type === 'separator') {
-    const color = stringValue(component.color) || '#1a2520'
-    const margin = stringValue(component.margin)
-    const marginClass =
-      margin === 'md' ? 'my-2.5' : margin === 'lg' ? 'my-3.5' : 'my-2'
-    return <hr className={`w-full border-t ${marginClass}`} style={{ borderColor: color }} />
+    return <FlexSeparatorComponent component={component} />
   }
 
   if (type === 'image') {
@@ -324,10 +350,10 @@ function FlexComponent({
 function FlexPreview({
   contents,
   onSelectUrl,
-}: {
+}: Readonly<{
   contents: unknown
   onSelectUrl?: (url: string, label?: string) => void
-}) {
+}>) {
   const root = isRecord(contents) ? contents : undefined
   if (!root)
     return <p className="text-sm text-white/60">Flex payload không có nội dung hợp lệ.</p>
@@ -378,7 +404,7 @@ function FlexPreview({
   if (root.type === 'carousel') {
     return (
       <div className="flex gap-3 overflow-x-auto pb-2">
-        {recordList(root.contents).map(renderBubble)}
+        {recordList(root.contents).map((bubble, index) => renderBubble(bubble, index))}
       </div>
     )
   }
@@ -392,10 +418,10 @@ function FlexPreview({
 function MessagePreview({
   payload,
   onSelectUrl,
-}: {
+}: Readonly<{
   payload: JsonRecord
   onSelectUrl: (url: string) => void
-}) {
+}>) {
   const messages = recordList(payload.messages)
   if (messages.length === 0)
     return <p className="text-sm text-white/60">Không có LINE message để preview.</p>
@@ -403,13 +429,14 @@ function MessagePreview({
   return (
     <div className="space-y-3 rounded-xl bg-black/30 p-3.5 border border-white/5">
       {messages.map((message, index) => {
+        const msgKey = stringValue(message.id) ?? `msg-${message.type}-${stringValue(message.text)?.slice(0, 15) ?? stringValue(message.altText)?.slice(0, 15) ?? index}`
         if (message.type === 'text') {
           const quickReply = isRecord(message.quickReply)
             ? recordList(message.quickReply.items)
             : []
           return (
             <div
-              key={index}
+              key={msgKey}
               className="max-w-lg rounded-2xl rounded-tl-sm border border-white/10 bg-[#0c241d] px-4 py-3.5 shadow-md"
             >
               <div className="flex items-start gap-2.5">
@@ -432,7 +459,7 @@ function MessagePreview({
         }
         if (message.type === 'flex') {
           return (
-            <div key={index}>
+            <div key={msgKey}>
               <p className="mb-2 text-xs text-white/60">
                 {stringValue(message.altText) ?? 'Flex Message'}
               </p>
@@ -441,7 +468,7 @@ function MessagePreview({
           )
         }
         return (
-          <p key={index} className="text-sm text-white/60">
+          <p key={msgKey} className="text-sm text-white/60">
             LINE message chưa hỗ trợ: {stringValue(message.type) ?? 'unknown'}.
           </p>
         )
@@ -455,12 +482,12 @@ function InteractiveRichMenuGrid({
   onSelectUrl,
   compact = false,
   locale,
-}: {
+}: Readonly<{
   areas: JsonRecord[]
   onSelectUrl: (url: string, label?: string, index?: number) => void
   compact?: boolean
   locale?: 'ja' | 'vi'
-}) {
+}>) {
   const firstActionLabel =
     areas.length > 0 && isRecord(areas[0]?.action) ? stringValue(areas[0]?.action.label) : ''
   const isJa = locale === 'ja' || firstActionLabel === 'スケジュール' || (!locale && firstActionLabel !== 'Lịch tập')
@@ -541,7 +568,7 @@ function InteractiveRichMenuGrid({
 
         return (
           <button
-            key={index}
+            key={meta.badge}
             type="button"
             onClick={() => uri && onSelectUrl(uri, label, index + 1)}
             className={`group relative flex flex-col items-center justify-center ${
@@ -595,10 +622,10 @@ function InteractiveRichMenuGrid({
 function RichMenuPreview({
   payload,
   onSelectUrl,
-}: {
+}: Readonly<{
   payload: JsonRecord
   onSelectUrl: (url: string) => void
-}) {
+}>) {
   const areas = recordList(payload.areas)
 
   return (
@@ -636,7 +663,7 @@ function RichMenuPreview({
               const uri = stringValue(action?.uri) ?? '—'
               const label = stringValue(action?.label) ?? `Zone ${index + 1}`
               return (
-                <tr key={index} className="transition-colors hover:bg-white/[0.02]">
+                <tr key={`area-row-${label}-${uri}`} className="transition-colors hover:bg-white/[0.02]">
                   <td className="p-2.5 font-bold text-white">
                     {index + 1}. {label}
                   </td>
@@ -666,10 +693,10 @@ function RichMenuPreview({
 function MobilePhoneSimulator({
   url,
   onClose,
-}: {
+}: Readonly<{
   url: string
   onClose: () => void
-}) {
+}>) {
   const iframeRef = useRef<HTMLIFrameElement>(null)
   const [copied, setCopied] = useState(false)
   const [key, setKey] = useState(0)
@@ -833,7 +860,7 @@ const DEFAULT_RICH_MENU_PAYLOAD: JsonRecord = {
 function formatLineDateBadge(isoString?: string): string {
   if (!isoString) return 'Th 7, 18 thg 7'
   const date = new Date(isoString)
-  if (isNaN(date.getTime())) return 'Th 7, 18 thg 7'
+  if (Number.isNaN(date.getTime())) return 'Th 7, 18 thg 7'
   const days = ['CN', 'Th 2', 'Th 3', 'Th 4', 'Th 5', 'Th 6', 'Th 7']
   const dayName = days[date.getDay()]
   const dayNum = date.getDate()
@@ -845,11 +872,11 @@ function LineMobileChatMessageBubble({
   payload,
   timestamp,
   onSelectUrl,
-}: {
+}: Readonly<{
   payload: JsonRecord
   timestamp: string
   onSelectUrl: (url: string) => void
-}) {
+}>) {
   const messages = recordList(payload.messages)
   const timeStr = new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
 
@@ -864,6 +891,7 @@ function LineMobileChatMessageBubble({
 
       <div className="flex flex-col gap-2 min-w-0 flex-1">
         {messages.map((message, index) => {
+          const bubbleKey = stringValue(message.id) ?? `bubble-${timeStr}-${message.type}-${stringValue(message.text)?.slice(0, 15) ?? stringValue(message.altText)?.slice(0, 15) ?? index}`
           if (message.type === 'text') {
             const rawText = stringValue(message.text) ?? ''
             const quickReply = isRecord(message.quickReply)
@@ -873,7 +901,7 @@ function LineMobileChatMessageBubble({
               rawText.includes('http') || rawText.includes('liff') || rawText.includes('/liff')
 
             return (
-              <div key={index} className="flex items-end gap-1.5 min-w-0">
+              <div key={bubbleKey} className="flex items-end gap-1.5 min-w-0">
                 {/* Bubble Container */}
                 <div className="rounded-2xl rounded-tl-xs bg-[#262626] px-3.5 py-2.5 text-xs sm:text-sm text-white leading-relaxed shadow-md border border-white/5 max-w-[82%] break-words">
                   <p className="whitespace-pre-wrap font-normal text-white/90">
@@ -882,9 +910,10 @@ function LineMobileChatMessageBubble({
 
                   {/* LIFF Link Preview Card if message contains LIFF link */}
                   {hasLiffUrl && (
-                    <div
+                    <button
+                      type="button"
                       onClick={() => onSelectUrl('/liff?redirect=/member/profile')}
-                      className="mt-2.5 cursor-pointer overflow-hidden rounded-xl border border-white/10 bg-[#1d1d1d] p-2.5 transition-all hover:bg-[#222]"
+                      className="mt-2.5 w-full text-left cursor-pointer overflow-hidden rounded-xl border border-white/10 bg-[#1d1d1d] p-2.5 transition-all hover:bg-[#222]"
                     >
                       <div className="flex items-center gap-1.5 text-xs font-bold text-white">
                         <span>Gym Management</span>
@@ -893,7 +922,7 @@ function LineMobileChatMessageBubble({
                       <p className="mt-1 text-[11px] text-white/60">
                         Chạm vào đây để mở liên kết này.
                       </p>
-                    </div>
+                    </button>
                   )}
 
                   {quickReply.length > 0 && (
@@ -913,7 +942,7 @@ function LineMobileChatMessageBubble({
 
           if (message.type === 'flex') {
             return (
-              <div key={index} className="flex items-end gap-1.5 min-w-0">
+              <div key={bubbleKey} className="flex items-end gap-1.5 min-w-0">
                 <div>
                   <p className="mb-1 text-[10px] text-white/50">
                     {stringValue(message.altText) ?? 'Flex Message'}
@@ -937,10 +966,10 @@ function LineMobileChatMessageBubble({
 function LineChatRoomSimulator({
   messages,
   onSelectUrl,
-}: {
+}: Readonly<{
   messages: MockMessage[]
   onSelectUrl: (url: string) => void
-}) {
+}>) {
   const [showRichMenu, setShowRichMenu] = useState(true)
   const [inputText, setInputText] = useState('')
   const [userEvents, setUserEvents] = useState<ChatRoomEvent[]>([])
@@ -1223,6 +1252,97 @@ function LineChatRoomSimulator({
       </div>
     </div>
   )
+}
+
+function getMessageKindBadgeText(kind: string): string {
+  if (kind === 'rich-menu') return 'Rich Menu'
+  if (kind === 'reply') return 'Reply message'
+  return 'Push message'
+}
+
+function renderOutboxList(
+  loading: boolean,
+  messages: MockMessage[],
+  handleSelectUrl: (url: string, label?: string) => void
+) {
+  if (loading) {
+    return <p className="py-8 text-center text-sm text-white/50">Đang nạp dữ liệu…</p>
+  }
+  if (messages.length === 0) {
+    return (
+      <div className="rounded-2xl border border-dashed border-white/10 p-10 text-center text-sm text-white/50">
+        Chưa có tin nhắn mock nào trong hàng đợi. Bấm các nút ở trên để tạo mẫu thử nghiệm.
+      </div>
+    )
+  }
+  return messages.map((message) => {
+    const badgeText = getMessageKindBadgeText(message.kind)
+    return (
+      <article
+        key={message.id}
+        className="rounded-2xl border border-white/10 bg-[#081814] p-5 shadow-lg space-y-3.5"
+      >
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/5 pb-2.5 text-xs">
+          <div className="flex items-center gap-2">
+            <span
+              className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
+                message.kind === 'rich-menu'
+                  ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30'
+                  : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+              }`}
+            >
+              {badgeText}
+            </span>
+            {message.recipient && (
+              <span className="text-white/60">Đích: {message.recipient}</span>
+            )}
+          </div>
+          <time className="font-mono text-white/40">
+            {new Date(message.createdAt).toLocaleString()}
+          </time>
+        </div>
+
+        {/* Preview Content */}
+        <div>
+          {message.kind === 'rich-menu' ? (
+            <RichMenuPreview
+              payload={message.payload}
+              onSelectUrl={handleSelectUrl}
+            />
+          ) : (
+            <MessagePreview
+              payload={message.payload}
+              onSelectUrl={handleSelectUrl}
+            />
+          )}
+        </div>
+
+        {/* LIFF URL Action link */}
+        {message.liffUrl && (
+          <div className="flex items-center gap-3 pt-1">
+            <button
+              type="button"
+              onClick={() => handleSelectUrl(message.liffUrl!)}
+              className="inline-flex items-center gap-1.5 text-xs font-bold text-[var(--rogym-accent)] hover:underline"
+            >
+              <Smartphone size={13} />
+              <span>Mở trên Mobile Simulator</span>
+            </button>
+          </div>
+        )}
+
+        {/* Raw JSON Payload */}
+        <details className="border-t border-white/5 pt-2">
+          <summary className="cursor-pointer text-[11px] font-medium text-white/50 hover:text-white">
+            Xem chi tiết Payload JSON
+          </summary>
+          <pre className="mt-2 overflow-x-auto rounded-xl border border-white/5 bg-black/50 p-3 font-mono text-[11px] text-emerald-400">
+            {JSON.stringify(message.payload, null, 2)}
+          </pre>
+        </details>
+      </article>
+    )
+  })
 }
 
 export default function LineMockInboxPage() {
@@ -1689,81 +1809,7 @@ export default function LineMockInboxPage() {
                   <span className="text-xs text-white/50">Mới nhất ở trên</span>
                 </div>
 
-                {loading ? (
-                  <p className="py-8 text-center text-sm text-white/50">Đang nạp dữ liệu…</p>
-                ) : messages.length === 0 ? (
-                  <div className="rounded-2xl border border-dashed border-white/10 p-10 text-center text-sm text-white/50">
-                    Chưa có tin nhắn mock nào trong hàng đợi. Bấm các nút ở trên để tạo mẫu thử nghiệm.
-                  </div>
-                ) : (
-                  messages.map((message) => (
-                    <article
-                      key={message.id}
-                      className="rounded-2xl border border-white/10 bg-[#081814] p-5 shadow-lg space-y-3.5"
-                    >
-                      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/5 pb-2.5 text-xs">
-                        <div className="flex items-center gap-2">
-                          <span
-                            className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
-                              message.kind === 'rich-menu'
-                                ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30'
-                                : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
-                            }`}
-                          >
-                            {message.kind === 'rich-menu'
-                              ? 'Rich Menu'
-                              : `${message.kind === 'reply' ? 'Reply' : 'Push'} message`}
-                          </span>
-                          {message.recipient && (
-                            <span className="text-white/60">Đích: {message.recipient}</span>
-                          )}
-                        </div>
-                        <time className="font-mono text-white/40">
-                          {new Date(message.createdAt).toLocaleString()}
-                        </time>
-                      </div>
-
-                      {/* Preview Content */}
-                      <div>
-                        {message.kind === 'rich-menu' ? (
-                          <RichMenuPreview
-                            payload={message.payload}
-                            onSelectUrl={handleSelectUrl}
-                          />
-                        ) : (
-                          <MessagePreview
-                            payload={message.payload}
-                            onSelectUrl={handleSelectUrl}
-                          />
-                        )}
-                      </div>
-
-                      {/* LIFF URL Action link */}
-                      {message.liffUrl && (
-                        <div className="flex items-center gap-3 pt-1">
-                          <button
-                            type="button"
-                            onClick={() => handleSelectUrl(message.liffUrl!)}
-                            className="inline-flex items-center gap-1.5 text-xs font-bold text-[var(--rogym-accent)] hover:underline"
-                          >
-                            <Smartphone size={13} />
-                            <span>Mở trên Mobile Simulator</span>
-                          </button>
-                        </div>
-                      )}
-
-                      {/* Raw JSON Payload */}
-                      <details className="border-t border-white/5 pt-2">
-                        <summary className="cursor-pointer text-[11px] font-medium text-white/50 hover:text-white">
-                          Xem chi tiết Payload JSON
-                        </summary>
-                        <pre className="mt-2 overflow-x-auto rounded-xl border border-white/5 bg-black/50 p-3 font-mono text-[11px] text-emerald-400">
-                          {JSON.stringify(message.payload, null, 2)}
-                        </pre>
-                      </details>
-                    </article>
-                  ))
-                )}
+                {renderOutboxList(loading, messages, handleSelectUrl)}
               </section>
             )}
           </div>

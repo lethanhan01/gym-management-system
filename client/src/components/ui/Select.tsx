@@ -12,6 +12,7 @@ export type SelectOptionProps = {
 }
 
 export interface SelectProps {
+  id?: string
   children: ReactNode
   className?: string
   contentClassName?: string
@@ -25,6 +26,7 @@ export interface SelectProps {
 }
 
 export function Select({
+  id,
   children,
   className,
   contentClassName,
@@ -35,7 +37,7 @@ export function Select({
   name,
   ariaLabel,
   error,
-}: SelectProps) {
+}: Readonly<SelectProps>) {
   const options = Children.toArray(children).flatMap((child) => {
     if (!isValidElement<SelectOptionProps>(child)) return []
     return [
@@ -60,6 +62,7 @@ export function Select({
       name={name}
     >
       <RadixSelect.Trigger
+        id={id}
         className={cn(
           'rogym-select',
           error && 'border-red-500/80 focus:border-red-400 focus:ring-1 focus:ring-red-400/30',

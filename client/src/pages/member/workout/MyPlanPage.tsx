@@ -43,13 +43,13 @@ function PlanCard({
   canEdit,
   isPT,
   onDelete,
-}: {
+}: Readonly<{
   assignment: WorkoutAssignmentSummary
   plan: WorkoutPlan | null
   canEdit: boolean
   isPT: boolean
   onDelete: () => void
-}) {
+}>) {
   const navigate = useNavigate()
   const { t } = useTranslation('member')
   const [expanded, setExpanded] = useState(false)
@@ -285,12 +285,12 @@ function SavedPlanCard({
   hasPtPlan,
   onApply,
   onDelete,
-}: {
+}: Readonly<{
   plan: WorkoutPlan
   hasPtPlan: boolean
   onApply: (p: WorkoutPlan) => void
   onDelete: () => void
-}) {
+}>) {
   const navigate = useNavigate()
   const { t } = useTranslation('member')
   const [expanded, setExpanded] = useState(false)

@@ -490,7 +490,7 @@ export default function EquipmentPage() {
   )
 }
 
-function InfoPair({ label, value }: { label: string; value: string }) {
+function InfoPair({ label, value }: Readonly<{ label: string; value: string }>) {
   return (
     <div className="rounded-xl border border-white/5 bg-white/[0.03] p-3">
       <div className="text-xs rogym-text-dim">{label}</div>

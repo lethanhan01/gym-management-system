@@ -32,11 +32,11 @@ function PackageModal({
   pkg,
   onClose,
   onSaved,
-}: {
+}: Readonly<{
   pkg?: Package
   onClose: () => void
   onSaved: (p: Package) => void
-}) {
+}>) {
   const { t } = useTranslation('owner')
   const { t: tCommon } = useTranslation('common')
   const isEdit = !!pkg

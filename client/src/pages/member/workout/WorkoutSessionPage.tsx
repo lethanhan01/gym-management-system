@@ -69,7 +69,7 @@ const WorkoutSessionExercise = memo(function WorkoutSessionExercise({
             {ex.targetWeightKg ? ` · ${Number(ex.targetWeightKg)} kg` : ''}
           </p>
         </div>
-        {ex.exercise && ex.exercise.instructions && ex.exercise.instructions.length > 0 && (
+        {Boolean(ex.exercise?.instructions?.length) && (
           <button
             type="button"
             className="flex h-8 w-8 items-center justify-center rounded-full text-white/70 hover:bg-white/10 hover:text-white transition-colors"
@@ -94,7 +94,7 @@ const WorkoutSessionExercise = memo(function WorkoutSessionExercise({
         <div className="space-y-2">
           {exerciseSets.map((s, setIdx) => (
             <div
-              key={setIdx}
+              key={`set-${ex.planExerciseId}-${setIdx + 1}`}
               className={`rogym-workout-set-grid grid items-center gap-2 ${s.completed ? 'is-completed' : ''}`}
             >
               <span className="rogym-workout-set-index text-sm font-medium">
@@ -381,8 +381,8 @@ export default function WorkoutSessionPage() {
         >
           <div className="max-h-72 overflow-y-auto pr-2">
             <ol className="list-decimal space-y-2 pl-5 text-sm leading-6 rogym-text-secondary">
-              {infoModalExercise.instructions?.map((step, idx) => (
-                <li key={idx} className="pl-1">{step}</li>
+              {infoModalExercise.instructions?.map((step) => (
+                <li key={`step-${step}`} className="pl-1">{step}</li>
               ))}
             </ol>
           </div>

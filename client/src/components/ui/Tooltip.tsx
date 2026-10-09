@@ -58,7 +58,7 @@ export function Tooltip({
   disabled = false,
   className,
   showArrow = true,
-}: TooltipProps) {
+}: Readonly<TooltipProps>) {
   const tooltipText = content ?? label
   if (disabled || !tooltipText) {
     return <>{children}</>

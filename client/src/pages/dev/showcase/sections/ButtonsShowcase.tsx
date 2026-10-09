@@ -57,8 +57,9 @@ export function ButtonsShowcase() {
         controls={
           <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-3 w-full items-center text-xs">
             <div>
-              <label className="text-white/60 block mb-1">Variant</label>
+              <label htmlFor="btn-variant-select" className="text-white/60 block mb-1">Variant</label>
               <Select
+                id="btn-variant-select"
                 value={variant}
                 onValueChange={(val) => setVariant(val as ButtonVariant)}
               >
@@ -75,8 +76,9 @@ export function ButtonsShowcase() {
             </div>
 
             <div>
-              <label className="text-white/60 block mb-1">Size</label>
+              <label htmlFor="btn-size-select" className="text-white/60 block mb-1">Size</label>
               <Select
+                id="btn-size-select"
                 value={size}
                 onValueChange={(val) => setSize(val as ButtonSize)}
               >
@@ -89,8 +91,9 @@ export function ButtonsShowcase() {
             </div>
 
             <div>
-              <label className="text-white/60 block mb-1">Nhãn nút</label>
+              <label htmlFor="btn-label-input" className="text-white/60 block mb-1">Nhãn nút</label>
               <Input
+                id="btn-label-input"
                 value={label}
                 onChange={(e) => setLabel(e.target.value)}
                 placeholder="Nhãn nút..."

@@ -367,9 +367,10 @@ const SessionsWidget = memo(function SessionsWidget({
       ) : (
         <div className="flex flex-col gap-2">
           {sessions.map((s) => (
-            <div
+            <button
+              type="button"
               key={s.sessionId}
-              className="flex items-center justify-between py-2.5 px-3 rounded-xl bg-white/[0.04] cursor-pointer hover:bg-white/[0.08] transition-colors"
+              className="w-full text-left flex items-center justify-between py-2.5 px-3 rounded-xl bg-white/[0.04] cursor-pointer hover:bg-white/[0.08] transition-colors"
               onClick={() => navigate(`/member/workout/sessions?sessionId=${s.sessionId}`)}
             >
               <div className="flex items-center gap-2.5">
@@ -389,7 +390,7 @@ const SessionsWidget = memo(function SessionsWidget({
                 label={t('dashboard.sessionStatusLabel.' + s.status, s.status)}
                 tone={SESSION_STATUS_TONE[s.status]}
               />
-            </div>
+            </button>
           ))}
         </div>
       )}

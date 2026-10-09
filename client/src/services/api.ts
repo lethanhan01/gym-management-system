@@ -1,6 +1,6 @@
 import axios, { AxiosHeaders, type InternalAxiosRequestConfig } from 'axios'
 import { useAuthStore, type AuthUser } from '@/stores/authStore'
-import { initLiff, isLiffMockEnabled, liff } from '@/lib/liff'
+import { initLiff, isLiffMockEnabled } from '@/lib/liff'
 
 import { getCleanLiffRedirectUri } from '@/pages/liff/liff-redirect'
 
@@ -35,7 +35,8 @@ export function isLineSession(): boolean {
   if (isLiffMockEnabled) return true
   if (typeof navigator !== 'undefined' && /Line\//i.test(navigator.userAgent)) return true
   try {
-    if (typeof liff !== 'undefined' && typeof liff.isInClient === 'function' && liff.isInClient()) {
+    const globalLiff = (globalThis as unknown as { liff?: { isInClient?: () => boolean } }).liff
+    if (globalLiff !== undefined && typeof globalLiff.isInClient === 'function' && globalLiff.isInClient()) {
       return true
     }
   } catch {
@@ -95,7 +96,7 @@ api.interceptors.response.use(
       if (!isLineSession()) {
         useAuthStore.getState().clearAuth()
         window.location.href = '/login'
-        return Promise.reject(err)
+        throw err
       }
 
       // 2. Nếu đã thử retry 1 lần mà vẫn 401 -> dừng lại, tránh vòng lặp vô hạn
@@ -103,20 +104,18 @@ api.interceptors.response.use(
         useAuthStore.getState().clearAuth()
         const currentPath = window.location.pathname + window.location.search
         if (currentPath.startsWith('/liff')) {
-          return Promise.reject(err)
+          throw err
         }
         window.location.href = `/liff?redirect=${encodeURIComponent(currentPath)}`
-        return Promise.reject(err)
+        throw err
       }
 
       config._retry = true
 
       // 3. Thực hiện Silent Refresh có Mutex Queue
-      if (!refreshPromise) {
-        refreshPromise = executeSilentLineRefresh().finally(() => {
-          refreshPromise = null
-        })
-      }
+      refreshPromise ??= executeSilentLineRefresh().finally(() => {
+        refreshPromise = null
+      })
 
       try {
         const newToken = await refreshPromise
@@ -128,15 +127,15 @@ api.interceptors.response.use(
         useAuthStore.getState().clearAuth()
         const currentPath = window.location.pathname + window.location.search
         if (currentPath.startsWith('/liff')) {
-          return Promise.reject(refreshErr)
+          throw refreshErr
         }
         const redirect = currentPath.startsWith('/login') ? '/member' : currentPath
         window.location.href = `/liff?redirect=${encodeURIComponent(redirect)}`
-        return Promise.reject(refreshErr)
+        throw refreshErr
       }
     }
 
-    return Promise.reject(err)
+    throw err
   }
 )
 

@@ -58,22 +58,22 @@ function computeBmi(weightKg: number, heightCm: number): number {
   return Math.round((weightKg / (hm * hm)) * 10) / 10
 }
 
-function SelfReportForm({ onSuccess, t }: { onSuccess: () => void; t: TFunction<'member'> }) {
+function SelfReportForm({ onSuccess, t }: Readonly<{ onSuccess: () => void; t: TFunction<'member'> }>) {
   const [weight, setWeight] = useState('')
   const [height, setHeight] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const weightNum = parseFloat(weight)
-  const heightNum = parseFloat(height)
+  const weightNum = Number.parseFloat(weight)
+  const heightNum = Number.parseFloat(height)
   const previewBmi =
-    !isNaN(weightNum) && weightNum > 0 && !isNaN(heightNum) && heightNum > 0
+    !Number.isNaN(weightNum) && weightNum > 0 && !Number.isNaN(heightNum) && heightNum > 0
       ? computeBmi(weightNum, heightNum)
       : null
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (isNaN(weightNum) || weightNum <= 0) {
+    if (Number.isNaN(weightNum) || weightNum <= 0) {
       setError(t('progress.errorInvalidWeight'))
       return
     }
@@ -82,7 +82,7 @@ function SelfReportForm({ onSuccess, t }: { onSuccess: () => void; t: TFunction<
     try {
       await memberService.recordSelfProgress({
         weight: weightNum,
-        height: !isNaN(heightNum) && heightNum > 0 ? heightNum : undefined,
+        height: !Number.isNaN(heightNum) && heightNum > 0 ? heightNum : undefined,
       })
       setWeight('')
       setHeight('')
@@ -251,7 +251,7 @@ export default function ProgressPage() {
       ) : (
         <main className="space-y-5">
           {/* Workout Plan Progress Card */}
-          {activeAssignment && activeAssignment.progress && (
+          {activeAssignment?.progress && (
             <Card as="article" variant="compact" className="p-5 border-[var(--rogym-green)]/20">
               <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex items-start gap-3 min-w-0 flex-1">

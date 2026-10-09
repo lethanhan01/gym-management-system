@@ -455,7 +455,7 @@ describe('LINE Flex Messaging End-to-End (E2E) Integration Test Suite', () => {
 
       const outbox = mockController.messages()
       expect(outbox.success).toBe(true)
-      expect(outbox.data.messages.length).toBe(sampleList.length * 2)
+      expect(outbox.data.messages).toHaveLength(sampleList.length * 2)
 
       // Clear outbox
       expect(mockController.clearMessages()).toEqual({ success: true })

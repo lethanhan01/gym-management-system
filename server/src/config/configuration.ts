@@ -138,29 +138,7 @@ function validateExerciseDbConfig(config: EnvironmentVariables) {
   }
 }
 
-function validateDatabaseConnectionConfig(
-  config: EnvironmentVariables,
-  raw: Record<string, unknown>
-) {
-  const requestedMode = config.DB_CONNECTION_MODE?.trim() as DatabaseConnectionMode | undefined
-  if (config.NODE_ENV === NodeEnv.Production && !requestedMode) {
-    throw new Error(
-      'Invalid environment configuration:\n  - DB_CONNECTION_MODE: required in production (direct or supavisor-session)'
-    )
-  }
-
-  // Development retains a safe IPv4-compatible default while production must
-  // declare its topology explicitly.
-  const mode = requestedMode ?? 'supavisor-session'
-  config.DB_CONNECTION_MODE = mode
-
-  let url: URL
-  try {
-    url = new URL(config.DATABASE_URL)
-  } catch {
-    throw new Error('Invalid environment configuration:\n  - DATABASE_URL: must be a valid URL')
-  }
-
+function validateDatabaseUrlBasics(url: URL, mode: DatabaseConnectionMode) {
   if (!['postgres:', 'postgresql:'].includes(url.protocol)) {
     throw new Error(
       'Invalid environment configuration:\n  - DATABASE_URL: must use postgres or postgresql'
@@ -184,20 +162,6 @@ function validateDatabaseConnectionConfig(
       )
     }
   }
-  const sslmode = url.searchParams.get('sslmode')
-  if (mode === 'supavisor-session') {
-    if (sslmode !== 'require') {
-      throw new Error(
-        'Invalid environment configuration:\n  - DATABASE_URL: sslmode=require is required'
-      )
-    }
-  } else if (mode === 'direct') {
-    if (!sslmode || !['require', 'prefer', 'disable'].includes(sslmode)) {
-      throw new Error(
-        'Invalid environment configuration:\n  - DATABASE_URL: sslmode must be require, prefer, or disable for direct mode'
-      )
-    }
-  }
   const connLimit = url.searchParams.get('connection_limit')
   const connLimitNum = Number(connLimit)
   if (!connLimit || !Number.isInteger(connLimitNum) || connLimitNum < 1) {
@@ -213,6 +177,20 @@ function validateDatabaseConnectionConfig(
   if (!url.searchParams.get('application_name')?.trim()) {
     throw new Error(
       'Invalid environment configuration:\n  - DATABASE_URL: application_name is required'
+    )
+  }
+}
+
+function validateDatabaseSslAndTopology(url: URL, mode: DatabaseConnectionMode) {
+  const sslmode = url.searchParams.get('sslmode')
+  if (mode === 'supavisor-session' && sslmode !== 'require') {
+    throw new Error(
+      'Invalid environment configuration:\n  - DATABASE_URL: sslmode=require is required'
+    )
+  }
+  if (mode === 'direct' && (!sslmode || !['require', 'prefer', 'disable'].includes(sslmode))) {
+    throw new Error(
+      'Invalid environment configuration:\n  - DATABASE_URL: sslmode must be require, prefer, or disable for direct mode'
     )
   }
 
@@ -234,10 +212,33 @@ function validateDatabaseConnectionConfig(
       )
     }
   }
+}
 
-  // `raw` is deliberately accepted so validation remains tied to boot-time
-  // environment values instead of mutating the database URL at runtime.
-  void raw
+function validateDatabaseConnectionConfig(
+  config: EnvironmentVariables,
+  _raw: Record<string, unknown>
+) {
+  const requestedMode = config.DB_CONNECTION_MODE?.trim() as DatabaseConnectionMode | undefined
+  if (config.NODE_ENV === NodeEnv.Production && !requestedMode) {
+    throw new Error(
+      'Invalid environment configuration:\n  - DB_CONNECTION_MODE: required in production (direct or supavisor-session)'
+    )
+  }
+
+  // Development retains a safe IPv4-compatible default while production must
+  // declare its topology explicitly.
+  const mode = requestedMode ?? 'supavisor-session'
+  config.DB_CONNECTION_MODE = mode
+
+  let url: URL
+  try {
+    url = new URL(config.DATABASE_URL)
+  } catch {
+    throw new Error('Invalid environment configuration:\n  - DATABASE_URL: must be a valid URL')
+  }
+
+  validateDatabaseUrlBasics(url, mode)
+  validateDatabaseSslAndTopology(url, mode)
 }
 
 function validateSmtpConfig(config: EnvironmentVariables) {
@@ -251,15 +252,13 @@ function validateSmtpConfig(config: EnvironmentVariables) {
   const configured = smtp.some(([, value]) => value !== undefined && String(value).trim() !== '')
   const missing = smtp.filter(([, value]) => value === undefined || String(value).trim() === '')
   if (configured && missing.length > 0) {
-    throw new Error(
-      `Invalid environment configuration:\n${missing.map(([key]) => `  - ${key}: required when SMTP is configured`).join('\n')}`
-    )
+    const errorDetails = missing.map(([key]) => `  - ${key}: required when SMTP is configured`).join('\n')
+    throw new Error(`Invalid environment configuration:\n${errorDetails}`)
   }
   if (config.NODE_ENV === NodeEnv.Production) {
     if (missing.length > 0) {
-      throw new Error(
-        `Invalid environment configuration:\n${missing.map(([key]) => `  - ${key}: required in production`).join('\n')}`
-      )
+      const errorDetails = missing.map(([key]) => `  - ${key}: required in production`).join('\n')
+      throw new Error(`Invalid environment configuration:\n${errorDetails}`)
     }
     if (config.DEMO_MASTER_OTP?.trim()) {
       throw new Error(
@@ -281,11 +280,10 @@ function validateLineMessagingConfig(config: EnvironmentVariables) {
   ].filter(([, value]) => typeof value !== 'string' || value.trim() === '')
 
   if (missing.length > 0) {
-    throw new Error(
-      `Invalid environment configuration:\n${missing
-        .map(([key]) => `  - ${key}: required when LINE_MESSAGING_ENABLED=true`)
-        .join('\n')}`
-    )
+    const errorDetails = missing
+      .map(([key]) => `  - ${key}: required when LINE_MESSAGING_ENABLED=true`)
+      .join('\n')
+    throw new Error(`Invalid environment configuration:\n${errorDetails}`)
   }
 
   let url: URL

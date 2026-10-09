@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { cn } from '@/lib/utils'
 
-export function Page({ children, className }: { children: ReactNode; className?: string }) {
+export function Page({ children, className }: Readonly<{ children: ReactNode; className?: string }>) {
   return <div className={cn('mx-auto w-full max-w-[1280px] space-y-6', className)}>{children}</div>
 }
 
@@ -14,12 +14,12 @@ export function PageHeader({
   title,
   description,
   actions,
-}: {
+}: Readonly<{
   eyebrow?: string
   title: string
   description?: string
   actions?: ReactNode
-}) {
+}>) {
   return (
     <div className="flex flex-col gap-4 border-b border-[var(--rogym-border-section)] pb-6 md:flex-row md:items-end md:justify-between">
       <div>
@@ -36,13 +36,13 @@ export function PageHeader({
   )
 }
 
-export function PageSkeleton({ rows = 3 }: { rows?: number }) {
+export function PageSkeleton({ rows = 3 }: Readonly<{ rows?: number }>) {
   const { t } = useTranslation('common')
   return (
     <div className="space-y-3" aria-label={t('loading')}>
-      {Array.from({ length: rows }).map((_, index) => (
+      {Array.from({ length: rows }, (_, idx) => `page-skel-row-${idx + 1}`).map((rowKey) => (
         <div
-          key={index}
+          key={rowKey}
           className="h-20 animate-pulse rounded-2xl border border-white/5 bg-white/5"
         />
       ))}
@@ -54,11 +54,11 @@ export function PageEmptyState({
   title,
   description,
   action,
-}: {
+}: Readonly<{
   title: string
   description?: string
   action?: ReactNode
-}) {
+}>) {
   return (
     <Card variant="compact" className="flex min-h-48 flex-col items-center justify-center p-8 text-center">
       <div className="mb-3 flex h-11 w-11 items-center justify-center rounded-full bg-white/5 rogym-text-dim">
@@ -77,11 +77,11 @@ export function PageErrorState({
   message,
   onRetry,
   retryLabel,
-}: {
+}: Readonly<{
   message: string
   onRetry?: () => void
   retryLabel?: string
-}) {
+}>) {
   const { t } = useTranslation('common')
   const effectiveRetryLabel = retryLabel ?? t('button.retry')
   return (

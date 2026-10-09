@@ -121,6 +121,16 @@ function truncateText(text: string, maxLength: number): string {
   return text.length > maxLength ? text.slice(0, maxLength) : text
 }
 
+function formatLocalizedCurrency(val: number, locale: LineMessageLocale): string {
+  if (locale === 'ja') {
+    if (val < 0) {
+      return `-¥${Math.abs(val).toLocaleString('ja-JP')}`
+    }
+    return `¥${val.toLocaleString('ja-JP')}`
+  }
+  return `${val.toLocaleString('vi-VN')} đ`
+}
+
 /**
  * Format số tiền theo định dạng tiền tệ của ngôn ngữ được chỉ định
  */
@@ -129,31 +139,12 @@ export function formatAmount(amount: string | number | undefined | null, locale:
     return locale === 'ja' ? '¥0' : '0 đ'
   }
 
-  if (typeof amount === 'number') {
-    if (!Number.isFinite(amount) || Number.isNaN(amount)) {
-      return locale === 'ja' ? '¥0' : '0 đ'
-    }
-    if (locale === 'ja') {
-      if (amount < 0) {
-        return `-¥${Math.abs(amount).toLocaleString('ja-JP')}`
-      }
-      return `¥${amount.toLocaleString('ja-JP')}`
-    }
-    return `${amount.toLocaleString('vi-VN')} đ`
+  const numericValue = typeof amount === 'number' ? amount : Number(amount)
+  if (!Number.isFinite(numericValue) || Number.isNaN(numericValue)) {
+    return typeof amount === 'number' ? (locale === 'ja' ? '¥0' : '0 đ') : String(amount)
   }
 
-  const numericValue = Number(amount)
-  if (!Number.isNaN(numericValue) && Number.isFinite(numericValue)) {
-    if (locale === 'ja') {
-      if (numericValue < 0) {
-        return `-¥${Math.abs(numericValue).toLocaleString('ja-JP')}`
-      }
-      return `¥${numericValue.toLocaleString('ja-JP')}`
-    }
-    return `${numericValue.toLocaleString('vi-VN')} đ`
-  }
-
-  return String(amount)
+  return formatLocalizedCurrency(numericValue, locale)
 }
 
 /**

@@ -31,11 +31,11 @@ function DetailRow({
   icon,
   label,
   value,
-}: {
+}: Readonly<{
   icon: React.ReactNode
   label: string
   value: string
-}) {
+}>) {
   return (
     <div className="flex gap-3 border-b border-white/5 py-3 last:border-0">
       <div className="mt-0.5 shrink-0 rogym-text-accent">{icon}</div>
@@ -47,7 +47,7 @@ function DetailRow({
   )
 }
 
-export function SessionDetailModal({ sessionId, onClose, onUpdate }: Props) {
+export function SessionDetailModal({ sessionId, onClose, onUpdate }: Readonly<Props>) {
   const { t } = useTranslation('trainer')
   const [session, setSession] = useState<TrainingSessionDetail | null>(null)
   const [fetchLoading, setFetchLoading] = useState(false)
@@ -166,8 +166,7 @@ await trainingSessionService.updateSessionStatus(sessionId, statusTarget)
   if (!sessionId) return null
 
   const editable =
-    session != null &&
-    session.status === 'scheduled' &&
+    session?.status === 'scheduled' &&
     new Date(session.startTime) > new Date()
   const canStart = session?.status === 'scheduled'
   const canComplete = session?.status === 'scheduled' || session?.status === 'in_progress'
@@ -445,15 +444,22 @@ await trainingSessionService.updateSessionStatus(sessionId, statusTarget)
   return (
     <div
       className="fixed inset-0 z-[80] flex items-center justify-center bg-black/70 p-4"
-      role="dialog"
-      aria-modal="true"
+      onKeyDown={(e) => {
+        if (e.key === 'Escape') onClose()
+      }}
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose()
       }}
     >
-      <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-white/10 bg-[var(--rogym-bg-card)] shadow-2xl">
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="session-detail-modal-title"
+        tabIndex={-1}
+        className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-white/10 bg-[var(--rogym-bg-card)] shadow-2xl"
+      >
         <div className="flex items-center justify-between border-b border-white/5 px-6 py-4">
-          <h2 className="text-base font-bold text-white">{modalTitle}</h2>
+          <h2 id="session-detail-modal-title" className="text-base font-bold text-white">{modalTitle}</h2>
           <button
             type="button"
             className="rogym-btn rogym-btn--icon rogym-btn--elevated shrink-0"

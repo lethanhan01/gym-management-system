@@ -140,8 +140,7 @@ export default function LoginPage() {
   }
 
   return (
-    <>
-      <AuthShell>
+    <AuthShell>
         <form onSubmit={handleSubmit} className="flex flex-col gap-6">
           <div className="text-center space-y-1.5">
             <h1 className="text-2xl font-bold text-white">{t('login.title')}</h1>
@@ -213,6 +212,5 @@ export default function LoginPage() {
           </p>
         </form>
       </AuthShell>
-    </>
   )
 }

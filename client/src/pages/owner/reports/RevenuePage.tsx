@@ -151,12 +151,12 @@ function GridTooltip({
   y,
   date,
   amount,
-}: {
+}: Readonly<{
   x: number
   y: number
   date: string
   amount: number
-}) {
+}>) {
   return (
     <div
       className="fixed z-50 rounded-xl border border-white/10 bg-[#1a2d22] px-3 py-2 text-sm shadow-xl pointer-events-none"
@@ -182,13 +182,13 @@ function RevenueDayGrid({
   displayTo,
   mode,
   todayStr,
-}: {
+}: Readonly<{
   data: RevenueBreakdown[]
   displayFrom: string
   displayTo: string
   mode: FilterMode
   todayStr: string
-}) {
+}>) {
   const { t } = useTranslation('owner')
   const [tip, setTip] = useState<{ x: number; y: number; date: string; amount: number } | null>(
     null
@@ -221,7 +221,7 @@ function RevenueDayGrid({
             const hasRevenue = !isFuture && amount > 0
             return (
               <div
-                key={di}
+                key={date ? `rev-day-${date}` : `empty-day-${di}`}
                 className="rounded-xl flex flex-col items-center justify-center gap-1 min-h-[84px] px-1 py-3 transition-colors"
                 style={{
                   backgroundColor: date
@@ -296,7 +296,7 @@ function RevenueDayGrid({
           if (showMonthLabel) prevMonth = firstRealMonth
 
           return (
-            <div key={wi}>
+            <div key={firstReal ? `rev-week-${firstReal}` : `week-${wi}`}>
               {showMonthLabel && firstReal && (
                 <p className="text-[10px] font-semibold rogym-text-dim pt-2 pb-0.5 pl-0.5">
                   {t('reports.revenue.monthLabel', {
@@ -312,7 +312,7 @@ function RevenueDayGrid({
                   const hasRevenue = !isFuture && amount > 0
                   return (
                     <div
-                      key={di}
+                      key={date ? `rev-cell-${date}` : `empty-cell-${wi}-${di}`}
                       className={`rounded-lg ${cellH} flex flex-col items-center justify-center gap-0.5 px-1`}
                       style={{
                         backgroundColor: !date

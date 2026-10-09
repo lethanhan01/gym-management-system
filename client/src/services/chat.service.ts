@@ -208,16 +208,25 @@ class ChatService {
       this.socket = null
     }
 
-    const baseUrl =
-      import.meta.env.VITE_WS_URL ||
-      (import.meta.env.DEV
-        ? 'http://localhost:3000'
-        : typeof window !== 'undefined'
-          ? window.location.origin
-          : 'http://localhost:3000')
+    let baseUrl: string = (import.meta.env.VITE_WS_URL as string | undefined) ?? ''
+    if (!baseUrl) {
+      if (import.meta.env.DEV) {
+        baseUrl = 'http://localhost:3000'
+      } else if (typeof window !== 'undefined') {
+        baseUrl = window.location.origin
+      } else {
+        baseUrl = 'http://localhost:3000'
+      }
+    }
+
+    let end = baseUrl.length
+    while (end > 0 && baseUrl[end - 1] === '/') {
+      end--
+    }
+    const cleanBaseUrl = baseUrl.slice(0, end)
 
     // Kết nối tới namespace /chat
-    const socketUrl = `${baseUrl.replace(/\/+$/, '')}/chat`
+    const socketUrl = `${cleanBaseUrl}/chat`
 
     this.socket = io(socketUrl, {
       auth: {

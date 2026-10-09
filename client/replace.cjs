@@ -1,5 +1,5 @@
-const fs = require('fs');
-const path = require('path');
+const fs = require('node:fs');
+const path = require('node:path');
 
 function walk(dir) {
   let results = [];
@@ -7,12 +7,10 @@ function walk(dir) {
   list.forEach(function(file) {
     file = path.join(dir, file);
     const stat = fs.statSync(file);
-    if (stat && stat.isDirectory()) {
+    if (stat?.isDirectory()) {
       results = results.concat(walk(file));
-    } else {
-      if (file.endsWith('.ts') || file.endsWith('.tsx')) {
-        results.push(file);
-      }
+    } else if (file.endsWith('.ts') || file.endsWith('.tsx')) {
+      results.push(file);
     }
   });
   return results;

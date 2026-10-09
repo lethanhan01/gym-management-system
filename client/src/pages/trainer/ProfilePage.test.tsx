@@ -142,7 +142,7 @@ describe('TrainerProfilePage', () => {
     })
 
     const passwordInputs = container.querySelectorAll<HTMLInputElement>('input[type="password"]')
-    expect(passwordInputs.length).toBe(3)
+    expect(passwordInputs).toHaveLength(3)
 
     fireEvent.change(passwordInputs[0], { target: { value: 'OldPass123!' } })
     fireEvent.change(passwordInputs[1], { target: { value: 'NewPass123!' } })

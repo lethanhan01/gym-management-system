@@ -20,7 +20,7 @@ export interface ModalFooterProps {
   className?: string
 }
 
-export function ModalFooter({ children, className = '' }: ModalFooterProps) {
+export function ModalFooter({ children, className = '' }: Readonly<ModalFooterProps>) {
   return (
     <div
       className={cn(
@@ -61,7 +61,7 @@ export function Modal({
   contentClassName,
   description,
   closeOnOutsideClick = false,
-}: ModalProps) {
+}: Readonly<ModalProps>) {
   const { t } = useTranslation('common')
 
   useEffect(() => {
@@ -76,11 +76,15 @@ export function Modal({
   if (!open) return null
 
   return (
-    <div
-      className="fixed inset-0 z-[80] flex items-center justify-center bg-black/75 backdrop-blur-[2px] p-3 sm:p-4 animate-in fade-in duration-200"
-      role="dialog"
+    <dialog
+      open
       aria-modal="true"
       aria-labelledby="modal-title"
+      tabIndex={-1}
+      className="fixed inset-0 z-[80] flex items-center justify-center bg-black/75 backdrop-blur-[2px] p-3 sm:p-4 animate-in fade-in duration-200 border-none m-0 max-w-none max-h-none w-full h-full"
+      onKeyDown={(e) => {
+        if (e.key === 'Escape') onClose()
+      }}
       onClick={(e) => {
         if (closeOnOutsideClick && e.target === e.currentTarget) {
           onClose()
@@ -127,7 +131,7 @@ export function Modal({
           </div>
         )}
       </div>
-    </div>
+    </dialog>
   )
 }
 

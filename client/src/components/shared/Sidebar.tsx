@@ -48,13 +48,13 @@ function isGroupActive(item: NavItem, pathname: string): boolean {
   return item.children.some((c) => pathname === c.to || pathname.startsWith(c.to + '/'))
 }
 
-function NavItems({ sections, expanded }: { sections: NavSection[]; expanded: boolean }) {
+function NavItems({ sections, expanded }: Readonly<{ sections: NavSection[]; expanded: boolean }>) {
   const { pathname } = useLocation()
 
   return (
     <nav className="flex flex-col gap-1 px-2">
       {sections.map((section, si) => (
-        <div key={si} className={si > 0 ? 'mt-1' : ''}>
+        <div key={section.label ?? section.items[0]?.to ?? `nav-section-${si}`} className={si > 0 ? 'mt-1' : ''}>
           {section.label && (
             <div className="rogym-sidebar__section-label">
               {section.label}
@@ -139,10 +139,10 @@ function NavItems({ sections, expanded }: { sections: NavSection[]; expanded: bo
 export default function Sidebar({
   isMobileOpen = false,
   onCloseMobile,
-}: {
+}: Readonly<{
   isMobileOpen?: boolean
   onCloseMobile?: () => void
-}) {
+}>) {
   const [expanded, setExpanded] = useState(false)
   const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const user = useAuthStore((state) => state.user)

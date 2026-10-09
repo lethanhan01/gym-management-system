@@ -81,7 +81,14 @@ export const TagInput = forwardRef<HTMLDivElement, TagInputProps>(
     return (
       <div
         ref={ref}
+        role="group"
+        aria-label="Danh sách thẻ"
         onClick={() => inputRef.current?.focus()}
+        onKeyDown={(e) => {
+          if (e.target === e.currentTarget && (e.key === 'Enter' || e.key === ' ')) {
+            inputRef.current?.focus()
+          }
+        }}
         className={cn(
           'flex min-h-[44px] w-full flex-wrap items-center gap-1.5 rounded-xl border border-white/10 bg-white/[0.04] p-2 text-sm text-white transition-colors duration-150',
           'hover:border-[var(--rogym-teal)]/50 hover:bg-white/[0.06]',

@@ -180,7 +180,7 @@
     border-width: 1px;
     border-color: rgba(248, 113, 113, 0.35);
     color: #fca5a5;
-    background-color: rgba(248, 113, 113, 0.08);
+    background-color: #1c0f12;
   }
 
   @media (hover: hover) and (pointer: fine) {

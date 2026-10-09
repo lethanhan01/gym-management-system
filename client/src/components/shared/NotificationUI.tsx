@@ -15,14 +15,14 @@ export function NotificationToast({
   action,
   onClose,
   role,
-}: {
+}: Readonly<{
   tone: NotificationTone
   message: ReactNode
   icon?: ReactNode
   action?: ReactNode
   onClose?: () => void
   role?: AriaRole
-}) {
+}>) {
   return (
     <div className="rogym-notification-toast" data-tone={tone} role={role ?? defaultRole(tone)}>
       {icon && <span className="rogym-notification-toast__icon">{icon}</span>}
@@ -48,13 +48,13 @@ export function NotificationAlert({
   title,
   action,
   role,
-}: {
+}: Readonly<{
   tone: NotificationTone
   message: ReactNode
   title?: ReactNode
   action?: ReactNode
   role?: AriaRole
-}) {
+}>) {
   return (
     <div className="rogym-notification-alert" data-tone={tone} role={role ?? defaultRole(tone)}>
       <div className="rogym-notification-alert__content">
@@ -70,18 +70,17 @@ export function NotificationPanel({
   children,
   titleId,
   className,
-}: {
+}: Readonly<{
   children: ReactNode
   titleId?: string
   className?: string
-}) {
+}>) {
   return (
-    <div
+    <section
       className={cn('rogym-notification-panel', className)}
-      role="region"
       aria-labelledby={titleId}
     >
       {children}
-    </div>
+    </section>
   )
 }

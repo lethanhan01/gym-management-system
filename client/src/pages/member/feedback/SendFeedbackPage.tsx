@@ -543,7 +543,7 @@ export default function SendFeedbackPage() {
                 <div className="grid grid-cols-3 gap-2.5 sm:gap-3">
                   {images.map((imgUrl, idx) => (
                     <div
-                      key={idx}
+                      key={imgUrl}
                       className="relative group aspect-square sm:aspect-video rounded-xl overflow-hidden border border-white/10 bg-black/40"
                     >
                       <img

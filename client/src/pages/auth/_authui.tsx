@@ -18,13 +18,13 @@ export function BtnPrimary({
   onClick,
   disabled,
   className = ''
-}: {
+}: Readonly<{
   children: React.ReactNode
   type?: 'button' | 'submit'
   onClick?: () => void
   disabled?: boolean
   className?: string
-}) {
+}>) {
   return (
     <Button
       type={type}
@@ -45,12 +45,12 @@ export function BtnOutlineWhite({
   type = 'button',
   onClick,
   disabled,
-}: {
+}: Readonly<{
   children: React.ReactNode
   type?: 'button' | 'submit'
   onClick?: () => void
   disabled?: boolean
-}) {
+}>) {
   return (
     <Button
       type={type}
@@ -69,11 +69,11 @@ export function TextLink({
   children,
   onClick,
   to,
-}: {
+}: Readonly<{
   children: React.ReactNode
   onClick?: () => void
   to?: string
-}) {
+}>) {
   if (to) {
     return (
       <Link to={to} className="rogym-auth-text-link rogym-text-link">
@@ -93,11 +93,11 @@ export function MutedLink({
   children,
   onClick,
   to,
-}: {
+}: Readonly<{
   children: React.ReactNode
   onClick?: () => void
   to?: string
-}) {
+}>) {
   if (to) {
     return (
       <Link
@@ -128,7 +128,7 @@ export function PasswordField({
   icon: Icon,
   autoComplete,
   name,
-}: {
+}: Readonly<{
   label: string
   placeholder?: string
   value: string
@@ -136,7 +136,7 @@ export function PasswordField({
   icon?: LucideIcon
   autoComplete?: string
   name?: string
-}) {
+}>) {
   const [show, setShow] = useState(false)
   return (
     <Field
@@ -168,7 +168,7 @@ export function Field({
   right,
   autoComplete,
   name,
-}: {
+}: Readonly<{
   label: string
   type?: string
   placeholder?: string
@@ -178,7 +178,7 @@ export function Field({
   right?: React.ReactNode
   autoComplete?: string
   name?: string
-}) {
+}>) {
   const id = useId()
   return (
     <div className="flex flex-col gap-1.5">
@@ -210,12 +210,12 @@ export function Field({
 }
 
 /* ── Error message ── */
-export function ErrorMsg({ message }: { message: string }) {
+export function ErrorMsg({ message }: Readonly<{ message: string }>) {
   return <p className="rogym-sx-d50aacc0">{message}</p>
 }
 
 /* ── Divider ── */
-export function Divider({ label }: { label: string }) {
+export function Divider({ label }: Readonly<{ label: string }>) {
   return (
     <div className="flex items-center gap-3">
       <div className="flex-1 h-px rogym-sx-0881c59b" />
@@ -231,12 +231,12 @@ export function AuthShell({
   maxWidth = 400,
   backTo = '/',
   backLabel,
-}: {
+}: Readonly<{
   children: React.ReactNode
   maxWidth?: number
   backTo?: string
   backLabel?: string
-}) {
+}>) {
   const { t } = useTranslation('auth')
   const label = backLabel ?? t('login.backHome')
   return (

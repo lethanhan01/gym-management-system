@@ -6,8 +6,8 @@ import type { NestExpressApplication } from '@nestjs/platform-express'
 import express from 'express'
 import helmet from 'helmet'
 import { AppModule } from './app.module'
-import { join } from 'path'
-import * as fs from 'fs'
+import { join } from 'node:path'
+import * as fs from 'node:fs'
 import { HttpExceptionFilter } from './common/filters/http-exception.filter'
 import { setupSwagger } from './common/swagger/swagger'
 import { DatabaseRetryInterceptor } from './common/interceptors/database-retry.interceptor'
@@ -16,7 +16,7 @@ import { DatabaseRetryInterceptor } from './common/interceptors/database-retry.i
  * Cho phep JSON.stringify(BigInt) hoat dong (BigInt khong serialize mac dinh).
  * Prisma tra ve BigInt cho cot BIGSERIAL -> chuyen ra string trong response.
  */
-;(BigInt.prototype as unknown as { toJSON: () => string }).toJSON = function () {
+;(BigInt.prototype as unknown as { toJSON: () => string }).toJSON = function (this: bigint) {
   return this.toString()
 }
 
@@ -37,20 +37,30 @@ async function bootstrap(): Promise<void> {
       crossOriginResourcePolicy: { policy: 'cross-origin' },
     })
   )
+  const stripTrailingSlash = (url: string) => {
+    let end = url.length
+    while (end > 0 && url[end - 1] === '/') {
+      end--
+    }
+    return url.slice(0, end)
+  }
+
   const clientUrlEnv = config.get<string>('CLIENT_URL') ?? 'http://localhost:5173'
-  const allowedOrigins = clientUrlEnv
-    .split(',')
-    .map((url) => url.trim().replace(/\/+$/, ''))
-    .filter(Boolean)
+  const allowedOrigins = new Set(
+    clientUrlEnv
+      .split(',')
+      .map((url) => stripTrailingSlash(url.trim()))
+      .filter(Boolean)
+  )
 
   app.enableCors({
     origin: (origin, callback) => {
       // Allow requests with no origin (such as mobile apps, curl, server-to-server)
       if (!origin) return callback(null, true)
 
-      const cleanOrigin = origin.trim().replace(/\/+$/, '')
+      const cleanOrigin = stripTrailingSlash(origin.trim())
 
-      const isExplicitlyAllowed = allowedOrigins.includes(cleanOrigin)
+      const isExplicitlyAllowed = allowedOrigins.has(cleanOrigin)
       const isVercelDeploy =
         cleanOrigin.startsWith('https://') && cleanOrigin.endsWith('.vercel.app')
       const isLocalhost =

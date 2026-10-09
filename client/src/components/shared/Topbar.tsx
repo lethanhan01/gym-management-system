@@ -145,12 +145,12 @@ function DropdownItem({
   children,
   onClick,
   danger,
-}: {
+}: Readonly<{
   icon: React.ReactNode;
   children: React.ReactNode;
   onClick: () => void;
   danger?: boolean;
-}) {
+}>) {
   return (
     <button
       onClick={onClick}

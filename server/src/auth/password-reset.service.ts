@@ -1,7 +1,7 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common'
 import { OtpPurpose } from '@prisma/client'
 import bcrypt from 'bcryptjs'
-import { createHash, randomBytes } from 'crypto'
+import { createHash, randomBytes } from 'node:crypto'
 import { PrismaService } from '../prisma/prisma.service'
 import { UsersService } from './users.service'
 import { AuditService } from '../common/audit/audit.service'

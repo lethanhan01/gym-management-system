@@ -300,9 +300,9 @@ export default function MyFeedbackPage() {
                     {/* Layer 3: Image attachments */}
                     {fb.imageUrls && fb.imageUrls.length > 0 && (
                       <div className="flex flex-wrap gap-2.5 pt-0.5">
-                        {fb.imageUrls.map((img, idx) => (
+                        {fb.imageUrls.map((img) => (
                           <button
-                            key={idx}
+                            key={img}
                             type="button"
                             onClick={() => setPreviewImage(img)}
                             className="relative h-16 w-24 rounded-xl overflow-hidden border border-white/10 hover:border-emerald-400/50 transition-all group shadow-sm"
@@ -373,11 +373,19 @@ export default function MyFeedbackPage() {
             {previewImage && (
               <div
                 className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
-                onClick={() => setPreviewImage(null)}
+                onClick={(e) => {
+                  if (e.target === e.currentTarget) setPreviewImage(null)
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Escape') setPreviewImage(null)
+                }}
               >
                 <div
+                  role="dialog"
+                  aria-modal="true"
+                  aria-label={t('feedback.list.imageAltPreview', 'attachment preview')}
+                  tabIndex={-1}
                   className="relative max-w-3xl max-h-[85vh] rounded-2xl overflow-hidden bg-[#181d28] border border-white/15 p-2 shadow-2xl"
-                  onClick={(e) => e.stopPropagation()}
                 >
                   <button
                     type="button"

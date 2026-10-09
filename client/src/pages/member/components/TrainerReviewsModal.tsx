@@ -48,7 +48,7 @@ export default function TrainerReviewsModal({
   onChooseTrainer,
   isChoosing = false,
   readOnly = false,
-}: TrainerReviewsModalProps) {
+}: Readonly<TrainerReviewsModalProps>) {
   const { t, i18n } = useTranslation('member')
   const [detail, setDetail] = useState<TrainerReviewDetail | null>(null)
   const [loading, setLoading] = useState(false)
@@ -115,7 +115,7 @@ export default function TrainerReviewsModal({
   }, [open, trainer, fetchReviews])
 
   const handleLoadMore = () => {
-    if (!trainer || !detail || !detail.pagination.hasMore || loadingMore) return
+    if (!trainer || !detail?.pagination.hasMore || loadingMore) return
     fetchReviews(trainer.staffId, detail.pagination.page + 1, true)
   }
 
@@ -219,7 +219,7 @@ export default function TrainerReviewsModal({
               </p>
             )}
 
-            {activeTrainer.bio && activeTrainer.bio.trim() ? (
+            {activeTrainer.bio?.trim() ? (
               <p className="text-xs rogym-text-secondary pt-1 leading-relaxed">
                 {activeTrainer.bio}
               </p>
@@ -231,7 +231,7 @@ export default function TrainerReviewsModal({
         <section className="grid sm:grid-cols-2 gap-4 p-4 rounded-2xl bg-white/[0.03] border border-white/10">
           {/* Overall score */}
           <div className="flex flex-col items-center justify-center p-4 text-center rounded-xl bg-white/[0.02]">
-            {stats && stats.ratingAverage ? (
+            {stats?.ratingAverage ? (
               <>
                 <div className="text-4xl font-extrabold text-white flex items-baseline gap-1">
                   <span>{stats.ratingAverage.toFixed(1)}</span>

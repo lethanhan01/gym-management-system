@@ -581,7 +581,7 @@ export default function WorkoutPlansPage() {
   )
 }
 
-function Metric({ value, label }: { value: string | number; label: string }) {
+function Metric({ value, label }: Readonly<{ value: string | number; label: string }>) {
   return (
     <div className="min-w-0">
       <div className="truncate text-sm font-semibold text-white">{value}</div>

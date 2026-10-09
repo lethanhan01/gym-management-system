@@ -233,6 +233,53 @@ export class SubscriptionsService {
     return { data: this.serializeSubscription(updated) }
   }
 
+  private async applySubscriptionRoleScope(
+    where: Prisma.SubscriptionWhereInput,
+    memberId: number | undefined,
+    caller: AuthenticatedUser
+  ): Promise<void> {
+    if (isOwnerOrStaff(caller)) {
+      if (memberId) where.memberId = BigInt(memberId)
+      return
+    }
+
+    if (caller.roles.includes('member')) {
+      const selfMemberId = await this.resolveCallerMemberId(caller)
+      if (memberId && BigInt(memberId) !== selfMemberId) {
+        throw new ForbiddenException({
+          success: false,
+          code: 'FORBIDDEN',
+          message: 'Member chi duoc xem subscription cua chinh minh',
+        })
+      }
+      where.memberId = selfMemberId
+      return
+    }
+
+    if (caller.roles.includes('trainer')) {
+      if (!caller.staffId) {
+        throw new ForbiddenException({
+          success: false,
+          code: 'FORBIDDEN',
+          message: 'Khong tim thay staff profile',
+        })
+      }
+      if (memberId) {
+        await this.assertTrainerOwnsMember(BigInt(memberId), caller.staffId)
+        where.memberId = BigInt(memberId)
+      } else {
+        where.trainerId = caller.staffId
+      }
+      return
+    }
+
+    throw new ForbiddenException({
+      success: false,
+      code: 'FORBIDDEN',
+      message: 'Khong co quyen xem subscriptions',
+    })
+  }
+
   async listSubscriptions(dto: ListSubscriptionsDto, caller: AuthenticatedUser) {
     const {
       page = 1,
@@ -255,38 +302,7 @@ export class SubscriptionsService {
       }
     }
 
-    if (isOwnerOrStaff(caller)) {
-      if (memberId) where.memberId = BigInt(memberId)
-    } else if (caller.roles.includes('member')) {
-      const selfMemberId = await this.resolveCallerMemberId(caller)
-      if (memberId && BigInt(memberId) !== selfMemberId) {
-        throw new ForbiddenException({
-          success: false,
-          code: 'FORBIDDEN',
-          message: 'Member chi duoc xem subscription cua chinh minh',
-        })
-      }
-      where.memberId = selfMemberId
-    } else if (caller.roles.includes('trainer')) {
-      if (!caller.staffId)
-        throw new ForbiddenException({
-          success: false,
-          code: 'FORBIDDEN',
-          message: 'Khong tim thay staff profile',
-        })
-      if (memberId) {
-        await this.assertTrainerOwnsMember(BigInt(memberId), caller.staffId)
-        where.memberId = BigInt(memberId)
-      } else {
-        where.trainerId = caller.staffId
-      }
-    } else {
-      throw new ForbiddenException({
-        success: false,
-        code: 'FORBIDDEN',
-        message: 'Khong co quyen xem subscriptions',
-      })
-    }
+    await this.applySubscriptionRoleScope(where, memberId, caller)
 
     const orderBy = this.buildOrder(sort)
     const data = await this.prisma.subscription.findMany({
@@ -362,7 +378,7 @@ export class SubscriptionsService {
     const now = new Date()
     const today = todayVN()
     const yesterday = addDays(today, -1)
-    const effectiveEndDate = sub.endDate > yesterday ? yesterday : sub.endDate
+    const effectiveEndDate = new Date(Math.min(sub.endDate.getTime(), yesterday.getTime()))
     await this.prisma.$transaction(async (tx) => {
       await tx.subscription.update({
         where: { subscriptionId },

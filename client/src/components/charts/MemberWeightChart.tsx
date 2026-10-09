@@ -15,7 +15,7 @@ interface WeightPoint {
   weight: number
 }
 
-export default function MemberWeightChart({ data }: { data: WeightPoint[] }) {
+export default function MemberWeightChart({ data }: Readonly<{ data: WeightPoint[] }>) {
   const { t } = useTranslation('member')
   return (
     <ResponsiveContainer width="100%" height={220}>

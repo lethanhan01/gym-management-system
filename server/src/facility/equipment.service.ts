@@ -212,78 +212,10 @@ export class EquipmentService {
       })
     }
 
-    const mergedRoomId = dto.roomId !== undefined ? BigInt(dto.roomId) : existing.roomId
-    if (dto.roomId !== undefined) {
-      const room = await this.prisma.gymRoom.findFirst({ where: { roomId: mergedRoomId } })
-      if (!room) {
-        throw new BadRequestException({
-          success: false,
-          code: 'FK_CONSTRAINT',
-          message: 'roomId không tồn tại',
-        })
-      }
-    }
+    const { mergedRoomId, mergedImportDate, mergedWarrantyUntil } =
+      await this.validateUpdateEquipmentDatesAndRoom(dto, existing)
 
-    const mergedImportDate =
-      dto.importDate !== undefined ? parseDateOnly(dto.importDate) : existing.importDate
-    const mergedWarrantyUntil =
-      dto.warrantyUntil !== undefined
-        ? dto.warrantyUntil
-          ? parseDateOnly(dto.warrantyUntil)
-          : null
-        : existing.warrantyUntil
-
-    if (mergedImportDate > todayVN()) {
-      throw new BadRequestException({
-        success: false,
-        code: 'VALIDATION_ERROR',
-        message: 'Ngày nhập không được ở tương lai',
-      })
-    }
-    if (mergedWarrantyUntil && mergedWarrantyUntil < mergedImportDate) {
-      throw new BadRequestException({
-        success: false,
-        code: 'VALIDATION_ERROR',
-        message: 'warrantyUntil phải lớn hơn hoặc bằng importDate',
-      })
-    }
-
-    if (dto.status === EquipmentStatus.broken) {
-      throw new ConflictException({
-        success: false,
-        code: 'USE_MAINTENANCE_LOG_ENDPOINT',
-        message: 'Thiết bị hỏng phải báo qua maintenance log, không patch status trực tiếp',
-      })
-    }
-
-    if (
-      existing.status === EquipmentStatus.retired &&
-      dto.status !== undefined &&
-      dto.status !== EquipmentStatus.retired
-    ) {
-      throw new ConflictException({
-        success: false,
-        code: 'EQUIPMENT_INVALID_STATE_TRANSITION',
-        message: 'Không thể khôi phục thiết bị đã thanh lý',
-      })
-    }
-
-    if (dto.status !== undefined) {
-      const openCount = await this.prisma.maintenanceLog.count({
-        where: {
-          equipmentId,
-          status: { in: [MaintenanceStatus.reported, MaintenanceStatus.repairing] },
-        },
-      })
-      if (openCount > 0) {
-        throw new ConflictException({
-          success: false,
-          code: 'EQUIPMENT_HAS_OPEN_MAINTENANCE',
-          message: 'Thiết bị đang có maintenance mở, không thể đổi status',
-          details: { openMaintenanceCount: openCount },
-        })
-      }
-    }
+    await this.validateUpdateEquipmentStatus(equipmentId, dto.status, existing.status)
 
     const updated = await this.prisma.equipment.update({
       where: { equipmentId },
@@ -488,7 +420,7 @@ export class EquipmentService {
     const rows = await this.prisma.equipment.findMany({ select: { equipmentCode: true } })
     const maxNum = rows.reduce((max, { equipmentCode }) => {
       const n = Number.parseInt(equipmentCode.replace(/^EQP-0*/, ''), 10)
-      return isNaN(n) ? max : Math.max(max, n)
+      return Number.isNaN(n) ? max : Math.max(max, n)
     }, 0)
     for (let i = 1; i <= 20; i++) {
       const code = `EQP-${String(maxNum + i).padStart(6, '0')}`
@@ -500,5 +432,98 @@ export class EquipmentService {
       code: 'EQUIPMENT_CODE_GENERATION_FAILED',
       message: 'Không thể tự sinh equipmentCode',
     })
+  }
+
+  private resolveWarrantyDate(
+    warranty?: string | null,
+    existingDate?: Date | null
+  ): Date | null | undefined {
+    if (warranty === undefined) return existingDate
+    return warranty ? parseDateOnly(warranty) : null
+  }
+
+  private async validateUpdateEquipmentDatesAndRoom(
+    dto: UpdateEquipmentDto,
+    existing: { roomId: bigint; importDate: Date; warrantyUntil: Date | null }
+  ): Promise<{
+    mergedRoomId: bigint
+    mergedImportDate: Date
+    mergedWarrantyUntil: Date | null | undefined
+  }> {
+    const mergedRoomId = dto.roomId !== undefined ? BigInt(dto.roomId) : existing.roomId
+    if (dto.roomId !== undefined) {
+      const room = await this.prisma.gymRoom.findFirst({ where: { roomId: mergedRoomId } })
+      if (!room) {
+        throw new BadRequestException({
+          success: false,
+          code: 'FK_CONSTRAINT',
+          message: 'roomId không tồn tại',
+        })
+      }
+    }
+
+    const mergedImportDate =
+      dto.importDate !== undefined ? parseDateOnly(dto.importDate) : existing.importDate
+    const mergedWarrantyUntil = this.resolveWarrantyDate(dto.warrantyUntil, existing.warrantyUntil)
+
+    if (mergedImportDate > todayVN()) {
+      throw new BadRequestException({
+        success: false,
+        code: 'VALIDATION_ERROR',
+        message: 'Ngày nhập không được ở tương lai',
+      })
+    }
+    if (mergedWarrantyUntil && mergedWarrantyUntil < mergedImportDate) {
+      throw new BadRequestException({
+        success: false,
+        code: 'VALIDATION_ERROR',
+        message: 'warrantyUntil phải lớn hơn hoặc bằng importDate',
+      })
+    }
+
+    return { mergedRoomId, mergedImportDate, mergedWarrantyUntil }
+  }
+
+  private async validateUpdateEquipmentStatus(
+    equipmentId: bigint,
+    newStatus: EquipmentStatus | undefined,
+    currentStatus: EquipmentStatus
+  ): Promise<void> {
+    if (newStatus === EquipmentStatus.broken) {
+      throw new ConflictException({
+        success: false,
+        code: 'USE_MAINTENANCE_LOG_ENDPOINT',
+        message: 'Thiết bị hỏng phải báo qua maintenance log, không patch status trực tiếp',
+      })
+    }
+
+    if (
+      currentStatus === EquipmentStatus.retired &&
+      newStatus !== undefined &&
+      newStatus !== EquipmentStatus.retired
+    ) {
+      throw new ConflictException({
+        success: false,
+        code: 'EQUIPMENT_INVALID_STATE_TRANSITION',
+        message: 'Không thể khôi phục thiết bị đã thanh lý',
+      })
+    }
+
+    if (newStatus !== undefined) {
+      const openCount = await this.prisma.maintenanceLog.count({
+        where: {
+          equipmentId,
+          status: { in: [MaintenanceStatus.reported, MaintenanceStatus.repairing] },
+        },
+      })
+      if (openCount > 0) {
+        throw new ConflictException({
+          success: false,
+          code: 'EQUIPMENT_HAS_OPEN_MAINTENANCE',
+          message: 'Thiết bị đang có maintenance mở, không thể đổi status',
+          details: { openMaintenanceCount: openCount },
+        })
+      }
+    }
   }
 }

@@ -123,11 +123,11 @@ function SessionTooltip({
   session,
   locale,
   align = 'left',
-}: {
+}: Readonly<{
   session: TrainingSession
   locale: string
   align?: 'left' | 'right'
-}) {
+}>) {
   const { t } = useTranslation('member')
   return (
     <div
@@ -227,7 +227,8 @@ const CalendarCell = memo(function CalendarCell({
 
   return (
     <div
-      role="button"
+      role="gridcell"
+      aria-selected={isSelected}
       tabIndex={0}
       onClick={() => onSelectDate(dateObj)}
       onKeyDown={(e) => {
@@ -292,7 +293,7 @@ const CalendarCell = memo(function CalendarCell({
 
 // ── Selected Date Section ──────────────────────────────────────────────────────
 
-function StatusBadge({ status }: { status: string }) {
+function StatusBadge({ status }: Readonly<{ status: string }>) {
   const { t } = useTranslation('member')
   return (
     <span
@@ -309,12 +310,12 @@ function SelectedDateSection({
   sessions,
   locale,
   onSelectSession,
-}: {
+}: Readonly<{
   date: Date
   sessions: TrainingSession[]
   locale: string
   onSelectSession: (session: TrainingSession) => void
-}) {
+}>) {
   const { t } = useTranslation('member')
 
   return (
@@ -382,10 +383,10 @@ function SelectedDateSection({
 function CalendarView({
   sessions,
   onSelect,
-}: {
+}: Readonly<{
   sessions: TrainingSession[]
   onSelect: (session: TrainingSession) => void
-}) {
+}>) {
   const { t, i18n } = useTranslation('member')
   const locale = i18n.language
   const [month, setMonth] = useState(() => new Date())
@@ -510,23 +511,26 @@ function CalendarView({
 
       {/* Calendar grid */}
       <div className="space-y-1 sm:space-y-1.5">
-        {grid.map((row, rIdx) => (
-          <div key={rIdx} className="grid grid-cols-7 gap-1 sm:gap-1.5">
-            {row.map((cell, cIdx) => (
-              <CalendarCell
-                key={cIdx}
-                cell={cell}
-                sessions={cell.key ? sessionMap.get(cell.key) ?? [] : []}
-                today={today}
-                selectedKey={selectedKey}
-                locale={locale}
-                colIndex={cIdx}
-                onSelectDate={handleSelectDate}
-                onSelectSession={onSelect}
-              />
-            ))}
-          </div>
-        ))}
+        {grid.map((row, rIdx) => {
+          const rowKey = row.find((c) => c.key)?.key ?? `cal-row-${rIdx + 1}`
+          return (
+            <div key={rowKey} className="grid grid-cols-7 gap-1 sm:gap-1.5">
+              {row.map((cell, cIdx) => (
+                <CalendarCell
+                  key={cell.key ?? `cal-pad-${rowKey}-${cIdx}`}
+                  cell={cell}
+                  sessions={cell.key ? sessionMap.get(cell.key) ?? [] : []}
+                  today={today}
+                  selectedKey={selectedKey}
+                  locale={locale}
+                  colIndex={cIdx}
+                  onSelectDate={handleSelectDate}
+                  onSelectSession={onSelect}
+                />
+              ))}
+            </div>
+          )
+        })}
       </div>
 
       {/* Selected Date Section */}
@@ -546,10 +550,10 @@ function CalendarView({
 function UpcomingRow({
   session,
   onSelect,
-}: {
+}: Readonly<{
   session: TrainingSession
   onSelect: (session: TrainingSession) => void
-}) {
+}>) {
   const { t, i18n } = useTranslation('member')
   const countdown = daysUntil(session.startTime, t)
 
@@ -577,10 +581,10 @@ function UpcomingRow({
 function PastRow({
   session,
   onSelect,
-}: {
+}: Readonly<{
   session: TrainingSession
   onSelect: (session: TrainingSession) => void
-}) {
+}>) {
   const { t, i18n } = useTranslation('member')
 
   return (
@@ -607,11 +611,11 @@ function SessionSidebar({
   upcoming,
   past,
   onSelect,
-}: {
+}: Readonly<{
   upcoming: TrainingSession[]
   past: TrainingSession[]
   onSelect: (session: TrainingSession) => void
-}) {
+}>) {
   const { t, i18n } = useTranslation('member')
   const nextSession = upcoming[0]
   const countdown = nextSession ? daysUntil(nextSession.startTime, t) : null
@@ -715,14 +719,14 @@ function SessionDetailModal({
   onClose,
   onStart,
   onCancel,
-}: {
+}: Readonly<{
   session: TrainingSessionDetail | null
   loading: boolean
   error: string | null
   onClose: () => void
   onStart: (sessionId: string) => void
   onCancel?: (session: TrainingSession) => void
-}) {
+}>) {
   const { t, i18n } = useTranslation('member')
   const exercises = session?.planDay?.exercises ?? []
   const isWithin2Hours =

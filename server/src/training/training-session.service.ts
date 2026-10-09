@@ -54,8 +54,12 @@ export class TrainingSessionService {
     if (to) where.startTime = { ...(where.startTime as object), lte: new Date(to) }
 
     const [sortField, sortDir] = sort.split(':')
-    const sortKey =
-      sortField === 'end_time' ? 'endTime' : sortField === 'status' ? 'status' : 'startTime'
+    let sortKey = 'startTime'
+    if (sortField === 'end_time') {
+      sortKey = 'endTime'
+    } else if (sortField === 'status') {
+      sortKey = 'status'
+    }
     const orderBy = {
       [sortKey]: sortDir === 'desc' ? 'desc' : 'asc',
     } as Prisma.TrainingSessionOrderByWithRelationInput
@@ -250,19 +254,11 @@ export class TrainingSessionService {
     return { data: this.presenter.serializeSession(session) }
   }
 
-  async updateSession(id: bigint, dto: UpdateSessionDto, caller: Caller) {
-    const session = await this.prisma.trainingSession.findFirst({
-      where: { sessionId: id, deletedAt: null },
-      include: SESSION_SUMMARY_INCLUDE,
-    })
-    if (!session) {
-      throw new NotFoundException({
-        success: false,
-        code: 'NOT_FOUND',
-        message: 'Session khong ton tai',
-      })
-    }
-
+  private async assertCanUpdateSession(
+    session: { trainerStaffId: bigint; status: TrainingSessionStatus; startTime: Date },
+    dto: UpdateSessionDto,
+    caller: Caller
+  ): Promise<void> {
     const callerStaffId = await this.caller.resolveStaffId(caller)
     const isPTOnly = this.caller.isTrainerOnly(caller)
     if (isPTOnly && session.trainerStaffId !== callerStaffId) {
@@ -291,6 +287,22 @@ export class TrainingSessionService {
         message: 'Session da bat dau hoac hoan tat, khong the sua',
       })
     }
+  }
+
+  async updateSession(id: bigint, dto: UpdateSessionDto, caller: Caller) {
+    const session = await this.prisma.trainingSession.findFirst({
+      where: { sessionId: id, deletedAt: null },
+      include: SESSION_SUMMARY_INCLUDE,
+    })
+    if (!session) {
+      throw new NotFoundException({
+        success: false,
+        code: 'NOT_FOUND',
+        message: 'Session khong ton tai',
+      })
+    }
+
+    await this.assertCanUpdateSession(session, dto, caller)
 
     const startTime = dto.startTime ? new Date(dto.startTime) : session.startTime
     const endTime = dto.endTime ? new Date(dto.endTime) : session.endTime

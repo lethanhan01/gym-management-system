@@ -1,6 +1,7 @@
 import { CallHandler, ExecutionContext, Injectable, NestInterceptor } from '@nestjs/common'
 import { Reflector } from '@nestjs/core'
 import { Request } from 'express'
+import { randomInt } from 'crypto'
 import { Observable, defer, from, mergeMap, timer, catchError } from 'rxjs'
 import { DATABASE_RETRYABLE_KEY } from '../decorators/database-retryable.decorator'
 import { isConnectionPoolTimeout, isTransientDatabaseError } from '../../prisma/database-errors'
@@ -32,7 +33,7 @@ export class DatabaseRetryInterceptor implements NestInterceptor {
         // the singleton Prisma client here would abort unrelated in-flight queries.
         if (isConnectionPoolTimeout(error)) throw error
 
-        const jitterMs = 100 + Math.floor(Math.random() * 151)
+        const jitterMs = 100 + randomInt(0, 151)
         const startedAt = Date.now()
         return from(this.prisma.recoverConnection()).pipe(
           mergeMap((recovered) => {

@@ -56,13 +56,11 @@ npm run build
 Workflow chạy khi push, tạo/cập nhật pull request, hoặc chạy thủ công:
 
 - Job **Codebase metrics (cloc)** hiển thị thống kê trực tiếp trong log của step `Count files and lines by language`.
-- Job **Client** chạy lint và build frontend.
-- Job **Server** chạy lint, Jest coverage gate, xác nhận `coverage/lcov.info`, phân tích SonarQube Cloud và build backend.
-- Coverage backend được lưu thành artifact `server-coverage` trong 7 ngày, kể cả khi một bước sau đó thất bại.
+- Job **Client** chạy lint, Vitest coverage gate, upload artifact `client-coverage` và build frontend.
+- Job **Server** chạy lint, Jest coverage gate, xác nhận `coverage/lcov.info`, upload artifact `server-coverage` và build backend.
+- Job **SonarQube Cloud scan** chạy độc lập sau khi cả Client và Server hoàn thành, tự động tải coverage của cả 2 phía để phân tích toàn diện.
 
-SonarQube Cloud vẫn được chạy khi Jest đã tạo LCOV nhưng coverage gate không đạt, giúp kết quả quality không bị mất vì một gate trước đó. Scan chờ Quality Gate và làm workflow thất bại nếu Quality Gate không đạt.
-
-Nếu chưa cấu hình SonarQube Cloud, workflow ghi một notice và bỏ qua riêng bước scan; cloc, lint, test, coverage và build vẫn chạy bình thường. Pull request từ fork cũng có thể bị bỏ qua scan vì GitHub không cấp repository secrets cho workflow không tin cậy.
+Nếu chưa cấu hình `SONAR_TOKEN`, workflow ghi một notice và bỏ qua riêng bước scan; cloc, lint, test, coverage và build vẫn chạy bình thường. Pull request từ fork cũng có thể bị bỏ qua scan vì GitHub không cấp repository secrets cho workflow không tin cậy.
 
 ## Cấu hình SonarQube Cloud
 

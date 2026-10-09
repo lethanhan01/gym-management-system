@@ -64,7 +64,7 @@ export function Combobox({
   ariaLabel,
   required,
   size = 'md',
-}: ComboboxProps) {
+}: Readonly<ComboboxProps>) {
   const formField = useFormField()
   const isControlled = value !== undefined
   const [internalValue, setInternalValue] = useState(defaultValue)
@@ -161,10 +161,14 @@ export function Combobox({
             <div className="flex items-center gap-1 shrink-0 rogym-text-dim">
               {clearable && selectedOption && !effectiveDisabled && (
                 <span
-                  role="button"
-                  tabIndex={-1}
                   onClick={handleClear}
-                  className="p-0.5 rounded-md hover:bg-white/10 hover:text-white transition-colors"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault()
+                      handleClear(e as unknown as React.MouseEvent)
+                    }
+                  }}
+                  className="p-0.5 rounded-md hover:bg-white/10 hover:text-white transition-colors cursor-pointer"
                   aria-label="Xóa lựa chọn"
                 >
                   <X size={14} />

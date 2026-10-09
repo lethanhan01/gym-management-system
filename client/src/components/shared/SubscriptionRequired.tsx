@@ -27,13 +27,12 @@ export default function SubscriptionRequired() {
 
   if (status === 'idle' || status === 'loading') {
     return (
-      <div
+      <output
         className="flex min-h-[60vh] items-center justify-center"
-        role="status"
         aria-label={t('subscription.access.loading')}
       >
         <div className="h-8 w-8 animate-spin rounded-full border-2 border-t-transparent rogym-sx-87386abd" />
-      </div>
+      </output>
     )
   }
 

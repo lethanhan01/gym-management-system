@@ -132,7 +132,7 @@ export class ReportsService {
         if (!current || sub.endDate > current) maxEndByMember.set(key, sub.endDate)
       }
 
-      const memberIds = Array.from(maxEndByMember.keys()).map((id) => BigInt(id))
+      const memberIds = Array.from(maxEndByMember.keys()).map(BigInt)
 
       const futureSubscriptions = await this.prisma.subscription.findMany({
         where: {

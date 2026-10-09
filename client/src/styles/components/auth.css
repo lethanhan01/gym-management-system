@@ -96,7 +96,7 @@
     border: 1px solid rgba(255, 255, 255, 0.1);
     appearance: none;
     -webkit-appearance: none;
-    background: rgba(255, 255, 255, 0.06);
+    background: #151f1a;
     color: #fff;
     font-family: var(--rogym-font-body);
     line-height: 1.25rem;
@@ -137,7 +137,7 @@
   .rogym-auth-date-field .rogym-input {
     min-height: 44px;
     border-color: rgba(255, 255, 255, 0.1);
-    background: rgba(255, 255, 255, 0.06);
+    background: #151f1a;
     color: #fff;
     font-family: var(--rogym-font-body);
     line-height: 1.25rem;
@@ -231,7 +231,7 @@
     width: 44px;
     height: 52px;
     border: 1.5px solid rgba(255, 255, 255, 0.12);
-    background: rgba(255, 255, 255, 0.06);
+    background: #151f1a;
     color: #fff;
     caret-color: var(--rogym-teal);
     font-family: var(--rogym-font-body);

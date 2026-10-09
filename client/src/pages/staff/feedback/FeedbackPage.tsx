@@ -455,9 +455,9 @@ export default function StaffFeedbackPage() {
                     Hình ảnh minh chứng ({selected.imageUrls.length})
                   </span>
                   <div className="flex flex-wrap gap-2.5">
-                    {selected.imageUrls.map((img, idx) => (
+                    {selected.imageUrls.map((img) => (
                       <button
-                        key={idx}
+                        key={img}
                         type="button"
                         onClick={() => setPreviewImage(img)}
                         className="relative h-20 w-32 rounded-lg overflow-hidden border border-white/10 hover:border-emerald-400 transition-all group"
@@ -519,11 +519,19 @@ export default function StaffFeedbackPage() {
       {previewImage && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
-          onClick={() => setPreviewImage(null)}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setPreviewImage(null)
+          }}
+          onKeyDown={(e) => {
+            if (e.key === 'Escape') setPreviewImage(null)
+          }}
         >
           <div
+            role="dialog"
+            aria-modal="true"
+            aria-label="Xem ảnh đính kèm"
+            tabIndex={-1}
             className="relative max-w-3xl max-h-[85vh] rounded-2xl overflow-hidden bg-[#181d28] border border-white/15 p-2 shadow-2xl"
-            onClick={(e) => e.stopPropagation()}
           >
             <button
               type="button"

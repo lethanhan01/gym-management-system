@@ -6,7 +6,7 @@ import { authService } from "@/services/auth.service";
 import { getApiError, isNetworkError } from "@/lib/api-error";
 import { AuthShell, BtnPrimary, TextLink, Field, ErrorMsg, G, T } from "./_authui";
 
-function ForgotView({ onSent }: { onSent: (email: string) => void }) {
+function ForgotView({ onSent }: Readonly<{ onSent: (email: string) => void }>) {
   const [email, setEmail] = useState(""); const [loading, setLoading] = useState(false); const [error, setError] = useState("");
   const navigate = useNavigate(); const { t } = useTranslation("auth");
   async function handleSubmit(event: React.FormEvent) {
@@ -34,6 +34,6 @@ function ForgotView({ onSent }: { onSent: (email: string) => void }) {
   </form>;
 }
 
-function SentView({ email }: { email: string }) { const navigate = useNavigate(); const { t } = useTranslation("auth"); return <div className="flex flex-col gap-5 items-center text-center"><div className="w-16 h-16 rounded-2xl flex items-center justify-center rogym-sx-b1711891"><svg width="28" height="28" viewBox="0 0 24 24" fill="none"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" stroke={G} strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" /><path d="M22 6l-10 7L2 6" stroke={G} strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" /></svg></div><div><h1 className="rogym-sx-28816d54">{t("forgotPassword.sentTitle")}</h1><p className="rogym-sx-2a7c513c">{t("forgotPassword.sentBody")}</p></div><BtnPrimary onClick={() => navigate("/reset-password", { state: { email } })}>{t("forgotPassword.enterOtp")}</BtnPrimary><p className="rogym-sx-a3c9452a">{t("forgotPassword.backToLoginQ")} <TextLink to="/login">{t("forgotPassword.loginLink")}</TextLink></p></div>; }
+function SentView({ email }: Readonly<{ email: string }>) { const navigate = useNavigate(); const { t } = useTranslation("auth"); return <div className="flex flex-col gap-5 items-center text-center"><div className="w-16 h-16 rounded-2xl flex items-center justify-center rogym-sx-b1711891"><svg width="28" height="28" viewBox="0 0 24 24" fill="none"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" stroke={G} strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" /><path d="M22 6l-10 7L2 6" stroke={G} strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" /></svg></div><div><h1 className="rogym-sx-28816d54">{t("forgotPassword.sentTitle")}</h1><p className="rogym-sx-2a7c513c">{t("forgotPassword.sentBody")}</p></div><BtnPrimary onClick={() => navigate("/reset-password", { state: { email } })}>{t("forgotPassword.enterOtp")}</BtnPrimary><p className="rogym-sx-a3c9452a">{t("forgotPassword.backToLoginQ")} <TextLink to="/login">{t("forgotPassword.loginLink")}</TextLink></p></div>; }
 
 export default function ForgotPasswordPage() { const [email, setEmail] = useState<string>(); return <AuthShell>{email ? <SentView email={email} /> : <ForgotView onSent={setEmail} />}</AuthShell>; }

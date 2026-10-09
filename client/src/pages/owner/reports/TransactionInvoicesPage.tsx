@@ -174,7 +174,7 @@ function downloadPaymentListExcel(
   URL.revokeObjectURL(url)
 }
 
-function DetailItem({ label, value }: { label: string; value: string }) {
+function DetailItem({ label, value }: Readonly<{ label: string; value: string }>) {
   return (
     <div className="rogym-detail-item">
       <span className="rogym-detail-item__label">{label}</span>

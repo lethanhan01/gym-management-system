@@ -216,7 +216,7 @@
 
   .rogym-inline-action--start {
     border-color: rgba(242, 202, 80, 0.35);
-    background: rgba(242, 202, 80, 0.08);
+    background: #1c190d;
     color: #f2ca50;
   }
 
@@ -236,7 +236,7 @@
 
   .rogym-inline-action--danger {
     border-color: rgba(239, 68, 68, 0.35);
-    background: rgba(239, 68, 68, 0.08);
+    background: #1c0f12;
     color: #fca5a5;
   }
 

@@ -81,58 +81,11 @@ export class FeedbackService {
       to,
       sort = 'created_at:desc',
     } = dto
-    const { roles } = caller
-
-    const isMember = roles.includes('member')
-
-    const where: Prisma.FeedbackWhereInput = { deletedAt: null }
-
-    if (isMember) {
-      if (!caller.memberId)
-        throw new ForbiddenException({
-          success: false,
-          code: 'FORBIDDEN',
-          message: 'Không tìm thấy member profile',
-        })
-      where.memberId = caller.memberId
-    } else {
-      if (memberId) where.memberId = BigInt(memberId)
-      if (handledByStaffId) where.handledByStaffId = BigInt(handledByStaffId)
-    }
-
-    if (feedbackType) where.feedbackType = feedbackType as FeedbackType
-    if (rating) where.rating = rating
-    if (severity) where.severity = severity as FeedbackSeverity
-    if (status) where.status = status as FeedbackStatus
-    if (subjectStaffId) where.subjectStaffId = BigInt(subjectStaffId)
-    if (subjectEquipmentId) where.subjectEquipmentId = BigInt(subjectEquipmentId)
-    if (subjectRoomId) where.subjectRoomId = BigInt(subjectRoomId)
-    if (sessionId) where.sessionId = BigInt(sessionId)
-
-    if (from)
-      where.createdAt = {
-        ...(where.createdAt as object as Record<string, unknown>),
-        gte: new Date(from),
-      }
-    if (to)
-      where.createdAt = {
-        ...(where.createdAt as object as Record<string, unknown>),
-        lte: new Date(to),
-      }
-
-    if (overdue) {
-      const now = new Date()
-      where.status = { in: ['open', 'in_progress'] }
-      where.createdAt = {
-        ...(where.createdAt as object as Record<string, unknown>),
-        lte: new Date(now.getTime() - SLA_DAYS[severity ?? 'low'] * 24 * 60 * 60 * 1000),
-      }
-    }
-
+    const where = this.buildListFeedbackWhere(dto, caller)
     const [sortField, sortDir] = sort.split(':')
+    const sortColumn = this.resolveSortColumn(sortField)
     const orderBy = {
-      [sortField === 'created_at' ? 'createdAt' : sortField === 'severity' ? 'severity' : 'status']:
-        sortDir === 'asc' ? 'asc' : 'desc',
+      [sortColumn]: sortDir === 'asc' ? 'asc' : 'desc',
     } as Prisma.FeedbackOrderByWithRelationInput
 
     const [data, total] = await Promise.all([
@@ -379,44 +332,9 @@ export class FeedbackService {
       })
 
     const feedbackType = dto.feedbackType as FeedbackType
-    if (feedbackType === 'staff' && (dto.subjectEquipmentId || dto.subjectRoomId)) {
-      throw new BadRequestException({
-        success: false,
-        code: 'FEEDBACK_SUBJECT_MISMATCH',
-        message: 'feedbackType staff không được có subjectEquipmentId hoặc subjectRoomId',
-      })
-    }
-    if ((feedbackType === 'equipment' || feedbackType === 'facility') && dto.subjectStaffId) {
-      throw new BadRequestException({
-        success: false,
-        code: 'FEEDBACK_SUBJECT_MISMATCH',
-        message: 'feedbackType facility/equipment không được có subjectStaffId',
-      })
-    }
-    if (feedbackType === 'service' && (dto.subjectStaffId || dto.subjectEquipmentId || dto.subjectRoomId)) {
-      throw new BadRequestException({
-        success: false,
-        code: 'FEEDBACK_SUBJECT_MISMATCH',
-        message: 'feedbackType service không được có subject',
-      })
-    }
-
-    // Auto-routing logic based on rating & severity
     const rating = dto.rating ?? 5
-    let status: FeedbackStatus = FeedbackStatus.open
-    let severity: FeedbackSeverity = (dto.severity as FeedbackSeverity) ?? FeedbackSeverity.low
-
-    if (rating >= 4) {
-      status = FeedbackStatus.resolved
-      severity = (dto.severity as FeedbackSeverity) ?? FeedbackSeverity.low
-    } else if (rating === 3) {
-      status = FeedbackStatus.open
-      severity = (dto.severity as FeedbackSeverity) ?? FeedbackSeverity.medium
-    } else {
-      // rating 1 or 2
-      status = FeedbackStatus.open
-      severity = (dto.severity as FeedbackSeverity) ?? FeedbackSeverity.high
-    }
+    this.validateFeedbackSubject(dto)
+    const { status, severity } = this.determineInitialStatusAndSeverity(rating, dto.severity)
 
     const feedback = await this.prisma.feedback.create({
       data: {
@@ -624,25 +542,8 @@ export class FeedbackService {
         message: 'Feedback không tồn tại',
       })
 
-    if (feedback.status === 'resolved' || feedback.status === 'rejected') {
-      throw new ConflictException({
-        success: false,
-        code: 'FEEDBACK_ALREADY_CLOSED',
-        message: 'Feedback đã được xử lý xong',
-      })
-    }
-
     const newStatus = dto.status as FeedbackStatus
-    if (
-      (feedback.status === 'open' && newStatus === 'resolved') ||
-      (feedback.status === 'open' && newStatus === 'rejected')
-    ) {
-      throw new ConflictException({
-        success: false,
-        code: 'FEEDBACK_INVALID_STATE_TRANSITION',
-        message: 'Feedback phải qua in_progress trước khi resolved/rejected',
-      })
-    }
+    this.validateStatusTransition(feedback.status, newStatus)
 
     const data: Prisma.FeedbackUpdateInput = {}
     if (dto.severity) data.severity = dto.severity as FeedbackSeverity
@@ -682,12 +583,7 @@ export class FeedbackService {
       },
     })
 
-    const action =
-      newStatus === 'resolved'
-        ? 'feedback.resolve'
-        : newStatus === 'rejected'
-          ? 'feedback.reject'
-          : 'feedback.update'
+    const action = this.resolveAuditAction(newStatus)
     this.audit.log({
       actorUserId: caller.userId,
       action,
@@ -697,23 +593,7 @@ export class FeedbackService {
       afterData: { status: newStatus, resolutionNote: dto.resolutionNote },
     })
 
-    if (newStatus === FeedbackStatus.resolved || newStatus === FeedbackStatus.rejected) {
-      await this.notifications.safeNotifyUser(updated.member.userId, {
-        type: newStatus === FeedbackStatus.resolved ? 'feedback.resolved' : 'feedback.rejected',
-        title:
-          newStatus === FeedbackStatus.resolved
-            ? 'Phan hoi da duoc giai quyet'
-            : 'Phan hoi da bi tu choi',
-        message:
-          newStatus === FeedbackStatus.resolved
-            ? 'Phan hoi cua ban da duoc xu ly.'
-            : 'Phan hoi cua ban da bi tu choi.',
-        resourceType: 'feedback',
-        resourceId: id.toString(),
-        dedupeKey: `feedback:${id.toString()}:${newStatus}`,
-      })
-      await this.lineMessaging.safePushFeedbackResponded(id)
-    }
+    await this.notifyStatusTransition(updated, newStatus, id)
 
     return { data: this.serialize(updated as unknown as FeedbackRow, true, caller) }
   }
@@ -732,26 +612,8 @@ export class FeedbackService {
     detail = false,
     caller?: { userId?: bigint; roles?: Role[]; memberId?: bigint; staffId?: bigint }
   ) {
-    let memberData = {
-      memberId: f.member?.memberId ? f.member.memberId.toString() : f.memberId.toString(),
-      memberCode: f.member?.memberCode ?? '',
-      fullName: f.member?.user?.fullName ?? '',
-    }
-
     const isAnonymous = f.isAnonymous ?? false
-    const isCallerAuthor = caller?.memberId && caller.memberId === f.memberId
-    const isCallerOwnerOrAdmin = caller?.roles?.includes('owner')
-    const isCallerTargetTrainer =
-      (caller?.roles?.includes('trainer') && !caller?.roles?.includes('owner')) ||
-      (caller?.staffId && f.subjectStaffId && caller.staffId === f.subjectStaffId)
-
-    if (isAnonymous && isCallerTargetTrainer && !isCallerAuthor && !isCallerOwnerOrAdmin) {
-      memberData = {
-        memberId: '',
-        memberCode: 'ANONYMOUS',
-        fullName: 'Hội viên ẩn danh',
-      }
-    }
+    const memberData = this.resolveMemberDisplayData(f, isAnonymous, caller)
 
     const base: Record<string, unknown> = {
       feedbackId: f.feedbackId.toString(),
@@ -821,6 +683,204 @@ export class FeedbackService {
       handledAt: f.handledAt,
       response: f.resolutionNote ?? null,
       sla: this.computeSLA(f.createdAt, f.severity),
+    }
+  }
+
+  private resolveSortColumn(sortField: string): 'createdAt' | 'severity' | 'status' {
+    if (sortField === 'created_at') return 'createdAt'
+    if (sortField === 'severity') return 'severity'
+    return 'status'
+  }
+
+  private buildListFeedbackWhere(
+    dto: ListFeedbackDto,
+    caller: { userId: bigint; roles: Role[]; memberId?: bigint; staffId?: bigint }
+  ): Prisma.FeedbackWhereInput {
+    const {
+      memberId,
+      feedbackType,
+      rating,
+      severity,
+      status,
+      handledByStaffId,
+      subjectStaffId,
+      subjectEquipmentId,
+      subjectRoomId,
+      sessionId,
+      overdue,
+      from,
+      to,
+    } = dto
+
+    const isMember = caller.roles.includes('member')
+    const where: Prisma.FeedbackWhereInput = { deletedAt: null }
+
+    if (isMember) {
+      if (!caller.memberId) {
+        throw new ForbiddenException({
+          success: false,
+          code: 'FORBIDDEN',
+          message: 'Không tìm thấy member profile',
+        })
+      }
+      where.memberId = caller.memberId
+    } else {
+      if (memberId) where.memberId = BigInt(memberId)
+      if (handledByStaffId) where.handledByStaffId = BigInt(handledByStaffId)
+    }
+
+    if (feedbackType) where.feedbackType = feedbackType as FeedbackType
+    if (rating) where.rating = rating
+    if (severity) where.severity = severity as FeedbackSeverity
+    if (status) where.status = status as FeedbackStatus
+    if (subjectStaffId) where.subjectStaffId = BigInt(subjectStaffId)
+    if (subjectEquipmentId) where.subjectEquipmentId = BigInt(subjectEquipmentId)
+    if (subjectRoomId) where.subjectRoomId = BigInt(subjectRoomId)
+    if (sessionId) where.sessionId = BigInt(sessionId)
+
+    if (from) {
+      where.createdAt = {
+        ...(where.createdAt as object as Record<string, unknown>),
+        gte: new Date(from),
+      }
+    }
+    if (to) {
+      where.createdAt = {
+        ...(where.createdAt as object as Record<string, unknown>),
+        lte: new Date(to),
+      }
+    }
+
+    if (overdue) {
+      const now = new Date()
+      where.status = { in: ['open', 'in_progress'] }
+      where.createdAt = {
+        ...(where.createdAt as object as Record<string, unknown>),
+        lte: new Date(now.getTime() - SLA_DAYS[severity ?? 'low'] * 24 * 60 * 60 * 1000),
+      }
+    }
+
+    return where
+  }
+
+  private validateFeedbackSubject(dto: CreateFeedbackDto) {
+    const feedbackType = dto.feedbackType as FeedbackType
+    if (feedbackType === 'staff' && (dto.subjectEquipmentId || dto.subjectRoomId)) {
+      throw new BadRequestException({
+        success: false,
+        code: 'FEEDBACK_SUBJECT_MISMATCH',
+        message: 'feedbackType staff không được có subjectEquipmentId hoặc subjectRoomId',
+      })
+    }
+    if ((feedbackType === 'equipment' || feedbackType === 'facility') && dto.subjectStaffId) {
+      throw new BadRequestException({
+        success: false,
+        code: 'FEEDBACK_SUBJECT_MISMATCH',
+        message: 'feedbackType facility/equipment không được có subjectStaffId',
+      })
+    }
+    if (feedbackType === 'service' && (dto.subjectStaffId || dto.subjectEquipmentId || dto.subjectRoomId)) {
+      throw new BadRequestException({
+        success: false,
+        code: 'FEEDBACK_SUBJECT_MISMATCH',
+        message: 'feedbackType service không được có subject',
+      })
+    }
+  }
+
+  private determineInitialStatusAndSeverity(
+    rawRating?: number,
+    customSeverity?: string
+  ): { status: FeedbackStatus; severity: FeedbackSeverity } {
+    const rating = rawRating ?? 5
+    if (rating >= 4) {
+      return {
+        status: FeedbackStatus.resolved,
+        severity: (customSeverity as FeedbackSeverity) ?? FeedbackSeverity.low,
+      }
+    }
+    if (rating === 3) {
+      return {
+        status: FeedbackStatus.open,
+        severity: (customSeverity as FeedbackSeverity) ?? FeedbackSeverity.medium,
+      }
+    }
+    return {
+      status: FeedbackStatus.open,
+      severity: (customSeverity as FeedbackSeverity) ?? FeedbackSeverity.high,
+    }
+  }
+
+  private validateStatusTransition(currentStatus: string, newStatus: FeedbackStatus) {
+    if (currentStatus === 'resolved' || currentStatus === 'rejected') {
+      throw new ConflictException({
+        success: false,
+        code: 'FEEDBACK_ALREADY_CLOSED',
+        message: 'Feedback đã được xử lý xong',
+      })
+    }
+
+    if (
+      (currentStatus === 'open' && newStatus === 'resolved') ||
+      (currentStatus === 'open' && newStatus === 'rejected')
+    ) {
+      throw new ConflictException({
+        success: false,
+        code: 'FEEDBACK_INVALID_STATE_TRANSITION',
+        message: 'Feedback phải qua in_progress trước khi resolved/rejected',
+      })
+    }
+  }
+
+  private resolveAuditAction(newStatus: FeedbackStatus): string {
+    if (newStatus === 'resolved') return 'feedback.resolve'
+    if (newStatus === 'rejected') return 'feedback.reject'
+    return 'feedback.update'
+  }
+
+  private async notifyStatusTransition(updated: any, newStatus: FeedbackStatus, id: bigint) {
+    if (newStatus === FeedbackStatus.resolved || newStatus === FeedbackStatus.rejected) {
+      await this.notifications.safeNotifyUser(updated.member.userId, {
+        type: newStatus === FeedbackStatus.resolved ? 'feedback.resolved' : 'feedback.rejected',
+        title:
+          newStatus === FeedbackStatus.resolved
+            ? 'Phan hoi da duoc giai quyet'
+            : 'Phan hoi da bi tu choi',
+        message:
+          newStatus === FeedbackStatus.resolved
+            ? 'Phan hoi cua ban da duoc xu ly.'
+            : 'Phan hoi cua ban da bi tu choi.',
+        resourceType: 'feedback',
+        resourceId: id.toString(),
+        dedupeKey: `feedback:${id.toString()}:${newStatus}`,
+      })
+      await this.lineMessaging.safePushFeedbackResponded(id)
+    }
+  }
+
+  private resolveMemberDisplayData(
+    f: FeedbackRow,
+    isAnonymous: boolean,
+    caller?: { userId?: bigint; roles?: Role[]; memberId?: bigint; staffId?: bigint }
+  ) {
+    const isCallerAuthor = caller?.memberId && caller.memberId === f.memberId
+    const isCallerOwnerOrAdmin = caller?.roles?.includes('owner')
+    const isCallerTargetTrainer =
+      (caller?.roles?.includes('trainer') && !caller?.roles?.includes('owner')) ||
+      (caller?.staffId && f.subjectStaffId && caller.staffId === f.subjectStaffId)
+
+    if (isAnonymous && isCallerTargetTrainer && !isCallerAuthor && !isCallerOwnerOrAdmin) {
+      return {
+        memberId: '',
+        memberCode: 'ANONYMOUS',
+        fullName: 'Hội viên ẩn danh',
+      }
+    }
+
+    return {
+      memberId: f.member?.memberId ? f.member.memberId.toString() : f.memberId.toString(),
+      memberCode: f.member?.memberCode ?? '',
+      fullName: f.member?.user?.fullName ?? '',
     }
   }
 }

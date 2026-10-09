@@ -57,7 +57,7 @@ export default function ExercisesPage() {
   const [formTargetMuscleId, setFormTargetMuscleId] = useState<number | ''>('')
   const [formEquipmentId, setFormEquipmentId] = useState<number | ''>('')
   const [description, setDescription] = useState('')
-  const [instructions, setInstructions] = useState<string[]>([''])
+  const [instructions, setInstructions] = useState<Array<{ id: string; text: string }>>([{ id: crypto.randomUUID(), text: '' }])
   const [imageUrl, setImageUrl] = useState('')
   const [gifUrl, setGifUrl] = useState('')
 
@@ -118,7 +118,7 @@ export default function ExercisesPage() {
     setFormTargetMuscleId('')
     setFormEquipmentId('')
     setDescription('')
-    setInstructions([''])
+    setInstructions([{ id: crypto.randomUUID(), text: '' }])
     setImageUrl('')
     setGifUrl('')
     setModalOpen(true)
@@ -131,7 +131,11 @@ export default function ExercisesPage() {
     setFormTargetMuscleId(exercise.targetMuscleId ?? '')
     setFormEquipmentId(exercise.equipmentId ?? '')
     setDescription(exercise.description ?? '')
-    setInstructions(exercise.instructions?.length ? exercise.instructions : [''])
+    setInstructions(
+      exercise.instructions?.length
+        ? exercise.instructions.map((text) => ({ id: crypto.randomUUID(), text }))
+        : [{ id: crypto.randomUUID(), text: '' }]
+    )
     setImageUrl(exercise.imageUrl ?? '')
     setGifUrl(exercise.gifUrl ?? '')
     setModalOpen(true)
@@ -141,13 +145,14 @@ export default function ExercisesPage() {
     event.preventDefault()
     setSubmitting(true)
     setError(null)
+    const cleanedInstructions = instructions.map((s) => s.text.trim()).filter(Boolean)
     const payload = {
       name: name.trim(),
       bodyPartId: formBodyPartId !== '' ? formBodyPartId : undefined,
       targetMuscleId: formTargetMuscleId !== '' ? formTargetMuscleId : undefined,
       equipmentId: formEquipmentId !== '' ? formEquipmentId : undefined,
       description: description.trim() || undefined,
-      instructions: instructions.map(s => s.trim()).filter(s => s).length > 0 ? instructions.map(s => s.trim()).filter(s => s) : undefined,
+      instructions: cleanedInstructions.length > 0 ? cleanedInstructions : undefined,
       imageUrl: imageUrl.trim() || undefined,
       gifUrl: gifUrl.trim() || undefined,
     }
@@ -331,13 +336,13 @@ export default function ExercisesPage() {
             <span className="rogym-field-label">{tm('workout.exercises.fieldInstructions', 'Instructions')}</span>
             <div className="space-y-2">
               {instructions.map((step, idx) => (
-                <div key={idx} className="flex gap-2">
+                <div key={step.id} className="flex gap-2">
                   <input
                     className="rogym-input flex-1"
-                    value={step}
+                    value={step.text}
                     onChange={(e) => {
                       const newInst = [...instructions]
-                      newInst[idx] = e.target.value
+                      newInst[idx] = { ...step, text: e.target.value }
                       setInstructions(newInst)
                     }}
                     placeholder={`Step ${idx + 1}`}
@@ -346,7 +351,7 @@ export default function ExercisesPage() {
                     variant="outline-white"
                     className="px-2 shrink-0"
                     onClick={() => {
-                      const newInst = instructions.filter((_, i) => i !== idx)
+                      const newInst = instructions.filter((item) => item.id !== step.id)
                       setInstructions(newInst)
                     }}
                   >
@@ -360,7 +365,7 @@ export default function ExercisesPage() {
               size="sm"
               leftIcon={<Plus size={14} />}
               className="mt-2 w-full justify-center"
-              onClick={() => setInstructions([...instructions, ''])}
+              onClick={() => setInstructions([...instructions, { id: crypto.randomUUID(), text: '' }])}
             >
               Add Step
             </Button>

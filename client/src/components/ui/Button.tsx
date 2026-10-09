@@ -80,7 +80,7 @@ export function ButtonContent({
   responsiveIconOnly,
   truncate,
   children,
-}: ButtonContentProps) {
+}: Readonly<ButtonContentProps>) {
   const effectiveContent = loading && loadingText ? loadingText : children
   const spinnerClass = getSpinnerClass(size)
 

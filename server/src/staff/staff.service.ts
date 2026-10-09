@@ -13,8 +13,9 @@ import { AuthenticatedUser } from '../auth/types/jwt-payload.interface'
 import { AuditService } from '../common/audit/audit.service'
 import { normalizeEmail } from '../common/normalization'
 import { PrismaService } from '../prisma/prisma.service'
-import { join } from 'path'
-import * as fs from 'fs'
+import { randomInt } from 'node:crypto'
+import { join } from 'node:path'
+import * as fs from 'node:fs'
 import { CreateStaffDto } from './dto/create-staff.dto'
 import { UpdateStaffDto } from './dto/update-staff.dto'
 import { UpdateMyProfileDto } from './dto/update-my-profile.dto'
@@ -45,7 +46,7 @@ export class StaffService {
   private async generateStaffCode(tx: Prisma.TransactionClient): Promise<string> {
     const year = new Date().getFullYear()
     for (let attempt = 0; attempt < 5; attempt++) {
-      const seq = Math.floor(Math.random() * 900000) + 100000
+      const seq = randomInt(100000, 1000000)
       const code = `STF-${year}-${String(seq).padStart(6, '0')}`
       const existing = await tx.staff.findFirst({ where: { staffCode: code } })
       if (!existing) return code

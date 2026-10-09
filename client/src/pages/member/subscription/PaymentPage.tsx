@@ -152,8 +152,8 @@ export default function PaymentPage() {
                   </div>
                   {benefits.length > 0 && (
                     <ul className="flex flex-col gap-2 mb-6">
-                      {benefits.map((b, i) => (
-                        <li key={i} className="flex items-start gap-2 rogym-sx-c2ff5e7f">
+                      {benefits.map((b) => (
+                        <li key={`pay-ben-${pkg.packageId}-${b}`} className="flex items-start gap-2 rogym-sx-c2ff5e7f">
                           <Check size={14} className="rogym-sx-9b3528d7" />
                           {b}
                         </li>

@@ -38,7 +38,7 @@ function totalSets(log: WorkoutLog): number {
   return log.sets?.length ?? 0
 }
 
-function MiniProgressBar({ done, total }: { done: number; total: number }) {
+function MiniProgressBar({ done, total }: Readonly<{ done: number; total: number }>) {
   const pct = total > 0 ? Math.round((done / total) * 100) : 0
   return (
     <ProgressBar value={pct} tone="primary" size="xs" className="mt-1 w-20" aria-label={`${pct}% set hoàn thành`} />
@@ -46,7 +46,7 @@ function MiniProgressBar({ done, total }: { done: number; total: number }) {
 }
 
 
-function SetComparison({ set }: { set: WorkoutLogSet }) {
+function SetComparison({ set }: Readonly<{ set: WorkoutLogSet }>) {
   const ex = set.planExercise
   const isCardio = ex?.exercise?.bodyPart?.name?.toLowerCase() === 'cardio'
   const targetVal = isCardio
@@ -236,8 +236,9 @@ export default function WorkoutHistoryPage() {
                   padding="none"
                 >
                   {/* Log header */}
-                  <header
-                    className="flex cursor-pointer items-center justify-between p-4"
+                  <button
+                    type="button"
+                    className="w-full flex cursor-pointer items-center justify-between p-4 text-left bg-transparent border-0"
                     onClick={() => toggleLog(log.logId)}
                   >
                     <div className="flex items-center gap-3">
@@ -264,7 +265,7 @@ export default function WorkoutHistoryPage() {
                         {expanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
                       </span>
                     </div>
-                  </header>
+                  </button>
 
                   {/* Detail */}
                   {expanded && (

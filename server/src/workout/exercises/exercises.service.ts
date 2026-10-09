@@ -76,7 +76,7 @@ export class ExercisesService {
       data: {
         ...dto,
         instructions:
-          dto.instructions && dto.instructions.length ? JSON.stringify(dto.instructions) : null,
+          dto.instructions?.length ? JSON.stringify(dto.instructions) : null,
         source: ExerciseSource.manual,
         catalogVisible: true,
         createdByStaffId: user.staffId ?? null,
@@ -99,16 +99,16 @@ export class ExercisesService {
       throw new ConflictException('Legacy exercise cannot be edited')
     if (before.source === ExerciseSource.exercisedb)
       throw new ConflictException('ExerciseDB exercises cannot be edited')
+    let instructions: string | null | undefined
+    if (dto.instructions !== undefined) {
+      instructions = dto.instructions.length > 0 ? JSON.stringify(dto.instructions) : null
+    }
+
     const exercise = await this.prisma.exercise.update({
       where: { exerciseId: id },
       data: {
         ...dto,
-        instructions:
-          dto.instructions !== undefined
-            ? dto.instructions.length
-              ? JSON.stringify(dto.instructions)
-              : null
-            : undefined,
+        instructions,
       },
       include: EXERCISE_INCLUDE,
     })

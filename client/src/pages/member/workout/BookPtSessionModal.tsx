@@ -58,7 +58,7 @@ export function BookPtSessionModal({
   onClose,
   onSuccess,
   scheduledCount = 0,
-}: BookPtSessionModalProps) {
+}: Readonly<BookPtSessionModalProps>) {
   const { t, i18n } = useTranslation('member')
   const locale = i18n.language
   const navigate = useNavigate()
@@ -179,10 +179,10 @@ export function BookPtSessionModal({
     noSubscription || Boolean(planBookingData && !planBookingData.hasPtBenefit && planBookingData.subscriptionReason === 'NO_ACTIVE_SUBSCRIPTION')
 
   const isNoActivePlan =
-    Boolean(planBookingData && planBookingData.hasPtBenefit && !planBookingData.hasActivePlan)
+    Boolean(planBookingData?.hasPtBenefit && !planBookingData.hasActivePlan)
 
   const isAllDaysCompletedOrScheduled =
-    Boolean(planBookingData && planBookingData.hasPtBenefit && planBookingData.hasActivePlan && planBookingData.allCompletedOrScheduled)
+    Boolean(planBookingData?.hasPtBenefit && planBookingData.hasActivePlan && planBookingData.allCompletedOrScheduled)
 
   const canSubmit = Boolean(
     selectedSlot &&

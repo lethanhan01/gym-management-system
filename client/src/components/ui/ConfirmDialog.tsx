@@ -28,7 +28,7 @@ export function ConfirmDialog({
   variant = 'primary',
   loading = false,
   icon,
-}: ConfirmDialogProps) {
+}: Readonly<ConfirmDialogProps>) {
   const { t } = useTranslation('common')
   const isDanger = variant === 'danger'
 

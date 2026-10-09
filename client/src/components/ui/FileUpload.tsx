@@ -123,10 +123,13 @@ export const FileUpload = forwardRef<HTMLDivElement, FileUploadProps>(
             onChange={handleInputChange}
             className="hidden"
           />
-          <div
+          <button
+            type="button"
+            disabled={effectiveDisabled}
             onClick={() => !effectiveDisabled && inputRef.current?.click()}
+            aria-label="Chọn ảnh đại diện"
             className={cn(
-              'group relative flex h-20 w-20 cursor-pointer items-center justify-center overflow-hidden rounded-full border-2 border-dashed border-white/20 bg-white/[0.03] transition-all',
+              'group relative flex h-20 w-20 cursor-pointer items-center justify-center overflow-hidden rounded-full border-2 border-dashed border-white/20 bg-white/[0.03] transition-all p-0',
               'hover:border-[var(--rogym-teal)] hover:bg-white/[0.06]',
               effectiveError && 'border-red-500/80',
               effectiveDisabled && 'pointer-events-none opacity-40'
@@ -144,7 +147,7 @@ export const FileUpload = forwardRef<HTMLDivElement, FileUploadProps>(
             <div className="absolute inset-0 flex items-center justify-center bg-black/60 opacity-0 transition-opacity group-hover:opacity-100">
               <UploadCloud size={20} className="text-white" />
             </div>
-          </div>
+          </button>
 
           <div className="flex flex-col gap-1.5">
             <Button
@@ -181,9 +184,8 @@ export const FileUpload = forwardRef<HTMLDivElement, FileUploadProps>(
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
-          onClick={() => !effectiveDisabled && inputRef.current?.click()}
           className={cn(
-            'group relative flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-white/15 bg-white/[0.02] p-6 text-center transition-all duration-150 cursor-pointer',
+            'group relative flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-white/15 bg-white/[0.02] p-6 text-center transition-all duration-150',
             'hover:border-[var(--rogym-teal)]/50 hover:bg-white/[0.04]',
             isDragging && 'border-[var(--rogym-teal)] bg-[var(--rogym-teal)]/[0.05] ring-2 ring-[var(--rogym-teal)]/30',
             effectiveError && 'border-red-500/80 bg-red-500/[0.02]',
@@ -200,7 +202,6 @@ export const FileUpload = forwardRef<HTMLDivElement, FileUploadProps>(
                 />
                 <button
                   type="button"
-                  tabIndex={-1}
                   onClick={handleClear}
                   className="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-black/70 text-white hover:bg-red-600 transition-colors"
                   aria-label="Xóa ảnh"
@@ -208,12 +209,22 @@ export const FileUpload = forwardRef<HTMLDivElement, FileUploadProps>(
                   <X size={14} />
                 </button>
               </div>
-              <p className="text-xs text-[var(--rogym-teal)] font-medium flex items-center gap-1">
+              <button
+                type="button"
+                disabled={effectiveDisabled}
+                onClick={() => !effectiveDisabled && inputRef.current?.click()}
+                className="text-xs text-[var(--rogym-teal)] font-medium flex items-center gap-1 bg-transparent border-0 cursor-pointer hover:underline"
+              >
                 <CheckCircle2 size={13} /> Nhấn hoặc kéo thả để thay đổi tệp
-              </p>
+              </button>
             </div>
           ) : (
-            <div className="flex flex-col items-center gap-2">
+            <button
+              type="button"
+              disabled={effectiveDisabled}
+              onClick={() => !effectiveDisabled && inputRef.current?.click()}
+              className="w-full flex flex-col items-center gap-2 bg-transparent border-0 cursor-pointer p-0 text-center"
+            >
               <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/[0.04] text-[var(--rogym-teal)] group-hover:scale-105 transition-transform">
                 <UploadCloud size={24} />
               </div>
@@ -223,7 +234,7 @@ export const FileUpload = forwardRef<HTMLDivElement, FileUploadProps>(
                   {helperText ?? `Tối đa ${maxSizeMB}MB (Hỗ trợ PNG, JPG, WEBP)`}
                 </p>
               </div>
-            </div>
+            </button>
           )}
 
           {loading && (

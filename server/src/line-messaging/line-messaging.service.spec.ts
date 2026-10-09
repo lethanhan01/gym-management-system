@@ -705,7 +705,7 @@ describe('LineMessagingService', () => {
     service.createMockSample('pt-session-cancelled')
 
     const messages = service.getMockMessages()
-    expect(messages.length).toBe(5)
+    expect(messages).toHaveLength(5)
     expect(messages[0].kind).toBe('push') // pt-session-cancelled (reversed order)
     expect(messages[0].payload).toMatchObject({
       messages: [

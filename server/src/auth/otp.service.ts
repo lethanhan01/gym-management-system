@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common'
 import { OtpPurpose } from '@prisma/client'
 import bcrypt from 'bcryptjs'
-import { randomInt } from 'crypto'
+import { randomInt } from 'node:crypto'
 import { PrismaService } from '../prisma/prisma.service'
 import { OTP_MAX_ATTEMPTS, OTP_RATE_LIMIT, OTP_RATE_WINDOW_MS, OTP_TTL_MS } from './auth.constants'
 

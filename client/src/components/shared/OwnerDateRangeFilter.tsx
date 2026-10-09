@@ -20,7 +20,7 @@ export function OwnerDateRangeFilter({
   onLoad,
   loading = false,
   maxTo,
-}: OwnerDateRangeFilterProps) {
+}: Readonly<OwnerDateRangeFilterProps>) {
   const { t } = useTranslation('common')
   const effectiveMaxTo = maxTo ?? todayInput()
   return (

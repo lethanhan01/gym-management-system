@@ -18,7 +18,7 @@ export function CancelPtBookingModal({
   session,
   onClose,
   onSuccess,
-}: CancelPtBookingModalProps) {
+}: Readonly<CancelPtBookingModalProps>) {
   const { t, i18n } = useTranslation('member')
   const locale = i18n.language
   const [reason, setReason] = useState('')

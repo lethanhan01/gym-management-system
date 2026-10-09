@@ -1,8 +1,10 @@
 import {
   createContext,
   forwardRef,
+  useCallback,
   useContext,
   useId,
+  useMemo,
   useState,
   type ButtonHTMLAttributes,
   type HTMLAttributes,
@@ -85,46 +87,55 @@ export const Accordion = forwardRef<HTMLDivElement, AccordionProps>(
     const isControlled = controlledValue !== undefined
     const currentValue = isControlled ? controlledValue : uncontrolledValue
 
-    const isExpanded = (itemValue: string): boolean => {
-      if (type === 'multiple') {
-        return Array.isArray(currentValue) && currentValue.includes(itemValue)
-      }
-      return currentValue === itemValue
-    }
+    const isExpanded = useCallback(
+      (itemValue: string): boolean => {
+        if (type === 'multiple') {
+          return Array.isArray(currentValue) && currentValue.includes(itemValue)
+        }
+        return currentValue === itemValue
+      },
+      [type, currentValue]
+    )
 
-    const toggleItem = (itemValue: string) => {
-      if (type === 'multiple') {
-        const arr = Array.isArray(currentValue) ? [...currentValue] : []
-        const index = arr.indexOf(itemValue)
-        let nextArr: string[]
-        if (index > -1) {
-          nextArr = arr.filter((v) => v !== itemValue)
+    const toggleItem = useCallback(
+      (itemValue: string) => {
+        if (type === 'multiple') {
+          const arr = Array.isArray(currentValue) ? [...currentValue] : []
+          const index = arr.indexOf(itemValue)
+          let nextArr: string[]
+          if (index > -1) {
+            nextArr = arr.filter((v) => v !== itemValue)
+          } else {
+            nextArr = [...arr, itemValue]
+          }
+          if (!isControlled) setUncontrolledValue(nextArr)
+          onValueChange?.(nextArr)
         } else {
-          nextArr = [...arr, itemValue]
+          let nextVal = itemValue
+          if (currentValue === itemValue) {
+            if (collapsible) nextVal = ''
+            else return
+          }
+          if (!isControlled) setUncontrolledValue(nextVal)
+          onValueChange?.(nextVal)
         }
-        if (!isControlled) setUncontrolledValue(nextArr)
-        onValueChange?.(nextArr)
-      } else {
-        let nextVal = itemValue
-        if (currentValue === itemValue) {
-          if (collapsible) nextVal = ''
-          else return
-        }
-        if (!isControlled) setUncontrolledValue(nextVal)
-        onValueChange?.(nextVal)
-      }
-    }
+      },
+      [type, currentValue, isControlled, collapsible, onValueChange]
+    )
+
+    const accordionContextValue = useMemo<AccordionContextValue>(
+      () => ({
+        type,
+        variant,
+        isExpanded,
+        toggleItem,
+        baseId,
+      }),
+      [type, variant, isExpanded, toggleItem, baseId]
+    )
 
     return (
-      <AccordionContext.Provider
-        value={{
-          type,
-          variant,
-          isExpanded,
-          toggleItem,
-          baseId,
-        }}
-      >
+      <AccordionContext.Provider value={accordionContextValue}>
         <div ref={ref} className={cn('w-full space-y-2.5', className)} {...props}>
           {children}
         </div>
@@ -153,8 +164,13 @@ export const AccordionItem = forwardRef<HTMLDivElement, AccordionItemProps>(
     const isOpen = isExpanded(value)
     const itemId = `${baseId}-item-${value}`
 
+    const itemContextValue = useMemo<AccordionItemContextValue>(
+      () => ({ value, disabled, isOpen, itemId }),
+      [value, disabled, isOpen, itemId]
+    )
+
     return (
-      <AccordionItemContext.Provider value={{ value, disabled, isOpen, itemId }}>
+      <AccordionItemContext.Provider value={itemContextValue}>
         <div
           ref={ref}
           className={cn(
@@ -282,10 +298,9 @@ export const AccordionContent = forwardRef<HTMLDivElement, AccordionContentProps
     if (!isOpen) return null
 
     return (
-      <div
-        ref={ref}
+      <section
+        ref={ref as React.Ref<HTMLElement>}
         id={panelId}
-        role="region"
         aria-labelledby={headerId}
         className={cn(
           'px-4 sm:px-5 pb-4 pt-1 text-sm text-[var(--rogym-text-secondary)] border-t border-white/5 animate-in fade-in-50 duration-200 leading-relaxed',
@@ -294,7 +309,7 @@ export const AccordionContent = forwardRef<HTMLDivElement, AccordionContentProps
         {...props}
       >
         {children}
-      </div>
+      </section>
     )
   }
 )

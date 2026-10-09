@@ -32,7 +32,7 @@ export class MemberProgressService {
         select: { primaryTrainerId: true },
       })
       const callerStaffId = await this.caller.resolveStaffId(caller)
-      if (!member || member.primaryTrainerId !== callerStaffId) {
+      if (member?.primaryTrainerId !== callerStaffId) {
         throw new ForbiddenException({
           success: false,
           code: 'FORBIDDEN',
@@ -46,7 +46,7 @@ export class MemberProgressService {
       where.recordedAt = { ...(where.recordedAt as object), gte: new Date(query.from) }
     if (query.to) where.recordedAt = { ...(where.recordedAt as object), lte: new Date(query.to) }
 
-    const limit = query.limit ? Math.min(parseInt(query.limit, 10), 100) : 50
+    const limit = query.limit ? Math.min(Number.parseInt(query.limit, 10), 100) : 50
     const records = await this.prisma.memberProgress.findMany({
       where,
       orderBy: { recordedAt: 'desc' },

@@ -43,7 +43,7 @@ export function TimeSlotPicker({
   slotClassName,
   timeZone = 'Asia/Ho_Chi_Minh',
   locale = 'vi-VN',
-}: TimeSlotPickerProps) {
+}: Readonly<TimeSlotPickerProps>) {
   function formatTime(iso: string) {
     try {
       return new Date(iso).toLocaleTimeString(locale, {

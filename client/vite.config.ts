@@ -1,6 +1,6 @@
 import { createLogger, defineConfig, loadEnv, type Plugin } from 'vite'
 import react from '@vitejs/plugin-react'
-import path from 'path'
+import path from 'node:path'
 
 const DEFAULT_API_PROXY_TARGET = 'http://127.0.0.1:3000'
 const BACKEND_READY_TIMEOUT_MS = 60_000

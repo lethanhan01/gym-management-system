@@ -50,11 +50,11 @@ function MethodBtn({
   opt,
   selected,
   onClick,
-}: {
+}: Readonly<{
   opt: PaymentMethodOption
   selected: boolean
   onClick: () => void
-}) {
+}>) {
   return (
     <button type="button" onClick={onClick} className={`rogym-checkout-method ${selected ? 'is-active' : ''}`}>
       <opt.Icon size={18} />
@@ -63,7 +63,7 @@ function MethodBtn({
   )
 }
 
-export default function SubscriptionCheckoutPage({ mode }: { mode: 'buy' | 'renew' }) {
+export default function SubscriptionCheckoutPage({ mode }: Readonly<{ mode: 'buy' | 'renew' }>) {
   const { t } = useTranslation('member')
   const navigate = useNavigate()
   const location = useLocation()

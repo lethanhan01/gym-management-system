@@ -243,8 +243,8 @@ export function GymDomainFlowsShowcase() {
                   Hướng dẫn kỹ thuật thực hiện chuẩn:
                 </h5>
                 <ol className="list-decimal list-inside space-y-1.5 text-xs text-white/70">
-                  {activeExerciseModal.instructions?.map((step, idx) => (
-                    <li key={idx}>{step}</li>
+                  {activeExerciseModal.instructions?.map((step) => (
+                    <li key={step}>{step}</li>
                   ))}
                 </ol>
               </div>
@@ -649,14 +649,15 @@ export function GymDomainFlowsShowcase() {
 
           <div className="space-y-2.5">
             {notifications.map((item) => (
-              <div
+              <button
+                type="button"
                 key={item.id}
                 onClick={() => {
                   setNotifications((prev) =>
                     prev.map((n) => (n.id === item.id ? { ...n, unread: false } : n))
                   )
                 }}
-                className={`flex items-start justify-between p-3.5 rounded-xl border transition-colors cursor-pointer ${
+                className={`w-full text-left flex items-start justify-between p-3.5 rounded-xl border transition-colors cursor-pointer ${
                   item.unread
                     ? 'bg-white/[0.05] border-[var(--rogym-teal)]/40 hover:bg-white/[0.08]'
                     : 'bg-white/[0.02] border-white/5 hover:bg-white/[0.04]'
@@ -670,7 +671,7 @@ export function GymDomainFlowsShowcase() {
                   <p className="text-xs text-white/70">{item.message}</p>
                 </div>
                 <span className="text-[11px] text-white/40 shrink-0">{item.time}</span>
-              </div>
+              </button>
             ))}
           </div>
         </div>

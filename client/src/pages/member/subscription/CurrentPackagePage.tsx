@@ -99,7 +99,7 @@ export default function CurrentPackagePage() {
     ])
       .then(([subRes, payRes]) => {
         if (subRes.status === 'fulfilled') {
-          const sorted = subRes.value.sort(
+          const sorted = [...subRes.value].sort(
             (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
           )
           const active = sorted.find((s) => isSubscriptionActive(s))
@@ -370,8 +370,8 @@ export default function CurrentPackagePage() {
                 <Card variant="compact">
                   <h3 className="text-base font-bold text-white mb-4">{t('subscription.current.benefitsTitle')}</h3>
                   <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                    {benefits.map((b, i) => (
-                      <li key={i} className="flex items-start gap-2 text-sm rogym-text-secondary">
+                    {benefits.map((b) => (
+                      <li key={`benefit-${b}`} className="flex items-start gap-2 text-sm rogym-text-secondary">
                         <Check size={14} className="text-[var(--rogym-teal)]" />
                         {b}
                       </li>
@@ -543,9 +543,9 @@ export default function CurrentPackagePage() {
                           </div>
                           {bens.length > 0 && (
                             <ul className="mt-3 grid grid-cols-1 gap-1.5 sm:grid-cols-2">
-                              {bens.map((b, i) => (
+                              {bens.map((b) => (
                                 <li
-                                  key={i}
+                                  key={`ben-${p.packageId}-${b}`}
                                   className="flex items-start gap-2 text-xs rogym-text-secondary"
                                 >
                                   <Check

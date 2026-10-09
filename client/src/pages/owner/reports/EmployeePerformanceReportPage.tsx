@@ -79,11 +79,11 @@ function PerfTooltipContent({
   active,
   actualMinutes,
   expectedMinutes,
-}: {
+}: Readonly<{
   active?: boolean
   actualMinutes: number
   expectedMinutes: number
-}) {
+}>) {
   const { t } = useTranslation('owner')
   if (!active) return null
   return (
@@ -107,10 +107,10 @@ function PerfTooltipContent({
 function PerformancePieCard({
   emp,
   onViewDetail,
-}: {
+}: Readonly<{
   emp: EmployeePerformanceItem
   onViewDetail: (staffId: string) => void
-}) {
+}>) {
   const { t } = useTranslation('owner')
   const perf = emp.performancePercent
   const chartData = [

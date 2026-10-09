@@ -9,7 +9,7 @@ interface Props {
   children: React.ReactNode
 }
 
-export default function ProtectedRoute({ allowedRoles, children }: Props) {
+export default function ProtectedRoute({ allowedRoles, children }: Readonly<Props>) {
   const user = useAuthStore((state) => state.user)
   const hasHydrated = useAuthStore((state) => state.hasHydrated)
   const location = useLocation()

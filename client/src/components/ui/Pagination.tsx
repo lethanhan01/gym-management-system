@@ -21,7 +21,7 @@ export function Pagination({
   pageSize,
   className,
   showItemCount = false,
-}: PaginationProps) {
+}: Readonly<PaginationProps>) {
   const { t } = useTranslation('common')
 
   if (totalPages <= 1 && !totalItems) return null
@@ -85,8 +85,9 @@ export function Pagination({
         <div className="hidden items-center gap-1 md:flex">
           {pageNumbers.map((p, idx) => {
             if (p === 'ellipsis') {
+              const ellipsisKey = idx < pageNumbers.length / 2 ? 'ellipsis-prev' : 'ellipsis-next'
               return (
-                <span key={`ellipsis-${idx}`} className="px-2 text-xs rogym-text-dim select-none">
+                <span key={ellipsisKey} className="px-2 text-xs rogym-text-dim select-none">
                   ...
                 </span>
               )

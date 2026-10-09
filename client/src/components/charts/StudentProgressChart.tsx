@@ -17,7 +17,7 @@ interface ProgressPoint {
   bmi: number | null
 }
 
-export default function StudentProgressChart({ data }: { data: ProgressPoint[] }) {
+export default function StudentProgressChart({ data }: Readonly<{ data: ProgressPoint[] }>) {
   const { t } = useTranslation('trainer')
   return (
     <ResponsiveContainer width="100%" height="100%">

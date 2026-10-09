@@ -7,7 +7,7 @@ import {
 } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { AttendanceMethod, Prisma } from '@prisma/client'
-import { createHmac, timingSafeEqual } from 'crypto'
+import { createHmac, timingSafeEqual } from 'node:crypto'
 import { AuditService } from '../common/audit/audit.service'
 import { PrismaService } from '../prisma/prisma.service'
 import { CheckoutDto } from './dto/checkout.dto'
@@ -92,8 +92,8 @@ export class AttendanceService {
         })
       }
       where.member = { primaryTrainerId: callerStaffId }
-    } else {
-      if (memberId) where.memberId = BigInt(memberId)
+    } else if (memberId) {
+      where.memberId = BigInt(memberId)
     }
 
     if (subscriptionId) where.subscriptionId = BigInt(subscriptionId)

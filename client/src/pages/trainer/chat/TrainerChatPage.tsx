@@ -100,8 +100,8 @@ export default function TrainerChatPage() {
     return conversations.filter(
       (c) =>
         c.participant.fullName.toLowerCase().includes(q) ||
-        (c.participant.memberCode && c.participant.memberCode.toLowerCase().includes(q)) ||
-        (c.participant.memberId && c.participant.memberId.toLowerCase().includes(q))
+        c.participant.memberCode?.toLowerCase().includes(q) ||
+        c.participant.memberId?.toLowerCase().includes(q)
     )
   }, [conversations, searchQuery])
 

@@ -269,9 +269,9 @@ export default function MemberPlanBuilderPage() {
       .getAssignments(memberId, { status: 'active' })
       .then((assignments) => {
         const self = assignments.find((a) => !a.assignedByStaffId)
-        const pt = assignments.find((a) => !!a.assignedByStaffId)
+        const hasPt = assignments.some((a) => !!a.assignedByStaffId)
         setExistingSelfPlan(self ? { name: self.plan?.name ?? t('workout.session.defaultPlanName') } : null)
-        setHasActivePtPlan(!!pt)
+        setHasActivePtPlan(hasPt)
       })
       .catch(() => {
         /* silent */
@@ -898,12 +898,12 @@ function AddExerciseForm({
   submitting,
   onCancel,
   onSubmit,
-}: {
+}: Readonly<{
   day: WorkoutPlanDay
   submitting: boolean
   onCancel: () => void
   onSubmit: (day: WorkoutPlanDay, exercise: Exercise, targets: ExerciseTargets) => Promise<void>
-}) {
+}>) {
   const { t } = useTranslation('member')
   const [selectedExercise, setSelectedExercise] = useState<Exercise | null>(null)
   const [sets, setSets] = useState(3)
@@ -966,11 +966,11 @@ function AddDayForm({
   submitting,
   onCancel,
   onSubmit,
-}: {
+}: Readonly<{
   submitting: boolean
   onCancel: () => void
   onSubmit: (name: string) => Promise<void>
-}) {
+}>) {
   const { t } = useTranslation('member')
   const [name, setName] = useState('')
 

@@ -9,7 +9,7 @@ export class InvalidSubscriptionResponseError extends Error {
 
 export function parseSubscriptionListResponse(value: unknown): Subscription[] {
   const response = value as { success?: unknown; data?: unknown } | null
-  if (!response || response.success !== true || !Array.isArray(response.data)) {
+  if (response?.success !== true || !Array.isArray(response.data)) {
     throw new InvalidSubscriptionResponseError()
   }
   return response.data as Subscription[]
