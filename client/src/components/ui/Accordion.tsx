@@ -299,7 +299,7 @@ export const AccordionContent = forwardRef<HTMLDivElement, AccordionContentProps
 
     return (
       <section
-        ref={ref as any}
+        ref={ref as React.Ref<HTMLElement>}
         id={panelId}
         aria-labelledby={headerId}
         className={cn(

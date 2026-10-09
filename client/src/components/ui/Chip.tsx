@@ -73,10 +73,10 @@ export const Chip = React.forwardRef<HTMLDivElement, ChipProps>(
     if (isInteractive && !removable) {
       return (
         <button
-          ref={ref as any}
+          ref={ref as unknown as React.Ref<HTMLButtonElement>}
           type="button"
           disabled={disabled}
-          onClick={onClick as any}
+          onClick={onClick as unknown as React.MouseEventHandler<HTMLButtonElement>}
           className={cn(
             'inline-flex items-center justify-center font-medium border transition-all select-none',
             toneStyle,
@@ -84,7 +84,7 @@ export const Chip = React.forwardRef<HTMLDivElement, ChipProps>(
             'cursor-pointer active:scale-95',
             className
           )}
-          {...(props as any)}
+          {...(props as unknown as React.ButtonHTMLAttributes<HTMLButtonElement>)}
         >
           {icon && <span className="shrink-0">{icon}</span>}
           <span className="truncate">{label}</span>

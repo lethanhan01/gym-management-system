@@ -31,7 +31,7 @@ type LineWebhookBody = {
 }
 
 type LineWebhookEvent = {
-  type: 'follow' | 'unfollow' | 'message' | (string & {})
+  type: 'follow' | 'unfollow' | 'message' | (string & Record<never, never>)
   replyToken?: string
   source?: {
     type?: string

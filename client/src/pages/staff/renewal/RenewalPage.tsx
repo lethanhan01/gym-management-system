@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { AlertTriangle, Check, ChevronRight, RotateCcw, UserRound } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import type { TFunction } from 'i18next'
 import { getApiError } from '@/lib/api-error'
 import { formatDate } from '@/lib/date'
 import { formatVnd } from '@/lib/currency'
@@ -20,7 +21,13 @@ import {
 } from '@/components/StaffUI'
 
 type PaymentMethod = 'cash' | 'bank_card' | 'ewallet'
-type WizardStep = 'select-member' | 'review-sub' | 'select-package' | 'select-trainer' | 'payment' | 'success'
+type WizardStep =
+  | 'select-member'
+  | 'review-sub'
+  | 'select-package'
+  | 'select-trainer'
+  | 'payment'
+  | 'success'
 type WizardMode = 'renew' | 'new'
 
 function stepToNumber(step: WizardStep): number {
@@ -67,12 +74,7 @@ function StepIndicator({ step, mode }: Readonly<{ step: WizardStep; mode: Wizard
               >
                 {done ? <Check size={16} strokeWidth={2.5} /> : s.n}
               </div>
-              <span
-                className={[
-                  'text-xs font-medium whitespace-nowrap',
-                  labelClass,
-                ].join(' ')}
-              >
+              <span className={['text-xs font-medium whitespace-nowrap', labelClass].join(' ')}>
                 {s.label}
               </span>
             </div>
@@ -100,20 +102,22 @@ function subStatusTone(status: string | undefined) {
   return 'muted'
 }
 
-function getSubStatusLabel(status: string | undefined, t: (k: any) => string): string {
+function getSubStatusLabel(status: string | undefined, t: TFunction<'staff'>): string {
   if (status === 'active') return t('renewal.subStatusActive')
   if (status === 'expired') return t('renewal.subStatusExpired')
   if (status === 'pending') return t('renewal.subStatusPending')
   return status ?? ''
 }
 
-function getShortSubStatusLabel(status: string | undefined, t: (k: any) => string): string {
+function getShortSubStatusLabel(status: string | undefined, t: TFunction<'staff'>): string {
   if (status === 'active') return t('renewal.activeShort')
   if (status === 'expired') return t('renewal.expiredShort')
   return t('renewal.noPackageBadge')
 }
 
-function SelectMemberStep({ onSelect }: Readonly<{ onSelect: (m: TrainerStudentSummary) => void }>) {
+function SelectMemberStep({
+  onSelect,
+}: Readonly<{ onSelect: (m: TrainerStudentSummary) => void }>) {
   const { t } = useTranslation('staff')
 
   const STATUS_FILTERS: { value: string; label: string }[] = [
@@ -204,9 +208,7 @@ function SelectMemberStep({ onSelect }: Readonly<{ onSelect: (m: TrainerStudentS
                     )}
                   </td>
                   <td className="px-5 py-4 rogym-text-secondary">
-                    {m.activeSubscription?.endDate
-                      ? formatDate(m.activeSubscription.endDate)
-                      : '—'}
+                    {m.activeSubscription?.endDate ? formatDate(m.activeSubscription.endDate) : '—'}
                   </td>
                   <td className="px-5 py-4 min-w-0">
                     {m.activeSubscription ? (
@@ -217,7 +219,9 @@ function SelectMemberStep({ onSelect }: Readonly<{ onSelect: (m: TrainerStudentS
                         {getSubStatusLabel(m.activeSubscription.status, t)}
                       </span>
                     ) : (
-                      <span className="rogym-tone-badge" data-tone="muted">{t('renewal.noPackageBadge')}</span>
+                      <span className="rogym-tone-badge" data-tone="muted">
+                        {t('renewal.noPackageBadge')}
+                      </span>
                     )}
                   </td>
                   <td className="px-5 py-4 text-right">
@@ -270,7 +274,9 @@ function SelectMemberStep({ onSelect }: Readonly<{ onSelect: (m: TrainerStudentS
                 )}
               </div>
               <div className="mt-3 flex justify-end">
-                <span className="rogym-text-link rogym-text-link--accent text-sm">{t('renewal.selectArrow')}</span>
+                <span className="rogym-text-link rogym-text-link--accent text-sm">
+                  {t('renewal.selectArrow')}
+                </span>
               </div>
             </button>
           ))}
@@ -286,7 +292,9 @@ function SelectMemberStep({ onSelect }: Readonly<{ onSelect: (m: TrainerStudentS
             >
               {t('renewal.prevPage')}
             </button>
-            <span className="text-sm rogym-text-secondary">{page}/{totalPages}</span>
+            <span className="text-sm rogym-text-secondary">
+              {page}/{totalPages}
+            </span>
             <button
               type="button"
               className="rogym-btn rogym-btn--outline-white"
@@ -329,7 +337,11 @@ function SelectMemberStep({ onSelect }: Readonly<{ onSelect: (m: TrainerStudentS
           </div>
         }
         actions={
-          <button type="button" className="rogym-btn rogym-btn--primary h-11 px-4 text-sm" onClick={applySearch}>
+          <button
+            type="button"
+            className="rogym-btn rogym-btn--primary h-11 px-4 text-sm"
+            onClick={applySearch}
+          >
             {t('renewal.search')}
           </button>
         }
@@ -421,11 +433,7 @@ function ReviewSubscriptionStep({
             <p className="font-medium text-white">{t('renewal.noRenewable')}</p>
             <p className="mt-1 text-sm rogym-text-dim">{t('renewal.noRenewableDesc')}</p>
           </div>
-          <button
-            type="button"
-            className="rogym-btn rogym-btn--primary"
-            onClick={onProceedNew}
-          >
+          <button type="button" className="rogym-btn rogym-btn--primary" onClick={onProceedNew}>
             {t('renewal.subscribeNew')}
           </button>
         </div>
@@ -467,7 +475,9 @@ function ReviewSubscriptionStep({
             <div className="flex items-center justify-between rounded-xl border border-[rgba(6,195,132,0.25)] bg-[rgba(6,195,132,0.06)] px-4 py-3">
               <div>
                 <span className="rogym-text-secondary text-sm">{t('renewal.renewExtend')} </span>
-                <span className="font-semibold text-white">{t('renewal.renewExtendDays', { days: subscription.package.durationDays })}</span>
+                <span className="font-semibold text-white">
+                  {t('renewal.renewExtendDays', { days: subscription.package.durationDays })}
+                </span>
               </div>
               <span className="text-lg font-bold text-[var(--rogym-teal)]">
                 {formatVnd(Number(subscription.package.price))}
@@ -482,7 +492,9 @@ function ReviewSubscriptionStep({
           <AlertTriangle size={16} className="shrink-0 mt-0.5" />
           <span
             dangerouslySetInnerHTML={{
-              __html: t('renewal.packageInactiveWarning', { name: `<strong class="text-amber-200">${subscription.packageName}</strong>` }),
+              __html: t('renewal.packageInactiveWarning', {
+                name: `<strong class="text-amber-200">${subscription.packageName}</strong>`,
+              }),
             }}
           />
         </div>
@@ -547,10 +559,7 @@ function SelectPackageStep({
     packagesContent = <StaffErrorState message={error} />
   } else if (packages.length === 0) {
     packagesContent = (
-      <StaffEmptyState
-        title={t('renewal.noPackages')}
-        description={t('renewal.noPackagesDesc')}
-      />
+      <StaffEmptyState title={t('renewal.noPackages')} description={t('renewal.noPackagesDesc')} />
     )
   } else {
     packagesContent = (
@@ -606,9 +615,13 @@ function SelectPackageStep({
         </div>
         <div className="flex-1">
           <div className="font-bold text-white">{member.fullName}</div>
-          <div className="text-sm rogym-text-dim">{member.memberCode} · {member.email}</div>
+          <div className="text-sm rogym-text-dim">
+            {member.memberCode} · {member.email}
+          </div>
         </div>
-        <span className="rogym-tone-badge" data-tone="muted">{t('renewal.noPackageBadge')}</span>
+        <span className="rogym-tone-badge" data-tone="muted">
+          {t('renewal.noPackageBadge')}
+        </span>
       </div>
 
       {packagesContent}
@@ -663,7 +676,9 @@ function SelectTrainerStep({
   } else if (error) {
     trainersContent = <StaffErrorState message={error} />
   } else if (trainers.length === 0) {
-    trainersContent = <StaffEmptyState title={t('renewal.noPt')} description={t('renewal.noPtDesc')} />
+    trainersContent = (
+      <StaffEmptyState title={t('renewal.noPt')} description={t('renewal.noPtDesc')} />
+    )
   } else {
     trainersContent = (
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -703,16 +718,16 @@ function SelectTrainerStep({
         </div>
         <div className="flex-1">
           <div className="font-bold text-white">{member.fullName}</div>
-          <div className="text-sm rogym-text-dim">{t('renewal.packageLabel', { name: selectedPackage.name })}</div>
+          <div className="text-sm rogym-text-dim">
+            {t('renewal.packageLabel', { name: selectedPackage.name })}
+          </div>
         </div>
         <span className="shrink-0 text-xs font-medium px-2 py-0.5 rounded-full border border-[var(--rogym-teal)] text-[var(--rogym-teal)]">
           {t('renewal.hasPt')}
         </span>
       </div>
 
-      <p className="text-sm rogym-text-secondary px-1">
-        {t('renewal.ptRequired')}
-      </p>
+      <p className="text-sm rogym-text-secondary px-1">{t('renewal.ptRequired')}</p>
 
       {trainersContent}
 
@@ -775,9 +790,7 @@ function PaymentStep({
       : (selectedPackage?.durationDays ?? 0)
 
   const displayName =
-    mode === 'renew'
-      ? (subscription?.packageName ?? '—')
-      : (selectedPackage?.name ?? '—')
+    mode === 'renew' ? (subscription?.packageName ?? '—') : (selectedPackage?.name ?? '—')
 
   async function handleConfirm() {
     setSubmitting(true)
@@ -811,9 +824,10 @@ function PaymentStep({
     }
   }
 
-  let confirmBtnText = mode === 'renew'
-    ? t('renewal.confirmRenewBtn', { amount: formatVnd(price) })
-    : t('renewal.confirmNewBtn', { amount: formatVnd(price) })
+  let confirmBtnText =
+    mode === 'renew'
+      ? t('renewal.confirmRenewBtn', { amount: formatVnd(price) })
+      : t('renewal.confirmNewBtn', { amount: formatVnd(price) })
   if (submitting) {
     confirmBtnText = t('renewal.processingPayment')
   }
@@ -836,7 +850,9 @@ function PaymentStep({
               {mode === 'renew' ? t('renewal.summaryPackageRenew') : t('renewal.summaryPackageNew')}
             </div>
             <div className="font-medium text-white">{displayName}</div>
-            <div className="text-xs rogym-text-dim">{t('renewal.addDays', { days: durationDays })}</div>
+            <div className="text-xs rogym-text-dim">
+              {t('renewal.addDays', { days: durationDays })}
+            </div>
           </div>
           {selectedTrainer && (
             <div className="rounded-xl border border-white/5 bg-white/[0.03] p-3 col-span-2">
@@ -981,7 +997,9 @@ export default function RenewalPage() {
   const [subscription, setSubscription] = useState<Subscription | null>(null)
   const [selectedPackage, setSelectedPackage] = useState<Package | null>(null)
   const [selectedTrainer, setSelectedTrainer] = useState<Trainer | null>(null)
-  const [successData, setSuccessData] = useState<{ endDate: string; packageName: string } | null>(null)
+  const [successData, setSuccessData] = useState<{ endDate: string; packageName: string } | null>(
+    null
+  )
 
   function handleSelectMember(m: TrainerStudentSummary) {
     setSelectedMember(m)

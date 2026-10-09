@@ -36,6 +36,21 @@ function PackageImageLightbox({
 }>) {
   const dialogRef = useRef<HTMLDialogElement>(null)
   const [isClosing, setIsClosing] = useState(false)
+  const finishClose = useCallback(() => {
+    const dialog = dialogRef.current
+    if (dialog?.open) {
+      dialog.close()
+      return
+    }
+    setIsClosing(false)
+    onClose()
+  }, [onClose])
+
+  const requestClose = useCallback(() => {
+    if (activeIndex === null || isClosing) return
+    setIsClosing(true)
+    window.setTimeout(finishClose, CLOSE_DURATION_MS)
+  }, [activeIndex, isClosing, finishClose])
 
   useEffect(() => {
     const dialog = dialogRef.current
@@ -50,23 +65,7 @@ function PackageImageLightbox({
     return () => {
       dialog.removeEventListener('click', handleClick)
     }
-  }, [activeIndex, isClosing])
-
-  function finishClose() {
-    const dialog = dialogRef.current
-    if (dialog?.open) {
-      dialog.close()
-      return
-    }
-    setIsClosing(false)
-    onClose()
-  }
-
-  function requestClose() {
-    if (activeIndex === null || isClosing) return
-    setIsClosing(true)
-    window.setTimeout(finishClose, CLOSE_DURATION_MS)
-  }
+  }, [activeIndex, requestClose])
 
   function handleNativeClose() {
     if (!isClosing) onClose()
