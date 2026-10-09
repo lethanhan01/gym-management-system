@@ -168,14 +168,14 @@ jobs:
           fetch-depth: 0
 
       - name: Download client coverage
-        uses: actions/download-artifact@cc203385981b70ca67e1ab38865b36f8885e8386 # v4.1.9
+        uses: actions/download-artifact@cc203385981b70ca67e1cc392babf9cc229d5806 # v4.1.9
         with:
           name: client-coverage
           path: client/coverage
         continue-on-error: true
 
       - name: Download server coverage
-        uses: actions/download-artifact@cc203385981b70ca67e1ab38865b36f8885e8386 # v4.1.9
+        uses: actions/download-artifact@cc203385981b70ca67e1cc392babf9cc229d5806 # v4.1.9
         with:
           name: server-coverage
           path: server/coverage
@@ -269,7 +269,7 @@ jobs:
       - name: Deploy to VPS
         shell: bash
         env:
-          CONFIGURED_DEPLOY_PATH: ${{ vars.VPS_DEPLOY_PATH }}
+          CONFIGURED_DEPLOY_PATH: ${{ vars.VPS_DEPLOY_PATH || secrets.VPS_DEPLOY_PATH }}
           SERVER_IMAGE: ghcr.io/${{ github.repository }}/server
         run: |
           set -euo pipefail
